@@ -45,7 +45,7 @@ img{max-width:100%;display:block}
 .nav-links{display:none;}
 .hero{
 min-height:650px!important;
-padding-top:40px!important;
+padding-top:80px!important;
 }
  } 
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}.reveal{opacity:1;transform:none}}
