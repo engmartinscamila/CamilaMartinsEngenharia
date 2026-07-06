@@ -26,13 +26,13 @@ img{max-width:100%;display:block}
 }
 
 .about-image{
-    max-width:380px;
+    max-width:260px;
     margin:auto;
 }
 
 .about-image img{
     width:100%;
-    max-width:240px;
+    max-width:260px;
     border-radius:4px;
 }
 
