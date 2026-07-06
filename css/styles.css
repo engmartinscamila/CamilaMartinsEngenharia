@@ -41,14 +41,33 @@ img{max-width:100%;display:block}
 @media(max-width:1050px){.cards{grid-template-columns:repeat(2,1fr)}.hero-grid,.about-grid,.process-grid,.contact-grid{grid-template-columns:1fr}.hero-signature{max-width:620px}.portrait-wrap{max-width:520px}.visual-band{background-attachment:scroll}}
 @media(max-width:760px){.nav{height:76px}.brand img{width:50px;height:50px}.brand strong{font-size:.82rem}.brand small{font-size:1.15rem}.menu-toggle{display:block}.nav-links{position:fixed;top:76px;left:0;right:0;background:rgba(1,9,20,.98);display:grid;gap:0;border-bottom:1px solid var(--line);transform:translateY(-120%);transition:.35s;padding:10px 0}.nav-links.open{transform:translateY(0)}.nav-links a{display:block;padding:15px 6%;font-size:.78rem}.hero{padding-top:76px}.section{padding:82px 0}.hero h1 span{letter-spacing:.08em}.actions{display:grid}.btn{width:100%}.cards{grid-template-columns:1fr}.portrait-wrap{min-height:auto;padding:12px}.portrait-wrap::before{inset:28px -13px -13px 28px}.portrait-wrap img{height:auto;max-height:620px}.visual-band{min-height:36vh}.call-card{padding:32px 22px}.footer-grid{display:grid}.floating-actions{right:14px;bottom:14px}.float-btn{width:48px;height:48px}.contact-card{padding:20px}.contact-card a{grid-template-columns:40px 1fr;padding:14px}.portfolio-header{height:68px;grid-template-columns:1fr auto;gap:10px;padding:0 14px}.portfolio-header div{display:none}.portfolio-contact{font-size:.68rem}.portfolio-back{font-size:.68rem}.portfolio-viewer{height:calc(100vh - 68px)}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}.reveal{opacity:1;transform:none}}
+.footer .footer-grid{
+    display:block!important;
+    text-align:center!important;
+}
+.footer-info{
+    text-align:center;
+    width:100%;
+    margin:auto;
+    padding:40px 20px;
+}
+
 .footer-signature{
-    font-family:"Brittany Signature Script", cursive;
-    font-size:32px;
+    font-family:"Brittany Signature Script", "Parisienne", cursive;
+    font-size:42px;
     color:#b89a63;
-    margin-bottom:10px;
+    margin-bottom:15px;
 }
 
 .footer-info p{
     font-family:"Century Gothic", sans-serif;
+    font-size:16px;
     letter-spacing:1px;
+    margin:8px 0;
+}
+
+.copyright{
+    margin-top:30px!important;
+    font-size:14px!important;
+    opacity:.8;
 }
