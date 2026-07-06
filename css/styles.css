@@ -43,7 +43,9 @@ img{max-width:100%;display:block}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}.reveal{opacity:1;transform:none}}
 .footer .footer-grid{
     display:block!important;
-    text-align:center!important;
+    width:min(1160px,92%);
+    margin:0 auto;
+    text-align:left!important;
 }
 .footer-info{
     text-align:center;
