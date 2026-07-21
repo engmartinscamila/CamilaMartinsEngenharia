@@ -55,11 +55,11 @@ padding-top:80px!important;
 }
  } 
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}.reveal{opacity:1;transform:none}}
-.footer-signature{
-    font-family:"Brittany Signature Script", cursive;
-    font-size:26px;
-    color:#b89a63;
-    margin-bottom:10px;
+.footer-signature {
+    font-family: var(--font-signature);
+    font-size: 26px;
+    color: #b89a63;
+    margin-bottom: 10px;
 }
 
 .footer-info p{
