@@ -2,11 +2,15 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
 
   <meta
     name="description"
-    content="Entre em contato com Camila Martins Engenharia Civil."
+    content="Cartão de contato virtual de Camila Martins Engenharia Civil."
   />
 
   <title>Contato | Camila Martins Engenharia Civil</title>
@@ -26,15 +30,73 @@
     href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
   />
 
-  <link rel="stylesheet" href="css/styles.css" />
-
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       min-height: 100vh;
       margin: 0;
+      color: #f4f6f8;
+      font-family: Arial, Helvetica, sans-serif;
+
       background:
-        linear-gradient(rgba(8, 22, 38, 0.88), rgba(8, 22, 38, 0.94)),
-        url("assets/images/foto-camila.jpg") center top / cover fixed;
+        radial-gradient(
+          circle at 50% 20%,
+          rgba(212, 176, 106, 0.12),
+          transparent 28%
+        ),
+        radial-gradient(
+          circle at 10% 85%,
+          rgba(255, 255, 255, 0.05),
+          transparent 30%
+        ),
+        linear-gradient(
+          145deg,
+          #071522 0%,
+          #0b1f33 52%,
+          #071522 100%
+        );
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+
+      background:
+        linear-gradient(
+          rgba(4, 14, 24, 0.55),
+          rgba(4, 14, 24, 0.7)
+        ),
+        url("assets/images/foto-camila.jpg") center / cover no-repeat;
+
+      filter: blur(7px);
+      transform: scale(1.05);
+      opacity: 0.18;
+      z-index: -2;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+
+      background:
+        radial-gradient(
+          circle at center,
+          transparent 20%,
+          rgba(0, 0, 0, 0.48) 100%
+        );
+
+      z-index: -1;
     }
 
     .contact-page {
@@ -42,209 +104,378 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 45px 20px;
+      padding: 32px 16px;
     }
 
     .virtual-card {
+      position: relative;
       width: 100%;
       max-width: 480px;
-      padding: 42px 32px 32px;
+      padding: 40px 30px 30px;
+      overflow: hidden;
       text-align: center;
-      background: rgba(12, 30, 48, 0.95);
-      border: 1px solid rgba(193, 163, 98, 0.45);
-      box-shadow: 0 24px 65px rgba(0, 0, 0, 0.32);
-      border-radius: 4px;
+
+      background:
+        linear-gradient(
+          145deg,
+          rgba(15, 40, 64, 0.88),
+          rgba(8, 26, 43, 0.82)
+        );
+
+      border: 1px solid rgba(212, 176, 106, 0.55);
+      border-radius: 22px;
+
+      box-shadow:
+        0 28px 80px rgba(0, 0, 0, 0.48),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+
+      animation: cardEnter 0.85s ease both;
     }
 
-.virtual-logo {
-    width: 75px;
-    height: auto;
-    display: block;
-    margin: 0 auto 20px;
-    object-fit: contain;
+    .virtual-card::before {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      top: -120px;
+      right: -110px;
+      border-radius: 50%;
+
+      background:
+        radial-gradient(
+          circle,
+          rgba(212, 176, 106, 0.22),
+          rgba(212, 176, 106, 0) 68%
+        );
+
+      pointer-events: none;
+    }
+
+    .virtual-card::after {
+      content: "";
+      position: absolute;
+      left: 18%;
+      right: 18%;
+      bottom: -1px;
+      height: 1px;
+
+      background:
+        linear-gradient(
+          90deg,
+          transparent,
+          rgba(212, 176, 106, 0.9),
+          transparent
+        );
+    }
+
+    .profile-photo-wrap {
+      width: 126px;
+      height: 126px;
+      margin: 0 auto 18px;
+      padding: 4px;
+
+      border-radius: 50%;
+      background:
+        linear-gradient(
+          135deg,
+          #f0c56f,
+          #8e6a2c,
+          #f0c56f
+        );
+
+      box-shadow:
+        0 0 0 7px rgba(212, 176, 106, 0.08),
+        0 0 35px rgba(212, 176, 106, 0.28);
+    }
+
+    .profile-photo {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      object-position: center;
+      border-radius: 50%;
+      border: 4px solid #0b1f33;
+    }
+
+    .virtual-logo {
+      width: 82px;
+      height: auto;
+      display: block;
+      margin: 0 auto 14px;
+      object-fit: contain;
+
+      filter:
+        drop-shadow(0 5px 12px rgba(0, 0, 0, 0.32));
     }
 
     .virtual-card h1 {
       margin: 0;
-      color: #10263d;
+      color: #ffffff;
+
       font-family: "Parisienne", cursive;
-      font-size: clamp(42px, 10vw, 58px);
+      font-size: clamp(45px, 11vw, 62px);
       font-weight: 400;
       line-height: 1;
+
+      text-shadow:
+        0 3px 14px rgba(0, 0, 0, 0.45);
     }
 
     .profession {
-      margin: 10px 0 5px;
-      color: #10263d;
+      margin: 13px 0 7px;
+      color: #f1c56c;
+
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 4px;
       text-transform: uppercase;
     }
 
     .crea {
-      margin: 0 0 24px;
-      color: #707070;
+      margin: 0;
+      color: #dce3ea;
+
       font-size: 12px;
-      letter-spacing: 1px;
+      letter-spacing: 1.2px;
     }
 
     .divider {
-      width: 65px;
+      position: relative;
+      width: 120px;
       height: 1px;
-      margin: 0 auto 25px;
-      background: #b49557;
+      margin: 26px auto;
+
+      background:
+        linear-gradient(
+          90deg,
+          transparent,
+          #d4b06a,
+          transparent
+        );
+    }
+
+    .divider::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+
+      width: 7px;
+      height: 7px;
+
+      border-radius: 50%;
+      background: #f1c56c;
+
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 16px rgba(241, 197, 108, 0.9);
     }
 
     .intro {
-      max-width: 370px;
+      max-width: 385px;
       margin: 0 auto 28px;
-      color: #555;
+
+      color: #eef3f7;
       font-size: 15px;
-      line-height: 1.7;
+      line-height: 1.75;
+
+      text-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.25);
     }
 
     .contact-buttons {
       display: grid;
-      gap: 12px;
+      gap: 13px;
     }
 
     .contact-buttons a {
-      min-height: 58px;
-      padding: 10px 18px;
+      position: relative;
+      min-height: 62px;
+      padding: 11px 18px;
+
       display: grid;
-      grid-template-columns: 28px 1fr 28px;
+      grid-template-columns: 36px 1fr 36px;
       align-items: center;
-      color: #10263d;
+
+      color: #ffffff;
       text-decoration: none;
       text-transform: uppercase;
+
       font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 1.5px;
-      background: transparent;
-      border: 1px solid rgba(16, 38, 61, 0.35);
-      transition: 0.25s ease;
+      font-weight: 700;
+      letter-spacing: 1.8px;
+
+      background:
+        linear-gradient(
+          145deg,
+          rgba(255, 255, 255, 0.07),
+          rgba(255, 255, 255, 0.025)
+        );
+
+      border: 1px solid rgba(212, 176, 106, 0.5);
+      border-radius: 15px;
+
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 8px 24px rgba(0, 0, 0, 0.15);
+
+      transition:
+        transform 0.25s ease,
+        border-color 0.25s ease,
+        background 0.25s ease,
+        box-shadow 0.25s ease;
     }
 
-    .contact-buttons a i:first-child {
-      font-size: 21px;
-      color: #b49557;
-    }
+    .contact-buttons a::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
 
-    .contact-buttons a .arrow {
-      font-size: 15px;
-      color: #10263d;
+      background:
+        linear-gradient(
+          110deg,
+          transparent 20%,
+          rgba(255, 255, 255, 0.08) 50%,
+          transparent 80%
+        );
+
+      transform: translateX(-120%);
+      transition: transform 0.55s ease;
+      pointer-events: none;
     }
 
     .contact-buttons a:hover {
-      color: #fff;
-      background: #10263d;
-      border-color: #10263d;
-      transform: translateY(-2px);
+      transform: translateY(-3px);
+
+      background:
+        linear-gradient(
+          145deg,
+          rgba(212, 176, 106, 0.22),
+          rgba(212, 176, 106, 0.08)
+        );
+
+      border-color: #f0c56f;
+
+      box-shadow:
+        0 12px 30px rgba(0, 0, 0, 0.26),
+        0 0 24px rgba(212, 176, 106, 0.12);
+    }
+
+    .contact-buttons a:hover::before {
+      transform: translateX(120%);
+    }
+
+    .contact-buttons a i:first-child {
+      color: #f0c56f;
+      font-size: 24px;
+      justify-self: start;
+    }
+
+    .contact-buttons a .arrow {
+      color: #f0c56f;
+      font-size: 19px;
+      justify-self: end;
+
+      transition: transform 0.25s ease;
     }
 
     .contact-buttons a:hover .arrow {
-      color: #fff;
+      transform: translateX(4px);
     }
 
     .back-site {
-      margin-top: 28px;
+      margin-top: 27px;
     }
 
     .back-site a {
-      color: #777;
+      color: #d7dee5;
       font-size: 12px;
-      letter-spacing: 1px;
+      letter-spacing: 1.3px;
       text-decoration: none;
       text-transform: uppercase;
+
+      transition: color 0.25s ease;
     }
 
     .back-site a:hover {
-      color: #10263d;
+      color: #f0c56f;
     }
 
     .virtual-footer {
-      margin-top: 25px;
-      color: #999;
+      margin: 22px 0 0;
+      color: #9eabb7;
+
       font-size: 11px;
       letter-spacing: 0.7px;
     }
 
+    @keyframes cardEnter {
+      from {
+        opacity: 0;
+        transform: translateY(28px) scale(0.97);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
     @media (max-width: 520px) {
       .contact-page {
-        padding: 20px 14px;
+        align-items: flex-start;
+        padding: 18px 12px;
       }
 
       .virtual-card {
-        padding: 35px 20px 26px;
+        padding: 30px 18px 24px;
+        border-radius: 18px;
+      }
+
+      .profile-photo-wrap {
+        width: 112px;
+        height: 112px;
+      }
+
+      .virtual-logo {
+        width: 72px;
       }
 
       .virtual-card h1 {
-        font-size: 45px;
+        font-size: 47px;
       }
 
       .profession {
-        font-size: 12px;
+        font-size: 11px;
         letter-spacing: 3px;
       }
-      /* CORES DO CARTÃO — IDENTIDADE AZUL ESCURO */
 
-.virtual-card {
-  background: rgba(12, 30, 48, 0.96);
-  border-color: rgba(193, 163, 98, 0.6);
-}
+      .intro {
+        font-size: 14px;
+      }
 
-.virtual-card h1 {
-  color: #f6f4ef;
-}
+      .contact-buttons a {
+        min-height: 59px;
+        grid-template-columns: 32px 1fr 32px;
+        padding: 10px 15px;
 
-.profession {
-  color: #d9dde2;
-}
+        font-size: 12px;
+        letter-spacing: 1.5px;
+      }
+    }
 
-.crea {
-  color: #aeb7c2;
-}
-
-.intro {
-  color: #d9dde2;
-}
-
-.contact-buttons a {
-  color: #f5f5f5;
-  background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(193, 163, 98, 0.45);
-}
-
-.contact-buttons a i:first-child {
-  color: #d4b06a;
-}
-
-.contact-buttons a .arrow {
-  color: #f5f5f5;
-}
-
-.contact-buttons a:hover {
-  color: #0d2237;
-  background: #d4b06a;
-  border-color: #d4b06a;
-}
-
-.contact-buttons a:hover .arrow {
-  color: #0d2237;
-}
-
-.back-site a {
-  color: #c9d0d8;
-}
-
-.back-site a:hover {
-  color: #ffffff;
-}
-
-.virtual-footer {
-  color: #9ea8b3;
-}
+    @media (prefers-reduced-motion: reduce) {
+      .virtual-card,
+      .contact-buttons a,
+      .contact-buttons a::before,
+      .contact-buttons a .arrow {
+        animation: none;
+        transition: none;
+      }
     }
   </style>
 </head>
@@ -253,6 +484,14 @@
   <main class="contact-page">
 
     <section class="virtual-card">
+
+      <div class="profile-photo-wrap">
+        <img
+          class="profile-photo"
+          src="assets/images/foto-camila.jpg"
+          alt="Foto profissional de Camila Martins"
+        />
+      </div>
 
       <img
         class="virtual-logo"
@@ -282,7 +521,7 @@
         >
           <i class="bi bi-whatsapp"></i>
           <span>WhatsApp</span>
-          <i class="bi bi-arrow-up-right arrow"></i>
+          <i class="bi bi-arrow-right arrow"></i>
         </a>
 
         <a
@@ -290,7 +529,7 @@
         >
           <i class="bi bi-envelope"></i>
           <span>E-mail</span>
-          <i class="bi bi-arrow-up-right arrow"></i>
+          <i class="bi bi-arrow-right arrow"></i>
         </a>
 
         <a
@@ -300,19 +539,19 @@
         >
           <i class="bi bi-instagram"></i>
           <span>Instagram</span>
-          <i class="bi bi-arrow-up-right arrow"></i>
+          <i class="bi bi-arrow-right arrow"></i>
         </a>
 
         <a href="portfolio.html">
           <i class="bi bi-images"></i>
           <span>Portfólio</span>
-          <i class="bi bi-arrow-up-right arrow"></i>
+          <i class="bi bi-arrow-right arrow"></i>
         </a>
 
         <a href="index.html">
           <i class="bi bi-globe2"></i>
           <span>Site oficial</span>
-          <i class="bi bi-arrow-up-right arrow"></i>
+          <i class="bi bi-arrow-right arrow"></i>
         </a>
 
       </div>
