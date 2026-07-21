@@ -1094,9 +1094,10 @@ const clientData = {
         currentYear.textContent =
             new Date().getFullYear();
 
-        logoutButton.addEventListener("click", function () {
-            window.location.href = "login.html";
-        });
+        logoutButton.addEventListener("click", async function () {
+    await supabase.auth.signOut();
+    window.location.href = "login.html";
+});
 
         document
             .querySelectorAll(".portal-card")
