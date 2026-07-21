@@ -379,6 +379,13 @@
             }
         }
     </style>
+    <script type="importmap">
+{
+  "imports": {
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+}
+</script>
+    
 </head>
 
 <body>
@@ -494,7 +501,8 @@
         </a>
     </main>
 
-    <script>
+    <script type="module">
+import { supabase } from "./js/config/supabase.js";
         const loginForm = document.getElementById("loginForm");
         const passwordInput = document.getElementById("password");
         const togglePassword = document.getElementById("togglePassword");
@@ -517,12 +525,26 @@
                     : "bi bi-eye-slash";
         });
 
-        loginForm.addEventListener("submit", function (event) {
-            event.preventDefault();
+       loginForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
 
-            formMessage.textContent =
-                "O login será ativado na etapa de integração com o Supabase.";
-        });
+    formMessage.textContent = "";
+
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+    });
+
+    if (error) {
+        formMessage.textContent = "E-mail ou senha inválidos.";
+        return;
+    }
+
+    window.location.href = "portal.html";
+});
 
         forgotPassword.addEventListener("click", function (event) {
             event.preventDefault();
