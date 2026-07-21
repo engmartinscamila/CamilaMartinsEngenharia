@@ -1,440 +1,277 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="description"
+    content="Entre em contato com Camila Martins Engenharia Civil."
+  />
 
-    <meta
-        name="description"
-        content="Contato profissional da engenheira civil Camila Martins."
-    >
+  <title>Contato | Camila Martins Engenharia Civil</title>
 
-    <title>Camila Martins | Engenheira Civil</title>
+  <link rel="icon" href="assets/logo.png" />
 
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <link
+    href="https://fonts.googleapis.com/css2?family=Parisienne&display=swap"
+    rel="stylesheet"
+  />
 
-        :root {
-            --azul: #07172f;
-            --azul-claro: #10294d;
-            --dourado: #c6a56b;
-            --branco: #ffffff;
-            --cinza: #d6d9df;
-            --texto-escuro: #182033;
-        }
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+  />
 
-        html {
-            scroll-behavior: smooth;
-        }
+  <link rel="stylesheet" href="css/styles.css" />
 
-        body {
-            min-height: 100vh;
-            font-family: "Century Gothic", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
-            color: var(--branco);
-            background:
-                radial-gradient(
-                    circle at top,
-                    #18375f 0%,
-                    var(--azul) 42%,
-                    #030b18 100%
-                );
-        }
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background:
+        linear-gradient(rgba(8, 22, 38, 0.88), rgba(8, 22, 38, 0.94)),
+        url("assets/images/foto-camila.jpg") center top / cover fixed;
+    }
 
-        a {
-            color: inherit;
-            text-decoration: none;
-        }
+    .contact-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 45px 20px;
+    }
 
-        .pagina {
-            width: min(100%, 520px);
-            margin: 0 auto;
-            padding: 34px 20px 48px;
-        }
+    .virtual-card {
+      width: 100%;
+      max-width: 480px;
+      padding: 42px 32px 32px;
+      text-align: center;
+      background: rgba(250, 249, 246, 0.97);
+      border: 1px solid rgba(193, 163, 98, 0.45);
+      box-shadow: 0 24px 65px rgba(0, 0, 0, 0.32);
+      border-radius: 4px;
+    }
 
-        .perfil {
-            text-align: center;
-            animation: aparecer 0.8s ease;
-        }
+    .virtual-logo {
+      width: 92px;
+      height: 92px;
+      margin: 0 auto 20px;
+      display: block;
+      object-fit: contain;
+    }
 
-        .logo {
-            width: 88px;
-            height: 88px;
-            margin: 0 auto 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(198, 165, 107, 0.65);
-            border-radius: 50%;
-            color: var(--dourado);
-            font-size: 32px;
-            background: rgba(255, 255, 255, 0.04);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-        }
+    .virtual-card h1 {
+      margin: 0;
+      color: #10263d;
+      font-family: "Parisienne", cursive;
+      font-size: clamp(42px, 10vw, 58px);
+      font-weight: 400;
+      line-height: 1;
+    }
 
-        .perfil h1 {
-            font-size: 30px;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-        }
+    .profession {
+      margin: 10px 0 5px;
+      color: #10263d;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
 
-        .profissao {
-            margin-top: 7px;
-            color: var(--dourado);
-            font-size: 15px;
-            letter-spacing: 1.8px;
-            text-transform: uppercase;
-        }
+    .crea {
+      margin: 0 0 24px;
+      color: #707070;
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
 
-        .crea {
-            margin-top: 7px;
-            color: var(--cinza);
-            font-size: 13px;
-        }
+    .divider {
+      width: 65px;
+      height: 1px;
+      margin: 0 auto 25px;
+      background: #b49557;
+    }
 
-        .frase {
-            max-width: 410px;
-            margin: 22px auto 0;
-            color: #e4e7ec;
-            font-size: 15px;
-            line-height: 1.7;
-        }
+    .intro {
+      max-width: 370px;
+      margin: 0 auto 28px;
+      color: #555;
+      font-size: 15px;
+      line-height: 1.7;
+    }
 
-        .experiencia {
-            margin-top: 23px;
-            padding: 15px 18px;
-            border: 1px solid rgba(198, 165, 107, 0.34);
-            border-radius: 14px;
-            color: #f3eadb;
-            background: rgba(198, 165, 107, 0.08);
-            font-size: 14px;
-            line-height: 1.5;
-        }
+    .contact-buttons {
+      display: grid;
+      gap: 12px;
+    }
 
-        .botoes {
-            display: grid;
-            gap: 12px;
-            margin-top: 28px;
-        }
+    .contact-buttons a {
+      min-height: 58px;
+      padding: 10px 18px;
+      display: grid;
+      grid-template-columns: 28px 1fr 28px;
+      align-items: center;
+      color: #10263d;
+      text-decoration: none;
+      text-transform: uppercase;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      background: transparent;
+      border: 1px solid rgba(16, 38, 61, 0.35);
+      transition: 0.25s ease;
+    }
 
-        .botao {
-            min-height: 58px;
-            display: flex;
-            align-items: center;
-            position: relative;
-            padding: 14px 52px;
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            border-radius: 14px;
-            color: var(--texto-escuro);
-            background: rgba(255, 255, 255, 0.96);
-            font-size: 15px;
-            font-weight: 600;
-            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
-            transition:
-                transform 0.25s ease,
-                box-shadow 0.25s ease,
-                background 0.25s ease;
-        }
+    .contact-buttons a i:first-child {
+      font-size: 21px;
+      color: #b49557;
+    }
 
-        .botao:hover {
-            transform: translateY(-3px);
-            background: var(--branco);
-            box-shadow: 0 15px 34px rgba(0, 0, 0, 0.27);
-        }
+    .contact-buttons a .arrow {
+      font-size: 15px;
+      color: #10263d;
+    }
 
-        .botao i {
-            position: absolute;
-            left: 20px;
-            width: 24px;
-            color: var(--azul-claro);
-            font-size: 20px;
-            text-align: center;
-        }
+    .contact-buttons a:hover {
+      color: #fff;
+      background: #10263d;
+      border-color: #10263d;
+      transform: translateY(-2px);
+    }
 
-        .botao span {
-            width: 100%;
-            text-align: center;
-        }
+    .contact-buttons a:hover .arrow {
+      color: #fff;
+    }
 
-        .botao-destaque {
-            color: var(--branco);
-            border-color: rgba(198, 165, 107, 0.6);
-            background: linear-gradient(
-                135deg,
-                #b68b4f,
-                var(--dourado)
-            );
-        }
+    .back-site {
+      margin-top: 28px;
+    }
 
-        .botao-destaque i {
-            color: var(--branco);
-        }
+    .back-site a {
+      color: #777;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-decoration: none;
+      text-transform: uppercase;
+    }
 
-        .secao {
-            margin-top: 42px;
-        }
+    .back-site a:hover {
+      color: #10263d;
+    }
 
-        .titulo-secao {
-            margin-bottom: 20px;
-            text-align: center;
-        }
+    .virtual-footer {
+      margin-top: 25px;
+      color: #999;
+      font-size: 11px;
+      letter-spacing: 0.7px;
+    }
 
-        .titulo-secao span {
-            color: var(--dourado);
-            font-size: 12px;
-            letter-spacing: 2.4px;
-            text-transform: uppercase;
-        }
+    @media (max-width: 520px) {
+      .contact-page {
+        padding: 20px 14px;
+      }
 
-        .titulo-secao h2 {
-            margin-top: 7px;
-            font-size: 23px;
-            font-weight: 500;
-        }
+      .virtual-card {
+        padding: 35px 20px 26px;
+      }
 
-        .servicos {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
+      .virtual-card h1 {
+        font-size: 45px;
+      }
 
-        .servico {
-            min-height: 130px;
-            padding: 20px 14px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            text-align: center;
-            background: rgba(255, 255, 255, 0.055);
-            backdrop-filter: blur(10px);
-        }
-
-        .servico i {
-            margin-bottom: 13px;
-            color: var(--dourado);
-            font-size: 25px;
-        }
-
-        .servico p {
-            color: #edf0f4;
-            font-size: 13px;
-            line-height: 1.45;
-        }
-
-        .chamada {
-            margin-top: 42px;
-            padding: 30px 22px;
-            border: 1px solid rgba(198, 165, 107, 0.34);
-            border-radius: 20px;
-            text-align: center;
-            background: rgba(255, 255, 255, 0.06);
-        }
-
-        .chamada h2 {
-            font-size: 23px;
-            font-weight: 500;
-            line-height: 1.3;
-        }
-
-        .chamada p {
-            margin: 13px 0 22px;
-            color: var(--cinza);
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        footer {
-            margin-top: 38px;
-            color: rgba(255, 255, 255, 0.55);
-            font-size: 12px;
-            text-align: center;
-        }
-
-        @keyframes aparecer {
-            from {
-                opacity: 0;
-                transform: translateY(18px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @media (max-width: 390px) {
-            .pagina {
-                padding-right: 15px;
-                padding-left: 15px;
-            }
-
-            .perfil h1 {
-                font-size: 27px;
-            }
-
-            .servicos {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+      .profession {
+        font-size: 12px;
+        letter-spacing: 3px;
+      }
+    }
+  </style>
 </head>
 
 <body>
-    <main class="pagina">
+  <main class="contact-page">
 
-        <section class="perfil">
+    <section class="virtual-card">
 
-            <div class="logo">
-                <i class="fa-solid fa-building"></i>
-            </div>
+      <img
+        class="virtual-logo"
+        src="assets/logo.png"
+        alt="Logomarca Camila Martins Engenharia Civil"
+      />
 
-            <h1>Camila Martins</h1>
+      <h1>Camila Martins</h1>
 
-            <p class="profissao">Engenheira Civil</p>
+      <p class="profession">Engenharia Civil</p>
 
-            <p class="crea">CREA: inserir número</p>
+      <p class="crea">CREA-RJ 2023511771</p>
 
-            <p class="frase">
-                Projetos, obras, laudos e soluções de engenharia
-                desenvolvidos com técnica, funcionalidade e atenção
-                aos detalhes.
-            </p>
+      <div class="divider"></div>
 
-            <div class="experiencia">
-                Mais de 5 anos transformando ideias em projetos
-                funcionais e bem executados.
-            </div>
+      <p class="intro">
+        Projetos desenvolvidos com precisão técnica, funcionalidade,
+        estética e cuidado em cada detalhe.
+      </p>
 
-        </section>
+      <div class="contact-buttons">
 
-        <section class="botoes">
+        <a
+          href="https://wa.me/5521986429999?text=Ol%C3%A1%20Camila!%20Conheci%20seu%20cart%C3%A3o%20virtual%20e%20gostaria%20de%20solicitar%20um%20or%C3%A7amento."
+          target="_blank"
+          rel="noopener"
+        >
+          <i class="bi bi-whatsapp"></i>
+          <span>WhatsApp</span>
+          <i class="bi bi-arrow-up-right arrow"></i>
+        </a>
 
-            <a
-                class="botao botao-destaque"
-                href="https://wa.me/5500000000000"
-                target="_blank"
-                rel="noopener noreferrer"
-            >
-                <i class="fa-brands fa-whatsapp"></i>
-                <span>Falar pelo WhatsApp</span>
-            </a>
+        <a
+          href="mailto:eng.martins.camila@gmail.com?subject=Solicita%C3%A7%C3%A3o%20de%20or%C3%A7amento"
+        >
+          <i class="bi bi-envelope"></i>
+          <span>E-mail</span>
+          <i class="bi bi-arrow-up-right arrow"></i>
+        </a>
 
-            <a
-                class="botao"
-                href="https://www.instagram.com/eng.martins.camila/"
-                target="_blank"
-                rel="noopener noreferrer"
-            >
-                <i class="fa-brands fa-instagram"></i>
-                <span>Instagram</span>
-            </a>
+        <a
+          href="https://www.instagram.com/eng.martins.camila"
+          target="_blank"
+          rel="noopener"
+        >
+          <i class="bi bi-instagram"></i>
+          <span>Instagram</span>
+          <i class="bi bi-arrow-up-right arrow"></i>
+        </a>
 
-            <a
-                class="botao"
-                href="index.html"
-            >
-                <i class="fa-solid fa-globe"></i>
-                <span>Conhecer o site</span>
-            </a>
+        <a href="portfolio.html">
+          <i class="bi bi-images"></i>
+          <span>Portfólio</span>
+          <i class="bi bi-arrow-up-right arrow"></i>
+        </a>
 
-            <a
-                class="botao"
-                href="mailto:seuemail@exemplo.com"
-            >
-                <i class="fa-regular fa-envelope"></i>
-                <span>Enviar e-mail</span>
-            </a>
+        <a href="index.html">
+          <i class="bi bi-globe2"></i>
+          <span>Site oficial</span>
+          <i class="bi bi-arrow-up-right arrow"></i>
+        </a>
 
-            <a
-                class="botao"
-                href="portfolio.html"
-            >
-                <i class="fa-regular fa-images"></i>
-                <span>Ver portfólio</span>
-            </a>
+      </div>
 
-        </section>
+      <div class="back-site">
+        <a href="index.html">
+          <i class="bi bi-arrow-left"></i>
+          Voltar ao site
+        </a>
+      </div>
 
-        <section class="secao">
+      <p class="virtual-footer">
+        © 2026 Camila Martins Engenharia Civil
+      </p>
 
-            <div class="titulo-secao">
-                <span>Áreas de atuação</span>
-                <h2>Principais serviços</h2>
-            </div>
+    </section>
 
-            <div class="servicos">
-
-                <article class="servico">
-                    <i class="fa-solid fa-house"></i>
-                    <p>Projetos arquitetônicos</p>
-                </article>
-
-                <article class="servico">
-                    <i class="fa-solid fa-ruler-combined"></i>
-                    <p>Projetos complementares</p>
-                </article>
-
-                <article class="servico">
-                    <i class="fa-solid fa-helmet-safety"></i>
-                    <p>Acompanhamento de obras</p>
-                </article>
-
-                <article class="servico">
-                    <i class="fa-solid fa-file-signature"></i>
-                    <p>Laudos e avaliações</p>
-                </article>
-
-                <article class="servico">
-                    <i class="fa-solid fa-landmark"></i>
-                    <p>Aprovação e regularização</p>
-                </article>
-
-                <article class="servico">
-                    <i class="fa-solid fa-comments"></i>
-                    <p>Consultoria em engenharia</p>
-                </article>
-
-            </div>
-
-        </section>
-
-        <section class="chamada">
-
-            <h2>Vamos transformar sua ideia em um projeto bem planejado?</h2>
-
-            <p>
-                Entre em contato para conversar sobre seu projeto
-                e solicitar um orçamento personalizado.
-            </p>
-
-            <a
-                class="botao botao-destaque"
-                href="https://wa.me/5500000000000"
-                target="_blank"
-                rel="noopener noreferrer"
-            >
-                <i class="fa-brands fa-whatsapp"></i>
-                <span>Solicitar orçamento</span>
-            </a>
-
-        </section>
-
-        <footer>
-            © Camila Martins Engenharia
-        </footer>
-
-    </main>
+  </main>
 </body>
 </html>
