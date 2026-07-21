@@ -1,3 +1,9 @@
+@font-face {
+    font-family: "Brittany";
+    src: url("../fonts/BrittanySignatureScript.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
 :root{
   --navy:#010914;
   --navy-2:#030d1a;
@@ -10,7 +16,7 @@
   --glass:rgba(216,218,221,.045);
   --shadow:0 28px 90px rgba(0,0,0,.48);
   --font-main:"Century Gothic","Avenir Next","Helvetica Neue",Arial,sans-serif;
-  --font-signature:"Brittany Signature Script","Parisienne","Segoe Script",cursive;
+  --font-signature:"Brittany","Parisienne","Segoe Script",cursive;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
