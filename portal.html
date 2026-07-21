@@ -1012,8 +1012,18 @@
         </main>
     </div>
 
-    <script>
-        const clientData = {
+  <script type="module">
+import { supabase } from "./js/config/supabase.js";
+
+const {
+    data: { session },
+} = await supabase.auth.getSession();
+
+if (!session) {
+    window.location.href = "login.html";
+}
+
+const clientData = {
             firstName: "Cliente",
             fullName: "Cliente",
             projectName: "Residência Família Oliveira",
