@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Portal exclusivo para clientes da Camila Martins Engenharia."
+    >
+
+    <title>Portal do Cliente | Camila Martins Engenharia</title>
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&family=Parisienne&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    >
+
+    <style>
+        :root {
+            --azul-escuro: #071522;
+            --azul-card: rgba(12, 31, 48, 0.88);
+            --dourado: #c6a86a;
+            --dourado-claro: #e3cc97;
+            --texto-claro: #f5f2ea;
+            --texto-suave: #b9c1c8;
+            --borda: rgba(198, 168, 106, 0.35);
+            --erro: #d88a8a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: "Montserrat", sans-serif;
+            color: var(--texto-claro);
+            background:
+                radial-gradient(
+                    circle at top left,
+                    rgba(198, 168, 106, 0.14),
+                    transparent 30%
+                ),
+                radial-gradient(
+                    circle at bottom right,
+                    rgba(40, 83, 111, 0.25),
+                    transparent 35%
+                ),
+                linear-gradient(
+                    135deg,
+                    #04101a,
+                    var(--azul-escuro)
+                );
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            overflow-x: hidden;
+        }
+
+        .background-line {
+            position: fixed;
+            width: 420px;
+            height: 420px;
+            border: 1px solid rgba(198, 168, 106, 0.12);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .line-one {
+            top: -180px;
+            right: -120px;
+        }
+
+        .line-two {
+            bottom: -220px;
+            left: -140px;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 460px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .login-card {
+            width: 100%;
+            padding: 42px 36px;
+            border: 1px solid var(--borda);
+            border-radius: 28px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(255, 255, 255, 0.08),
+                    rgba(255, 255, 255, 0.025)
+                ),
+                var(--azul-card);
+
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+
+            box-shadow:
+                0 28px 70px rgba(0, 0, 0, 0.45),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+            animation: aparecer 0.8s ease;
+        }
+
+        @keyframes aparecer {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .signature {
+            font-family: "Parisienne", cursive;
+            font-size: 2.7rem;
+            font-weight: 400;
+            color: var(--dourado-claro);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .brand-subtitle {
+            font-family: "Cormorant Garamond", serif;
+            font-size: 1rem;
+            font-weight: 500;
+            letter-spacing: 0.24em;
+            text-transform: uppercase;
+            color: var(--texto-suave);
+        }
+
+        .divider {
+            width: 64px;
+            height: 1px;
+            margin: 24px auto;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                var(--dourado),
+                transparent
+            );
+        }
+
+        .login-title {
+            font-family: "Cormorant Garamond", serif;
+            font-size: 2.2rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .login-description {
+            color: var(--texto-suave);
+            font-size: 0.92rem;
+            line-height: 1.65;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--texto-claro);
+            font-size: 0.88rem;
+            font-weight: 500;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            top: 50%;
+            left: 16px;
+            transform: translateY(-50%);
+            color: var(--dourado);
+            font-size: 1rem;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            height: 54px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            padding: 0 46px 0 46px;
+
+            background: rgba(255, 255, 255, 0.045);
+            color: var(--texto-claro);
+
+            font-family: "Montserrat", sans-serif;
+            font-size: 0.94rem;
+
+            outline: none;
+            transition:
+                border-color 0.25s ease,
+                background 0.25s ease,
+                box-shadow 0.25s ease;
+        }
+
+        .input-wrapper input::placeholder {
+            color: rgba(185, 193, 200, 0.65);
+        }
+
+        .input-wrapper input:focus {
+            border-color: var(--dourado);
+            background: rgba(255, 255, 255, 0.065);
+            box-shadow: 0 0 0 4px rgba(198, 168, 106, 0.09);
+        }
+
+        .toggle-password {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: var(--texto-suave);
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .login-button {
+            width: 100%;
+            height: 55px;
+            margin-top: 8px;
+
+            border: 1px solid var(--dourado);
+            border-radius: 14px;
+
+            background: linear-gradient(
+                135deg,
+                var(--dourado),
+                var(--dourado-claro)
+            );
+
+            color: #0b1823;
+            font-family: "Montserrat", sans-serif;
+            font-size: 0.92rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+
+            cursor: pointer;
+
+            box-shadow: 0 12px 28px rgba(198, 168, 106, 0.18);
+
+            transition:
+                transform 0.25s ease,
+                box-shadow 0.25s ease,
+                filter 0.25s ease;
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.04);
+            box-shadow: 0 16px 34px rgba(198, 168, 106, 0.26);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .forgot-password {
+            display: block;
+            margin-top: 20px;
+            color: var(--dourado-claro);
+            font-size: 0.84rem;
+            text-align: center;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .forgot-password:hover {
+            color: var(--texto-claro);
+        }
+
+        .exclusive-message {
+            margin-top: 28px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.09);
+
+            color: var(--texto-suave);
+            font-size: 0.78rem;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .exclusive-message i {
+            margin-right: 6px;
+            color: var(--dourado);
+        }
+
+        .back-home {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+
+            margin-top: 22px;
+
+            color: var(--texto-suave);
+            font-size: 0.82rem;
+            text-decoration: none;
+
+            transition: color 0.2s ease;
+        }
+
+        .back-home:hover {
+            color: var(--dourado-claro);
+        }
+
+        .form-message {
+            min-height: 20px;
+            margin-top: 16px;
+            color: var(--erro);
+            font-size: 0.82rem;
+            text-align: center;
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding: 16px;
+            }
+
+            .login-card {
+                padding: 34px 22px;
+                border-radius: 22px;
+            }
+
+            .signature {
+                font-size: 2.3rem;
+            }
+
+            .login-title {
+                font-size: 1.9rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="background-line line-one"></div>
+    <div class="background-line line-two"></div>
+
+    <main class="login-container">
+        <section class="login-card">
+
+            <div class="brand">
+                <div class="signature">Camila Martins</div>
+
+                <div class="brand-subtitle">
+                    Engenharia
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <h1 class="login-title">
+                Portal do Cliente
+            </h1>
+
+            <p class="login-description">
+                Acesse seus documentos, materiais exclusivos e informações
+                do seu projeto.
+            </p>
+
+            <form id="loginForm">
+
+                <div class="form-group">
+                    <label for="email">
+                        E-mail
+                    </label>
+
+                    <div class="input-wrapper">
+                        <i class="bi bi-envelope"></i>
+
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder="Digite seu e-mail"
+                            autocomplete="email"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">
+                        Senha
+                    </label>
+
+                    <div class="input-wrapper">
+                        <i class="bi bi-lock"></i>
+
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Digite sua senha"
+                            autocomplete="current-password"
+                            required
+                        >
+
+                        <button
+                            type="button"
+                            class="toggle-password"
+                            id="togglePassword"
+                            aria-label="Mostrar ou ocultar senha"
+                        >
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button
+                    type="submit"
+                    class="login-button"
+                >
+                    Entrar
+                </button>
+
+                <p
+                    class="form-message"
+                    id="formMessage"
+                ></p>
+
+                <a
+                    href="#"
+                    class="forgot-password"
+                    id="forgotPassword"
+                >
+                    Esqueci minha senha
+                </a>
+            </form>
+
+            <div class="exclusive-message">
+                <i class="bi bi-shield-lock"></i>
+
+                Área exclusiva para clientes autorizados da
+                Camila Martins Engenharia.
+            </div>
+        </section>
+
+        <a
+            href="index.html"
+            class="back-home"
+        >
+            <i class="bi bi-arrow-left"></i>
+            Voltar ao site
+        </a>
+    </main>
+
+    <script>
+        const loginForm = document.getElementById("loginForm");
+        const passwordInput = document.getElementById("password");
+        const togglePassword = document.getElementById("togglePassword");
+        const formMessage = document.getElementById("formMessage");
+        const forgotPassword = document.getElementById("forgotPassword");
+
+        togglePassword.addEventListener("click", function () {
+            const passwordType =
+                passwordInput.type === "password"
+                    ? "text"
+                    : "password";
+
+            passwordInput.type = passwordType;
+
+            const icon = togglePassword.querySelector("i");
+
+            icon.className =
+                passwordType === "password"
+                    ? "bi bi-eye"
+                    : "bi bi-eye-slash";
+        });
+
+        loginForm.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            formMessage.textContent =
+                "O login será ativado na etapa de integração com o Supabase.";
+        });
+
+        forgotPassword.addEventListener("click", function (event) {
+            event.preventDefault();
+
+            formMessage.textContent =
+                "A recuperação de senha será ativada junto com o Supabase.";
+        });
+    </script>
+</body>
+</html>
