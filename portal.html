@@ -1023,16 +1023,19 @@ if (!session) {
     window.location.href = "login.html";
 }
 
-const clientData = {
-            firstName: "Cliente",
-            fullName: "Cliente",
-            projectName: "Residência Família Oliveira",
-            currentStage: "Projeto Executivo",
-            progress: 65
-        };
+const { data: clientData, error } = await supabase
+    .from("CLIENTES")
+    .select("*")
+    .eq("auth_id", session.user.id)
+    .single();
 
-        const clientFirstName =
-            document.getElementById("clientFirstName");
+if (error) {
+    alert("Cliente não encontrado.");
+    window.location.href = "login.html";
+}
+
+const clientFirstName =
+    document.getElementById("clientFirstName");
 
         const topUserName =
             document.getElementById("topUserName");
@@ -1059,33 +1062,26 @@ const clientData = {
             document.getElementById("currentYear");
 
         const logoutButton =
-            document.getElementById("logoutButton");
+    document.getElementById("logoutButton");
 
         function loadClientData() {
-            clientFirstName.textContent =
-                clientData.firstName;
+            clientFirstName.textContent = clientData.nome.split(" ")[0];
 
-            topUserName.textContent =
-                clientData.fullName;
+           topUserName.textContent = clientData.nome;
+            
+            topProjectName.textContent = clientData.projeto;
+            
+          projectName.textContent = clientData.projeto;
+            
+           currentStage.textContent = clientData.etapa;
 
-            topProjectName.textContent =
-                clientData.projectName;
+            progressText.textContent = `${clientData.progresso}%`;
 
-            projectName.textContent =
-                clientData.projectName;
-
-            currentStage.textContent =
-                clientData.currentStage;
-
-            progressText.textContent =
-                `${clientData.progress}%`;
-
-            progressFill.style.width =
-                `${clientData.progress}%`;
+            progressFill.style.width = `${clientData.progresso}%`;
 
             progressBar.setAttribute(
                 "aria-valuenow",
-                clientData.progress
+                clientData.progresso
             );
         }
 
