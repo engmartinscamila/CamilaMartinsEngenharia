@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Portal exclusivo para clientes da Camila Martins Engenharia."
+    >
+
+    <title>Portal do Cliente | Camila Martins Engenharia</title>
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&family=Parisienne&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    >
+
+    <style>
+        :root {
+            --azul-principal: #061522;
+            --azul-secundario: #0b2133;
+            --azul-card: rgba(14, 38, 57, 0.82);
+            --dourado: #c5a667;
+            --dourado-claro: #e1ca93;
+            --branco: #f6f3eb;
+            --cinza-claro: #c3cad0;
+            --cinza: #8f9ba5;
+            --verde: #6f9e89;
+            --borda: rgba(197, 166, 103, 0.28);
+            --borda-clara: rgba(255, 255, 255, 0.08);
+            --sombra: 0 24px 60px rgba(0, 0, 0, 0.32);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: "Montserrat", sans-serif;
+            color: var(--branco);
+
+            background:
+                radial-gradient(
+                    circle at top left,
+                    rgba(197, 166, 103, 0.13),
+                    transparent 28%
+                ),
+                radial-gradient(
+                    circle at bottom right,
+                    rgba(39, 88, 120, 0.24),
+                    transparent 34%
+                ),
+                linear-gradient(
+                    135deg,
+                    #040e17,
+                    var(--azul-principal)
+                );
+
+            overflow-x: hidden;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button,
+        input {
+            font: inherit;
+        }
+
+        .background-circle {
+            position: fixed;
+            width: 480px;
+            height: 480px;
+            border: 1px solid rgba(197, 166, 103, 0.08);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .circle-one {
+            top: -230px;
+            right: -180px;
+        }
+
+        .circle-two {
+            bottom: -280px;
+            left: -190px;
+        }
+
+        .page-wrapper {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            width: 100%;
+            min-height: 82px;
+            padding: 16px 6%;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+
+            border-bottom: 1px solid var(--borda-clara);
+            background: rgba(4, 14, 23, 0.72);
+
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .brand {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .signature {
+            font-family: "Parisienne", cursive;
+            font-size: 2rem;
+            line-height: 1;
+            color: var(--dourado-claro);
+        }
+
+        .brand-subtitle {
+            margin-top: 4px;
+            font-family: "Cormorant Garamond", serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: var(--cinza-claro);
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            display: block;
+            font-size: 0.86rem;
+            font-weight: 500;
+            color: var(--branco);
+        }
+
+        .user-project {
+            display: block;
+            margin-top: 3px;
+            font-size: 0.72rem;
+            color: var(--cinza);
+        }
+
+        .logout-button {
+            width: 42px;
+            height: 42px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border: 1px solid var(--borda);
+            border-radius: 12px;
+
+            background: rgba(255, 255, 255, 0.035);
+            color: var(--dourado-claro);
+
+            cursor: pointer;
+
+            transition:
+                transform 0.25s ease,
+                background 0.25s ease,
+                border-color 0.25s ease;
+        }
+
+        .logout-button:hover {
+            transform: translateY(-2px);
+            background: rgba(197, 166, 103, 0.1);
+            border-color: var(--dourado);
+        }
+
+        .portal-container {
+            width: min(1180px, 88%);
+            margin: 0 auto;
+            padding: 55px 0 70px;
+        }
+
+        .welcome-section {
+            display: grid;
+            grid-template-columns: 1.55fr 0.85fr;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        .welcome-card,
+        .status-card,
+        .engineer-message,
+        .support-card {
+            border: 1px solid var(--borda);
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(255, 255, 255, 0.07),
+                    rgba(255, 255, 255, 0.02)
+                ),
+                var(--azul-card);
+
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+
+            box-shadow: var(--sombra);
+        }
+
+        .welcome-card {
+            min-height: 275px;
+            padding: 40px;
+            border-radius: 28px;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+
+            position: relative;
+            overflow: hidden;
+
+            animation: aparecer 0.7s ease;
+        }
+
+        .welcome-card::after {
+            content: "";
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            right: -80px;
+            bottom: -90px;
+            border: 1px solid rgba(197, 166, 103, 0.15);
+            border-radius: 50%;
+        }
+
+        .eyebrow {
+            margin-bottom: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--dourado-claro);
+        }
+
+        .welcome-title {
+            font-family: "Cormorant Garamond", serif;
+            font-size: clamp(2.3rem, 5vw, 4rem);
+            font-weight: 500;
+            line-height: 1;
+        }
+
+        .welcome-text {
+            max-width: 620px;
+            margin-top: 18px;
+            color: var(--cinza-claro);
+            font-size: 0.94rem;
+            line-height: 1.75;
+        }
+
+        .project-name {
+            margin-top: 22px;
+            color: var(--dourado-claro);
+            font-family: "Cormorant Garamond", serif;
+            font-size: 1.45rem;
+            font-weight: 600;
+        }
+
+        .status-card {
+            padding: 30px;
+            border-radius: 28px;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+
+            animation: aparecer 0.85s ease;
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .status-title {
+            font-family: "Cormorant Garamond", serif;
+            font-size: 1.55rem;
+            font-weight: 600;
+        }
+
+        .status-icon {
+            width: 46px;
+            height: 46px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 14px;
+
+            background: rgba(197, 166, 103, 0.12);
+            color: var(--dourado-claro);
+            font-size: 1.15rem;
+        }
+
+        .current-stage {
+            margin-top: 30px;
+        }
+
+        .stage-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--cinza);
+        }
+
+        .stage-name {
+            display: block;
+            margin-top: 8px;
+            font-family: "Cormorant Garamond", serif;
+            font-size: 1.5rem;
+            color: var(--branco);
+        }
+
+        .progress-area {
+            margin-top: 26px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.78rem;
+            color: var(--cinza-claro);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .progress-fill {
+            width: 65%;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(
+                90deg,
+                var(--dourado),
+                var(--dourado-claro)
+            );
+        }
+
+        .section-heading {
+            margin: 46px 0 22px;
+        }
+
+        .section-heading span {
+            display: block;
+            margin-bottom: 7px;
+            color: var(--dourado-claro);
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 0.17em;
+            text-transform: uppercase;
+        }
+
+        .section-heading h2 {
+            font-family: "Cormorant Garamond", serif;
+            font-size: 2.1rem;
+            font-weight: 600;
+        }
+
+        .portal-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+        }
+
+        .portal-card {
+            min-height: 205px;
+            padding: 28px;
+            border: 1px solid var(--borda-clara);
+            border-radius: 22px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(255, 255, 255, 0.055),
+                    rgba(255, 255, 255, 0.015)
+                ),
+                rgba(11, 33, 51, 0.76);
+
+            display: flex;
+            flex-direction: column;
+
+            position: relative;
+            overflow: hidden;
+
+            transition:
+                transform 0.3s ease,
+                border-color 0.3s ease,
+                box-shadow 0.3s ease,
+                background 0.3s ease;
+        }
+
+        .portal-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--dourado);
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(197, 166, 103, 0.09),
+                    rgba(255, 255, 255, 0.02)
+                ),
+                rgba(11, 33, 51, 0.9);
+
+            box-shadow: 0 20px 42px rgba(0, 0, 0, 0.25);
+        }
+
+        .card-icon {
+            width: 52px;
+            height: 52px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 15px;
+
+            background: rgba(197, 166, 103, 0.11);
+            color: var(--dourado-claro);
+            font-size: 1.3rem;
+        }
+
+        .portal-card h3 {
+            margin-top: 24px;
+            font-family: "Cormorant Garamond", serif;
+            font-size: 1.45rem;
+            font-weight: 600;
+        }
+
+        .portal-card p {
+            margin-top: 8px;
+            color: var(--cinza);
+            font-size: 0.8rem;
+            line-height: 1.55;
+        }
+
+        .card-arrow {
+            position: absolute;
+            right: 24px;
+            bottom: 22px;
+            color: var(--dourado);
+            transition: transform 0.25s ease;
+        }
+
+        .portal-card:hover .card-arrow {
+            transform: translateX(5px);
+        }
+
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1.45fr 0.75fr;
+            gap: 20px;
+            margin-top: 42px;
+        }
+
+        .engineer-message,
+        .support-card {
+            border-radius: 24px;
+            padding: 30px;
+        }
+
+        .message-title,
+        .support-title {
+            font-family: "Cormorant Garamond", serif;
+            font-size: 1.55rem;
+            font-weight: 600;
+        }
+
+        .message-text {
+            margin-top: 14px;
+            color: var(--cinza-claro);
+            font-size: 0.87rem;
+            line-height: 1.75;
+        }
+
+        .message-signature {
+            margin-top: 18px;
+            font-family: "Parisienne", cursive;
+            font-size: 1.8rem;
+            color: var(--dourado-claro);
+        }
+
+        .support-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .support-card p {
+            margin-top: 12px;
+            color: var(--cinza);
+            font-size: 0.82rem;
+            line-height: 1.6;
+        }
+
+        .whatsapp-button {
+            min-height: 48px;
+            margin-top: 24px;
+            padding: 0 18px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+
+            border: 1px solid var(--dourado);
+            border-radius: 13px;
+
+            background: linear-gradient(
+                135deg,
+                var(--dourado),
+                var(--dourado-claro)
+            );
+
+            color: #081521;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-align: center;
+
+            transition:
+                transform 0.25s ease,
+                box-shadow 0.25s ease;
+        }
+
+        .whatsapp-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 26px rgba(197, 166, 103, 0.2);
+        }
+
+        .portal-footer {
+            margin-top: 55px;
+            padding-top: 24px;
+            border-top: 1px solid var(--borda-clara);
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+
+            color: var(--cinza);
+            font-size: 0.72rem;
+        }
+
+        .footer-security {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .footer-security i {
+            color: var(--dourado);
+        }
+
+        @keyframes aparecer {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 980px) {
+            .welcome-section,
+            .bottom-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .portal-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 650px) {
+            .topbar {
+                padding: 14px 20px;
+            }
+
+            .signature {
+                font-size: 1.65rem;
+            }
+
+            .brand-subtitle {
+                font-size: 0.62rem;
+            }
+
+            .user-info {
+                display: none;
+            }
+
+            .portal-container {
+                width: min(92%, 1180px);
+                padding-top: 30px;
+            }
+
+            .welcome-card,
+            .status-card {
+                padding: 28px 23px;
+                border-radius: 22px;
+            }
+
+            .welcome-title {
+                font-size: 2.45rem;
+            }
+
+            .portal-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .portal-card {
+                min-height: 175px;
+            }
+
+            .portal-footer {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="background-circle circle-one"></div>
+    <div class="background-circle circle-two"></div>
+
+    <div class="page-wrapper">
+
+        <header class="topbar">
+
+            <a href="index.html" class="brand">
+                <span class="signature">
+                    Camila Martins
+                </span>
+
+                <span class="brand-subtitle">
+                    Engenharia
+                </span>
+            </a>
+
+            <div class="topbar-actions">
+
+                <div class="user-info">
+                    <span class="user-name" id="topUserName">
+                        Cliente
+                    </span>
+
+                    <span class="user-project" id="topProjectName">
+                        Portal do Cliente
+                    </span>
+                </div>
+
+                <button
+                    type="button"
+                    class="logout-button"
+                    id="logoutButton"
+                    aria-label="Sair do portal"
+                    title="Sair"
+                >
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+
+            </div>
+        </header>
+
+        <main class="portal-container">
+
+            <section class="welcome-section">
+
+                <article class="welcome-card">
+
+                    <span class="eyebrow">
+                        Portal exclusivo
+                    </span>
+
+                    <h1 class="welcome-title">
+                        Boa tarde, <span id="clientFirstName">Cliente</span>.
+                    </h1>
+
+                    <p class="welcome-text">
+                        Este espaço foi criado para que você acompanhe seu
+                        projeto, consulte documentos e tenha acesso aos
+                        materiais preparados especialmente para você.
+                    </p>
+
+                    <p class="project-name" id="projectName">
+                        Residência Família Oliveira
+                    </p>
+
+                </article>
+
+                <article class="status-card">
+
+                    <div class="status-header">
+
+                        <h2 class="status-title">
+                            Andamento
+                        </h2>
+
+                        <div class="status-icon">
+                            <i class="bi bi-bar-chart-line"></i>
+                        </div>
+
+                    </div>
+
+                    <div class="current-stage">
+
+                        <span class="stage-label">
+                            Etapa atual
+                        </span>
+
+                        <strong class="stage-name" id="currentStage">
+                            Projeto Executivo
+                        </strong>
+
+                    </div>
+
+                    <div class="progress-area">
+
+                        <div class="progress-info">
+                            <span>Progresso do projeto</span>
+                            <span id="progressText">65%</span>
+                        </div>
+
+                        <div
+                            class="progress-bar"
+                            role="progressbar"
+                            aria-label="Progresso do projeto"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                            aria-valuenow="65"
+                        >
+                            <div
+                                class="progress-fill"
+                                id="progressFill"
+                            ></div>
+                        </div>
+
+                    </div>
+
+                </article>
+
+            </section>
+
+            <section>
+
+                <div class="section-heading">
+                    <span>
+                        Seu espaço
+                    </span>
+
+                    <h2>
+                        Acesse as informações do projeto
+                    </h2>
+                </div>
+
+                <div class="portal-grid">
+
+                    <a
+                        href="#"
+                        class="portal-card"
+                        data-page="projeto"
+                    >
+                        <div class="card-icon">
+                            <i class="bi bi-house-door"></i>
+                        </div>
+
+                        <h3>
+                            Meu Projeto
+                        </h3>
+
+                        <p>
+                            Consulte as principais informações e dados do seu
+                            projeto.
+                        </p>
+
+                        <i class="bi bi-arrow-right card-arrow"></i>
+                    </a>
+
+                    <a
+                        href="#"
+                        class="portal-card"
+                        data-page="biblioteca"
+                    >
+                        <div class="card-icon">
+                            <i class="bi bi-journals"></i>
+                        </div>
+
+                        <h3>
+                            Biblioteca Premium
+                        </h3>
+
+                        <p>
+                            Guias, checklists e conteúdos exclusivos para
+                            clientes.
+                        </p>
+
+                        <i class="bi bi-arrow-right card-arrow"></i>
+                    </a>
+
+                    <a
+                        href="#"
+                        class="portal-card"
+                        data-page="documentos"
+                    >
+                        <div class="card-icon">
+                            <i class="bi bi-folder2-open"></i>
+                        </div>
+
+                        <h3>
+                            Documentos
+                        </h3>
+
+                        <p>
+                            Acesse projetos, memoriais, contratos, ARTs e
+                            arquivos.
+                        </p>
+
+                        <i class="bi bi-arrow-right card-arrow"></i>
+                    </a>
+
+                    <a
+                        href="#"
+                        class="portal-card"
+                        data-page="cronograma"
+                    >
+                        <div class="card-icon">
+                            <i class="bi bi-calendar-check"></i>
+                        </div>
+
+                        <h3>
+                            Cronograma
+                        </h3>
+
+                        <p>
+                            Acompanhe etapas, prazos previstos e atividades em
+                            andamento.
+                        </p>
+
+                        <i class="bi bi-arrow-right card-arrow"></i>
+                    </a>
+
+                    <a
+                        href="#"
+                        class="portal-card"
+                        data-page="fotos"
+                    >
+                        <div class="card-icon">
+                            <i class="bi bi-images"></i>
+                        </div>
+
+                        <h3>
+                            Fotos da Obra
+                        </h3>
+
+                        <p>
+                            Visualize registros, atualizações e evolução dos
+                            serviços.
+                        </p>
+
+                        <i class="bi bi-arrow-right card-arrow"></i>
+                    </a>
+
+                    <a
+                        href="#"
+                        class="portal-card"
+                        data-page="solicitacoes"
+                    >
+                        <div class="card-icon">
+                            <i class="bi bi-chat-square-text"></i>
+                        </div>
+
+                        <h3>
+                            Solicitações
+                        </h3>
+
+                        <p>
+                            Registre dúvidas, pedidos de alteração e novas
+                            solicitações.
+                        </p>
+
+                        <i class="bi bi-arrow-right card-arrow"></i>
+                    </a>
+
+                </div>
+
+            </section>
+
+            <section class="bottom-grid">
+
+                <article class="engineer-message">
+
+                    <h2 class="message-title">
+                        Mensagem da Engenheira
+                    </h2>
+
+                    <p class="message-text">
+                        Olá! Este portal foi criado para tornar o acompanhamento
+                        do seu projeto mais simples, organizado e transparente.
+                        Aqui você encontrará documentos, informações e
+                        materiais preparados especialmente para auxiliar em
+                        cada etapa.
+                    </p>
+
+                    <p class="message-signature">
+                        Camila Martins
+                    </p>
+
+                </article>
+
+                <article class="support-card">
+
+                    <div>
+                        <h2 class="support-title">
+                            Precisa de ajuda?
+                        </h2>
+
+                        <p>
+                            Entre em contato diretamente comigo pelo WhatsApp.
+                        </p>
+                    </div>
+
+                    <a
+                        href="https://wa.me/5500000000000"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="whatsapp-button"
+                    >
+                        <i class="bi bi-whatsapp"></i>
+                        Falar com a Engenheira
+                    </a>
+
+                </article>
+
+            </section>
+
+            <footer class="portal-footer">
+
+                <p>
+                    © <span id="currentYear"></span>
+                    Camila Martins Engenharia
+                </p>
+
+                <p class="footer-security">
+                    <i class="bi bi-shield-lock"></i>
+                    Ambiente exclusivo para clientes autorizados
+                </p>
+
+            </footer>
+
+        </main>
+    </div>
+
+    <script>
+        const clientData = {
+            firstName: "Cliente",
+            fullName: "Cliente",
+            projectName: "Residência Família Oliveira",
+            currentStage: "Projeto Executivo",
+            progress: 65
+        };
+
+        const clientFirstName =
+            document.getElementById("clientFirstName");
+
+        const topUserName =
+            document.getElementById("topUserName");
+
+        const topProjectName =
+            document.getElementById("topProjectName");
+
+        const projectName =
+            document.getElementById("projectName");
+
+        const currentStage =
+            document.getElementById("currentStage");
+
+        const progressText =
+            document.getElementById("progressText");
+
+        const progressFill =
+            document.getElementById("progressFill");
+
+        const progressBar =
+            document.querySelector(".progress-bar");
+
+        const currentYear =
+            document.getElementById("currentYear");
+
+        const logoutButton =
+            document.getElementById("logoutButton");
+
+        function loadClientData() {
+            clientFirstName.textContent =
+                clientData.firstName;
+
+            topUserName.textContent =
+                clientData.fullName;
+
+            topProjectName.textContent =
+                clientData.projectName;
+
+            projectName.textContent =
+                clientData.projectName;
+
+            currentStage.textContent =
+                clientData.currentStage;
+
+            progressText.textContent =
+                `${clientData.progress}%`;
+
+            progressFill.style.width =
+                `${clientData.progress}%`;
+
+            progressBar.setAttribute(
+                "aria-valuenow",
+                clientData.progress
+            );
+        }
+
+        loadClientData();
+
+        currentYear.textContent =
+            new Date().getFullYear();
+
+        logoutButton.addEventListener("click", function () {
+            window.location.href = "login.html";
+        });
+
+        document
+            .querySelectorAll(".portal-card")
+            .forEach(function (card) {
+
+                card.addEventListener(
+                    "click",
+                    function (event) {
+
+                        event.preventDefault();
+
+                        const page =
+                            card.dataset.page;
+
+                        alert(
+                            `A página "${page}" será criada nas próximas etapas.`
+                        );
+                    }
+                );
+            });
+    </script>
+</body>
+</html>
