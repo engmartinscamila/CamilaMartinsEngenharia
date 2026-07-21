@@ -1095,7 +1095,11 @@ const clientData = {
             new Date().getFullYear();
 
         logoutButton.addEventListener("click", async function () {
-    await supabase.auth.signOut();
+   const { error } = await supabase.auth.signOut();
+
+if (error) {
+    alert(error.message);
+}
     window.location.href = "login.html";
 });
 
