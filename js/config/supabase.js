@@ -4,7 +4,7 @@ export const SUPABASE_URL =
     "https://hghtwlopqztfcosfxafd.supabase.co";
 
 export const SUPABASE_KEY =
-    "sb_publishable_-unXLR2NSSACLs01Sr60GA_uCFnj74f";
+    "sb_publishable_-unXLR2NSSACLs01Sr60GA_uCFnJ74f";
 
 export const ADMIN_UID =
     "5c9d7a0e-0495-4e96-8561-1d7f220be154";
