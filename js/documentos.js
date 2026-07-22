@@ -1,7 +1,10 @@
-import { supabase } from "./config/supabase.js";
+import {
+    supabase,
+    BUCKETS
+} from "./config/supabase.js";
 
 /* ============================
-   ELEMENTOS DA TELA
+   ELEMENTOS
 ============================ */
 
 const documentsList =
@@ -31,7 +34,7 @@ let cliente = null;
 let documentos = [];
 
 /* ============================
-   VERIFICAR LOGIN
+   LOGIN
 ============================ */
 
 async function verificarLogin() {
@@ -47,16 +50,25 @@ async function verificarLogin() {
             "login.html";
 
         return;
+
     }
 
     const {
+
         data,
         error
 
     } = await supabase
+
         .from("CLIENTES")
+
         .select("*")
-        .eq("auth_id", session.user.id)
+
+        .eq(
+            "auth_id",
+            session.user.id
+        )
+
         .single();
 
     if (error || !data) {
@@ -67,15 +79,17 @@ async function verificarLogin() {
             "login.html";
 
         return;
+
     }
 
     cliente = data;
 
     carregarDocumentos();
+
 }
 
 /* ============================
-   BUSCAR DOCUMENTOS
+   DOCUMENTOS
 ============================ */
 
 async function carregarDocumentos() {
@@ -93,6 +107,7 @@ async function carregarDocumentos() {
     `;
 
     const {
+
         data,
         error
 
@@ -102,13 +117,21 @@ async function carregarDocumentos() {
 
         .select("*")
 
-        .eq("cliente_id", cliente.id)
+        .eq(
+            "cliente_id",
+            cliente.id
+        )
 
-        .order("created_at", {
-            ascending: false
-        });
+        .order(
+            "created_at",
+            {
+                ascending: false
+            }
+        );
 
     if (error) {
+
+        console.error(error);
 
         documentsList.innerHTML = `
 
@@ -123,15 +146,16 @@ async function carregarDocumentos() {
         `;
 
         return;
+
     }
 
     documentos = data || [];
 
     atualizarLista();
-}
 
+}
 /* ============================
-   FILTRAR
+   FILTROS
 ============================ */
 
 function atualizarLista() {
@@ -141,38 +165,49 @@ function atualizarLista() {
             .trim()
             .toLowerCase();
 
-    const categoria =
+    const tipoSelecionado =
         categorySelect.value;
 
-    let lista =
-        documentos.filter(function (doc) {
+    const lista = documentos.filter(
 
-            const nome =
-                (doc.nome || "")
-                .toLowerCase();
+        function (doc) {
 
             const passouTexto =
-                nome.includes(texto);
 
-            const passouCategoria =
+                (doc.nome || "")
 
-                categoria === "todos"
+                .toLowerCase()
+
+                .includes(texto);
+
+            const passouTipo =
+
+                tipoSelecionado === "todos"
 
                 ||
 
-                doc.categoria === categoria;
+                doc.tipo === tipoSelecionado;
 
             return (
-                passouTexto &&
-                passouCategoria
+
+                passouTexto
+
+                &&
+
+                passouTipo
+
             );
 
-        });
+        }
+
+    );
 
     renderizar(lista);
+
 }
+
 /* ============================
-   RENDERIZAR DOCUMENTOS
+   RENDERIZAÇÃO
 ============================ */
 
 function renderizar(lista) {
@@ -192,158 +227,230 @@ function renderizar(lista) {
         `;
 
         return;
+
     }
 
     documentsList.innerHTML = "";
 
-    lista.forEach(function (doc) {
+    lista.forEach(
 
-        const card =
-            document.createElement("div");
+        function (doc) {
 
-        card.className =
-            "document-card";
+            const card =
+                document.createElement("div");
 
-        const icone =
-            obterIcone(doc.nome);
+            card.className =
+                "document-card";
 
-        const data =
-            doc.created_at
-                ? new Date(doc.created_at)
-                    .toLocaleDateString("pt-BR")
-                : "-";
+            const dataFormatada =
 
-        card.innerHTML = `
+                doc.created_at
 
-            <div class="document-icon">
+                ?
 
-                <i class="${icone}"></i>
+                new Date(
+                    doc.created_at
+                ).toLocaleDateString(
+                    "pt-BR"
+                )
 
-            </div>
+                :
 
-            <div>
+                "-";
 
-                <div class="document-name">
+            card.innerHTML = `
 
-                    ${doc.nome}
+                <div class="document-icon">
 
-                </div>
-
-                <div class="document-meta">
-
-                    ${doc.categoria || "Sem categoria"}
-                    •
-                    ${data}
+                    <i class="${obterIcone(doc.arquivo)}"></i>
 
                 </div>
 
-            </div>
+                <div>
 
-            <div class="document-actions">
+                    <div class="document-name">
 
-                <button
-                    class="document-button visualizar"
-                >
+                        ${doc.nome}
 
-                    <i class="bi bi-eye"></i>
+                    </div>
 
-                    Visualizar
+                    <div class="document-meta">
 
-                </button>
+                        ${doc.tipo || "Sem categoria"}
 
-                <button
-                    class="document-button baixar"
-                >
+                        •
 
-                    <i class="bi bi-download"></i>
+                        ${dataFormatada}
 
-                    Download
+                    </div>
 
-                </button>
+                </div>
 
-            </div>
+                <div class="document-actions">
 
-        `;
+                    <button
+                        class="document-button visualizar"
+                    >
 
-        card
-            .querySelector(".visualizar")
-            .addEventListener("click", function () {
+                        <i class="bi bi-eye"></i>
 
-                visualizarDocumento(doc);
+                        Visualizar
 
-            });
+                    </button>
 
-        card
-            .querySelector(".baixar")
-            .addEventListener("click", function () {
+                    <button
+                        class="document-button baixar"
+                    >
 
-                baixarDocumento(doc);
+                        <i class="bi bi-download"></i>
 
-            });
+                        Download
 
-        documentsList.appendChild(card);
+                    </button>
 
-    });
+                </div>
+
+            `;
+
+            card
+
+                .querySelector(
+                    ".visualizar"
+                )
+
+                .addEventListener(
+
+                    "click",
+
+                    function () {
+
+                        visualizarDocumento(doc);
+
+                    }
+
+                );
+
+            card
+
+                .querySelector(
+                    ".baixar"
+                )
+
+                .addEventListener(
+
+                    "click",
+
+                    function () {
+
+                        baixarDocumento(doc);
+
+                    }
+
+                );
+
+            documentsList.appendChild(card);
+
+        }
+
+    );
 
 }
-
 /* ============================
-   ÍCONE
+   ÍCONES
 ============================ */
 
-function obterIcone(nome) {
+function obterIcone(nomeArquivo) {
 
-    const arquivo =
-        (nome || "").toLowerCase();
+    if (!nomeArquivo)
+        return "bi bi-file-earmark";
 
-    if (arquivo.endsWith(".pdf"))
+    const nome =
+        nomeArquivo.toLowerCase();
+
+    if (nome.endsWith(".pdf"))
         return "bi bi-file-earmark-pdf";
 
     if (
-        arquivo.endsWith(".doc") ||
-        arquivo.endsWith(".docx")
+        nome.endsWith(".doc") ||
+        nome.endsWith(".docx")
     )
         return "bi bi-file-earmark-word";
 
     if (
-        arquivo.endsWith(".xls") ||
-        arquivo.endsWith(".xlsx")
+        nome.endsWith(".xls") ||
+        nome.endsWith(".xlsx")
     )
         return "bi bi-file-earmark-excel";
 
     if (
-        arquivo.endsWith(".zip") ||
-        arquivo.endsWith(".rar")
+        nome.endsWith(".dwg")
+    )
+        return "bi bi-file-earmark-richtext";
+
+    if (
+        nome.endsWith(".zip") ||
+        nome.endsWith(".rar")
     )
         return "bi bi-file-earmark-zip";
 
     if (
-        arquivo.endsWith(".jpg") ||
-        arquivo.endsWith(".jpeg") ||
-        arquivo.endsWith(".png")
+        nome.endsWith(".jpg") ||
+        nome.endsWith(".jpeg") ||
+        nome.endsWith(".png") ||
+        nome.endsWith(".webp")
     )
         return "bi bi-image";
 
     return "bi bi-file-earmark";
 
+}
+
+/* ============================
+   URL DO STORAGE
+============================ */
+
+function obterUrlArquivo(doc) {
+
+    if (!doc.arquivo)
+        return null;
+
+    const {
+
+        data
+
+    } = supabase.storage
+
+        .from(BUCKETS.DOCUMENTOS)
+
+        .getPublicUrl(
+            doc.arquivo
+        );
+
+    return data.publicUrl;
+
+}
+
 /* ============================
    VISUALIZAR
 ============================ */
 
-}
-
 function visualizarDocumento(doc) {
 
-    if (!doc.url) {
+    const url =
+        obterUrlArquivo(doc);
 
-        alert("Arquivo indisponível.");
+    if (!url) {
+
+        alert(
+            "Arquivo indisponível."
+        );
 
         return;
 
     }
 
     window.open(
-        doc.url,
+        url,
         "_blank"
     );
 
@@ -355,41 +462,65 @@ function visualizarDocumento(doc) {
 
 function baixarDocumento(doc) {
 
-    if (!doc.url) {
+    const url =
+        obterUrlArquivo(doc);
 
-        alert("Arquivo indisponível.");
+    if (!url) {
+
+        alert(
+            "Arquivo indisponível."
+        );
 
         return;
 
     }
 
-    const a =
+    const link =
         document.createElement("a");
 
-    a.href = doc.url;
+    link.href =
+        url;
 
-    a.download = "";
+    link.download =
+        doc.nome || "";
 
-    a.click();
+    document.body.appendChild(
+        link
+    );
+
+    link.click();
+
+    link.remove();
 
 }
-
 /* ============================
    EVENTOS
 ============================ */
 
 searchInput.addEventListener(
+
     "input",
+
     atualizarLista
+
 );
 
 categorySelect.addEventListener(
+
     "change",
+
     atualizarLista
+
 );
 
+/* ============================
+   LOGOUT
+============================ */
+
 logoutButton.addEventListener(
+
     "click",
+
     async function () {
 
         await supabase.auth.signOut();
@@ -398,10 +529,21 @@ logoutButton.addEventListener(
             "login.html";
 
     }
+
 );
 
 /* ============================
-   INICIAR
+   INICIALIZAÇÃO
 ============================ */
 
-verificarLogin();
+document.addEventListener(
+
+    "DOMContentLoaded",
+
+    function () {
+
+        verificarLogin();
+
+    }
+
+);
