@@ -16,8 +16,8 @@ export const TABELAS = {
 };
 
 export const BUCKETS = {
-    DOCUMENTOS: "DOCUMENTOS",
-    FOTOS: "FOTOS"
+    DOCUMENTOS: "documentos",
+    FOTOS: "fotos"
 };
 
 export const supabase = createClient(
