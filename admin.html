@@ -1245,224 +1245,134 @@
     </p>
 
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<div class="campo">
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/clientes.js"></script>
+<script src="js/projetos.js"></script>
+<script src="js/documentos.js"></script>
+<script src="js/fotos.js"></script>
+<script src="js/admin.js"></script>
 
-    <label for="documentoTipo">
+<script>
 
-        Tipo do Documento
+document.addEventListener("DOMContentLoaded", () => {
 
-    </label>
+    const menuItems = document.querySelectorAll(".menu-item");
 
-    <select id="documentoTipo">
+    menuItems.forEach(item => {
 
-        <option value="projeto">
-            Projeto
-        </option>
+        item.addEventListener("click", () => {
 
-        <option value="laudo">
-            Laudo
-        </option>
+            menuItems.forEach(m => m.classList.remove("ativo"));
 
-        <option value="art">
-            ART
-        </option>
+            item.classList.add("ativo");
 
-        <option value="memorial">
-            Memorial
-        </option>
+        });
 
-        <option value="contrato">
-            Contrato
-        </option>
+    });
 
-        <option value="outros">
-            Outros
-        </option>
+    const abrir = (id) => {
 
-    </select>
+        const modal = document.getElementById(id);
 
-</div>
+        if(modal){
 
-<div class="campo campo-full">
+            modal.classList.add("show");
 
-    <label for="arquivoDocumento">
+        }
 
-        Arquivo
+    };
 
-    </label>
+    const fechar = (id) => {
 
-    <input
-        type="file"
-        id="arquivoDocumento">
+        const modal = document.getElementById(id);
 
-</div>
+        if(modal){
 
-<div class="campo campo-full">
+            modal.classList.remove("show");
 
-    <label for="descricaoDocumento">
+        }
 
-        Observações
+    };
 
-    </label>
+    document.getElementById("novoCliente")?.addEventListener("click", () => abrir("modalCliente"));
+    document.getElementById("novoProjeto")?.addEventListener("click", () => abrir("modalProjeto"));
 
-    <textarea
-        id="descricaoDocumento"
-        rows="5"></textarea>
+    document.getElementById("fecharModalCliente")?.addEventListener("click", () => fechar("modalCliente"));
+    document.getElementById("cancelarCliente")?.addEventListener("click", () => fechar("modalCliente"));
 
-</div>
+    document.getElementById("fecharModalProjeto")?.addEventListener("click", () => fechar("modalProjeto"));
+    document.getElementById("cancelarProjeto")?.addEventListener("click", () => fechar("modalProjeto"));
 
-</div>
+    document.getElementById("fecharModalDocumento")?.addEventListener("click", () => fechar("modalDocumento"));
+    document.getElementById("cancelarDocumento")?.addEventListener("click", () => fechar("modalDocumento"));
 
-<div class="modal-footer">
+    document.getElementById("fecharModalFoto")?.addEventListener("click", () => fechar("modalFoto"));
+    document.getElementById("cancelarFoto")?.addEventListener("click", () => fechar("modalFoto"));
 
-    <button
-        type="button"
-        id="cancelarDocumento">
+    document.querySelectorAll(".modal").forEach(modal=>{
 
-        Cancelar
+        modal.addEventListener("click",(e)=>{
 
-    </button>
+            if(e.target===modal){
 
-    <button
-        type="submit"
-        id="salvarDocumento">
+                modal.classList.remove("show");
 
-        Salvar Documento
+            }
 
-    </button>
+        });
 
-</div>
-
-</form>
-
-</div>
-
-</div>
-
-<div
-id="modalFoto"
-class="modal">
-
-<div class="modal-content">
-
-<div class="modal-header">
-
-<h2>
-
-Enviar Fotos
-
-</h2>
-
-<button
-id="fecharModalFoto">
-
-<i class="fa-solid fa-xmark"></i>
-
-</button>
-
-</div>
-
-<form id="formFoto">
-
-<div class="form-grid">
-
-<div class="campo">
-
-<label for="fotoCliente">
-
-Cliente
-
-</label>
-
-<select id="fotoCliente">
-
-</select>
-
-</div>
-
-<div class="campo">
-
-<label for="fotoProjeto">
-
-Projeto
-
-</label>
-
-<select id="fotoProjeto">
-
-</select>
-
-</div>
-
-<div class="campo campo-full">
-
-<label for="arquivoFoto">
-
-Selecionar Fotos
-
-</label>
-
-<input
-type="file"
-id="arquivoFoto"
-accept="image/*"
-multiple>
-
-</div>
-
-<div class="campo campo-full">
-
-<label for="descricaoFoto">
-
-Descrição
-
-</label>
-
-<textarea
-id="descricaoFoto"
-rows="5"></textarea>
-
-</div>
-
-</div>
-
-<div class="modal-footer">
-
-<button
-type="button"
-id="cancelarFoto">
-
-Cancelar
-
-</button>
-
-<button
-type="submit"
-id="salvarFoto">
-
-Enviar Fotos
-
-</button>
-
-</div>
-
-</form>
-
-</div>
-
-</div>
-
-<div
-id="loading"
-class="loading">
-
-<div class="spinner"></div>
-
-<p>
-
-Carregando...
+    });
 
 </p>
 
 </div>
+    document.getElementById("abrirClientes")?.addEventListener("click", () => {
+        location.href = "clientes.html";
+    });
+
+    document.getElementById("abrirProjetos")?.addEventListener("click", () => {
+        location.href = "projetos.html";
+    });
+
+    document.getElementById("abrirDocumentos")?.addEventListener("click", () => {
+        location.href = "documentos.html";
+    });
+
+    document.getElementById("abrirBiblioteca")?.addEventListener("click", () => {
+        location.href = "biblioteca.html";
+    });
+
+    document.getElementById("abrirFotos")?.addEventListener("click", () => {
+        location.href = "fotos.html";
+    });
+
+    document.getElementById("logoutButton")?.addEventListener("click", async () => {
+
+        try {
+
+            if (window.supabase) {
+
+                await supabase.auth.signOut();
+
+            }
+
+        } catch (erro) {
+
+            console.error(erro);
+
+        }
+
+        location.href = "login.html";
+
+    });
+
+});
+
+</script>
+
+</body>
+
+</html>
