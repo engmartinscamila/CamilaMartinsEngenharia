@@ -1,1 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
 
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Solicitações | Camila Martins Engenharia</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/solicitacoes.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <aside class="sidebar">
+
+        <div class="logo-area">
+
+            <img src="img/logo-branca.png" alt="Logo">
+
+        </div>
+
+        <nav>
+
+            <a href="portal.html">
+                <i class="fa-solid fa-house"></i>
+                Dashboard
+            </a>
+
+            <a href="meu-projeto.html">
+                <i class="fa-solid fa-building"></i>
+                Meu Projeto
+            </a>
+
+            <a href="cronograma.html">
+                <i class="fa-solid fa-calendar-check"></i>
+                Cronograma
+            </a>
+
+            <a href="fotos.html">
+                <i class="fa-solid fa-camera"></i>
+                Fotos
+            </a>
+
+            <a href="documentos.html">
+                <i class="fa-solid fa-folder-open"></i>
+                Documentos
+            </a>
+
+            <a href="biblioteca.html">
+                <i class="fa-solid fa-book"></i>
+                Biblioteca
+            </a>
+
+            <a class="active" href="solicitacoes.html">
+                <i class="fa-solid fa-comments"></i>
+                Solicitações
+            </a>
+
+        </nav>
+
+    </aside>
+
+    <main class="content">
+
+        <header class="topbar">
+
+            <div>
+
+                <h1>Solicitações</h1>
+
+                <p>Envie dúvidas, alterações ou solicitações relacionadas ao seu projeto.</p>
+
+            </div>
+
+            <button
+                class="btn-primary"
+                onclick="document.getElementById('modalSolicitacao').classList.add('show')">
+
+                <i class="fa-solid fa-plus"></i>
+
+                Nova Solicitação
+
+            </button>
+
+        </header>
+
+        <section class="cards-resumo">
+
+            <div class="card-resumo">
+
+                <span>Total</span>
+
+                <h2 id="totalSolicitacoes">0</h2>
+
+            </div>
+
+            <div class="card-resumo">
+
+                <span>Abertas</span>
+
+                <h2 id="abertas">0</h2>
+
+            </div>
+
+            <div class="card-resumo">
+
+                <span>Em andamento</span>
+
+                <h2 id="andamento">0</h2>
+
+            </div>
+
+            <div class="card-resumo">
+
+                <span>Concluídas</span>
+
+                <h2 id="concluidas">0</h2>
+
+            </div>
+
+        </section>
+
+        <section class="toolbar">
+
+            <div class="search">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input
+                    type="text"
+                    placeholder="Pesquisar..."
+                    onkeyup="pesquisarSolicitacoes(this.value)">
+
+            </div>
+
+        </section>
+
+        <section class="table-container">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Título</th>
+                        <th>Cliente</th>
+                        <th>Projeto</th>
+                        <th>Status</th>
+                        <th>Data</th>
+                        <th>Ações</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="listaSolicitacoes">
+
+                </tbody>
+
+            </table>
+
+        </section>
+
+    </main>
+
+</div>
+
+<div
+    id="modalSolicitacao"
+    class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2>Nova Solicitação</h2>
+
+            <button
+                class="close"
+                onclick="document.getElementById('modalSolicitacao').classList.remove('show')">
+
+                &times;
+
+            </button>
+
+        </div>
+
+        <form id="formSolicitacao">
+
+            <div class="form-group">
+
+                <label>Título</label>
+
+                <input
+                    id="tituloSolicitacao"
+                    type="text"
+                    required>
+
+            </div>
+
+            <div class="grid-2">
+
+                <div class="form-group">
+
+                    <label>Cliente</label>
+
+                    <select id="clienteSolicitacao"></select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Projeto</label>
+
+                    <select id="projetoSolicitacao"></select>
+
+                </div>
+
+            </div>
+
+            <div class="form-group">
+
+                <label>Status</label>
+
+                <select id="statusSolicitacao">
+
+                    <option>Aberta</option>
+                    <option>Em andamento</option>
+                    <option>Concluída</option>
+
+                </select>
+
+            </div>
+
+            <div class="form-group">
+
+                <label>Mensagem</label>
+
+                <textarea
+                    id="mensagemSolicitacao"
+                    rows="6"
+                    required></textarea>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    onclick="document.getElementById('modalSolicitacao').classList.remove('show')">
+
+                    Cancelar
+
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn-primary">
+
+                    Enviar
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="js/config.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/solicitacoes.js"></script>
+
+</body>
+</html>
