@@ -138,7 +138,6 @@ async function carregarFotosPagina(){
     renderizarFotos(data || []);
 
 }
-
 /*
 ==========================================================
 GALERIA
@@ -251,7 +250,6 @@ async function excluirFoto(id, arquivo){
     }
 
 }
-
 /*
 ==========================================================
 PESQUISAR
