@@ -92,7 +92,6 @@ if (loginForm) {
                     mostrarMensagem(
                         "E-mail ou senha inválidos."
                     );
-
                     return;
                 }
 
@@ -103,12 +102,14 @@ if (loginForm) {
                         ? "admin.html"
                         : "portal.html"
                 );
+
             } catch (error) {
                 console.error(error);
 
                 mostrarMensagem(
                     "Não foi possível entrar. Tente novamente."
                 );
+
             } finally {
                 alterarCarregamento(false);
             }
@@ -133,8 +134,6 @@ if (forgotPassword) {
                 return;
             }
 
-            forgotPassword.style.pointerEvents = "none";
-
             mostrarMensagem(
                 "Enviando link de recuperação...",
                 "sucesso"
@@ -149,20 +148,18 @@ if (forgotPassword) {
                     }
                 );
 
-            forgotPassword.style.pointerEvents = "";
-
             if (error) {
                 console.error(error);
 
                 mostrarMensagem(
-                    "Não foi possível enviar o link. Tente novamente."
+                    "Não foi possível enviar o e-mail."
                 );
 
                 return;
             }
 
             mostrarMensagem(
-                "Link enviado! Verifique seu e-mail.",
+                "Link enviado! Verifique sua caixa de entrada.",
                 "sucesso"
             );
         }
