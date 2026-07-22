@@ -119,11 +119,50 @@ if (loginForm) {
 if (forgotPassword) {
     forgotPassword.addEventListener(
         "click",
-        function (event) {
+        async function (event) {
             event.preventDefault();
 
+            const email = emailInput.value.trim();
+
+            if (!email) {
+                mostrarMensagem(
+                    "Digite seu e-mail para receber o link de recuperação."
+                );
+
+                emailInput.focus();
+                return;
+            }
+
+            forgotPassword.style.pointerEvents = "none";
+
             mostrarMensagem(
-                "A recuperação de senha será configurada na próxima etapa.",
+                "Enviando link de recuperação...",
+                "sucesso"
+            );
+
+            const { error } =
+                await supabase.auth.resetPasswordForEmail(
+                    email,
+                    {
+                        redirectTo:
+                            "https://camilamartinsengenharia.com.br/redefinir-senha.html"
+                    }
+                );
+
+            forgotPassword.style.pointerEvents = "";
+
+            if (error) {
+                console.error(error);
+
+                mostrarMensagem(
+                    "Não foi possível enviar o link. Tente novamente."
+                );
+
+                return;
+            }
+
+            mostrarMensagem(
+                "Link enviado! Verifique seu e-mail.",
                 "sucesso"
             );
         }
