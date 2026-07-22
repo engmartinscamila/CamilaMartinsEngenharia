@@ -1,1 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
 
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Redefinir senha | Camila Martins Engenharia</title>
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&family=Parisienne&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    >
+
+    <style>
+        :root {
+            --azul-escuro: #071522;
+            --azul-card: rgba(12, 31, 48, 0.88);
+            --dourado: #c6a86a;
+            --dourado-claro: #e3cc97;
+            --texto-claro: #f5f2ea;
+            --texto-suave: #b9c1c8;
+            --erro: #d88a8a;
+            --sucesso: #9fd3a9;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            padding: 24px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-family: "Montserrat", sans-serif;
+            color: var(--texto-claro);
+
+            background:
+                radial-gradient(
+                    circle at top left,
+                    rgba(198, 168, 106, 0.14),
+                    transparent 30%
+                ),
+                linear-gradient(
+                    135deg,
+                    #04101a,
+                    var(--azul-escuro)
+                );
+        }
+
+        .card {
+            width: 100%;
+            max-width: 460px;
+            padding: 42px 36px;
+
+            border: 1px solid rgba(198, 168, 106, 0.35);
+            border-radius: 28px;
+
+            background: var(--azul-card);
+            box-shadow: 0 28px 70px rgba(0, 0, 0, 0.45);
+        }
+
+        .signature {
+            margin-bottom: 8px;
+
+            font-family: "Parisienne", cursive;
+            font-size: 2.7rem;
+            font-weight: 400;
+            line-height: 1;
+            text-align: center;
+            color: var(--dourado-claro);
+        }
+
+        .subtitle {
+            margin-bottom: 28px;
+
+            font-family: "Cormorant Garamond", serif;
+            font-size: 1rem;
+            letter-spacing: 0.24em;
+            text-align: center;
+            text-transform: uppercase;
+            color: var(--texto-suave);
+        }
+
+        h1 {
+            margin-bottom: 8px;
+
+            font-family: "Cormorant Garamond", serif;
+            font-size: 2.1rem;
+            text-align: center;
+        }
+
+        .description {
+            margin-bottom: 28px;
+
+            font-size: 0.9rem;
+            line-height: 1.6;
+            text-align: center;
+            color: var(--texto-suave);
+        }
+
+        label {
+            display: block;
+            margin: 18px 0 8px;
+            font-size: 0.88rem;
+        }
+
+        input {
+            width: 100%;
+            height: 54px;
+            padding: 0 16px;
+
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            outline: none;
+
+            background: rgba(255, 255, 255, 0.045);
+            color: var(--texto-claro);
+
+            font-family: "Montserrat", sans-serif;
+        }
+
+        input:focus {
+            border-color: var(--dourado);
+            box-shadow: 0 0 0 4px rgba(198, 168, 106, 0.09);
+        }
+
+        button {
+            width: 100%;
+            height: 55px;
+            margin-top: 24px;
+
+            border: 1px solid var(--dourado);
+            border-radius: 14px;
+
+            background: linear-gradient(
+                135deg,
+                var(--dourado),
+                var(--dourado-claro)
+            );
+
+            color: #0b1823;
+            font-family: "Montserrat", sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.65;
+            cursor: wait;
+        }
+
+        #mensagem {
+            min-height: 22px;
+            margin-top: 18px;
+            font-size: 0.84rem;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .voltar {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            color: var(--dourado-claro);
+            text-decoration: none;
+            font-size: 0.84rem;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="card">
+        <div class="signature">Camila Martins</div>
+        <div class="subtitle">Engenharia</div>
+
+        <h1>Redefinir senha</h1>
+
+        <p class="description">
+            Digite e confirme a sua nova senha.
+        </p>
+
+        <form id="formRedefinirSenha">
+            <label for="novaSenha">Nova senha</label>
+
+            <input
+                type="password"
+                id="novaSenha"
+                minlength="8"
+                autocomplete="new-password"
+                required
+            >
+
+            <label for="confirmarSenha">Confirmar nova senha</label>
+
+            <input
+                type="password"
+                id="confirmarSenha"
+                minlength="8"
+                autocomplete="new-password"
+                required
+            >
+
+            <button type="submit" id="botaoSalvar">
+                Salvar nova senha
+            </button>
+
+            <p id="mensagem"></p>
+        </form>
+
+        <a href="login.html" class="voltar">
+            Voltar para o login
+        </a>
+    </main>
+
+    <script
+        type="module"
+        src="./js/redefinir-senha.js"
+    ></script>
+</body>
+</html>
