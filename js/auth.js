@@ -149,8 +149,7 @@ if (forgotPassword) {
                 );
 
             if (error) {
-                console.log("ERRO COMPLETO:", error);
-                alert(JSON.stringify(error, null, 2));
+               console.error(error);
 
                 mostrarMensagem(
                     "Não foi possível enviar o e-mail."
