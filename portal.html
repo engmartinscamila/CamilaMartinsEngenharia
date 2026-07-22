@@ -1099,25 +1099,33 @@ if (error) {
     window.location.href = "login.html";
 });
 
-        document
-            .querySelectorAll(".portal-card")
-            .forEach(function (card) {
+       document
+    .querySelectorAll(".portal-card")
+    .forEach(function (card) {
 
-                card.addEventListener(
-                    "click",
-                    function (event) {
+        card.addEventListener("click", function (event) {
 
-                        event.preventDefault();
+            const href = card.getAttribute("href");
 
-                        const page =
-                            card.dataset.page;
+            if (
+                href &&
+                href !== "#" &&
+                href !== ""
+            ) {
+                return;
+            }
 
-                        alert(
-                            `A página "${page}" será criada nas próximas etapas.`
-                        );
-                    }
-                );
-            });
+            event.preventDefault();
+
+            const page = card.dataset.page;
+
+            alert(
+                `A página "${page}" será criada nas próximas etapas.`
+            );
+
+        });
+
+    });
       window.addEventListener("pageshow", function (event) {
     if (event.persisted) {
         window.location.reload();
