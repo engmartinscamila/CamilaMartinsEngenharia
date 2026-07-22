@@ -1,1 +1,1167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
 
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Meu Projeto | Camila Martins Engenharia</title>
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&family=Parisienne&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    >
+
+    <style>
+        :root {
+            --azul-principal: #061522;
+            --azul-secundario: #0b2133;
+            --azul-card: rgba(14, 38, 57, 0.82);
+            --dourado: #c5a667;
+            --dourado-claro: #e1ca93;
+            --branco: #f6f3eb;
+            --cinza-claro: #c3cad0;
+            --cinza: #8f9ba5;
+            --verde: #6f9e89;
+            --borda: rgba(197, 166, 103, 0.28);
+            --borda-clara: rgba(255, 255, 255, 0.08);
+            --sombra: 0 24px 60px rgba(0, 0, 0, 0.32);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: "Montserrat", sans-serif;
+            color: var(--branco);
+
+            background:
+                radial-gradient(
+                    circle at top left,
+                    rgba(197, 166, 103, 0.13),
+                    transparent 28%
+                ),
+                radial-gradient(
+                    circle at bottom right,
+                    rgba(39, 88, 120, 0.24),
+                    transparent 34%
+                ),
+                linear-gradient(
+                    135deg,
+                    #040e17,
+                    var(--azul-principal)
+                );
+
+            overflow-x: hidden;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button {
+            font: inherit;
+        }
+
+        .background-circle {
+            position: fixed;
+            width: 480px;
+            height: 480px;
+            border: 1px solid rgba(197, 166, 103, 0.08);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .circle-one {
+            top: -230px;
+            right: -180px;
+        }
+
+        .circle-two {
+            bottom: -280px;
+            left: -190px;
+        }
+
+        .page-wrapper {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            width: 100%;
+            min-height: 82px;
+            padding: 16px 6%;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+
+            border-bottom: 1px solid var(--borda-clara);
+            background: rgba(4, 14, 23, 0.72);
+
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .brand {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .signature {
+            font-family: "Parisienne", cursive;
+            font-size: 2rem;
+            line-height: 1;
+            color: var(--dourado-claro);
+        }
+
+        .brand-subtitle {
+            margin-top: 4px;
+            font-family: "Cormorant Garamond", serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: var(--cinza-claro);
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .back-button,
+        .logout-button {
+            min-height: 42px;
+            padding: 0 15px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+
+            border: 1px solid var(--borda);
+            border-radius: 12px;
+
+            background: rgba(255, 255, 255, 0.035);
+            color: var(--dourado-claro);
+
+            cursor: pointer;
+
+            transition:
+                transform 0.25s ease,
+                background 0.25s ease,
+                border-color 0.25s ease;
+        }
+
+        .logout-button {
+            width: 42px;
+            padding: 0;
+        }
+
+        .back-button:hover,
+        .logout-button:hover {
+            transform: translateY(-2px);
+            background: rgba(197, 166, 103, 0.1);
+            border-color: var(--dourado);
+        }
+
+        .page-container {
+            width: min(1180px, 88%);
+            margin: 0 auto;
+            padding: 52px 0 70px;
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .eyebrow {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--dourado-claro);
+            font-size: 0.74rem;
+            font-weight: 500;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+
+        .page-title {
+            font-family: "Cormorant Garamond", serif;
+            font-size: clamp(2.5rem, 5vw, 4.2rem);
+            font-weight: 500;
+            line-height: 1;
+        }
+
+        .page-description {
+            max-width: 720px;
+            margin-top: 16px;
+            color: var(--cinza-claro);
+            font-size: 0.92rem;
+            line-height: 1.75;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1.35fr 0.65fr;
+            gap: 22px;
+        }
+
+        .card {
+            border: 1px solid var(--borda);
+            border-radius: 24px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(255, 255, 255, 0.07),
+                    rgba(255, 255, 255, 0.02)
+                ),
+                var(--azul-card);
+
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+
+            box-shadow: var(--sombra);
+        }
+
+        .project-card {
+            padding: 32px;
+        }
+
+        .progress-card {
+            padding: 30px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 26px;
+        }
+
+        .card-title {
+            font-family: "Cormorant Garamond", serif;
+            font-size: 1.65rem;
+            font-weight: 600;
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 14px;
+            background: rgba(197, 166, 103, 0.12);
+            color: var(--dourado-claro);
+            font-size: 1.18rem;
+        }
+
+        .project-name {
+            font-family: "Cormorant Garamond", serif;
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--branco);
+        }
+
+        .project-client {
+            margin-top: 8px;
+            color: var(--cinza);
+            font-size: 0.84rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin-top: 28px;
+        }
+
+        .info-item {
+            min-height: 100px;
+            padding: 18px;
+
+            border: 1px solid var(--borda-clara);
+            border-radius: 17px;
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .info-label {
+            display: block;
+            margin-bottom: 9px;
+            color: var(--cinza);
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            color: var(--branco);
+            font-family: "Cormorant Garamond", serif;
+            font-size: 1.18rem;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        .stage-label {
+            color: var(--cinza);
+            font-size: 0.73rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .stage-name {
+            display: block;
+            margin-top: 10px;
+            font-family: "Cormorant Garamond", serif;
+            font-size: 1.7rem;
+            color: var(--branco);
+        }
+
+        .progress-area {
+            margin-top: 28px;
+        }
+
+        .progress-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 11px;
+            color: var(--cinza-claro);
+            font-size: 0.78rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 9px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .progress-fill {
+            width: 0;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(
+                90deg,
+                var(--dourado),
+                var(--dourado-claro)
+            );
+            transition: width 0.6s ease;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+
+            margin-top: 26px;
+            padding: 9px 13px;
+
+            border: 1px solid rgba(111, 158, 137, 0.35);
+            border-radius: 999px;
+
+            background: rgba(111, 158, 137, 0.1);
+            color: #9fc8b5;
+
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #83b69f;
+        }
+
+        .secondary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 22px;
+            margin-top: 22px;
+        }
+
+        .details-card,
+        .message-card {
+            padding: 30px;
+        }
+
+        .details-list {
+            display: grid;
+            gap: 14px;
+            margin-top: 22px;
+        }
+
+        .detail-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 22px;
+
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--borda-clara);
+        }
+
+        .detail-row:last-child {
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .detail-name {
+            color: var(--cinza);
+            font-size: 0.78rem;
+        }
+
+        .detail-value {
+            max-width: 58%;
+            color: var(--branco);
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-align: right;
+            line-height: 1.45;
+        }
+
+        .message-text {
+            margin-top: 20px;
+            color: var(--cinza-claro);
+            font-size: 0.86rem;
+            line-height: 1.8;
+        }
+
+        .message-signature {
+            margin-top: 22px;
+            font-family: "Parisienne", cursive;
+            font-size: 1.9rem;
+            color: var(--dourado-claro);
+        }
+
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+
+            background: var(--azul-principal);
+            color: var(--cinza-claro);
+        }
+
+        .loading-spinner {
+            width: 42px;
+            height: 42px;
+            border: 3px solid rgba(255, 255, 255, 0.12);
+            border-top-color: var(--dourado);
+            border-radius: 50%;
+            animation: girar 0.8s linear infinite;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .page-footer {
+            margin-top: 50px;
+            padding-top: 24px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+
+            border-top: 1px solid var(--borda-clara);
+            color: var(--cinza);
+            font-size: 0.72rem;
+        }
+
+        .footer-security {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .footer-security i {
+            color: var(--dourado);
+        }
+
+        @keyframes girar {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 920px) {
+            .main-grid,
+            .secondary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .topbar {
+                padding: 14px 20px;
+            }
+
+            .signature {
+                font-size: 1.65rem;
+            }
+
+            .brand-subtitle {
+                font-size: 0.62rem;
+            }
+
+            .back-button span {
+                display: none;
+            }
+
+            .back-button {
+                width: 42px;
+                padding: 0;
+            }
+
+            .page-container {
+                width: 92%;
+                padding-top: 32px;
+            }
+
+            .project-card,
+            .progress-card,
+            .details-card,
+            .message-card {
+                padding: 23px;
+                border-radius: 20px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-footer {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div
+        class="loading-screen"
+        id="loadingScreen"
+    >
+        <div class="loading-spinner"></div>
+        <p>Carregando projeto...</p>
+    </div>
+
+    <div class="background-circle circle-one"></div>
+    <div class="background-circle circle-two"></div>
+
+    <div class="page-wrapper">
+
+        <header class="topbar">
+
+            <a
+                href="index.html"
+                class="brand"
+            >
+                <span class="signature">
+                    Camila Martins
+                </span>
+
+                <span class="brand-subtitle">
+                    Engenharia
+                </span>
+            </a>
+
+            <div class="topbar-actions">
+
+                <a
+                    href="portal.html"
+                    class="back-button"
+                >
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Voltar ao Portal</span>
+                </a>
+
+                <button
+                    type="button"
+                    class="logout-button"
+                    id="logoutButton"
+                    aria-label="Sair"
+                    title="Sair"
+                >
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+
+            </div>
+        </header>
+
+        <main class="page-container">
+
+            <section class="page-header">
+
+                <span class="eyebrow">
+                    Portal do Cliente
+                </span>
+
+                <h1 class="page-title">
+                    Meu Projeto
+                </h1>
+
+                <p class="page-description">
+                    Consulte as principais informações, a etapa atual e o
+                    andamento do seu projeto.
+                </p>
+
+            </section>
+
+            <section class="main-grid">
+
+                <article class="card project-card">
+
+                    <div class="card-header">
+
+                        <h2 class="card-title">
+                            Informações do projeto
+                        </h2>
+
+                        <div class="card-icon">
+                            <i class="bi bi-house-door"></i>
+                        </div>
+
+                    </div>
+
+                    <h3
+                        class="project-name"
+                        id="projectName"
+                    >
+                        Projeto
+                    </h3>
+
+                    <p class="project-client">
+                        Cliente:
+                        <span id="clientName">—</span>
+                    </p>
+
+                    <div class="info-grid">
+
+                        <div class="info-item">
+                            <span class="info-label">
+                                Tipo de projeto
+                            </span>
+
+                            <strong
+                                class="info-value"
+                                id="projectType"
+                            >
+                                Não informado
+                            </strong>
+                        </div>
+
+                        <div class="info-item">
+                            <span class="info-label">
+                                Local da obra
+                            </span>
+
+                            <strong
+                                class="info-value"
+                                id="projectLocation"
+                            >
+                                Não informado
+                            </strong>
+                        </div>
+
+                        <div class="info-item">
+                            <span class="info-label">
+                                Área do terreno
+                            </span>
+
+                            <strong
+                                class="info-value"
+                                id="landArea"
+                            >
+                                Não informado
+                            </strong>
+                        </div>
+
+                        <div class="info-item">
+                            <span class="info-label">
+                                Área construída
+                            </span>
+
+                            <strong
+                                class="info-value"
+                                id="builtArea"
+                            >
+                                Não informado
+                            </strong>
+                        </div>
+
+                    </div>
+
+                </article>
+
+                <article class="card progress-card">
+
+                    <div class="card-header">
+
+                        <h2 class="card-title">
+                            Andamento
+                        </h2>
+
+                        <div class="card-icon">
+                            <i class="bi bi-bar-chart-line"></i>
+                        </div>
+
+                    </div>
+
+                    <span class="stage-label">
+                        Etapa atual
+                    </span>
+
+                    <strong
+                        class="stage-name"
+                        id="currentStage"
+                    >
+                        Não informada
+                    </strong>
+
+                    <div class="progress-area">
+
+                        <div class="progress-info">
+                            <span>Progresso do projeto</span>
+                            <span id="progressText">0%</span>
+                        </div>
+
+                        <div
+                            class="progress-bar"
+                            role="progressbar"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                            aria-valuenow="0"
+                            id="progressBar"
+                        >
+                            <div
+                                class="progress-fill"
+                                id="progressFill"
+                            ></div>
+                        </div>
+
+                    </div>
+
+                    <div class="status-badge">
+                        <span class="status-dot"></span>
+                        Projeto ativo
+                    </div>
+
+                </article>
+
+            </section>
+
+            <section class="secondary-grid">
+
+                <article class="card details-card">
+
+                    <div class="card-header">
+
+                        <h2 class="card-title">
+                            Dados gerais
+                        </h2>
+
+                        <div class="card-icon">
+                            <i class="bi bi-info-circle"></i>
+                        </div>
+
+                    </div>
+
+                    <div class="details-list">
+
+                        <div class="detail-row">
+                            <span class="detail-name">
+                                Responsável técnico
+                            </span>
+
+                            <strong class="detail-value">
+                                Eng. Camila Martins
+                            </strong>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-name">
+                                Data de início
+                            </span>
+
+                            <strong
+                                class="detail-value"
+                                id="startDate"
+                            >
+                                Não informada
+                            </strong>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-name">
+                                Previsão de conclusão
+                            </span>
+
+                            <strong
+                                class="detail-value"
+                                id="endDate"
+                            >
+                                Não informada
+                            </strong>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-name">
+                                Próxima etapa
+                            </span>
+
+                            <strong
+                                class="detail-value"
+                                id="nextStage"
+                            >
+                                Não informada
+                            </strong>
+                        </div>
+
+                    </div>
+
+                </article>
+
+                <article class="card message-card">
+
+                    <div class="card-header">
+
+                        <h2 class="card-title">
+                            Observações
+                        </h2>
+
+                        <div class="card-icon">
+                            <i class="bi bi-chat-left-text"></i>
+                        </div>
+
+                    </div>
+
+                    <p
+                        class="message-text"
+                        id="projectNotes"
+                    >
+                        As informações e atualizações do seu projeto serão
+                        disponibilizadas neste espaço.
+                    </p>
+
+                    <p class="message-signature">
+                        Camila Martins
+                    </p>
+
+                </article>
+
+            </section>
+
+            <footer class="page-footer">
+
+                <p>
+                    © <span id="currentYear"></span>
+                    Camila Martins Engenharia
+                </p>
+
+                <p class="footer-security">
+                    <i class="bi bi-shield-lock"></i>
+                    Ambiente exclusivo para clientes autorizados
+                </p>
+
+            </footer>
+
+        </main>
+    </div>
+
+    <script type="module">
+        import { supabase } from "./js/config/supabase.js";
+
+        const loadingScreen =
+            document.getElementById("loadingScreen");
+
+        const logoutButton =
+            document.getElementById("logoutButton");
+
+        const projectName =
+            document.getElementById("projectName");
+
+        const clientName =
+            document.getElementById("clientName");
+
+        const projectType =
+            document.getElementById("projectType");
+
+        const projectLocation =
+            document.getElementById("projectLocation");
+
+        const landArea =
+            document.getElementById("landArea");
+
+        const builtArea =
+            document.getElementById("builtArea");
+
+        const currentStage =
+            document.getElementById("currentStage");
+
+        const progressText =
+            document.getElementById("progressText");
+
+        const progressFill =
+            document.getElementById("progressFill");
+
+        const progressBar =
+            document.getElementById("progressBar");
+
+        const startDate =
+            document.getElementById("startDate");
+
+        const endDate =
+            document.getElementById("endDate");
+
+        const nextStage =
+            document.getElementById("nextStage");
+
+        const projectNotes =
+            document.getElementById("projectNotes");
+
+        const currentYear =
+            document.getElementById("currentYear");
+
+        function valueOrDefault(value, defaultValue = "Não informado") {
+            if (
+                value === null ||
+                value === undefined ||
+                value === ""
+            ) {
+                return defaultValue;
+            }
+
+            return value;
+        }
+
+        function formatArea(value) {
+            if (
+                value === null ||
+                value === undefined ||
+                value === ""
+            ) {
+                return "Não informado";
+            }
+
+            const textValue = String(value);
+
+            if (textValue.toLowerCase().includes("m²")) {
+                return textValue;
+            }
+
+            return `${textValue} m²`;
+        }
+
+        function formatDate(value) {
+            if (!value) {
+                return "Não informada";
+            }
+
+            const date = new Date(`${value}T00:00:00`);
+
+            if (Number.isNaN(date.getTime())) {
+                return value;
+            }
+
+            return date.toLocaleDateString("pt-BR");
+        }
+
+        async function loadPage() {
+            const {
+                data: { session },
+                error: sessionError
+            } = await supabase.auth.getSession();
+
+            if (sessionError || !session) {
+                window.location.href = "login.html";
+                return;
+            }
+
+            const {
+                data: clientData,
+                error: clientError
+            } = await supabase
+                .from("CLIENTES")
+                .select("*")
+                .eq("auth_id", session.user.id)
+                .single();
+
+            if (clientError || !clientData) {
+                alert("Cliente não encontrado.");
+                window.location.href = "login.html";
+                return;
+            }
+
+            const progress = Math.min(
+                100,
+                Math.max(
+                    0,
+                    Number(clientData.progresso) || 0
+                )
+            );
+
+            projectName.textContent =
+                valueOrDefault(
+                    clientData.projeto,
+                    "Projeto sem nome"
+                );
+
+            clientName.textContent =
+                valueOrDefault(
+                    clientData.nome,
+                    "Cliente"
+                );
+
+            projectType.textContent =
+                valueOrDefault(
+                    clientData.tipo_projeto ||
+                    clientData.tipo ||
+                    clientData.servico
+                );
+
+            projectLocation.textContent =
+                valueOrDefault(
+                    clientData.endereco ||
+                    clientData.local_obra ||
+                    clientData.cidade
+                );
+
+            landArea.textContent =
+                formatArea(
+                    clientData.area_terreno
+                );
+
+            builtArea.textContent =
+                formatArea(
+                    clientData.area_construida
+                );
+
+            currentStage.textContent =
+                valueOrDefault(
+                    clientData.etapa,
+                    "Não informada"
+                );
+
+            progressText.textContent =
+                `${progress}%`;
+
+            progressFill.style.width =
+                `${progress}%`;
+
+            progressBar.setAttribute(
+                "aria-valuenow",
+                progress
+            );
+
+            startDate.textContent =
+                formatDate(
+                    clientData.data_inicio
+                );
+
+            endDate.textContent =
+                formatDate(
+                    clientData.data_conclusao ||
+                    clientData.previsao_conclusao
+                );
+
+            nextStage.textContent =
+                valueOrDefault(
+                    clientData.proxima_etapa,
+                    "Não informada"
+                );
+
+            projectNotes.textContent =
+                valueOrDefault(
+                    clientData.observacoes ||
+                    clientData.mensagem ||
+                    clientData.descricao,
+                    "As informações e atualizações do seu projeto serão disponibilizadas neste espaço."
+                );
+
+            currentYear.textContent =
+                new Date().getFullYear();
+
+            loadingScreen.classList.add("hidden");
+        }
+
+        logoutButton.addEventListener(
+            "click",
+            async function () {
+                const { error } =
+                    await supabase.auth.signOut();
+
+                if (error) {
+                    alert(error.message);
+                    return;
+                }
+
+                window.location.href = "login.html";
+            }
+        );
+
+        window.addEventListener(
+            "pageshow",
+            function (event) {
+                if (event.persisted) {
+                    window.location.reload();
+                }
+            }
+        );
+
+        loadPage();
+    </script>
+</body>
+</html>
