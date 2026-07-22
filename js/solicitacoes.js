@@ -1,300 +1,315 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+/*
+==========================================================
+CAMILA MARTINS ENGENHARIA
+SOLICITAÇÕES
+==========================================================
+*/
 
-<head>
+document.addEventListener("DOMContentLoaded", () => {
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    configurarFormularioSolicitacao();
 
-    <title>Solicitações | Camila Martins Engenharia</title>
+    carregarSolicitacoes();
 
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/solicitacoes.css">
+});
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+/*
+==========================================================
+FORMULÁRIO
+==========================================================
+*/
 
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+function configurarFormularioSolicitacao(){
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    const formulario = document.getElementById("formSolicitacao");
 
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    if(!formulario) return;
 
-</head>
+    formulario.onsubmit = salvarSolicitacao;
 
-<body>
+}
 
-<div class="dashboard">
+/*
+==========================================================
+SALVAR
+==========================================================
+*/
 
-    <aside class="sidebar">
+async function salvarSolicitacao(event){
 
-        <div class="logo-area">
+    event.preventDefault();
 
-            <img src="img/logo-branca.png" alt="Logo">
+    const solicitacao = {
 
-        </div>
+        titulo: document.getElementById("tituloSolicitacao").value.trim(),
 
-        <nav>
+        cliente_id: document.getElementById("clienteSolicitacao").value,
 
-            <a href="portal.html">
-                <i class="fa-solid fa-house"></i>
-                Dashboard
-            </a>
+        projeto_id: document.getElementById("projetoSolicitacao").value,
 
-            <a href="meu-projeto.html">
-                <i class="fa-solid fa-building"></i>
-                Meu Projeto
-            </a>
+        status: document.getElementById("statusSolicitacao").value,
 
-            <a href="cronograma.html">
-                <i class="fa-solid fa-calendar-check"></i>
-                Cronograma
-            </a>
+        mensagem: document.getElementById("mensagemSolicitacao").value.trim()
 
-            <a href="fotos.html">
-                <i class="fa-solid fa-camera"></i>
-                Fotos
-            </a>
+    };
 
-            <a href="documentos.html">
-                <i class="fa-solid fa-folder-open"></i>
-                Documentos
-            </a>
+    const { error } = await supabase
+        .from("solicitacoes")
+        .insert([solicitacao]);
 
-            <a href="biblioteca.html">
-                <i class="fa-solid fa-book"></i>
-                Biblioteca
-            </a>
+    if(error){
 
-            <a class="active" href="solicitacoes.html">
-                <i class="fa-solid fa-comments"></i>
-                Solicitações
-            </a>
+        console.error(error);
 
-        </nav>
+        alert("Erro ao salvar.");
 
-    </aside>
+        return;
 
-    <main class="content">
+    }
 
-        <header class="topbar">
+    alert("Solicitação enviada.");
 
-            <div>
+    document.getElementById("formSolicitacao").reset();
 
-                <h1>Solicitações</h1>
+    document
+        .getElementById("modalSolicitacao")
+        ?.classList.remove("show");
 
-                <p>Envie dúvidas, alterações ou solicitações relacionadas ao seu projeto.</p>
+    carregarSolicitacoes();
 
-            </div>
+}
 
-            <button
-                class="btn-primary"
-                onclick="document.getElementById('modalSolicitacao').classList.add('show')">
+/*
+==========================================================
+CARREGAR
+==========================================================
+*/
 
-                <i class="fa-solid fa-plus"></i>
+async function carregarSolicitacoes(){
 
-                Nova Solicitação
+    const tabela = document.getElementById("listaSolicitacoes");
 
-            </button>
+    if(!tabela) return;
 
-        </header>
+    const { data, error } = await supabase
+        .from("solicitacoes")
+        .select(`
+            *,
+            clientes(nome),
+            projetos(nome)
+        `)
+        .order("created_at",{
+            ascending:false
+        });
 
-        <section class="cards-resumo">
+    if(error){
 
-            <div class="card-resumo">
+        console.error(error);
 
-                <span>Total</span>
+        return;
 
-                <h2 id="totalSolicitacoes">0</h2>
+    }
 
-            </div>
+    renderizarSolicitacoes(data || []);
 
-            <div class="card-resumo">
+}
 
-                <span>Abertas</span>
+/*
+==========================================================
+RENDERIZAR
+==========================================================
+*/
 
-                <h2 id="abertas">0</h2>
+function renderizarSolicitacoes(lista){
 
-            </div>
+    const tabela=document.getElementById("listaSolicitacoes");
 
-            <div class="card-resumo">
+    if(!tabela) return;
 
-                <span>Em andamento</span>
+    if(lista.length===0){
 
-                <h2 id="andamento">0</h2>
+        tabela.innerHTML=`
+            <tr>
+                <td colspan="6" style="text-align:center;">
+                    Nenhuma solicitação cadastrada.
+                </td>
+            </tr>
+        `;
 
-            </div>
+        atualizarResumoSolicitacoes([]);
 
-            <div class="card-resumo">
+        return;
 
-                <span>Concluídas</span>
+    }
 
-                <h2 id="concluidas">0</h2>
+    tabela.innerHTML=lista.map(item=>`
 
-            </div>
+        <tr>
 
-        </section>
+            <td>${escapeSolicitacao(item.titulo)}</td>
 
-        <section class="toolbar">
+            <td>${escapeSolicitacao(item.clientes?.nome || "-")}</td>
 
-            <div class="search">
+            <td>${escapeSolicitacao(item.projetos?.nome || "-")}</td>
 
-                <i class="fa-solid fa-magnifying-glass"></i>
+            <td>
 
-                <input
-                    type="text"
-                    placeholder="Pesquisar..."
-                    onkeyup="pesquisarSolicitacoes(this.value)">
+                <span class="status ${classeStatusSolicitacao(item.status)}">
 
-            </div>
+                    ${escapeSolicitacao(item.status)}
 
-        </section>
+                </span>
 
-        <section class="table-container">
+            </td>
 
-            <table>
+            <td>${formatarDataSolicitacao(item.created_at)}</td>
 
-                <thead>
-
-                    <tr>
-
-                        <th>Título</th>
-                        <th>Cliente</th>
-                        <th>Projeto</th>
-                        <th>Status</th>
-                        <th>Data</th>
-                        <th>Ações</th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody id="listaSolicitacoes">
-
-                </tbody>
-
-            </table>
-
-        </section>
-
-    </main>
-
-</div>
-
-<div
-    id="modalSolicitacao"
-    class="modal">
-
-    <div class="modal-content">
-
-        <div class="modal-header">
-
-            <h2>Nova Solicitação</h2>
-
-            <button
-                class="close"
-                onclick="document.getElementById('modalSolicitacao').classList.remove('show')">
-
-                &times;
-
-            </button>
-
-        </div>
-
-        <form id="formSolicitacao">
-
-            <div class="form-group">
-
-                <label>Título</label>
-
-                <input
-                    id="tituloSolicitacao"
-                    type="text"
-                    required>
-
-            </div>
-
-            <div class="grid-2">
-
-                <div class="form-group">
-
-                    <label>Cliente</label>
-
-                    <select id="clienteSolicitacao"></select>
-
-                </div>
-
-                <div class="form-group">
-
-                    <label>Projeto</label>
-
-                    <select id="projetoSolicitacao"></select>
-
-                </div>
-
-            </div>
-
-            <div class="form-group">
-
-                <label>Status</label>
-
-                <select id="statusSolicitacao">
-
-                    <option>Aberta</option>
-                    <option>Em andamento</option>
-                    <option>Concluída</option>
-
-                </select>
-
-            </div>
-
-            <div class="form-group">
-
-                <label>Mensagem</label>
-
-                <textarea
-                    id="mensagemSolicitacao"
-                    rows="6"
-                    required></textarea>
-
-            </div>
-
-            <div class="modal-footer">
+            <td>
 
                 <button
-                    type="button"
-                    class="btn-secondary"
-                    onclick="document.getElementById('modalSolicitacao').classList.remove('show')">
+                    class="btn-icon delete"
+                    onclick="excluirSolicitacao('${item.id}')">
 
-                    Cancelar
+                    <i class="fa-solid fa-trash"></i>
 
                 </button>
 
-                <button
-                    type="submit"
-                    class="btn-primary">
+            </td>
 
-                    Enviar
+        </tr>
 
-                </button>
+    `).join("");
 
-            </div>
+    atualizarResumoSolicitacoes(lista);
 
-        </form>
+}
 
-    </div>
+/*
+==========================================================
+RESUMO
+==========================================================
+*/
 
-</div>
+function atualizarResumoSolicitacoes(lista){
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    document.getElementById("totalSolicitacoes").textContent=lista.length;
 
-<script src="js/config.js"></script>
-<script src="js/supabase.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/storage.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/solicitacoes.js"></script>
+    const abertas=lista.filter(x=>x.status==="Aberta").length;
 
-</body>
-</html>
+    const andamento=lista.filter(x=>x.status==="Em andamento").length;
+
+    const concluidas=lista.filter(x=>x.status==="Concluída").length;
+
+    document.getElementById("abertas").textContent=abertas;
+
+    document.getElementById("andamento").textContent=andamento;
+
+    document.getElementById("concluidas").textContent=concluidas;
+
+}
+
+/*
+==========================================================
+EXCLUIR
+==========================================================
+*/
+
+async function excluirSolicitacao(id){
+
+    if(!confirm("Excluir solicitação?")) return;
+
+    const { error } = await supabase
+        .from("solicitacoes")
+        .delete()
+        .eq("id",id);
+
+    if(error){
+
+        console.error(error);
+
+        alert("Erro ao excluir.");
+
+        return;
+
+    }
+
+    carregarSolicitacoes();
+
+}
+
+/*
+==========================================================
+PESQUISAR
+==========================================================
+*/
+
+async function pesquisarSolicitacoes(texto){
+
+    const { data,error } = await supabase
+        .from("solicitacoes")
+        .select(`
+            *,
+            clientes(nome),
+            projetos(nome)
+        `)
+        .ilike("titulo",`%${texto}%`);
+
+    if(error){
+
+        console.error(error);
+
+        return;
+
+    }
+
+    renderizarSolicitacoes(data || []);
+
+}
+
+/*
+==========================================================
+STATUS
+==========================================================
+*/
+
+function classeStatusSolicitacao(status){
+
+    switch(status){
+
+        case "Concluída":
+            return "success";
+
+        case "Em andamento":
+            return "warning";
+
+        default:
+            return "pending";
+
+    }
+
+}
+
+/*
+==========================================================
+UTIL
+==========================================================
+*/
+
+function formatarDataSolicitacao(data){
+
+    if(!data) return "-";
+
+    return new Date(data).toLocaleDateString("pt-BR");
+
+}
+
+function escapeSolicitacao(texto){
+
+    return String(texto || "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+
+}
