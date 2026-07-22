@@ -1,1 +1,362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
 
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Cronograma | Camila Martins Engenharia</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/cronograma.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+        <div class="logo-area">
+
+            <img src="img/logo-branca.png" alt="Logo">
+
+        </div>
+
+        <nav>
+
+            <a href="portal.html">
+                <i class="fa-solid fa-house"></i>
+                Dashboard
+            </a>
+
+            <a href="meu-projeto.html">
+                <i class="fa-solid fa-building"></i>
+                Meu Projeto
+            </a>
+
+            <a class="active" href="cronograma.html">
+                <i class="fa-solid fa-calendar-check"></i>
+                Cronograma
+            </a>
+
+            <a href="fotos.html">
+                <i class="fa-solid fa-camera"></i>
+                Fotos
+            </a>
+
+            <a href="documentos.html">
+                <i class="fa-solid fa-folder-open"></i>
+                Documentos
+            </a>
+
+            <a href="biblioteca.html">
+                <i class="fa-solid fa-book"></i>
+                Biblioteca
+            </a>
+
+            <a href="solicitacoes.html">
+                <i class="fa-solid fa-comments"></i>
+                Solicitações
+            </a>
+
+        </nav>
+
+    </aside>
+
+    <!-- CONTEÚDO -->
+
+    <main class="content">
+
+        <header class="topbar">
+
+            <div>
+
+                <h1>Cronograma da Obra</h1>
+
+                <p>Acompanhe o andamento da execução.</p>
+
+            </div>
+
+            <button
+                class="btn-primary"
+                onclick="document.getElementById('modalCronograma').classList.add('show')">
+
+                <i class="fa-solid fa-plus"></i>
+
+                Nova Etapa
+
+            </button>
+
+        </header>
+
+        <!-- CARDS -->
+
+        <section class="cards-resumo">
+
+            <div class="card-resumo">
+
+                <span>Total de Etapas</span>
+
+                <h2 id="totalEtapas">0</h2>
+
+            </div>
+
+            <div class="card-resumo">
+
+                <span>Pendentes</span>
+
+                <h2 id="pendentes">0</h2>
+
+            </div>
+
+            <div class="card-resumo">
+
+                <span>Em andamento</span>
+
+                <h2 id="andamento">0</h2>
+
+            </div>
+
+            <div class="card-resumo">
+
+                <span>Concluídas</span>
+
+                <h2 id="concluidas">0</h2>
+
+            </div>
+
+        </section>
+
+        <!-- PROGRESSO -->
+
+        <section class="progress-box">
+
+            <div class="progress-header">
+
+                <h2>Progresso Geral</h2>
+
+                <span id="percentualObra">0%</span>
+
+            </div>
+
+            <div class="progress">
+
+                <div
+                    class="progress-fill"
+                    id="barraProgresso">
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- PESQUISA -->
+
+        <section class="toolbar">
+
+            <div class="search">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input
+                    type="text"
+                    id="pesquisaCronograma"
+                    placeholder="Pesquisar etapa..."
+                    onkeyup="pesquisarCronograma(this.value)">
+
+            </div>
+
+        </section>
+
+        <!-- TABELA -->
+
+        <section class="table-container">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Etapa</th>
+                        <th>Cliente</th>
+                        <th>Projeto</th>
+                        <th>Início</th>
+                        <th>Fim</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="listaCronograma">
+
+                </tbody>
+
+            </table>
+
+        </section>
+
+    </main>
+
+</div>
+
+<!-- MODAL -->
+
+<div
+    class="modal"
+    id="modalCronograma">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2>Nova Etapa</h2>
+
+            <button
+                class="close"
+                onclick="document.getElementById('modalCronograma').classList.remove('show')">
+
+                &times;
+
+            </button>
+
+        </div>
+
+        <form id="formCronograma">
+
+            <div class="form-group">
+
+                <label>Etapa</label>
+
+                <input
+                    id="nomeEtapa"
+                    type="text"
+                    required>
+
+            </div>
+
+            <div class="grid-2">
+
+                <div class="form-group">
+
+                    <label>Cliente</label>
+
+                    <select id="clienteCronograma"></select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Projeto</label>
+
+                    <select id="projetoCronograma"></select>
+
+                </div>
+
+            </div>
+
+            <div class="grid-2">
+
+                <div class="form-group">
+
+                    <label>Data Inicial</label>
+
+                    <input
+                        id="inicioEtapa"
+                        type="date">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Data Final</label>
+
+                    <input
+                        id="fimEtapa"
+                        type="date">
+
+                </div>
+
+            </div>
+
+            <div class="form-group">
+
+                <label>Status</label>
+
+                <select id="statusEtapa">
+
+                    <option>Pendente</option>
+                    <option>Em andamento</option>
+                    <option>Concluído</option>
+
+                </select>
+
+            </div>
+
+            <div class="form-group">
+
+                <label>Descrição</label>
+
+                <textarea
+                    id="descricaoEtapa"
+                    rows="4"></textarea>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn-secondary"
+                    onclick="document.getElementById('modalCronograma').classList.remove('show')">
+
+                    Cancelar
+
+                </button>
+
+                <button
+                    class="btn-primary"
+                    type="submit">
+
+                    Salvar
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="js/config.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/cronograma.js"></script>
+
+</body>
+
+</html>
