@@ -148,14 +148,16 @@ if (forgotPassword) {
                     }
                 );
 
-            if (error) {
-                console.error(error);
+           if (error) {
+    console.log("ERRO COMPLETO:", error);
+    alert(JSON.stringify(error, null, 2));
 
-                mostrarMensagem(
-                    "Não foi possível enviar o e-mail."
-                );
+    mostrarMensagem(
+        "Não foi possível enviar o e-mail."
+    );
 
-                return;
+    return;
+}
             }
 
             mostrarMensagem(
