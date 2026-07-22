@@ -1246,3 +1246,120 @@
 
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/clientes.js"></script>
+<script src="js/projetos.js"></script>
+<script src="js/documentos.js"></script>
+<script src="js/fotos.js"></script>
+<script src="js/admin.js"></script>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const menuItems = document.querySelectorAll(".menu-item");
+
+    menuItems.forEach(item => {
+
+        item.addEventListener("click", () => {
+
+            menuItems.forEach(m => m.classList.remove("ativo"));
+
+            item.classList.add("ativo");
+
+        });
+
+    });
+
+    const abrir = (id) => {
+
+        const modal = document.getElementById(id);
+
+        if (modal) modal.classList.add("show");
+
+    };
+
+    const fechar = (id) => {
+
+        const modal = document.getElementById(id);
+
+        if (modal) modal.classList.remove("show");
+
+    };
+
+    document.getElementById("novoCliente")?.addEventListener("click", () => abrir("modalCliente"));
+    document.getElementById("novoProjeto")?.addEventListener("click", () => abrir("modalProjeto"));
+
+    document.getElementById("fecharModalCliente")?.addEventListener("click", () => fechar("modalCliente"));
+    document.getElementById("cancelarCliente")?.addEventListener("click", () => fechar("modalCliente"));
+
+    document.getElementById("fecharModalProjeto")?.addEventListener("click", () => fechar("modalProjeto"));
+    document.getElementById("cancelarProjeto")?.addEventListener("click", () => fechar("modalProjeto"));
+
+    document.getElementById("fecharModalDocumento")?.addEventListener("click", () => fechar("modalDocumento"));
+    document.getElementById("cancelarDocumento")?.addEventListener("click", () => fechar("modalDocumento"));
+
+    document.getElementById("fecharModalFoto")?.addEventListener("click", () => fechar("modalFoto"));
+    document.getElementById("cancelarFoto")?.addEventListener("click", () => fechar("modalFoto"));
+
+    document.querySelectorAll(".modal").forEach(modal => {
+
+        modal.addEventListener("click", (e) => {
+
+            if (e.target === modal) {
+
+                modal.classList.remove("show");
+
+            }
+
+        });
+
+    });
+
+    document.getElementById("abrirClientes")?.addEventListener("click", () => {
+        location.href = "clientes.html";
+    });
+
+    document.getElementById("abrirProjetos")?.addEventListener("click", () => {
+        location.href = "projetos.html";
+    });
+
+    document.getElementById("abrirDocumentos")?.addEventListener("click", () => {
+        location.href = "documentos.html";
+    });
+
+    document.getElementById("abrirBiblioteca")?.addEventListener("click", () => {
+        location.href = "biblioteca.html";
+    });
+
+    document.getElementById("abrirFotos")?.addEventListener("click", () => {
+        location.href = "fotos.html";
+    });
+
+    document.getElementById("logoutButton")?.addEventListener("click", async () => {
+
+        try {
+
+            if (window.supabase) {
+
+                await supabase.auth.signOut();
+
+            }
+
+        } catch (erro) {
+
+            console.error(erro);
+
+        }
+
+        location.href = "login.html";
+
+    });
+
+});
+
+</script>
+
+</body>
+</html>
