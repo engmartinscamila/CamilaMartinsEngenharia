@@ -1,549 +1,316 @@
-import {
-    supabase,
-    BUCKETS
-} from "./config/supabase.js";
+/*
+==========================================================
+CAMILA MARTINS ENGENHARIA
+DOCUMENTOS
+==========================================================
+*/
 
-/* ============================
-   ELEMENTOS
-============================ */
+document.addEventListener("DOMContentLoaded", () => {
 
-const documentsList =
-    document.getElementById("documentsList");
+    configurarFormularioDocumento();
 
-const searchInput =
-    document.getElementById("searchInput");
+    carregarDocumentosPagina();
 
-const categorySelect =
-    document.getElementById("categorySelect");
+});
 
-const logoutButton =
-    document.getElementById("logoutButton");
+/*
+==========================================================
+FORMULÁRIO
+==========================================================
+*/
 
-const currentYear =
-    document.getElementById("currentYear");
+function configurarFormularioDocumento(){
 
-currentYear.textContent =
-    new Date().getFullYear();
+    const formulario = document.getElementById("formDocumento");
 
-/* ============================
-   VARIÁVEIS
-============================ */
+    if(!formulario) return;
 
-let cliente = null;
-
-let documentos = [];
-
-/* ============================
-   LOGIN
-============================ */
-
-async function verificarLogin() {
-
-    const {
-        data: { session }
-
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-
-        window.location.href =
-            "login.html";
-
-        return;
-
-    }
-
-    const {
-
-        data,
-        error
-
-    } = await supabase
-
-        .from("CLIENTES")
-
-        .select("*")
-
-        .eq(
-            "auth_id",
-            session.user.id
-        )
-
-        .single();
-
-    if (error || !data) {
-
-        alert("Cliente não encontrado.");
-
-        window.location.href =
-            "login.html";
-
-        return;
-
-    }
-
-    cliente = data;
-
-    carregarDocumentos();
+    formulario.onsubmit = salvarDocumento;
 
 }
 
-/* ============================
-   DOCUMENTOS
-============================ */
+/*
+==========================================================
+SALVAR DOCUMENTO
+==========================================================
+*/
 
-async function carregarDocumentos() {
+async function salvarDocumento(event){
 
-    documentsList.innerHTML = `
+    event.preventDefault();
 
-        <div class="loading">
+    const arquivo = document.getElementById("arquivoDocumento").files[0];
 
-            <i class="bi bi-arrow-repeat"></i>
+    if(!arquivo){
 
-            Carregando documentos...
+        alert("Selecione um documento.");
 
-        </div>
+        return;
 
-    `;
+    }
 
-    const {
+    const nomeArquivo =
+        Date.now() + "_" + arquivo.name;
 
-        data,
-        error
+    const caminho = await uploadDocumento(
+        arquivo,
+        nomeArquivo
+    );
 
-    } = await supabase
+    const documento = {
 
-        .from("DOCUMENTOS")
+        titulo:document.getElementById("documentoTitulo").value.trim(),
 
-        .select("*")
+        categoria:document.getElementById("documentoCategoria").value,
 
-        .eq(
-            "cliente_id",
-            cliente.id
-        )
+        cliente_id:document.getElementById("documentoCliente").value,
 
-        .order(
-            "created_at",
-            {
-                ascending: false
-            }
-        );
+        projeto_id:document.getElementById("documentoProjeto").value,
 
-    if (error) {
+        descricao:document.getElementById("descricaoDocumento").value.trim(),
+
+        arquivo:caminho
+
+    };
+
+    const { error } = await supabase
+
+        .from("documentos")
+
+        .insert([documento]);
+
+    if(error){
 
         console.error(error);
 
-        documentsList.innerHTML = `
-
-            <div class="error-state">
-
-                <i class="bi bi-x-circle"></i>
-
-                Erro ao carregar documentos.
-
-            </div>
-
-        `;
+        alert("Erro ao salvar documento.");
 
         return;
 
     }
 
-    documentos = data || [];
+    alert("Documento enviado com sucesso.");
 
-    atualizarLista();
+    document.getElementById("formDocumento").reset();
 
-}
-/* ============================
-   FILTROS
-============================ */
+    document.getElementById("modalDocumento")
+        ?.classList.remove("show");
 
-function atualizarLista() {
+    carregarDocumentosPagina();
 
-    const texto =
-        searchInput.value
-            .trim()
-            .toLowerCase();
+    if(typeof carregarDashboard==="function"){
 
-    const tipoSelecionado =
-        categorySelect.value;
+        carregarDashboard();
 
-    const lista = documentos.filter(
-
-        function (doc) {
-
-            const passouTexto =
-
-                (doc.nome || "")
-
-                .toLowerCase()
-
-                .includes(texto);
-
-            const passouTipo =
-
-                tipoSelecionado === "todos"
-
-                ||
-
-                doc.tipo === tipoSelecionado;
-
-            return (
-
-                passouTexto
-
-                &&
-
-                passouTipo
-
-            );
-
-        }
-
-    );
-
-    renderizar(lista);
+    }
 
 }
 
-/* ============================
-   RENDERIZAÇÃO
-============================ */
+/*
+==========================================================
+CARREGAR DOCUMENTOS
+==========================================================
+*/
 
-function renderizar(lista) {
+async function carregarDocumentosPagina(){
 
-    if (lista.length === 0) {
+    const tabela=document.getElementById("tabelaDocumentos");
 
-        documentsList.innerHTML = `
+    if(!tabela) return;
 
-            <div class="empty-state">
+    const { data,error }=await supabase
 
-                <i class="bi bi-folder2-open"></i>
+        .from("documentos")
 
+        .select(`
+            *,
+            clientes(nome),
+            projetos(nome)
+        `)
+
+        .order("created_at",{ascending:false});
+
+    if(error){
+
+        console.error(error);
+
+        return;
+
+    }
+
+    renderizarDocumentos(data||[]);
+
+}
+
+/*
+==========================================================
+RENDERIZAR
+==========================================================
+*/
+
+function renderizarDocumentos(lista){
+
+    const tabela=document.getElementById("tabelaDocumentos");
+
+    if(!tabela) return;
+
+    if(lista.length===0){
+
+        tabela.innerHTML=`
+        <tr>
+            <td colspan="7">
                 Nenhum documento encontrado.
-
-            </div>
-
-        `;
+            </td>
+        </tr>`;
 
         return;
 
     }
 
-    documentsList.innerHTML = "";
+    tabela.innerHTML=lista.map(doc=>`
 
-    lista.forEach(
+<tr>
 
-        function (doc) {
+<td>${escapeDocumento(doc.titulo)}</td>
 
-            const card =
-                document.createElement("div");
+<td>${escapeDocumento(doc.categoria)}</td>
 
-            card.className =
-                "document-card";
+<td>${escapeDocumento(doc.clientes?.nome||"-")}</td>
 
-            const dataFormatada =
+<td>${escapeDocumento(doc.projetos?.nome||"-")}</td>
 
-                doc.created_at
+<td>${formatarData(doc.created_at)}</td>
 
-                ?
+<td>
 
-                new Date(
-                    doc.created_at
-                ).toLocaleDateString(
-                    "pt-BR"
-                )
+<a
 
-                :
+class="btn-icon"
 
-                "-";
+target="_blank"
 
-            card.innerHTML = `
+href="${urlPublica("documentos",doc.arquivo)}">
 
-                <div class="document-icon">
+<i class="fa-solid fa-download"></i>
 
-                    <i class="${obterIcone(doc.arquivo)}"></i>
+</a>
 
-                </div>
+</td>
 
-                <div>
+<td>
 
-                    <div class="document-name">
+<button
 
-                        ${doc.nome}
+class="btn-icon delete"
 
-                    </div>
+onclick="excluirDocumento('${doc.id}','${doc.arquivo}')">
 
-                    <div class="document-meta">
+<i class="fa-solid fa-trash"></i>
 
-                        ${doc.tipo || "Sem categoria"}
+</button>
 
-                        •
+</td>
 
-                        ${dataFormatada}
+</tr>
 
-                    </div>
+`).join("");
 
-                </div>
+}
 
-                <div class="document-actions">
+/*
+==========================================================
+EXCLUIR
+==========================================================
+*/
 
-                    <button
-                        class="document-button visualizar"
-                    >
+async function excluirDocumento(id,arquivo){
 
-                        <i class="bi bi-eye"></i>
+    if(!confirm("Excluir documento?")) return;
 
-                        Visualizar
+    await removerArquivo(
 
-                    </button>
+        "documentos",
 
-                    <button
-                        class="document-button baixar"
-                    >
-
-                        <i class="bi bi-download"></i>
-
-                        Download
-
-                    </button>
-
-                </div>
-
-            `;
-
-            card
-
-                .querySelector(
-                    ".visualizar"
-                )
-
-                .addEventListener(
-
-                    "click",
-
-                    function () {
-
-                        visualizarDocumento(doc);
-
-                    }
-
-                );
-
-            card
-
-                .querySelector(
-                    ".baixar"
-                )
-
-                .addEventListener(
-
-                    "click",
-
-                    function () {
-
-                        baixarDocumento(doc);
-
-                    }
-
-                );
-
-            documentsList.appendChild(card);
-
-        }
+        arquivo
 
     );
 
-}
-/* ============================
-   ÍCONES
-============================ */
+    const { error } = await supabase
 
-function obterIcone(nomeArquivo) {
+        .from("documentos")
 
-    if (!nomeArquivo)
-        return "bi bi-file-earmark";
+        .delete()
 
-    const nome =
-        nomeArquivo.toLowerCase();
+        .eq("id",id);
 
-    if (nome.endsWith(".pdf"))
-        return "bi bi-file-earmark-pdf";
+    if(error){
 
-    if (
-        nome.endsWith(".doc") ||
-        nome.endsWith(".docx")
-    )
-        return "bi bi-file-earmark-word";
-
-    if (
-        nome.endsWith(".xls") ||
-        nome.endsWith(".xlsx")
-    )
-        return "bi bi-file-earmark-excel";
-
-    if (
-        nome.endsWith(".dwg")
-    )
-        return "bi bi-file-earmark-richtext";
-
-    if (
-        nome.endsWith(".zip") ||
-        nome.endsWith(".rar")
-    )
-        return "bi bi-file-earmark-zip";
-
-    if (
-        nome.endsWith(".jpg") ||
-        nome.endsWith(".jpeg") ||
-        nome.endsWith(".png") ||
-        nome.endsWith(".webp")
-    )
-        return "bi bi-image";
-
-    return "bi bi-file-earmark";
-
-}
-
-/* ============================
-   URL DO STORAGE
-============================ */
-
-function obterUrlArquivo(doc) {
-
-    if (!doc.arquivo)
-        return null;
-
-    const {
-
-        data
-
-    } = supabase.storage
-
-        .from(BUCKETS.DOCUMENTOS)
-
-        .getPublicUrl(
-            doc.arquivo
-        );
-
-    return data.publicUrl;
-
-}
-
-/* ============================
-   VISUALIZAR
-============================ */
-
-function visualizarDocumento(doc) {
-
-    const url =
-        obterUrlArquivo(doc);
-
-    if (!url) {
-
-        alert(
-            "Arquivo indisponível."
-        );
+        console.error(error);
 
         return;
 
     }
 
-    window.open(
-        url,
-        "_blank"
-    );
+    carregarDocumentosPagina();
+
+    if(typeof carregarDashboard==="function"){
+
+        carregarDashboard();
+
+    }
 
 }
 
-/* ============================
-   DOWNLOAD
-============================ */
+/*
+==========================================================
+PESQUISA
+==========================================================
+*/
 
-function baixarDocumento(doc) {
+async function pesquisarDocumento(texto){
 
-    const url =
-        obterUrlArquivo(doc);
+    const { data,error }=await supabase
 
-    if (!url) {
+        .from("documentos")
 
-        alert(
-            "Arquivo indisponível."
-        );
+        .select(`
+            *,
+            clientes(nome),
+            projetos(nome)
+        `)
+
+        .ilike("titulo",`%${texto}%`);
+
+    if(error){
+
+        console.error(error);
 
         return;
 
     }
 
-    const link =
-        document.createElement("a");
-
-    link.href =
-        url;
-
-    link.download =
-        doc.nome || "";
-
-    document.body.appendChild(
-        link
-    );
-
-    link.click();
-
-    link.remove();
+    renderizarDocumentos(data||[]);
 
 }
-/* ============================
-   EVENTOS
-============================ */
 
-searchInput.addEventListener(
+/*
+==========================================================
+UTIL
+==========================================================
+*/
 
-    "input",
+function escapeDocumento(texto){
 
-    atualizarLista
+    return String(texto||"")
 
-);
+    .replaceAll("&","&amp;")
 
-categorySelect.addEventListener(
+    .replaceAll("<","&lt;")
 
-    "change",
+    .replaceAll(">","&gt;")
 
-    atualizarLista
+    .replaceAll('"',"&quot;")
 
-);
+    .replaceAll("'","&#039;");
 
-/* ============================
-   LOGOUT
-============================ */
-
-logoutButton.addEventListener(
-
-    "click",
-
-    async function () {
-
-        await supabase.auth.signOut();
-
-        window.location.href =
-            "login.html";
-
-    }
-
-);
-
-/* ============================
-   INICIALIZAÇÃO
-============================ */
-
-document.addEventListener(
-
-    "DOMContentLoaded",
-
-    function () {
-
-        verificarLogin();
-
-    }
-
-);
+}
