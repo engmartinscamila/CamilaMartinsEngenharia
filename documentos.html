@@ -1,1 +1,585 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
 
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Documentos | Portal do Cliente</title>
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&family=Parisienne&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    >
+
+    <style>
+        :root {
+            --azul-principal: #061522;
+            --azul-secundario: #0b2133;
+            --azul-card: rgba(14, 38, 57, 0.88);
+            --dourado: #c5a667;
+            --dourado-claro: #e1ca93;
+            --branco: #f6f3eb;
+            --cinza-claro: #c3cad0;
+            --cinza: #8f9ba5;
+            --borda: rgba(197, 166, 103, 0.28);
+            --borda-clara: rgba(255, 255, 255, 0.08);
+            --sombra: 0 24px 60px rgba(0, 0, 0, 0.32);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: "Montserrat", sans-serif;
+            color: var(--branco);
+
+            background:
+                radial-gradient(
+                    circle at top left,
+                    rgba(197, 166, 103, 0.13),
+                    transparent 28%
+                ),
+                radial-gradient(
+                    circle at bottom right,
+                    rgba(39, 88, 120, 0.24),
+                    transparent 34%
+                ),
+                linear-gradient(
+                    135deg,
+                    #040e17,
+                    var(--azul-principal)
+                );
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        .topbar {
+            width: 100%;
+            min-height: 82px;
+            padding: 16px 6%;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+
+            border-bottom: 1px solid var(--borda-clara);
+            background: rgba(4, 14, 23, 0.82);
+
+            backdrop-filter: blur(18px);
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .brand {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .signature {
+            font-family: "Parisienne", cursive;
+            font-size: 2rem;
+            line-height: 1;
+            color: var(--dourado-claro);
+        }
+
+        .brand-subtitle {
+            margin-top: 4px;
+            font-family: "Cormorant Garamond", serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: var(--cinza-claro);
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .back-button,
+        .logout-button {
+            min-height: 42px;
+            padding: 0 16px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+
+            border: 1px solid var(--borda);
+            border-radius: 12px;
+
+            background: rgba(255, 255, 255, 0.035);
+            color: var(--dourado-claro);
+
+            cursor: pointer;
+            transition: 0.25s ease;
+        }
+
+        .back-button:hover,
+        .logout-button:hover {
+            transform: translateY(-2px);
+            background: rgba(197, 166, 103, 0.1);
+            border-color: var(--dourado);
+        }
+
+        .container {
+            width: min(1120px, 90%);
+            margin: 0 auto;
+            padding: 55px 0 70px;
+        }
+
+        .page-header {
+            padding: 38px;
+            border: 1px solid var(--borda);
+            border-radius: 28px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(255, 255, 255, 0.07),
+                    rgba(255, 255, 255, 0.02)
+                ),
+                var(--azul-card);
+
+            box-shadow: var(--sombra);
+        }
+
+        .eyebrow {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--dourado-claro);
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 0.17em;
+            text-transform: uppercase;
+        }
+
+        .page-title {
+            font-family: "Cormorant Garamond", serif;
+            font-size: clamp(2.5rem, 6vw, 4.2rem);
+            font-weight: 500;
+            line-height: 1;
+        }
+
+        .page-description {
+            max-width: 680px;
+            margin-top: 16px;
+            color: var(--cinza-claro);
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
+        .filters {
+            margin-top: 28px;
+            padding: 20px;
+
+            display: grid;
+            grid-template-columns: 1fr 240px;
+            gap: 14px;
+
+            border: 1px solid var(--borda-clara);
+            border-radius: 18px;
+            background: rgba(11, 33, 51, 0.72);
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--dourado);
+        }
+
+        .search-input,
+        .category-select {
+            width: 100%;
+            height: 48px;
+
+            border: 1px solid var(--borda-clara);
+            border-radius: 12px;
+
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--branco);
+
+            outline: none;
+        }
+
+        .search-input {
+            padding: 0 16px 0 45px;
+        }
+
+        .category-select {
+            padding: 0 14px;
+        }
+
+        .category-select option {
+            color: #061522;
+        }
+
+        .search-input:focus,
+        .category-select:focus {
+            border-color: var(--dourado);
+        }
+
+        .documents-section {
+            margin-top: 34px;
+        }
+
+        .section-title {
+            margin-bottom: 18px;
+            font-family: "Cormorant Garamond", serif;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .documents-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .document-card {
+            padding: 20px;
+
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 18px;
+
+            border: 1px solid var(--borda-clara);
+            border-radius: 18px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(255, 255, 255, 0.055),
+                    rgba(255, 255, 255, 0.015)
+                ),
+                rgba(11, 33, 51, 0.78);
+
+            transition: 0.25s ease;
+        }
+
+        .document-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--dourado);
+        }
+
+        .document-icon {
+            width: 54px;
+            height: 54px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 15px;
+            background: rgba(197, 166, 103, 0.11);
+            color: var(--dourado-claro);
+            font-size: 1.45rem;
+        }
+
+        .document-name {
+            font-family: "Cormorant Garamond", serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .document-meta {
+            margin-top: 5px;
+            color: var(--cinza);
+            font-size: 0.75rem;
+        }
+
+        .document-actions {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .document-button {
+            min-height: 40px;
+            padding: 0 14px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+
+            border: 1px solid var(--borda);
+            border-radius: 11px;
+
+            background: transparent;
+            color: var(--dourado-claro);
+
+            cursor: pointer;
+            transition: 0.25s ease;
+        }
+
+        .document-button:hover {
+            background: var(--dourado);
+            color: var(--azul-principal);
+        }
+
+        .loading,
+        .empty-state,
+        .error-state {
+            padding: 45px 20px;
+            border: 1px solid var(--borda-clara);
+            border-radius: 18px;
+            text-align: center;
+            background: rgba(11, 33, 51, 0.6);
+            color: var(--cinza-claro);
+        }
+
+        .loading i,
+        .empty-state i,
+        .error-state i {
+            display: block;
+            margin-bottom: 14px;
+            color: var(--dourado-claro);
+            font-size: 2rem;
+        }
+
+        .footer {
+            margin-top: 55px;
+            padding-top: 24px;
+            border-top: 1px solid var(--borda-clara);
+
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+
+            color: var(--cinza);
+            font-size: 0.72rem;
+        }
+
+        @media (max-width: 760px) {
+            .topbar {
+                padding: 14px 20px;
+            }
+
+            .signature {
+                font-size: 1.6rem;
+            }
+
+            .brand-subtitle {
+                font-size: 0.58rem;
+            }
+
+            .back-button span,
+            .logout-button span {
+                display: none;
+            }
+
+            .filters {
+                grid-template-columns: 1fr;
+            }
+
+            .document-card {
+                grid-template-columns: auto 1fr;
+            }
+
+            .document-actions {
+                grid-column: 1 / -1;
+                width: 100%;
+            }
+
+            .document-button {
+                flex: 1;
+            }
+
+            .footer {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="topbar">
+
+        <a href="index.html" class="brand">
+            <span class="signature">
+                Camila Martins
+            </span>
+
+            <span class="brand-subtitle">
+                Engenharia
+            </span>
+        </a>
+
+        <div class="topbar-actions">
+
+            <a
+                href="portal.html"
+                class="back-button"
+            >
+                <i class="bi bi-arrow-left"></i>
+                <span>Voltar ao portal</span>
+            </a>
+
+            <button
+                type="button"
+                class="logout-button"
+                id="logoutButton"
+            >
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Sair</span>
+            </button>
+
+        </div>
+    </header>
+
+    <main class="container">
+
+        <section class="page-header">
+
+            <span class="eyebrow">
+                Portal do Cliente
+            </span>
+
+            <h1 class="page-title">
+                Documentos
+            </h1>
+
+            <p class="page-description">
+                Consulte e baixe os documentos disponibilizados para o seu
+                projeto, incluindo contratos, plantas, memoriais, ARTs e
+                demais arquivos.
+            </p>
+
+        </section>
+
+        <section class="filters">
+
+            <div class="input-wrapper">
+                <i class="bi bi-search"></i>
+
+                <input
+                    type="search"
+                    class="search-input"
+                    id="searchInput"
+                    placeholder="Pesquisar documento..."
+                >
+            </div>
+
+            <select
+                class="category-select"
+                id="categorySelect"
+            >
+                <option value="todos">
+                    Todas as categorias
+                </option>
+
+                <option value="Projetos">
+                    Projetos
+                </option>
+
+                <option value="Contratos">
+                    Contratos
+                </option>
+
+                <option value="ART">
+                    ART
+                </option>
+
+                <option value="Memoriais">
+                    Memoriais
+                </option>
+
+                <option value="Orçamentos">
+                    Orçamentos
+                </option>
+
+                <option value="Outros">
+                    Outros
+                </option>
+            </select>
+
+        </section>
+
+        <section class="documents-section">
+
+            <h2 class="section-title">
+                Arquivos disponíveis
+            </h2>
+
+            <div
+                class="documents-list"
+                id="documentsList"
+            >
+                <div class="loading">
+                    <i class="bi bi-arrow-repeat"></i>
+                    Carregando documentos...
+                </div>
+            </div>
+
+        </section>
+
+        <footer class="footer">
+
+            <p>
+                © <span id="currentYear"></span>
+                Camila Martins Engenharia
+            </p>
+
+            <p>
+                <i class="bi bi-shield-lock"></i>
+                Ambiente exclusivo para clientes autorizados
+            </p>
+
+        </footer>
+
+    </main>
+
+    <script
+        type="module"
+        src="./js/documentos.js"
+    ></script>
+
+</body>
+</html>
