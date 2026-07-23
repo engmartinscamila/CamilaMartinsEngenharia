@@ -5,16 +5,19 @@ CAMILA MARTINS ENGENHARIA
 DATABASE.JS
 CAMADA CENTRAL DO SISTEMA
 
+TODOS OS MÓDULOS UTILIZAM ESTE ARQUIVO
+
 ADMIN
 CLIENTES
 PROJETOS
 DOCUMENTOS
 FOTOS
+BIBLIOTECA
 FINANCEIRO
 AGENDA
 CONFIGURAÇÕES
 
-VERSÃO DEFINITIVA
+SUPABASE
 ==========================================================
 */
 
@@ -30,20 +33,22 @@ async function dbCriarCliente(cliente){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("clientes")
+
     .insert([cliente])
+
     .select()
+
     .single();
 
 
 
     if(error){
 
-        console.error(
-            "Erro criar cliente:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -52,7 +57,10 @@ async function dbCriarCliente(cliente){
 
     return data;
 
+
 }
+
+
 
 
 
@@ -62,9 +70,13 @@ async function dbBuscarClientes(){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("clientes")
+
     .select("*")
+
     .order(
         "created_at",
         {
@@ -76,10 +88,7 @@ async function dbBuscarClientes(){
 
     if(error){
 
-        console.error(
-            "Erro buscar clientes:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -88,7 +97,10 @@ async function dbBuscarClientes(){
 
     return data || [];
 
+
 }
+
+
 
 
 
@@ -98,23 +110,25 @@ async function dbBuscarClientePorId(id){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("clientes")
+
     .select("*")
+
     .eq(
         "id",
         id
     )
+
     .single();
 
 
 
     if(error){
 
-        console.error(
-            "Erro buscar cliente:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -123,7 +137,10 @@ async function dbBuscarClientePorId(id){
 
     return data;
 
+
 }
+
+
 
 
 
@@ -133,24 +150,27 @@ async function dbEditarCliente(id,cliente){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("clientes")
+
     .update(cliente)
+
     .eq(
         "id",
         id
     )
+
     .select()
+
     .single();
 
 
 
     if(error){
 
-        console.error(
-            "Erro editar cliente:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -159,7 +179,10 @@ async function dbEditarCliente(id,cliente){
 
     return data;
 
+
 }
+
+
 
 
 
@@ -169,9 +192,13 @@ async function dbExcluirCliente(id){
 
 
     const {error} =
+
     await supabaseClient
+
     .from("clientes")
+
     .delete()
+
     .eq(
         "id",
         id
@@ -181,10 +208,7 @@ async function dbExcluirCliente(id){
 
     if(error){
 
-        console.error(
-            "Erro excluir cliente:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -193,7 +217,10 @@ async function dbExcluirCliente(id){
 
     return true;
 
+
 }
+
+
 
 
 
@@ -207,25 +234,26 @@ async function dbExcluirCliente(id){
 
 
 
-
 async function dbCriarProjeto(projeto){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("projetos")
+
     .insert([projeto])
+
     .select()
+
     .single();
 
 
 
     if(error){
 
-        console.error(
-            "Erro criar projeto:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -234,7 +262,10 @@ async function dbCriarProjeto(projeto){
 
     return data;
 
+
 }
+
+
 
 
 
@@ -244,14 +275,18 @@ async function dbBuscarProjetos(){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("projetos")
+
     .select(`
         *,
         clientes(
             nome
         )
     `)
+
     .order(
         "created_at",
         {
@@ -263,10 +298,7 @@ async function dbBuscarProjetos(){
 
     if(error){
 
-        console.error(
-            "Erro buscar projetos:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -275,7 +307,10 @@ async function dbBuscarProjetos(){
 
     return data || [];
 
+
 }
+
+
 
 
 
@@ -285,23 +320,25 @@ async function dbBuscarProjetoPorId(id){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("projetos")
+
     .select("*")
+
     .eq(
         "id",
         id
     )
+
     .single();
 
 
 
     if(error){
 
-        console.error(
-            "Erro buscar projeto:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -310,7 +347,10 @@ async function dbBuscarProjetoPorId(id){
 
     return data;
 
+
 }
+
+
 
 
 
@@ -320,9 +360,13 @@ async function dbBuscarProjetosCliente(cliente_id){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("projetos")
+
     .select("*")
+
     .eq(
         "cliente_id",
         cliente_id
@@ -332,10 +376,7 @@ async function dbBuscarProjetosCliente(cliente_id){
 
     if(error){
 
-        console.error(
-            "Erro buscar projetos cliente:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -344,7 +385,10 @@ async function dbBuscarProjetosCliente(cliente_id){
 
     return data || [];
 
+
 }
+
+
 
 
 
@@ -354,24 +398,27 @@ async function dbEditarProjeto(id,projeto){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("projetos")
+
     .update(projeto)
+
     .eq(
         "id",
         id
     )
+
     .select()
+
     .single();
 
 
 
     if(error){
 
-        console.error(
-            "Erro editar projeto:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -380,7 +427,10 @@ async function dbEditarProjeto(id,projeto){
 
     return data;
 
+
 }
+
+
 
 
 
@@ -390,9 +440,13 @@ async function dbExcluirProjeto(id){
 
 
     const {error} =
+
     await supabaseClient
+
     .from("projetos")
+
     .delete()
+
     .eq(
         "id",
         id
@@ -402,10 +456,7 @@ async function dbExcluirProjeto(id){
 
     if(error){
 
-        console.error(
-            "Erro excluir projeto:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -413,6 +464,7 @@ async function dbExcluirProjeto(id){
 
 
     return true;
+
 
 }
 // ==========================================================
@@ -425,20 +477,22 @@ async function dbSalvarDocumento(documento){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("documentos")
+
     .insert([documento])
+
     .select()
+
     .single();
 
 
 
     if(error){
 
-        console.error(
-            "Erro salvar documento:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -447,7 +501,10 @@ async function dbSalvarDocumento(documento){
 
     return data;
 
+
 }
+
+
 
 
 
@@ -457,8 +514,11 @@ async function dbBuscarDocumentos(){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("documentos")
+
     .select(`
         *,
         clientes(
@@ -468,6 +528,7 @@ async function dbBuscarDocumentos(){
             nome
         )
     `)
+
     .order(
         "created_at",
         {
@@ -479,10 +540,7 @@ async function dbBuscarDocumentos(){
 
     if(error){
 
-        console.error(
-            "Erro buscar documentos:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -491,7 +549,10 @@ async function dbBuscarDocumentos(){
 
     return data || [];
 
+
 }
+
+
 
 
 
@@ -501,9 +562,13 @@ async function dbBuscarDocumentosCliente(cliente_id){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("documentos")
+
     .select("*")
+
     .eq(
         "cliente_id",
         cliente_id
@@ -513,10 +578,7 @@ async function dbBuscarDocumentosCliente(cliente_id){
 
     if(error){
 
-        console.error(
-            "Erro documentos cliente:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -525,7 +587,10 @@ async function dbBuscarDocumentosCliente(cliente_id){
 
     return data || [];
 
+
 }
+
+
 
 
 
@@ -535,9 +600,13 @@ async function dbExcluirDocumento(id){
 
 
     const {error} =
+
     await supabaseClient
+
     .from("documentos")
+
     .delete()
+
     .eq(
         "id",
         id
@@ -547,10 +616,7 @@ async function dbExcluirDocumento(id){
 
     if(error){
 
-        console.error(
-            "Erro excluir documento:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -559,7 +625,9 @@ async function dbExcluirDocumento(id){
 
     return true;
 
+
 }
+
 
 
 
@@ -573,24 +641,27 @@ async function dbExcluirDocumento(id){
 
 
 
+
 async function dbSalvarFoto(foto){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("fotos")
+
     .insert([foto])
+
     .select()
+
     .single();
 
 
 
     if(error){
 
-        console.error(
-            "Erro salvar foto:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -599,7 +670,10 @@ async function dbSalvarFoto(foto){
 
     return data;
 
+
 }
+
+
 
 
 
@@ -609,8 +683,11 @@ async function dbBuscarFotos(){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("fotos")
+
     .select(`
         *,
         clientes(
@@ -620,6 +697,7 @@ async function dbBuscarFotos(){
             nome
         )
     `)
+
     .order(
         "created_at",
         {
@@ -631,10 +709,7 @@ async function dbBuscarFotos(){
 
     if(error){
 
-        console.error(
-            "Erro buscar fotos:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -643,7 +718,10 @@ async function dbBuscarFotos(){
 
     return data || [];
 
+
 }
+
+
 
 
 
@@ -653,9 +731,13 @@ async function dbBuscarFotosProjeto(projeto_id){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("fotos")
+
     .select("*")
+
     .eq(
         "projeto_id",
         projeto_id
@@ -665,10 +747,7 @@ async function dbBuscarFotosProjeto(projeto_id){
 
     if(error){
 
-        console.error(
-            "Erro fotos projeto:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -677,7 +756,10 @@ async function dbBuscarFotosProjeto(projeto_id){
 
     return data || [];
 
+
 }
+
+
 
 
 
@@ -687,9 +769,13 @@ async function dbExcluirFoto(id){
 
 
     const {error} =
+
     await supabaseClient
+
     .from("fotos")
+
     .delete()
+
     .eq(
         "id",
         id
@@ -699,10 +785,7 @@ async function dbExcluirFoto(id){
 
     if(error){
 
-        console.error(
-            "Erro excluir foto:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -711,101 +794,6 @@ async function dbExcluirFoto(id){
 
     return true;
 
-}
-
-
-
-
-
-
-
-// ==========================================================
-// STORAGE
-// ==========================================================
-
-
-
-async function dbUploadArquivo(bucket,caminho,arquivo){
-
-
-    const {data,error} =
-    await supabaseClient
-    .storage
-    .from(bucket)
-    .upload(
-        caminho,
-        arquivo
-    );
-
-
-
-    if(error){
-
-        console.error(
-            "Erro upload:",
-            error
-        );
-
-        throw error;
-
-    }
-
-
-    return data;
-
-}
-
-
-
-
-
-function dbGerarUrlArquivo(bucket,caminho){
-
-
-    const {data} =
-    supabaseClient
-    .storage
-    .from(bucket)
-    .getPublicUrl(
-        caminho
-    );
-
-
-
-    return data.publicUrl;
-
-}
-
-
-
-
-
-async function dbExcluirArquivo(bucket,caminho){
-
-
-    const {data,error} =
-    await supabaseClient
-    .storage
-    .from(bucket)
-    .remove([
-        caminho
-    ]);
-
-
-
-    if(error){
-
-        console.error(
-            "Erro excluir arquivo:",
-            error
-        );
-
-        throw error;
-
-    }
-
-
-    return data;
 
 }
 // ==========================================================
@@ -818,20 +806,22 @@ async function dbSalvarArquivoBiblioteca(arquivo){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("biblioteca")
+
     .insert([arquivo])
+
     .select()
+
     .single();
 
 
 
     if(error){
 
-        console.error(
-            "Erro salvar biblioteca:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -840,7 +830,10 @@ async function dbSalvarArquivoBiblioteca(arquivo){
 
     return data;
 
+
 }
+
+
 
 
 
@@ -850,9 +843,13 @@ async function dbBuscarBiblioteca(){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("biblioteca")
+
     .select("*")
+
     .order(
         "created_at",
         {
@@ -864,10 +861,7 @@ async function dbBuscarBiblioteca(){
 
     if(error){
 
-        console.error(
-            "Erro buscar biblioteca:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -876,7 +870,10 @@ async function dbBuscarBiblioteca(){
 
     return data || [];
 
+
 }
+
+
 
 
 
@@ -886,9 +883,13 @@ async function dbExcluirArquivoBiblioteca(id){
 
 
     const {error} =
+
     await supabaseClient
+
     .from("biblioteca")
+
     .delete()
+
     .eq(
         "id",
         id
@@ -898,10 +899,7 @@ async function dbExcluirArquivoBiblioteca(id){
 
     if(error){
 
-        console.error(
-            "Erro excluir biblioteca:",
-            error
-        );
+        console.error(error);
 
         throw error;
 
@@ -909,6 +907,7 @@ async function dbExcluirArquivoBiblioteca(id){
 
 
     return true;
+
 
 }
 
@@ -918,10 +917,114 @@ async function dbExcluirArquivoBiblioteca(id){
 
 
 
+
+
+// ==========================================================
+// STORAGE SUPABASE
+// ==========================================================
+
+
+
+
+async function dbUploadArquivo(bucket,caminho,arquivo){
+
+
+    const {data,error} =
+
+    await supabaseClient
+
+    .storage
+
+    .from(bucket)
+
+    .upload(
+        caminho,
+        arquivo
+    );
+
+
+
+    if(error){
+
+        console.error(error);
+
+        throw error;
+
+    }
+
+
+    return data;
+
+
+}
+
+
+
+
+
+
+
+function dbGerarUrlArquivo(bucket,caminho){
+
+
+    const {data} =
+
+    supabaseClient
+
+    .storage
+
+    .from(bucket)
+
+    .getPublicUrl(
+        caminho
+    );
+
+
+
+    return data.publicUrl;
+
+
+}
+
+
+
+
+
+
+
+async function dbExcluirArquivoStorage(bucket,caminho){
+
+
+    const {data,error} =
+
+    await supabaseClient
+
+    .storage
+
+    .from(bucket)
+
+    .remove([
+        caminho
+    ]);
+
+
+
+    if(error){
+
+        console.error(error);
+
+        throw error;
+
+    }
+
+
+    return data;
+
+
+}
 // ==========================================================
 // FINANCEIRO
 // ==========================================================
-
 
 
 
@@ -929,10 +1032,15 @@ async function dbCriarLancamentoFinanceiro(lancamento){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("financeiro")
+
     .insert([lancamento])
+
     .select()
+
     .single();
 
 
@@ -951,7 +1059,10 @@ async function dbCriarLancamentoFinanceiro(lancamento){
 
     return data;
 
+
 }
+
+
 
 
 
@@ -961,14 +1072,18 @@ async function dbBuscarFinanceiro(){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("financeiro")
+
     .select(`
         *,
         projetos(
             nome
         )
     `)
+
     .order(
         "created_at",
         {
@@ -992,7 +1107,10 @@ async function dbBuscarFinanceiro(){
 
     return data || [];
 
+
 }
+
+
 
 
 
@@ -1002,14 +1120,20 @@ async function dbEditarLancamentoFinanceiro(id,lancamento){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("financeiro")
+
     .update(lancamento)
+
     .eq(
         "id",
         id
     )
+
     .select()
+
     .single();
 
 
@@ -1028,7 +1152,10 @@ async function dbEditarLancamentoFinanceiro(id,lancamento){
 
     return data;
 
+
 }
+
+
 
 
 
@@ -1038,9 +1165,13 @@ async function dbExcluirLancamentoFinanceiro(id){
 
 
     const {error} =
+
     await supabaseClient
+
     .from("financeiro")
+
     .delete()
+
     .eq(
         "id",
         id
@@ -1062,7 +1193,10 @@ async function dbExcluirLancamentoFinanceiro(id){
 
     return true;
 
+
 }
+
+
 
 
 
@@ -1106,6 +1240,7 @@ async function dbResumoFinanceiro(){
         }
 
 
+
     });
 
 
@@ -1134,14 +1269,19 @@ async function dbResumoFinanceiro(){
 
 
 
-async function dbCriarEventoAgenda(evento){
+async function dbCriarEvento(evento){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("agenda")
+
     .insert([evento])
+
     .select()
+
     .single();
 
 
@@ -1160,7 +1300,10 @@ async function dbCriarEventoAgenda(evento){
 
     return data;
 
+
 }
+
+
 
 
 
@@ -1170,9 +1313,21 @@ async function dbBuscarAgenda(){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("agenda")
-    .select("*")
+
+    .select(`
+        *,
+        clientes(
+            nome
+        ),
+        projetos(
+            nome
+        )
+    `)
+
     .order(
         "data",
         {
@@ -1196,24 +1351,33 @@ async function dbBuscarAgenda(){
 
     return data || [];
 
+
 }
 
 
 
 
 
-async function dbEditarEventoAgenda(id,evento){
+
+
+async function dbEditarEvento(id,event){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("agenda")
-    .update(evento)
+
+    .update(event)
+
     .eq(
         "id",
         id
     )
+
     .select()
+
     .single();
 
 
@@ -1232,19 +1396,26 @@ async function dbEditarEventoAgenda(id,evento){
 
     return data;
 
+
 }
 
 
 
 
 
-async function dbExcluirEventoAgenda(id){
+
+
+async function dbExcluirEvento(id){
 
 
     const {error} =
+
     await supabaseClient
+
     .from("agenda")
+
     .delete()
+
     .eq(
         "id",
         id
@@ -1266,6 +1437,7 @@ async function dbExcluirEventoAgenda(id){
 
     return true;
 
+
 }
 
 
@@ -1275,7 +1447,7 @@ async function dbExcluirEventoAgenda(id){
 
 
 // ==========================================================
-// CONFIGURAÇÕES DA EMPRESA
+// CONFIGURAÇÕES
 // ==========================================================
 
 
@@ -1284,10 +1456,15 @@ async function dbBuscarConfiguracoes(){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("configuracoes")
+
     .select("*")
+
     .limit(1)
+
     .single();
 
 
@@ -1306,7 +1483,10 @@ async function dbBuscarConfiguracoes(){
 
     return data;
 
+
 }
+
+
 
 
 
@@ -1316,10 +1496,15 @@ async function dbSalvarConfiguracoes(config){
 
 
     const {data,error} =
+
     await supabaseClient
+
     .from("configuracoes")
+
     .upsert(config)
+
     .select()
+
     .single();
 
 
@@ -1337,6 +1522,7 @@ async function dbSalvarConfiguracoes(config){
 
 
     return data;
+
 
 }
 // ==========================================================
@@ -1356,7 +1542,9 @@ async function dbDashboardTotais(){
 
         documentos,
 
-        fotos
+        fotos,
+
+        biblioteca
 
 
     ] = await Promise.all([
@@ -1371,7 +1559,11 @@ async function dbDashboardTotais(){
         dbBuscarDocumentos(),
 
 
-        dbBuscarFotos()
+        dbBuscarFotos(),
+
+
+        dbBuscarBiblioteca()
+
 
 
     ]);
@@ -1395,7 +1587,11 @@ async function dbDashboardTotais(){
 
 
         fotos:
-        fotos.length
+        fotos.length,
+
+
+        biblioteca:
+        biblioteca.length
 
 
     };
@@ -1429,6 +1625,8 @@ async function dbClientesRecentes(){
 
 
 
+
+
 async function dbProjetosRecentes(){
 
 
@@ -1444,6 +1642,8 @@ async function dbProjetosRecentes(){
 
 
 }
+
+
 
 
 
@@ -1469,6 +1669,8 @@ async function dbDocumentosRecentes(){
 
 
 
+
+
 async function dbProximosEventos(){
 
 
@@ -1482,16 +1684,11 @@ async function dbProximosEventos(){
 
 
 
-    return agenda
-    .filter(evento=>{
+    return agenda.filter(evento=>{
 
 
-        const dataEvento =
-        new Date(evento.data);
-
-
-
-        return dataEvento >= hoje;
+        return new Date(evento.data)
+        >= hoje;
 
 
     })
@@ -1508,141 +1705,22 @@ async function dbProximosEventos(){
 
 
 
-async function dbBuscarResumoDashboard(){
 
-
-    const financeiro =
-    await dbResumoFinanceiro();
-
-
-
-    const totais =
-    await dbDashboardTotais();
-
-
-
-
-    return {
-
-
-        ...totais,
-
-
-        financeiro
-
-
-    };
-
-
-}
 // ==========================================================
-// AUTENTICAÇÃO / SESSÃO
+// AUTENTICAÇÃO
 // ==========================================================
-
-
-
-
-async function dbObterUsuarioAtual(){
-
-
-    const {data,error} =
-    await supabaseClient
-    .auth
-    .getSession();
-
-
-
-    if(error){
-
-        console.error(
-            "Erro obter sessão:",
-            error
-        );
-
-        throw error;
-
-    }
-
-
-
-    return data.session;
-
-
-}
-
-
-
-
-
-
-
-async function dbUsuarioLogado(){
-
-
-    const sessao =
-    await dbObterUsuarioAtual();
-
-
-
-    if(!sessao){
-
-        return null;
-
-    }
-
-
-
-    return sessao.user;
-
-
-}
-
-
-
-
-
-
-
-async function dbSairSistema(){
-
-
-    const {error} =
-    await supabaseClient
-    .auth
-    .signOut();
-
-
-
-    if(error){
-
-        console.error(
-            "Erro sair sistema:",
-            error
-        );
-
-        throw error;
-
-    }
-
-
-    return true;
-
-
-}
-
-
-
-
 
 
 
 async function dbLogin(email,senha){
 
 
-
     const {data,error} =
+
     await supabaseClient
+
     .auth
+
     .signInWithPassword({
 
         email,
@@ -1650,8 +1728,6 @@ async function dbLogin(email,senha){
         password:senha
 
     });
-
-
 
 
 
@@ -1667,14 +1743,86 @@ async function dbLogin(email,senha){
     }
 
 
-
     return data;
+
+
+}
+
+
+
+
+
+
+
+async function dbUsuarioAtual(){
+
+
+    const {data,error} =
+
+    await supabaseClient
+
+    .auth
+
+    .getUser();
+
+
+
+    if(error){
+
+        console.error(
+            "Erro usuário:",
+            error
+        );
+
+        throw error;
+
+    }
+
+
+    return data.user;
+
+
+}
+
+
+
+
+
+
+
+async function dbSairSistema(){
+
+
+    const {error} =
+
+    await supabaseClient
+
+    .auth
+
+    .signOut();
+
+
+
+    if(error){
+
+        console.error(
+            "Erro logout:",
+            error
+        );
+
+        throw error;
+
+    }
+
+
+    return true;
 
 
 }
 // ==========================================================
 // COMPATIBILIDADE COM SCRIPTS EXISTENTES
 // ==========================================================
+
 
 
 // CLIENTES
@@ -1805,7 +1953,7 @@ async function buscarAgenda(){
 
 
 // ==========================================================
-// FUNÇÕES AUXILIARES GERAIS
+// FUNÇÕES AUXILIARES
 // ==========================================================
 
 
@@ -1869,8 +2017,6 @@ function dbEscaparHTML(valor){
 
 
 }
-
-
 
 
 
