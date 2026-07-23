@@ -1,303 +1,635 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
+
 
 <head>
 
+
 <meta charset="UTF-8">
+
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Clientes | Camila Martins Engenharia</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<title>
+Clientes | Camila Martins Engenharia
+</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Parisienne&display=swap" rel="stylesheet">
+
 
 <link rel="stylesheet" href="css/admin.css">
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Parisienne&display=swap"
+rel="stylesheet">
+
+
 
 </head>
+
 
 
 <body>
 
 
+
 <div class="layout">
+
 
 
 <aside class="sidebar">
 
 
+
 <div class="logo">
 
+
 <h1 class="assinatura">
+
 Camila Martins
+
 </h1>
 
+
 <span>
+
 ENGENHARIA
+
 </span>
 
+
 </div>
+
+
+
+
 
 
 <nav class="menu-lateral">
 
 
+
 <a href="admin.html" class="menu-item">
+
 <i class="fa-solid fa-house"></i>
-<span>Dashboard</span>
+
+Dashboard
+
 </a>
+
 
 
 <a href="clientes.html" class="menu-item ativo">
+
 <i class="fa-solid fa-users"></i>
-<span>Clientes</span>
+
+Clientes
+
 </a>
+
 
 
 <a href="projetos.html" class="menu-item">
+
 <i class="fa-solid fa-compass-drafting"></i>
-<span>Projetos</span>
+
+Projetos
+
 </a>
+
 
 
 <a href="documentos.html" class="menu-item">
+
 <i class="fa-solid fa-folder-open"></i>
-<span>Documentos</span>
+
+Documentos
+
 </a>
+
 
 
 <a href="biblioteca.html" class="menu-item">
+
 <i class="fa-solid fa-book-open"></i>
-<span>Biblioteca</span>
+
+Biblioteca
+
 </a>
+
 
 
 <a href="fotos.html" class="menu-item">
+
 <i class="fa-solid fa-images"></i>
-<span>Fotos</span>
+
+Fotos
+
 </a>
+
 
 
 <a href="financeiro.html" class="menu-item">
+
 <i class="fa-solid fa-chart-line"></i>
-<span>Financeiro</span>
+
+Financeiro
+
 </a>
+
 
 
 <a href="agenda.html" class="menu-item">
-<i class="fa-solid fa-calendar"></i>
-<span>Agenda</span>
+
+<i class="fa-solid fa-calendar-days"></i>
+
+Agenda
+
 </a>
+
 
 
 <a href="configuracoes.html" class="menu-item">
+
 <i class="fa-solid fa-gear"></i>
-<span>Configurações</span>
+
+Configurações
+
 </a>
+
 
 
 </nav>
 
 
-<button id="logoutButton" class="btn-sair">
+
+
+
+<button
+id="logoutButton"
+class="btn-sair">
+
 
 <i class="fa-solid fa-right-from-bracket"></i>
 
+
 Sair
+
 
 </button>
 
 
+
 </aside>
-
-
-
 <main class="conteudo">
 
 
 
 <header class="topbar">
 
+
 <div>
 
+
 <h2>
+
 Clientes
+
 </h2>
 
+
+
 <p>
-Gerenciamento de clientes
+
+Gerenciamento de clientes cadastrados
+
 </p>
+
 
 </div>
 
 
+
+
+<div class="acoes-topo">
+
+
 <button id="novoCliente">
+
 
 <i class="fa-solid fa-user-plus"></i>
 
+
 Novo Cliente
 
+
 </button>
+
+
+
+</div>
+
 
 
 </header>
 
 
 
+
+
+
+
+
 <section class="card-grande">
+
 
 
 <div class="card-header">
 
 
 <h2>
+
 Lista de Clientes
+
 </h2>
+
+
 
 
 <div class="acoes-card">
 
 
+
 <input
 type="search"
-id="pesquisarClientes"
+id="pesquisaCliente"
 placeholder="Pesquisar cliente...">
 
 
-<button id="btnPesquisarClientes">
+
+<button
+id="btnPesquisarCliente">
+
 
 <i class="fa-solid fa-search"></i>
+
 
 </button>
 
 
-</div>
-
 
 </div>
 
 
 
-<table class="tabela">
+</div>
 
 
-<thead>
-
-<tr>
-
-<th>Nome</th>
-
-<th>Telefone</th>
-
-<th>Email</th>
-
-<th>Cidade</th>
-
-<th>Estado</th>
-
-<th>Status</th>
-
-<th>Ações</th>
-
-</tr>
-
-</thead>
 
 
-<tbody id="tabelaClientes">
 
 
-</tbody>
 
 
-</table>
+<div
+id="listaClientes"
+class="lista-clientes">
+
+
+</div>
+
 
 
 </section>
 
 
 
-</main>
-
-
-</div>
 
 
 
 
 
-<div id="modalCliente" class="modal">
+
+<!-- MODAL CLIENTE -->
+
+
+<div
+id="modalCliente"
+class="modal">
+
 
 
 <div class="modal-content">
 
 
+
 <div class="modal-header">
 
+
 <h2>
-Novo Cliente
+
+Cadastro de Cliente
+
 </h2>
 
 
-<button id="fecharModalCliente">
+
+
+<button
+id="fecharModalCliente">
+
 
 <i class="fa-solid fa-xmark"></i>
 
+
 </button>
+
+
 
 </div>
 
 
 
-<form id="formCliente">
 
 
-<input id="clienteNome" placeholder="Nome completo" required>
+<form
+id="formCliente">
 
-<input id="clienteCpf" placeholder="CPF/CNPJ">
 
-<input id="clienteTelefone" placeholder="Telefone">
 
-<input id="clienteEmail" placeholder="E-mail">
+<div class="form-grid">
 
-<input id="clienteEndereco" placeholder="Endereço">
 
-<input id="clienteCidade" placeholder="Cidade">
 
-<input id="clienteEstado" placeholder="Estado">
+<div class="campo">
 
-<input id="clienteCep" placeholder="CEP">
+
+<label>
+
+Nome Completo
+
+</label>
+
+
+<input
+id="clienteNome"
+type="text"
+required>
+
+
+
+</div>
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+CPF/CNPJ
+
+</label>
+
+
+<input
+id="clienteCpf"
+type="text">
+
+
+
+</div>
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+Telefone
+
+</label>
+
+
+<input
+id="clienteTelefone"
+type="text">
+
+
+
+</div>
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+E-mail
+
+</label>
+
+
+<input
+id="clienteEmail"
+type="email">
+
+
+
+</div>
+
+
+
+
+
+<div class="campo campo-full">
+
+
+<label>
+
+Endereço
+
+</label>
+
+
+<input
+id="clienteEndereco"
+type="text">
+
+
+
+</div>
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+Cidade
+
+</label>
+
+
+<input
+id="clienteCidade"
+type="text">
+
+
+
+</div>
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+Estado
+
+</label>
+
+
+<input
+id="clienteEstado"
+type="text">
+
+
+
+</div>
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+CEP
+
+</label>
+
+
+<input
+id="clienteCep"
+type="text">
+
+
+
+</div>
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+Status
+
+</label>
 
 
 <select id="clienteStatus">
 
+
 <option value="ativo">
+
 Ativo
+
 </option>
+
+
 
 <option value="orcamento">
+
 Orçamento
+
 </option>
+
+
 
 <option value="pausado">
+
 Pausado
+
 </option>
 
+
+
 <option value="concluido">
+
 Concluído
+
 </option>
 
 
 </select>
 
 
+</div>
+
+
+
+
+
+<div class="campo campo-full">
+
+
+<label>
+
+Observações
+
+</label>
+
 
 <textarea
 id="clienteObservacoes"
-placeholder="Observações">
+rows="5">
+
 </textarea>
+
+
+</div>
+
+
+
+
+
+</div>
+<div class="modal-footer">
+
+
+<button
+type="button"
+id="cancelarCliente">
+
+Cancelar
+
+</button>
 
 
 
@@ -311,6 +643,10 @@ Salvar Cliente
 
 
 
+</div>
+
+
+
 </form>
 
 
@@ -318,58 +654,187 @@ Salvar Cliente
 </div>
 
 
+
 </div>
 
 
 
 
 
+
+
+
+
+<!-- ÁREA DE DETALHES -->
+
+<section class="painel-principal">
+
+
+
+<div class="card-grande">
+
+
+<div class="card-header">
+
+
+<h2>
+
+Detalhes do Cliente
+
+</h2>
+
+
+
+</div>
+
+
+
+
+
+<div
+id="detalhesCliente"
+class="detalhes">
+
+
+<p>
+
+Selecione um cliente para visualizar os detalhes.
+
+</p>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+<div class="card-grande">
+
+
+<div class="card-header">
+
+
+<h2>
+
+Projetos do Cliente
+
+</h2>
+
+
+</div>
+
+
+
+
+<div
+id="projetosCliente"
+class="lista-projetos">
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+<div class="card-grande">
+
+
+<div class="card-header">
+
+
+<h2>
+
+Documentos do Cliente
+
+</h2>
+
+
+</div>
+
+
+
+<div
+id="documentosCliente"
+class="lista-documentos">
+
+
+</div>
+
+
+
+</div>
+
+
+
+</section>
+</main>
+
+
+
+</div>
+
+
+
+
+
+
+<!-- LOADING -->
+
+<div
+id="loading"
+class="loading">
+
+
+<div class="spinner"></div>
+
+
+<p>
+
+Carregando...
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- SCRIPTS -->
+
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 
 <script src="js/supabase.js"></script>
 
+
+<script src="js/database.js"></script>
+
+
 <script src="js/auth.js"></script>
+
 
 <script src="js/clientes.js"></script>
 
-  <script>
 
-document.getElementById("novoCliente")?.addEventListener("click", () => {
-
-    document
-    .getElementById("modalCliente")
-    .classList.add("show");
-
-});
-
-
-document.getElementById("fecharModalCliente")?.addEventListener("click", () => {
-
-    document
-    .getElementById("modalCliente")
-    .classList.remove("show");
-
-});
-
-
-document.getElementById("logoutButton")?.addEventListener("click", async () => {
-
-    await supabase.auth.signOut();
-
-    location.href="login.html";
-
-});
-
-
-</script>
 
 </body>
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <script src="js/supabase.js"></script>
-    <script src="js/database.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/clientes.js"></script>
-</body>
+
 </html>
