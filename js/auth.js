@@ -6,7 +6,7 @@ AUTH
 */
 async function possuiSessao(){
 
-    const { data } = await supabase.auth.getSession();
+   const { data } = await supabaseClient.auth.getSession();
 
     return !!data.session;
 
