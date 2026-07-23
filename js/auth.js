@@ -5,10 +5,7 @@ AUTH
 ==========================================================
 */
 
-const supabase = window.supabase.createClient(
-    "https://hghtwlopqztfcosfxafd.supabase.co",
-    "sb_publishable_-unXLR2NSSACLs01Sr60GA_uCFnJ74f"
-);
+// conexão carregada pelo supabase.js
 
 document.addEventListener("DOMContentLoaded", () => {
 
