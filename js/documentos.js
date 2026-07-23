@@ -42,9 +42,6 @@ document.addEventListener(
 async function iniciarDocumentos(){
 
 
-    configurarEventosDocumento();
-
-
     await carregarDocumentos();
 
 
