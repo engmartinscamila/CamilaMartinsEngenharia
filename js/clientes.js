@@ -2,18 +2,36 @@
 ==========================================================
 CAMILA MARTINS ENGENHARIA
 CLIENTES
-VERSÃO FINAL SUPABASE
+VERSÃO FINAL
 ==========================================================
 */
 
 
 document.addEventListener("DOMContentLoaded", () => {
 
+    iniciarClientes();
+
+});
+
+
+
+
+// ==========================================================
+// INICIALIZAÇÃO
+// ==========================================================
+
+
+function iniciarClientes(){
+
+
     configurarFormularioCliente();
+
 
     carregarClientesPagina();
 
+
     carregarClientesNosSelects();
+
 
 
     document
@@ -24,24 +42,8 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
 
-    document
-    .getElementById("pesquisarClientes")
-    ?.addEventListener(
-        "keydown",
-        (event)=>{
+}
 
-            if(event.key === "Enter"){
-
-                event.preventDefault();
-
-                pesquisarClientesPagina();
-
-            }
-
-        }
-    );
-
-});
 
 
 
@@ -53,19 +55,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function configurarFormularioCliente(){
 
+
     const formulario =
     document.getElementById("formCliente");
+
 
 
     if(!formulario) return;
 
 
+
     formulario.addEventListener(
         "submit",
-        salvarCliente
+        salvarClienteFormulario
     );
 
+
 }
+
 
 
 
@@ -75,51 +82,70 @@ function configurarFormularioCliente(){
 // ==========================================================
 
 
-async function salvarCliente(event){
+async function salvarClienteFormulario(event){
+
 
     event.preventDefault();
 
 
+
     const cliente = {
+
 
         nome:
         document.getElementById("clienteNome")
-        ?.value.trim(),
+        ?.value
+        .trim(),
+
 
 
         cpf_cnpj:
         document.getElementById("clienteCpf")
-        ?.value.trim() || null,
+        ?.value
+        .trim() || null,
+
 
 
         telefone:
         document.getElementById("clienteTelefone")
-        ?.value.trim() || null,
+        ?.value
+        .trim() || null,
+
 
 
         email:
         document.getElementById("clienteEmail")
-        ?.value.trim() || null,
+        ?.value
+        .trim() || null,
+
 
 
         endereco:
         document.getElementById("clienteEndereco")
-        ?.value.trim() || null,
+        ?.value
+        .trim() || null,
+
 
 
         cidade:
         document.getElementById("clienteCidade")
-        ?.value.trim() || null,
+        ?.value
+        .trim() || null,
+
 
 
         estado:
         document.getElementById("clienteEstado")
-        ?.value.trim() || null,
+        ?.value
+        .trim() || null,
+
 
 
         cep:
         document.getElementById("clienteCep")
-        ?.value.trim() || null,
+        ?.value
+        .trim() || null,
+
 
 
         status:
@@ -127,21 +153,26 @@ async function salvarCliente(event){
         ?.value || "ativo",
 
 
+
         observacoes:
         document.getElementById("clienteObservacoes")
-        ?.value.trim() || null
+        ?.value
+        .trim() || null
 
     };
 
 
 
+
     if(!cliente.nome){
+
 
         alert("Informe o nome do cliente.");
 
         return;
 
     }
+
 
 
 
@@ -152,9 +183,11 @@ async function salvarCliente(event){
 
 
 
-        alert(
-            "Cliente cadastrado com sucesso."
-        );
+        alert("Cliente cadastrado com sucesso.");
+
+
+
+        fecharModalCliente();
 
 
 
@@ -164,14 +197,8 @@ async function salvarCliente(event){
 
 
 
-        document
-        .getElementById("modalCliente")
-        ?.classList
-        .remove("show");
-
-
-
         await carregarClientesPagina();
+
 
 
         await carregarClientesNosSelects();
@@ -185,12 +212,11 @@ async function salvarCliente(event){
         console.error(error);
 
 
-        alert(
-            "Erro ao cadastrar cliente."
-        );
+        alert("Erro ao cadastrar cliente.");
 
 
     }
+
 
 
 }
@@ -201,27 +227,14 @@ async function salvarCliente(event){
 
 async function carregarClientesPagina(){
 
+
     const tabela =
     document.getElementById("tabelaClientes");
 
 
+
     if(!tabela) return;
 
-
-
-    tabela.innerHTML = `
-
-        <tr>
-
-            <td colspan="7">
-
-                Carregando clientes...
-
-            </td>
-
-        </tr>
-
-    `;
 
 
 
@@ -234,6 +247,7 @@ async function carregarClientesPagina(){
 
 
         renderizarClientes(clientes);
+
 
 
     }
@@ -261,6 +275,7 @@ async function carregarClientesPagina(){
 
     }
 
+
 }
 
 
@@ -279,7 +294,9 @@ function renderizarClientes(clientes){
     document.getElementById("tabelaClientes");
 
 
+
     if(!tabela) return;
+
 
 
 
@@ -307,6 +324,8 @@ function renderizarClientes(clientes){
 
 
 
+
+
     tabela.innerHTML = clientes.map(cliente => `
 
 
@@ -314,39 +333,47 @@ function renderizarClientes(clientes){
 
 
             <td>
-                ${escaparCliente(cliente.nome)}
+                ${escaparTexto(cliente.nome)}
             </td>
+
 
 
             <td>
-                ${escaparCliente(cliente.telefone || "-")}
+                ${escaparTexto(cliente.telefone || "-")}
             </td>
+
 
 
             <td>
-                ${escaparCliente(cliente.email || "-")}
+                ${escaparTexto(cliente.email || "-")}
             </td>
+
 
 
             <td>
-                ${escaparCliente(cliente.cidade || "-")}
+                ${escaparTexto(cliente.cidade || "-")}
             </td>
+
 
 
             <td>
-                ${escaparCliente(cliente.estado || "-")}
+                ${escaparTexto(cliente.estado || "-")}
             </td>
+
 
 
             <td>
 
                 <span class="badge">
 
-                    ${formatarStatusCliente(cliente.status)}
+                    ${formatarStatus(cliente.status)}
 
                 </span>
 
+
             </td>
+
+
 
 
             <td>
@@ -354,7 +381,7 @@ function renderizarClientes(clientes){
 
                 <button
                 class="btn-icon edit"
-                onclick="editarCliente('${cliente.id}')">
+                onclick="abrirEdicaoCliente('${cliente.id}')">
 
                     <i class="fa-solid fa-pen"></i>
 
@@ -362,22 +389,27 @@ function renderizarClientes(clientes){
 
 
 
+
                 <button
                 class="btn-icon delete"
-                onclick="excluirCliente('${cliente.id}')">
+                onclick="excluirClienteTela('${cliente.id}')">
 
                     <i class="fa-solid fa-trash"></i>
 
                 </button>
 
 
+
             </td>
+
 
 
         </tr>
 
 
     `).join("");
+
+
 
 }
 
@@ -386,7 +418,7 @@ function renderizarClientes(clientes){
 
 
 // ==========================================================
-// PESQUISAR CLIENTES
+// PESQUISA
 // ==========================================================
 
 
@@ -394,15 +426,18 @@ async function pesquisarClientesPagina(){
 
 
     const termo =
-    document.getElementById("pesquisarClientes")
+    document
+    .getElementById("pesquisarClientes")
     ?.value
     .toLowerCase()
     .trim();
 
 
 
+
     const clientes =
     await buscarClientes();
+
 
 
 
@@ -416,13 +451,17 @@ async function pesquisarClientesPagina(){
             ?.toLowerCase()
             .includes(termo)
 
+
             ||
+
 
             cliente.email
             ?.toLowerCase()
             .includes(termo)
 
+
             ||
+
 
             cliente.telefone
             ?.toLowerCase()
@@ -435,16 +474,18 @@ async function pesquisarClientesPagina(){
 
 
 
+
     renderizarClientes(filtrados);
+
 
 
 }
 // ==========================================================
-// EDITAR CLIENTE
+// ABRIR EDIÇÃO
 // ==========================================================
 
 
-async function editarCliente(id){
+async function abrirEdicaoCliente(id){
 
 
     const cliente =
@@ -456,40 +497,50 @@ async function editarCliente(id){
 
 
 
+
     document.getElementById("clienteNome").value =
     cliente.nome || "";
+
 
 
     document.getElementById("clienteCpf").value =
     cliente.cpf_cnpj || "";
 
 
+
     document.getElementById("clienteTelefone").value =
     cliente.telefone || "";
+
 
 
     document.getElementById("clienteEmail").value =
     cliente.email || "";
 
 
+
     document.getElementById("clienteEndereco").value =
     cliente.endereco || "";
+
 
 
     document.getElementById("clienteCidade").value =
     cliente.cidade || "";
 
 
+
     document.getElementById("clienteEstado").value =
     cliente.estado || "";
+
 
 
     document.getElementById("clienteCep").value =
     cliente.cep || "";
 
 
+
     document.getElementById("clienteStatus").value =
     cliente.status || "ativo";
+
 
 
     document.getElementById("clienteObservacoes").value =
@@ -497,32 +548,33 @@ async function editarCliente(id){
 
 
 
+
     const formulario =
     document.getElementById("formCliente");
 
 
-    formulario.dataset.id = id;
+
+    formulario.dataset.clienteId = id;
 
 
 
     formulario.removeEventListener(
         "submit",
-        salvarCliente
+        salvarClienteFormulario
     );
+
 
 
     formulario.addEventListener(
         "submit",
-        atualizarCliente,
+        salvarEdicaoCliente,
         {once:true}
     );
 
 
 
-    document
-    .getElementById("modalCliente")
-    ?.classList
-    .add("show");
+    abrirModalCliente();
+
 
 
 }
@@ -532,11 +584,12 @@ async function editarCliente(id){
 
 
 // ==========================================================
-// ATUALIZAR CLIENTE
+// SALVAR EDIÇÃO
 // ==========================================================
 
 
-async function atualizarCliente(event){
+async function salvarEdicaoCliente(event){
+
 
     event.preventDefault();
 
@@ -545,7 +598,8 @@ async function atualizarCliente(event){
     const id =
     document
     .getElementById("formCliente")
-    .dataset.id;
+    .dataset.clienteId;
+
 
 
 
@@ -591,6 +645,7 @@ async function atualizarCliente(event){
         observacoes:
         clienteObservacoes.value
 
+
     };
 
 
@@ -599,17 +654,23 @@ async function atualizarCliente(event){
 
 
 
-    alert("Cliente atualizado.");
+    alert("Cliente atualizado com sucesso.");
+
+
+
+    fecharModalCliente();
 
 
 
     document
     .getElementById("formCliente")
-    .reset();
+    ?.reset();
 
 
 
     await carregarClientesPagina();
+
+
 
 }
 
@@ -618,25 +679,46 @@ async function atualizarCliente(event){
 
 
 // ==========================================================
-// EXCLUIR CLIENTE
+// EXCLUIR
 // ==========================================================
 
 
-async function excluirCliente(id){
+async function excluirClienteTela(id){
 
 
     if(
-        !confirm("Deseja excluir este cliente?")
+        !confirm(
+            "Deseja excluir este cliente?"
+        )
     )
     return;
 
 
 
-    await window.excluirCliente(id);
+    try{
+
+
+        await excluirCliente(id);
 
 
 
-    await carregarClientesPagina();
+        await carregarClientesPagina();
+
+
+
+    }
+    catch(error){
+
+
+        console.error(error);
+
+
+        alert(
+            "Erro ao excluir cliente."
+        );
+
+
+    }
 
 
 }
@@ -665,12 +747,15 @@ async function carregarClientesNosSelects(){
 
 
 
+
     if(selects.length === 0) return;
+
 
 
 
     const clientes =
     await buscarClientes();
+
 
 
 
@@ -694,12 +779,15 @@ async function carregarClientesNosSelects(){
             document.createElement("option");
 
 
+
             option.value =
             cliente.id;
 
 
+
             option.textContent =
             cliente.nome;
+
 
 
             select.appendChild(option);
@@ -708,10 +796,46 @@ async function carregarClientesNosSelects(){
         });
 
 
+
     });
 
 
+
 }
+
+
+
+
+
+// ==========================================================
+// MODAL
+// ==========================================================
+
+
+function abrirModalCliente(){
+
+
+    document
+    .getElementById("modalCliente")
+    ?.classList
+    .add("show");
+
+
+}
+
+
+
+function fecharModalCliente(){
+
+
+    document
+    .getElementById("modalCliente")
+    ?.classList
+    .remove("show");
+
+
+}
+
 
 
 
@@ -721,10 +845,11 @@ async function carregarClientesNosSelects(){
 // ==========================================================
 
 
-function formatarStatusCliente(status){
+function formatarStatus(status){
 
 
     const lista = {
+
 
         ativo:"Ativo",
 
@@ -734,17 +859,19 @@ function formatarStatusCliente(status){
 
         concluido:"Concluído"
 
+
     };
 
 
     return lista[status] || "Ativo";
+
 
 }
 
 
 
 
-function escaparCliente(valor){
+function escaparTexto(valor){
 
 
     return String(valor ?? "")
