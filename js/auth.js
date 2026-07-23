@@ -5,6 +5,11 @@ AUTH
 ==========================================================
 */
 
+const supabase = window.supabase.createClient(
+    "URL_DO_SEU_PROJETO",
+    "SUA_CHAVE_ANON"
+);
+
 document.addEventListener("DOMContentLoaded", () => {
 
     iniciarAuth();
