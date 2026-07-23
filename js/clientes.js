@@ -30,35 +30,29 @@ document.addEventListener(
 
 
 
-async function iniciarClientes(){
+async function iniciarClientes() {
 
-
-    try{
-
+    try {
 
         await carregarClientes();
 
-
-
         configurarEventosClientes();
 
+    } catch (error) {
 
+        console.error("Erro inicializar clientes:", error);
+
+    } finally {
+
+        const loading = document.getElementById("loading");
+
+        if (loading) {
+            loading.style.display = "none";
+        }
 
     }
-    catch(error){
-
-
-        console.error(
-            "Erro inicializar clientes:",
-            error
-        );
-
-
-    }
-
 
 }
-
 
 
 
