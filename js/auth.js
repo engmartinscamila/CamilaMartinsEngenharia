@@ -4,7 +4,13 @@ CAMILA MARTINS ENGENHARIA
 AUTH
 =====================================================
 */
+async function possuiSessao(){
 
+    const { data } = await supabase.auth.getSession();
+
+    return !!data.session;
+
+}
 
 document.addEventListener("DOMContentLoaded", () => {
 
