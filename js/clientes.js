@@ -106,9 +106,7 @@ async function salvarCliente(event){
 
     try{
 
-        const { error } = await supabase
-            .from("clientes")
-            .insert([cliente]);
+        const { error } = await criarCliente(cliente);
 
         if(error) throw error;
 
