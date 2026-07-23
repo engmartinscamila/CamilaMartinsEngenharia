@@ -5,7 +5,7 @@ CAMILA MARTINS ENGENHARIA
 ADMIN.JS
 PAINEL ADMINISTRATIVO
 
-VERSÃO DEFINITIVA
+VERSÃO CORRIGIDA
 ==========================================================
 */
 
@@ -29,13 +29,26 @@ document.addEventListener(
 async function iniciarAdmin(){
 
 
-    await carregarDashboard();
+    try{
+
+        await carregarDashboard();
+
+    }
+    catch(error){
+
+        console.error(
+            "Erro ao iniciar painel:",
+            error
+        );
+
+    }
 
 
     configurarEventos();
 
 
 }
+
 
 
 
@@ -52,22 +65,25 @@ async function carregarDashboard(){
     try{
 
 
-        await carregarTotais();
+        await Promise.allSettled([
+
+            carregarTotais(),
+
+            carregarClientes(),
+
+            carregarProjetos(),
+
+            carregarDocumentos(),
+
+            carregarBiblioteca(),
+
+            carregarAtividades()
+
+        ]);
 
 
-        await carregarClientes();
 
-
-        await carregarProjetos();
-
-
-        await carregarDocumentos();
-
-
-        await carregarBiblioteca();
-
-
-        await carregarAtividades();
+        finalizarCarregamento();
 
 
 
@@ -76,7 +92,252 @@ async function carregarDashboard(){
 
 
         console.error(
-            "Erro ao carregar dashboard:",
+            "Erro dashboard:",
+            error
+        );
+
+
+        finalizarCarregamento();
+
+
+    }
+
+
+}
+
+
+
+
+
+function finalizarCarregamento(){
+
+
+    const elementos = [
+
+        "loading",
+
+        "loader",
+
+        "carregando"
+
+    ];
+
+
+
+    elementos.forEach(id=>{
+
+
+        const elemento =
+        document.getElementById(id);
+
+
+
+        if(elemento){
+
+            elemento.style.display="none";
+
+        }
+
+
+    });
+
+
+
+}
+// ==========================================================
+// TOTAIS DO DASHBOARD
+// ==========================================================
+
+
+async function carregarTotais(){
+
+
+    try{
+
+
+        const [
+
+            clientes,
+
+            projetos,
+
+            documentos,
+
+            fotos
+
+
+        ] = await Promise.allSettled([
+
+
+            buscarDados("clientes"),
+
+            buscarDados("projetos"),
+
+            buscarDados("documentos"),
+
+            buscarDados("fotos")
+
+
+        ]);
+
+
+
+
+        atualizarNumero(
+
+            "totalClientes",
+
+            clientes.status==="fulfilled"
+            ? clientes.value.length
+            : 0
+
+        );
+
+
+
+        atualizarNumero(
+
+            "totalProjetos",
+
+            projetos.status==="fulfilled"
+            ? projetos.value.length
+            : 0
+
+        );
+
+
+
+        atualizarNumero(
+
+            "totalDocumentos",
+
+            documentos.status==="fulfilled"
+            ? documentos.value.length
+            : 0
+
+        );
+
+
+
+        atualizarNumero(
+
+            "totalFotos",
+
+            fotos.status==="fulfilled"
+            ? fotos.value.length
+            : 0
+
+        );
+
+
+
+    }
+    catch(error){
+
+        console.error(
+            "Erro totais:",
+            error
+        );
+
+    }
+
+
+}
+
+
+
+
+
+
+
+function atualizarNumero(id,valor){
+
+
+    const elemento =
+    document.getElementById(id);
+
+
+
+    if(elemento){
+
+        elemento.innerText =
+        valor ?? 0;
+
+    }
+
+
+}
+
+
+
+
+
+
+
+// ==========================================================
+// CLIENTES
+// ==========================================================
+
+
+async function carregarClientes(){
+
+
+    try{
+
+
+        const dados =
+        await buscarDados("clientes");
+
+
+
+        const elemento =
+        document.getElementById(
+            "listaClientes"
+        );
+
+
+
+        if(!elemento)
+        return;
+
+
+
+        elemento.innerHTML="";
+
+
+
+        dados.forEach(cliente=>{
+
+
+            elemento.innerHTML += `
+
+            <div class="item-dashboard">
+
+                <strong>
+                ${cliente.nome ?? ""}
+                </strong>
+
+
+                <span>
+                ${cliente.email ?? ""}
+                </span>
+
+
+            </div>
+
+            `;
+
+
+        });
+
+
+
+    }
+    catch(error){
+
+
+        console.error(
+            "Erro clientes:",
             error
         );
 
@@ -93,369 +354,146 @@ async function carregarDashboard(){
 
 
 // ==========================================================
-// CARDS DO DASHBOARD
-// ==========================================================
-
-
-async function carregarTotais(){
-
-
-
-    const [
-
-        clientes,
-
-        projetos,
-
-        documentos,
-
-        fotos,
-
-        biblioteca
-
-
-    ] = await Promise.all([
-
-
-
-        dbBuscarClientes(),
-
-
-        dbBuscarProjetos(),
-
-
-        dbBuscarDocumentos(),
-
-
-        dbBuscarFotos(),
-
-
-        dbBuscarBiblioteca()
-
-
-
-    ]);
-
-
-
-
-    atualizarElemento(
-        "totalClientes",
-        clientes.length
-    );
-
-
-
-    atualizarElemento(
-        "totalProjetos",
-        projetos.length
-    );
-
-
-
-    atualizarElemento(
-        "totalDocumentos",
-        documentos.length
-    );
-
-
-
-    atualizarElemento(
-        "totalFotos",
-        fotos.length
-    );
-
-
-
-    atualizarElemento(
-        "totalBiblioteca",
-        biblioteca.length
-    );
-
-
-
-}
-
-
-
-
-
-
-
-// ==========================================================
-// CLIENTES RECENTES
-// ==========================================================
-
-
-async function carregarClientes(){
-
-
-
-    const lista =
-    document.getElementById(
-        "listaClientes"
-    );
-
-
-
-    if(!lista)
-    return;
-
-
-
-
-    const clientes =
-    await dbBuscarClientes();
-
-
-
-
-    if(!clientes.length){
-
-
-        lista.innerHTML =
-        estadoVazio(
-            "Nenhum cliente cadastrado."
-        );
-
-
-        return;
-
-
-    }
-
-
-
-
-
-    lista.innerHTML =
-
-    clientes
-    .slice(0,5)
-    .map(cliente=>`
-
-
-        <div class="item-lista">
-
-
-            <div>
-
-                <h3>
-
-                ${escapar(
-                    cliente.nome
-                )}
-
-                </h3>
-
-
-                <span>
-
-                ${escapar(
-                    cliente.email || ""
-                )}
-
-                </span>
-
-
-            </div>
-
-
-
-        </div>
-
-
-    `)
-    .join("");
-
-
-
-}
-// ==========================================================
-// PROJETOS RECENTES
+// PROJETOS
 // ==========================================================
 
 
 async function carregarProjetos(){
 
 
-    const lista =
-    document.getElementById(
-        "listaProjetos"
-    );
+    try{
+
+
+        const dados =
+        await buscarDados("projetos");
 
 
 
-    if(!lista)
-    return;
-
-
-
-
-    const projetos =
-    await dbBuscarProjetos();
-
-
-
-
-    if(!projetos.length){
-
-
-        lista.innerHTML =
-        estadoVazio(
-            "Nenhum projeto cadastrado."
+        const elemento =
+        document.getElementById(
+            "listaProjetos"
         );
 
 
+
+        if(!elemento)
         return;
+
+
+
+        elemento.innerHTML="";
+
+
+
+        dados.forEach(projeto=>{
+
+
+            elemento.innerHTML += `
+
+            <div class="item-dashboard">
+
+                <strong>
+                ${projeto.nome ?? ""}
+                </strong>
+
+
+            </div>
+
+            `;
+
+
+        });
+
+
+
+    }
+    catch(error){
+
+
+        console.error(
+            "Erro projetos:",
+            error
+        );
 
 
     }
 
 
-
-
-    lista.innerHTML =
-
-
-    projetos
-    .slice(0,5)
-    .map(projeto=>`
-
-
-        <div class="item-lista">
-
-
-            <div>
-
-
-                <h3>
-
-                ${escapar(
-                    projeto.nome
-                )}
-
-                </h3>
-
-
-
-                <span>
-
-                ${escapar(
-                    projeto.status || ""
-                )}
-
-                </span>
-
-
-
-            </div>
-
-
-        </div>
-
-
-    `)
-    .join("");
-
-
-
 }
-
-
-
-
-
-
-
 // ==========================================================
-// DOCUMENTOS RECENTES
+// DOCUMENTOS
 // ==========================================================
 
 
 async function carregarDocumentos(){
 
 
-    const lista =
-    document.getElementById(
-        "listaDocumentos"
-    );
+    try{
+
+
+        const dados =
+        await buscarDados("documentos");
 
 
 
-    if(!lista)
-    return;
-
-
-
-
-    const documentos =
-    await dbBuscarDocumentos();
-
-
-
-
-    if(!documentos.length){
-
-
-        lista.innerHTML =
-        estadoVazio(
-            "Nenhum documento cadastrado."
+        const elemento =
+        document.getElementById(
+            "listaDocumentos"
         );
 
 
+
+        if(!elemento)
         return;
 
 
-    }
+
+        elemento.innerHTML="";
 
 
 
-
-    lista.innerHTML =
-
-
-    documentos
-    .slice(0,5)
-    .map(documento=>`
+        dados.forEach(documento=>{
 
 
-        <div class="item-lista">
+            elemento.innerHTML += `
+
+            <div class="item-dashboard">
 
 
-            <div>
+                <strong>
 
+                ${documento.nome ?? documento.titulo ?? ""}
 
-                <h3>
-
-                ${escapar(
-                    documento.titulo ||
-                    documento.nome ||
-                    "Documento"
-                )}
-
-                </h3>
-
+                </strong>
 
 
                 <span>
 
-                ${escapar(
-                    documento.categoria || ""
-                )}
+                ${documento.categoria ?? ""}
 
                 </span>
 
 
             </div>
 
+            `;
 
-        </div>
+
+        });
 
 
-    `)
-    .join("");
 
+    }
+    catch(error){
+
+
+        console.error(
+            "Erro documentos:",
+            error
+        );
+
+
+    }
 
 
 }
@@ -474,17 +512,41 @@ async function carregarDocumentos(){
 async function carregarBiblioteca(){
 
 
-
-    const biblioteca =
-    await dbBuscarBiblioteca();
+    try{
 
 
+        const dados =
+        await buscarDados("biblioteca");
 
-    atualizarElemento(
-        "totalBiblioteca",
-        biblioteca.length
-    );
 
+
+        atualizarNumero(
+
+            "totalBiblioteca",
+
+            dados.length
+
+        );
+
+
+
+    }
+    catch(error){
+
+
+        console.error(
+            "Erro biblioteca:",
+            error
+        );
+
+
+        atualizarNumero(
+            "totalBiblioteca",
+            0
+        );
+
+
+    }
 
 
 }
@@ -503,20 +565,19 @@ async function carregarBiblioteca(){
 async function carregarAtividades(){
 
 
-
-    const lista =
+    const elemento =
     document.getElementById(
         "atividadeRecentes"
     );
 
 
 
-    if(!lista)
+    if(!elemento)
     return;
 
 
 
-    lista.innerHTML = `
+    elemento.innerHTML = `
 
         <div class="atividade">
 
@@ -527,10 +588,142 @@ async function carregarAtividades(){
     `;
 
 
+}
+
+
+
+
+
+
+
+// ==========================================================
+// BUSCA PADRÃO SUPABASE
+// ==========================================================
+
+
+async function buscarDados(tabela){
+
+
+    try{
+
+
+        const {
+
+            data,
+
+            error
+
+
+        } = await supabaseClient
+
+        .from(tabela)
+
+        .select("*");
+
+
+
+
+        if(error){
+
+            console.error(
+                "Erro tabela:",
+                tabela,
+                error
+            );
+
+            return [];
+
+        }
+
+
+
+
+        return data || [];
+
+
+
+    }
+    catch(error){
+
+
+        console.error(
+            "Erro consulta:",
+            tabela,
+            error
+        );
+
+
+        return [];
+
+    }
+
+
+}
+
+
+
+
+
+
+
+// ==========================================================
+// EVENTOS
+// ==========================================================
+
+
+function configurarEventos(){
+
+
+    document
+    .getElementById(
+        "abrirClientes"
+    )
+    ?.addEventListener(
+        "click",
+        ()=>{
+
+            window.location.href =
+            "clientes.html";
+
+        }
+    );
+
+
+
+    document
+    .getElementById(
+        "abrirProjetos"
+    )
+    ?.addEventListener(
+        "click",
+        ()=>{
+
+            window.location.href =
+            "projetos.html";
+
+        }
+    );
+
+
+
+    document
+    .getElementById(
+        "abrirDocumentos"
+    )
+    ?.addEventListener(
+        "click",
+        ()=>{
+
+            window.location.href =
+            "documentos.html";
+
+        }
+    );
+
 
 }
 // ==========================================================
-// PESQUISA DE CLIENTES
+// PESQUISA CLIENTES
 // ==========================================================
 
 
@@ -566,19 +759,25 @@ async function pesquisarClientes(){
 
 
     const clientes =
-    await dbBuscarClientes();
+    await buscarDados(
+        "clientes"
+    );
 
 
 
 
     const resultado =
-
     clientes.filter(cliente=>{
 
 
-        return cliente.nome
-        .toLowerCase()
-        .includes(termo);
+        return (
+
+            cliente.nome &&
+            cliente.nome
+            .toLowerCase()
+            .includes(termo)
+
+        );
 
 
     });
@@ -587,63 +786,40 @@ async function pesquisarClientes(){
 
 
 
-    if(!resultado.length){
-
-
-        lista.innerHTML =
-        estadoVazio(
-            "Nenhum cliente encontrado."
-        );
-
-
-        return;
-
-
-    }
+    lista.innerHTML = "";
 
 
 
 
 
-    lista.innerHTML =
+    resultado.forEach(cliente=>{
 
 
-    resultado.map(cliente=>`
+        lista.innerHTML += `
+
+        <div class="item-dashboard">
 
 
-        <div class="item-lista">
+            <strong>
+
+                ${cliente.nome ?? ""}
+
+            </strong>
 
 
-            <div>
+            <span>
 
+                ${cliente.email ?? ""}
 
-                <h3>
-
-                ${escapar(
-                    cliente.nome
-                )}
-
-                </h3>
-
-
-
-                <span>
-
-                ${escapar(
-                    cliente.email || ""
-                )}
-
-                </span>
-
-
-            </div>
+            </span>
 
 
         </div>
 
+        `;
 
-    `)
-    .join("");
+
+    });
 
 
 
@@ -656,268 +832,8 @@ async function pesquisarClientes(){
 
 
 // ==========================================================
-// EVENTOS DO PAINEL
+// UTILITÁRIOS
 // ==========================================================
-
-
-function configurarEventos(){
-
-
-
-    document
-    .getElementById(
-        "btnPesquisarCliente"
-    )
-    ?.addEventListener(
-        "click",
-        pesquisarClientes
-    );
-
-
-
-
-
-    document
-    .getElementById(
-        "pesquisaCliente"
-    )
-    ?.addEventListener(
-        "keydown",
-        (evento)=>{
-
-
-            if(evento.key==="Enter"){
-
-                pesquisarClientes();
-
-            }
-
-
-        }
-    );
-
-
-
-
-
-
-
-    document
-    .getElementById(
-        "abrirClientes"
-    )
-    ?.addEventListener(
-        "click",
-        ()=>{
-
-            window.location.href =
-            "clientes.html";
-
-        }
-    );
-
-
-
-
-
-    document
-    .getElementById(
-        "abrirProjetos"
-    )
-    ?.addEventListener(
-        "click",
-        ()=>{
-
-            window.location.href =
-            "projetos.html";
-
-        }
-    );
-
-
-
-
-
-    document
-    .getElementById(
-        "abrirDocumentos"
-    )
-    ?.addEventListener(
-        "click",
-        ()=>{
-
-            window.location.href =
-            "documentos.html";
-
-        }
-    );
-
-
-
-
-
-    document
-    .getElementById(
-        "abrirBiblioteca"
-    )
-    ?.addEventListener(
-        "click",
-        ()=>{
-
-            window.location.href =
-            "biblioteca.html";
-
-        }
-    );
-
-
-
-
-
-    document
-    .getElementById(
-        "abrirFotos"
-    )
-    ?.addEventListener(
-        "click",
-        ()=>{
-
-            window.location.href =
-            "fotos.html";
-
-        }
-    );
-
-
-
-
-
-    document
-    .getElementById(
-        "abrirFinanceiro"
-    )
-    ?.addEventListener(
-        "click",
-        ()=>{
-
-            window.location.href =
-            "financeiro.html";
-
-        }
-    );
-
-
-
-
-
-    document
-    .getElementById(
-        "abrirAgenda"
-    )
-    ?.addEventListener(
-        "click",
-        ()=>{
-
-            window.location.href =
-            "agenda.html";
-
-        }
-    );
-
-
-
-
-
-    document
-    .getElementById(
-        "abrirConfiguracoes"
-    )
-    ?.addEventListener(
-        "click",
-        ()=>{
-
-            window.location.href =
-            "configuracoes.html";
-
-        }
-    );
-
-
-
-
-
-    document
-    .getElementById(
-        "logoutButton"
-    )
-    ?.addEventListener(
-        "click",
-        async()=>{
-
-
-            await dbSairSistema();
-
-
-
-            window.location.href =
-            "login.html";
-
-
-        }
-    );
-
-
-
-}
-// ==========================================================
-// FUNÇÕES AUXILIARES
-// ==========================================================
-
-
-
-function atualizarElemento(id,valor){
-
-
-    const elemento =
-    document.getElementById(id);
-
-
-
-    if(elemento){
-
-        elemento.textContent =
-        valor;
-
-    }
-
-
-}
-
-
-
-
-
-
-
-function estadoVazio(texto){
-
-
-    return `
-
-        <div class="estado-vazio">
-
-            ${texto}
-
-        </div>
-
-    `;
-
-
-}
-
-
-
-
 
 
 
@@ -945,27 +861,22 @@ function escapar(valor){
 
 
 
-async function atualizarStorage(){
+function estadoVazio(texto){
 
 
+    return `
 
-    const elemento =
-    document.getElementById(
-        "storageUsado"
-    );
+    <div class="estado-vazio">
 
+        ${texto}
 
+    </div>
 
-    if(elemento){
-
-        elemento.textContent =
-        "0 MB";
-
-    }
-
+    `;
 
 
 }
+
 
 
 
