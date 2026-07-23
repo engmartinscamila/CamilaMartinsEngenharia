@@ -6,7 +6,7 @@ AUTH
 */
 
 const supabase = window.supabase.createClient(
-    "https://hghtwlopqztfcosxfafd.supabase.co",
+    "https://hghtwlopqztfcosfxafd.supabase.co",
     "sb_publishable_-unXLR2NSSACLs01Sr60GA_uCFnJ74f"
 );
 
