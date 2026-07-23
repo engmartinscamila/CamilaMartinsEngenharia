@@ -1,307 +1,645 @@
-<!-- ===========================================================
-FOTOS.HTML
-PARTE 1/3
-=========================================================== -->
-
 <!DOCTYPE html>
+
 <html lang="pt-BR">
+
 
 <head>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Fotos da Obra | Camila Martins Engenharia</title>
+<meta charset="UTF-8">
 
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/fotos.css">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<title>
+Fotos | Camila Martins Engenharia
+</title>
+
+
+
+<link rel="stylesheet" href="css/admin.css">
+
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Parisienne&display=swap"
+rel="stylesheet">
+
+
 
 </head>
 
+
+
 <body>
 
-<div class="dashboard">
 
-    <!-- SIDEBAR -->
 
-    <aside class="sidebar">
+<div class="layout">
 
-        <div class="logo-area">
 
-            <img src="img/logo-branca.png" alt="Logo">
 
-        </div>
+<aside class="sidebar">
 
-        <nav>
 
-            <a href="portal.html">
-                <i class="fa-solid fa-house"></i>
-                Dashboard
-            </a>
 
-            <a href="meu-projeto.html">
-                <i class="fa-solid fa-building"></i>
-                Meu Projeto
-            </a>
+<div class="logo">
 
-            <a href="cronograma.html">
-                <i class="fa-solid fa-list-check"></i>
-                Cronograma
-            </a>
 
-            <a class="active" href="fotos.html">
-                <i class="fa-solid fa-camera"></i>
-                Fotos
-            </a>
+<h1 class="assinatura">
 
-            <a href="documentos.html">
-                <i class="fa-solid fa-folder-open"></i>
-                Documentos
-            </a>
+Camila Martins
 
-            <a href="biblioteca.html">
-                <i class="fa-solid fa-book"></i>
-                Biblioteca
-            </a>
+</h1>
 
-            <a href="solicitacoes.html">
-                <i class="fa-solid fa-comments"></i>
-                Solicitações
-            </a>
 
-        </nav>
+<span>
 
-    </aside>
+ENGENHARIA
 
-    <!-- CONTEÚDO -->
+</span>
 
-    <main class="content">
-
-        <header class="topbar">
-
-            <div>
-
-                <h1>Fotos da Obra</h1>
-
-                <p>
-                    Acompanhe toda a evolução da sua obra através das imagens.
-                </p>
-
-            </div>
-
-            <button
-                class="btn-primary"
-                onclick="document.getElementById('modalFoto').classList.add('show')">
-
-                <i class="fa-solid fa-plus"></i>
-
-                Nova Foto
-
-            </button>
-
-        </header>
-
-        <!-- FILTROS -->
-
-        <section class="toolbar">
-
-            <div class="search">
-
-                <i class="fa-solid fa-magnifying-glass"></i>
-
-                <input
-                    type="text"
-                    placeholder="Pesquisar foto..."
-                    onkeyup="pesquisarFotos(this.value)">
-
-            </div>
-
-        </section>
-
-        <!-- GALERIA -->
-
-        <section
-            id="galeriaFotos"
-            class="galeria-fotos">
-
-        </section>
-        <!-- ===========================================================
-FOTOS.HTML
-PARTE 2/3
-=========================================================== -->
-
-        <!-- MODAL -->
-
-        <div
-            id="modalFoto"
-            class="modal">
-
-            <div class="modal-content">
-
-                <div class="modal-header">
-
-                    <h2>Nova Foto</h2>
-
-                    <button
-                        class="close"
-                        onclick="document.getElementById('modalFoto').classList.remove('show')">
-
-                        &times;
-
-                    </button>
-
-                </div>
-
-                <form id="formFoto">
-
-                    <div class="grid-2">
-
-                        <div class="form-group">
-
-                            <label>Título</label>
-
-                            <input
-                                id="fotoTitulo"
-                                type="text"
-                                required>
-
-                        </div>
-
-                        <div class="form-group">
-
-                            <label>Categoria</label>
-
-                            <select
-                                id="fotoCategoria"
-                                required>
-
-                                <option value="">Selecione</option>
-                                <option>Fundação</option>
-                                <option>Estrutura</option>
-                                <option>Alvenaria</option>
-                                <option>Cobertura</option>
-                                <option>Instalações</option>
-                                <option>Acabamentos</option>
-                                <option>Entrega</option>
-
-                            </select>
-
-                        </div>
-
-                    </div>
-
-                    <div class="grid-2">
-
-                        <div class="form-group">
-
-                            <label>Cliente</label>
-
-                            <select
-                                id="fotoCliente"
-                                required>
-
-                            </select>
-
-                        </div>
-
-                        <div class="form-group">
-
-                            <label>Projeto</label>
-
-                            <select
-                                id="fotoProjeto"
-                                required>
-
-                            </select>
-
-                        </div>
-
-                    </div>
-
-                    <div class="form-group">
-
-                        <label>Descrição</label>
-
-                        <textarea
-                            id="descricaoFoto"
-                            rows="4"></textarea>
-
-                    </div>
-
-                    <div class="form-group">
-
-                        <label>Imagem</label>
-
-                        <input
-                            id="arquivoFoto"
-                            type="file"
-                            accept="image/*"
-                            required>
-
-                    </div>
-
-                    <div class="modal-footer">
-
-                        <button
-                            type="button"
-                            class="btn-secondary"
-                            onclick="document.getElementById('modalFoto').classList.remove('show')">
-
-                            Cancelar
-
-                        </button>
-
-                        <button
-                            type="submit"
-                            class="btn-primary">
-
-                            <i class="fa-solid fa-cloud-arrow-up"></i>
-
-                            Enviar Foto
-
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </div>
-
-        </div>
-        <!-- ===========================================================
-FOTOS.HTML
-PARTE 3/3
-=========================================================== -->
-
-    </main>
 
 </div>
 
-<!-- SUPABASE -->
+
+
+
+
+
+<nav class="menu-lateral">
+
+
+
+<a href="admin.html" class="menu-item">
+
+<i class="fa-solid fa-house"></i>
+
+Dashboard
+
+</a>
+
+
+
+<a href="clientes.html" class="menu-item">
+
+<i class="fa-solid fa-users"></i>
+
+Clientes
+
+</a>
+
+
+
+<a href="projetos.html" class="menu-item">
+
+<i class="fa-solid fa-compass-drafting"></i>
+
+Projetos
+
+</a>
+
+
+
+<a href="documentos.html" class="menu-item">
+
+<i class="fa-solid fa-folder-open"></i>
+
+Documentos
+
+</a>
+
+
+
+<a href="biblioteca.html" class="menu-item">
+
+<i class="fa-solid fa-book-open"></i>
+
+Biblioteca
+
+</a>
+
+
+
+<a href="fotos.html" class="menu-item ativo">
+
+<i class="fa-solid fa-images"></i>
+
+Fotos
+
+</a>
+
+
+
+<a href="financeiro.html" class="menu-item">
+
+<i class="fa-solid fa-chart-line"></i>
+
+Financeiro
+
+</a>
+
+
+
+<a href="agenda.html" class="menu-item">
+
+<i class="fa-solid fa-calendar-days"></i>
+
+Agenda
+
+</a>
+
+
+
+<a href="configuracoes.html" class="menu-item">
+
+<i class="fa-solid fa-gear"></i>
+
+Configurações
+
+</a>
+
+
+
+</nav>
+
+
+
+
+
+<button
+id="logoutButton"
+class="btn-sair">
+
+
+<i class="fa-solid fa-right-from-bracket"></i>
+
+
+Sair
+
+
+</button>
+
+
+
+</aside>
+<main class="conteudo">
+
+
+
+<header class="topbar">
+
+
+<div>
+
+
+<h2>
+
+Fotos
+
+</h2>
+
+
+
+<p>
+
+Galeria de imagens dos projetos
+
+</p>
+
+
+</div>
+
+
+
+
+<div class="acoes-topo">
+
+
+<button id="novaFoto">
+
+
+<i class="fa-solid fa-image"></i>
+
+
+Nova Foto
+
+
+</button>
+
+
+
+</div>
+
+
+
+</header>
+
+
+
+
+
+
+
+
+
+<section class="card-grande">
+
+
+
+<div class="card-header">
+
+
+<h2>
+
+Galeria
+
+</h2>
+
+
+
+
+<div class="acoes-card">
+
+
+<input
+type="search"
+id="pesquisaFoto"
+placeholder="Pesquisar foto...">
+
+
+
+<button
+id="btnPesquisarFoto">
+
+
+<i class="fa-solid fa-search"></i>
+
+
+</button>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<div
+id="galeriaFotos"
+class="galeria-fotos">
+
+
+</div>
+
+
+
+</section>
+
+
+
+
+
+
+
+
+
+<!-- MODAL FOTO -->
+
+
+
+<div
+id="modalFoto"
+class="modal">
+
+
+
+<div class="modal-content">
+
+
+
+<div class="modal-header">
+
+
+<h2>
+
+Adicionar Foto
+
+</h2>
+
+
+
+
+<button
+id="fecharModalFoto">
+
+
+<i class="fa-solid fa-xmark"></i>
+
+
+</button>
+
+
+
+</div>
+
+
+
+
+
+
+
+<form
+id="formFoto">
+
+
+
+<div class="form-grid">
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+Projeto
+
+</label>
+
+
+
+<select
+id="fotoProjeto">
+
+
+<option value="">
+
+Selecione o projeto
+
+</option>
+
+
+</select>
+
+
+
+</div>
+
+
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+Cliente
+
+</label>
+
+
+
+<select
+id="fotoCliente">
+
+
+<option value="">
+
+Selecione o cliente
+
+</option>
+
+
+</select>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="campo campo-full">
+
+
+<label>
+
+Título da Foto
+
+</label>
+
+
+
+<input
+id="fotoTitulo">
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="campo campo-full">
+
+
+<label>
+
+Imagem
+
+</label>
+
+
+
+<input
+type="file"
+id="arquivoFoto"
+accept="image/*">
+
+
+
+</div>
+<div class="modal-footer">
+
+
+<button
+type="button"
+id="cancelarFoto">
+
+Cancelar
+
+</button>
+
+
+
+
+<button
+type="submit"
+id="salvarFoto">
+
+Salvar Foto
+
+</button>
+
+
+
+</div>
+
+
+
+</form>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- DETALHES DA FOTO -->
+
+
+
+<section class="painel-principal">
+
+
+
+<div class="card-grande">
+
+
+
+<div class="card-header">
+
+
+<h2>
+
+Detalhes da Foto
+
+</h2>
+
+
+
+</div>
+
+
+
+
+
+<div
+id="detalhesFoto"
+class="detalhes">
+
+
+<p>
+
+Selecione uma imagem para visualizar os detalhes.
+
+</p>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+</section>
+</main>
+
+
+
+</div>
+
+
+
+
+
+
+<!-- LOADING -->
+
+<div
+id="loading"
+class="loading">
+
+
+<div class="spinner"></div>
+
+
+<p>
+
+Carregando...
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- SCRIPTS -->
+
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- CONFIGURAÇÕES -->
 
-<script src="js/config.js"></script>
 <script src="js/supabase.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/storage.js"></script>
-<script src="js/utils.js"></script>
 
-<!-- PÁGINA -->
+
+<script src="js/database.js"></script>
+
+
+<script src="js/auth.js"></script>
+
 
 <script src="js/fotos.js"></script>
 
+
+
 </body>
+
 
 </html>
