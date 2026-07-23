@@ -228,3 +228,154 @@ async function criarBiblioteca(item){
     return data;
 
 }
+// ===============================
+// CRONOGRAMA
+// ===============================
+
+async function buscarCronograma(){
+
+    const { data, error } = await supabaseClient
+        .from("cronograma")
+        .select("*")
+        .order("created_at", {
+            ascending:false
+        });
+
+
+    if(error) throw error;
+
+    return data || [];
+
+}
+
+
+
+async function criarCronograma(item){
+
+    const { data, error } = await supabaseClient
+        .from("cronograma")
+        .insert([item])
+        .select();
+
+
+    if(error) throw error;
+
+    return data;
+
+}
+
+
+
+
+// ===============================
+// FINANCEIRO
+// ===============================
+
+async function buscarFinanceiro(){
+
+    const { data, error } = await supabaseClient
+        .from("financeiro")
+        .select("*")
+        .order("created_at", {
+            ascending:false
+        });
+
+
+    if(error) throw error;
+
+    return data || [];
+
+}
+
+
+
+async function criarLancamentoFinanceiro(lancamento){
+
+    const { data, error } = await supabaseClient
+        .from("financeiro")
+        .insert([lancamento])
+        .select();
+
+
+    if(error) throw error;
+
+    return data;
+
+}
+
+
+
+
+// ===============================
+// AGENDA
+// ===============================
+
+async function buscarAgenda(){
+
+    const { data, error } = await supabaseClient
+        .from("agenda")
+        .select("*")
+        .order("data", {
+            ascending:true
+        });
+
+
+    if(error) throw error;
+
+    return data || [];
+
+}
+
+
+
+async function criarEventoAgenda(evento){
+
+    const { data, error } = await supabaseClient
+        .from("agenda")
+        .insert([evento])
+        .select();
+
+
+    if(error) throw error;
+
+    return data;
+
+}
+
+
+
+
+// ===============================
+// CONFIGURAÇÕES
+// ===============================
+
+async function buscarConfiguracoes(){
+
+    const { data, error } = await supabaseClient
+        .from("configuracoes")
+        .select("*")
+        .limit(1)
+        .single();
+
+
+    if(error) throw error;
+
+    return data;
+
+}
+
+
+
+async function salvarConfiguracoes(config){
+
+    const { data, error } = await supabaseClient
+        .from("configuracoes")
+        .upsert(config)
+        .select();
+
+
+    if(error) throw error;
+
+    return data;
+
+}
