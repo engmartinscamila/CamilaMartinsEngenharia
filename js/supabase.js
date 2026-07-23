@@ -1,230 +1,473 @@
-/*
-==========================================================
-CAMILA MARTINS ENGENHARIA
-SUPABASE
-==========================================================
-*/
+-- =====================================================
+-- CAMILA MARTINS ENGENHARIA
+-- ESTRUTURA COMPLETA SUPABASE
+-- PARTE 1/4
+-- =====================================================
 
-const SUPABASE_URL = "https://hghtwlopqztfcosfxafd.supabase.co";
 
-const SUPABASE_ANON_KEY = "sb_publishable_-unXLR2NSSACLs01Sr60GA_uCFnJ74f";
+-- EXTENSÃO UUID
 
-const supabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY,
-    {
-        auth:{
+create extension if not exists "uuid-ossp";
 
-            persistSession:true,
 
-            autoRefreshToken:true,
 
-            detectSessionInUrl:true
+-- =====================================================
+-- CLIENTES
+-- =====================================================
 
-        }
-    }
+
+create table if not exists public.clientes (
+
+    id uuid primary key default uuid_generate_v4(),
+
+    nome text not null,
+
+    cpf_cnpj text,
+
+    telefone text,
+
+    email text,
+
+    endereco text,
+
+    cidade text,
+
+    estado text,
+
+    cep text,
+
+    status text default 'ativo',
+
+    observacoes text,
+
+    created_at timestamp with time zone default now()
+
 );
 
-/*
-==========================================================
-USUÁRIO LOGADO
-==========================================================
-*/
 
-async function getUsuario(){
 
-    const { data, error } = await supabase.auth.getUser();
+-- =====================================================
+-- PROJETOS
+-- =====================================================
 
-    if(error){
 
-        console.error(error);
+create table if not exists public.projetos (
 
-        return null;
+    id uuid primary key default uuid_generate_v4(),
 
-    }
+    cliente_id uuid references public.clientes(id)
+    on delete cascade,
 
-    return data.user;
+    nome text not null,
 
-}
+    tipo text,
 
-/*
-==========================================================
-SESSÃO
-==========================================================
-*/
+    status text default 'em_andamento',
 
-async function possuiSessao(){
+    descricao text,
 
-    const { data } = await supabase.auth.getSession();
+    created_at timestamp with time zone default now()
 
-    return data.session !== null;
+);
 
-}
 
-/*
-==========================================================
-LOGOUT
-==========================================================
-*/
 
-async function logout(){
+-- =====================================================
+-- DOCUMENTOS
+-- =====================================================
 
-    await supabase.auth.signOut();
 
-    location.href="login.html";
+create table if not exists public.documentos (
 
-}
+    id uuid primary key default uuid_generate_v4(),
 
-/*
-==========================================================
-FORMATAR DATA
-==========================================================
-*/
+    cliente_id uuid references public.clientes(id)
+    on delete cascade,
 
-function formatarData(data){
 
-    if(!data) return "";
+    projeto_id uuid references public.projetos(id)
+    on delete cascade,
 
-    return new Date(data).toLocaleDateString(
-        "pt-BR"
-    );
 
-}
+    nome text,
 
-/*
-==========================================================
-FORMATAR DINHEIRO
-==========================================================
-*/
+    arquivo text,
 
-function dinheiro(valor){
+    tipo text,
 
-    return Number(valor || 0).toLocaleString(
-        "pt-BR",
-        {
+    created_at timestamp with time zone default now()
 
-            style:"currency",
+);
 
-            currency:"BRL"
 
-        }
-    );
 
-}
+-- =====================================================
+-- FOTOS
+-- =====================================================
 
-/*
-==========================================================
-UPLOAD DOCUMENTOS
-==========================================================
-*/
 
-async function uploadDocumento(arquivo,nome){
+create table if not exists public.fotos (
 
-    const{
+    id uuid primary key default uuid_generate_v4(),
 
-        data,
 
-        error
+    cliente_id uuid references public.clientes(id)
+    on delete cascade,
 
-    } = await supabase.storage
-    .from("documentos")
-    .upload(nome,arquivo,{
 
-        upsert:true
+    projeto_id uuid references public.projetos(id)
+    on delete cascade,
 
-    });
 
-    if(error) throw error;
+    nome text,
 
-    return data.path;
+    arquivo text,
 
-}
+    descricao text,
 
-/*
-==========================================================
-UPLOAD FOTOS
-==========================================================
-*/
+    created_at timestamp with time zone default now()
 
-async function uploadFoto(arquivo,nome){
+);
+-- =====================================================
+-- BIBLIOTECA
+-- =====================================================
 
-    const{
 
-        data,
+create table if not exists public.biblioteca (
 
-        error
+    id uuid primary key default uuid_generate_v4(),
 
-    } = await supabase.storage
-    .from("fotos")
-    .upload(nome,arquivo,{
+    nome text,
 
-        upsert:true
+    categoria text,
 
-    });
+    arquivo text,
 
-    if(error) throw error;
+    tipo text,
 
-    return data.path;
+    descricao text,
 
-}
+    created_at timestamp with time zone default now()
 
-/*
-==========================================================
-UPLOAD BIBLIOTECA
-==========================================================
-*/
+);
 
-async function uploadBiblioteca(arquivo,nome){
 
-    const{
 
-        data,
 
-        error
+-- =====================================================
+-- CRONOGRAMA
+-- =====================================================
 
-    } = await supabase.storage
-    .from("biblioteca")
-    .upload(nome,arquivo,{
 
-        upsert:true
+create table if not exists public.cronograma (
 
-    });
+    id uuid primary key default uuid_generate_v4(),
 
-    if(error) throw error;
 
-    return data.path;
+    projeto_id uuid references public.projetos(id)
+    on delete cascade,
 
-}
 
-/*
-==========================================================
-DOWNLOAD
-==========================================================
-*/
+    etapa text,
 
-async function urlPublica(bucket,arquivo){
 
-    return supabase
-    .storage
-    .from(bucket)
-    .getPublicUrl(arquivo)
-    .data
-    .publicUrl;
+    data_inicio date,
 
-}
 
-/*
-==========================================================
-REMOVER ARQUIVO
-==========================================================
-*/
+    data_fim date,
 
-async function removerArquivo(bucket,arquivo){
 
-    return await supabase
-    .storage
-    .from(bucket)
-    .remove([arquivo]);
+    status text default 'pendente',
 
-}
+
+    created_at timestamp with time zone default now()
+
+);
+
+
+
+
+-- =====================================================
+-- FINANCEIRO
+-- =====================================================
+
+
+create table if not exists public.financeiro (
+
+    id uuid primary key default uuid_generate_v4(),
+
+
+    projeto_id uuid references public.projetos(id)
+    on delete cascade,
+
+
+    descricao text,
+
+
+    tipo text,
+
+
+    valor numeric(12,2),
+
+
+    data date,
+
+
+    created_at timestamp with time zone default now()
+
+);
+
+
+
+
+-- =====================================================
+-- AGENDA
+-- =====================================================
+
+
+create table if not exists public.agenda (
+
+    id uuid primary key default uuid_generate_v4(),
+
+
+    titulo text,
+
+
+    descricao text,
+
+
+    data date,
+
+
+    horario time,
+
+
+    created_at timestamp with time zone default now()
+
+);
+-- =====================================================
+-- CONFIGURAÇÕES
+-- =====================================================
+
+
+create table if not exists public.configuracoes (
+
+    id uuid primary key default uuid_generate_v4(),
+
+    nome_empresa text,
+
+    logo text,
+
+    telefone text,
+
+    email text,
+
+    endereco text,
+
+    created_at timestamp with time zone default now()
+
+);
+
+
+
+
+-- =====================================================
+-- ATIVAR RLS
+-- =====================================================
+
+
+alter table public.clientes enable row level security;
+
+alter table public.projetos enable row level security;
+
+alter table public.documentos enable row level security;
+
+alter table public.fotos enable row level security;
+
+alter table public.biblioteca enable row level security;
+
+alter table public.cronograma enable row level security;
+
+alter table public.financeiro enable row level security;
+
+alter table public.agenda enable row level security;
+
+alter table public.configuracoes enable row level security;
+
+
+
+
+-- =====================================================
+-- POLICIES - USUÁRIO AUTENTICADO
+-- =====================================================
+
+
+create policy "usuarios autenticados clientes"
+on public.clientes
+for all
+to authenticated
+using (true)
+with check (true);
+
+
+
+create policy "usuarios autenticados projetos"
+on public.projetos
+for all
+to authenticated
+using (true)
+with check (true);
+
+
+
+create policy "usuarios autenticados documentos"
+on public.documentos
+for all
+to authenticated
+using (true)
+with check (true);
+
+
+
+create policy "usuarios autenticados fotos"
+on public.fotos
+for all
+to authenticated
+using (true)
+with check (true);
+
+
+
+create policy "usuarios autenticados biblioteca"
+on public.biblioteca
+for all
+to authenticated
+using (true)
+with check (true);
+-- =====================================================
+-- POLICIES RESTANTES
+-- =====================================================
+
+
+create policy "usuarios autenticados cronograma"
+on public.cronograma
+for all
+to authenticated
+using (true)
+with check (true);
+
+
+
+create policy "usuarios autenticados financeiro"
+on public.financeiro
+for all
+to authenticated
+using (true)
+with check (true);
+
+
+
+create policy "usuarios autenticados agenda"
+on public.agenda
+for all
+to authenticated
+using (true)
+with check (true);
+
+
+
+create policy "usuarios autenticados configuracoes"
+on public.configuracoes
+for all
+to authenticated
+using (true)
+with check (true);
+
+
+
+
+-- =====================================================
+-- STORAGE BUCKETS
+-- =====================================================
+
+
+insert into storage.buckets
+(id, name, public)
+
+
+values
+
+('documentos', 'documentos', true),
+
+('fotos', 'fotos', true),
+
+('biblioteca', 'biblioteca', true)
+
+
+on conflict (id) do nothing;
+
+
+
+
+-- =====================================================
+-- STORAGE POLICIES
+-- =====================================================
+
+
+create policy "usuarios autenticados upload documentos"
+on storage.objects
+for insert
+to authenticated
+with check (
+bucket_id = 'documentos'
+);
+
+
+
+create policy "usuarios autenticados visualizar documentos"
+on storage.objects
+for select
+to authenticated
+using (
+bucket_id = 'documentos'
+);
+
+
+
+create policy "usuarios autenticados upload fotos"
+on storage.objects
+for insert
+to authenticated
+with check (
+bucket_id = 'fotos'
+);
+
+
+
+create policy "usuarios autenticados visualizar fotos"
+on storage.objects
+for select
+to authenticated
+using (
+bucket_id = 'fotos'
+);
+
+
+
+create policy "usuarios autenticados upload biblioteca"
+on storage.objects
+for insert
+to authenticated
+with check (
+bucket_id = 'biblioteca'
+);
+
+
+
+create policy "usuarios autenticados visualizar biblioteca"
+on storage.objects
+for select
+to authenticated
+using (
+bucket_id = 'biblioteca'
 );
