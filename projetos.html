@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+
+
+<head>
+
+
+<meta charset="UTF-8">
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+<title>
+Projetos | Camila Martins Engenharia
+</title>
+
+
+
+<link rel="stylesheet" href="css/admin.css">
+
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Parisienne&display=swap"
+rel="stylesheet">
+
+
+
+</head>
+
+
+
+
+<body>
+
+
+
+<div class="layout">
+
+
+
+<aside class="sidebar">
+
+
+
+<div class="logo">
+
+
+<h1 class="assinatura">
+
+Camila Martins
+
+</h1>
+
+
+<span>
+
+ENGENHARIA
+
+</span>
+
+
+</div>
+
+
+
+
+
+
+<nav class="menu-lateral">
+
+
+
+<a href="admin.html" class="menu-item">
+
+<i class="fa-solid fa-house"></i>
+
+Dashboard
+
+</a>
+
+
+
+<a href="clientes.html" class="menu-item">
+
+<i class="fa-solid fa-users"></i>
+
+Clientes
+
+</a>
+
+
+
+<a href="projetos.html" class="menu-item ativo">
+
+<i class="fa-solid fa-compass-drafting"></i>
+
+Projetos
+
+</a>
+
+
+
+<a href="documentos.html" class="menu-item">
+
+<i class="fa-solid fa-folder-open"></i>
+
+Documentos
+
+</a>
+
+
+
+<a href="biblioteca.html" class="menu-item">
+
+<i class="fa-solid fa-book-open"></i>
+
+Biblioteca
+
+</a>
+
+
+
+<a href="fotos.html" class="menu-item">
+
+<i class="fa-solid fa-images"></i>
+
+Fotos
+
+</a>
+
+
+
+<a href="financeiro.html" class="menu-item">
+
+<i class="fa-solid fa-chart-line"></i>
+
+Financeiro
+
+</a>
+
+
+
+<a href="agenda.html" class="menu-item">
+
+<i class="fa-solid fa-calendar-days"></i>
+
+Agenda
+
+</a>
+
+
+
+<a href="configuracoes.html" class="menu-item">
+
+<i class="fa-solid fa-gear"></i>
+
+Configurações
+
+</a>
+
+
+
+</nav>
+
+
+
+
+
+<button
+id="logoutButton"
+class="btn-sair">
+
+
+<i class="fa-solid fa-right-from-bracket"></i>
+
+
+Sair
+
+
+</button>
+
+
+
+</aside>
+<main class="conteudo">
+
+
+
+<header class="topbar">
+
+
+<div>
+
+
+<h2>
+
+Projetos
+
+</h2>
+
+
+
+<p>
+
+Gerenciamento de projetos da engenharia
+
+</p>
+
+
+</div>
+
+
+
+
+
+<div class="acoes-topo">
+
+
+<button id="novoProjeto">
+
+
+<i class="fa-solid fa-plus"></i>
+
+
+Novo Projeto
+
+
+</button>
+
+
+
+</div>
+
+
+
+</header>
+
+
+
+
+
+
+
+
+
+<section class="card-grande">
+
+
+
+<div class="card-header">
+
+
+<h2>
+
+Lista de Projetos
+
+</h2>
+
+
+
+
+<div class="acoes-card">
+
+
+<input
+type="search"
+id="pesquisaProjeto"
+placeholder="Pesquisar projeto...">
+
+
+
+<button
+id="btnPesquisarProjeto">
+
+
+<i class="fa-solid fa-search"></i>
+
+
+</button>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<div
+id="listaProjetos"
+class="lista-projetos">
+
+
+</div>
+
+
+
+</section>
+
+
+
+
+
+
+
+
+
+<!-- MODAL PROJETO -->
+
+
+
+<div
+id="modalProjeto"
+class="modal">
+
+
+
+<div class="modal-content">
+
+
+
+<div class="modal-header">
+
+
+<h2>
+
+Cadastro de Projeto
+
+</h2>
+
+
+
+
+<button
+id="fecharModalProjeto">
+
+
+<i class="fa-solid fa-xmark"></i>
+
+
+</button>
+
+
+
+</div>
+
+
+
+
+
+
+
+<form
+id="formProjeto">
+
+
+
+<div class="form-grid">
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+Nome do Projeto
+
+</label>
+
+
+<input
+id="projetoNome"
+required>
+
+
+
+</div>
+
+
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+Cliente
+
+</label>
+
+
+
+<select
+id="projetoCliente">
+
+
+</select>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+Tipo de Projeto
+
+</label>
+
+
+<select
+id="projetoTipo">
+
+
+<option value="arquitetonico">
+
+Arquitetônico
+
+</option>
+
+
+<option value="executivo">
+
+Executivo
+
+</option>
+
+
+<option value="reforma">
+
+Reforma
+
+</option>
+
+
+<option value="outro">
+
+Outro
+
+</option>
+
+
+</select>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+Status
+
+</label>
+
+
+
+<select
+id="projetoStatus">
+
+
+<option value="orcamento">
+
+Orçamento
+
+</option>
+
+
+<option value="em_andamento">
+
+Em andamento
+
+</option>
+
+
+<option value="concluido">
+
+Concluído
+
+</option>
+
+
+<option value="cancelado">
+
+Cancelado
+
+</option>
+
+
+</select>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="campo campo-full">
+
+
+<label>
+
+Descrição
+
+</label>
+
+
+
+<textarea
+id="projetoDescricao"
+rows="5">
+
+</textarea>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+Data início
+
+</label>
+
+
+<input
+type="date"
+id="projetoDataInicio">
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+Previsão de entrega
+
+</label>
+
+
+<input
+type="date"
+id="projetoDataFim">
+
+
+</div>
+
+
+
+
+
+</div>
+<div class="modal-footer">
+
+
+<button
+type="button"
+id="cancelarProjeto">
+
+Cancelar
+
+</button>
+
+
+
+
+<button
+type="submit"
+id="salvarProjeto">
+
+Salvar Projeto
+
+</button>
+
+
+
+</div>
+
+
+
+
+</form>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- DETALHES DO PROJETO -->
+
+
+
+<section class="painel-principal">
+
+
+
+<div class="card-grande">
+
+
+
+<div class="card-header">
+
+
+<h2>
+
+Detalhes do Projeto
+
+</h2>
+
+
+
+</div>
+
+
+
+
+
+
+<div
+id="detalhesProjeto"
+class="detalhes">
+
+
+<p>
+
+Selecione um projeto para visualizar os detalhes.
+
+</p>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="card-grande">
+
+
+<div class="card-header">
+
+
+<h2>
+
+Documentos do Projeto
+
+</h2>
+
+
+</div>
+
+
+
+<div
+id="documentosProjeto"
+class="lista-documentos">
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="card-grande">
+
+
+<div class="card-header">
+
+
+<h2>
+
+Fotos do Projeto
+
+</h2>
+
+
+</div>
+
+
+
+<div
+id="fotosProjeto"
+class="galeria-fotos">
+
+
+</div>
+
+
+
+</div>
+
+
+
+</section>
+</main>
+
+
+
+</div>
+
+
+
+
+
+
+<!-- LOADING -->
+
+<div
+id="loading"
+class="loading">
+
+
+<div class="spinner"></div>
+
+
+<p>
+
+Carregando...
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- SCRIPTS -->
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+<script src="js/supabase.js"></script>
+
+
+<script src="js/database.js"></script>
+
+
+<script src="js/auth.js"></script>
+
+
+<script src="js/projetos.js"></script>
+
+
+
+</body>
+
+
+</html>
