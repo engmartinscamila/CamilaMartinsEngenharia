@@ -113,3 +113,118 @@ async function criarProjeto(projeto){
     return data;
 
 }
+// ===============================
+// DOCUMENTOS
+// ===============================
+
+async function buscarDocumentos(){
+
+    const { data, error } = await supabaseClient
+        .from("documentos")
+        .select("*")
+        .order("created_at", {
+            ascending:false
+        });
+
+
+    if(error) throw error;
+
+    return data || [];
+
+}
+
+
+
+async function criarDocumento(documento){
+
+    const { data, error } = await supabaseClient
+        .from("documentos")
+        .insert([documento])
+        .select();
+
+
+    if(error) throw error;
+
+    return data;
+
+}
+
+
+
+
+// ===============================
+// FOTOS
+// ===============================
+
+
+async function buscarFotos(){
+
+    const { data, error } = await supabaseClient
+        .from("fotos")
+        .select("*")
+        .order("created_at", {
+            ascending:false
+        });
+
+
+    if(error) throw error;
+
+    return data || [];
+
+}
+
+
+
+async function criarFoto(foto){
+
+    const { data, error } = await supabaseClient
+        .from("fotos")
+        .insert([foto])
+        .select();
+
+
+    if(error) throw error;
+
+    return data;
+
+}
+
+
+
+
+// ===============================
+// BIBLIOTECA
+// ===============================
+
+
+async function buscarBiblioteca(){
+
+    const { data, error } = await supabaseClient
+        .from("biblioteca")
+        .select("*")
+        .order("created_at", {
+            ascending:false
+        });
+
+
+    if(error) throw error;
+
+    return data || [];
+
+}
+
+
+
+async function criarBiblioteca(item){
+
+    const { data, error } = await supabaseClient
+        .from("biblioteca")
+        .insert([item])
+        .select();
+
+
+    if(error) throw error;
+
+    return data;
+
+}
