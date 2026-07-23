@@ -332,6 +332,36 @@ Salvar Cliente
 
 <script src="js/clientes.js"></script>
 
+  <script>
+
+document.getElementById("novoCliente")?.addEventListener("click", () => {
+
+    document
+    .getElementById("modalCliente")
+    .classList.add("show");
+
+});
+
+
+document.getElementById("fecharModalCliente")?.addEventListener("click", () => {
+
+    document
+    .getElementById("modalCliente")
+    .classList.remove("show");
+
+});
+
+
+document.getElementById("logoutButton")?.addEventListener("click", async () => {
+
+    await supabase.auth.signOut();
+
+    location.href="login.html";
+
+});
+
+
+</script>
 
 </body>
 
