@@ -6,8 +6,8 @@ AUTH
 */
 
 const supabase = window.supabase.createClient(
-    "URL_DO_SEU_PROJETO",
-    "SUA_CHAVE_ANON"
+    "https://hghtwlopqztfcosxfafd.supabase.co",
+    "sb_publishable_-unXLR2NSSACLs01Sr60GA_uCFnJ74f"
 );
 
 document.addEventListener("DOMContentLoaded", () => {
