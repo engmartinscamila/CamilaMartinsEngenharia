@@ -1,1 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
 
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Clientes | Camila Martins Engenharia</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Parisienne&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/admin.css">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+</head>
+
+
+<body>
+
+
+<div class="layout">
+
+
+<aside class="sidebar">
+
+
+<div class="logo">
+
+<h1 class="assinatura">
+Camila Martins
+</h1>
+
+<span>
+ENGENHARIA
+</span>
+
+</div>
+
+
+<nav class="menu-lateral">
+
+
+<a href="admin.html" class="menu-item">
+<i class="fa-solid fa-house"></i>
+<span>Dashboard</span>
+</a>
+
+
+<a href="clientes.html" class="menu-item ativo">
+<i class="fa-solid fa-users"></i>
+<span>Clientes</span>
+</a>
+
+
+<a href="projetos.html" class="menu-item">
+<i class="fa-solid fa-compass-drafting"></i>
+<span>Projetos</span>
+</a>
+
+
+<a href="documentos.html" class="menu-item">
+<i class="fa-solid fa-folder-open"></i>
+<span>Documentos</span>
+</a>
+
+
+<a href="biblioteca.html" class="menu-item">
+<i class="fa-solid fa-book-open"></i>
+<span>Biblioteca</span>
+</a>
+
+
+<a href="fotos.html" class="menu-item">
+<i class="fa-solid fa-images"></i>
+<span>Fotos</span>
+</a>
+
+
+<a href="financeiro.html" class="menu-item">
+<i class="fa-solid fa-chart-line"></i>
+<span>Financeiro</span>
+</a>
+
+
+<a href="agenda.html" class="menu-item">
+<i class="fa-solid fa-calendar"></i>
+<span>Agenda</span>
+</a>
+
+
+<a href="configuracoes.html" class="menu-item">
+<i class="fa-solid fa-gear"></i>
+<span>Configurações</span>
+</a>
+
+
+</nav>
+
+
+<button id="logoutButton" class="btn-sair">
+
+<i class="fa-solid fa-right-from-bracket"></i>
+
+Sair
+
+</button>
+
+
+</aside>
+
+
+
+<main class="conteudo">
+
+
+
+<header class="topbar">
+
+<div>
+
+<h2>
+Clientes
+</h2>
+
+<p>
+Gerenciamento de clientes
+</p>
+
+</div>
+
+
+<button id="novoCliente">
+
+<i class="fa-solid fa-user-plus"></i>
+
+Novo Cliente
+
+</button>
+
+
+</header>
+
+
+
+<section class="card-grande">
+
+
+<div class="card-header">
+
+
+<h2>
+Lista de Clientes
+</h2>
+
+
+<div class="acoes-card">
+
+
+<input
+type="search"
+id="pesquisarClientes"
+placeholder="Pesquisar cliente...">
+
+
+<button id="btnPesquisarClientes">
+
+<i class="fa-solid fa-search"></i>
+
+</button>
+
+
+</div>
+
+
+</div>
+
+
+
+<table class="tabela">
+
+
+<thead>
+
+<tr>
+
+<th>Nome</th>
+
+<th>Telefone</th>
+
+<th>Email</th>
+
+<th>Cidade</th>
+
+<th>Estado</th>
+
+<th>Status</th>
+
+<th>Ações</th>
+
+</tr>
+
+</thead>
+
+
+<tbody id="tabelaClientes">
+
+
+</tbody>
+
+
+</table>
+
+
+</section>
+
+
+
+</main>
+
+
+</div>
+
+
+
+
+
+<div id="modalCliente" class="modal">
+
+
+<div class="modal-content">
+
+
+<div class="modal-header">
+
+<h2>
+Novo Cliente
+</h2>
+
+
+<button id="fecharModalCliente">
+
+<i class="fa-solid fa-xmark"></i>
+
+</button>
+
+</div>
+
+
+
+<form id="formCliente">
+
+
+<input id="clienteNome" placeholder="Nome completo" required>
+
+<input id="clienteCpf" placeholder="CPF/CNPJ">
+
+<input id="clienteTelefone" placeholder="Telefone">
+
+<input id="clienteEmail" placeholder="E-mail">
+
+<input id="clienteEndereco" placeholder="Endereço">
+
+<input id="clienteCidade" placeholder="Cidade">
+
+<input id="clienteEstado" placeholder="Estado">
+
+<input id="clienteCep" placeholder="CEP">
+
+
+<select id="clienteStatus">
+
+<option value="ativo">
+Ativo
+</option>
+
+<option value="orcamento">
+Orçamento
+</option>
+
+<option value="pausado">
+Pausado
+</option>
+
+<option value="concluido">
+Concluído
+</option>
+
+
+</select>
+
+
+
+<textarea
+id="clienteObservacoes"
+placeholder="Observações">
+</textarea>
+
+
+
+<button
+type="submit"
+id="salvarCliente">
+
+Salvar Cliente
+
+</button>
+
+
+
+</form>
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="js/supabase.js"></script>
+
+<script src="js/auth.js"></script>
+
+<script src="js/clientes.js"></script>
+
+
+</body>
+
+</html>
