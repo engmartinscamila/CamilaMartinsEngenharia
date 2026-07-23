@@ -2,6 +2,7 @@
 ==========================================================
 CAMILA MARTINS ENGENHARIA
 CLIENTES
+VERSÃO FINAL SUPABASE
 ==========================================================
 */
 
@@ -13,6 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
     carregarClientesPagina();
 
     carregarClientesNosSelects();
+
 
     document
     .getElementById("btnPesquisarClientes")
@@ -26,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("pesquisarClientes")
     ?.addEventListener(
         "keydown",
-        event => {
+        (event)=>{
 
             if(event.key === "Enter"){
 
@@ -38,7 +40,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         }
     );
-
 
 });
 
@@ -68,8 +69,9 @@ function configurarFormularioCliente(){
 
 
 
+
 // ==========================================================
-// SALVAR CLIENTE
+// CADASTRAR CLIENTE
 // ==========================================================
 
 
@@ -176,14 +178,6 @@ async function salvarCliente(event){
 
 
 
-        if(typeof carregarDashboard === "function"){
-
-            await carregarDashboard();
-
-        }
-
-
-
     }
     catch(error){
 
@@ -207,20 +201,26 @@ async function salvarCliente(event){
 
 async function carregarClientesPagina(){
 
-    const lista =
+    const tabela =
     document.getElementById("tabelaClientes");
 
 
-    if(!lista) return;
+    if(!tabela) return;
 
 
 
-    lista.innerHTML = `
+    tabela.innerHTML = `
+
         <tr>
+
             <td colspan="7">
+
                 Carregando clientes...
+
             </td>
+
         </tr>
+
     `;
 
 
@@ -228,12 +228,12 @@ async function carregarClientesPagina(){
     try{
 
 
-        const clientes = await buscarClientes();
+        const clientes =
+        await buscarClientes();
 
 
 
         renderizarClientes(clientes);
-
 
 
     }
@@ -243,19 +243,27 @@ async function carregarClientesPagina(){
         console.error(error);
 
 
-        lista.innerHTML = `
-            <tr>
-                <td colspan="7">
-                    Não foi possível carregar os clientes.
-                </td>
-            </tr>
+
+        tabela.innerHTML = `
+
+        <tr>
+
+            <td colspan="7">
+
+                Erro ao carregar clientes.
+
+            </td>
+
+        </tr>
+
         `;
 
 
     }
 
-
 }
+
+
 
 
 
@@ -267,23 +275,29 @@ async function carregarClientesPagina(){
 function renderizarClientes(clientes){
 
 
-    const lista =
+    const tabela =
     document.getElementById("tabelaClientes");
 
 
-    if(!lista) return;
+    if(!tabela) return;
 
 
 
     if(clientes.length === 0){
 
 
-        lista.innerHTML = `
-            <tr>
-                <td colspan="7">
-                    Nenhum cliente cadastrado.
-                </td>
-            </tr>
+        tabela.innerHTML = `
+
+        <tr>
+
+            <td colspan="7">
+
+                Nenhum cliente cadastrado.
+
+            </td>
+
+        </tr>
+
         `;
 
 
@@ -293,34 +307,45 @@ function renderizarClientes(clientes){
 
 
 
-    lista.innerHTML =
-    clientes.map(cliente => {
+    tabela.innerHTML = clientes.map(cliente => `
 
-
-        return `
 
         <tr>
 
 
-            <td>${escaparCliente(cliente.nome)}</td>
-
-
-            <td>${escaparCliente(cliente.telefone || "-")}</td>
-
-
-            <td>${escaparCliente(cliente.email || "-")}</td>
-
-
-            <td>${escaparCliente(cliente.cidade || "-")}</td>
-
-
-            <td>${escaparCliente(cliente.estado || "-")}</td>
+            <td>
+                ${escaparCliente(cliente.nome)}
+            </td>
 
 
             <td>
-                <span class="badge ${cliente.status || "ativo"}">
+                ${escaparCliente(cliente.telefone || "-")}
+            </td>
+
+
+            <td>
+                ${escaparCliente(cliente.email || "-")}
+            </td>
+
+
+            <td>
+                ${escaparCliente(cliente.cidade || "-")}
+            </td>
+
+
+            <td>
+                ${escaparCliente(cliente.estado || "-")}
+            </td>
+
+
+            <td>
+
+                <span class="badge">
+
                     ${formatarStatusCliente(cliente.status)}
+
                 </span>
+
             </td>
 
 
@@ -331,7 +356,7 @@ function renderizarClientes(clientes){
                 class="btn-icon edit"
                 onclick="editarCliente('${cliente.id}')">
 
-                <i class="fa-solid fa-pen"></i>
+                    <i class="fa-solid fa-pen"></i>
 
                 </button>
 
@@ -341,7 +366,7 @@ function renderizarClientes(clientes){
                 class="btn-icon delete"
                 onclick="excluirCliente('${cliente.id}')">
 
-                <i class="fa-solid fa-trash"></i>
+                    <i class="fa-solid fa-trash"></i>
 
                 </button>
 
@@ -352,17 +377,16 @@ function renderizarClientes(clientes){
         </tr>
 
 
-        `;
-
-
-    }).join("");
+    `).join("");
 
 }
 
 
 
+
+
 // ==========================================================
-// PESQUISA
+// PESQUISAR CLIENTES
 // ==========================================================
 
 
@@ -388,17 +412,20 @@ async function pesquisarClientesPagina(){
 
         return (
 
-            cliente.nome?.toLowerCase()
+            cliente.nome
+            ?.toLowerCase()
             .includes(termo)
 
             ||
 
-            cliente.email?.toLowerCase()
+            cliente.email
+            ?.toLowerCase()
             .includes(termo)
 
             ||
 
-            cliente.telefone?.toLowerCase()
+            cliente.telefone
+            ?.toLowerCase()
             .includes(termo)
 
         );
@@ -412,9 +439,6 @@ async function pesquisarClientesPagina(){
 
 
 }
-
-
-
 // ==========================================================
 // EDITAR CLIENTE
 // ==========================================================
@@ -423,63 +447,53 @@ async function pesquisarClientesPagina(){
 async function editarCliente(id){
 
 
-    const {data,error} =
-    await supabaseClient
-    .from("clientes")
-    .select("*")
-    .eq("id",id)
-    .single();
+    const cliente =
+    await buscarClientePorId(id);
 
 
 
-    if(error){
-
-        console.error(error);
-
-        return;
-
-    }
+    if(!cliente) return;
 
 
 
-    clienteNome.value =
-    data.nome || "";
+    document.getElementById("clienteNome").value =
+    cliente.nome || "";
 
 
-    clienteCpf.value =
-    data.cpf_cnpj || "";
+    document.getElementById("clienteCpf").value =
+    cliente.cpf_cnpj || "";
 
 
-    clienteTelefone.value =
-    data.telefone || "";
+    document.getElementById("clienteTelefone").value =
+    cliente.telefone || "";
 
 
-    clienteEmail.value =
-    data.email || "";
+    document.getElementById("clienteEmail").value =
+    cliente.email || "";
 
 
-    clienteEndereco.value =
-    data.endereco || "";
+    document.getElementById("clienteEndereco").value =
+    cliente.endereco || "";
 
 
-    clienteCidade.value =
-    data.cidade || "";
+    document.getElementById("clienteCidade").value =
+    cliente.cidade || "";
 
 
-    clienteEstado.value =
-    data.estado || "";
+    document.getElementById("clienteEstado").value =
+    cliente.estado || "";
 
 
-    clienteCep.value =
-    data.cep || "";
+    document.getElementById("clienteCep").value =
+    cliente.cep || "";
 
 
-    clienteStatus.value =
-    data.status || "ativo";
+    document.getElementById("clienteStatus").value =
+    cliente.status || "ativo";
 
 
-    clienteObservacoes.value =
-    data.observacoes || "";
+    document.getElementById("clienteObservacoes").value =
+    cliente.observacoes || "";
 
 
 
@@ -487,7 +501,7 @@ async function editarCliente(id){
     document.getElementById("formCliente");
 
 
-    formulario.dataset.clienteId = id;
+    formulario.dataset.id = id;
 
 
 
@@ -516,97 +530,118 @@ async function editarCliente(id){
 
 
 
+
 // ==========================================================
-// ATUALIZAR
+// ATUALIZAR CLIENTE
 // ==========================================================
 
 
 async function atualizarCliente(event){
 
-
     event.preventDefault();
 
 
 
-    const formulario =
-    document.getElementById("formCliente");
-
-
-
     const id =
-    formulario.dataset.clienteId;
+    document
+    .getElementById("formCliente")
+    .dataset.id;
 
 
 
     const cliente = {
 
-        nome: clienteNome.value,
 
-        cpf_cnpj: clienteCpf.value,
+        nome:
+        clienteNome.value,
 
-        telefone: clienteTelefone.value,
 
-        email: clienteEmail.value,
+        cpf_cnpj:
+        clienteCpf.value,
 
-        endereco: clienteEndereco.value,
 
-        cidade: clienteCidade.value,
+        telefone:
+        clienteTelefone.value,
 
-        estado: clienteEstado.value,
 
-        cep: clienteCep.value,
+        email:
+        clienteEmail.value,
 
-        status: clienteStatus.value,
 
-        observacoes: clienteObservacoes.value
+        endereco:
+        clienteEndereco.value,
+
+
+        cidade:
+        clienteCidade.value,
+
+
+        estado:
+        clienteEstado.value,
+
+
+        cep:
+        clienteCep.value,
+
+
+        status:
+        clienteStatus.value,
+
+
+        observacoes:
+        clienteObservacoes.value
 
     };
 
 
 
-    await atualizarCliente(id,cliente);
+    await editarCliente(id, cliente);
 
 
 
-    alert(
-        "Cliente atualizado."
-    );
+    alert("Cliente atualizado.");
 
 
 
-    formulario.reset();
+    document
+    .getElementById("formCliente")
+    .reset();
+
 
 
     await carregarClientesPagina();
-
 
 }
 
 
 
+
+
 // ==========================================================
-// EXCLUIR
+// EXCLUIR CLIENTE
 // ==========================================================
 
 
 async function excluirCliente(id){
 
 
-    if(!confirm(
-        "Deseja excluir este cliente?"
-    )) return;
+    if(
+        !confirm("Deseja excluir este cliente?")
+    )
+    return;
 
 
 
-    await removerCliente(id);
+    await window.excluirCliente(id);
 
 
 
     await carregarClientesPagina();
 
 
-
 }
+
+
 
 
 
@@ -639,14 +674,15 @@ async function carregarClientesNosSelects(){
 
 
 
-    selects.forEach(select => {
+    selects.forEach(select=>{
 
 
-        select.innerHTML =
-        `
+        select.innerHTML = `
+
         <option value="">
         Selecione um cliente
         </option>
+
         `;
 
 
@@ -703,8 +739,8 @@ function formatarStatusCliente(status){
 
     return lista[status] || "Ativo";
 
-
 }
+
 
 
 
@@ -712,10 +748,15 @@ function escaparCliente(valor){
 
 
     return String(valor ?? "")
+
     .replaceAll("&","&amp;")
+
     .replaceAll("<","&lt;")
+
     .replaceAll(">","&gt;")
+
     .replaceAll('"',"&quot;")
+
     .replaceAll("'","&#039;");
 
 
