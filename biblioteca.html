@@ -1,251 +1,664 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
+
 
 <head>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Biblioteca | Camila Martins Engenharia</title>
+<meta charset="UTF-8">
 
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/biblioteca.css">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>
+Biblioteca | Camila Martins Engenharia
+</title>
 
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+
+<link rel="stylesheet" href="css/admin.css">
+
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Parisienne&display=swap"
+rel="stylesheet">
+
+
 
 </head>
 
+
+
 <body>
 
-<div class="dashboard">
 
-    <!-- SIDEBAR -->
 
-    <aside class="sidebar">
+<div class="layout">
 
-        <div class="logo-area">
 
-            <img src="img/logo-branca.png" alt="Logo">
 
-        </div>
+<aside class="sidebar">
 
-        <nav>
 
-            <a href="portal.html">
-                <i class="fa-solid fa-house"></i>
-                Dashboard
-            </a>
 
-            <a href="meu-projeto.html">
-                <i class="fa-solid fa-building"></i>
-                Meu Projeto
-            </a>
+<div class="logo">
 
-            <a href="cronograma.html">
-                <i class="fa-solid fa-calendar-check"></i>
-                Cronograma
-            </a>
 
-            <a href="fotos.html">
-                <i class="fa-solid fa-camera"></i>
-                Fotos
-            </a>
+<h1 class="assinatura">
 
-            <a href="documentos.html">
-                <i class="fa-solid fa-folder-open"></i>
-                Documentos
-            </a>
+Camila Martins
 
-            <a class="active" href="biblioteca.html">
-                <i class="fa-solid fa-book"></i>
-                Biblioteca
-            </a>
+</h1>
 
-            <a href="solicitacoes.html">
-                <i class="fa-solid fa-comments"></i>
-                Solicitações
-            </a>
 
-        </nav>
+<span>
 
-    </aside>
+ENGENHARIA
 
-    <!-- CONTEÚDO -->
+</span>
 
-    <main class="content">
-
-        <header class="topbar">
-
-            <div>
-
-                <h1>Biblioteca Premium</h1>
-
-                <p>Materiais exclusivos para consulta e download.</p>
-
-            </div>
-
-            <button
-                class="btn-primary"
-                onclick="document.getElementById('modalBiblioteca').classList.add('show')">
-
-                <i class="fa-solid fa-plus"></i>
-
-                Novo Material
-
-            </button>
-
-        </header>
-
-        <!-- PESQUISA -->
-
-        <section class="toolbar">
-
-            <div class="search">
-
-                <i class="fa-solid fa-magnifying-glass"></i>
-
-                <input
-                    type="text"
-                    placeholder="Pesquisar material..."
-                    onkeyup="pesquisarBiblioteca(this.value)">
-
-            </div>
-
-        </section>
-
-        <!-- LISTA -->
-
-        <section
-            id="listaBiblioteca"
-            class="biblioteca-grid">
-
-        </section>
-
-    </main>
 
 </div>
 
-<!-- MODAL -->
+
+
+
+
+
+<nav class="menu-lateral">
+
+
+
+<a href="admin.html" class="menu-item">
+
+<i class="fa-solid fa-house"></i>
+
+Dashboard
+
+</a>
+
+
+
+<a href="clientes.html" class="menu-item">
+
+<i class="fa-solid fa-users"></i>
+
+Clientes
+
+</a>
+
+
+
+<a href="projetos.html" class="menu-item">
+
+<i class="fa-solid fa-compass-drafting"></i>
+
+Projetos
+
+</a>
+
+
+
+<a href="documentos.html" class="menu-item">
+
+<i class="fa-solid fa-folder-open"></i>
+
+Documentos
+
+</a>
+
+
+
+<a href="biblioteca.html" class="menu-item ativo">
+
+<i class="fa-solid fa-book-open"></i>
+
+Biblioteca
+
+</a>
+
+
+
+<a href="fotos.html" class="menu-item">
+
+<i class="fa-solid fa-images"></i>
+
+Fotos
+
+</a>
+
+
+
+<a href="financeiro.html" class="menu-item">
+
+<i class="fa-solid fa-chart-line"></i>
+
+Financeiro
+
+</a>
+
+
+
+<a href="agenda.html" class="menu-item">
+
+<i class="fa-solid fa-calendar-days"></i>
+
+Agenda
+
+</a>
+
+
+
+<a href="configuracoes.html" class="menu-item">
+
+<i class="fa-solid fa-gear"></i>
+
+Configurações
+
+</a>
+
+
+
+</nav>
+
+
+
+
+
+<button
+id="logoutButton"
+class="btn-sair">
+
+
+<i class="fa-solid fa-right-from-bracket"></i>
+
+
+Sair
+
+
+</button>
+
+
+
+</aside>
+<main class="conteudo">
+
+
+
+<header class="topbar">
+
+
+<div>
+
+
+<h2>
+
+Biblioteca
+
+</h2>
+
+
+
+<p>
+
+Central de arquivos e materiais da engenharia
+
+</p>
+
+
+</div>
+
+
+
+
+<div class="acoes-topo">
+
+
+<button id="novoArquivo">
+
+
+<i class="fa-solid fa-upload"></i>
+
+
+Novo Arquivo
+
+
+</button>
+
+
+
+</div>
+
+
+
+</header>
+
+
+
+
+
+
+
+
+
+<section class="card-grande">
+
+
+
+<div class="card-header">
+
+
+<h2>
+
+Arquivos
+
+</h2>
+
+
+
+
+<div class="acoes-card">
+
+
+<input
+type="search"
+id="pesquisaBiblioteca"
+placeholder="Pesquisar arquivo...">
+
+
+
+<button
+id="btnPesquisarBiblioteca">
+
+
+<i class="fa-solid fa-search"></i>
+
+
+</button>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
 
 <div
-    id="modalBiblioteca"
-    class="modal">
+id="listaBiblioteca"
+class="lista-documentos">
 
-    <div class="modal-content">
-
-        <div class="modal-header">
-
-            <h2>Novo Material</h2>
-
-            <button
-                class="close"
-                onclick="document.getElementById('modalBiblioteca').classList.remove('show')">
-
-                &times;
-
-            </button>
-
-        </div>
-
-        <form id="formBiblioteca">
-
-            <div class="form-group">
-
-                <label>Título</label>
-
-                <input
-                    id="tituloBiblioteca"
-                    type="text"
-                    required>
-
-            </div>
-
-            <div class="form-group">
-
-                <label>Categoria</label>
-
-                <select
-                    id="categoriaBiblioteca"
-                    required>
-
-                    <option value="">Selecione</option>
-                    <option>Checklist</option>
-                    <option>Manual</option>
-                    <option>Guia</option>
-                    <option>Projeto</option>
-                    <option>PDF</option>
-                    <option>Vídeo</option>
-                    <option>Outros</option>
-
-                </select>
-
-            </div>
-
-            <div class="form-group">
-
-                <label>Descrição</label>
-
-                <textarea
-                    id="descricaoBiblioteca"
-                    rows="4"></textarea>
-
-            </div>
-
-            <div class="form-group">
-
-                <label>Arquivo</label>
-
-                <input
-                    id="arquivoBiblioteca"
-                    type="file"
-                    required>
-
-            </div>
-
-            <div class="modal-footer">
-
-                <button
-                    type="button"
-                    class="btn-secondary"
-                    onclick="document.getElementById('modalBiblioteca').classList.remove('show')">
-
-                    Cancelar
-
-                </button>
-
-                <button
-                    class="btn-primary"
-                    type="submit">
-
-                    Salvar Material
-
-                </button>
-
-            </div>
-
-        </form>
-
-    </div>
 
 </div>
+
+
+
+</section>
+
+
+
+
+
+
+
+
+
+<!-- MODAL ARQUIVO -->
+
+
+
+<div
+id="modalArquivo"
+class="modal">
+
+
+
+<div class="modal-content">
+
+
+
+<div class="modal-header">
+
+
+<h2>
+
+Adicionar Arquivo
+
+</h2>
+
+
+
+
+<button
+id="fecharModalArquivo">
+
+
+<i class="fa-solid fa-xmark"></i>
+
+
+</button>
+
+
+
+</div>
+
+
+
+
+
+
+
+<form
+id="formArquivo">
+
+
+
+<div class="form-grid">
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+Nome do Arquivo
+
+</label>
+
+
+
+<input
+id="arquivoNome"
+required>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+Categoria
+
+</label>
+
+
+
+<select
+id="arquivoCategoria">
+
+
+<option value="projeto">
+
+Projetos
+
+</option>
+
+
+
+<option value="modelo">
+
+Modelos
+
+</option>
+
+
+
+<option value="norma">
+
+Normas
+
+</option>
+
+
+
+<option value="outros">
+
+Outros
+
+</option>
+
+
+
+</select>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="campo campo-full">
+
+
+<label>
+
+Descrição
+
+</label>
+
+
+
+<textarea
+id="arquivoDescricao"
+rows="5">
+
+</textarea>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="campo campo-full">
+
+
+<label>
+
+Arquivo
+
+</label>
+
+
+
+<input
+type="file"
+id="arquivoUpload">
+
+
+
+</div>
+<div class="modal-footer">
+
+
+<button
+type="button"
+id="cancelarArquivo">
+
+Cancelar
+
+</button>
+
+
+
+
+<button
+type="submit"
+id="salvarArquivo">
+
+Salvar Arquivo
+
+</button>
+
+
+
+</div>
+
+
+
+</form>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- DETALHES DO ARQUIVO -->
+
+
+
+<section class="painel-principal">
+
+
+
+<div class="card-grande">
+
+
+
+<div class="card-header">
+
+
+<h2>
+
+Detalhes do Arquivo
+
+</h2>
+
+
+
+</div>
+
+
+
+
+
+<div
+id="detalhesBiblioteca"
+class="detalhes">
+
+
+<p>
+
+Selecione um arquivo para visualizar os detalhes.
+
+</p>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+</section>
+</main>
+
+
+
+</div>
+
+
+
+
+
+
+<!-- LOADING -->
+
+<div
+id="loading"
+class="loading">
+
+
+<div class="spinner"></div>
+
+
+<p>
+
+Carregando...
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- SCRIPTS -->
+
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script src="js/config.js"></script>
+
 <script src="js/supabase.js"></script>
+
+
+<script src="js/database.js"></script>
+
+
 <script src="js/auth.js"></script>
-<script src="js/storage.js"></script>
-<script src="js/utils.js"></script>
+
+
 <script src="js/biblioteca.js"></script>
 
+
+
 </body>
+
 
 </html>
