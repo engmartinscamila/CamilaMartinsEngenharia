@@ -1,11 +1,10 @@
 /*
-==========================================================
+=====================================================
 CAMILA MARTINS ENGENHARIA
 AUTH
-==========================================================
+=====================================================
 */
 
-// conexão carregada pelo supabase.js
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -13,9 +12,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 
+
+
 async function iniciarAuth(){
 
+
     const pagina = location.pathname.split("/").pop();
+
+
 
     if(pagina === "login.html"){
 
@@ -25,7 +29,11 @@ async function iniciarAuth(){
 
     }
 
+
+
     const possui = await possuiSessao();
+
+
 
     if(!possui){
 
@@ -35,52 +43,39 @@ async function iniciarAuth(){
 
     }
 
+
+
     carregarNomeAdministrador();
 
-}
-
-async function carregarNomeAdministrador(){
-
-    const usuario = await getUsuario();
-
-    if(!usuario) return;
-
-    const nome = usuario.user_metadata?.nome
-        || usuario.user_metadata?.name
-        || usuario.email
-        || "Administrador";
-
-    const campo = document.getElementById("adminName");
-
-    if(campo){
-
-        campo.textContent = nome;
-
-    }
 
 }
 
-function prepararLogin(){
 
-    const form = document.getElementById("loginForm");
 
-    if(!form) return;
+async function prepararLogin(){
 
-    form.addEventListener("submit", fazerLogin);
 
-}
+    const formulario = document.querySelector("form");
 
-async function fazerLogin(event){
 
-    event.preventDefault();
+    if(!formulario) return;
 
-    const email = document.getElementById("email").value.trim();
 
-    const senha = document.getElementById("senha").value;
 
-    try{
+    formulario.addEventListener("submit", async(e)=>{
 
-        const { error } = await supabase.auth.signInWithPassword({
+
+        e.preventDefault();
+
+
+
+        const email = document.querySelector("#email").value;
+
+        const senha = document.querySelector("#senha").value;
+
+
+
+        const {data,error}=await supabaseClient.auth.signInWithPassword({
 
             email,
 
@@ -88,30 +83,43 @@ async function fazerLogin(event){
 
         });
 
+
+
         if(error){
 
-            alert(error.message);
+            alert("Usuário ou senha incorretos");
 
             return;
 
         }
 
+
+
         location.href="admin.html";
 
-    }
 
-    catch(erro){
+    });
 
-        console.error(erro);
-
-        alert("Erro ao realizar login.");
-
-    }
 
 }
 
-async function sair(){
 
-    await logout();
+
+
+async function carregarNomeAdministrador(){
+
+
+    const usuario = await supabaseClient.auth.getUser();
+
+
+    const nome = document.querySelector("#nomeAdministrador");
+
+
+    if(nome && usuario.data.user){
+
+        nome.innerHTML = usuario.data.user.email;
+
+    }
+
 
 }
