@@ -1,1 +1,607 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
 
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+<title>
+Dashboard | Camila Martins Engenharia
+</title>
+
+
+
+<link rel="stylesheet" href="css/style.css">
+
+
+<link 
+rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+>
+
+
+</head>
+
+
+<body>
+
+
+<div class="dashboard-container">
+
+
+
+<!-- MENU LATERAL -->
+
+<aside class="sidebar">
+
+
+<div class="logo-area">
+
+<img 
+src="assets/logo.png"
+alt="Camila Martins Engenharia"
+>
+
+
+<h2>
+Camila Martins Engenharia
+</h2>
+
+
+</div>
+
+
+
+<nav>
+
+
+<a href="dashboard.html" class="ativo">
+
+<i class="fa-solid fa-house"></i>
+
+Dashboard
+
+</a>
+
+
+
+<a href="clientes.html">
+
+<i class="fa-solid fa-users"></i>
+
+Clientes
+
+</a>
+
+
+
+<a href="projetos.html">
+
+<i class="fa-solid fa-building"></i>
+
+Projetos
+
+</a>
+
+
+
+<a href="documentos.html">
+
+<i class="fa-solid fa-file"></i>
+
+Documentos
+
+</a>
+
+
+
+<a href="fotos.html">
+
+<i class="fa-solid fa-image"></i>
+
+Fotos
+
+</a>
+
+
+
+<a href="financeiro.html">
+
+<i class="fa-solid fa-dollar-sign"></i>
+
+Financeiro
+
+</a>
+
+
+
+<a href="agenda.html">
+
+<i class="fa-solid fa-calendar"></i>
+
+Agenda
+
+</a>
+
+
+</nav>
+
+
+</aside>
+
+
+
+
+
+<!-- CONTEÚDO -->
+
+<main class="dashboard-main">
+
+
+
+<header class="dashboard-header">
+
+
+<div>
+
+<h1>
+Dashboard
+</h1>
+
+
+<p>
+Visão geral da sua empresa
+</p>
+
+
+</div>
+
+
+<button id="btnSair">
+
+<i class="fa-solid fa-right-from-bracket"></i>
+
+Sair
+
+</button>
+
+
+</header>
+
+
+
+
+
+<!-- CARDS -->
+
+
+<section class="cards">
+
+
+<div class="card">
+
+<i class="fa-solid fa-users"></i>
+
+<div>
+
+<h3>
+Clientes
+</h3>
+
+
+<strong id="totalClientes">
+0
+</strong>
+
+
+</div>
+
+</div>
+
+
+
+
+
+<div class="card">
+
+<i class="fa-solid fa-building"></i>
+
+
+<div>
+
+<h3>
+Projetos
+</h3>
+
+
+<strong id="totalProjetos">
+0
+</strong>
+
+
+</div>
+
+</div>
+
+
+
+
+
+<div class="card">
+
+<i class="fa-solid fa-file"></i>
+
+
+<div>
+
+<h3>
+Documentos
+</h3>
+
+
+<strong id="totalDocumentos">
+0
+</strong>
+
+
+</div>
+
+</div>
+
+
+
+
+
+<div class="card">
+
+<i class="fa-solid fa-image"></i>
+
+
+<div>
+
+<h3>
+Fotos
+</h3>
+
+
+<strong id="totalFotos">
+0
+</strong>
+
+
+</div>
+
+</div>
+
+
+
+</section>
+
+
+
+
+
+<!-- FINANCEIRO -->
+
+
+<section class="financeiro-resumo">
+
+
+<h2>
+Resumo Financeiro
+</h2>
+
+
+<div class="financeiro-cards">
+
+
+<div>
+
+<span>
+Entradas
+</span>
+
+
+<strong id="financeiroEntradas">
+R$ 0,00
+</strong>
+
+
+</div>
+
+
+
+<div>
+
+<span>
+Saídas
+</span>
+
+
+<strong id="financeiroSaidas">
+R$ 0,00
+</strong>
+
+
+</div>
+
+
+
+<div>
+
+<span>
+Saldo
+</span>
+
+
+<strong id="financeiroSaldo">
+R$ 0,00
+</strong>
+
+
+</div>
+
+
+</div>
+
+
+</section>
+<!-- PROJETOS RECENTES -->
+
+<section class="dashboard-section">
+
+
+<div class="section-header">
+
+<h2>
+Projetos Recentes
+</h2>
+
+
+<a href="projetos.html">
+
+Ver todos
+
+</a>
+
+
+</div>
+
+
+
+<table class="dashboard-table">
+
+
+<thead>
+
+<tr>
+
+<th>
+Projeto
+</th>
+
+
+<th>
+Cliente
+</th>
+
+
+<th>
+Tipo
+</th>
+
+
+<th>
+Status
+</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+<tbody id="listaProjetosRecentes">
+
+
+<tr>
+
+<td colspan="4">
+
+Carregando...
+
+</td>
+
+</tr>
+
+
+</tbody>
+
+
+</table>
+
+
+</section>
+
+
+
+
+
+
+
+<!-- AGENDA -->
+
+
+<section class="dashboard-section">
+
+
+<div class="section-header">
+
+
+<h2>
+Próximos Eventos
+</h2>
+
+
+<a href="agenda.html">
+
+Ver agenda
+
+</a>
+
+
+</div>
+
+
+
+
+
+<div 
+id="listaAgenda"
+class="agenda-list"
+>
+
+
+<p>
+
+Carregando...
+
+</p>
+
+
+</div>
+
+
+
+</section>
+
+
+
+
+
+
+
+<!-- ATALHOS -->
+
+
+<section class="atalhos">
+
+
+<h2>
+Acesso rápido
+</h2>
+
+
+
+<div class="atalhos-grid">
+
+
+
+<a href="clientes.html">
+
+<i class="fa-solid fa-user-plus"></i>
+
+Novo Cliente
+
+</a>
+
+
+
+
+<a href="projetos.html">
+
+<i class="fa-solid fa-plus"></i>
+
+Novo Projeto
+
+</a>
+
+
+
+
+
+<a href="documentos.html">
+
+<i class="fa-solid fa-upload"></i>
+
+Adicionar Documento
+
+</a>
+
+
+
+
+
+<a href="fotos.html">
+
+<i class="fa-solid fa-camera"></i>
+
+Adicionar Foto
+
+</a>
+
+
+
+
+
+<a href="financeiro.html">
+
+<i class="fa-solid fa-money-bill"></i>
+
+Lançar Financeiro
+
+</a>
+
+
+
+
+
+<a href="agenda.html">
+
+<i class="fa-solid fa-calendar-plus"></i>
+
+Novo Evento
+
+</a>
+
+
+
+</div>
+
+
+</section>
+
+
+
+
+</main>
+
+
+
+</div>
+<!-- SCRIPTS -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+<script src="js/supabase.js"></script>
+
+
+<script src="js/database.js"></script>
+
+
+<script src="js/auth.js"></script>
+
+
+<script src="js/dashboard.js"></script>
+
+
+
+</body>
+
+</html>
