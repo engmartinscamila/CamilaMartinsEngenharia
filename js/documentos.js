@@ -1,307 +1,1276 @@
 /*
 ==========================================================
 CAMILA MARTINS ENGENHARIA
-DOCUMENTOS
+
+DOCUMENTOS.JS
+GERENCIAMENTO DE DOCUMENTOS
+
+USA:
+database.js
+supabase.js
+
+VERSÃO DEFINITIVA
 ==========================================================
 */
 
-document.addEventListener("DOMContentLoaded", () => {
 
-    configurarFormularioDocumento();
+let documentoSelecionado = null;
 
-    carregarDocumentosPagina();
+
+
+document.addEventListener(
+"DOMContentLoaded",
+()=>{
+
+
+    iniciarDocumentos();
+
 
 });
 
-/*
-==========================================================
-FORMULÁRIO
-==========================================================
-*/
 
-function configurarFormularioDocumento(){
 
-    const formulario = document.getElementById("formDocumento");
 
-    if(!formulario) return;
 
-    formulario.onsubmit = salvarDocumento;
+
+
+// ==========================================================
+// INICIALIZAÇÃO
+// ==========================================================
+
+
+async function iniciarDocumentos(){
+
+
+    configurarEventosDocumento();
+
+
+    await carregarDocumentos();
+
+
+    await carregarClientesDocumento();
+
+
+    await carregarProjetosDocumento();
+
+
 
 }
 
-/*
-==========================================================
-SALVAR DOCUMENTO
-==========================================================
-*/
 
-async function salvarDocumento(event){
 
-    event.preventDefault();
 
-    const arquivo = document.getElementById("arquivoDocumento").files[0];
 
-    if(!arquivo){
 
-        alert("Selecione um documento.");
 
-        return;
 
-    }
+// ==========================================================
+// CARREGAR DOCUMENTOS
+// ==========================================================
 
-    const nomeArquivo =
-        Date.now() + "_" + arquivo.name;
 
-    const caminho = await uploadDocumento(
-        arquivo,
-        nomeArquivo
+async function carregarDocumentos(){
+
+
+
+    const lista =
+
+    document.getElementById(
+        "listaDocumentos"
     );
 
-    const documento = {
 
-        titulo:document.getElementById("documentoTitulo").value.trim(),
 
-        categoria:document.getElementById("documentoCategoria").value,
+    if(!lista)
+    return;
 
-        cliente_id:document.getElementById("documentoCliente").value,
 
-        projeto_id:document.getElementById("documentoProjeto").value,
 
-        descricao:document.getElementById("descricaoDocumento").value.trim(),
 
-        arquivo:caminho
+    try{
 
-    };
 
-    const { error } = await supabase
+        const documentos =
 
-        .from("documentos")
+        await dbBuscarDocumentos();
 
-        .insert([documento]);
 
-    if(error){
 
-        console.error(error);
 
-        alert("Erro ao salvar documento.");
 
-        return;
+        if(!documentos.length){
 
-    }
 
-    alert("Documento enviado com sucesso.");
+            lista.innerHTML = `
 
-    document.getElementById("formDocumento").reset();
+            <div class="estado-vazio">
 
-    document.getElementById("modalDocumento")
-        ?.classList.remove("show");
+            Nenhum documento cadastrado.
 
-    carregarDocumentosPagina();
+            </div>
 
-    if(typeof carregarDashboard==="function"){
+            `;
 
-        carregarDashboard();
 
-    }
+            return;
 
-}
 
-/*
-==========================================================
-CARREGAR DOCUMENTOS
-==========================================================
-*/
+        }
 
-async function carregarDocumentosPagina(){
 
-    const tabela=document.getElementById("tabelaDocumentos");
 
-    if(!tabela) return;
 
-    const { data,error }=await supabase
 
-        .from("documentos")
 
-        .select(`
-            *,
-            clientes(nome),
-            projetos(nome)
+        lista.innerHTML =
+
+
+        documentos.map(documento=>`
+
+
+
+        <div class="item-lista documento-item"
+        data-id="${documento.id}">
+
+
+
+            <div>
+
+
+
+                <h3>
+
+                ${escaparTexto(
+                    documento.nome ||
+                    documento.titulo ||
+                    "Documento"
+                )}
+
+                </h3>
+
+
+
+
+                <p>
+
+                ${escaparTexto(
+                    documento.categoria || ""
+                )}
+
+                </p>
+
+
+
+                <span>
+
+                ${escaparTexto(
+                    documento.clientes?.nome || ""
+                )}
+
+                </span>
+
+
+
+            </div>
+
+
+
+
+
+            <div class="acoes-item">
+
+
+                <button
+                class="visualizarDocumento"
+                data-id="${documento.id}">
+
+
+                <i class="fa-solid fa-eye"></i>
+
+
+                </button>
+
+
+
+
+
+                <button
+                class="excluirDocumento"
+                data-id="${documento.id}">
+
+
+                <i class="fa-solid fa-trash"></i>
+
+
+                </button>
+
+
+
+            </div>
+
+
+
+        </div>
+
+
+
         `)
+        .join("");
 
-        .order("created_at",{ascending:false});
 
-    if(error){
 
-        console.error(error);
 
-        return;
+
+        configurarAcoesDocumentos();
+
+
 
     }
+    catch(error){
 
-    renderizarDocumentos(data||[]);
+
+        console.error(
+            "Erro carregar documentos:",
+            error
+        );
+
+
+    }
+    // ==========================================================
+// CARREGAR CLIENTES NO SELECT
+// ==========================================================
+
+
+
+async function carregarClientesDocumento(){
+
+
+
+    const select =
+
+    document.getElementById(
+        "documentoCliente"
+    );
+
+
+
+    if(!select)
+    return;
+
+
+
+
+    const clientes =
+
+    await dbBuscarClientes();
+
+
+
+
+
+    select.innerHTML = `
+
+    <option value="">
+
+    Selecione o cliente
+
+    </option>
+
+    `;
+
+
+
+
+
+    clientes.forEach(cliente=>{
+
+
+        select.innerHTML += `
+
+
+        <option value="${cliente.id}">
+
+
+        ${escaparTexto(
+            cliente.nome
+        )}
+
+
+        </option>
+
+
+        `;
+
+
+    });
+
+
 
 }
 
-/*
-==========================================================
-RENDERIZAR
-==========================================================
-*/
 
-function renderizarDocumentos(lista){
 
-    const tabela=document.getElementById("tabelaDocumentos");
 
-    if(!tabela) return;
 
-    if(lista.length===0){
 
-        tabela.innerHTML=`
-        <tr>
-            <td colspan="7">
-                Nenhum documento encontrado.
-            </td>
-        </tr>`;
 
-        return;
 
-    }
+// ==========================================================
+// CARREGAR PROJETOS NO SELECT
+// ==========================================================
 
-    tabela.innerHTML=lista.map(doc=>`
 
-<tr>
 
-<td>${escapeDocumento(doc.titulo)}</td>
+async function carregarProjetosDocumento(){
 
-<td>${escapeDocumento(doc.categoria)}</td>
 
-<td>${escapeDocumento(doc.clientes?.nome||"-")}</td>
 
-<td>${escapeDocumento(doc.projetos?.nome||"-")}</td>
+    const select =
 
-<td>${formatarData(doc.created_at)}</td>
+    document.getElementById(
+        "documentoProjeto"
+    );
 
-<td>
 
-<a
 
-class="btn-icon"
+    if(!select)
+    return;
 
-target="_blank"
 
-href="${urlPublica("documentos",doc.arquivo)}">
 
-<i class="fa-solid fa-download"></i>
 
-</a>
+    const projetos =
 
-</td>
+    await dbBuscarProjetos();
 
-<td>
 
-<button
 
-class="btn-icon delete"
 
-onclick="excluirDocumento('${doc.id}','${doc.arquivo}')">
 
-<i class="fa-solid fa-trash"></i>
+    select.innerHTML = `
 
-</button>
+    <option value="">
 
-</td>
+    Selecione o projeto
 
-</tr>
+    </option>
 
-`).join("");
+    `;
+
+
+
+
+
+    projetos.forEach(projeto=>{
+
+
+        select.innerHTML += `
+
+
+        <option value="${projeto.id}">
+
+
+        ${escaparTexto(
+            projeto.nome
+        )}
+
+
+        </option>
+
+
+        `;
+
+
+    });
+
+
 
 }
 
-/*
-==========================================================
-EXCLUIR
-==========================================================
-*/
 
-async function excluirDocumento(id,arquivo){
 
-    if(!confirm("Excluir documento?")) return;
 
-    await removerArquivo(
 
-        "documentos",
 
-        arquivo
+
+
+// ==========================================================
+// MODAL DOCUMENTO
+// ==========================================================
+
+
+
+function abrirModalDocumento(){
+
+
+    const modal =
+
+    document.getElementById(
+        "modalDocumento"
+    );
+
+
+
+    if(modal){
+
+        modal.style.display =
+        "flex";
+
+    }
+
+
+
+}
+
+
+
+
+
+
+
+function fecharModalDocumento(){
+
+
+    const modal =
+
+    document.getElementById(
+        "modalDocumento"
+    );
+
+
+
+    if(modal){
+
+        modal.style.display =
+        "none";
+
+    }
+
+
+
+    limparFormularioDocumento();
+
+
+
+}
+
+
+
+
+
+
+
+
+// ==========================================================
+// SALVAR DOCUMENTO
+// ==========================================================
+
+
+
+async function salvarDocumento(evento){
+
+
+    evento.preventDefault();
+
+
+
+
+
+    const arquivoInput =
+
+    document.getElementById(
+        "documentoArquivo"
+    );
+
+
+
+    let urlArquivo = "";
+
+
+
+
+
+    try{
+
+
+
+        if(
+            arquivoInput &&
+            arquivoInput.files.length
+        ){
+
+
+            const arquivo =
+
+            arquivoInput.files[0];
+
+
+
+            const caminho =
+
+            `documentos/${Date.now()}_${arquivo.name}`;
+
+
+
+
+
+            await dbUploadArquivo(
+
+                "documentos",
+
+                caminho,
+
+                arquivo
+
+            );
+
+
+
+
+
+            urlArquivo =
+
+            dbGerarUrlArquivo(
+
+                "documentos",
+
+                caminho
+
+            );
+
+
+        }
+
+
+
+
+
+        const documento = {
+
+
+
+            nome:
+
+            document.getElementById(
+                "documentoNome"
+            ).value,
+
+
+
+
+
+            cliente_id:
+
+            document.getElementById(
+                "documentoCliente"
+            ).value || null,
+
+
+
+
+
+            projeto_id:
+
+            document.getElementById(
+                "documentoProjeto"
+            ).value || null,
+
+
+
+
+
+            categoria:
+
+            document.getElementById(
+                "documentoCategoria"
+            ).value,
+
+
+
+
+
+            descricao:
+
+            document.getElementById(
+                "documentoDescricao"
+            ).value,
+
+
+
+
+
+            url:
+
+            urlArquivo
+
+
+
+
+
+        };
+
+
+
+
+
+
+        await dbSalvarDocumento(
+            documento
+        );
+
+
+
+
+
+        fecharModalDocumento();
+
+
+
+        await carregarDocumentos();
+
+
+
+    }
+    catch(error){
+
+
+
+        console.error(
+            "Erro salvar documento:",
+            error
+        );
+
+
+
+        alert(
+            "Erro ao salvar documento."
+        );
+
+
+
+    }
+
+
+
+}
+    // ==========================================================
+// EXCLUSÃO DE DOCUMENTO
+// ==========================================================
+
+
+
+async function excluirDocumento(id){
+
+
+    const confirmar =
+
+    confirm(
+        "Deseja realmente excluir este documento?"
+    );
+
+
+
+    if(!confirmar)
+    return;
+
+
+
+
+
+    try{
+
+
+        await dbExcluirDocumento(id);
+
+
+
+        documentoSelecionado =
+        null;
+
+
+
+        await carregarDocumentos();
+
+
+
+    }
+    catch(error){
+
+
+        console.error(
+            "Erro excluir documento:",
+            error
+        );
+
+
+
+        alert(
+            "Erro ao excluir documento."
+        );
+
+
+    }
+
+
+
+}
+
+
+
+
+
+
+
+
+// ==========================================================
+// VISUALIZAÇÃO
+// ==========================================================
+
+
+
+async function visualizarDocumento(id){
+
+
+
+    const documento =
+
+    await buscarDocumentoPorId(id);
+
+
+
+
+
+    const detalhes =
+
+    document.getElementById(
+        "detalhesDocumento"
+    );
+
+
+
+
+
+    if(!detalhes)
+    return;
+
+
+
+
+
+
+    detalhes.innerHTML = `
+
+
+
+    <h3>
+
+    ${escaparTexto(
+        documento.nome
+    )}
+
+    </h3>
+
+
+
+    <p>
+
+    Categoria:
+
+    ${escaparTexto(
+        documento.categoria || ""
+    )}
+
+    </p>
+
+
+
+
+    <p>
+
+    Cliente:
+
+    ${escaparTexto(
+        documento.clientes?.nome || ""
+    )}
+
+    </p>
+
+
+
+
+    <p>
+
+    ${escaparTexto(
+        documento.descricao || ""
+    )}
+
+    </p>
+
+
+
+    ${
+        documento.url
+
+        ?
+
+        `
+
+        <a
+        href="${documento.url}"
+        target="_blank">
+
+        Abrir arquivo
+
+        </a>
+
+        `
+
+        :
+
+        ""
+
+    }
+
+
+    `;
+
+
+
+}
+
+
+
+
+
+
+
+
+async function buscarDocumentoPorId(id){
+
+
+
+    const documentos =
+
+    await dbBuscarDocumentos();
+
+
+
+
+    return documentos.find(
+
+        documento=>
+
+        documento.id == id
 
     );
 
-    const { error } = await supabase
 
-        .from("documentos")
-
-        .delete()
-
-        .eq("id",id);
-
-    if(error){
-
-        console.error(error);
-
-        return;
-
-    }
-
-    carregarDocumentosPagina();
-
-    if(typeof carregarDashboard==="function"){
-
-        carregarDashboard();
-
-    }
 
 }
 
-/*
-==========================================================
-PESQUISA
-==========================================================
-*/
 
-async function pesquisarDocumento(texto){
 
-    const { data,error }=await supabase
 
-        .from("documentos")
 
-        .select(`
-            *,
-            clientes(nome),
-            projetos(nome)
-        `)
 
-        .ilike("titulo",`%${texto}%`);
 
-    if(error){
 
-        console.error(error);
+// ==========================================================
+// AÇÕES DA LISTA
+// ==========================================================
 
-        return;
 
-    }
 
-    renderizarDocumentos(data||[]);
+function configurarAcoesDocumentos(){
+
+
+
+    document
+    .querySelectorAll(
+        ".visualizarDocumento"
+    )
+    .forEach(botao=>{
+
+
+        botao.addEventListener(
+            "click",
+            ()=>{
+
+
+                visualizarDocumento(
+                    botao.dataset.id
+                );
+
+
+            }
+        );
+
+
+    });
+
+
+
+
+
+
+
+    document
+    .querySelectorAll(
+        ".excluirDocumento"
+    )
+    .forEach(botao=>{
+
+
+        botao.addEventListener(
+            "click",
+            ()=>{
+
+
+                excluirDocumento(
+                    botao.dataset.id
+                );
+
+
+            }
+        );
+
+
+    });
+
+
+
+
+}
+    // ==========================================================
+// EVENTOS
+// ==========================================================
+
+
+
+function configurarEventosDocumento(){
+
+
+
+    document
+    .getElementById(
+        "novoDocumento"
+    )
+    ?.addEventListener(
+        "click",
+        ()=>{
+
+
+            documentoSelecionado =
+            null;
+
+
+            limparFormularioDocumento();
+
+
+            abrirModalDocumento();
+
+
+        }
+    );
+
+
+
+
+
+
+
+    document
+    .getElementById(
+        "fecharModalDocumento"
+    )
+    ?.addEventListener(
+        "click",
+        fecharModalDocumento
+    );
+
+
+
+
+
+
+
+    document
+    .getElementById(
+        "cancelarDocumento"
+    )
+    ?.addEventListener(
+        "click",
+        fecharModalDocumento
+    );
+
+
+
+
+
+
+
+    document
+    .getElementById(
+        "formDocumento"
+    )
+    ?.addEventListener(
+        "submit",
+        salvarDocumento
+    );
+
+
+
+
+
+
+
+    document
+    .getElementById(
+        "logoutButton"
+    )
+    ?.addEventListener(
+        "click",
+        async()=>{
+
+
+            await dbSairSistema();
+
+
+
+            window.location.href =
+            "login.html";
+
+
+        }
+    );
+
+
+
+
+
 
 }
 
-/*
-==========================================================
-UTIL
-==========================================================
-*/
 
-function escapeDocumento(texto){
 
-    return String(texto||"")
+
+
+
+
+
+// ==========================================================
+// PESQUISA
+// ==========================================================
+
+
+
+async function pesquisarDocumentos(){
+
+
+
+    const campo =
+
+    document.getElementById(
+        "pesquisaDocumento"
+    );
+
+
+
+    const lista =
+
+    document.getElementById(
+        "listaDocumentos"
+    );
+
+
+
+    if(!campo || !lista)
+    return;
+
+
+
+
+
+    const termo =
+
+    campo.value
+    .toLowerCase()
+    .trim();
+
+
+
+
+
+    const documentos =
+
+    await dbBuscarDocumentos();
+
+
+
+
+
+    const resultado =
+
+    documentos.filter(documento=>{
+
+
+        return (
+
+            documento.nome ||
+
+            documento.titulo ||
+
+            ""
+
+        )
+        .toLowerCase()
+        .includes(termo);
+
+
+    });
+
+
+
+
+
+
+    lista.innerHTML =
+
+
+    resultado.map(documento=>`
+
+
+    <div class="item-lista documento-item">
+
+
+        <h3>
+
+        ${escaparTexto(
+            documento.nome ||
+            documento.titulo
+        )}
+
+        </h3>
+
+
+    </div>
+
+
+    `)
+    .join("");
+
+
+
+}
+
+
+
+
+
+
+
+
+// ==========================================================
+// LIMPAR FORMULÁRIO
+// ==========================================================
+
+
+
+function limparFormularioDocumento(){
+
+
+
+    documentoSelecionado =
+    null;
+
+
+
+
+    const campos = [
+
+
+        "documentoNome",
+
+        "documentoDescricao"
+
+
+    ];
+
+
+
+
+    campos.forEach(id=>{
+
+
+        const campo =
+
+        document.getElementById(id);
+
+
+
+        if(campo){
+
+            campo.value = "";
+
+        }
+
+
+    });
+
+
+
+
+
+    const cliente =
+
+    document.getElementById(
+        "documentoCliente"
+    );
+
+
+
+    const projeto =
+
+    document.getElementById(
+        "documentoProjeto"
+    );
+
+
+
+    if(cliente){
+
+        cliente.value = "";
+
+    }
+
+
+
+    if(projeto){
+
+        projeto.value = "";
+
+    }
+
+
+
+}
+
+
+
+
+
+
+
+// ==========================================================
+// SEGURANÇA HTML
+// ==========================================================
+
+
+
+function escaparTexto(valor){
+
+
+    return String(valor ?? "")
 
     .replaceAll("&","&amp;")
 
@@ -312,5 +1281,10 @@ function escapeDocumento(texto){
     .replaceAll('"',"&quot;")
 
     .replaceAll("'","&#039;");
+
+
+}
+
+
 
 }
