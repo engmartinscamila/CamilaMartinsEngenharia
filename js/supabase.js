@@ -5,9 +5,9 @@ SUPABASE
 ==========================================================
 */
 
-const SUPABASE_URL = "COLE_AQUI_SUA_URL_DO_SUPABASE";
+const SUPABASE_URL = "https://hghtwlopqztfcosfxafd.supabase.co";
 
-const SUPABASE_ANON_KEY = "COLE_AQUI_SUA_CHAVE_ANON";
+const SUPABASE_ANON_KEY = "sb_publishable_-unXLR2NSSACLs01Sr60GA_uCFnJ74f";
 
 const supabase = window.supabase.createClient(
     SUPABASE_URL,
