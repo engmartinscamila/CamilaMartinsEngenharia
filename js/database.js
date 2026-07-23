@@ -1,14 +1,32 @@
 /*
 ==========================================================
 CAMILA MARTINS ENGENHARIA
-DATABASE
+DATABASE - SUPABASE
 ==========================================================
 */
 
 
-// ===============================
+// ==========================================================
 // CLIENTES
-// ===============================
+// ==========================================================
+
+
+async function criarCliente(cliente){
+
+    const { data, error } = await supabaseClient
+        .from("clientes")
+        .insert([cliente])
+        .select();
+
+
+    if(error) throw error;
+
+
+    return data;
+
+}
+
+
 
 async function buscarClientes(){
 
@@ -22,21 +40,24 @@ async function buscarClientes(){
 
     if(error) throw error;
 
+
     return data || [];
 
 }
 
 
 
-async function criarCliente(cliente){
+async function buscarCliente(id){
 
     const { data, error } = await supabaseClient
         .from("clientes")
-        .insert([cliente])
-        .select();
+        .select("*")
+        .eq("id", id)
+        .single();
 
 
     if(error) throw error;
+
 
     return data;
 
@@ -44,16 +65,17 @@ async function criarCliente(cliente){
 
 
 
-async function atualizarCliente(id, dados){
+async function atualizarCliente(id, cliente){
 
     const { data, error } = await supabaseClient
         .from("clientes")
-        .update(dados)
+        .update(cliente)
         .eq("id", id)
         .select();
 
 
     if(error) throw error;
+
 
     return data;
 
@@ -76,9 +98,26 @@ async function removerCliente(id){
 
 
 
-// ===============================
+// ==========================================================
 // PROJETOS
-// ===============================
+// ==========================================================
+
+
+async function criarProjeto(projeto){
+
+    const { data, error } = await supabaseClient
+        .from("projetos")
+        .insert([projeto])
+        .select();
+
+
+    if(error) throw error;
+
+
+    return data;
+
+}
+
 
 
 async function buscarProjetos(){
@@ -93,29 +132,81 @@ async function buscarProjetos(){
 
     if(error) throw error;
 
+
     return data || [];
 
 }
 
 
 
-
-async function criarProjeto(projeto){
+async function buscarProjeto(id){
 
     const { data, error } = await supabaseClient
         .from("projetos")
-        .insert([projeto])
+        .select("*")
+        .eq("id", id)
+        .single();
+
+
+    if(error) throw error;
+
+
+    return data;
+
+}
+
+
+
+async function atualizarProjeto(id, projeto){
+
+    const { data, error } = await supabaseClient
+        .from("projetos")
+        .update(projeto)
+        .eq("id", id)
         .select();
 
 
     if(error) throw error;
 
+
     return data;
 
 }
-// ===============================
+
+
+
+async function removerProjeto(id){
+
+    const { error } = await supabaseClient
+        .from("projetos")
+        .delete()
+        .eq("id", id);
+
+
+    if(error) throw error;
+
+}
+// ==========================================================
 // DOCUMENTOS
-// ===============================
+// ==========================================================
+
+
+async function criarDocumento(documento){
+
+    const { data, error } = await supabaseClient
+        .from("documentos")
+        .insert([documento])
+        .select();
+
+
+    if(error) throw error;
+
+
+    return data;
+
+}
+
+
 
 async function buscarDocumentos(){
 
@@ -129,21 +220,24 @@ async function buscarDocumentos(){
 
     if(error) throw error;
 
+
     return data || [];
 
 }
 
 
 
-async function criarDocumento(documento){
+async function buscarDocumento(id){
 
     const { data, error } = await supabaseClient
         .from("documentos")
-        .insert([documento])
-        .select();
+        .select("*")
+        .eq("id", id)
+        .single();
 
 
     if(error) throw error;
+
 
     return data;
 
@@ -151,10 +245,59 @@ async function criarDocumento(documento){
 
 
 
+async function atualizarDocumento(id, documento){
 
-// ===============================
+    const { data, error } = await supabaseClient
+        .from("documentos")
+        .update(documento)
+        .eq("id", id)
+        .select();
+
+
+    if(error) throw error;
+
+
+    return data;
+
+}
+
+
+
+async function removerDocumento(id){
+
+    const { error } = await supabaseClient
+        .from("documentos")
+        .delete()
+        .eq("id", id);
+
+
+    if(error) throw error;
+
+}
+
+
+
+
+// ==========================================================
 // FOTOS
-// ===============================
+// ==========================================================
+
+
+async function criarFoto(foto){
+
+    const { data, error } = await supabaseClient
+        .from("fotos")
+        .insert([foto])
+        .select();
+
+
+    if(error) throw error;
+
+
+    return data;
+
+}
+
 
 
 async function buscarFotos(){
@@ -169,32 +312,48 @@ async function buscarFotos(){
 
     if(error) throw error;
 
+
     return data || [];
 
 }
 
 
 
-async function criarFoto(foto){
+async function removerFoto(id){
 
-    const { data, error } = await supabaseClient
+    const { error } = await supabaseClient
         .from("fotos")
-        .insert([foto])
-        .select();
+        .delete()
+        .eq("id", id);
 
 
     if(error) throw error;
-
-    return data;
 
 }
 
 
 
 
-// ===============================
+// ==========================================================
 // BIBLIOTECA
-// ===============================
+// ==========================================================
+
+
+async function criarItemBiblioteca(item){
+
+    const { data, error } = await supabaseClient
+        .from("biblioteca")
+        .insert([item])
+        .select();
+
+
+    if(error) throw error;
+
+
+    return data;
+
+}
+
 
 
 async function buscarBiblioteca(){
@@ -209,28 +368,45 @@ async function buscarBiblioteca(){
 
     if(error) throw error;
 
+
     return data || [];
 
 }
 
 
 
-async function criarBiblioteca(item){
+async function removerItemBiblioteca(id){
+
+    const { error } = await supabaseClient
+        .from("biblioteca")
+        .delete()
+        .eq("id", id);
+
+
+    if(error) throw error;
+
+}
+// ==========================================================
+// CRONOGRAMA
+// ==========================================================
+
+
+async function criarCronograma(item){
 
     const { data, error } = await supabaseClient
-        .from("biblioteca")
+        .from("cronograma")
         .insert([item])
         .select();
 
 
     if(error) throw error;
 
+
     return data;
 
 }
-// ===============================
-// CRONOGRAMA
-// ===============================
+
+
 
 async function buscarCronograma(){
 
@@ -244,21 +420,24 @@ async function buscarCronograma(){
 
     if(error) throw error;
 
+
     return data || [];
 
 }
 
 
 
-async function criarCronograma(item){
+async function atualizarCronograma(id, item){
 
     const { data, error } = await supabaseClient
         .from("cronograma")
-        .insert([item])
+        .update(item)
+        .eq("id", id)
         .select();
 
 
     if(error) throw error;
+
 
     return data;
 
@@ -266,10 +445,42 @@ async function criarCronograma(item){
 
 
 
+async function removerCronograma(id){
 
-// ===============================
+    const { error } = await supabaseClient
+        .from("cronograma")
+        .delete()
+        .eq("id", id);
+
+
+    if(error) throw error;
+
+}
+
+
+
+
+// ==========================================================
 // FINANCEIRO
-// ===============================
+// ==========================================================
+
+
+async function criarLancamentoFinanceiro(lancamento){
+
+    const { data, error } = await supabaseClient
+        .from("financeiro")
+        .insert([lancamento])
+        .select();
+
+
+    if(error) throw error;
+
+
+    return data;
+
+}
+
+
 
 async function buscarFinanceiro(){
 
@@ -283,21 +494,24 @@ async function buscarFinanceiro(){
 
     if(error) throw error;
 
+
     return data || [];
 
 }
 
 
 
-async function criarLancamentoFinanceiro(lancamento){
+async function atualizarLancamentoFinanceiro(id, lancamento){
 
     const { data, error } = await supabaseClient
         .from("financeiro")
-        .insert([lancamento])
+        .update(lancamento)
+        .eq("id", id)
         .select();
 
 
     if(error) throw error;
+
 
     return data;
 
@@ -305,10 +519,42 @@ async function criarLancamentoFinanceiro(lancamento){
 
 
 
+async function removerLancamentoFinanceiro(id){
 
-// ===============================
+    const { error } = await supabaseClient
+        .from("financeiro")
+        .delete()
+        .eq("id", id);
+
+
+    if(error) throw error;
+
+}
+
+
+
+
+// ==========================================================
 // AGENDA
-// ===============================
+// ==========================================================
+
+
+async function criarEventoAgenda(evento){
+
+    const { data, error } = await supabaseClient
+        .from("agenda")
+        .insert([evento])
+        .select();
+
+
+    if(error) throw error;
+
+
+    return data;
+
+}
+
+
 
 async function buscarAgenda(){
 
@@ -322,21 +568,24 @@ async function buscarAgenda(){
 
     if(error) throw error;
 
+
     return data || [];
 
 }
 
 
 
-async function criarEventoAgenda(evento){
+async function atualizarEventoAgenda(id, evento){
 
     const { data, error } = await supabaseClient
         .from("agenda")
-        .insert([evento])
+        .update(evento)
+        .eq("id", id)
         .select();
 
 
     if(error) throw error;
+
 
     return data;
 
@@ -344,10 +593,21 @@ async function criarEventoAgenda(evento){
 
 
 
+async function removerEventoAgenda(id){
 
-// ===============================
+    const { error } = await supabaseClient
+        .from("agenda")
+        .delete()
+        .eq("id", id);
+
+
+    if(error) throw error;
+
+}
+// ==========================================================
 // CONFIGURAÇÕES
-// ===============================
+// ==========================================================
+
 
 async function buscarConfiguracoes(){
 
@@ -359,6 +619,7 @@ async function buscarConfiguracoes(){
 
 
     if(error) throw error;
+
 
     return data;
 
@@ -375,6 +636,146 @@ async function salvarConfiguracoes(config){
 
 
     if(error) throw error;
+
+
+    return data;
+
+}
+
+
+
+
+// ==========================================================
+// STORAGE - DOCUMENTOS
+// ==========================================================
+
+
+async function uploadDocumento(arquivo, caminho){
+
+
+    const { data, error } =
+    await supabaseClient.storage
+    .from("documentos")
+    .upload(
+        caminho,
+        arquivo,
+        {
+            upsert:true
+        }
+    );
+
+
+    if(error) throw error;
+
+
+    return data.path;
+
+}
+
+
+
+
+// ==========================================================
+// STORAGE - FOTOS
+// ==========================================================
+
+
+async function uploadFoto(arquivo, caminho){
+
+
+    const { data, error } =
+    await supabaseClient.storage
+    .from("fotos")
+    .upload(
+        caminho,
+        arquivo,
+        {
+            upsert:true
+        }
+    );
+
+
+    if(error) throw error;
+
+
+    return data.path;
+
+}
+
+
+
+
+// ==========================================================
+// STORAGE - BIBLIOTECA
+// ==========================================================
+
+
+async function uploadBiblioteca(arquivo, caminho){
+
+
+    const { data, error } =
+    await supabaseClient.storage
+    .from("biblioteca")
+    .upload(
+        caminho,
+        arquivo,
+        {
+            upsert:true
+        }
+    );
+
+
+    if(error) throw error;
+
+
+    return data.path;
+
+}
+
+
+
+
+// ==========================================================
+// URL PÚBLICA ARQUIVOS
+// ==========================================================
+
+
+function obterUrlArquivo(bucket, arquivo){
+
+
+    const { data } =
+    supabaseClient.storage
+    .from(bucket)
+    .getPublicUrl(arquivo);
+
+
+
+    return data.publicUrl;
+
+}
+
+
+
+
+// ==========================================================
+// REMOVER ARQUIVO STORAGE
+// ==========================================================
+
+
+async function removerArquivo(bucket, arquivo){
+
+
+    const { data, error } =
+    await supabaseClient.storage
+    .from(bucket)
+    .remove([
+        arquivo
+    ]);
+
+
+
+    if(error) throw error;
+
 
     return data;
 
