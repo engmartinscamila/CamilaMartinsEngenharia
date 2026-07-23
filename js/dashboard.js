@@ -1,201 +1,412 @@
+/*
+==========================================================
+CAMILA MARTINS ENGENHARIA
+DASHBOARD
+VERSÃO FINAL SUPABASE
+==========================================================
+*/
+
+
+document.addEventListener(
+"DOMContentLoaded",
+()=>{
+
+    iniciarDashboard();
+
+});
+
+
+
+
 // ==========================================================
-// DASHBOARD - FUNÇÕES DO SISTEMA
+// INICIALIZAÇÃO
 // ==========================================================
 
 
-// TOTAL CLIENTES
-
-async function dbContarClientes(){
-
-    const { count, error } = await supabaseClient
-    .from("clientes")
-    .select("*", { count:"exact", head:true });
+async function iniciarDashboard(){
 
 
-    if(error) throw error;
+    try{
 
 
-    return count || 0;
+        await carregarIndicadores();
+
+
+        await carregarFinanceiro();
+
+
+        await carregarProjetosRecentes();
+
+
+        await carregarAgenda();
+
+
+
+    }
+    catch(error){
+
+
+        console.error(
+            "Erro ao carregar dashboard:",
+            error
+        );
+
+
+    }
+
 
 }
 
 
 
 
-// TOTAL PROJETOS
-
-async function dbContarProjetos(){
-
-    const { count, error } = await supabaseClient
-    .from("projetos")
-    .select("*", { count:"exact", head:true });
 
 
-    if(error) throw error;
+// ==========================================================
+// INDICADORES
+// ==========================================================
 
 
-    return count || 0;
+async function carregarIndicadores(){
+
+
+
+    const [
+
+        clientes,
+
+        projetos,
+
+        documentos,
+
+        fotos
+
+
+    ] = await Promise.all([
+
+
+        dbContarClientes(),
+
+
+        dbContarProjetos(),
+
+
+        dbContarDocumentos(),
+
+
+        dbContarFotos()
+
+
+    ]);
+
+
+
+
+
+    document
+    .getElementById("totalClientes")
+    .textContent = clientes;
+
+
+
+
+    document
+    .getElementById("totalProjetos")
+    .textContent = projetos;
+
+
+
+
+    document
+    .getElementById("totalDocumentos")
+    .textContent = documentos;
+
+
+
+
+    document
+    .getElementById("totalFotos")
+    .textContent = fotos;
+
+
+
+}
+// ==========================================================
+// FINANCEIRO
+// ==========================================================
+
+
+async function carregarFinanceiro(){
+
+
+    const financeiro =
+    await dbResumoFinanceiro();
+
+
+
+
+    document
+    .getElementById("financeiroEntradas")
+    .textContent =
+    formatarMoeda(financeiro.entradas);
+
+
+
+
+    document
+    .getElementById("financeiroSaidas")
+    .textContent =
+    formatarMoeda(financeiro.saidas);
+
+
+
+
+    document
+    .getElementById("financeiroSaldo")
+    .textContent =
+    formatarMoeda(financeiro.saldo);
+
+
 
 }
 
 
 
 
-// TOTAL DOCUMENTOS
-
-async function dbContarDocumentos(){
-
-    const { count, error } = await supabaseClient
-    .from("documentos")
-    .select("*", { count:"exact", head:true });
 
 
-    if(error) throw error;
-
-
-    return count || 0;
-
-}
-
-
-
-
-// TOTAL FOTOS
-
-async function dbContarFotos(){
-
-    const { count, error } = await supabaseClient
-    .from("fotos")
-    .select("*", { count:"exact", head:true });
-
-
-    if(error) throw error;
-
-
-    return count || 0;
-
-}
-
-
-
-
+// ==========================================================
 // PROJETOS RECENTES
+// ==========================================================
 
-async function dbBuscarProjetosRecentes(){
+
+async function carregarProjetosRecentes(){
 
 
-    const { data, error } = await supabaseClient
-    .from("projetos")
-    .select(`
-        id,
-        nome,
-        tipo,
-        status,
-        created_at,
-        clientes(
-            nome
-        )
-    `)
-    .order("created_at",{ascending:false})
-    .limit(5);
+    const tabela =
+    document.getElementById(
+        "listaProjetosRecentes"
+    );
 
 
 
-    if(error) throw error;
+    const projetos =
+    await dbBuscarProjetosRecentes();
 
 
 
-    return data || [];
+
+    if(projetos.length === 0){
+
+
+        tabela.innerHTML = `
+
+        <tr>
+
+        <td colspan="4">
+
+        Nenhum projeto cadastrado.
+
+        </td>
+
+        </tr>
+
+        `;
+
+
+        return;
+
+    }
+
+
+
+
+    tabela.innerHTML =
+    projetos.map(projeto=>{
+
+
+        return `
+
+        <tr>
+
+
+        <td>
+        ${escaparDashboard(projeto.nome)}
+        </td>
+
+
+
+        <td>
+        ${
+        projeto.clientes?.nome 
+        || "-"
+        }
+        </td>
+
+
+
+        <td>
+        ${escaparDashboard(projeto.tipo || "-")}
+        </td>
+
+
+
+        <td>
+        ${escaparDashboard(projeto.status || "-")}
+        </td>
+
+
+
+        </tr>
+
+        `;
+
+
+    }).join("");
+
+
+
+}
+// ==========================================================
+// AGENDA
+// ==========================================================
+
+
+async function carregarAgenda(){
+
+
+    const lista =
+    document.getElementById(
+        "listaAgenda"
+    );
+
+
+
+    const eventos =
+    await dbBuscarAgenda();
+
+
+
+
+    if(eventos.length === 0){
+
+
+        lista.innerHTML = `
+
+        <p>
+
+        Nenhum evento próximo.
+
+        </p>
+
+        `;
+
+
+        return;
+
+    }
+
+
+
+
+    lista.innerHTML =
+    eventos.map(evento=>{
+
+
+        return `
+
+        <div class="agenda-item">
+
+
+            <strong>
+
+            ${escaparDashboard(evento.titulo)}
+
+            </strong>
+
+
+            <span>
+
+            ${formatarData(evento.data)}
+
+            ${evento.horario || ""}
+
+            </span>
+
+
+        </div>
+
+        `;
+
+
+    }).join("");
+
+
 
 }
 
 
 
 
-// AGENDA PRÓXIMOS EVENTOS
-
-async function dbBuscarAgenda(){
 
 
-    const hoje =
-    new Date()
-    .toISOString()
-    .split("T")[0];
+// ==========================================================
+// FORMATADORES
+// ==========================================================
 
 
-
-    const { data, error } = await supabaseClient
-    .from("agenda")
-    .select("*")
-    .gte("data",hoje)
-    .order("data",{ascending:true})
-    .limit(5);
+function formatarMoeda(valor){
 
 
+    return Number(valor || 0)
+    .toLocaleString(
+        "pt-BR",
+        {
+            style:"currency",
+            currency:"BRL"
+        }
+    );
 
-    if(error) throw error;
-
-
-
-    return data || [];
 
 }
 
 
 
 
-// RESUMO FINANCEIRO
-
-async function dbResumoFinanceiro(){
+function formatarData(data){
 
 
-    const { data, error } = await supabaseClient
-    .from("financeiro")
-    .select("tipo,valor");
+    if(!data)
+    return "-";
 
 
 
-    if(error) throw error;
+    return new Date(data)
+    .toLocaleDateString(
+        "pt-BR"
+    );
+
+
+}
 
 
 
-    let entradas = 0;
-
-    let saidas = 0;
 
 
-
-    data.forEach(item=>{
-
-
-        if(item.tipo === "entrada"){
-
-            entradas += Number(item.valor || 0);
-
-        }
+function escaparDashboard(valor){
 
 
-        if(item.tipo === "saida"){
+    return String(valor ?? "")
 
-            saidas += Number(item.valor || 0);
+    .replaceAll("&","&amp;")
 
-        }
+    .replaceAll("<","&lt;")
 
+    .replaceAll(">","&gt;")
 
-    });
+    .replaceAll('"',"&quot;")
 
-
-
-    return {
-
-        entradas,
-
-        saidas,
-
-        saldo:
-        entradas - saidas
-
-    };
+    .replaceAll("'","&#039;");
 
 
 }
