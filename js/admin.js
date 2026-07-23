@@ -1,7 +1,10 @@
 /*
 ==========================================================
 CAMILA MARTINS ENGENHARIA
+
+ADMIN.JS
 PAINEL ADMINISTRATIVO
+
 VERSÃO DEFINITIVA
 ==========================================================
 */
@@ -26,11 +29,10 @@ document.addEventListener(
 async function iniciarAdmin(){
 
 
-    configurarBotoesAdmin();
+    await carregarDashboard();
 
 
-    await carregarPainel();
-
+    configurarEventos();
 
 
 }
@@ -38,38 +40,34 @@ async function iniciarAdmin(){
 
 
 
+
 // ==========================================================
-// CARREGAR PAINEL
+// CARREGAMENTO PRINCIPAL
 // ==========================================================
 
 
-async function carregarPainel(){
-
-
-    mostrarLoading();
-
+async function carregarDashboard(){
 
 
     try{
 
 
-        await Promise.all([
+        await carregarTotais();
 
 
-            carregarTotais(),
+        await carregarClientes();
 
 
-            carregarClientesRecentes(),
+        await carregarProjetos();
 
 
-            carregarProjetosRecentes(),
+        await carregarDocumentos();
 
 
-            carregarDocumentosRecentes()
+        await carregarBiblioteca();
 
 
-
-        ]);
+        await carregarAtividades();
 
 
 
@@ -78,16 +76,9 @@ async function carregarPainel(){
 
 
         console.error(
-            "Erro no painel:",
+            "Erro ao carregar dashboard:",
             error
         );
-
-
-    }
-    finally{
-
-
-        esconderLoading();
 
 
     }
@@ -100,8 +91,9 @@ async function carregarPainel(){
 
 
 
+
 // ==========================================================
-// TOTAIS
+// CARDS DO DASHBOARD
 // ==========================================================
 
 
@@ -117,10 +109,13 @@ async function carregarTotais(){
 
         documentos,
 
-        fotos
+        fotos,
+
+        biblioteca
 
 
     ] = await Promise.all([
+
 
 
         dbBuscarClientes(),
@@ -132,7 +127,11 @@ async function carregarTotais(){
         dbBuscarDocumentos(),
 
 
-        dbBuscarFotos()
+        dbBuscarFotos(),
+
+
+        dbBuscarBiblioteca()
+
 
 
     ]);
@@ -140,40 +139,56 @@ async function carregarTotais(){
 
 
 
-    atualizarTexto(
+    atualizarElemento(
         "totalClientes",
         clientes.length
     );
 
 
 
-    atualizarTexto(
+    atualizarElemento(
         "totalProjetos",
         projetos.length
     );
 
 
 
-    atualizarTexto(
+    atualizarElemento(
         "totalDocumentos",
         documentos.length
     );
 
 
 
-    atualizarTexto(
+    atualizarElemento(
         "totalFotos",
         fotos.length
     );
 
 
+
+    atualizarElemento(
+        "totalBiblioteca",
+        biblioteca.length
+    );
+
+
+
 }
+
+
+
+
+
+
+
 // ==========================================================
 // CLIENTES RECENTES
 // ==========================================================
 
 
-async function carregarClientesRecentes(){
+async function carregarClientes(){
+
 
 
     const lista =
@@ -182,7 +197,9 @@ async function carregarClientesRecentes(){
     );
 
 
-    if(!lista) return;
+
+    if(!lista)
+    return;
 
 
 
@@ -193,54 +210,49 @@ async function carregarClientesRecentes(){
 
 
 
-    const recentes =
-    clientes.slice(0,5);
-
-
-
-
-    if(recentes.length === 0){
+    if(!clientes.length){
 
 
         lista.innerHTML =
-        mensagemVazia(
+        estadoVazio(
             "Nenhum cliente cadastrado."
         );
 
 
         return;
 
+
     }
 
 
 
 
+
     lista.innerHTML =
-    recentes.map(cliente=>{
 
+    clientes
+    .slice(0,5)
+    .map(cliente=>`
 
-        return `
 
         <div class="item-lista">
 
 
-            <div class="item-info">
-
+            <div>
 
                 <h3>
 
-                ${escaparHTML(
+                ${escapar(
                     cliente.nome
                 )}
 
                 </h3>
 
 
-
                 <span>
 
-                ${escaparHTML(
-                    cliente.email || "Sem e-mail"
+                ${escapar(
+                    cliente.email || ""
                 )}
 
                 </span>
@@ -250,40 +262,21 @@ async function carregarClientesRecentes(){
 
 
 
-
-            <span class="badge">
-
-
-            ${formatarStatus(
-                cliente.status
-            )}
-
-
-            </span>
-
-
-
         </div>
 
-        `;
 
-
-    }).join("");
+    `)
+    .join("");
 
 
 
 }
-
-
-
-
-
 // ==========================================================
 // PROJETOS RECENTES
 // ==========================================================
 
 
-async function carregarProjetosRecentes(){
+async function carregarProjetos(){
 
 
     const lista =
@@ -293,7 +286,8 @@ async function carregarProjetosRecentes(){
 
 
 
-    if(!lista) return;
+    if(!lista)
+    return;
 
 
 
@@ -304,22 +298,17 @@ async function carregarProjetosRecentes(){
 
 
 
-    const recentes =
-    projetos.slice(0,5);
-
-
-
-
-    if(recentes.length === 0){
+    if(!projetos.length){
 
 
         lista.innerHTML =
-        mensagemVazia(
+        estadoVazio(
             "Nenhum projeto cadastrado."
         );
 
 
         return;
+
 
     }
 
@@ -327,20 +316,22 @@ async function carregarProjetosRecentes(){
 
 
     lista.innerHTML =
-    recentes.map(projeto=>{
 
 
-        return `
+    projetos
+    .slice(0,5)
+    .map(projeto=>`
+
 
         <div class="item-lista">
 
 
-            <div class="item-info">
+            <div>
 
 
                 <h3>
 
-                ${escaparHTML(
+                ${escapar(
                     projeto.nome
                 )}
 
@@ -350,40 +341,28 @@ async function carregarProjetosRecentes(){
 
                 <span>
 
-                ${escaparHTML(
-                    projeto.tipo || "Sem categoria"
+                ${escapar(
+                    projeto.status || ""
                 )}
 
                 </span>
 
 
+
             </div>
-
-
-
-
-            <span class="badge">
-
-
-            ${formatarStatus(
-                projeto.status
-            )}
-
-
-            </span>
-
 
 
         </div>
 
-        `;
 
-
-    }).join("");
+    `)
+    .join("");
 
 
 
 }
+
+
 
 
 
@@ -394,7 +373,7 @@ async function carregarProjetosRecentes(){
 // ==========================================================
 
 
-async function carregarDocumentosRecentes(){
+async function carregarDocumentos(){
 
 
     const lista =
@@ -404,7 +383,8 @@ async function carregarDocumentosRecentes(){
 
 
 
-    if(!lista) return;
+    if(!lista)
+    return;
 
 
 
@@ -415,22 +395,17 @@ async function carregarDocumentosRecentes(){
 
 
 
-    const recentes =
-    documentos.slice(0,5);
-
-
-
-
-    if(recentes.length === 0){
+    if(!documentos.length){
 
 
         lista.innerHTML =
-        mensagemVazia(
+        estadoVazio(
             "Nenhum documento cadastrado."
         );
 
 
         return;
+
 
     }
 
@@ -438,21 +413,25 @@ async function carregarDocumentosRecentes(){
 
 
     lista.innerHTML =
-    recentes.map(documento=>{
 
 
-        return `
+    documentos
+    .slice(0,5)
+    .map(documento=>`
+
 
         <div class="item-lista">
 
 
-            <div class="item-info">
+            <div>
 
 
                 <h3>
 
-                ${escaparHTML(
-                    documento.nome || "Documento"
+                ${escapar(
+                    documento.titulo ||
+                    documento.nome ||
+                    "Documento"
                 )}
 
                 </h3>
@@ -461,8 +440,8 @@ async function carregarDocumentosRecentes(){
 
                 <span>
 
-                ${escaparHTML(
-                    documento.tipo || ""
+                ${escapar(
+                    documento.categoria || ""
                 )}
 
                 </span>
@@ -471,14 +450,81 @@ async function carregarDocumentosRecentes(){
             </div>
 
 
+        </div>
 
+
+    `)
+    .join("");
+
+
+
+}
+
+
+
+
+
+
+
+// ==========================================================
+// BIBLIOTECA
+// ==========================================================
+
+
+async function carregarBiblioteca(){
+
+
+
+    const biblioteca =
+    await dbBuscarBiblioteca();
+
+
+
+    atualizarElemento(
+        "totalBiblioteca",
+        biblioteca.length
+    );
+
+
+
+}
+
+
+
+
+
+
+
+// ==========================================================
+// ATIVIDADES
+// ==========================================================
+
+
+async function carregarAtividades(){
+
+
+
+    const lista =
+    document.getElementById(
+        "atividadeRecentes"
+    );
+
+
+
+    if(!lista)
+    return;
+
+
+
+    lista.innerHTML = `
+
+        <div class="atividade">
+
+            Sistema iniciado.
 
         </div>
 
-        `;
-
-
-    }).join("");
+    `;
 
 
 
@@ -488,13 +534,7 @@ async function carregarDocumentosRecentes(){
 // ==========================================================
 
 
-function configurarPesquisaCliente(){
-
-
-    const botao =
-    document.getElementById(
-        "btnPesquisarCliente"
-    );
+async function pesquisarClientes(){
 
 
     const campo =
@@ -502,58 +542,6 @@ function configurarPesquisaCliente(){
         "pesquisaCliente"
     );
 
-
-
-    if(botao){
-
-
-        botao.addEventListener(
-            "click",
-            pesquisarCliente
-        );
-
-
-    }
-
-
-
-
-    if(campo){
-
-
-        campo.addEventListener(
-            "keydown",
-            (evento)=>{
-
-
-                if(evento.key === "Enter"){
-
-                    pesquisarCliente();
-
-                }
-
-
-            }
-        );
-
-
-    }
-
-
-
-}
-
-
-
-
-
-async function pesquisarCliente(){
-
-
-    const campo =
-    document.getElementById(
-        "pesquisaCliente"
-    );
 
 
     const lista =
@@ -568,10 +556,12 @@ async function pesquisarCliente(){
 
 
 
+
     const termo =
     campo.value
-    .trim()
-    .toLowerCase();
+    .toLowerCase()
+    .trim();
+
 
 
 
@@ -582,6 +572,7 @@ async function pesquisarCliente(){
 
 
     const resultado =
+
     clientes.filter(cliente=>{
 
 
@@ -596,11 +587,11 @@ async function pesquisarCliente(){
 
 
 
-    if(resultado.length === 0){
+    if(!resultado.length){
 
 
         lista.innerHTML =
-        mensagemVazia(
+        estadoVazio(
             "Nenhum cliente encontrado."
         );
 
@@ -613,31 +604,33 @@ async function pesquisarCliente(){
 
 
 
+
     lista.innerHTML =
-    resultado.map(cliente=>{
 
 
-        return `
+    resultado.map(cliente=>`
+
 
         <div class="item-lista">
 
 
-            <div class="item-info">
+            <div>
 
 
                 <h3>
 
-                ${escaparHTML(
+                ${escapar(
                     cliente.nome
                 )}
 
                 </h3>
 
 
+
                 <span>
 
-                ${escaparHTML(
-                    cliente.email || "Sem e-mail"
+                ${escapar(
+                    cliente.email || ""
                 )}
 
                 </span>
@@ -648,10 +641,9 @@ async function pesquisarCliente(){
 
         </div>
 
-        `;
 
-
-    }).join("");
+    `)
+    .join("");
 
 
 
@@ -662,68 +654,213 @@ async function pesquisarCliente(){
 
 
 
+
 // ==========================================================
-// NAVEGAÇÃO DO PAINEL
+// EVENTOS DO PAINEL
 // ==========================================================
 
 
-function configurarBotoesAdmin(){
-
-
-    configurarPesquisaCliente();
+function configurarEventos(){
 
 
 
     document
     .getElementById(
-        "btnSair"
+        "btnPesquisarCliente"
+    )
+    ?.addEventListener(
+        "click",
+        pesquisarClientes
+    );
+
+
+
+
+
+    document
+    .getElementById(
+        "pesquisaCliente"
+    )
+    ?.addEventListener(
+        "keydown",
+        (evento)=>{
+
+
+            if(evento.key==="Enter"){
+
+                pesquisarClientes();
+
+            }
+
+
+        }
+    );
+
+
+
+
+
+
+
+    document
+    .getElementById(
+        "abrirClientes"
+    )
+    ?.addEventListener(
+        "click",
+        ()=>{
+
+            window.location.href =
+            "clientes.html";
+
+        }
+    );
+
+
+
+
+
+    document
+    .getElementById(
+        "abrirProjetos"
+    )
+    ?.addEventListener(
+        "click",
+        ()=>{
+
+            window.location.href =
+            "projetos.html";
+
+        }
+    );
+
+
+
+
+
+    document
+    .getElementById(
+        "abrirDocumentos"
+    )
+    ?.addEventListener(
+        "click",
+        ()=>{
+
+            window.location.href =
+            "documentos.html";
+
+        }
+    );
+
+
+
+
+
+    document
+    .getElementById(
+        "abrirBiblioteca"
+    )
+    ?.addEventListener(
+        "click",
+        ()=>{
+
+            window.location.href =
+            "biblioteca.html";
+
+        }
+    );
+
+
+
+
+
+    document
+    .getElementById(
+        "abrirFotos"
+    )
+    ?.addEventListener(
+        "click",
+        ()=>{
+
+            window.location.href =
+            "fotos.html";
+
+        }
+    );
+
+
+
+
+
+    document
+    .getElementById(
+        "abrirFinanceiro"
+    )
+    ?.addEventListener(
+        "click",
+        ()=>{
+
+            window.location.href =
+            "financeiro.html";
+
+        }
+    );
+
+
+
+
+
+    document
+    .getElementById(
+        "abrirAgenda"
+    )
+    ?.addEventListener(
+        "click",
+        ()=>{
+
+            window.location.href =
+            "agenda.html";
+
+        }
+    );
+
+
+
+
+
+    document
+    .getElementById(
+        "abrirConfiguracoes"
+    )
+    ?.addEventListener(
+        "click",
+        ()=>{
+
+            window.location.href =
+            "configuracoes.html";
+
+        }
+    );
+
+
+
+
+
+    document
+    .getElementById(
+        "logoutButton"
     )
     ?.addEventListener(
         "click",
         async()=>{
 
 
-            await sairSistema();
+            await dbSairSistema();
+
 
 
             window.location.href =
-            "index.html";
-
-
-        }
-    );
-
-
-
-    document
-    .getElementById(
-        "verTodosProjetos"
-    )
-    ?.addEventListener(
-        "click",
-        ()=>{
-
-
-            window.location.href =
-            "projetos.html";
-
-
-        }
-    );
-
-
-
-    document
-    .getElementById(
-        "verTodosDocumentos"
-    )
-    ?.addEventListener(
-        "click",
-        ()=>{
-
-
-            window.location.href =
-            "documentos.html";
+            "login.html";
 
 
         }
@@ -733,181 +870,12 @@ function configurarBotoesAdmin(){
 
 }
 // ==========================================================
-// FINANCEIRO
+// FUNÇÕES AUXILIARES
 // ==========================================================
 
 
-async function carregarResumoFinanceiro(){
 
-
-    const financeiro =
-    await dbBuscarFinanceiro();
-
-
-
-    let entradas = 0;
-
-    let saidas = 0;
-
-
-
-
-    financeiro.forEach(item=>{
-
-
-        const valor =
-        Number(item.valor || 0);
-
-
-
-        if(item.tipo === "entrada"){
-
-            entradas += valor;
-
-        }
-
-
-        if(item.tipo === "saida"){
-
-            saidas += valor;
-
-        }
-
-
-
-    });
-
-
-
-
-    atualizarTexto(
-        "financeiroEntradas",
-        formatarMoeda(entradas)
-    );
-
-
-
-    atualizarTexto(
-        "financeiroSaidas",
-        formatarMoeda(saidas)
-    );
-
-
-
-    atualizarTexto(
-        "financeiroSaldo",
-        formatarMoeda(
-            entradas - saidas
-        )
-    );
-
-
-}
-
-
-
-
-
-// ==========================================================
-// AGENDA
-// ==========================================================
-
-
-async function carregarAgenda(){
-
-
-    const agenda =
-    await dbBuscarAgenda();
-
-
-
-    const lista =
-    document.getElementById(
-        "listaAgenda"
-    );
-
-
-
-    if(!lista)
-    return;
-
-
-
-
-    if(!agenda.length){
-
-
-        lista.innerHTML =
-        mensagemVazia(
-            "Nenhum evento cadastrado."
-        );
-
-
-        return;
-
-    }
-
-
-
-
-    lista.innerHTML =
-    agenda.slice(0,5)
-    .map(evento=>{
-
-
-        return `
-
-        <div class="item-lista">
-
-
-            <div class="item-info">
-
-
-                <h3>
-
-                ${escaparHTML(
-                    evento.titulo
-                )}
-
-                </h3>
-
-
-
-                <span>
-
-                ${formatarData(
-                    evento.data
-                )}
-
-                ${evento.horario || ""}
-
-                </span>
-
-
-            </div>
-
-
-        </div>
-
-        `;
-
-
-    }).join("");
-
-
-
-}
-
-
-
-
-
-// ==========================================================
-// AUXILIARES
-// ==========================================================
-
-
-function atualizarTexto(id,valor){
+function atualizarElemento(id,valor){
 
 
     const elemento =
@@ -929,94 +897,18 @@ function atualizarTexto(id,valor){
 
 
 
-function formatarMoeda(valor){
 
 
-    return Number(valor || 0)
-    .toLocaleString(
-        "pt-BR",
-        {
-            style:"currency",
-            currency:"BRL"
-        }
-    );
-
-
-}
-
-
-
-
-
-function formatarData(data){
-
-
-    if(!data)
-    return "-";
-
-
-
-    return new Date(data)
-    .toLocaleDateString(
-        "pt-BR"
-    );
-
-
-}
-
-
-
-
-
-function formatarStatus(status){
-
-
-    const lista = {
-
-
-        ativo:"Ativo",
-
-        em_andamento:"Em andamento",
-
-        concluido:"Concluído",
-
-        pendente:"Pendente",
-
-        aprovado:"Aprovado"
-
-
-    };
-
-
-
-    return lista[status]
-    ||
-    status
-    ||
-    "Ativo";
-
-
-}
-
-
-
-
-
-function mensagemVazia(texto){
+function estadoVazio(texto){
 
 
     return `
 
-    <div class="empty-state">
+        <div class="estado-vazio">
 
-        <p>
+            ${texto}
 
-        ${texto}
-
-        </p>
-
-
-    </div>
+        </div>
 
     `;
 
@@ -1027,55 +919,9 @@ function mensagemVazia(texto){
 
 
 
-function mostrarLoading(){
 
 
-    const loading =
-    document.getElementById(
-        "loading"
-    );
-
-
-
-    if(loading){
-
-        loading.style.display =
-        "flex";
-
-    }
-
-
-}
-
-
-
-
-
-function esconderLoading(){
-
-
-    const loading =
-    document.getElementById(
-        "loading"
-    );
-
-
-
-    if(loading){
-
-        loading.style.display =
-        "none";
-
-    }
-
-
-}
-
-
-
-
-
-function escaparHTML(valor){
+function escapar(valor){
 
 
     return String(valor ?? "")
@@ -1092,3 +938,54 @@ function escaparHTML(valor){
 
 
 }
+
+
+
+
+
+
+
+async function atualizarStorage(){
+
+
+
+    const elemento =
+    document.getElementById(
+        "storageUsado"
+    );
+
+
+
+    if(elemento){
+
+        elemento.textContent =
+        "0 MB";
+
+    }
+
+
+
+}
+
+
+
+
+
+// ==========================================================
+// ATUALIZAÇÃO AUTOMÁTICA
+// ==========================================================
+
+
+setInterval(()=>{
+
+
+    if(
+        typeof carregarDashboard === "function"
+    ){
+
+        carregarDashboard();
+
+    }
+
+
+},300000);
