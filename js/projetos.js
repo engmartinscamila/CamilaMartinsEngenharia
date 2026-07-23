@@ -1,849 +1,1391 @@
 /*
 ==========================================================
 CAMILA MARTINS ENGENHARIA
-PROJETOS
+
+PROJETOS.JS
+GERENCIAMENTO DE PROJETOS
+
+USA:
+database.js
+supabase.js
+
+VERSÃO DEFINITIVA
 ==========================================================
 */
 
-document.addEventListener("DOMContentLoaded", () => {
 
-    configurarFormularioProjeto();
+let projetoSelecionado = null;
 
-    carregarProjetosPagina();
 
-    configurarPesquisaProjetos();
+
+document.addEventListener(
+"DOMContentLoaded",
+()=>{
+
+
+    iniciarProjetos();
+
 
 });
 
-/*
-==========================================================
-CONFIGURAR FORMULÁRIO
-==========================================================
-*/
 
-function configurarFormularioProjeto(){
 
-    const formulario = document.getElementById("formProjeto");
 
-    if(!formulario) return;
 
-    formulario.onsubmit = salvarProjeto;
 
-}
 
-/*
-==========================================================
-OBTER DADOS DO FORMULÁRIO
-==========================================================
-*/
+// ==========================================================
+// INICIALIZAÇÃO
+// ==========================================================
 
-function obterDadosProjeto(){
 
-    return {
+async function iniciarProjetos(){
 
-        nome: document
-            .getElementById("projetoNome")
-            ?.value
-            .trim(),
 
-        cliente_id: document
-            .getElementById("clienteProjeto")
-            ?.value || null,
+    configurarEventosProjeto();
 
-        tipo: document
-            .getElementById("tipoProjeto")
-            ?.value || null,
 
-        status: document
-            .getElementById("statusProjeto")
-            ?.value || "orcamento",
+    await carregarProjetos();
 
-        data_inicio: document
-            .getElementById("dataInicio")
-            ?.value || null,
 
-        prazo_final: document
-            .getElementById("prazoProjeto")
-            ?.value || null,
+    await carregarClientesSelect();
 
-        valor: document
-            .getElementById("valorProjeto")
-            ?.value || null,
 
-        descricao: document
-            .getElementById("descricaoProjeto")
-            ?.value
-            .trim() || null
-
-    };
 
 }
 
-/*
-==========================================================
-SALVAR PROJETO
-==========================================================
-*/
 
-async function salvarProjeto(event){
 
-    event.preventDefault();
 
-    const formulario = document.getElementById("formProjeto");
 
-    const id = formulario?.dataset.projetoId;
 
-    if(id){
 
-        await atualizarProjeto(id);
 
-        return;
+// ==========================================================
+// CARREGAR PROJETOS
+// ==========================================================
 
-    }
 
-    const projeto = obterDadosProjeto();
+async function carregarProjetos(){
 
-    if(!projeto.nome){
 
-        alert("Informe o nome do projeto.");
 
-        return;
+    const lista =
 
-    }
-
-    if(!projeto.cliente_id){
-
-        alert("Selecione o cliente.");
-
-        return;
-
-    }
-
-    const botao = document.getElementById("salvarProjeto");
-
-    alterarBotaoProjeto(botao, true);
-
-    try{
-
-        const { error } = await supabase
-            .from("projetos")
-            .insert([projeto]);
-
-        if(error) throw error;
-
-        alert("Projeto cadastrado com sucesso.");
-
-        formulario.reset();
-
-        fecharModalProjeto();
-
-        await carregarProjetosPagina();
-
-        if(typeof carregarDashboard === "function"){
-
-            await carregarDashboard();
-
-        }
-
-    }
-    catch(erro){
-
-        console.error("Erro ao salvar projeto:", erro);
-
-        alert(
-            "Não foi possível cadastrar o projeto. " +
-            (erro.message || "")
-        );
-
-    }
-    finally{
-
-        alterarBotaoProjeto(botao, false);
-
-    }
-
-}
-
-/*
-==========================================================
-CARREGAR PROJETOS
-==========================================================
-*/
-
-async function carregarProjetosPagina(){
-
-    const tabela = document.getElementById("tabelaProjetos");
-
-    if(!tabela) return;
-
-    tabela.innerHTML = `
-        <tr>
-            <td colspan="8">
-                Carregando projetos...
-            </td>
-        </tr>
-    `;
-
-    const { data, error } = await supabase
-        .from("projetos")
-        .select(`
-            *,
-            clientes (
-                nome
-            )
-        `)
-        .order("created_at", {
-            ascending:false
-        });
-
-    if(error){
-
-        console.error("Erro ao carregar projetos:", error);
-
-        tabela.innerHTML = `
-            <tr>
-                <td colspan="8">
-                    Não foi possível carregar os projetos.
-                </td>
-            </tr>
-        `;
-
-        return;
-
-    }
-
-    renderizarProjetos(data || []);
-
-}
-
-/*
-==========================================================
-RENDERIZAR PROJETOS
-==========================================================
-*/
-
-function renderizarProjetos(projetos){
-
-    const tabela = document.getElementById("tabelaProjetos");
-
-    if(!tabela) return;
-
-    if(projetos.length === 0){
-
-        tabela.innerHTML = `
-            <tr>
-                <td colspan="8">
-                    Nenhum projeto cadastrado.
-                </td>
-            </tr>
-        `;
-
-        return;
-
-    }
-
-    tabela.innerHTML = projetos.map(projeto => {
-
-        return `
-            <tr>
-
-                <td>
-                    ${escaparProjeto(projeto.nome || "")}
-                </td>
-
-                <td>
-                    ${escaparProjeto(
-                        projeto.clientes?.nome || "Sem cliente"
-                    )}
-                </td>
-
-                <td>
-                    ${formatarTipoProjeto(projeto.tipo)}
-                </td>
-
-                <td>
-                    <span class="badge ${classeProjetoStatus(projeto.status)}">
-                        ${formatarStatusProjeto(projeto.status)}
-                    </span>
-                </td>
-
-                <td>
-                    ${formatarDataProjeto(projeto.data_inicio)}
-                </td>
-
-                <td>
-                    ${formatarDataProjeto(projeto.prazo_final)}
-                </td>
-
-                <td>
-                    ${formatarValorProjeto(projeto.valor)}
-                </td>
-
-                <td>
-
-                    <button
-                        type="button"
-                        class="btn-icon edit"
-                        title="Editar"
-                        onclick="editarProjeto('${projeto.id}')">
-
-                        <i class="fa-solid fa-pen"></i>
-
-                    </button>
-
-                    <button
-                        type="button"
-                        class="btn-icon delete"
-                        title="Excluir"
-                        onclick="excluirProjeto('${projeto.id}')">
-
-                        <i class="fa-solid fa-trash"></i>
-
-                    </button>
-
-                </td>
-
-            </tr>
-        `;
-
-    }).join("");
-
-}
-
-/*
-==========================================================
-EDITAR PROJETO
-==========================================================
-*/
-
-async function editarProjeto(id){
-
-    const { data, error } = await supabase
-        .from("projetos")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-    if(error){
-
-        console.error(error);
-
-        alert("Não foi possível abrir o projeto.");
-
-        return;
-
-    }
-
-    const formulario = document.getElementById("formProjeto");
-
-    if(!formulario) return;
-
-    document.getElementById("projetoNome").value =
-        data.nome || "";
-
-    document.getElementById("clienteProjeto").value =
-        data.cliente_id || "";
-
-    document.getElementById("tipoProjeto").value =
-        data.tipo || "arquitetonico";
-
-    document.getElementById("statusProjeto").value =
-        data.status || "orcamento";
-
-    document.getElementById("dataInicio").value =
-        data.data_inicio || "";
-
-    document.getElementById("prazoProjeto").value =
-        data.prazo_final || "";
-
-    document.getElementById("valorProjeto").value =
-        data.valor || "";
-
-    document.getElementById("descricaoProjeto").value =
-        data.descricao || "";
-
-    formulario.dataset.projetoId = id;
-
-    const botao = document.getElementById("salvarProjeto");
-
-    if(botao){
-
-        botao.textContent = "Atualizar Projeto";
-
-    }
-
-    document
-        .getElementById("modalProjeto")
-        ?.classList
-        .add("show");
-
-}
-
-/*
-==========================================================
-ATUALIZAR PROJETO
-==========================================================
-*/
-
-async function atualizarProjeto(id){
-
-    const projeto = obterDadosProjeto();
-
-    if(!projeto.nome){
-
-        alert("Informe o nome do projeto.");
-
-        return;
-
-    }
-
-    if(!projeto.cliente_id){
-
-        alert("Selecione o cliente.");
-
-        return;
-
-    }
-
-    const botao = document.getElementById("salvarProjeto");
-
-    alterarBotaoProjeto(botao, true);
-
-    try{
-
-        const { error } = await supabase
-            .from("projetos")
-            .update(projeto)
-            .eq("id", id);
-
-        if(error) throw error;
-
-        alert("Projeto atualizado com sucesso.");
-
-        limparFormularioProjeto();
-
-        fecharModalProjeto();
-
-        await carregarProjetosPagina();
-
-        if(typeof carregarDashboard === "function"){
-
-            await carregarDashboard();
-
-        }
-
-    }
-    catch(erro){
-
-        console.error("Erro ao atualizar projeto:", erro);
-
-        alert(
-            "Não foi possível atualizar o projeto. " +
-            (erro.message || "")
-        );
-
-    }
-    finally{
-
-        alterarBotaoProjeto(botao, false);
-
-    }
-
-}
-
-/*
-==========================================================
-EXCLUIR PROJETO
-==========================================================
-*/
-
-async function excluirProjeto(id){
-
-    const confirmar = confirm(
-        "Deseja realmente excluir este projeto?"
+    document.getElementById(
+        "listaProjetos"
     );
 
-    if(!confirmar) return;
 
-    const { error } = await supabase
-        .from("projetos")
-        .delete()
-        .eq("id", id);
 
-    if(error){
+    if(!lista)
+    return;
 
-        console.error(error);
 
-        alert(
-            "Não foi possível excluir o projeto. " +
-            "Verifique se existem documentos ou fotos vinculados."
-        );
 
-        return;
 
-    }
+    try{
 
-    alert("Projeto excluído com sucesso.");
 
-    await carregarProjetosPagina();
+        const projetos =
 
-    if(typeof carregarDashboard === "function"){
+        await dbBuscarProjetos();
 
-        await carregarDashboard();
 
-    }
 
-}
 
-/*
-==========================================================
-PESQUISAR PROJETOS
-==========================================================
-*/
 
-function configurarPesquisaProjetos(){
+        if(!projetos.length){
 
-    document
-        .getElementById("btnPesquisarProjetos")
-        ?.addEventListener(
-            "click",
-            pesquisarProjetos
-        );
 
-    document
-        .getElementById("pesquisarProjetos")
-        ?.addEventListener("keydown", event => {
+            lista.innerHTML = `
 
-            if(event.key === "Enter"){
+            <div class="estado-vazio">
 
-                event.preventDefault();
+            Nenhum projeto cadastrado.
 
-                pesquisarProjetos();
+            </div>
 
-            }
+            `;
 
-        });
 
-}
+            return;
 
-async function pesquisarProjetos(){
 
-    const termo = document
-        .getElementById("pesquisarProjetos")
-        ?.value
-        .trim() || "";
+        }
 
-    if(!termo){
 
-        await carregarProjetosPagina();
 
-        return;
 
-    }
 
-    const { data, error } = await supabase
-        .from("projetos")
-        .select(`
-            *,
-            clientes (
-                nome
-            )
+
+
+        lista.innerHTML =
+
+
+        projetos.map(projeto=>`
+
+
+        <div class="item-lista projeto-item"
+        data-id="${projeto.id}">
+
+
+
+            <div>
+
+
+                <h3>
+
+                ${escaparTexto(
+                    projeto.nome
+                )}
+
+                </h3>
+
+
+
+                <p>
+
+                Cliente:
+
+                ${escaparTexto(
+                    projeto.clientes?.nome || 
+                    "Não informado"
+                )}
+
+                </p>
+
+
+
+                <span>
+
+                ${escaparTexto(
+                    projeto.status || ""
+                )}
+
+                </span>
+
+
+
+            </div>
+
+
+
+
+
+            <div class="acoes-item">
+
+
+                <button
+                class="editarProjeto"
+                data-id="${projeto.id}">
+
+
+                <i class="fa-solid fa-pen"></i>
+
+
+                </button>
+
+
+
+
+
+                <button
+                class="excluirProjeto"
+                data-id="${projeto.id}">
+
+
+                <i class="fa-solid fa-trash"></i>
+
+
+                </button>
+
+
+
+            </div>
+
+
+
+        </div>
+
+
+
         `)
-        .ilike("nome", `%${termo}%`)
-        .order("created_at", {
-            ascending:false
-        });
+        .join("");
 
-    if(error){
 
-        console.error(error);
 
-        alert("Não foi possível pesquisar os projetos.");
 
-        return;
+
+        configurarAcoesProjetos();
+
+
+
+    }
+    catch(error){
+
+
+        console.error(
+            "Erro carregar projetos:",
+            error
+        );
+
 
     }
 
-    renderizarProjetos(data || []);
+
 
 }
+// ==========================================================
+// CARREGAR CLIENTES NO SELECT
+// ==========================================================
 
-/*
-==========================================================
-PROJETOS NOS SELECTS
-==========================================================
-*/
 
-async function carregarProjetosNosSelects(clienteId = null){
 
-    const selects = [
+async function carregarClientesSelect(){
 
-        document.getElementById("documentoProjeto"),
 
-        document.getElementById("fotoProjeto")
 
-    ].filter(Boolean);
+    const select =
 
-    if(selects.length === 0) return;
+    document.getElementById(
+        "projetoCliente"
+    );
 
-    let consulta = supabase
-        .from("projetos")
-        .select("id, nome, cliente_id")
-        .order("nome", {
-            ascending:true
-        });
 
-    if(clienteId){
 
-        consulta = consulta.eq("cliente_id", clienteId);
+    if(!select)
+    return;
 
-    }
 
-    const { data, error } = await consulta;
 
-    if(error){
 
-        console.error(error);
+    const clientes =
 
-        return;
+    await dbBuscarClientes();
 
-    }
 
-    selects.forEach(select => {
 
-        const valorAtual = select.value;
 
-        select.innerHTML = `
-            <option value="">
-                Selecione um projeto
-            </option>
+
+    select.innerHTML = `
+
+    <option value="">
+
+    Selecione o cliente
+
+    </option>
+
+    `;
+
+
+
+
+
+
+    clientes.forEach(cliente=>{
+
+
+        select.innerHTML += `
+
+
+        <option value="${cliente.id}">
+
+
+        ${escaparTexto(
+            cliente.nome
+        )}
+
+
+        </option>
+
+
         `;
 
-        (data || []).forEach(projeto => {
-
-            const option = document.createElement("option");
-
-            option.value = projeto.id;
-
-            option.textContent = projeto.nome;
-
-            select.appendChild(option);
-
-        });
-
-        select.value = valorAtual;
 
     });
+
+
 
 }
 
-/*
-==========================================================
-FILTRAR PROJETOS POR CLIENTE
-==========================================================
-*/
 
-document
-    .getElementById("documentoCliente")
-    ?.addEventListener("change", event => {
 
-        carregarProjetosNosSelects(event.target.value);
 
-    });
 
-document
-    .getElementById("fotoCliente")
-    ?.addEventListener("change", event => {
 
-        carregarProjetosNosSelects(event.target.value);
 
-    });
 
-/*
-==========================================================
-LIMPAR FORMULÁRIO
-==========================================================
-*/
+// ==========================================================
+// ABRIR / FECHAR MODAL
+// ==========================================================
 
-function limparFormularioProjeto(){
 
-    const formulario = document.getElementById("formProjeto");
 
-    if(!formulario) return;
+function abrirModalProjeto(){
 
-    formulario.reset();
 
-    delete formulario.dataset.projetoId;
+    const modal =
 
-    const botao = document.getElementById("salvarProjeto");
+    document.getElementById(
+        "modalProjeto"
+    );
 
-    if(botao){
 
-        botao.textContent = "Salvar Projeto";
+
+    if(modal){
+
+        modal.style.display =
+        "flex";
 
     }
 
+
 }
 
-/*
-==========================================================
-FECHAR MODAL
-==========================================================
-*/
+
+
+
+
+
 
 function fecharModalProjeto(){
 
-    document
-        .getElementById("modalProjeto")
-        ?.classList
-        .remove("show");
+
+    const modal =
+
+    document.getElementById(
+        "modalProjeto"
+    );
+
+
+
+    if(modal){
+
+        modal.style.display =
+        "none";
+
+    }
+
+
 
     limparFormularioProjeto();
 
+
+
 }
 
-/*
-==========================================================
-BOTÃO
-==========================================================
-*/
 
-function alterarBotaoProjeto(botao, carregando){
 
-    if(!botao) return;
 
-    botao.disabled = carregando;
 
-    if(carregando){
 
-        botao.textContent = "Salvando...";
 
-        return;
+
+// ==========================================================
+// SALVAR PROJETO
+// ==========================================================
+
+
+
+async function salvarProjeto(evento){
+
+
+    evento.preventDefault();
+
+
+
+
+
+    const projeto = {
+
+
+
+        nome:
+
+        document.getElementById(
+            "projetoNome"
+        ).value,
+
+
+
+
+
+        cliente_id:
+
+        document.getElementById(
+            "projetoCliente"
+        ).value,
+
+
+
+
+
+        tipo:
+
+        document.getElementById(
+            "projetoTipo"
+        ).value,
+
+
+
+
+
+        status:
+
+        document.getElementById(
+            "projetoStatus"
+        ).value,
+
+
+
+
+
+        descricao:
+
+        document.getElementById(
+            "projetoDescricao"
+        ).value,
+
+
+
+
+
+        data_inicio:
+
+        document.getElementById(
+            "projetoDataInicio"
+        ).value,
+
+
+
+
+
+        data_fim:
+
+        document.getElementById(
+            "projetoDataFim"
+        ).value
+
+
+
+
+    };
+
+
+
+
+
+
+    try{
+
+
+
+        if(projetoSelecionado){
+
+
+
+            await dbEditarProjeto(
+
+                projetoSelecionado,
+
+                projeto
+
+            );
+
+
+
+        }
+        else{
+
+
+
+            await dbCriarProjeto(
+
+                projeto
+
+            );
+
+
+
+        }
+
+
+
+
+
+
+        fecharModalProjeto();
+
+
+
+        await carregarProjetos();
+
+
+
+    }
+    catch(error){
+
+
+        console.error(
+            "Erro salvar projeto:",
+            error
+        );
+
+
+
+        alert(
+            "Erro ao salvar projeto."
+        );
+
 
     }
 
-    const formulario = document.getElementById("formProjeto");
 
-    botao.textContent = formulario?.dataset.projetoId
-        ? "Atualizar Projeto"
-        : "Salvar Projeto";
 
 }
 
-/*
-==========================================================
-FORMATAÇÕES
-==========================================================
-*/
 
-function formatarTipoProjeto(tipo){
 
-    const tipos = {
 
-        arquitetonico:"Projeto Arquitetônico",
 
-        interiores:"Design de Interiores",
 
-        estrutural:"Projeto Estrutural",
 
-        eletrico:"Projeto Elétrico",
+// ==========================================================
+// EDITAR PROJETO
+// ==========================================================
 
-        hidraulico:"Projeto Hidráulico",
 
-        regularizacao:"Regularização",
 
-        laudo:"Laudo Técnico",
+async function editarProjeto(id){
 
-        vistoria:"Vistoria",
 
-        consultoria:"Consultoria"
 
-    };
+    const projeto =
 
-    return tipos[tipo] || tipo || "-";
+    await dbBuscarProjetoPorId(id);
+
+
+
+
+
+    projetoSelecionado =
+    id;
+
+
+
+
+
+    document.getElementById(
+        "projetoNome"
+    ).value =
+    projeto.nome || "";
+
+
+
+
+
+    document.getElementById(
+        "projetoCliente"
+    ).value =
+    projeto.cliente_id || "";
+
+
+
+
+
+    document.getElementById(
+        "projetoTipo"
+    ).value =
+    projeto.tipo || "";
+
+
+
+
+
+    document.getElementById(
+        "projetoStatus"
+    ).value =
+    projeto.status || "";
+
+
+
+
+
+    document.getElementById(
+        "projetoDescricao"
+    ).value =
+    projeto.descricao || "";
+
+
+
+
+
+    document.getElementById(
+        "projetoDataInicio"
+    ).value =
+    projeto.data_inicio || "";
+
+
+
+
+
+    document.getElementById(
+        "projetoDataFim"
+    ).value =
+    projeto.data_fim || "";
+
+
+
+
+
+    abrirModalProjeto();
+
+
 
 }
+// ==========================================================
+// EXCLUIR PROJETO
+// ==========================================================
 
-function formatarStatusProjeto(status){
 
-    const statusProjetos = {
 
-        orcamento:"Orçamento",
+async function excluirProjeto(id){
 
-        em_andamento:"Em andamento",
 
-        aprovacao:"Aprovação",
+    const confirmar =
 
-        execucao:"Execução",
+    confirm(
+        "Deseja realmente excluir este projeto?"
+    );
 
-        finalizado:"Finalizado"
 
-    };
 
-    return statusProjetos[status] || status || "-";
+    if(!confirmar)
+    return;
 
-}
 
-function classeProjetoStatus(status){
 
-    const classes = {
 
-        orcamento:"orcamento",
 
-        em_andamento:"andamento",
+    try{
 
-        aprovacao:"andamento",
 
-        execucao:"andamento",
+        await dbExcluirProjeto(id);
 
-        finalizado:"finalizado"
 
-    };
 
-    return classes[status] || "ativo";
+        projetoSelecionado =
+        null;
 
-}
 
-function formatarDataProjeto(data){
 
-    if(!data) return "-";
+        await carregarProjetos();
 
-    const partes = data.split("-");
 
-    if(partes.length !== 3) return data;
 
-    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+    catch(error){
 
-}
 
-function formatarValorProjeto(valor){
+        console.error(
+            "Erro excluir projeto:",
+            error
+        );
 
-    if(valor === null || valor === undefined || valor === ""){
 
-        return "-";
+
+        alert(
+            "Erro ao excluir projeto."
+        );
+
 
     }
 
-    return Number(valor).toLocaleString(
-        "pt-BR",
-        {
 
-            style:"currency",
 
-            currency:"BRL"
+}
+
+
+
+
+
+
+
+
+// ==========================================================
+// AÇÕES DA LISTA
+// ==========================================================
+
+
+
+function configurarAcoesProjetos(){
+
+
+
+    document
+    .querySelectorAll(
+        ".editarProjeto"
+    )
+    .forEach(botao=>{
+
+
+        botao.addEventListener(
+            "click",
+            ()=>{
+
+
+                editarProjeto(
+                    botao.dataset.id
+                );
+
+
+            }
+        );
+
+
+    });
+
+
+
+
+
+
+
+    document
+    .querySelectorAll(
+        ".excluirProjeto"
+    )
+    .forEach(botao=>{
+
+
+        botao.addEventListener(
+            "click",
+            ()=>{
+
+
+                excluirProjeto(
+                    botao.dataset.id
+                );
+
+
+            }
+        );
+
+
+    });
+
+
+
+
+
+
+
+    document
+    .querySelectorAll(
+        ".projeto-item"
+    )
+    .forEach(item=>{
+
+
+        item.addEventListener(
+            "click",
+            ()=>{
+
+
+                carregarDetalhesProjeto(
+                    item.dataset.id
+                );
+
+
+            }
+        );
+
+
+    });
+
+
+
+}
+
+
+
+
+
+
+
+
+// ==========================================================
+// DETALHES DO PROJETO
+// ==========================================================
+
+
+
+async function carregarDetalhesProjeto(id){
+
+
+
+    projetoSelecionado =
+    id;
+
+
+
+
+    const projeto =
+
+    await dbBuscarProjetoPorId(id);
+
+
+
+
+
+    const detalhes =
+
+    document.getElementById(
+        "detalhesProjeto"
+    );
+
+
+
+
+
+    if(detalhes){
+
+
+
+        detalhes.innerHTML = `
+
+
+        <h3>
+
+        ${escaparTexto(
+            projeto.nome
+        )}
+
+        </h3>
+
+
+
+        <p>
+
+        Status:
+
+        ${escaparTexto(
+            projeto.status || ""
+        )}
+
+        </p>
+
+
+
+        <p>
+
+        Tipo:
+
+        ${escaparTexto(
+            projeto.tipo || ""
+        )}
+
+        </p>
+
+
+
+        <p>
+
+        ${escaparTexto(
+            projeto.descricao || ""
+        )}
+
+        </p>
+
+
+        `;
+
+
+    }
+
+
+
+
+
+    carregarDocumentosProjeto(id);
+
+
+    carregarFotosProjeto(id);
+
+
+
+}
+
+
+
+
+
+
+
+
+// ==========================================================
+// DOCUMENTOS DO PROJETO
+// ==========================================================
+
+
+
+async function carregarDocumentosProjeto(id){
+
+
+
+    const lista =
+
+    document.getElementById(
+        "documentosProjeto"
+    );
+
+
+
+    if(!lista)
+    return;
+
+
+
+
+
+    const documentos =
+
+    await dbBuscarDocumentosProjeto(id);
+
+
+
+
+
+    lista.innerHTML =
+
+
+    documentos.map(documento=>`
+
+
+        <div class="item-lista">
+
+
+            ${escaparTexto(
+                documento.nome ||
+                documento.titulo
+            )}
+
+
+        </div>
+
+
+    `)
+    .join("");
+
+
+
+}
+
+
+
+
+
+
+
+// ==========================================================
+// FOTOS DO PROJETO
+// ==========================================================
+
+
+
+async function carregarFotosProjeto(id){
+
+
+
+    const lista =
+
+    document.getElementById(
+        "fotosProjeto"
+    );
+
+
+
+    if(!lista)
+    return;
+
+
+
+
+
+    const fotos =
+
+    await dbBuscarFotosProjeto(id);
+
+
+
+
+
+    lista.innerHTML =
+
+
+    fotos.map(foto=>`
+
+
+        <img
+        src="${foto.url}"
+        class="foto-miniatura">
+
+
+
+    `)
+    .join("");
+
+
+
+}
+// ==========================================================
+// EVENTOS
+// ==========================================================
+
+
+
+function configurarEventosProjeto(){
+
+
+
+    document
+    .getElementById(
+        "novoProjeto"
+    )
+    ?.addEventListener(
+        "click",
+        ()=>{
+
+
+            projetoSelecionado =
+            null;
+
+
+            limparFormularioProjeto();
+
+
+            abrirModalProjeto();
+
 
         }
     );
 
+
+
+
+
+
+    document
+    .getElementById(
+        "fecharModalProjeto"
+    )
+    ?.addEventListener(
+        "click",
+        fecharModalProjeto
+    );
+
+
+
+
+
+
+
+    document
+    .getElementById(
+        "cancelarProjeto"
+    )
+    ?.addEventListener(
+        "click",
+        fecharModalProjeto
+    );
+
+
+
+
+
+
+
+    document
+    .getElementById(
+        "formProjeto"
+    )
+    ?.addEventListener(
+        "submit",
+        salvarProjeto
+    );
+
+
+
+
+
+
+
+    document
+    .getElementById(
+        "pesquisaProjeto"
+    )
+    ?.addEventListener(
+        "keyup",
+        pesquisarProjetos
+    );
+
+
+
+
+
+
+
+    document
+    .getElementById(
+        "btnPesquisarProjeto"
+    )
+    ?.addEventListener(
+        "click",
+        pesquisarProjetos
+    );
+
+
+
+
+
+
+
+    document
+    .getElementById(
+        "logoutButton"
+    )
+    ?.addEventListener(
+        "click",
+        async()=>{
+
+
+            await dbSairSistema();
+
+
+
+            window.location.href =
+            "login.html";
+
+
+        }
+    );
+
+
+
 }
 
-function escaparProjeto(valor){
+
+
+
+
+
+
+
+// ==========================================================
+// PESQUISA DE PROJETOS
+// ==========================================================
+
+
+
+async function pesquisarProjetos(){
+
+
+
+    const campo =
+
+    document.getElementById(
+        "pesquisaProjeto"
+    );
+
+
+
+    const lista =
+
+    document.getElementById(
+        "listaProjetos"
+    );
+
+
+
+    if(!campo || !lista)
+    return;
+
+
+
+
+
+    const termo =
+
+    campo.value
+    .toLowerCase()
+    .trim();
+
+
+
+
+
+    const projetos =
+
+    await dbBuscarProjetos();
+
+
+
+
+
+    const resultado =
+
+    projetos.filter(projeto=>{
+
+
+        return projeto.nome
+        .toLowerCase()
+        .includes(termo);
+
+
+    });
+
+
+
+
+
+    lista.innerHTML =
+
+
+    resultado.map(projeto=>`
+
+
+    <div class="item-lista projeto-item"
+    data-id="${projeto.id}">
+
+
+        <h3>
+
+        ${escaparTexto(
+            projeto.nome
+        )}
+
+        </h3>
+
+
+    </div>
+
+
+    `)
+    .join("");
+
+
+
+}
+
+
+
+
+
+
+
+
+// ==========================================================
+// LIMPAR FORMULÁRIO
+// ==========================================================
+
+
+
+function limparFormularioProjeto(){
+
+
+
+    projetoSelecionado =
+    null;
+
+
+
+
+    const campos = [
+
+
+        "projetoNome",
+
+        "projetoDescricao",
+
+        "projetoDataInicio",
+
+        "projetoDataFim"
+
+
+    ];
+
+
+
+
+    campos.forEach(id=>{
+
+
+        const campo =
+
+        document.getElementById(id);
+
+
+
+        if(campo){
+
+            campo.value = "";
+
+        }
+
+
+    });
+
+
+
+
+
+    const cliente =
+
+    document.getElementById(
+        "projetoCliente"
+    );
+
+
+
+    if(cliente){
+
+        cliente.value = "";
+
+    }
+
+
+
+
+}
+
+
+
+
+
+
+
+
+// ==========================================================
+// SEGURANÇA HTML
+// ==========================================================
+
+
+
+function escaparTexto(valor){
+
 
     return String(valor ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+
+    .replaceAll("&","&amp;")
+
+    .replaceAll("<","&lt;")
+
+    .replaceAll(">","&gt;")
+
+    .replaceAll('"',"&quot;")
+
+    .replaceAll("'","&#039;");
+
 
 }
