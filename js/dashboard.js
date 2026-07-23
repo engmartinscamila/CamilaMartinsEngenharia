@@ -190,9 +190,7 @@ async function carregarProjetosRecentes(){
 
 
 
-    const projetos =
-    await dbBuscarProjetosRecentes();
-
+   const projetos = (await dbBuscarProjetos()).slice(0, 5);
 
 
 
