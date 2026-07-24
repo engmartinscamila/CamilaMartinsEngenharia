@@ -1,1331 +1,186 @@
 /*
-==========================================================
+=====================================================
 CAMILA MARTINS ENGENHARIA
-
 FOTOS.JS
-GERENCIAMENTO DE GALERIA
-
-USA:
-database.js
-supabase.js
-
-VERSÃO DEFINITIVA
-==========================================================
+=====================================================
 */
 
+let fotos = [];
 
-let fotoSelecionada = null;
-
-
-
-document.addEventListener(
-"DOMContentLoaded",
-()=>{
-
-
+document.addEventListener("DOMContentLoaded", () => {
     iniciarFotos();
-
-
 });
 
+async function iniciarFotos() {
+    try {
+        mostrarLoadingFotos(true);
 
+        const [listaFotos, clientes, projetos] = await Promise.all([
+            dbBuscarFotos(),
+            dbBuscarClientes().catch(() => []),
+            dbBuscarProjetos().catch(() => [])
+        ]);
 
+        fotos = listaFotos;
 
+        preencherSelectFotos("fotoCliente", clientes, "nome");
+        preencherSelectFotos("fotoProjeto", projetos, "nome");
 
-
-
-// ==========================================================
-// INICIALIZAÇÃO
-// ==========================================================
-
-
-async function iniciarFotos(){
-
-
-    configurarEventosFoto();
-
-
-    await carregarFotos();
-
-
-    await carregarProjetosFoto();
-
-
-    await carregarClientesFoto();
-
-
-
+        renderizarGaleria();
+        configurarEventosFotos();
+    }
+    catch (error) {
+        console.error("Erro ao iniciar fotos:", error);
+    }
+    finally {
+        mostrarLoadingFotos(false);
+    }
 }
 
-
-
-
-
-
-
-
-// ==========================================================
-// CARREGAR FOTOS
-// ==========================================================
-
-
-async function carregarFotos(){
-
-
-
-    const galeria =
-
-    document.getElementById(
-        "galeriaFotos"
-    );
-
-
-
-    if(!galeria)
-    return;
-
-
-
-
-    try{
-
-
-        const fotos =
-
-        await dbBuscarFotos();
-
-
-
-
-
-
-        if(!fotos.length){
-
-
-            galeria.innerHTML = `
-
-
-            <div class="estado-vazio">
-
-
-            Nenhuma foto cadastrada.
-
-
-            </div>
-
-
-            `;
-
-
-            return;
-
-
-        }
-
-
-
-
-
-
-
-
-        galeria.innerHTML =
-
-
-
-        fotos.map(foto=>`
-
-
-        <div class="foto-card"
-        data-id="${foto.id}">
-
-
-
-
-
-            <img
-
-            src="${foto.url}"
-
-            alt="${escaparTexto(
-                foto.titulo || "Foto"
-            )}"
-
-            >
-
-
-
-
-
-            <div class="foto-info">
-
-
-
-                <h3>
-
-                ${escaparTexto(
-                    foto.titulo ||
-                    "Imagem"
-                )}
-
-                </h3>
-
-
-
-                <p>
-
-                ${escaparTexto(
-                    foto.projetos?.nome || ""
-                )}
-
-                </p>
-
-
-
-            </div>
-
-
-
-
-
-
-            <div class="acoes-item">
-
-
-
-                <button
-
-                class="visualizarFoto"
-
-                data-id="${foto.id}">
-
-
-                <i class="fa-solid fa-eye"></i>
-
-
-                </button>
-
-
-
-
-
-
-                <button
-
-                class="excluirFoto"
-
-                data-id="${foto.id}">
-
-
-                <i class="fa-solid fa-trash"></i>
-
-
-                </button>
-
-
-
-            </div>
-
-
-
-        </div>
-
-
-
-        `)
-        .join("");
-
-
-
-
-
-        configurarAcoesFotos();
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro carregar fotos:",
-            error
-        );
-
-
-    }
-
-
-
+function mostrarLoadingFotos(mostrar) {
+    const el = document.getElementById("loading");
+    if (el) el.style.display = mostrar ? "flex" : "none";
 }
-// ==========================================================
-// CARREGAR PROJETOS NO SELECT
-// ==========================================================
 
+function preencherSelectFotos(id, itens, campoLabel) {
+    const select = document.getElementById(id);
+    if (!select) return;
 
+    const atual = select.innerHTML.match(/<option[^>]*value=""[^>]*>[^<]*<\/option>/);
+    select.innerHTML = (atual ? atual[0] : `<option value="">Selecione</option>`) +
+        itens.map(item => `<option value="${item.id}">${item[campoLabel] ?? ""}</option>`).join("");
+}
 
-async function carregarProjetosFoto(){
+function renderizarGaleria(lista = fotos) {
+    const galeria = document.getElementById("galeriaFotos");
+    if (!galeria) return;
 
+    if (!lista || lista.length === 0) {
+        galeria.innerHTML = `<div class="vazio">Nenhuma foto cadastrada.</div>`;
+        return;
+    }
 
-
-    const select =
-
-    document.getElementById(
-        "fotoProjeto"
-    );
-
-
-
-    if(!select)
-    return;
-
-
-
-
-    const projetos =
-
-    await dbBuscarProjetos();
-
-
-
-
-
-    select.innerHTML = `
-
-    <option value="">
-
-    Selecione o projeto
-
-    </option>
-
-    `;
-
-
-
-
-
-    projetos.forEach(projeto=>{
-
-
-        select.innerHTML += `
-
-
-        <option value="${projeto.id}">
-
-
-        ${escaparTexto(
-            projeto.nome
-        )}
-
-
-        </option>
-
-
+    galeria.innerHTML = lista.map(foto => {
+        const url = foto.caminho ? dbGerarUrlArquivo(BUCKETS.FOTOS, foto.caminho) : "";
+        return `
+            <div class="foto-item" data-id="${foto.id}">
+                ${url ? `<img src="${url}" alt="${foto.titulo ?? ""}">` : ""}
+                <span>${foto.titulo ?? ""}</span>
+                <button type="button" class="btn-excluir-foto" data-id="${foto.id}">Excluir</button>
+            </div>
         `;
+    }).join("");
 
-
+    galeria.querySelectorAll(".btn-excluir-foto").forEach(btn => {
+        btn.addEventListener("click", () => excluirFoto(btn.dataset.id));
     });
 
-
-
-}
-
-
-
-
-
-
-
-
-// ==========================================================
-// CARREGAR CLIENTES NO SELECT
-// ==========================================================
-
-
-
-async function carregarClientesFoto(){
-
-
-
-    const select =
-
-    document.getElementById(
-        "fotoCliente"
-    );
-
-
-
-    if(!select)
-    return;
-
-
-
-
-    const clientes =
-
-    await dbBuscarClientes();
-
-
-
-
-
-    select.innerHTML = `
-
-    <option value="">
-
-    Selecione o cliente
-
-    </option>
-
-    `;
-
-
-
-
-
-    clientes.forEach(cliente=>{
-
-
-        select.innerHTML += `
-
-
-        <option value="${cliente.id}">
-
-
-        ${escaparTexto(
-            cliente.nome
-        )}
-
-
-        </option>
-
-
-        `;
-
-
+    galeria.querySelectorAll(".foto-item").forEach(item => {
+        item.addEventListener("click", (e) => {
+            if (e.target.closest("button")) return;
+            mostrarDetalhesFoto(item.dataset.id);
+        });
     });
-
-
-
 }
 
+function configurarEventosFotos() {
+    document.getElementById("novaFoto")?.addEventListener("click", abrirModalFoto);
+    document.getElementById("cancelarFoto")?.addEventListener("click", fecharModalFoto);
+    document.getElementById("fecharModalFoto")?.addEventListener("click", fecharModalFoto);
 
+    document.getElementById("formFoto")?.addEventListener("submit", salvarFoto);
 
+    document.getElementById("pesquisaFoto")?.addEventListener("input", pesquisarFotos);
+    document.getElementById("btnPesquisarFoto")?.addEventListener("click", pesquisarFotos);
+}
 
+function abrirModalFoto() {
+    document.getElementById("formFoto")?.reset();
+    const modal = document.getElementById("modalFoto");
+    if (modal) modal.style.display = "flex";
+}
 
+function fecharModalFoto() {
+    const modal = document.getElementById("modalFoto");
+    if (modal) modal.style.display = "none";
+}
 
+async function salvarFoto(e) {
+    e.preventDefault();
 
+    const titulo = document.getElementById("fotoTitulo")?.value.trim();
+    const clienteId = document.getElementById("fotoCliente")?.value || null;
+    const projetoId = document.getElementById("fotoProjeto")?.value || null;
+    const arquivo = document.getElementById("arquivoFoto")?.files?.[0];
 
-// ==========================================================
-// MODAL FOTO
-// ==========================================================
-
-
-
-function abrirModalFoto(){
-
-
-    const modal =
-
-    document.getElementById(
-        "modalFoto"
-    );
-
-
-
-    if(modal){
-
-        modal.style.display =
-        "flex";
-
+    if (!titulo || !arquivo) {
+        alert("Informe o título e selecione uma imagem.");
+        return;
     }
 
-
-
-}
-
-
-
-
-
-
-
-function fecharModalFoto(){
-
-
-    const modal =
-
-    document.getElementById(
-        "modalFoto"
-    );
-
-
-
-    if(modal){
-
-        modal.style.display =
-        "none";
-
-    }
-
-
-
-    limparFormularioFoto();
-
-
-
-}
-
-
-
-
-
-
-
-
-// ==========================================================
-// SALVAR FOTO
-// ==========================================================
-
-
-
-async function salvarFoto(evento){
-
-
-    evento.preventDefault();
-
-
-
-
-    try{
-
-
-
-        const arquivoInput =
-
-        document.getElementById(
-            "arquivoFoto"
-        );
-
-
-
-
-        if(
-            !arquivoInput ||
-            !arquivoInput.files.length
-        ){
-
-
-            alert(
-                "Selecione uma imagem."
-            );
-
-
-            return;
-
-
-        }
-
-
-
-
-
-
-
-        const arquivo =
-
-        arquivoInput.files[0];
-
-
-
-
-
-        const caminho =
-
-        `fotos/${Date.now()}_${arquivo.name}`;
-
-
-
-
-
-        await dbUploadArquivo(
-
-            "fotos",
-
-            caminho,
-
-            arquivo
-
-        );
-
-
-
-
-
-
-        const url =
-
-        dbGerarUrlArquivo(
-
-            "fotos",
-
+    try {
+        const caminho = `${Date.now()}-${arquivo.name}`;
+        await dbUploadArquivo(BUCKETS.FOTOS, caminho, arquivo);
+
+        await dbCriarFoto({
+            titulo,
+            cliente_id: clienteId || null,
+            projeto_id: projetoId || null,
             caminho
-
-        );
-
-
-
-
-
-
-
-        const foto = {
-
-
-
-            projeto_id:
-
-            document.getElementById(
-                "fotoProjeto"
-            ).value || null,
-
-
-
-
-
-            cliente_id:
-
-            document.getElementById(
-                "fotoCliente"
-            ).value || null,
-
-
-
-
-
-            titulo:
-
-            document.getElementById(
-                "fotoTitulo"
-            ).value,
-
-
-
-
-
-            url:url,
-
-
-
-
-
-            caminho:caminho
-
-
-
-
-
-        };
-
-
-
-
-
-
-
-        await dbSalvarFoto(
-            foto
-        );
-
-
-
-
-
-
+        });
 
         fecharModalFoto();
 
-
-
-        await carregarFotos();
-
-
-
+        fotos = await dbBuscarFotos();
+        renderizarGaleria();
     }
-    catch(error){
-
-
-        console.error(
-            "Erro salvar foto:",
-            error
-        );
-
-
-
-        alert(
-            "Erro ao salvar foto."
-        );
-
-
+    catch (error) {
+        console.error("Erro ao salvar foto:", error);
+        alert("Não foi possível salvar a foto.");
     }
-
-
-
 }
-// ==========================================================
-// EXCLUIR FOTO
-// ==========================================================
 
+function mostrarDetalhesFoto(id) {
+    const foto = fotos.find(f => String(f.id) === String(id));
+    const painel = document.getElementById("detalhesFoto");
+    if (!foto || !painel) return;
 
+    const url = foto.caminho ? dbGerarUrlArquivo(BUCKETS.FOTOS, foto.caminho) : "";
 
-async function excluirFoto(id){
+    painel.innerHTML = `
+        <h3>${foto.titulo ?? ""}</h3>
+        ${url ? `<img src="${url}" alt="${foto.titulo ?? ""}" style="max-width:100%;">` : ""}
+    `;
+}
 
+async function excluirFoto(id) {
+    if (!confirm("Deseja realmente excluir esta foto?")) return;
 
-    const confirmar =
+    try {
+        const foto = fotos.find(f => String(f.id) === String(id));
 
-    confirm(
-        "Deseja realmente excluir esta foto?"
-    );
-
-
-
-    if(!confirmar)
-    return;
-
-
-
-
-
-    try{
-
-
-        const fotos =
-
-        await dbBuscarFotos();
-
-
-
-
-        const foto =
-
-        fotos.find(
-            item=>item.id == id
-        );
-
-
-
-
-        if(foto?.caminho){
-
-
-
-            await dbExcluirArquivoStorage(
-
-                "fotos",
-
-                foto.caminho
-
-            );
-
-
-
+        if (foto?.caminho) {
+            await dbExcluirArquivoStorage(BUCKETS.FOTOS, foto.caminho).catch(() => {});
         }
-
-
-
-
 
         await dbExcluirFoto(id);
 
-
-
-
-        await carregarFotos();
-
-
-
+        fotos = await dbBuscarFotos();
+        renderizarGaleria();
     }
-    catch(error){
+    catch (error) {
+        console.error("Erro ao excluir foto:", error);
+        alert("Não foi possível excluir a foto.");
+    }
+}
 
+function pesquisarFotos() {
+    const termo = (document.getElementById("pesquisaFoto")?.value || "").toLowerCase().trim();
 
-        console.error(
-            "Erro excluir foto:",
-            error
-        );
-
-
-
-        alert(
-            "Erro ao excluir foto."
-        );
-
-
+    if (!termo) {
+        renderizarGaleria();
+        return;
     }
 
-
-
-}
-
-
-
-
-
-
-
-
-
-// ==========================================================
-// VISUALIZAR FOTO
-// ==========================================================
-
-
-
-async function visualizarFoto(id){
-
-
-
-    const fotos =
-
-    await dbBuscarFotos();
-
-
-
-
-    const foto =
-
-    fotos.find(
-        item=>item.id == id
-    );
-
-
-
-
-
-
-    const detalhes =
-
-    document.getElementById(
-        "detalhesFoto"
-    );
-
-
-
-
-
-
-    if(!detalhes || !foto)
-    return;
-
-
-
-
-
-
-    detalhes.innerHTML = `
-
-
-
-    <img
-
-    src="${foto.url}"
-
-    class="foto-detalhe"
-
-
-
-    >
-
-
-
-
-    <h3>
-
-    ${escaparTexto(
-        foto.titulo || ""
-    )}
-
-    </h3>
-
-
-
-
-
-    <p>
-
-    Projeto:
-
-    ${escaparTexto(
-        foto.projetos?.nome || ""
-    )}
-
-    </p>
-
-
-
-
-
-    <p>
-
-    Cliente:
-
-    ${escaparTexto(
-        foto.clientes?.nome || ""
-    )}
-
-    </p>
-
-
-
-    `;
-
-
-
-}
-
-
-
-
-
-
-
-
-// ==========================================================
-// AÇÕES DA GALERIA
-// ==========================================================
-
-
-
-function configurarAcoesFotos(){
-
-
-
-    document
-    .querySelectorAll(
-        ".visualizarFoto"
-    )
-    .forEach(botao=>{
-
-
-        botao.addEventListener(
-            "click",
-            ()=>{
-
-
-                visualizarFoto(
-                    botao.dataset.id
-                );
-
-
-            }
-        );
-
-
-    });
-
-
-
-
-
-
-
-    document
-    .querySelectorAll(
-        ".excluirFoto"
-    )
-    .forEach(botao=>{
-
-
-        botao.addEventListener(
-            "click",
-            ()=>{
-
-
-                excluirFoto(
-                    botao.dataset.id
-                );
-
-
-            }
-        );
-
-
-    });
-
-
-
-}
-// ==========================================================
-// EVENTOS
-// ==========================================================
-
-
-
-function configurarEventosFoto(){
-
-
-
-    document
-    .getElementById(
-        "novaFoto"
-    )
-    ?.addEventListener(
-        "click",
-        ()=>{
-
-
-            fotoSelecionada =
-            null;
-
-
-            limparFormularioFoto();
-
-
-            abrirModalFoto();
-
-
-        }
-    );
-
-
-
-
-
-
-
-    document
-    .getElementById(
-        "fecharModalFoto"
-    )
-    ?.addEventListener(
-        "click",
-        fecharModalFoto
-    );
-
-
-
-
-
-
-
-    document
-    .getElementById(
-        "cancelarFoto"
-    )
-    ?.addEventListener(
-        "click",
-        fecharModalFoto
-    );
-
-
-
-
-
-
-
-    document
-    .getElementById(
-        "formFoto"
-    )
-    ?.addEventListener(
-        "submit",
-        salvarFoto
-    );
-
-
-
-
-
-
-
-    document
-    .getElementById(
-        "pesquisaFoto"
-    )
-    ?.addEventListener(
-        "keyup",
-        pesquisarFotos
-    );
-
-
-
-
-
-
-
-    document
-    .getElementById(
-        "btnPesquisarFoto"
-    )
-    ?.addEventListener(
-        "click",
-        pesquisarFotos
-    );
-
-
-
-
-
-
-
-    document
-    .getElementById(
-        "logoutButton"
-    )
-    ?.addEventListener(
-        "click",
-        async()=>{
-
-
-            await dbSairSistema();
-
-
-
-            window.location.href =
-            "login.html";
-
-
-        }
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-// ==========================================================
-// PESQUISA
-// ==========================================================
-
-
-
-async function pesquisarFotos(){
-
-
-
-    const campo =
-
-    document.getElementById(
-        "pesquisaFoto"
-    );
-
-
-
-    const galeria =
-
-    document.getElementById(
-        "galeriaFotos"
-    );
-
-
-
-    if(!campo || !galeria)
-    return;
-
-
-
-
-
-    const termo =
-
-    campo.value
-    .toLowerCase()
-    .trim();
-
-
-
-
-
-    const fotos =
-
-    await dbBuscarFotos();
-
-
-
-
-
-    const resultado =
-
-    fotos.filter(foto=>{
-
-
-        return (
-
-            foto.titulo ||
-
-            ""
-
-        )
-        .toLowerCase()
-        .includes(termo);
-
-
-    });
-
-
-
-
-
-
-
-    galeria.innerHTML =
-
-
-    resultado.map(foto=>`
-
-
-    <div class="foto-card">
-
-
-        <img
-
-        src="${foto.url}"
-
-        >
-
-
-
-        <h3>
-
-        ${escaparTexto(
-            foto.titulo || ""
-        )}
-
-        </h3>
-
-
-
-    </div>
-
-
-    `)
-    .join("");
-
-
-
-}
-
-
-
-
-
-
-
-
-// ==========================================================
-// LIMPAR FORMULÁRIO
-// ==========================================================
-
-
-
-function limparFormularioFoto(){
-
-
-
-    fotoSelecionada =
-    null;
-
-
-
-
-    const campos = [
-
-
-        "fotoTitulo"
-
-    ];
-
-
-
-
-    campos.forEach(id=>{
-
-
-        const campo =
-
-        document.getElementById(id);
-
-
-
-        if(campo){
-
-            campo.value = "";
-
-        }
-
-
-    });
-
-
-
-
-
-    const projeto =
-
-    document.getElementById(
-        "fotoProjeto"
-    );
-
-
-
-    const cliente =
-
-    document.getElementById(
-        "fotoCliente"
-    );
-
-
-
-    if(projeto){
-
-        projeto.value = "";
-
-    }
-
-
-
-    if(cliente){
-
-        cliente.value = "";
-
-    }
-
-
-
-}
-
-
-
-
-
-
-
-
-// ==========================================================
-// SEGURANÇA HTML
-// ==========================================================
-
-
-
-function escaparTexto(valor){
-
-
-    return String(valor ?? "")
-
-    .replaceAll("&","&amp;")
-
-    .replaceAll("<","&lt;")
-
-    .replaceAll(">","&gt;")
-
-    .replaceAll('"',"&quot;")
-
-    .replaceAll("'","&#039;");
-
-
+    renderizarGaleria(fotos.filter(f => (f.titulo || "").toLowerCase().includes(termo)));
 }
