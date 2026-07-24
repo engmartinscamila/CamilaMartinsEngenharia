@@ -1,9 +1,67 @@
-const header=document.querySelector('.site-header');
-const menuToggle=document.querySelector('.menu-toggle');
-const navLinks=document.querySelector('.nav-links');
-function updateHeader(){if(header) header.classList.toggle('scrolled',window.scrollY>24)}
-window.addEventListener('scroll',updateHeader);updateHeader();
-if(menuToggle&&navLinks){menuToggle.addEventListener('click',()=>{const open=navLinks.classList.toggle('open');menuToggle.setAttribute('aria-expanded',String(open));document.body.classList.toggle('no-scroll',open)});document.querySelectorAll('.nav-links a').forEach(link=>link.addEventListener('click',()=>{navLinks.classList.remove('open');menuToggle.setAttribute('aria-expanded','false');document.body.classList.remove('no-scroll')}));}
-const observer=new IntersectionObserver((entries)=>{entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('visible');observer.unobserve(entry.target)}})},{threshold:.12});
-document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
-document.addEventListener('contextmenu',event=>{if(event.target.closest('.portfolio-viewer')) event.preventDefault()});
+/*
+=====================================================
+CAMILA MARTINS ENGENHARIA
+SCRIPT.JS - Site público (index.html)
+=====================================================
+Menu mobile, header com fundo ao rolar a página, e
+animação de entrada dos elementos ".reveal".
+=====================================================
+*/
+
+document.addEventListener("DOMContentLoaded", () => {
+    configurarMenuMobile();
+    configurarHeaderScroll();
+    configurarAnimacaoReveal();
+});
+
+function configurarMenuMobile() {
+    const botao = document.querySelector(".menu-toggle");
+    const links = document.querySelector(".nav-links");
+
+    if (!botao || !links) return;
+
+    botao.addEventListener("click", () => {
+        const aberto = links.classList.toggle("open");
+        botao.setAttribute("aria-expanded", aberto ? "true" : "false");
+    });
+
+    links.querySelectorAll("a").forEach(link => {
+        link.addEventListener("click", () => {
+            links.classList.remove("open");
+            botao.setAttribute("aria-expanded", "false");
+        });
+    });
+}
+
+function configurarHeaderScroll() {
+    const header = document.querySelector(".site-header");
+    if (!header) return;
+
+    const atualizar = () => {
+        header.classList.toggle("scrolled", window.scrollY > 10);
+    };
+
+    atualizar();
+    window.addEventListener("scroll", atualizar, { passive: true });
+}
+
+function configurarAnimacaoReveal() {
+    const elementos = document.querySelectorAll(".reveal");
+    if (elementos.length === 0) return;
+
+    if (!("IntersectionObserver" in window)) {
+        elementos.forEach(el => el.classList.add("visible"));
+        return;
+    }
+
+    const observer = new IntersectionObserver((entradas) => {
+        entradas.forEach(entrada => {
+            if (entrada.isIntersecting) {
+                entrada.target.classList.add("visible");
+                observer.unobserve(entrada.target);
+            }
+        });
+    }, { threshold: 0.15 });
+
+    elementos.forEach(el => observer.observe(el));
+}
