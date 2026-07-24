@@ -1,330 +1,208 @@
 /*
-==========================================================
+=====================================================
 CAMILA MARTINS ENGENHARIA
-CRONOGRAMA
-==========================================================
+CRONOGRAMA.JS
+=====================================================
 */
+
+let etapas = [];
 
 document.addEventListener("DOMContentLoaded", () => {
-
-    configurarFormularioCronograma();
-
-    carregarCronograma();
-
+    iniciarCronograma();
 });
 
-/*
-==========================================================
-FORMULÁRIO
-==========================================================
-*/
+async function iniciarCronograma() {
+    try {
+        const [listaEtapas, clientes, projetos] = await Promise.all([
+            buscarEtapas(),
+            buscarClientesCronograma(),
+            buscarProjetosCronograma()
+        ]);
 
-function configurarFormularioCronograma(){
+        etapas = listaEtapas;
 
-    const formulario = document.getElementById("formCronograma");
+        preencherSelectCronograma("clienteCronograma", clientes, "nome");
+        preencherSelectCronograma("projetoCronograma", projetos, "nome");
 
-    if(!formulario) return;
-
-    formulario.onsubmit = salvarEtapa;
-
+        renderizarCronograma();
+        atualizarResumoCronograma();
+        configurarEventosCronograma();
+    }
+    catch (error) {
+        console.error("Erro ao iniciar cronograma:", error);
+    }
 }
 
-/*
-==========================================================
-SALVAR ETAPA
-==========================================================
-*/
+async function buscarEtapas() {
+    const { data, error } = await supabaseClient
+        .from(TABELAS.CRONOGRAMA)
+        .select("*")
+        .order("inicio", { ascending: true });
 
-async function salvarEtapa(event){
-
-    event.preventDefault();
-
-    const etapa = {
-
-        nome: document.getElementById("nomeEtapa").value.trim(),
-
-        cliente_id: document.getElementById("clienteCronograma").value,
-
-        projeto_id: document.getElementById("projetoCronograma").value,
-
-        data_inicio: document.getElementById("inicioEtapa").value,
-
-        data_fim: document.getElementById("fimEtapa").value,
-
-        status: document.getElementById("statusEtapa").value,
-
-        descricao: document.getElementById("descricaoEtapa").value.trim()
-
-    };
-
-    const { error } = await supabase
-        .from("cronograma")
-        .insert([etapa]);
-
-    if(error){
-
-        console.error(error);
-
-        alert("Erro ao salvar etapa.");
-
-        return;
-
-    }
-
-    alert("Etapa cadastrada com sucesso.");
-
-    document.getElementById("formCronograma").reset();
-
-    document
-        .getElementById("modalCronograma")
-        ?.classList.remove("show");
-
-    carregarCronograma();
-
+    if (error) throw error;
+    return data;
 }
 
-/*
-==========================================================
-CARREGAR CRONOGRAMA
-==========================================================
-*/
+async function buscarClientesCronograma() {
+    const { data, error } = await supabaseClient
+        .from(TABELAS.CLIENTES)
+        .select("*");
 
-async function carregarCronograma(){
-
-    const tabela = document.getElementById("listaCronograma");
-
-    if(!tabela) return;
-
-    const { data, error } = await supabase
-        .from("cronograma")
-        .select(`
-            *,
-            clientes(nome),
-            projetos(nome)
-        `)
-        .order("data_inicio",{
-            ascending:true
-        });
-
-    if(error){
-
-        console.error(error);
-
-        return;
-
-    }
-
-    renderizarCronograma(data || []);
-
+    if (error) return [];
+    return data;
 }
 
-/*
-==========================================================
-RENDERIZAR
-==========================================================
-*/
+async function buscarProjetosCronograma() {
+    const { data, error } = await supabaseClient
+        .from(TABELAS.PROJETOS)
+        .select("*");
 
-function renderizarCronograma(lista){
+    if (error) return [];
+    return data;
+}
 
-    const tabela = document.getElementById("listaCronograma");
+function preencherSelectCronograma(id, itens, campoLabel) {
+    const select = document.getElementById(id);
+    if (!select) return;
 
-    if(!tabela) return;
+    select.innerHTML = `<option value="">Selecione</option>` +
+        itens.map(item => `<option value="${item.id}">${textoOuVazio(item[campoLabel])}</option>`).join("");
+}
 
-    if(lista.length===0){
+function renderizarCronograma(lista = etapas) {
+    const corpo = document.getElementById("listaCronograma");
+    if (!corpo) return;
 
-        tabela.innerHTML=`
-            <tr>
-                <td colspan="7" style="text-align:center;">
-                    Nenhuma etapa cadastrada.
-                </td>
-            </tr>
-        `;
-
-        atualizarResumo([]);
-
+    if (!lista || lista.length === 0) {
+        corpo.innerHTML = `<tr><td colspan="7">Nenhuma etapa cadastrada.</td></tr>`;
         return;
-
     }
 
-    tabela.innerHTML=lista.map(etapa=>`
-
-        <tr>
-
-            <td>${escapeCronograma(etapa.nome)}</td>
-
-            <td>${escapeCronograma(etapa.clientes?.nome || "-")}</td>
-
-            <td>${escapeCronograma(etapa.projetos?.nome || "-")}</td>
-
-            <td>${formatarData(etapa.data_inicio)}</td>
-
-            <td>${formatarData(etapa.data_fim)}</td>
-
+    corpo.innerHTML = lista.map(etapa => `
+        <tr data-id="${etapa.id}">
+            <td>${textoOuVazio(etapa.nome)}</td>
+            <td>${textoOuVazio(etapa.cliente_nome)}</td>
+            <td>${textoOuVazio(etapa.projeto_nome)}</td>
+            <td>${formatarData(etapa.inicio)}</td>
+            <td>${formatarData(etapa.fim)}</td>
+            <td>${textoOuVazio(etapa.status)}</td>
             <td>
-
-                <span class="status ${classeStatus(etapa.status)}">
-
-                    ${escapeCronograma(etapa.status)}
-
-                </span>
-
+                <button type="button" class="btn-excluir-etapa" data-id="${etapa.id}">Excluir</button>
             </td>
-
-            <td>
-
-                <button
-                    class="btn-icon delete"
-                    onclick="excluirEtapa('${etapa.id}')">
-
-                    <i class="fa-solid fa-trash"></i>
-
-                </button>
-
-            </td>
-
         </tr>
-
     `).join("");
 
-    atualizarResumo(lista);
-
+    corpo.querySelectorAll(".btn-excluir-etapa").forEach(btn => {
+        btn.addEventListener("click", () => excluirEtapa(btn.dataset.id));
+    });
 }
 
-/*
-==========================================================
-RESUMO
-==========================================================
-*/
+function atualizarResumoCronograma() {
+    const total = etapas.length;
+    const pendentes = etapas.filter(e => e.status === "Pendente").length;
+    const andamento = etapas.filter(e => e.status === "Em andamento").length;
+    const concluidas = etapas.filter(e => e.status === "Concluído").length;
 
-function atualizarResumo(lista){
+    const setTexto = (id, valor) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = valor;
+    };
 
-    document.getElementById("totalEtapas").textContent=lista.length;
+    setTexto("totalEtapas", total);
+    setTexto("pendentes", pendentes);
+    setTexto("andamento", andamento);
+    setTexto("concluidas", concluidas);
 
-    const pendentes=lista.filter(e=>e.status==="Pendente").length;
+    const percentual = total > 0 ? Math.round((concluidas / total) * 100) : 0;
 
-    const andamento=lista.filter(e=>e.status==="Em andamento").length;
+    setTexto("percentualObra", `${percentual}%`);
 
-    const concluidas=lista.filter(e=>e.status==="Concluído").length;
-
-    document.getElementById("pendentes").textContent=pendentes;
-
-    document.getElementById("andamento").textContent=andamento;
-
-    document.getElementById("concluidas").textContent=concluidas;
-
-    const percentual=lista.length
-        ?Math.round((concluidas/lista.length)*100)
-        :0;
-
-    document.getElementById("percentualObra").textContent=percentual+"%";
-
-    document.getElementById("barraProgresso").style.width=percentual+"%";
-
+    const barra = document.getElementById("barraProgresso");
+    if (barra) barra.style.width = `${percentual}%`;
 }
 
-/*
-==========================================================
-EXCLUIR
-==========================================================
-*/
+function configurarEventosCronograma() {
+    document.getElementById("formCronograma")?.addEventListener("submit", salvarEtapa);
+}
 
-async function excluirEtapa(id){
+async function salvarEtapa(e) {
+    e.preventDefault();
 
-    if(!confirm("Excluir esta etapa?")) return;
+    const nome = document.getElementById("nomeEtapa")?.value.trim();
+    const clienteSelect = document.getElementById("clienteCronograma");
+    const projetoSelect = document.getElementById("projetoCronograma");
+    const inicio = document.getElementById("inicioEtapa")?.value || null;
+    const fim = document.getElementById("fimEtapa")?.value || null;
+    const status = document.getElementById("statusEtapa")?.value || "Pendente";
+    const descricao = document.getElementById("descricaoEtapa")?.value.trim() || "";
 
-    const { error } = await supabase
-        .from("cronograma")
-        .delete()
-        .eq("id",id);
-
-    if(error){
-
-        console.error(error);
-
-        alert("Erro ao excluir.");
-
+    if (!nome) {
+        alert("Informe o nome da etapa.");
         return;
-
     }
 
-    carregarCronograma();
+    const dados = {
+        nome,
+        cliente_id: clienteSelect?.value || null,
+        cliente_nome: clienteSelect?.selectedOptions?.[0]?.textContent || "",
+        projeto_id: projetoSelect?.value || null,
+        projeto_nome: projetoSelect?.selectedOptions?.[0]?.textContent || "",
+        inicio,
+        fim,
+        status,
+        descricao
+    };
 
+    try {
+        const { error } = await supabaseClient
+            .from(TABELAS.CRONOGRAMA)
+            .insert(dados);
+
+        if (error) throw error;
+
+        document.getElementById("modalCronograma")?.classList.remove("show");
+        document.getElementById("formCronograma")?.reset();
+
+        etapas = await buscarEtapas();
+        renderizarCronograma();
+        atualizarResumoCronograma();
+    }
+    catch (error) {
+        console.error("Erro ao salvar etapa:", error);
+        alert("Não foi possível salvar a etapa.");
+    }
 }
 
-/*
-==========================================================
-PESQUISA
-==========================================================
-*/
+async function excluirEtapa(id) {
+    if (!confirm("Deseja realmente excluir esta etapa?")) return;
 
-async function pesquisarCronograma(texto){
+    try {
+        const { error } = await supabaseClient
+            .from(TABELAS.CRONOGRAMA)
+            .delete()
+            .eq("id", id);
 
-    const { data,error } = await supabase
-        .from("cronograma")
-        .select(`
-            *,
-            clientes(nome),
-            projetos(nome)
-        `)
-        .ilike("nome",`%${texto}%`);
+        if (error) throw error;
 
-    if(error){
+        etapas = await buscarEtapas();
+        renderizarCronograma();
+        atualizarResumoCronograma();
+    }
+    catch (error) {
+        console.error("Erro ao excluir etapa:", error);
+        alert("Não foi possível excluir a etapa.");
+    }
+}
 
-        console.error(error);
+function pesquisarCronograma(termo) {
+    const busca = (termo || "").toLowerCase().trim();
 
+    if (!busca) {
+        renderizarCronograma();
         return;
-
     }
 
-    renderizarCronograma(data || []);
-
-}
-
-/*
-==========================================================
-STATUS
-==========================================================
-*/
-
-function classeStatus(status){
-
-    switch(status){
-
-        case "Concluído":
-            return "success";
-
-        case "Em andamento":
-            return "warning";
-
-        default:
-            return "pending";
-
-    }
-
-}
-
-/*
-==========================================================
-UTIL
-==========================================================
-*/
-
-function formatarData(data){
-
-    if(!data) return "-";
-
-    return new Date(data)
-        .toLocaleDateString("pt-BR");
-
-}
-
-function escapeCronograma(texto){
-
-    return String(texto || "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-
+    renderizarCronograma(
+        etapas.filter(e => (e.nome || "").toLowerCase().includes(busca))
+    );
 }
