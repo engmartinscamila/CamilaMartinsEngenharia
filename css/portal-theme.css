@@ -184,8 +184,37 @@ h3 {
     text-align: center;
 }
 
+.preview-admin-banner {
+    position: relative;
+    z-index: 10000;
+    min-height: 44px;
+    padding: 10px clamp(18px, 4vw, 64px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    border-bottom: 1px solid var(--dourado);
+    background: var(--dourado);
+    color: #010914;
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.preview-admin-banner a {
+    color: #010914;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
 @media (max-width: 800px) {
     .topbar {
         background: rgba(0, 7, 17, 0.96) !important;
+    }
+
+    .preview-admin-banner {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
     }
 }

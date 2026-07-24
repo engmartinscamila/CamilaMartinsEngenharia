@@ -150,7 +150,9 @@ FOTOS.JS - CRUD ADMINISTRATIVO
 
             dados.arquivo = novoCaminho;
 
-            if (fotoSelecionadaId) {
+            const editando = Boolean(fotoSelecionadaId);
+
+            if (editando) {
                 await dbEditarFoto(fotoSelecionadaId, dados);
             }
             else {
@@ -161,10 +163,23 @@ FOTOS.JS - CRUD ADMINISTRATIVO
                 await dbExcluirArquivoStorage(BUCKETS.FOTOS, anterior.arquivo).catch(() => {});
             }
 
-            const editando = Boolean(fotoSelecionadaId);
+            const notificacao = await dbNotificarAtualizacao({
+                tipo: editando ? "foto_atualizada" : "foto_publicada",
+                cliente_id: dados.cliente_id,
+                projeto_id: dados.projeto_id,
+                titulo: dados.nome,
+                mensagem: editando
+                    ? "Uma foto do acompanhamento do seu projeto foi atualizada."
+                    : "Uma nova foto do acompanhamento foi publicada no portal."
+            });
             fecharModal();
             await recarregar();
-            alert(editando ? "Foto atualizada com sucesso." : "Foto cadastrada com sucesso.");
+            alert(
+                `${editando ? "Foto atualizada" : "Foto cadastrada"} com sucesso.` +
+                (notificacao.enviado
+                    ? "\nO cliente também recebeu um aviso por e-mail."
+                    : "\nO registro foi salvo, mas o aviso por e-mail ainda não está configurado.")
+            );
         }
         catch (error) {
             if (arquivo && novoCaminho && novoCaminho !== anterior?.arquivo) {

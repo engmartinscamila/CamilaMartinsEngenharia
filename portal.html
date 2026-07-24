@@ -680,7 +680,7 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="css/portal-theme.css?v=20260724-5">
+    <link rel="stylesheet" href="css/portal-theme.css?v=20260724-6">
 </head>
 
 <body>
@@ -1015,7 +1015,7 @@
     </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase.js?v=20260724-5"></script>
+  <script src="js/supabase.js?v=20260724-6"></script>
   <script type="module">
 async function iniciarPortal() {
 const clienteSupabase = window.supabaseClient;
@@ -1029,21 +1029,25 @@ if (!session) {
     return;
 }
 
-if (session.user.id === window.ADMIN_UID) {
-    window.location.replace("admin.html");
+const contexto = await window.obterContextoPortal(session);
+
+if (contexto.redirecionar) {
+    window.location.replace(contexto.redirecionar);
     return;
 }
 
-const { data: clientData, error } = await clienteSupabase
-    .from(window.TABELAS.CLIENTES)
-    .select("*")
-    .eq("auth_id", session.user.id)
-    .maybeSingle();
+const clientData = contexto.cliente;
+window.aplicarContextoPortal(contexto);
 
-if (error || !clientData) {
+if (!clientData) {
     alert("Cliente não encontrado.");
-    await clienteSupabase.auth.signOut();
-    window.location.replace("login.html");
+    if (contexto.modoPreview) {
+        window.location.replace("clientes.html");
+    }
+    else {
+        await clienteSupabase.auth.signOut();
+        window.location.replace("login.html");
+    }
     return;
 }
 

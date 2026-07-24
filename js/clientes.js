@@ -269,6 +269,12 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
             return;
         }
 
+        if (acao === "portal") {
+            window.location.href =
+                `portal.html?preview=1&cliente=${encodeURIComponent(id)}`;
+            return;
+        }
+
         if (acao === "excluir") {
             excluirCliente(id);
         }
@@ -635,6 +641,14 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
             <div class="cliente-detalhes-acoes">
                 <button
                     type="button"
+                    data-acao-cliente="portal"
+                    data-cliente-id="${escaparTexto(cliente.id)}">
+                    <i class="fa-solid fa-user-shield"></i>
+                    Visualizar portal do cliente
+                </button>
+
+                <button
+                    type="button"
                     data-acao-cliente="editar"
                     data-cliente-id="${escaparTexto(cliente.id)}">
                     <i class="fa-solid fa-pen"></i>
@@ -754,6 +768,26 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
                     <div class="item-info">
                         <h3>${escaparTexto(documento.nome || "Documento")}</h3>
                         <span>${escaparTexto(documento.tipo || "Tipo não informado")}</span>
+                    </div>
+                    <div class="item-acoes">
+                        ${documento.url ? `
+                            <a
+                                class="btn-icon"
+                                href="${escaparTexto(documento.url)}"
+                                target="_blank"
+                                rel="noopener"
+                                title="Visualizar documento"
+                                aria-label="Visualizar ${escaparTexto(documento.nome || "documento")}">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                        ` : ""}
+                        <a
+                            class="btn-icon edit"
+                            href="documentos.html?documento=${encodeURIComponent(documento.id)}&acao=editar"
+                            title="Alterar ou substituir documento"
+                            aria-label="Alterar ${escaparTexto(documento.nome || "documento")}">
+                            <i class="fa-solid fa-pen"></i>
+                        </a>
                     </div>
                 </div>
             `)

@@ -118,6 +118,8 @@ PROJETOS.JS - CRUD ADMINISTRATIVO
         preencher("projetoCliente", projeto.cliente_id);
         preencher("projetoTipo", projeto.tipo);
         preencher("projetoStatus", projeto.status);
+        preencher("projetoNumeroContrato", projeto.numero_contrato);
+        preencher("projetoNumeroOrcamento", projeto.numero_orcamento);
         preencher("projetoDescricao", projeto.descricao);
         preencher("projetoDataInicio", projeto.data_inicio);
         preencher("projetoDataFim", projeto.data_fim);
@@ -133,6 +135,8 @@ PROJETOS.JS - CRUD ADMINISTRATIVO
             cliente_id: valor("projetoCliente") || null,
             tipo: valor("projetoTipo"),
             status: valor("projetoStatus"),
+            numero_contrato: valor("projetoNumeroContrato") || null,
+            numero_orcamento: valor("projetoNumeroOrcamento") || null,
             descricao: valor("projetoDescricao"),
             data_inicio: valor("projetoDataInicio") || null,
             data_fim: valor("projetoDataFim") || null
@@ -147,16 +151,32 @@ PROJETOS.JS - CRUD ADMINISTRATIVO
         alternarSalvamento(botaoSalvar, true);
 
         try {
-            if (projetoSelecionadoId) {
+            const editando = Boolean(projetoSelecionadoId);
+
+            if (editando) {
                 await dbEditarProjeto(projetoSelecionadoId, dados);
             }
             else {
                 await dbCriarProjeto(dados);
             }
 
+            const notificacao = await dbNotificarAtualizacao({
+                tipo: editando ? "projeto_atualizado" : "projeto_criado",
+                cliente_id: dados.cliente_id,
+                projeto_id: projetoSelecionadoId || null,
+                titulo: dados.nome,
+                mensagem: editando
+                    ? "As informações do seu projeto foram atualizadas."
+                    : "Seu projeto foi cadastrado e já pode ser acompanhado no portal."
+            });
             fecharModal();
             await recarregar();
-            alert(projetoSelecionadoId ? "Projeto atualizado com sucesso." : "Projeto cadastrado com sucesso.");
+            alert(
+                `${editando ? "Projeto atualizado" : "Projeto cadastrado"} com sucesso.` +
+                (notificacao.enviado
+                    ? "\nO cliente também recebeu um aviso por e-mail."
+                    : "\nO registro foi salvo, mas o aviso por e-mail ainda não está configurado.")
+            );
         }
         catch (error) {
             tratarErro("Não foi possível salvar o projeto.", error);
@@ -195,6 +215,8 @@ PROJETOS.JS - CRUD ADMINISTRATIVO
             <p><strong>Cliente:</strong> ${escapar(nomeCliente(projeto))}</p>
             <p><strong>Tipo:</strong> ${escapar(projeto.tipo || "-")}</p>
             <p><strong>Status:</strong> ${escapar(rotuloStatus(projeto.status))}</p>
+            <p><strong>Número do contrato:</strong> ${escapar(projeto.numero_contrato || "Não informado")}</p>
+            <p><strong>Número do orçamento:</strong> ${escapar(projeto.numero_orcamento || "Não informado")}</p>
             <p><strong>Período:</strong> ${escapar(formatarData(projeto.data_inicio))} a ${escapar(formatarData(projeto.data_fim))}</p>
             <p>${escapar(projeto.descricao || "Sem descrição.")}</p>
             <div class="detalhes-acoes">
@@ -216,7 +238,15 @@ PROJETOS.JS - CRUD ADMINISTRATIVO
         if (documentos) {
             const docs = docsResultado.status === "fulfilled" ? docsResultado.value : [];
             documentos.innerHTML = docs.length
-                ? docs.map(doc => `<div class="item-lista"><span>${escapar(doc.nome)}</span></div>`).join("")
+                ? docs.map(doc => `
+                    <div class="item-lista">
+                        <span>${escapar(doc.nome)}</span>
+                        <div class="item-acoes">
+                            ${doc.url ? `<a class="btn-icon" href="${escapar(doc.url)}" target="_blank" rel="noopener" title="Visualizar documento"><i class="fa-solid fa-eye"></i></a>` : ""}
+                            <a class="btn-icon edit" href="documentos.html?documento=${encodeURIComponent(doc.id)}&acao=editar" title="Alterar documento"><i class="fa-solid fa-pen"></i></a>
+                        </div>
+                    </div>
+                `).join("")
                 : `<div class="estado-vazio">Nenhum documento vinculado.</div>`;
         }
 
@@ -241,7 +271,14 @@ PROJETOS.JS - CRUD ADMINISTRATIVO
         if (!termo) return renderizarProjetos();
 
         renderizarProjetos(projetos.filter(projeto =>
-            [projeto.nome, projeto.tipo, projeto.status, nomeCliente(projeto)]
+            [
+                projeto.nome,
+                projeto.tipo,
+                projeto.status,
+                projeto.numero_contrato,
+                projeto.numero_orcamento,
+                nomeCliente(projeto)
+            ]
                 .some(campo => String(campo || "").toLocaleLowerCase("pt-BR").includes(termo))
         ));
     }

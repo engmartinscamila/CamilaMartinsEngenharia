@@ -150,17 +150,32 @@ SOLICITACOES.JS - CADASTRO E GERENCIAMENTO
         alternarSalvamento(botaoSalvar, true);
 
         try {
-            if (solicitacaoSelecionadaId) {
+            const editando = Boolean(solicitacaoSelecionadaId);
+
+            if (editando) {
                 await dbEditarSolicitacao(solicitacaoSelecionadaId, dados);
             }
             else {
                 await dbCriarSolicitacao(dados);
             }
 
-            const editando = Boolean(solicitacaoSelecionadaId);
+            const notificacao = await dbNotificarAtualizacao({
+                tipo: editando ? "solicitacao_atualizada" : "solicitacao_admin_criada",
+                cliente_id: dados.cliente_id,
+                projeto_id: dados.projeto_id,
+                titulo: dados.titulo,
+                mensagem: editando
+                    ? `Sua solicitação foi atualizada para o status: ${dados.status}.`
+                    : "Uma nova comunicação foi adicionada ao seu portal."
+            });
             fecharModal();
             await recarregar();
-            alert(editando ? "Solicitação atualizada com sucesso." : "Solicitação enviada com sucesso.");
+            alert(
+                `${editando ? "Solicitação atualizada" : "Solicitação enviada"} com sucesso.` +
+                (notificacao.enviado
+                    ? "\nO cliente também recebeu um aviso por e-mail."
+                    : "\nO registro foi salvo, mas o aviso por e-mail ainda não está configurado.")
+            );
         }
         catch (error) {
             tratarErro("Não foi possível salvar a solicitação.", error);

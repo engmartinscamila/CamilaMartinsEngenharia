@@ -10,6 +10,13 @@ Site institucional, painel administrativo e portal privado do cliente.
   financeiro, agenda, cronograma e solicitações.
 - Upload validado no Storage antes da mensagem de sucesso e exibição por
   URL temporária segura.
+- Visualização de imagens e PDFs no painel, com abertura, download e
+  substituição do arquivo durante a edição.
+- Modo de teste do portal do cliente acessível pelo cadastro de clientes,
+  sem encerrar a sessão administrativa.
+- Número de contrato e número de orçamento vinculados a cada projeto.
+- Primeiro acesso com criação de senha e recuperação de senha por e-mail.
+- Avisos por e-mail para novas solicitações e atualizações importantes.
 - Preenchimento automático de endereço, cidade e estado pelo CEP, mantendo
   todos os campos editáveis.
 - Página administrativa de solicitações reorganizada.
@@ -27,14 +34,22 @@ do banco incluída no pacote.
    `supabase/migracao_correcao_final.sql`, execute uma única vez e confirme
    que não apareceu erro. Se ela já foi executada com sucesso, não é
    necessário repeti-la.
-4. Em **Authentication > Providers > Email**, mantenha o provedor de e-mail
-   ativado. Se o painel exibir separadamente **Allow new users to sign up**,
-   desative somente essa opção. Em versões do painel que não exibem essa
-   opção, o RLS continuará bloqueando usuários não vinculados.
-5. Substitua os arquivos do site pelos arquivos deste pacote.
-6. Teste primeiro o login administrativo e depois um login de cliente.
-7. No Supabase, execute novamente o **Security Advisor** para confirmar as
+4. Execute também `supabase/migracao_recursos_portal.sql` para adicionar
+   número de contrato e número de orçamento aos projetos.
+5. Em **Authentication > Providers > Email**, mantenha o provedor de e-mail
+   ativado. Se o painel não mostrar uma opção separada para permitir novos
+   cadastros, não é necessário alterar mais nada. O gatilho da migração
+   principal bloqueia qualquer e-mail que não tenha sido previamente
+   cadastrado na tabela `clientes`.
+6. Substitua os arquivos do site pelos arquivos deste pacote.
+7. Teste primeiro o login administrativo e depois use o botão
+   **Visualizar portal do cliente** no cadastro de um cliente.
+8. No Supabase, execute novamente o **Security Advisor** para confirmar as
    políticas aplicadas.
+
+O arquivo `supabase/verificacao_portal.sql` é somente leitura e mostra, em
+uma única revisão, os acessos dos clientes, arquivos ausentes no Storage,
+contratos/orçamentos e políticas do portal.
 
 Depois do envio ao GitHub, aguarde o workflow do GitHub Pages ficar verde e
 atualize o navegador com `Ctrl + F5`.
@@ -46,20 +61,52 @@ atualize o navegador com `Ctrl + F5`.
 3. Cadastre um projeto para esse cliente.
 4. Envie uma foto e um documento vinculados ao projeto.
 5. Abra os dois arquivos no painel administrativo.
-6. Entre com o usuário do cliente e confirme que projeto, foto e documento
-   aparecem somente para ele.
+6. No cadastro do cliente, use **Visualizar portal do cliente** e confirme
+   que projeto, foto e documento aparecem somente para ele.
 7. Envie uma solicitação pelo portal e altere o status no painel
    administrativo.
 
 ## Como liberar o acesso de um cliente
 
 1. Cadastre o cliente no painel administrativo com o e-mail correto.
-2. No Supabase, abra **Authentication > Users**.
-3. Crie ou convide o usuário usando exatamente o mesmo e-mail.
-4. O vínculo com a tabela `clientes` será feito automaticamente.
+2. Oriente o cliente a abrir `login.html` e clicar em
+   **Primeiro acesso: criar minha senha**.
+3. O cliente informa o mesmo e-mail cadastrado, cria a senha e confirma o
+   endereço pelo e-mail recebido.
+4. O vínculo com a tabela `clientes` é feito automaticamente.
+
+Como alternativa, a administradora ainda pode convidar o mesmo e-mail em
+**Authentication > Users**.
 
 Qualquer tentativa de criar uma conta cujo e-mail não tenha sido cadastrado
 antes na tabela `clientes` será bloqueada pelo banco.
+
+## Recuperação de senha
+
+O botão **Esqueci minha senha** envia o link para o e-mail cadastrado no
+Supabase Authentication. A URL
+`https://camilamartinsengenharia.com.br/redefinir-senha.html` precisa
+permanecer na lista de Redirect URLs do Supabase.
+
+Para uso em produção, configure um SMTP próprio em
+**Authentication > Emails > SMTP Settings**. Sem SMTP próprio, o envio usa
+o serviço padrão do Supabase e fica sujeito aos limites do projeto.
+
+## Notificações de andamento
+
+O código da Edge Function está em
+`supabase/functions/notificar-atualizacao`.
+
+Antes de publicar a função, configure em **Edge Functions > Secrets**:
+
+- `RESEND_API_KEY`
+- `NOTIFICATION_ADMIN_EMAIL`
+- `NOTIFICATION_FROM_EMAIL`
+- `SITE_URL`
+
+Depois implante a função `notificar-atualizacao`. O remetente precisa usar
+um domínio verificado no Resend. As instruções completas estão em
+`supabase/functions/README.md`.
 
 O site não usa a tabela antiga `clientes_camila` para os clientes novos.
 Ela foi mantida para não apagar o cadastro administrativo existente.

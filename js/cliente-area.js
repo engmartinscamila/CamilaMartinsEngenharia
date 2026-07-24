@@ -328,8 +328,18 @@ CAMILA MARTINS ENGENHARIA
             return;
         }
 
+        const notificacao = await window.notificarAtualizacao({
+            tipo: "solicitacao_criada",
+            cliente_id: clienteAtual.id,
+            projeto_id: projetosCliente[0]?.id || null,
+            titulo,
+            mensagem
+        });
+
         formulario.reset();
-        retorno.textContent = "Solicitação enviada com sucesso.";
+        retorno.textContent = notificacao.enviado
+            ? "Solicitação enviada. A engenheira também recebeu o aviso por e-mail."
+            : "Solicitação enviada. O aviso por e-mail ainda não está configurado.";
         await carregarArea();
     }
 
@@ -399,20 +409,24 @@ CAMILA MARTINS ENGENHARIA
             return;
         }
 
-        if (session.user.id === window.ADMIN_UID) {
-            window.location.replace("admin.html");
+        const contexto = await window.obterContextoPortal(session);
+
+        if (contexto.redirecionar) {
+            window.location.replace(contexto.redirecionar);
             return;
         }
 
-        const { data: cliente, error: clienteError } = await clienteSupabase
-            .from(window.TABELAS.CLIENTES)
-            .select("*")
-            .eq("auth_id", session.user.id)
-            .maybeSingle();
+        const cliente = contexto.cliente;
+        window.aplicarContextoPortal(contexto);
 
-        if (clienteError || !cliente) {
-            await clienteSupabase.auth.signOut();
-            window.location.replace("login.html");
+        if (!cliente) {
+            if (contexto.modoPreview) {
+                window.location.replace("clientes.html");
+            }
+            else {
+                await clienteSupabase.auth.signOut();
+                window.location.replace("login.html");
+            }
             return;
         }
 

@@ -588,7 +588,7 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="css/portal-theme.css?v=20260724-5">
+    <link rel="stylesheet" href="css/portal-theme.css?v=20260724-6">
 </head>
 
 <body>
@@ -739,6 +739,32 @@
                             <strong
                                 class="info-value"
                                 id="builtArea"
+                            >
+                                Não informado
+                            </strong>
+                        </div>
+
+                        <div class="info-item">
+                            <span class="info-label">
+                                Número do contrato
+                            </span>
+
+                            <strong
+                                class="info-value"
+                                id="contractNumber"
+                            >
+                                Não informado
+                            </strong>
+                        </div>
+
+                        <div class="info-item">
+                            <span class="info-label">
+                                Número do orçamento
+                            </span>
+
+                            <strong
+                                class="info-value"
+                                id="quoteNumber"
                             >
                                 Não informado
                             </strong>
@@ -924,7 +950,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase.js?v=20260724-5"></script>
+    <script src="js/supabase.js?v=20260724-6"></script>
     <script type="module">
         const clienteSupabase = window.supabaseClient;
 
@@ -951,6 +977,12 @@
 
         const builtArea =
             document.getElementById("builtArea");
+
+        const contractNumber =
+            document.getElementById("contractNumber");
+
+        const quoteNumber =
+            document.getElementById("quoteNumber");
 
         const currentStage =
             document.getElementById("currentStage");
@@ -1034,24 +1066,25 @@
                 return;
             }
 
-            if (session.user.id === window.ADMIN_UID) {
-                window.location.replace("admin.html");
+            const contexto = await window.obterContextoPortal(session);
+
+            if (contexto.redirecionar) {
+                window.location.replace(contexto.redirecionar);
                 return;
             }
 
-            const {
-                data: clientData,
-                error: clientError
-            } = await clienteSupabase
-                .from(window.TABELAS.CLIENTES)
-                .select("*")
-                .eq("auth_id", session.user.id)
-                .maybeSingle();
+            const clientData = contexto.cliente;
+            window.aplicarContextoPortal(contexto);
 
-            if (clientError || !clientData) {
+            if (!clientData) {
                 alert("Cliente não encontrado.");
-                await clienteSupabase.auth.signOut();
-                window.location.href = "login.html";
+                if (contexto.modoPreview) {
+                    window.location.href = "clientes.html";
+                }
+                else {
+                    await clienteSupabase.auth.signOut();
+                    window.location.href = "login.html";
+                }
                 return;
             }
 
@@ -1123,6 +1156,12 @@
                 formatArea(
                     null
                 );
+
+            contractNumber.textContent =
+                valueOrDefault(projectData?.numero_contrato);
+
+            quoteNumber.textContent =
+                valueOrDefault(projectData?.numero_orcamento);
 
             currentStage.textContent =
                 valueOrDefault(

@@ -26,7 +26,29 @@ async function verificarRecuperacao() {
     const { data, error } =
         await window.supabaseClient.auth.getSession();
 
-    if (error || !data.session) {
+    if (!error && data.session) {
+        botaoSalvar.disabled = false;
+        return;
+    }
+
+    const sessaoRecuperada = await new Promise(resolve => {
+        let assinatura;
+        const temporizador = window.setTimeout(() => {
+            assinatura?.unsubscribe();
+            resolve(false);
+        }, 2500);
+        const { data: listener } =
+            window.supabaseClient.auth.onAuthStateChange((evento, sessao) => {
+                if (evento === "PASSWORD_RECOVERY" && sessao) {
+                    window.clearTimeout(temporizador);
+                    assinatura?.unsubscribe();
+                    resolve(true);
+                }
+            });
+        assinatura = listener.subscription;
+    });
+
+    if (!sessaoRecuperada) {
         mostrarMensagem(
             "O link é inválido ou expirou. Solicite um novo link."
         );

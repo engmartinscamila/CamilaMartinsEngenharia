@@ -385,6 +385,59 @@ tbody td {
     text-align: center;
 }
 
+.arquivo-preview {
+    width: 100%;
+    min-height: 260px;
+    margin: 20px 0;
+    overflow: hidden;
+    border: 1px solid var(--linha);
+    background: #000711;
+}
+
+.arquivo-preview img,
+.arquivo-preview iframe {
+    width: 100%;
+    min-height: 420px;
+    display: block;
+    border: 0;
+    object-fit: contain;
+}
+
+.arquivo-preview-generico {
+    min-height: 180px;
+    padding: 30px;
+    display: grid;
+    place-items: center;
+    gap: 12px;
+    color: var(--texto-claro);
+    text-align: center;
+}
+
+.arquivo-preview-generico i {
+    color: var(--dourado);
+    font-size: 2.4rem;
+}
+
+.arquivo-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.arquivo-links a {
+    padding: 10px 14px;
+    border: 1px solid var(--dourado);
+    color: var(--dourado-claro);
+    text-decoration: none;
+}
+
+.ajuda-campo {
+    display: block;
+    margin-top: 8px;
+    color: var(--texto-claro);
+    line-height: 1.5;
+}
+
 .cards-dashboard {
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
 }

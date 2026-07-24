@@ -151,17 +151,32 @@ CRONOGRAMA.JS - CRUD ADMINISTRATIVO
         alternarSalvamento(botaoSalvar, true);
 
         try {
-            if (etapaSelecionadaId) {
+            const editando = Boolean(etapaSelecionadaId);
+
+            if (editando) {
                 await dbEditarEtapaCronograma(etapaSelecionadaId, dados);
             }
             else {
                 await dbCriarEtapaCronograma(dados);
             }
 
-            const editando = Boolean(etapaSelecionadaId);
+            const notificacao = await dbNotificarAtualizacao({
+                tipo: editando ? "cronograma_atualizado" : "cronograma_publicado",
+                cliente_id: dados.cliente_id,
+                projeto_id: dados.projeto_id,
+                titulo: dados.nome,
+                mensagem: editando
+                    ? "Uma etapa do cronograma do seu projeto foi atualizada."
+                    : "Uma nova etapa foi incluída no cronograma do seu projeto."
+            });
             fecharModal();
             await recarregar();
-            alert(editando ? "Etapa atualizada com sucesso." : "Etapa cadastrada com sucesso.");
+            alert(
+                `${editando ? "Etapa atualizada" : "Etapa cadastrada"} com sucesso.` +
+                (notificacao.enviado
+                    ? "\nO cliente também recebeu um aviso por e-mail."
+                    : "\nO registro foi salvo, mas o aviso por e-mail ainda não está configurado.")
+            );
         }
         catch (error) {
             tratarErro("Não foi possível salvar a etapa.", error);

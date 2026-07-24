@@ -349,10 +349,12 @@ as $$
 $$;
 
 /*
-O cadastro de acesso continua manual e exclusivo:
+O acesso continua exclusivo, mas o cliente pode criar a própria senha:
 1. A administradora cadastra o cliente no painel.
-2. A administradora cria/convida o mesmo e-mail no Authentication.
-3. Os gatilhos abaixo vinculam automaticamente os dois cadastros.
+2. O cliente usa o mesmo e-mail no primeiro acesso, ou a administradora
+   convida esse e-mail pelo Authentication.
+3. Os gatilhos abaixo vinculam os cadastros e rejeitam e-mails que não
+   tenham sido previamente autorizados na tabela clientes.
 */
 create or replace function private.vincular_cliente_por_auth()
 returns trigger

@@ -29,6 +29,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
             preencherSelect("documentoCliente", clientes);
             preencherProjetos();
             renderizar();
+            abrirDocumentoDaUrl();
         }
         catch (error) {
             tratarErro("Não foi possível carregar os documentos.", error);
@@ -166,7 +167,9 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
 
             dados.arquivo = novoCaminho;
 
-            if (documentoSelecionadoId) {
+            const editando = Boolean(documentoSelecionadoId);
+
+            if (editando) {
                 await dbEditarDocumento(documentoSelecionadoId, dados);
             }
             else {
@@ -177,10 +180,21 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
                 await dbExcluirArquivoStorage(BUCKETS.DOCUMENTOS, anterior.arquivo).catch(() => {});
             }
 
-            const editando = Boolean(documentoSelecionadoId);
+            const notificacao = await dbNotificarAtualizacao({
+                tipo: editando ? "documento_atualizado" : "documento_publicado",
+                cliente_id: dados.cliente_id,
+                projeto_id: dados.projeto_id,
+                titulo: dados.nome,
+                mensagem: editando
+                    ? "Um documento do seu projeto foi atualizado."
+                    : "Um novo documento foi disponibilizado no seu portal."
+            });
             fecharModal();
             await recarregar();
-            alert(editando ? "Documento atualizado com sucesso." : "Documento cadastrado com sucesso.");
+            alert(
+                `${editando ? "Documento atualizado" : "Documento cadastrado"} com sucesso.` +
+                avisoNotificacao(notificacao)
+            );
         }
         catch (error) {
             if (arquivo && novoCaminho && novoCaminho !== anterior?.arquivo) {
@@ -199,6 +213,8 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
         if (!documento || !painel) return;
 
         documentoSelecionadoId = documento.id;
+        const visualizacao = criarVisualizacao(documento);
+
         painel.innerHTML = `
             <h3>${escapar(documento.nome)}</h3>
             <p><strong>Cliente:</strong> ${escapar(nomeCliente(documento.cliente_id))}</p>
@@ -206,7 +222,15 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
             <p><strong>Categoria:</strong> ${escapar(documento.tipo || "-")}</p>
             <p>${escapar(documento.descricao || "Sem descrição.")}</p>
             ${documento.url
-                ? `<p><a href="${escapar(documento.url)}" target="_blank" rel="noopener">Baixar arquivo</a></p>`
+                ? `${visualizacao}
+                    <p class="arquivo-links">
+                        <a href="${escapar(documento.url)}" target="_blank" rel="noopener">
+                            Abrir em nova guia
+                        </a>
+                        <a href="${escapar(documento.url)}" download>
+                            Baixar arquivo
+                        </a>
+                    </p>`
                 : `<div class="arquivo-indisponivel">
                     Arquivo indisponível${documento.urlErro ? `: ${escapar(documento.urlErro)}` : ""}
                 </div>`}
@@ -215,6 +239,69 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
                 ${botao("excluir", documento.id, "fa-trash", "Excluir documento", "delete")}
             </div>
         `;
+    }
+
+    function criarVisualizacao(documento) {
+        if (!documento.url) return "";
+
+        const extensao = String(documento.arquivo || "")
+            .split("?")[0]
+            .split(".")
+            .pop()
+            .toLocaleLowerCase("pt-BR");
+        const url = escapar(documento.url);
+        const titulo = escapar(documento.nome || "Documento");
+
+        if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(extensao)) {
+            return `
+                <div class="arquivo-preview">
+                    <img src="${url}" alt="Visualização de ${titulo}">
+                </div>
+            `;
+        }
+
+        if (extensao === "pdf") {
+            return `
+                <div class="arquivo-preview">
+                    <iframe src="${url}" title="Visualização de ${titulo}"></iframe>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="arquivo-preview arquivo-preview-generico">
+                <i class="fa-solid fa-file-arrow-down"></i>
+                <span>Use os botões abaixo para abrir ou baixar este arquivo.</span>
+            </div>
+        `;
+    }
+
+    function abrirDocumentoDaUrl() {
+        const parametros = new URLSearchParams(window.location.search);
+        const id = parametros.get("documento");
+        const acao = parametros.get("acao");
+
+        if (!id || !localizar(id)) return;
+
+        if (acao === "editar") {
+            editarDocumento(id);
+        }
+        else {
+            mostrarDetalhes(id);
+            document
+                .getElementById("detalhesDocumento")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        window.history.replaceState({}, "", window.location.pathname);
+    }
+
+    function avisoNotificacao(resultado) {
+        if (resultado?.enviado) {
+            return "\nO cliente também recebeu um aviso por e-mail.";
+        }
+
+        return "\nO registro foi salvo, mas o aviso por e-mail ainda não está configurado.";
     }
 
     async function excluirDocumento(id) {

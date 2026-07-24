@@ -83,6 +83,10 @@ function prepararLogin() {
     const mensagem = document.getElementById("formMessage");
     const botaoAlternarSenha = document.getElementById("togglePassword");
     const botaoRecuperarSenha = document.getElementById("forgotPassword");
+    const botaoPrimeiroAcesso = document.getElementById("firstAccess");
+    const grupoConfirmarSenha = document.getElementById("confirmarSenhaGroup");
+    const campoConfirmarSenha = document.getElementById("confirmarSenha");
+    let modoPrimeiroAcesso = false;
 
     if (!formulario || !campoEmail || !campoSenha) return;
 
@@ -99,6 +103,41 @@ function prepararLogin() {
         botaoAlternarSenha.setAttribute(
             "aria-label",
             senhaVisivel ? "Mostrar senha" : "Ocultar senha"
+        );
+    });
+
+    botaoPrimeiroAcesso?.addEventListener("click", event => {
+        event.preventDefault();
+        modoPrimeiroAcesso = !modoPrimeiroAcesso;
+
+        if (grupoConfirmarSenha) {
+            grupoConfirmarSenha.hidden = !modoPrimeiroAcesso;
+        }
+
+        if (campoConfirmarSenha) {
+            campoConfirmarSenha.required = modoPrimeiroAcesso;
+            campoConfirmarSenha.value = "";
+        }
+
+        campoSenha.autocomplete = modoPrimeiroAcesso
+            ? "new-password"
+            : "current-password";
+
+        if (botaoEntrar) {
+            botaoEntrar.textContent = modoPrimeiroAcesso
+                ? "Criar minha senha"
+                : "Entrar";
+        }
+
+        botaoPrimeiroAcesso.textContent = modoPrimeiroAcesso
+            ? "Já tenho senha"
+            : "Primeiro acesso: criar minha senha";
+
+        mostrarMensagem(
+            modoPrimeiroAcesso
+                ? "Use o mesmo e-mail que foi cadastrado pela engenheira."
+                : "",
+            "sucesso"
         );
     });
 
@@ -142,6 +181,54 @@ function prepararLogin() {
 
         if (botaoEntrar) {
             botaoEntrar.disabled = true;
+        }
+
+        if (modoPrimeiroAcesso) {
+            if (campoSenha.value.length < 8) {
+                mostrarMensagem("Crie uma senha com pelo menos 8 caracteres.");
+                botaoEntrar.disabled = false;
+                return;
+            }
+
+            if (campoSenha.value !== campoConfirmarSenha?.value) {
+                mostrarMensagem("As senhas digitadas não são iguais.");
+                botaoEntrar.disabled = false;
+                return;
+            }
+
+            const emailRedirectTo = new URL(
+                "login.html",
+                window.location.href
+            ).href;
+
+            const { data, error } = await window.supabaseClient.auth.signUp({
+                email: campoEmail.value.trim(),
+                password: campoSenha.value,
+                options: { emailRedirectTo }
+            });
+
+            if (error) {
+                console.error("Erro no primeiro acesso:", error);
+                mostrarMensagem(
+                    error.message?.toLowerCase().includes("autoriz")
+                        ? "Este e-mail ainda não foi cadastrado pela engenheira."
+                        : "Não foi possível criar o acesso. Confirme o e-mail ou use “Esqueci minha senha”."
+                );
+                botaoEntrar.disabled = false;
+                return;
+            }
+
+            if (data.session) {
+                location.replace(destinoDaSessao(data.session));
+                return;
+            }
+
+            mostrarMensagem(
+                "Acesso criado. Abra o e-mail de confirmação e depois entre no portal.",
+                "sucesso"
+            );
+            botaoEntrar.disabled = false;
+            return;
         }
 
         const { data, error } =

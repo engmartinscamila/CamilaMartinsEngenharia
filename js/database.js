@@ -63,7 +63,10 @@ async function dbBuscarDocumentosCliente(clienteId) {
 
     if (error) throw error;
 
-    return data || [];
+    return dbAdicionarUrlsTemporarias(
+        data || [],
+        BUCKETS.DOCUMENTOS
+    );
 }
 
 
@@ -245,7 +248,10 @@ async function dbBuscarDocumentosProjeto(projetoId) {
 
     if (error) throw error;
 
-    return data || [];
+    return dbAdicionarUrlsTemporarias(
+        data || [],
+        BUCKETS.DOCUMENTOS
+    );
 }
 
 
@@ -760,6 +766,47 @@ async function dbExcluirArquivoStorage(bucket, caminho) {
     if (error) throw error;
 
     return true;
+}
+
+
+// ==========================================================
+// NOTIFICAÇÕES TRANSACIONAIS
+// ==========================================================
+
+async function dbNotificarAtualizacao(dados) {
+
+    if (typeof window.notificarAtualizacao === "function") {
+        return window.notificarAtualizacao(dados);
+    }
+
+    try {
+        const { data, error } = await supabaseClient.functions.invoke(
+            "notificar-atualizacao",
+            { body: dados }
+        );
+
+        if (error) throw error;
+
+        return {
+            enviado: Boolean(data?.enviado),
+            motivo: data?.motivo || "",
+            data
+        };
+    }
+    catch (error) {
+        /*
+        A atualização no banco não deve ser desfeita caso o serviço de
+        e-mail ainda não esteja configurado. A interface informa a falha
+        separadamente e mantém o registro salvo.
+        */
+        console.warn("Atualização salva, mas a notificação não foi enviada:", error);
+
+        return {
+            enviado: false,
+            motivo: error?.message || "Serviço de e-mail indisponível.",
+            error
+        };
+    }
 }
 
 
