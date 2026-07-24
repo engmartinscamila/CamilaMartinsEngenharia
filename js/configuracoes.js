@@ -1,16 +1,120 @@
 /*
 =====================================================
 CAMILA MARTINS ENGENHARIA
-CONFIG.JS
-=====================================================
-Configurações gerais do app usadas pelo portal do
-cliente (ex: cronograma.html). As credenciais do
-Supabase já ficam centralizadas em js/supabase.js —
-este arquivo é só para constantes específicas de UI.
+CONFIGURACOES.JS
 =====================================================
 */
 
-const APP_CONFIG = {
-    NOME_EMPRESA: "Camila Martins Engenharia",
-    FORMATO_DATA: "pt-BR"
-};
+document.addEventListener("DOMContentLoaded", () => {
+    iniciarConfiguracoes();
+});
+
+async function iniciarConfiguracoes() {
+    try {
+        const config = await dbBuscarConfiguracoes();
+
+        if (config) {
+            preencherCampo("empresaNome", config.empresa_nome);
+            preencherCampo("empresaCnpj", config.empresa_cnpj);
+            preencherCampo("empresaCrea", config.empresa_crea);
+            preencherCampo("empresaEmail", config.empresa_email);
+            preencherCampo("empresaTelefone", config.empresa_telefone);
+            preencherCampo("empresaEndereco", config.empresa_endereco);
+            preencherCampo("empresaCidade", config.empresa_cidade);
+            preencherCampo("empresaEstado", config.empresa_estado);
+            preencherCampo("empresaDescricao", config.empresa_descricao);
+            preencherCampo("sistemaTema", config.sistema_tema);
+            preencherCampo("sistemaCorPrincipal", config.sistema_cor_principal);
+            preencherCampoCheckbox("sistemaNotificacoes", config.sistema_notificacoes);
+        }
+
+        configurarEventosConfiguracoes();
+    }
+    catch (error) {
+        console.error("Erro ao carregar configurações:", error);
+    }
+}
+
+function preencherCampo(id, valor) {
+    const el = document.getElementById(id);
+    if (el && valor !== undefined && valor !== null) el.value = valor;
+}
+
+function preencherCampoCheckbox(id, valor) {
+    const el = document.getElementById(id);
+    if (el) el.checked = !!valor;
+}
+
+function configurarEventosConfiguracoes() {
+    document.getElementById("formConfiguracoes")?.addEventListener("submit", salvarConfiguracoesEmpresa);
+
+    document.getElementById("gerarBackup")?.addEventListener("click", gerarBackup);
+    document.getElementById("limparCache")?.addEventListener("click", limparCache);
+}
+
+async function salvarConfiguracoesEmpresa(e) {
+    e.preventDefault();
+
+    const dados = {
+        empresa_nome: document.getElementById("empresaNome")?.value.trim() || "",
+        empresa_cnpj: document.getElementById("empresaCnpj")?.value.trim() || "",
+        empresa_crea: document.getElementById("empresaCrea")?.value.trim() || "",
+        empresa_email: document.getElementById("empresaEmail")?.value.trim() || "",
+        empresa_telefone: document.getElementById("empresaTelefone")?.value.trim() || "",
+        empresa_endereco: document.getElementById("empresaEndereco")?.value.trim() || "",
+        empresa_cidade: document.getElementById("empresaCidade")?.value.trim() || "",
+        empresa_estado: document.getElementById("empresaEstado")?.value.trim() || "",
+        empresa_descricao: document.getElementById("empresaDescricao")?.value.trim() || "",
+        sistema_tema: document.getElementById("sistemaTema")?.value || "",
+        sistema_cor_principal: document.getElementById("sistemaCorPrincipal")?.value || "",
+        sistema_notificacoes: document.getElementById("sistemaNotificacoes")?.checked || false
+    };
+
+    try {
+        await dbSalvarConfiguracoes(dados);
+        alert("Configurações salvas com sucesso!");
+    }
+    catch (error) {
+        console.error("Erro ao salvar configurações:", error);
+        alert("Não foi possível salvar as configurações.");
+    }
+}
+
+async function gerarBackup() {
+    try {
+        const [clientes, projetos, documentos, fotos, financeiro, agenda, biblioteca] =
+            await Promise.all([
+                dbBuscarClientes().catch(() => []),
+                dbBuscarProjetos().catch(() => []),
+                dbBuscarDocumentos().catch(() => []),
+                dbBuscarFotos().catch(() => []),
+                dbBuscarFinanceiro().catch(() => []),
+                dbBuscarAgenda().catch(() => []),
+                dbBuscarBiblioteca().catch(() => [])
+            ]);
+
+        const backup = {
+            gerado_em: new Date().toISOString(),
+            clientes, projetos, documentos, fotos, financeiro, agenda, biblioteca
+        };
+
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `backup-${new Date().toISOString().slice(0, 10)}.json`;
+        link.click();
+
+        URL.revokeObjectURL(url);
+    }
+    catch (error) {
+        console.error("Erro ao gerar backup:", error);
+        alert("Não foi possível gerar o backup.");
+    }
+}
+
+function limparCache() {
+    if (!confirm("Isso vai recarregar a página. Deseja continuar?")) return;
+    location.reload(true);
+}
