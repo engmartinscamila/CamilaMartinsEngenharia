@@ -1027,6 +1027,1041 @@ Carregando...
 <script src="js/clientes.js"></script>
 
 
+<script src="js/admin.js"></script>
+
+
+
+
+</body>
+
+</html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+<title>
+Painel Administrativo | Camila Martins Engenharia
+</title>
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Parisienne&display=swap" rel="stylesheet">
+
+
+<link rel="stylesheet" href="css/admin.css">
+
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+
+</head>
+
+
+<body>
+
+
+<div class="layout">
+
+
+
+<!-- MENU LATERAL -->
+
+<aside class="sidebar">
+
+
+<div class="logo">
+
+<h1 class="assinatura">
+
+Camila Martins
+
+</h1>
+
+
+<span>
+
+ENGENHARIA
+
+</span>
+
+
+</div>
+
+
+
+
+<nav class="menu-lateral">
+
+
+
+<a href="admin.html" class="menu-item ativo">
+
+<i class="fa-solid fa-house"></i>
+
+<span>
+
+Dashboard
+
+</span>
+
+</a>
+
+
+
+
+<a href="clientes.html" class="menu-item">
+
+<i class="fa-solid fa-users"></i>
+
+<span>
+
+Clientes
+
+</span>
+
+</a>
+
+
+
+
+<a href="projetos.html" class="menu-item">
+
+<i class="fa-solid fa-compass-drafting"></i>
+
+<span>
+
+Projetos
+
+</span>
+
+</a>
+
+
+
+
+<a href="documentos.html" class="menu-item">
+
+<i class="fa-solid fa-folder-open"></i>
+
+<span>
+
+Documentos
+
+</span>
+
+</a>
+
+
+
+
+<a href="biblioteca.html" class="menu-item">
+
+<i class="fa-solid fa-book-open"></i>
+
+<span>
+
+Biblioteca
+
+</span>
+
+</a>
+
+
+
+
+<a href="fotos.html" class="menu-item">
+
+<i class="fa-solid fa-images"></i>
+
+<span>
+
+Fotos
+
+</span>
+
+</a>
+
+
+
+
+<a href="financeiro.html" class="menu-item">
+
+<i class="fa-solid fa-chart-line"></i>
+
+<span>
+
+Financeiro
+
+</span>
+
+</a>
+
+
+
+
+<a href="agenda.html" class="menu-item">
+
+<i class="fa-solid fa-calendar-days"></i>
+
+<span>
+
+Agenda
+
+</span>
+
+</a>
+
+
+
+
+<a href="configuracoes.html" class="menu-item">
+
+<i class="fa-solid fa-gear"></i>
+
+<span>
+
+Configurações
+
+</span>
+
+</a>
+
+
+
+</nav>
+
+
+
+
+
+<button
+id="logoutButton"
+class="btn-sair">
+
+
+<i class="fa-solid fa-right-from-bracket"></i>
+
+
+<span>
+
+Sair
+
+</span>
+
+
+</button>
+
+
+
+</aside>
+<!-- CONTEÚDO PRINCIPAL -->
+
+<main class="conteudo">
+
+
+<header class="topbar">
+
+
+<div>
+
+
+<h2>
+
+Painel Administrativo
+
+</h2>
+
+
+
+<p>
+
+Bem-vinda,
+
+<strong id="adminName">
+
+Camila
+
+</strong>
+
+
+</p>
+
+
+</div>
+
+
+
+
+<div class="acoes-topo">
+
+
+<button id="novoCliente">
+
+
+<i class="fa-solid fa-user-plus"></i>
+
+
+Novo Cliente
+
+
+</button>
+
+
+
+
+<button id="novoProjeto">
+
+
+<i class="fa-solid fa-plus"></i>
+
+
+Novo Projeto
+
+
+</button>
+
+
+</div>
+
+
+</header>
+
+
+
+
+
+
+
+<!-- CARDS -->
+
+<section class="cards-dashboard">
+
+
+
+<div class="card">
+
+
+<h3>
+
+Clientes
+
+</h3>
+
+
+<strong id="totalClientes">
+
+0
+
+</strong>
+
+
+</div>
+
+
+
+
+
+<div class="card">
+
+
+<h3>
+
+Projetos
+
+</h3>
+
+
+<strong id="totalProjetos">
+
+0
+
+</strong>
+
+
+</div>
+
+
+
+
+
+<div class="card">
+
+
+<h3>
+
+Documentos
+
+</h3>
+
+
+<strong id="totalDocumentos">
+
+0
+
+</strong>
+
+
+</div>
+
+
+
+
+
+<div class="card">
+
+
+<h3>
+
+Fotos
+
+</h3>
+
+
+<strong id="totalFotos">
+
+0
+
+</strong>
+
+
+</div>
+
+
+
+
+
+<div class="card">
+
+
+<h3>
+
+Biblioteca
+
+</h3>
+
+
+<strong id="totalBiblioteca">
+
+0
+
+</strong>
+
+
+</div>
+
+
+
+</section>
+<!-- ÁREA PRINCIPAL DO DASHBOARD -->
+
+<section class="painel-principal">
+
+
+<div class="painel-esquerda">
+
+
+
+<!-- CLIENTES -->
+
+<div class="card-grande">
+
+
+<div class="card-header">
+
+
+<h2>
+
+Clientes
+
+</h2>
+
+
+
+<div class="acoes-card">
+
+
+<input
+type="search"
+id="pesquisaCliente"
+placeholder="Pesquisar cliente...">
+
+
+
+<button
+id="btnPesquisarCliente">
+
+
+<i class="fa-solid fa-magnifying-glass"></i>
+
+
+</button>
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+<div
+id="listaClientes"
+class="lista-clientes">
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- PROJETOS -->
+
+
+<div class="card-grande">
+
+
+<div class="card-header">
+
+
+<h2>
+
+Projetos Recentes
+
+</h2>
+
+
+
+<button
+id="verTodosProjetos">
+
+
+Ver Todos
+
+
+</button>
+
+
+
+</div>
+
+
+
+<div
+id="listaProjetos"
+class="lista-projetos">
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- DOCUMENTOS -->
+
+
+<div class="card-grande">
+
+
+<div class="card-header">
+
+
+<h2>
+
+Últimos Documentos
+
+</h2>
+
+
+
+<button
+id="verTodosDocumentos">
+
+
+Ver Todos
+
+
+</button>
+
+
+</div>
+
+
+
+<div
+id="listaDocumentos"
+class="lista-documentos">
+
+
+</div>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- LATERAL DIREITA -->
+
+
+<aside class="painel-direita">
+
+
+
+<div class="card-lateral">
+
+
+<h2>
+
+Ações Rápidas
+
+</h2>
+
+
+
+
+<button id="abrirClientes">
+
+<i class="fa-solid fa-users"></i>
+
+Clientes
+
+</button>
+
+
+
+
+<button id="abrirProjetos">
+
+<i class="fa-solid fa-compass-drafting"></i>
+
+Projetos
+
+</button>
+
+
+
+
+<button id="abrirDocumentos">
+
+<i class="fa-solid fa-folder-open"></i>
+
+Documentos
+
+</button>
+
+
+
+
+<button id="abrirBiblioteca">
+
+<i class="fa-solid fa-book-open"></i>
+
+Biblioteca
+
+</button>
+
+
+
+
+<button id="abrirFotos">
+
+<i class="fa-solid fa-images"></i>
+
+Fotos
+
+</button>
+
+
+
+
+<button id="abrirFinanceiro">
+
+<i class="fa-solid fa-chart-line"></i>
+
+Financeiro
+
+</button>
+
+
+
+
+<button id="abrirAgenda">
+
+<i class="fa-solid fa-calendar-days"></i>
+
+Agenda
+
+</button>
+
+
+
+
+<button id="abrirConfiguracoes">
+
+<i class="fa-solid fa-gear"></i>
+
+Configurações
+
+</button>
+
+
+
+
+</div>
+<div class="card-lateral">
+
+
+<h2>
+
+Atividades Recentes
+
+</h2>
+
+
+
+<div
+id="atividadeRecentes"
+class="timeline">
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<div class="card-lateral">
+
+
+<h2>
+
+Armazenamento
+
+</h2>
+
+
+
+<div class="barra-storage">
+
+
+<div
+id="storageBar">
+
+
+</div>
+
+
+</div>
+
+
+
+
+<p>
+
+<span id="storageUsado">
+
+0 MB
+
+</span>
+
+
+utilizados
+
+
+</p>
+
+
+
+</div>
+
+
+</aside>
+
+
+</section>
+
+
+
+
+
+
+<!-- ==========================
+MODAL CLIENTE
+========================== -->
+
+
+<div
+id="modalCliente"
+class="modal">
+
+
+<div class="modal-content">
+
+
+
+<div class="modal-header">
+
+
+<h2>
+
+Novo Cliente
+
+</h2>
+
+
+
+<button
+id="fecharModalCliente">
+
+
+<i class="fa-solid fa-xmark"></i>
+
+
+</button>
+
+
+
+</div>
+
+
+
+
+
+<form id="formCliente">
+
+
+
+<div class="form-grid">
+
+
+
+<input
+id="clienteNome"
+placeholder="Nome Completo"
+required>
+
+
+<input
+id="clienteCpf"
+placeholder="CPF/CNPJ">
+
+
+<input
+id="clienteTelefone"
+placeholder="Telefone">
+
+
+<input
+id="clienteEmail"
+placeholder="E-mail">
+
+
+
+<input
+id="clienteEndereco"
+placeholder="Endereço">
+
+
+
+<input
+id="clienteCidade"
+placeholder="Cidade">
+
+
+
+<input
+id="clienteEstado"
+placeholder="Estado">
+
+
+
+<input
+id="clienteCep"
+placeholder="CEP">
+
+
+
+<select id="clienteStatus">
+
+
+<option value="ativo">
+
+Ativo
+
+</option>
+
+
+<option value="orcamento">
+
+Orçamento
+
+</option>
+
+
+<option value="pausado">
+
+Pausado
+
+</option>
+
+
+<option value="concluido">
+
+Concluído
+
+</option>
+
+
+</select>
+
+
+
+<textarea
+id="clienteObservacoes"
+placeholder="Observações">
+
+</textarea>
+
+
+
+</div>
+
+
+
+
+
+
+<div class="modal-footer">
+
+
+<button
+type="button"
+id="cancelarCliente">
+
+Cancelar
+
+</button>
+
+
+
+
+<button
+type="submit"
+id="salvarCliente">
+
+Salvar Cliente
+
+</button>
+
+
+
+</div>
+
+
+
+
+</form>
+
+
+
+</div>
+
+</div>
+</main>
+
+
+
+</div>
+
+
+
+
+
+
+<!-- LOADING -->
+
+<div
+id="loading"
+class="loading">
+
+
+<div class="spinner"></div>
+
+
+<p>
+
+Carregando...
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- SCRIPTS -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+<script src="js/supabase.js"></script>
+
+
+<script src="js/database.js"></script>
+
+
+<script src="js/auth.js"></script>
+
+
+<script src="js/clientes.js"></script>
+
+
 <script src="js/projetos.js"></script>
 
 
