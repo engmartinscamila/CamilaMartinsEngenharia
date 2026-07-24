@@ -6,6 +6,7 @@ CRONOGRAMA.JS
 */
 
 let etapas = [];
+let projetosCronograma = [];
 
 document.addEventListener("DOMContentLoaded", () => {
     iniciarCronograma();
@@ -20,6 +21,7 @@ async function iniciarCronograma() {
         ]);
 
         etapas = listaEtapas;
+        projetosCronograma = projetos;
 
         preencherSelectCronograma("clienteCronograma", clientes, "nome");
         preencherSelectCronograma("projetoCronograma", projetos, "nome");
@@ -36,8 +38,8 @@ async function iniciarCronograma() {
 async function buscarEtapas() {
     const { data, error } = await supabaseClient
         .from(TABELAS.CRONOGRAMA)
-        .select("*")
-        .order("inicio", { ascending: true });
+        .select("*, clientes(nome), projetos(nome)")
+        .order("data_inicio", { ascending: true });
 
     if (error) throw error;
     return data;
@@ -81,10 +83,10 @@ function renderizarCronograma(lista = etapas) {
     corpo.innerHTML = lista.map(etapa => `
         <tr data-id="${etapa.id}">
             <td>${textoOuVazio(etapa.nome)}</td>
-            <td>${textoOuVazio(etapa.cliente_nome)}</td>
-            <td>${textoOuVazio(etapa.projeto_nome)}</td>
-            <td>${formatarData(etapa.inicio)}</td>
-            <td>${formatarData(etapa.fim)}</td>
+            <td>${textoOuVazio(etapa.clientes?.nome)}</td>
+            <td>${textoOuVazio(etapa.projetos?.nome)}</td>
+            <td>${formatarData(etapa.data_inicio)}</td>
+            <td>${formatarData(etapa.data_fim)}</td>
             <td>${textoOuVazio(etapa.status)}</td>
             <td>
                 <button type="button" class="btn-excluir-etapa" data-id="${etapa.id}">Excluir</button>
@@ -129,26 +131,30 @@ async function salvarEtapa(e) {
     e.preventDefault();
 
     const nome = document.getElementById("nomeEtapa")?.value.trim();
-    const clienteSelect = document.getElementById("clienteCronograma");
-    const projetoSelect = document.getElementById("projetoCronograma");
+    const clienteId = document.getElementById("clienteCronograma")?.value || null;
+    const projetoId = document.getElementById("projetoCronograma")?.value || null;
     const inicio = document.getElementById("inicioEtapa")?.value || null;
     const fim = document.getElementById("fimEtapa")?.value || null;
     const status = document.getElementById("statusEtapa")?.value || "Pendente";
     const descricao = document.getElementById("descricaoEtapa")?.value.trim() || "";
 
-    if (!nome) {
-        alert("Informe o nome da etapa.");
+    if (!nome || !clienteId || !projetoId) {
+        alert("Informe a etapa, o cliente e o projeto.");
+        return;
+    }
+
+    const projeto = projetosCronograma.find(item => String(item.id) === String(projetoId));
+    if (!projeto || String(projeto.cliente_id) !== String(clienteId)) {
+        alert("O projeto selecionado não pertence a esse cliente.");
         return;
     }
 
     const dados = {
         nome,
-        cliente_id: clienteSelect?.value || null,
-        cliente_nome: clienteSelect?.selectedOptions?.[0]?.textContent || "",
-        projeto_id: projetoSelect?.value || null,
-        projeto_nome: projetoSelect?.selectedOptions?.[0]?.textContent || "",
-        inicio,
-        fim,
+        cliente_id: clienteId,
+        projeto_id: projetoId,
+        data_inicio: inicio,
+        data_fim: fim,
         status,
         descricao
     };

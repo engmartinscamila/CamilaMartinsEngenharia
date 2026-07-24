@@ -1,0 +1,149 @@
+@import url("admin.css");
+
+body {
+    background: #f3f5f8;
+}
+
+.dashboard {
+    min-height: 100vh;
+    display: flex;
+}
+
+.dashboard .sidebar {
+    justify-content: flex-start;
+    overflow-y: auto;
+}
+
+.logo-area {
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.logo-area img {
+    width: 150px;
+    max-height: 90px;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+}
+
+.sidebar nav {
+    display: grid;
+    gap: 8px;
+}
+
+.sidebar nav a {
+    padding: 13px 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-radius: 12px;
+    color: #d8e1eb;
+    text-decoration: none;
+}
+
+.sidebar nav a:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar nav a.active {
+    color: #0e2a47;
+    background: #c6a15b;
+    font-weight: 700;
+}
+
+.dashboard .content {
+    width: calc(100% - 280px);
+    min-height: 100vh;
+    margin-left: 280px;
+    padding: 35px;
+    min-width: 0;
+}
+
+.dashboard .topbar h1 {
+    color: #0e2a47;
+    font-family: "Cormorant Garamond", serif;
+    font-size: clamp(2rem, 4vw, 2.65rem);
+}
+
+.btn-primary,
+.btn-secondary {
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.btn-primary {
+    color: #fff;
+    background: #0e2a47;
+}
+
+.btn-primary:hover {
+    background: #143b63;
+}
+
+.btn-secondary {
+    color: #2d3748;
+    background: #f4f6f8;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.86rem;
+    font-weight: 600;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 13px 14px;
+    border: 1px solid #e0e4e9;
+    border-radius: 12px;
+    background-color: #fff;
+}
+
+@media (max-width: 700px) {
+    .dashboard {
+        display: block;
+    }
+
+    .dashboard .sidebar {
+        width: 100%;
+        position: relative;
+        left: 0;
+        right: auto;
+        bottom: auto;
+        padding: 14px 16px;
+    }
+
+    .logo-area {
+        margin-bottom: 12px;
+    }
+
+    .logo-area img {
+        width: 95px;
+        max-height: 55px;
+    }
+
+    .sidebar nav {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 4px;
+    }
+
+    .sidebar nav a {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    .dashboard .content {
+        width: 100%;
+        margin-left: 0;
+        padding: 20px;
+    }
+}

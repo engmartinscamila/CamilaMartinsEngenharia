@@ -921,8 +921,10 @@
         </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
     <script type="module">
-        import { supabase } from "./js/config/supabase.js";
+        const clienteSupabase = window.supabaseClient;
 
         const loadingScreen =
             document.getElementById("loadingScreen");
@@ -1023,40 +1025,73 @@
             const {
                 data: { session },
                 error: sessionError
-            } = await supabase.auth.getSession();
+            } = await clienteSupabase.auth.getSession();
 
             if (sessionError || !session) {
                 window.location.href = "login.html";
                 return;
             }
 
+            if (session.user.id === window.ADMIN_UID) {
+                window.location.replace("admin.html");
+                return;
+            }
+
             const {
                 data: clientData,
                 error: clientError
-            } = await supabase
-                .from("CLIENTES")
+            } = await clienteSupabase
+                .from(window.TABELAS.CLIENTES)
                 .select("*")
                 .eq("auth_id", session.user.id)
-                .single();
+                .maybeSingle();
 
             if (clientError || !clientData) {
                 alert("Cliente não encontrado.");
+                await clienteSupabase.auth.signOut();
                 window.location.href = "login.html";
                 return;
             }
 
-            const progress = Math.min(
-                100,
-                Math.max(
-                    0,
-                    Number(clientData.progresso) || 0
-                )
+            const { data: projectData } = await clienteSupabase
+                .from(window.TABELAS.PROJETOS)
+                .select("*")
+                .eq("cliente_id", clientData.id)
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            let stages = [];
+            if (projectData) {
+                const response = await clienteSupabase
+                    .from(window.TABELAS.CRONOGRAMA)
+                    .select("*")
+                    .eq("projeto_id", projectData.id)
+                    .order("data_inicio", { ascending: true });
+
+                stages = response.error ? [] : (response.data || []);
+            }
+
+            const completedStages = stages.filter(item =>
+                String(item.status || "").toLowerCase().startsWith("conclu")
+            ).length;
+            const progress = stages.length
+                ? Math.round((completedStages / stages.length) * 100)
+                : 0;
+            const currentStageIndex = stages.findIndex(item =>
+                !String(item.status || "").toLowerCase().startsWith("conclu")
             );
+            const currentStageData = currentStageIndex >= 0
+                ? stages[currentStageIndex]
+                : stages.at(-1);
+            const nextStageData = currentStageIndex >= 0
+                ? stages[currentStageIndex + 1]
+                : null;
 
             projectName.textContent =
                 valueOrDefault(
-                    clientData.projeto,
-                    "Projeto sem nome"
+                    projectData?.nome,
+                    "Projeto ainda não cadastrado"
                 );
 
             clientName.textContent =
@@ -1067,31 +1102,29 @@
 
             projectType.textContent =
                 valueOrDefault(
-                    clientData.tipo_projeto ||
-                    clientData.tipo ||
-                    clientData.servico
+                    projectData?.tipo
                 );
 
             projectLocation.textContent =
                 valueOrDefault(
-                    clientData.endereco ||
-                    clientData.local_obra ||
-                    clientData.cidade
+                    [clientData.endereco, clientData.cidade, clientData.estado]
+                        .filter(Boolean)
+                        .join(", ")
                 );
 
             landArea.textContent =
                 formatArea(
-                    clientData.area_terreno
+                    null
                 );
 
             builtArea.textContent =
                 formatArea(
-                    clientData.area_construida
+                    null
                 );
 
             currentStage.textContent =
                 valueOrDefault(
-                    clientData.etapa,
+                    currentStageData?.nome,
                     "Não informada"
                 );
 
@@ -1108,26 +1141,24 @@
 
             startDate.textContent =
                 formatDate(
-                    clientData.data_inicio
+                    projectData?.data_inicio || stages[0]?.data_inicio
                 );
 
             endDate.textContent =
                 formatDate(
-                    clientData.data_conclusao ||
-                    clientData.previsao_conclusao
+                    projectData?.data_fim || stages.at(-1)?.data_fim
                 );
 
             nextStage.textContent =
                 valueOrDefault(
-                    clientData.proxima_etapa,
+                    nextStageData?.nome,
                     "Não informada"
                 );
 
             projectNotes.textContent =
                 valueOrDefault(
-                    clientData.observacoes ||
-                    clientData.mensagem ||
-                    clientData.descricao,
+                    projectData?.descricao ||
+                    clientData.observacoes,
                     "As informações e atualizações do seu projeto serão disponibilizadas neste espaço."
                 );
 
@@ -1141,7 +1172,7 @@
             "click",
             async function () {
                 const { error } =
-                    await supabase.auth.signOut();
+                    await clienteSupabase.auth.signOut();
 
                 if (error) {
                     alert(error.message);

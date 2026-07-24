@@ -1,5 +1,3 @@
-import { supabase } from "./config/supabase.js";
-
 const formulario =
     document.getElementById("formRedefinirSenha");
 
@@ -26,7 +24,7 @@ function mostrarMensagem(texto, tipo = "erro") {
 
 async function verificarRecuperacao() {
     const { data, error } =
-        await supabase.auth.getSession();
+        await window.supabaseClient.auth.getSession();
 
     if (error || !data.session) {
         mostrarMensagem(
@@ -64,7 +62,7 @@ formulario.addEventListener(
         botaoSalvar.textContent = "Salvando...";
 
         const { error } =
-            await supabase.auth.updateUser({
+            await window.supabaseClient.auth.updateUser({
                 password: novaSenha.value
             });
 
@@ -86,7 +84,7 @@ formulario.addEventListener(
             "sucesso"
         );
 
-        await supabase.auth.signOut();
+        await window.supabaseClient.auth.signOut();
 
         setTimeout(function () {
             window.location.replace("login.html");

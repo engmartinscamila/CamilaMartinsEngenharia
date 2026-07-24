@@ -387,7 +387,7 @@
         }
 
         .progress-fill {
-            width: 65%;
+            width: 0;
             height: 100%;
             border-radius: inherit;
             background: linear-gradient(
@@ -745,7 +745,7 @@
                     </p>
 
                     <p class="project-name" id="projectName">
-                        Residência Família Oliveira
+                        Carregando projeto...
                     </p>
 
                 </article>
@@ -771,7 +771,7 @@
                         </span>
 
                         <strong class="stage-name" id="currentStage">
-                            Projeto Executivo
+                            Carregando...
                         </strong>
 
                     </div>
@@ -780,7 +780,7 @@
 
                         <div class="progress-info">
                             <span>Progresso do projeto</span>
-                            <span id="progressText">65%</span>
+                            <span id="progressText">0%</span>
                         </div>
 
                         <div
@@ -789,7 +789,7 @@
                             aria-label="Progresso do projeto"
                             aria-valuemin="0"
                             aria-valuemax="100"
-                            aria-valuenow="65"
+                            aria-valuenow="0"
                         >
                             <div
                                 class="progress-fill"
@@ -839,7 +839,7 @@
                     </a>
 
                     <a
-                        href="#"
+                        href="biblioteca-cliente.html"
                         class="portal-card"
                         data-page="biblioteca"
                     >
@@ -860,7 +860,7 @@
                     </a>
 
                     <a
-                       href="documentos.html"
+                       href="documentos-cliente.html"
                         class="portal-card"
                         data-page="documentos"
                     >
@@ -881,7 +881,7 @@
                     </a>
 
                     <a
-                        href="#"
+                        href="cronograma-cliente.html"
                         class="portal-card"
                         data-page="cronograma"
                     >
@@ -902,7 +902,7 @@
                     </a>
 
                     <a
-                        href="#"
+                        href="fotos-cliente.html"
                         class="portal-card"
                         data-page="fotos"
                     >
@@ -923,7 +923,7 @@
                     </a>
 
                     <a
-                        href="#"
+                        href="solicitacoes-cliente.html"
                         class="portal-card"
                         data-page="solicitacoes"
                     >
@@ -982,7 +982,7 @@
                     </div>
 
                     <a
-                        href="https://wa.me/5500000000000"
+                        href="https://wa.me/5521986429999"
                         target="_blank"
                         rel="noopener noreferrer"
                         class="whatsapp-button"
@@ -1012,26 +1012,56 @@
         </main>
     </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
   <script type="module">
-import { supabase } from "./js/config/supabase.js";
+async function iniciarPortal() {
+const clienteSupabase = window.supabaseClient;
 
 const {
     data: { session },
-} = await supabase.auth.getSession();
+} = await clienteSupabase.auth.getSession();
 
 if (!session) {
-    window.location.href = "login.html";
+    window.location.replace("login.html");
+    return;
 }
 
-const { data: clientData, error } = await supabase
-    .from("CLIENTES")
+if (session.user.id === window.ADMIN_UID) {
+    window.location.replace("admin.html");
+    return;
+}
+
+const { data: clientData, error } = await clienteSupabase
+    .from(window.TABELAS.CLIENTES)
     .select("*")
     .eq("auth_id", session.user.id)
-    .single();
+    .maybeSingle();
 
-if (error) {
+if (error || !clientData) {
     alert("Cliente não encontrado.");
-    window.location.href = "login.html";
+    await clienteSupabase.auth.signOut();
+    window.location.replace("login.html");
+    return;
+}
+
+const { data: projectData } = await clienteSupabase
+    .from(window.TABELAS.PROJETOS)
+    .select("*")
+    .eq("cliente_id", clientData.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+let stages = [];
+if (projectData) {
+    const response = await clienteSupabase
+        .from(window.TABELAS.CRONOGRAMA)
+        .select("*")
+        .eq("projeto_id", projectData.id)
+        .order("data_inicio", { ascending: true });
+
+    stages = response.error ? [] : (response.data || []);
 }
 
 const clientFirstName =
@@ -1065,23 +1095,35 @@ const clientFirstName =
     document.getElementById("logoutButton");
 
         function loadClientData() {
-            clientFirstName.textContent = clientData.nome.split(" ")[0];
+            const nomeCliente = clientData.nome || "Cliente";
+            const nomeProjeto = projectData?.nome || "Projeto ainda não cadastrado";
+            const concluidas = stages.filter(item =>
+                String(item.status || "").toLowerCase().startsWith("conclu")
+            ).length;
+            const progresso = stages.length
+                ? Math.round((concluidas / stages.length) * 100)
+                : 0;
+            const etapaAtual = stages.find(item =>
+                !String(item.status || "").toLowerCase().startsWith("conclu")
+            )?.nome || stages.at(-1)?.nome || "Não informada";
 
-           topUserName.textContent = clientData.nome;
-            
-            topProjectName.textContent = clientData.projeto;
-            
-          projectName.textContent = clientData.projeto;
-            
-           currentStage.textContent = clientData.etapa;
+            clientFirstName.textContent = nomeCliente.split(" ")[0];
 
-            progressText.textContent = `${clientData.progresso}%`;
+           topUserName.textContent = nomeCliente;
+            
+            topProjectName.textContent = nomeProjeto;
+            
+          projectName.textContent = nomeProjeto;
 
-            progressFill.style.width = `${clientData.progresso}%`;
+           currentStage.textContent = etapaAtual;
+
+            progressText.textContent = `${progresso}%`;
+
+            progressFill.style.width = `${progresso}%`;
 
             progressBar.setAttribute(
                 "aria-valuenow",
-                clientData.progresso
+                progresso
             );
         }
 
@@ -1091,7 +1133,7 @@ const clientFirstName =
             new Date().getFullYear();
 
         logoutButton.addEventListener("click", async function () {
-   const { error } = await supabase.auth.signOut();
+   const { error } = await clienteSupabase.auth.signOut();
 
 if (error) {
     alert(error.message);
@@ -1099,38 +1141,14 @@ if (error) {
     window.location.href = "login.html";
 });
 
-       document
-    .querySelectorAll(".portal-card")
-    .forEach(function (card) {
-
-        card.addEventListener("click", function (event) {
-
-            const href = card.getAttribute("href");
-
-            if (
-                href &&
-                href !== "#" &&
-                href !== ""
-            ) {
-                return;
-            }
-
-            event.preventDefault();
-
-            const page = card.dataset.page;
-
-            alert(
-                `A página "${page}" será criada nas próximas etapas.`
-            );
-
-        });
-
-    });
       window.addEventListener("pageshow", function (event) {
     if (event.persisted) {
         window.location.reload();
     }
 });
+}
+
+iniciarPortal();
     </script>
 </body>
 </html>

@@ -3,15 +3,8 @@
 CAMILA MARTINS ENGENHARIA
 DATABASE.JS - CAMADA DE ACESSO AOS DADOS (SUPABASE)
 =====================================================
-Reconstruído a partir do uso real dessas funções em
-clientes.js, agenda.js, biblioteca.js e admin.js.
-
-IMPORTANTE: os nomes de tabelas/buckets abaixo (em
-TABELAS e BUCKETS, definidos em js/supabase.js) são um
-"melhor palpite" com base no padrão do restante do
-código. Confira no seu painel do Supabase se os nomes
-reais das tabelas/buckets batem com esses valores e
-ajuste em js/supabase.js se necessário.
+Camada única usada pelas páginas administrativas para
+consultas, cadastros e arquivos do Supabase.
 =====================================================
 */
 
@@ -144,12 +137,97 @@ async function dbBuscarProjetos() {
 
     const { data, error } = await supabaseClient
         .from(TABELAS.PROJETOS)
-        .select("*")
+        .select("*, clientes(nome)")
         .order("created_at", { ascending: false });
 
     if (error) throw error;
 
+    return data || [];
+}
+
+
+async function dbBuscarProjetoPorId(id) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.PROJETOS)
+        .select("*, clientes(nome)")
+        .eq("id", id)
+        .maybeSingle();
+
+    if (error) throw error;
+
     return data;
+}
+
+
+async function dbCriarProjeto(dados) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.PROJETOS)
+        .insert(dados)
+        .select();
+
+    if (error) throw error;
+
+    return data;
+}
+
+
+async function dbEditarProjeto(id, dados) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.PROJETOS)
+        .update(dados)
+        .eq("id", id)
+        .select();
+
+    if (error) throw error;
+
+    return data;
+}
+
+
+async function dbExcluirProjeto(id) {
+
+    const { error } = await supabaseClient
+        .from(TABELAS.PROJETOS)
+        .delete()
+        .eq("id", id);
+
+    if (error) throw error;
+
+    return true;
+}
+
+
+async function dbBuscarDocumentosProjeto(projetoId) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.DOCUMENTOS)
+        .select("*")
+        .eq("projeto_id", projetoId)
+        .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return data || [];
+}
+
+
+async function dbBuscarFotosProjeto(projetoId) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.FOTOS)
+        .select("*")
+        .eq("projeto_id", projetoId)
+        .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return dbAdicionarUrlsTemporarias(
+        data || [],
+        BUCKETS.FOTOS
+    );
 }
 
 
@@ -166,7 +244,10 @@ async function dbBuscarBiblioteca() {
 
     if (error) throw error;
 
-    return data;
+    return dbAdicionarUrlsTemporarias(
+        data || [],
+        BUCKETS.BIBLIOTECA
+    );
 }
 
 
@@ -209,7 +290,10 @@ async function dbBuscarDocumentos() {
 
     if (error) throw error;
 
-    return data;
+    return dbAdicionarUrlsTemporarias(
+        data || [],
+        BUCKETS.DOCUMENTOS
+    );
 }
 
 
@@ -252,7 +336,10 @@ async function dbBuscarFotos() {
 
     if (error) throw error;
 
-    return data;
+    return dbAdicionarUrlsTemporarias(
+        data || [],
+        BUCKETS.FOTOS
+    );
 }
 
 
@@ -348,7 +435,7 @@ async function dbBuscarCronograma() {
     const { data, error } = await supabaseClient
         .from(TABELAS.CRONOGRAMA)
         .select("*")
-        .order("inicio", { ascending: true });
+        .order("data_inicio", { ascending: true });
 
     if (error) throw error;
 
@@ -459,14 +546,32 @@ async function dbUploadArquivo(bucket, caminho, arquivo) {
 }
 
 
-function dbGerarUrlArquivo(bucket, caminho) {
+async function dbGerarUrlArquivo(bucket, caminho, validade = 3600) {
 
-    const { data } = supabaseClient
+    if (!caminho) return "";
+
+    const { data, error } = await supabaseClient
         .storage
         .from(resolverBucket(bucket))
-        .getPublicUrl(caminho);
+        .createSignedUrl(caminho, validade);
 
-    return data?.publicUrl || "";
+    if (error) throw error;
+
+    return data?.signedUrl || "";
+}
+
+
+async function dbAdicionarUrlsTemporarias(lista, bucket) {
+
+    return Promise.all(
+        (lista || []).map(async item => ({
+            ...item,
+            url: item.arquivo
+                ? await dbGerarUrlArquivo(bucket, item.arquivo)
+                    .catch(() => "")
+                : ""
+        }))
+    );
 }
 
 

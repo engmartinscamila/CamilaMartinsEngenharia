@@ -1,0 +1,39 @@
+.progress-box {
+    padding: 22px;
+}
+
+.progress-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.progress-header h2 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.progress {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e8ebef;
+}
+
+.progress-fill {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: #b89a63;
+    transition: width 0.35s ease;
+}
+
+.btn-excluir-etapa {
+    padding: 7px 10px;
+    border: 1px solid #efd4d4;
+    border-radius: 8px;
+    color: #a63b3b;
+    background: #fff6f6;
+    cursor: pointer;
+}

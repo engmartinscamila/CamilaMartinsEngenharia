@@ -3,8 +3,8 @@
 CAMILA MARTINS ENGENHARIA
 STORAGE.JS - Helpers de upload/leitura de arquivos
 =====================================================
-Usado pelas páginas do portal do cliente que ainda não
-carregam js/database.js (ex: cronograma.html).
+Usado pelas páginas administrativas que não carregam
+js/database.js (ex: cronograma.html).
 =====================================================
 */
 
@@ -23,17 +23,18 @@ async function uploadArquivoStorage(bucket, caminho, arquivo) {
     return data;
 }
 
-function obterUrlPublicaStorage(bucket, caminho) {
+async function obterUrlPublicaStorage(bucket, caminho) {
     const nomeBucket = (typeof resolverBucket === "function")
         ? resolverBucket(bucket)
         : bucket;
 
-    const { data } = supabaseClient
+    const { data, error } = await supabaseClient
         .storage
         .from(nomeBucket)
-        .getPublicUrl(caminho);
+        .createSignedUrl(caminho, 3600);
 
-    return data?.publicUrl || "";
+    if (error) throw error;
+    return data?.signedUrl || "";
 }
 
 async function removerArquivoStorage(bucket, caminho) {

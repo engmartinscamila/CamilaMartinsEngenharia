@@ -391,7 +391,7 @@ async function salvarArquivo(evento){
 
         await dbUploadArquivo(
 
-            "biblioteca",
+            BUCKETS.BIBLIOTECA,
 
             caminho,
 
@@ -406,15 +406,11 @@ async function salvarArquivo(evento){
 
 
 
-        const url =
+        const tipo =
 
-        dbGerarUrlArquivo(
+        arquivo.type ||
 
-            "biblioteca",
-
-            caminho
-
-        );
+        "application/octet-stream";
 
 
 
@@ -458,13 +454,15 @@ async function salvarArquivo(evento){
 
 
 
-            url:url,
+            tipo:tipo,
 
 
 
 
 
-            caminho:caminho
+            tamanho:formatarTamanhoArquivo(arquivo.size),
+
+            arquivo:caminho
 
 
 
@@ -682,15 +680,15 @@ async function excluirArquivo(id){
 
 
 
-        if(arquivo?.caminho){
+        if(arquivo?.arquivo){
 
 
 
             await dbExcluirArquivoStorage(
 
-                "biblioteca",
+                BUCKETS.BIBLIOTECA,
 
-                arquivo.caminho
+                arquivo.arquivo
 
             );
 
@@ -1027,32 +1025,6 @@ function configurarEventosBiblioteca(){
 
 
 
-
-
-
-
-    document
-    .getElementById(
-        "logoutButton"
-    )
-    ?.addEventListener(
-        "click",
-        async()=>{
-
-
-            await dbSairSistema();
-
-
-
-            window.location.href =
-            "login.html";
-
-
-        }
-    );
-
-
-
 }
 
 
@@ -1143,6 +1115,24 @@ function limparFormularioArquivo(){
 // ==========================================================
 // SEGURANÇA HTML
 // ==========================================================
+
+
+
+function formatarTamanhoArquivo(bytes){
+
+    if(!Number.isFinite(bytes) || bytes <= 0)
+    return "0 B";
+
+    const unidades = ["B", "KB", "MB", "GB"];
+    const indice = Math.min(
+        Math.floor(Math.log(bytes) / Math.log(1024)),
+        unidades.length - 1
+    );
+
+    const valor = bytes / Math.pow(1024, indice);
+    return `${valor.toFixed(indice === 0 ? 0 : 1)} ${unidades[indice]}`;
+
+}
 
 
 

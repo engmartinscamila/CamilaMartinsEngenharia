@@ -5,13 +5,61 @@ SOLICITAÇÕES
 ==========================================================
 */
 
+let projetosSolicitacao = [];
+
 document.addEventListener("DOMContentLoaded", () => {
 
     configurarFormularioSolicitacao();
 
+    carregarOpcoesSolicitacao();
+
     carregarSolicitacoes();
 
 });
+
+async function carregarOpcoesSolicitacao(){
+
+    const [clientesResultado, projetosResultado] = await Promise.all([
+        window.supabaseClient
+            .from(TABELAS.CLIENTES)
+            .select("id,nome")
+            .order("nome", { ascending:true }),
+        window.supabaseClient
+            .from(TABELAS.PROJETOS)
+            .select("id,nome,cliente_id")
+            .order("nome", { ascending:true })
+    ]);
+
+    preencherSelectSolicitacao(
+        "clienteSolicitacao",
+        clientesResultado.data || []
+    );
+
+    projetosSolicitacao = projetosResultado.data || [];
+
+    preencherSelectSolicitacao(
+        "projetoSolicitacao",
+        projetosSolicitacao
+    );
+
+}
+
+function preencherSelectSolicitacao(id, itens){
+
+    const select = document.getElementById(id);
+
+    if(!select) return;
+
+    select.innerHTML = `
+        <option value="">Selecione</option>
+        ${itens.map(item => `
+            <option value="${escapeSolicitacao(item.id)}">
+                ${escapeSolicitacao(item.nome)}
+            </option>
+        `).join("")}
+    `;
+
+}
 
 /*
 ==========================================================
@@ -53,8 +101,17 @@ async function salvarSolicitacao(event){
 
     };
 
-    const { error } = await supabase
-        .from("solicitacoes")
+    const projeto = projetosSolicitacao.find(item =>
+        String(item.id) === String(solicitacao.projeto_id)
+    );
+
+    if (projeto && String(projeto.cliente_id) !== String(solicitacao.cliente_id)) {
+        alert("O projeto selecionado não pertence a esse cliente.");
+        return;
+    }
+
+    const { error } = await window.supabaseClient
+        .from(TABELAS.SOLICITACOES)
         .insert([solicitacao]);
 
     if(error){
@@ -91,8 +148,8 @@ async function carregarSolicitacoes(){
 
     if(!tabela) return;
 
-    const { data, error } = await supabase
-        .from("solicitacoes")
+    const { data, error } = await window.supabaseClient
+        .from(TABELAS.SOLICITACOES)
         .select(`
             *,
             clientes(nome),
@@ -218,8 +275,8 @@ async function excluirSolicitacao(id){
 
     if(!confirm("Excluir solicitação?")) return;
 
-    const { error } = await supabase
-        .from("solicitacoes")
+    const { error } = await window.supabaseClient
+        .from(TABELAS.SOLICITACOES)
         .delete()
         .eq("id",id);
 
@@ -245,8 +302,8 @@ PESQUISAR
 
 async function pesquisarSolicitacoes(texto){
 
-    const { data,error } = await supabase
-        .from("solicitacoes")
+    const { data,error } = await window.supabaseClient
+        .from(TABELAS.SOLICITACOES)
         .select(`
             *,
             clientes(nome),

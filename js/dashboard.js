@@ -73,7 +73,7 @@ function renderizarProjetosRecentes(projetos) {
     corpo.innerHTML = projetos.map(projeto => `
         <tr>
             <td>${projeto.nome ?? ""}</td>
-            <td>${projeto.cliente_nome ?? ""}</td>
+            <td>${projeto.clientes?.nome ?? ""}</td>
             <td>${projeto.tipo ?? ""}</td>
             <td>${projeto.status ?? ""}</td>
         </tr>

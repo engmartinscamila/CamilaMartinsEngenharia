@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Fotos da obra no Portal do Cliente Camila Martins Engenharia.">
+    <title>Fotos da Obra | Portal do Cliente</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600&family=Parisienne&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/portal-cliente.css">
+</head>
+<body data-area="fotos">
+    <header class="topbar">
+        <a href="portal.html" class="brand">
+            <span class="signature">Camila Martins</span>
+            <span class="brand-subtitle">Engenharia</span>
+        </a>
+        <div class="topbar-actions">
+            <a class="back-button" href="portal.html"><i class="bi bi-arrow-left"></i><span>Voltar ao portal</span></a>
+            <button class="logout-button" id="logoutButton" type="button" aria-label="Sair"><i class="bi bi-box-arrow-right"></i></button>
+        </div>
+    </header>
+    <main class="page-container">
+        <header class="page-header">
+            <span class="eyebrow">Registro visual</span>
+            <h1 class="page-title">Fotos da Obra</h1>
+            <p class="page-description">Veja os registros publicados durante o desenvolvimento e a execução do seu projeto.</p>
+        </header>
+        <div class="client-strip"><strong id="clientName">Cliente</strong><span id="clientProject">Portal do Cliente</span></div>
+        <section class="area-panel" id="areaContent" aria-live="polite">
+            <div class="loading"><i class="bi bi-arrow-repeat"></i><span>Carregando fotos...</span></div>
+        </section>
+        <footer class="page-footer">
+            <span>© <span id="currentYear"></span> Camila Martins Engenharia</span>
+            <span><i class="bi bi-shield-lock"></i> Ambiente exclusivo para clientes</span>
+        </footer>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/cliente-area.js"></script>
+</body>
+</html>

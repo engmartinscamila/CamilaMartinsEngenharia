@@ -6,6 +6,7 @@ FOTOS.JS
 */
 
 let fotos = [];
+let projetosFotos = [];
 
 document.addEventListener("DOMContentLoaded", () => {
     iniciarFotos();
@@ -22,6 +23,7 @@ async function iniciarFotos() {
         ]);
 
         fotos = listaFotos;
+        projetosFotos = projetos;
 
         preencherSelectFotos("fotoCliente", clientes, "nome");
         preencherSelectFotos("fotoProjeto", projetos, "nome");
@@ -61,11 +63,11 @@ function renderizarGaleria(lista = fotos) {
     }
 
     galeria.innerHTML = lista.map(foto => {
-        const url = foto.caminho ? dbGerarUrlArquivo(BUCKETS.FOTOS, foto.caminho) : "";
+        const url = foto.url || "";
         return `
             <div class="foto-item" data-id="${foto.id}">
-                ${url ? `<img src="${url}" alt="${foto.titulo ?? ""}">` : ""}
-                <span>${foto.titulo ?? ""}</span>
+                ${url ? `<img src="${url}" alt="${foto.nome ?? ""}">` : ""}
+                <span>${foto.nome ?? ""}</span>
                 <button type="button" class="btn-excluir-foto" data-id="${foto.id}">Excluir</button>
             </div>
         `;
@@ -108,25 +110,33 @@ function fecharModalFoto() {
 async function salvarFoto(e) {
     e.preventDefault();
 
-    const titulo = document.getElementById("fotoTitulo")?.value.trim();
+    const nome = document.getElementById("fotoTitulo")?.value.trim();
+    const descricao = document.getElementById("fotoDescricao")?.value.trim() || "";
     const clienteId = document.getElementById("fotoCliente")?.value || null;
     const projetoId = document.getElementById("fotoProjeto")?.value || null;
     const arquivo = document.getElementById("arquivoFoto")?.files?.[0];
 
-    if (!titulo || !arquivo) {
-        alert("Informe o título e selecione uma imagem.");
+    if (!nome || !clienteId || !arquivo) {
+        alert("Informe o título, selecione o cliente e escolha uma imagem.");
+        return;
+    }
+
+    const projeto = projetosFotos.find(item => String(item.id) === String(projetoId));
+    if (projeto && String(projeto.cliente_id) !== String(clienteId)) {
+        alert("O projeto selecionado não pertence a esse cliente.");
         return;
     }
 
     try {
-        const caminho = `${Date.now()}-${arquivo.name}`;
+        const caminho = `${clienteId}/${Date.now()}-${arquivo.name}`;
         await dbUploadArquivo(BUCKETS.FOTOS, caminho, arquivo);
 
         await dbCriarFoto({
-            titulo,
-            cliente_id: clienteId || null,
+            nome,
+            descricao,
+            cliente_id: clienteId,
             projeto_id: projetoId || null,
-            caminho
+            arquivo: caminho
         });
 
         fecharModalFoto();
@@ -145,11 +155,12 @@ function mostrarDetalhesFoto(id) {
     const painel = document.getElementById("detalhesFoto");
     if (!foto || !painel) return;
 
-    const url = foto.caminho ? dbGerarUrlArquivo(BUCKETS.FOTOS, foto.caminho) : "";
+    const url = foto.url || "";
 
     painel.innerHTML = `
-        <h3>${foto.titulo ?? ""}</h3>
-        ${url ? `<img src="${url}" alt="${foto.titulo ?? ""}" style="max-width:100%;">` : ""}
+        <h3>${foto.nome ?? ""}</h3>
+        ${url ? `<img src="${url}" alt="${foto.nome ?? ""}" style="max-width:100%;">` : ""}
+        <p>${foto.descricao ?? ""}</p>
     `;
 }
 
@@ -159,8 +170,8 @@ async function excluirFoto(id) {
     try {
         const foto = fotos.find(f => String(f.id) === String(id));
 
-        if (foto?.caminho) {
-            await dbExcluirArquivoStorage(BUCKETS.FOTOS, foto.caminho).catch(() => {});
+        if (foto?.arquivo) {
+            await dbExcluirArquivoStorage(BUCKETS.FOTOS, foto.arquivo).catch(() => {});
         }
 
         await dbExcluirFoto(id);
@@ -182,5 +193,5 @@ function pesquisarFotos() {
         return;
     }
 
-    renderizarGaleria(fotos.filter(f => (f.titulo || "").toLowerCase().includes(termo)));
+    renderizarGaleria(fotos.filter(f => (f.nome || "").toLowerCase().includes(termo)));
 }

@@ -1,0 +1,30 @@
+.status {
+    padding: 6px 9px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+}
+
+.status.success {
+    color: #26704d;
+    background: #e8f7ef;
+}
+
+.status.warning {
+    color: #8a6114;
+    background: #fff5d9;
+}
+
+.status.pending {
+    color: #46627f;
+    background: #eaf1f8;
+}
+
+.btn-icon {
+    width: 34px;
+    height: 34px;
+    border: 1px solid #efd4d4;
+    border-radius: 8px;
+    color: #a63b3b;
+    background: #fff6f6;
+    cursor: pointer;
+}

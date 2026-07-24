@@ -14,18 +14,18 @@ async function iniciarConfiguracoes() {
         const config = await dbBuscarConfiguracoes();
 
         if (config) {
-            preencherCampo("empresaNome", config.empresa_nome);
-            preencherCampo("empresaCnpj", config.empresa_cnpj);
-            preencherCampo("empresaCrea", config.empresa_crea);
-            preencherCampo("empresaEmail", config.empresa_email);
-            preencherCampo("empresaTelefone", config.empresa_telefone);
-            preencherCampo("empresaEndereco", config.empresa_endereco);
-            preencherCampo("empresaCidade", config.empresa_cidade);
-            preencherCampo("empresaEstado", config.empresa_estado);
-            preencherCampo("empresaDescricao", config.empresa_descricao);
-            preencherCampo("sistemaTema", config.sistema_tema);
-            preencherCampo("sistemaCorPrincipal", config.sistema_cor_principal);
-            preencherCampoCheckbox("sistemaNotificacoes", config.sistema_notificacoes);
+            preencherCampo("empresaNome", config.nome_empresa);
+            preencherCampo("empresaCnpj", config.cnpj);
+            preencherCampo("empresaCrea", config.crea);
+            preencherCampo("empresaEmail", config.email);
+            preencherCampo("empresaTelefone", config.telefone);
+            preencherCampo("empresaEndereco", config.endereco);
+            preencherCampo("empresaCidade", config.cidade);
+            preencherCampo("empresaEstado", config.estado);
+            preencherCampo("empresaDescricao", config.descricao);
+            preencherCampo("sistemaTema", config.tema);
+            preencherCampo("sistemaCorPrincipal", config.cor_principal);
+            preencherCampoCheckbox("sistemaNotificacoes", config.notificacoes);
         }
 
         configurarEventosConfiguracoes();
@@ -56,18 +56,18 @@ async function salvarConfiguracoesEmpresa(e) {
     e.preventDefault();
 
     const dados = {
-        empresa_nome: document.getElementById("empresaNome")?.value.trim() || "",
-        empresa_cnpj: document.getElementById("empresaCnpj")?.value.trim() || "",
-        empresa_crea: document.getElementById("empresaCrea")?.value.trim() || "",
-        empresa_email: document.getElementById("empresaEmail")?.value.trim() || "",
-        empresa_telefone: document.getElementById("empresaTelefone")?.value.trim() || "",
-        empresa_endereco: document.getElementById("empresaEndereco")?.value.trim() || "",
-        empresa_cidade: document.getElementById("empresaCidade")?.value.trim() || "",
-        empresa_estado: document.getElementById("empresaEstado")?.value.trim() || "",
-        empresa_descricao: document.getElementById("empresaDescricao")?.value.trim() || "",
-        sistema_tema: document.getElementById("sistemaTema")?.value || "",
-        sistema_cor_principal: document.getElementById("sistemaCorPrincipal")?.value || "",
-        sistema_notificacoes: document.getElementById("sistemaNotificacoes")?.checked || false
+        nome_empresa: document.getElementById("empresaNome")?.value.trim() || "",
+        cnpj: document.getElementById("empresaCnpj")?.value.trim() || "",
+        crea: document.getElementById("empresaCrea")?.value.trim() || "",
+        email: document.getElementById("empresaEmail")?.value.trim() || "",
+        telefone: document.getElementById("empresaTelefone")?.value.trim() || "",
+        endereco: document.getElementById("empresaEndereco")?.value.trim() || "",
+        cidade: document.getElementById("empresaCidade")?.value.trim() || "",
+        estado: document.getElementById("empresaEstado")?.value.trim() || "",
+        descricao: document.getElementById("empresaDescricao")?.value.trim() || "",
+        tema: document.getElementById("sistemaTema")?.value || "",
+        cor_principal: document.getElementById("sistemaCorPrincipal")?.value || "",
+        notificacoes: document.getElementById("sistemaNotificacoes")?.checked || false
     };
 
     try {

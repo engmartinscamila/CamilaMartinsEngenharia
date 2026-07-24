@@ -1,46 +1,50 @@
 /*
 =====================================================
 CAMILA MARTINS ENGENHARIA
-SUPABASE - INICIALIZAÇÃO DO CLIENTE GLOBAL
-=====================================================
-Este arquivo cria o cliente "supabaseClient" usado por
-todos os outros scripts (auth.js, admin.js, clientes.js,
-agenda.js, biblioteca.js, database.js, etc).
-
-Precisa ser carregado DEPOIS da tag:
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-e ANTES de qualquer outro script que use supabaseClient.
+SUPABASE - CONFIGURAÇÃO GLOBAL
 =====================================================
 */
 
-const SUPABASE_URL = "https://hghtwlopqztfcosfxafd.supabase.co";
-const SUPABASE_KEY = "sb_publishable_-unXLR2NSSACLs01Sr60GA_uCFnJ74f";
+(function iniciarSupabase() {
+    "use strict";
 
-// UID do administrador (usado para checagens de permissão, se necessário)
-const ADMIN_UID = "5c9d7a0e-0495-4e96-8561-1d7f220be154";
+    const configuracao = {
+        url: "https://hghtwlopqztfcosfxafd.supabase.co",
+        chavePublica: "sb_publishable_-unXLR2NSSACLs01Sr60GA_uCFnJ74f",
+        administradorId: "5c9d7a0e-0495-4e96-8561-1d7f220be154"
+    };
 
-// Nomes das tabelas no banco (ajuste aqui se os nomes reais no Supabase forem diferentes)
-const TABELAS = {
-    CLIENTES: "clientes",
-    AGENDA: "agenda",
-    PROJETOS: "projetos",
-    DOCUMENTOS: "documentos",
-    FOTOS: "fotos",
-    BIBLIOTECA: "biblioteca",
-    FINANCEIRO: "financeiro",
-    CONFIGURACOES: "configuracoes",
-    CRONOGRAMA: "cronograma"
-};
+    window.CM_CONFIG = window.CM_CONFIG || Object.freeze(configuracao);
+    window.ADMIN_UID = window.ADMIN_UID || configuracao.administradorId;
 
-// Nomes dos buckets de Storage (ajuste aqui se os nomes reais no Supabase forem diferentes)
-const BUCKETS = {
-    DOCUMENTOS: "documentos",
-    FOTOS: "fotos",
-    BIBLIOTECA: "biblioteca"
-};
+    window.TABELAS = window.TABELAS || Object.freeze({
+        CLIENTES: "clientes",
+        AGENDA: "agenda",
+        PROJETOS: "projetos",
+        DOCUMENTOS: "documentos",
+        FOTOS: "fotos",
+        BIBLIOTECA: "biblioteca",
+        FINANCEIRO: "financeiro",
+        CONFIGURACOES: "configuracoes",
+        CRONOGRAMA: "cronograma",
+        SOLICITACOES: "solicitacoes"
+    });
 
-// "supabase" aqui é o objeto global criado pelo script do jsdelivr (UMD)
-const supabaseClient = supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-);
+    /* Nomes exatos e sensíveis a maiúsculas dos buckets reais. */
+    window.BUCKETS = window.BUCKETS || Object.freeze({
+        DOCUMENTOS: "documentos",
+        FOTOS: "fotos",
+        BIBLIOTECA: "biblioteca"
+    });
+
+    if (!window.supabase || typeof window.supabase.createClient !== "function") {
+        throw new Error("A biblioteca do Supabase não foi carregada.");
+    }
+
+    if (!window.supabaseClient) {
+        window.supabaseClient = window.supabase.createClient(
+            configuracao.url,
+            configuracao.chavePublica
+        );
+    }
+})();

@@ -1147,32 +1147,6 @@ function configurarEventosProjeto(){
 
 
 
-
-
-
-
-    document
-    .getElementById(
-        "logoutButton"
-    )
-    ?.addEventListener(
-        "click",
-        async()=>{
-
-
-            await dbSairSistema();
-
-
-
-            window.location.href =
-            "login.html";
-
-
-        }
-    );
-
-
-
 }
 
 

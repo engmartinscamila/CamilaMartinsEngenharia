@@ -314,12 +314,12 @@ async function carregarClientes(){
             <div class="item-dashboard">
 
                 <strong>
-                ${cliente.nome ?? ""}
+                ${escapar(cliente.nome)}
                 </strong>
 
 
                 <span>
-                ${cliente.email ?? ""}
+                ${escapar(cliente.email)}
                 </span>
 
 
@@ -393,7 +393,7 @@ async function carregarProjetos(){
             <div class="item-dashboard">
 
                 <strong>
-                ${projeto.nome ?? ""}
+                ${escapar(projeto.nome)}
                 </strong>
 
 
@@ -462,14 +462,14 @@ async function carregarDocumentos(){
 
                 <strong>
 
-                ${documento.nome ?? documento.titulo ?? ""}
+                ${escapar(documento.nome ?? documento.titulo)}
 
                 </strong>
 
 
                 <span>
 
-                ${documento.categoria ?? ""}
+                ${escapar(documento.tipo)}
 
                 </span>
 
@@ -824,14 +824,14 @@ async function pesquisarClientes(){
 
             <strong>
 
-                ${cliente.nome ?? ""}
+                ${escapar(cliente.nome)}
 
             </strong>
 
 
             <span>
 
-                ${cliente.email ?? ""}
+                ${escapar(cliente.email)}
 
             </span>
 

@@ -69,7 +69,7 @@ function renderizarDocumentos(lista = documentos) {
             <i class="fa-solid fa-file"></i>
             <div class="documento-info">
                 <strong>${doc.nome ?? ""}</strong>
-                <span>${doc.categoria ?? ""}</span>
+                <span>${doc.tipo ?? ""}</span>
             </div>
             <div class="documento-acoes">
                 <button type="button" class="btn-abrir-documento" data-id="${doc.id}">Abrir</button>
@@ -120,8 +120,14 @@ async function salvarDocumento(e) {
     const arquivoInput = document.getElementById("documentoArquivo");
     const arquivo = arquivoInput?.files?.[0];
 
-    if (!nome) {
-        alert("Informe o nome do documento.");
+    if (!nome || !clienteId) {
+        alert("Informe o nome e selecione o cliente.");
+        return;
+    }
+
+    const projeto = projetosDocumentos.find(item => String(item.id) === String(projetoId));
+    if (projeto && String(projeto.cliente_id) !== String(clienteId)) {
+        alert("O projeto selecionado não pertence a esse cliente.");
         return;
     }
 
@@ -129,17 +135,17 @@ async function salvarDocumento(e) {
         let caminho = null;
 
         if (arquivo) {
-            caminho = `${Date.now()}-${arquivo.name}`;
+            caminho = `${clienteId}/${Date.now()}-${arquivo.name}`;
             await dbUploadArquivo(BUCKETS.DOCUMENTOS, caminho, arquivo);
         }
 
         await dbCriarDocumento({
             nome,
-            categoria,
+            tipo: categoria,
             cliente_id: clienteId || null,
             projeto_id: projetoId || null,
             descricao,
-            caminho
+            arquivo: caminho
         });
 
         fecharModalDocumento();
@@ -158,10 +164,7 @@ function mostrarDetalhesDocumento(id) {
     const painel = document.getElementById("detalhesDocumento");
     if (!doc || !painel) return;
 
-    let link = "";
-    if (doc.caminho) {
-        link = dbGerarUrlArquivo(BUCKETS.DOCUMENTOS, doc.caminho);
-    }
+    const link = doc.url || "";
 
     painel.innerHTML = `
         <h3>${doc.nome ?? ""}</h3>
@@ -176,8 +179,8 @@ async function excluirDocumento(id) {
     try {
         const doc = documentos.find(d => String(d.id) === String(id));
 
-        if (doc?.caminho) {
-            await dbExcluirArquivoStorage(BUCKETS.DOCUMENTOS, doc.caminho).catch(() => {});
+        if (doc?.arquivo) {
+            await dbExcluirArquivoStorage(BUCKETS.DOCUMENTOS, doc.arquivo).catch(() => {});
         }
 
         await dbExcluirDocumento(id);
@@ -201,7 +204,7 @@ function pesquisarDocumentos() {
 
     const filtrados = documentos.filter(doc =>
         (doc.nome || "").toLowerCase().includes(termo) ||
-        (doc.categoria || "").toLowerCase().includes(termo)
+        (doc.tipo || "").toLowerCase().includes(termo)
     );
 
     renderizarDocumentos(filtrados);
