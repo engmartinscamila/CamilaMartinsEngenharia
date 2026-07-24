@@ -13,7 +13,7 @@
 
 
 <title>
-Biblioteca | Camila Martins Engenharia
+Clientes | Camila Martins Engenharia
 </title>
 
 
@@ -23,7 +23,6 @@ Biblioteca | Camila Martins Engenharia
 
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-
 
 
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Parisienne&display=swap"
@@ -85,7 +84,7 @@ Dashboard
 
 
 
-<a href="clientes.html" class="menu-item">
+<a href="clientes.html" class="menu-item ativo">
 
 <i class="fa-solid fa-users"></i>
 
@@ -115,7 +114,7 @@ Documentos
 
 
 
-<a href="biblioteca.html" class="menu-item ativo">
+<a href="biblioteca.html" class="menu-item">
 
 <i class="fa-solid fa-book-open"></i>
 
@@ -199,7 +198,7 @@ Sair
 
 <h2>
 
-Biblioteca
+Clientes
 
 </h2>
 
@@ -207,7 +206,7 @@ Biblioteca
 
 <p>
 
-Central de arquivos e materiais da engenharia
+Gerenciamento de clientes cadastrados
 
 </p>
 
@@ -220,13 +219,13 @@ Central de arquivos e materiais da engenharia
 <div class="acoes-topo">
 
 
-<button id="novoArquivo">
+<button id="novoCliente">
 
 
-<i class="fa-solid fa-upload"></i>
+<i class="fa-solid fa-user-plus"></i>
 
 
-Novo Arquivo
+Novo Cliente
 
 
 </button>
@@ -246,7 +245,6 @@ Novo Arquivo
 
 
 
-
 <section class="card-grande">
 
 
@@ -256,7 +254,7 @@ Novo Arquivo
 
 <h2>
 
-Arquivos
+Lista de Clientes
 
 </h2>
 
@@ -266,15 +264,16 @@ Arquivos
 <div class="acoes-card">
 
 
+
 <input
 type="search"
-id="pesquisaBiblioteca"
-placeholder="Pesquisar arquivo...">
+id="pesquisaCliente"
+placeholder="Pesquisar cliente...">
 
 
 
 <button
-id="btnPesquisarBiblioteca">
+id="btnPesquisarCliente">
 
 
 <i class="fa-solid fa-search"></i>
@@ -298,8 +297,8 @@ id="btnPesquisarBiblioteca">
 
 
 <div
-id="listaBiblioteca"
-class="lista-documentos">
+id="listaClientes"
+class="lista-clientes">
 
 
 </div>
@@ -316,12 +315,11 @@ class="lista-documentos">
 
 
 
-<!-- MODAL ARQUIVO -->
-
+<!-- MODAL CLIENTE -->
 
 
 <div
-id="modalArquivo"
+id="modalCliente"
 class="modal">
 
 
@@ -335,7 +333,7 @@ class="modal">
 
 <h2>
 
-Adicionar Arquivo
+Cadastro de Cliente
 
 </h2>
 
@@ -343,7 +341,7 @@ Adicionar Arquivo
 
 
 <button
-id="fecharModalArquivo">
+id="fecharModalCliente">
 
 
 <i class="fa-solid fa-xmark"></i>
@@ -359,16 +357,12 @@ id="fecharModalArquivo">
 
 
 
-
-
 <form
-id="formArquivo">
+id="formCliente">
 
 
 
 <div class="form-grid">
-
-
 
 
 
@@ -377,14 +371,14 @@ id="formArquivo">
 
 <label>
 
-Nome do Arquivo
+Nome Completo
 
 </label>
 
 
-
 <input
-id="arquivoNome"
+id="clienteNome"
+type="text"
 required>
 
 
@@ -395,6 +389,25 @@ required>
 
 
 
+<div class="campo">
+
+
+<label>
+
+CPF/CNPJ
+
+</label>
+
+
+<input
+id="clienteCpf"
+type="text">
+
+
+
+</div>
+
+
 
 
 
@@ -403,56 +416,181 @@ required>
 
 <label>
 
-Categoria
+Telefone
 
 </label>
 
 
+<input
+id="clienteTelefone"
+type="text">
 
-<select
-id="arquivoCategoria">
 
 
-<option value="projeto">
+</div>
 
-Projetos
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+E-mail
+
+</label>
+
+
+<input
+id="clienteEmail"
+type="email">
+
+
+
+</div>
+
+
+
+
+
+<div class="campo campo-full">
+
+
+<label>
+
+Endereço
+
+</label>
+
+
+<input
+id="clienteEndereco"
+type="text">
+
+
+
+</div>
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+Cidade
+
+</label>
+
+
+<input
+id="clienteCidade"
+type="text">
+
+
+
+</div>
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+Estado
+
+</label>
+
+
+<input
+id="clienteEstado"
+type="text">
+
+
+
+</div>
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+CEP
+
+</label>
+
+
+<input
+id="clienteCep"
+type="text">
+
+
+
+</div>
+
+
+
+
+
+<div class="campo">
+
+
+<label>
+
+Status
+
+</label>
+
+
+<select id="clienteStatus">
+
+
+<option value="ativo">
+
+Ativo
 
 </option>
 
 
 
-<option value="modelo">
+<option value="orcamento">
 
-Modelos
-
-</option>
-
-
-
-<option value="norma">
-
-Normas
+Orçamento
 
 </option>
 
 
 
-<option value="outros">
+<option value="pausado">
 
-Outros
+Pausado
 
 </option>
 
+
+
+<option value="concluido">
+
+Concluído
+
+</option>
 
 
 </select>
 
 
-
 </div>
-
-
-
 
 
 
@@ -463,43 +601,21 @@ Outros
 
 <label>
 
-Descrição
+Observações
 
 </label>
 
 
-
 <textarea
-id="arquivoDescricao"
+id="clienteObservacoes"
 rows="5">
 
 </textarea>
 
 
-
 </div>
 
 
-
-
-
-
-
-
-<div class="campo campo-full">
-
-
-<label>
-
-Arquivo
-
-</label>
-
-
-
-<input
-type="file"
-id="arquivoUpload">
 
 
 
@@ -509,7 +625,7 @@ id="arquivoUpload">
 
 <button
 type="button"
-id="cancelarArquivo">
+id="cancelarCliente">
 
 Cancelar
 
@@ -517,12 +633,11 @@ Cancelar
 
 
 
-
 <button
 type="submit"
-id="salvarArquivo">
+id="salvarCliente">
 
-Salvar Arquivo
+Salvar Cliente
 
 </button>
 
@@ -550,9 +665,7 @@ Salvar Arquivo
 
 
 
-<!-- DETALHES DO ARQUIVO -->
-
-
+<!-- ÁREA DE DETALHES -->
 
 <section class="painel-principal">
 
@@ -561,13 +674,12 @@ Salvar Arquivo
 <div class="card-grande">
 
 
-
 <div class="card-header">
 
 
 <h2>
 
-Detalhes do Arquivo
+Detalhes do Cliente
 
 </h2>
 
@@ -580,17 +692,50 @@ Detalhes do Arquivo
 
 
 <div
-id="detalhesBiblioteca"
+id="detalhesCliente"
 class="detalhes">
 
 
 <p>
 
-Selecione um arquivo para visualizar os detalhes.
+Selecione um cliente para visualizar os detalhes.
 
 </p>
 
 
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+<div class="card-grande">
+
+
+<div class="card-header">
+
+
+<h2>
+
+Projetos do Cliente
+
+</h2>
+
+
+</div>
+
+
+
+
+<div
+id="projetosCliente"
+class="lista-projetos">
+
 
 </div>
 
@@ -599,6 +744,37 @@ Selecione um arquivo para visualizar os detalhes.
 </div>
 
 
+
+
+
+
+<div class="card-grande">
+
+
+<div class="card-header">
+
+
+<h2>
+
+Documentos do Cliente
+
+</h2>
+
+
+</div>
+
+
+
+<div
+id="documentosCliente"
+class="lista-documentos">
+
+
+</div>
+
+
+
+</div>
 
 
 
@@ -654,7 +830,7 @@ Carregando...
 <script src="js/auth.js"></script>
 
 
-<script src="js/biblioteca.js"></script>
+<script src="js/clientes.js"></script>
 
 
 
