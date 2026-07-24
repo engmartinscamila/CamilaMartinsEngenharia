@@ -146,6 +146,60 @@ select{
 
     z-index:500;
 
+    overflow-y:auto;
+
+}
+
+.detalhes-acoes{
+
+    display:flex;
+
+    gap:10px;
+
+    margin-top:18px;
+
+}
+
+.foto-item{
+
+    position:relative;
+
+}
+
+.foto-acoes{
+
+    display:flex;
+
+    gap:8px;
+
+    margin-top:10px;
+
+}
+
+.foto-acoes .btn-icon{
+
+    width:36px;
+
+    height:36px;
+
+}
+
+.estado-vazio{
+
+    padding:24px;
+
+    text-align:center;
+
+    color:var(--texto-claro);
+
+}
+
+button:disabled{
+
+    cursor:not-allowed;
+
+    opacity:.65;
+
 }
 
 /* ==========================================================
@@ -594,6 +648,104 @@ select{
     flex-direction:column;
 
     gap:14px;
+
+}
+
+.cliente-detalhes-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(2,minmax(0,1fr));
+
+    gap:16px;
+
+}
+
+.cliente-detalhe-campo{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:6px;
+
+    padding:16px;
+
+    background:var(--cinza);
+
+    border-radius:14px;
+
+}
+
+.cliente-detalhe-campo strong{
+
+    color:var(--azul);
+
+    font-size:13px;
+
+    text-transform:uppercase;
+
+    letter-spacing:.04em;
+
+}
+
+.cliente-detalhe-campo span{
+
+    color:var(--texto);
+
+    overflow-wrap:anywhere;
+
+}
+
+.cliente-detalhes-acoes{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:12px;
+
+    margin-top:22px;
+
+}
+
+.cliente-detalhes-acoes button{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:9px;
+
+    min-height:44px;
+
+    padding:10px 18px;
+
+    border-radius:12px;
+
+    background:var(--azul);
+
+    color:#FFF;
+
+    font-weight:600;
+
+}
+
+.cliente-detalhes-acoes .acao-excluir{
+
+    background:var(--vermelho);
+
+}
+
+#mensagemClientes{
+
+    position:sticky;
+
+    top:12px;
+
+    z-index:10000;
 
 }
 
