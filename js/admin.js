@@ -721,6 +721,28 @@ function configurarEventos(){
     );
 
 
+    const navegacaoRestante = {
+        abrirFotos: "fotos.html",
+        abrirFinanceiro: "financeiro.html",
+        abrirAgenda: "agenda.html",
+        abrirBiblioteca: "biblioteca.html",
+        abrirConfiguracoes: "configuracoes.html",
+        novoProjeto: "projetos.html",
+        verTodosProjetos: "projetos.html",
+        verTodosDocumentos: "documentos.html"
+    };
+
+    Object.entries(navegacaoRestante).forEach(([id, destino]) => {
+
+        document
+        .getElementById(id)
+        ?.addEventListener("click", () => {
+            window.location.href = destino;
+        });
+
+    });
+
+
 }
 // ==========================================================
 // PESQUISA CLIENTES
