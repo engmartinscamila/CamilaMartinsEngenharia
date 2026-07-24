@@ -42,17 +42,33 @@ document.addEventListener(
 async function iniciarAgenda(){
 
 
-    configurarEventosAgenda();
+    try{
+
+        configurarEventosAgenda();
 
 
-    await carregarClientesAgenda();
+        await carregarClientesAgenda();
 
 
-    await carregarProjetosAgenda();
+        await carregarProjetosAgenda();
 
 
-    await carregarAgenda();
+        await carregarAgenda();
 
+    }
+    catch(error){
+
+        console.error(
+            "Erro ao iniciar agenda:",
+            error
+        );
+
+    }
+    finally{
+
+        ocultarCarregamentoPagina();
+
+    }
 
 
 }

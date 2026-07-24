@@ -8,6 +8,14 @@ consultas, cadastros e arquivos do Supabase.
 =====================================================
 */
 
+function ocultarCarregamentoPagina() {
+    const loading = document.getElementById("loading");
+
+    if (loading) {
+        loading.style.display = "none";
+    }
+}
+
 
 function resolverBucket(nome) {
     const chave = String(nome || "").toUpperCase();

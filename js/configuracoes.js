@@ -33,6 +33,9 @@ async function iniciarConfiguracoes() {
     catch (error) {
         console.error("Erro ao carregar configurações:", error);
     }
+    finally {
+        ocultarCarregamentoPagina();
+    }
 }
 
 function preencherCampo(id, valor) {

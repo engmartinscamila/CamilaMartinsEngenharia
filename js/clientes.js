@@ -55,6 +55,11 @@ async function iniciarClientes(){
 
 
     }
+    finally{
+
+        ocultarCarregamentoPagina();
+
+    }
 
 
 }
@@ -995,7 +1000,7 @@ function carregarAnimacao(){
 
     return `
 
-    <div class="loading">
+    <div class="estado-vazio">
 
         Carregando...
 

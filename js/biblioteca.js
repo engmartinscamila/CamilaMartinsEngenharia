@@ -42,11 +42,27 @@ document.addEventListener(
 async function iniciarBiblioteca(){
 
 
-    configurarEventosBiblioteca();
+    try{
+
+        configurarEventosBiblioteca();
 
 
-    await carregarBiblioteca();
+        await carregarBiblioteca();
 
+    }
+    catch(error){
+
+        console.error(
+            "Erro ao iniciar biblioteca:",
+            error
+        );
+
+    }
+    finally{
+
+        ocultarCarregamentoPagina();
+
+    }
 
 
 }

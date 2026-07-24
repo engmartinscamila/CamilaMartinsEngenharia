@@ -42,14 +42,30 @@ document.addEventListener(
 async function iniciarProjetos(){
 
 
-    configurarEventosProjeto();
+    try{
+
+        configurarEventosProjeto();
 
 
-    await carregarProjetos();
+        await carregarProjetos();
 
 
-    await carregarClientesSelect();
+        await carregarClientesSelect();
 
+    }
+    catch(error){
+
+        console.error(
+            "Erro ao iniciar projetos:",
+            error
+        );
+
+    }
+    finally{
+
+        ocultarCarregamentoPagina();
+
+    }
 
 
 }
