@@ -1,410 +1,103 @@
 /*
-==========================================================
+=====================================================
 CAMILA MARTINS ENGENHARIA
-DASHBOARD
-VERSÃO FINAL SUPABASE
-==========================================================
+DASHBOARD.JS
+=====================================================
 */
 
-
-document.addEventListener(
-"DOMContentLoaded",
-()=>{
-
+document.addEventListener("DOMContentLoaded", () => {
     iniciarDashboard();
-
 });
 
+async function iniciarDashboard() {
+    try {
+        const [clientes, projetos, documentos, fotos, financeiro, agenda] =
+            await Promise.all([
+                dbBuscarClientes().catch(() => []),
+                dbBuscarProjetos().catch(() => []),
+                dbBuscarDocumentos().catch(() => []),
+                dbBuscarFotos().catch(() => []),
+                dbBuscarFinanceiro().catch(() => []),
+                dbBuscarAgenda().catch(() => [])
+            ]);
 
+        setTexto("totalClientes", clientes.length);
+        setTexto("totalProjetos", projetos.length);
+        setTexto("totalDocumentos", documentos.length);
+        setTexto("totalFotos", fotos.length);
 
-
-// ==========================================================
-// INICIALIZAÇÃO
-// ==========================================================
-
-
-async function iniciarDashboard(){
-
-
-    try{
-
-
-        await carregarIndicadores();
-
-
-        await carregarFinanceiro();
-
-
-        await carregarProjetosRecentes();
-
-
-        await carregarAgenda();
-
-
-
+        renderizarResumoFinanceiro(financeiro);
+        renderizarProjetosRecentes(projetos.slice(0, 5));
+        renderizarProximosEventos(agenda);
     }
-    catch(error){
-
-
-        console.error(
-            "Erro ao carregar dashboard:",
-            error
-        );
-
-
+    catch (error) {
+        console.error("Erro ao iniciar dashboard:", error);
     }
-
-
 }
 
-
-
-
-
-
-// ==========================================================
-// INDICADORES
-// ==========================================================
-
-
-async function carregarIndicadores(){
-
-
-
-    const [
-
-        clientes,
-
-        projetos,
-
-        documentos,
-
-        fotos
-
-
-    ] = await Promise.all([
-
-
-        dbContarClientes(),
-
-
-        dbContarProjetos(),
-
-
-        dbContarDocumentos(),
-
-
-        dbContarFotos()
-
-
-    ]);
-
-
-
-
-
-    document
-    .getElementById("totalClientes")
-    .textContent = clientes;
-
-
-
-
-    document
-    .getElementById("totalProjetos")
-    .textContent = projetos;
-
-
-
-
-    document
-    .getElementById("totalDocumentos")
-    .textContent = documentos;
-
-
-
-
-    document
-    .getElementById("totalFotos")
-    .textContent = fotos;
-
-
-
-}
-// ==========================================================
-// FINANCEIRO
-// ==========================================================
-
-
-async function carregarFinanceiro(){
-
-
-    const financeiro =
-    await dbResumoFinanceiro();
-
-
-
-
-    document
-    .getElementById("financeiroEntradas")
-    .textContent =
-    formatarMoeda(financeiro.entradas);
-
-
-
-
-    document
-    .getElementById("financeiroSaidas")
-    .textContent =
-    formatarMoeda(financeiro.saidas);
-
-
-
-
-    document
-    .getElementById("financeiroSaldo")
-    .textContent =
-    formatarMoeda(financeiro.saldo);
-
-
-
+function setTexto(id, valor) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = valor;
 }
 
+function formatarMoeda(valor) {
+    return (Number(valor) || 0).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    });
+}
 
+function renderizarResumoFinanceiro(lancamentos) {
+    const entradas = lancamentos
+        .filter(l => l.tipo === "entrada")
+        .reduce((soma, l) => soma + Number(l.valor || 0), 0);
 
+    const saidas = lancamentos
+        .filter(l => l.tipo === "saida")
+        .reduce((soma, l) => soma + Number(l.valor || 0), 0);
 
+    setTexto("financeiroEntradas", formatarMoeda(entradas));
+    setTexto("financeiroSaidas", formatarMoeda(saidas));
+    setTexto("financeiroSaldo", formatarMoeda(entradas - saidas));
+}
 
+function renderizarProjetosRecentes(projetos) {
+    const corpo = document.getElementById("listaProjetosRecentes");
+    if (!corpo) return;
 
-// ==========================================================
-// PROJETOS RECENTES
-// ==========================================================
-
-
-async function carregarProjetosRecentes(){
-
-
-    const tabela =
-    document.getElementById(
-        "listaProjetosRecentes"
-    );
-
-
-
-   const projetos = (await dbBuscarProjetos()).slice(0, 5);
-
-
-
-    if(projetos.length === 0){
-
-
-        tabela.innerHTML = `
-
-        <tr>
-
-        <td colspan="4">
-
-        Nenhum projeto cadastrado.
-
-        </td>
-
-        </tr>
-
-        `;
-
-
+    if (!projetos || projetos.length === 0) {
+        corpo.innerHTML = `<tr><td colspan="4">Nenhum projeto cadastrado.</td></tr>`;
         return;
-
     }
 
-
-
-
-    tabela.innerHTML =
-    projetos.map(projeto=>{
-
-
-        return `
-
+    corpo.innerHTML = projetos.map(projeto => `
         <tr>
-
-
-        <td>
-        ${escaparDashboard(projeto.nome)}
-        </td>
-
-
-
-        <td>
-        ${
-        projeto.clientes?.nome 
-        || "-"
-        }
-        </td>
-
-
-
-        <td>
-        ${escaparDashboard(projeto.tipo || "-")}
-        </td>
-
-
-
-        <td>
-        ${escaparDashboard(projeto.status || "-")}
-        </td>
-
-
-
+            <td>${projeto.nome ?? ""}</td>
+            <td>${projeto.cliente_nome ?? ""}</td>
+            <td>${projeto.tipo ?? ""}</td>
+            <td>${projeto.status ?? ""}</td>
         </tr>
-
-        `;
-
-
-    }).join("");
-
-
-
+    `).join("");
 }
-// ==========================================================
-// AGENDA
-// ==========================================================
 
+function renderizarProximosEventos(eventos) {
+    const lista = document.getElementById("listaAgenda");
+    if (!lista) return;
 
-async function carregarAgenda(){
+    const hoje = new Date();
+    const proximos = (eventos || [])
+        .filter(e => new Date(e.data) >= hoje)
+        .slice(0, 5);
 
-
-    const lista =
-    document.getElementById(
-        "listaAgenda"
-    );
-
-
-
-    const eventos =
-    await dbBuscarAgenda();
-
-
-
-
-    if(eventos.length === 0){
-
-
-        lista.innerHTML = `
-
-        <p>
-
-        Nenhum evento próximo.
-
-        </p>
-
-        `;
-
-
+    if (proximos.length === 0) {
+        lista.innerHTML = `<p>Nenhum evento agendado.</p>`;
         return;
-
     }
 
-
-
-
-    lista.innerHTML =
-    eventos.map(evento=>{
-
-
-        return `
-
+    lista.innerHTML = proximos.map(evento => `
         <div class="agenda-item">
-
-
-            <strong>
-
-            ${escaparDashboard(evento.titulo)}
-
-            </strong>
-
-
-            <span>
-
-            ${formatarData(evento.data)}
-
-            ${evento.horario || ""}
-
-            </span>
-
-
+            <strong>${evento.titulo ?? ""}</strong>
+            <span>${evento.data ? new Date(evento.data).toLocaleString("pt-BR") : ""}</span>
         </div>
-
-        `;
-
-
-    }).join("");
-
-
-
-}
-
-
-
-
-
-
-// ==========================================================
-// FORMATADORES
-// ==========================================================
-
-
-function formatarMoeda(valor){
-
-
-    return Number(valor || 0)
-    .toLocaleString(
-        "pt-BR",
-        {
-            style:"currency",
-            currency:"BRL"
-        }
-    );
-
-
-}
-
-
-
-
-function formatarData(data){
-
-
-    if(!data)
-    return "-";
-
-
-
-    return new Date(data)
-    .toLocaleDateString(
-        "pt-BR"
-    );
-
-
-}
-
-
-
-
-
-function escaparDashboard(valor){
-
-
-    return String(valor ?? "")
-
-    .replaceAll("&","&amp;")
-
-    .replaceAll("<","&lt;")
-
-    .replaceAll(">","&gt;")
-
-    .replaceAll('"',"&quot;")
-
-    .replaceAll("'","&#039;");
-
-
+    `).join("");
 }
