@@ -39,6 +39,33 @@ async function dbBuscarClientes() {
     return data;
 }
 
+async function dbBuscarProjetosCliente(clienteId) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.PROJETOS)
+        .select("*")
+        .eq("cliente_id", clienteId)
+        .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return data || [];
+}
+
+
+async function dbBuscarDocumentosCliente(clienteId) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.DOCUMENTOS)
+        .select("*")
+        .eq("cliente_id", clienteId)
+        .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return data || [];
+}
+
 
 async function dbCriarCliente(dados) {
 
@@ -272,6 +299,20 @@ async function dbSalvarArquivoBiblioteca(dados) {
 }
 
 
+async function dbEditarArquivoBiblioteca(id, dados) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.BIBLIOTECA)
+        .update(dados)
+        .eq("id", id)
+        .select();
+
+    if (error) throw error;
+
+    return data;
+}
+
+
 async function dbExcluirArquivoBiblioteca(id) {
 
     const { error } = await supabaseClient
@@ -318,6 +359,20 @@ async function dbCriarDocumento(dados) {
 }
 
 
+async function dbEditarDocumento(id, dados) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.DOCUMENTOS)
+        .update(dados)
+        .eq("id", id)
+        .select();
+
+    if (error) throw error;
+
+    return data;
+}
+
+
 async function dbExcluirDocumento(id) {
 
     const { error } = await supabaseClient
@@ -356,6 +411,20 @@ async function dbCriarFoto(dados) {
     const { data, error } = await supabaseClient
         .from(TABELAS.FOTOS)
         .insert(dados)
+        .select();
+
+    if (error) throw error;
+
+    return data;
+}
+
+
+async function dbEditarFoto(id, dados) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.FOTOS)
+        .update(dados)
+        .eq("id", id)
         .select();
 
     if (error) throw error;
@@ -482,6 +551,63 @@ async function dbExcluirEtapaCronograma(id) {
 
     const { error } = await supabaseClient
         .from(TABELAS.CRONOGRAMA)
+        .delete()
+        .eq("id", id);
+
+    if (error) throw error;
+
+    return true;
+}
+
+
+// ==========================================================
+// SOLICITAÇÕES
+// ==========================================================
+
+async function dbBuscarSolicitacoes() {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.SOLICITACOES)
+        .select("*, clientes(nome), projetos(nome)")
+        .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return data || [];
+}
+
+
+async function dbCriarSolicitacao(dados) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.SOLICITACOES)
+        .insert(dados)
+        .select();
+
+    if (error) throw error;
+
+    return data;
+}
+
+
+async function dbEditarSolicitacao(id, dados) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.SOLICITACOES)
+        .update(dados)
+        .eq("id", id)
+        .select();
+
+    if (error) throw error;
+
+    return data;
+}
+
+
+async function dbExcluirSolicitacao(id) {
+
+    const { error } = await supabaseClient
+        .from(TABELAS.SOLICITACOES)
         .delete()
         .eq("id", id);
 

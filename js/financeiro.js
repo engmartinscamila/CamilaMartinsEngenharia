@@ -1,215 +1,323 @@
 /*
 =====================================================
 CAMILA MARTINS ENGENHARIA
-FINANCEIRO.JS
+FINANCEIRO.JS - CRUD ADMINISTRATIVO
 =====================================================
 */
 
-let lancamentos = [];
-let projetosFinanceiro = [];
+(function moduloFinanceiro() {
+    "use strict";
 
-document.addEventListener("DOMContentLoaded", () => {
-    iniciarFinanceiro();
-});
+    let lancamentos = [];
+    let projetos = [];
+    let lancamentoSelecionadoId = null;
 
-async function iniciarFinanceiro() {
-    try {
-        mostrarLoadingFinanceiro(true);
+    document.addEventListener("DOMContentLoaded", iniciar);
 
-        const [dados, projetos] = await Promise.all([
-            dbBuscarFinanceiro(),
-            dbBuscarProjetos().catch(() => [])
-        ]);
+    async function iniciar() {
+        configurarEventos();
+        mostrarLoading(true);
 
-        lancamentos = dados;
-        projetosFinanceiro = projetos;
+        try {
+            [lancamentos, projetos] = await Promise.all([
+                dbBuscarFinanceiro(),
+                dbBuscarProjetos()
+            ]);
 
-        preencherSelectFinanceiro("financeiroProjeto", projetos, "nome");
-
-        renderizarFinanceiro();
-        atualizarResumoFinanceiro();
-        configurarEventosFinanceiro();
-    }
-    catch (error) {
-        console.error("Erro ao iniciar financeiro:", error);
-    }
-    finally {
-        mostrarLoadingFinanceiro(false);
-    }
-}
-
-function mostrarLoadingFinanceiro(mostrar) {
-    const el = document.getElementById("loading");
-    if (el) el.style.display = mostrar ? "flex" : "none";
-}
-
-function preencherSelectFinanceiro(id, itens, campoLabel) {
-    const select = document.getElementById(id);
-    if (!select) return;
-
-    const atual = select.innerHTML.match(/<option[^>]*value=""[^>]*>[^<]*<\/option>/);
-    select.innerHTML = (atual ? atual[0] : `<option value="">Selecione</option>`) +
-        itens.map(item => `<option value="${item.id}">${item[campoLabel] ?? ""}</option>`).join("");
-}
-
-function formatarMoedaFinanceiro(valor) {
-    return (Number(valor) || 0).toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-    });
-}
-
-function atualizarResumoFinanceiro() {
-    const entradas = lancamentos
-        .filter(l => l.tipo === "entrada")
-        .reduce((soma, l) => soma + Number(l.valor || 0), 0);
-
-    const saidas = lancamentos
-        .filter(l => l.tipo === "saida")
-        .reduce((soma, l) => soma + Number(l.valor || 0), 0);
-
-    const setTexto = (id, valor) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = valor;
-    };
-
-    setTexto("totalEntradas", formatarMoedaFinanceiro(entradas));
-    setTexto("totalSaidas", formatarMoedaFinanceiro(saidas));
-    setTexto("saldoAtual", formatarMoedaFinanceiro(entradas - saidas));
-}
-
-function renderizarFinanceiro(lista = lancamentos) {
-    const container = document.getElementById("listaFinanceiro");
-    if (!container) return;
-
-    if (!lista || lista.length === 0) {
-        container.innerHTML = `<div class="vazio">Nenhum lançamento cadastrado.</div>`;
-        return;
+            preencherProjetos();
+            renderizar();
+            atualizarResumo();
+        }
+        catch (error) {
+            tratarErro("Não foi possível carregar os lançamentos.", error);
+        }
+        finally {
+            mostrarLoading(false);
+        }
     }
 
-    container.innerHTML = lista.map(l => `
-        <div class="financeiro-item ${l.tipo}" data-id="${l.id}">
-            <div>
-                <strong>${l.descricao ?? ""}</strong>
-                <span>${l.data ? new Date(l.data).toLocaleDateString("pt-BR") : ""}</span>
-            </div>
-            <div class="financeiro-valor ${l.tipo === "entrada" ? "positivo" : "negativo"}">
-                ${l.tipo === "saida" ? "- " : "+ "}${formatarMoedaFinanceiro(l.valor)}
-            </div>
-            <div class="financeiro-acoes">
-                <button type="button" class="btn-ver-financeiro" data-id="${l.id}">Ver</button>
-                <button type="button" class="btn-excluir-financeiro" data-id="${l.id}">Excluir</button>
-            </div>
-        </div>
-    `).join("");
-
-    container.querySelectorAll(".btn-ver-financeiro").forEach(btn => {
-        btn.addEventListener("click", () => mostrarDetalhesFinanceiro(btn.dataset.id));
-    });
-
-    container.querySelectorAll(".btn-excluir-financeiro").forEach(btn => {
-        btn.addEventListener("click", () => excluirLancamento(btn.dataset.id));
-    });
-}
-
-function configurarEventosFinanceiro() {
-    document.getElementById("novoLancamento")?.addEventListener("click", abrirModalFinanceiro);
-    document.getElementById("cancelarLancamento")?.addEventListener("click", fecharModalFinanceiro);
-    document.getElementById("fecharModalFinanceiro")?.addEventListener("click", fecharModalFinanceiro);
-
-    document.getElementById("formFinanceiro")?.addEventListener("submit", salvarLancamento);
-
-    document.getElementById("pesquisaFinanceiro")?.addEventListener("input", pesquisarFinanceiro);
-    document.getElementById("btnPesquisarFinanceiro")?.addEventListener("click", pesquisarFinanceiro);
-}
-
-function abrirModalFinanceiro() {
-    document.getElementById("formFinanceiro")?.reset();
-    const modal = document.getElementById("modalFinanceiro");
-    if (modal) modal.style.display = "flex";
-}
-
-function fecharModalFinanceiro() {
-    const modal = document.getElementById("modalFinanceiro");
-    if (modal) modal.style.display = "none";
-}
-
-async function salvarLancamento(e) {
-    e.preventDefault();
-
-    const tipo = document.getElementById("financeiroTipo")?.value;
-    const descricao = document.getElementById("financeiroDescricao")?.value.trim();
-    const valor = parseFloat(document.getElementById("financeiroValor")?.value);
-    const data = document.getElementById("financeiroData")?.value;
-    const projetoId = document.getElementById("financeiroProjeto")?.value || null;
-    const observacoes = document.getElementById("financeiroObservacoes")?.value.trim() || "";
-
-    if (!tipo || !descricao || isNaN(valor) || !data) {
-        alert("Preencha tipo, descrição, valor e data.");
-        return;
-    }
-
-    try {
-        await dbCriarLancamentoFinanceiro({
-            tipo,
-            descricao,
-            valor,
-            data,
-            projeto_id: projetoId || null,
-            observacoes
+    function configurarEventos() {
+        document.getElementById("novoLancamento")?.addEventListener("click", novoLancamento);
+        document.getElementById("fecharModalFinanceiro")?.addEventListener("click", fecharModal);
+        document.getElementById("cancelarLancamento")?.addEventListener("click", fecharModal);
+        document.getElementById("formFinanceiro")?.addEventListener("submit", salvarLancamento);
+        document.getElementById("pesquisaFinanceiro")?.addEventListener("input", pesquisar);
+        document.getElementById("btnPesquisarFinanceiro")?.addEventListener("click", pesquisar);
+        document.getElementById("listaFinanceiro")?.addEventListener("click", tratarAcao);
+        document.getElementById("detalhesFinanceiro")?.addEventListener("click", tratarAcao);
+        document.getElementById("modalFinanceiro")?.addEventListener("click", event => {
+            if (event.target.id === "modalFinanceiro") fecharModal();
         });
+    }
 
-        fecharModalFinanceiro();
+    function preencherProjetos() {
+        const select = document.getElementById("financeiroProjeto");
+        if (!select) return;
 
+        select.innerHTML = `<option value="">Selecione o projeto</option>` +
+            projetos.map(projeto => `
+                <option value="${escapar(projeto.id)}">${escapar(projeto.nome)}</option>
+            `).join("");
+    }
+
+    function renderizar(lista = lancamentos) {
+        const container = document.getElementById("listaFinanceiro");
+        if (!container) return;
+
+        if (!lista.length) {
+            container.innerHTML = `<div class="estado-vazio">Nenhum lançamento cadastrado.</div>`;
+            return;
+        }
+
+        container.innerHTML = lista.map(lancamento => `
+            <article class="item-lista financeiro-item">
+                <div class="item-info">
+                    <h3>${escapar(lancamento.descricao)}</h3>
+                    <span>${escapar(nomeProjeto(lancamento.projeto_id))} · ${escapar(formatarData(lancamento.data))}</span>
+                    <span class="badge ${lancamento.tipo === "entrada" ? "ativo" : "pausado"}">
+                        ${lancamento.tipo === "entrada" ? "Entrada" : "Saída"} · ${escapar(formatarMoeda(lancamento.valor))}
+                    </span>
+                </div>
+                <div class="item-acoes">
+                    ${botao("abrir", lancamento.id, "fa-eye", "Abrir detalhes")}
+                    ${botao("editar", lancamento.id, "fa-pen", "Editar lançamento", "edit")}
+                    ${botao("excluir", lancamento.id, "fa-trash", "Excluir lançamento", "delete")}
+                </div>
+            </article>
+        `).join("");
+    }
+
+    function tratarAcao(event) {
+        const alvo = event.target.closest("[data-acao-financeiro]");
+        if (!alvo) return;
+
+        const { acaoFinanceiro: acao, id } = alvo.dataset;
+        if (acao === "abrir") mostrarDetalhes(id);
+        if (acao === "editar") editarLancamento(id);
+        if (acao === "excluir") excluirLancamento(id);
+    }
+
+    function novoLancamento() {
+        lancamentoSelecionadoId = null;
+        document.getElementById("formFinanceiro")?.reset();
+        preencher("financeiroData", new Date().toISOString().slice(0, 10));
+        atualizarModal("Novo Lançamento", "Salvar Lançamento");
+        abrirModal();
+    }
+
+    function editarLancamento(id) {
+        const lancamento = localizar(id);
+        if (!lancamento) return;
+
+        lancamentoSelecionadoId = lancamento.id;
+        preencher("financeiroDescricao", lancamento.descricao);
+        preencher("financeiroTipo", lancamento.tipo);
+        preencher("financeiroValor", lancamento.valor);
+        preencher("financeiroData", lancamento.data);
+        preencher("financeiroProjeto", lancamento.projeto_id);
+        preencher("financeiroObservacoes", lancamento.observacoes);
+        atualizarModal("Editar Lançamento", "Salvar Alterações");
+        abrirModal();
+    }
+
+    async function salvarLancamento(event) {
+        event.preventDefault();
+
+        const dados = {
+            descricao: valor("financeiroDescricao"),
+            tipo: valor("financeiroTipo"),
+            valor: Number(valor("financeiroValor")),
+            data: valor("financeiroData") || null,
+            projeto_id: valor("financeiroProjeto") || null,
+            observacoes: valor("financeiroObservacoes")
+        };
+
+        if (!dados.descricao || !Number.isFinite(dados.valor) || dados.valor <= 0) {
+            alert("Informe a descrição e um valor maior que zero.");
+            return;
+        }
+
+        const botaoSalvar = document.getElementById("salvarLancamento");
+        alternarSalvamento(botaoSalvar, true);
+
+        try {
+            if (lancamentoSelecionadoId) {
+                await dbEditarLancamentoFinanceiro(lancamentoSelecionadoId, dados);
+            }
+            else {
+                await dbCriarLancamentoFinanceiro(dados);
+            }
+
+            const editando = Boolean(lancamentoSelecionadoId);
+            fecharModal();
+            await recarregar();
+            alert(editando ? "Lançamento atualizado com sucesso." : "Lançamento cadastrado com sucesso.");
+        }
+        catch (error) {
+            tratarErro("Não foi possível salvar o lançamento.", error);
+        }
+        finally {
+            alternarSalvamento(botaoSalvar, false);
+        }
+    }
+
+    function mostrarDetalhes(id) {
+        const lancamento = localizar(id);
+        const painel = document.getElementById("detalhesFinanceiro");
+        if (!lancamento || !painel) return;
+
+        lancamentoSelecionadoId = lancamento.id;
+        painel.innerHTML = `
+            <h3>${escapar(lancamento.descricao)}</h3>
+            <p><strong>Tipo:</strong> ${lancamento.tipo === "entrada" ? "Entrada" : "Saída"}</p>
+            <p><strong>Valor:</strong> ${escapar(formatarMoeda(lancamento.valor))}</p>
+            <p><strong>Data:</strong> ${escapar(formatarData(lancamento.data))}</p>
+            <p><strong>Projeto:</strong> ${escapar(nomeProjeto(lancamento.projeto_id))}</p>
+            <p>${escapar(lancamento.observacoes || "Sem observações.")}</p>
+            <div class="detalhes-acoes">
+                ${botao("editar", lancamento.id, "fa-pen", "Editar lançamento", "edit")}
+                ${botao("excluir", lancamento.id, "fa-trash", "Excluir lançamento", "delete")}
+            </div>
+        `;
+    }
+
+    async function excluirLancamento(id) {
+        const lancamento = localizar(id);
+        if (!lancamento || !confirm(`Excluir o lançamento "${lancamento.descricao}"?`)) return;
+
+        try {
+            await dbExcluirLancamentoFinanceiro(lancamento.id);
+            limparDetalhes();
+            await recarregar();
+            alert("Lançamento excluído com sucesso.");
+        }
+        catch (error) {
+            tratarErro("Não foi possível excluir o lançamento.", error);
+        }
+    }
+
+    async function recarregar() {
         lancamentos = await dbBuscarFinanceiro();
-        renderizarFinanceiro();
-        atualizarResumoFinanceiro();
-    }
-    catch (error) {
-        console.error("Erro ao salvar lançamento:", error);
-        alert("Não foi possível salvar o lançamento.");
-    }
-}
-
-function mostrarDetalhesFinanceiro(id) {
-    const l = lancamentos.find(item => String(item.id) === String(id));
-    const painel = document.getElementById("detalhesFinanceiro");
-    if (!l || !painel) return;
-
-    painel.innerHTML = `
-        <h3>${l.descricao ?? ""}</h3>
-        <p>Tipo: ${l.tipo === "entrada" ? "Entrada" : "Saída"}</p>
-        <p>Valor: ${formatarMoedaFinanceiro(l.valor)}</p>
-        <p>Data: ${l.data ? new Date(l.data).toLocaleDateString("pt-BR") : ""}</p>
-        ${l.observacoes ? `<p>${l.observacoes}</p>` : ""}
-    `;
-}
-
-async function excluirLancamento(id) {
-    if (!confirm("Deseja realmente excluir este lançamento?")) return;
-
-    try {
-        await dbExcluirLancamentoFinanceiro(id);
-
-        lancamentos = await dbBuscarFinanceiro();
-        renderizarFinanceiro();
-        atualizarResumoFinanceiro();
-    }
-    catch (error) {
-        console.error("Erro ao excluir lançamento:", error);
-        alert("Não foi possível excluir o lançamento.");
-    }
-}
-
-function pesquisarFinanceiro() {
-    const termo = (document.getElementById("pesquisaFinanceiro")?.value || "").toLowerCase().trim();
-
-    if (!termo) {
-        renderizarFinanceiro();
-        return;
+        renderizar();
+        atualizarResumo();
     }
 
-    renderizarFinanceiro(
-        lancamentos.filter(l => (l.descricao || "").toLowerCase().includes(termo))
-    );
-}
+    function atualizarResumo() {
+        const entradas = lancamentos
+            .filter(item => item.tipo === "entrada")
+            .reduce((total, item) => total + Number(item.valor || 0), 0);
+        const saidas = lancamentos
+            .filter(item => item.tipo === "saida")
+            .reduce((total, item) => total + Number(item.valor || 0), 0);
+
+        definirTexto("totalEntradas", formatarMoeda(entradas));
+        definirTexto("totalSaidas", formatarMoeda(saidas));
+        definirTexto("saldoAtual", formatarMoeda(entradas - saidas));
+    }
+
+    function pesquisar() {
+        const termo = valor("pesquisaFinanceiro").toLocaleLowerCase("pt-BR");
+        if (!termo) return renderizar();
+
+        renderizar(lancamentos.filter(item =>
+            [item.descricao, item.tipo, item.observacoes, nomeProjeto(item.projeto_id)]
+                .some(campo => String(campo || "").toLocaleLowerCase("pt-BR").includes(termo))
+        ));
+    }
+
+    function abrirModal() {
+        const modal = document.getElementById("modalFinanceiro");
+        if (!modal) return;
+        modal.style.display = "flex";
+        modal.classList.add("show");
+    }
+
+    function fecharModal() {
+        const modal = document.getElementById("modalFinanceiro");
+        modal?.classList.remove("show");
+        if (modal) modal.style.display = "none";
+        document.getElementById("formFinanceiro")?.reset();
+    }
+
+    function atualizarModal(titulo, textoBotao) {
+        const tituloModal = document.querySelector("#modalFinanceiro .modal-header h2");
+        const botaoSalvar = document.getElementById("salvarLancamento");
+        if (tituloModal) tituloModal.textContent = titulo;
+        if (botaoSalvar) botaoSalvar.textContent = textoBotao;
+    }
+
+    function alternarSalvamento(botao, salvando) {
+        if (!botao) return;
+        botao.disabled = salvando;
+        if (salvando) botao.textContent = "Salvando...";
+        else botao.textContent = lancamentoSelecionadoId ? "Salvar Alterações" : "Salvar Lançamento";
+    }
+
+    function limparDetalhes() {
+        lancamentoSelecionadoId = null;
+        const painel = document.getElementById("detalhesFinanceiro");
+        if (painel) painel.innerHTML = "<p>Selecione um lançamento para visualizar os detalhes.</p>";
+    }
+
+    function botao(acao, id, icone, titulo, classe = "") {
+        return `
+            <button type="button" class="btn-icon ${classe}" data-acao-financeiro="${acao}"
+                data-id="${escapar(id)}" title="${titulo}" aria-label="${titulo}">
+                <i class="fa-solid ${icone}"></i>
+            </button>
+        `;
+    }
+
+    function localizar(id) {
+        return lancamentos.find(item => String(item.id) === String(id));
+    }
+
+    function nomeProjeto(id) {
+        return projetos.find(projeto => String(projeto.id) === String(id))?.nome || "Não informado";
+    }
+
+    function formatarMoeda(valor) {
+        return (Number(valor) || 0).toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+        });
+    }
+
+    function formatarData(data) {
+        if (!data) return "Não informada";
+        return new Date(`${data}T12:00:00`).toLocaleDateString("pt-BR");
+    }
+
+    function definirTexto(id, texto) {
+        const elemento = document.getElementById(id);
+        if (elemento) elemento.textContent = texto;
+    }
+
+    function mostrarLoading(mostrar) {
+        const elemento = document.getElementById("loading");
+        if (elemento) elemento.style.display = mostrar ? "flex" : "none";
+    }
+
+    function valor(id) {
+        return document.getElementById(id)?.value?.trim() || "";
+    }
+
+    function preencher(id, conteudo) {
+        const campo = document.getElementById(id);
+        if (campo) campo.value = conteudo ?? "";
+    }
+
+    function escapar(valor) {
+        return String(valor ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    function tratarErro(mensagem, error) {
+        console.error(mensagem, error);
+        alert(`${mensagem}${error?.message ? `\n${error.message}` : ""}`);
+    }
+})();

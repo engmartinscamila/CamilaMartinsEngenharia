@@ -25,7 +25,10 @@ async function iniciarConfiguracoes() {
             preencherCampo("empresaDescricao", config.descricao);
             preencherCampo("sistemaTema", config.tema);
             preencherCampo("sistemaCorPrincipal", config.cor_principal);
-            preencherCampoCheckbox("sistemaNotificacoes", config.notificacoes);
+            preencherCampo(
+                "sistemaNotificacoes",
+                config.notificacoes === false ? "inativo" : "ativo"
+            );
         }
 
         configurarEventosConfiguracoes();
@@ -41,11 +44,6 @@ async function iniciarConfiguracoes() {
 function preencherCampo(id, valor) {
     const el = document.getElementById(id);
     if (el && valor !== undefined && valor !== null) el.value = valor;
-}
-
-function preencherCampoCheckbox(id, valor) {
-    const el = document.getElementById(id);
-    if (el) el.checked = !!valor;
 }
 
 function configurarEventosConfiguracoes() {
@@ -70,22 +68,47 @@ async function salvarConfiguracoesEmpresa(e) {
         descricao: document.getElementById("empresaDescricao")?.value.trim() || "",
         tema: document.getElementById("sistemaTema")?.value || "",
         cor_principal: document.getElementById("sistemaCorPrincipal")?.value || "",
-        notificacoes: document.getElementById("sistemaNotificacoes")?.checked || false
+        notificacoes: document.getElementById("sistemaNotificacoes")?.value !== "inativo"
     };
 
+    const botaoSalvar = document.getElementById("salvarConfiguracoes");
+    const textoOriginal = botaoSalvar?.textContent;
+
     try {
+        if (botaoSalvar) {
+            botaoSalvar.disabled = true;
+            botaoSalvar.textContent = "Salvando...";
+        }
+
         await dbSalvarConfiguracoes(dados);
         alert("Configurações salvas com sucesso!");
     }
     catch (error) {
         console.error("Erro ao salvar configurações:", error);
-        alert("Não foi possível salvar as configurações.");
+        alert(`Não foi possível salvar as configurações.${error?.message ? `\n${error.message}` : ""}`);
+    }
+    finally {
+        if (botaoSalvar) {
+            botaoSalvar.disabled = false;
+            botaoSalvar.textContent = textoOriginal || "Salvar Configurações";
+        }
     }
 }
 
 async function gerarBackup() {
     try {
-        const [clientes, projetos, documentos, fotos, financeiro, agenda, biblioteca] =
+        const [
+            clientes,
+            projetos,
+            documentos,
+            fotos,
+            financeiro,
+            agenda,
+            biblioteca,
+            cronograma,
+            solicitacoes,
+            configuracoes
+        ] =
             await Promise.all([
                 dbBuscarClientes().catch(() => []),
                 dbBuscarProjetos().catch(() => []),
@@ -93,12 +116,24 @@ async function gerarBackup() {
                 dbBuscarFotos().catch(() => []),
                 dbBuscarFinanceiro().catch(() => []),
                 dbBuscarAgenda().catch(() => []),
-                dbBuscarBiblioteca().catch(() => [])
+                dbBuscarBiblioteca().catch(() => []),
+                dbBuscarCronograma().catch(() => []),
+                dbBuscarSolicitacoes().catch(() => []),
+                dbBuscarConfiguracoes().catch(() => null)
             ]);
 
         const backup = {
             gerado_em: new Date().toISOString(),
-            clientes, projetos, documentos, fotos, financeiro, agenda, biblioteca
+            clientes,
+            projetos,
+            documentos,
+            fotos,
+            financeiro,
+            agenda,
+            biblioteca,
+            cronograma,
+            solicitacoes,
+            configuracoes
         };
 
         const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
@@ -119,5 +154,6 @@ async function gerarBackup() {
 
 function limparCache() {
     if (!confirm("Isso vai recarregar a página. Deseja continuar?")) return;
-    location.reload(true);
+    sessionStorage.clear();
+    location.reload();
 }

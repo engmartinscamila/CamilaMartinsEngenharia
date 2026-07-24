@@ -1,1171 +1,301 @@
 /*
 ==========================================================
 CAMILA MARTINS ENGENHARIA
-
-BIBLIOTECA.JS
-GERENCIAMENTO DE ARQUIVOS
-
-USA:
-database.js
-supabase.js
-
-VERSÃO DEFINITIVA
+BIBLIOTECA.JS - CRUD ADMINISTRATIVO
 ==========================================================
 */
 
+(function moduloBiblioteca() {
+    "use strict";
 
-let arquivoSelecionado = null;
+    let arquivos = [];
+    let arquivoSelecionadoId = null;
 
+    document.addEventListener("DOMContentLoaded", iniciar);
 
+    async function iniciar() {
+        configurarEventos();
 
-document.addEventListener(
-"DOMContentLoaded",
-()=>{
-
-
-    iniciarBiblioteca();
-
-
-});
-
-
-
-
-
-
-
-// ==========================================================
-// INICIALIZAÇÃO
-// ==========================================================
-
-
-async function iniciarBiblioteca(){
-
-
-    try{
-
-        configurarEventosBiblioteca();
-
-
-        await carregarBiblioteca();
-
-    }
-    catch(error){
-
-        console.error(
-            "Erro ao iniciar biblioteca:",
-            error
-        );
-
-    }
-    finally{
-
-        ocultarCarregamentoPagina();
-
+        try {
+            arquivos = await dbBuscarBiblioteca();
+            renderizar();
+        }
+        catch (error) {
+            tratarErro("Não foi possível carregar a biblioteca.", error);
+        }
+        finally {
+            ocultarCarregamentoPagina();
+        }
     }
 
+    function configurarEventos() {
+        document.getElementById("novoArquivo")?.addEventListener("click", novoArquivo);
+        document.getElementById("fecharModalArquivo")?.addEventListener("click", fecharModal);
+        document.getElementById("cancelarArquivo")?.addEventListener("click", fecharModal);
+        document.getElementById("formArquivo")?.addEventListener("submit", salvarArquivo);
+        document.getElementById("pesquisaBiblioteca")?.addEventListener("input", pesquisar);
+        document.getElementById("btnPesquisarBiblioteca")?.addEventListener("click", pesquisar);
+        document.getElementById("listaBiblioteca")?.addEventListener("click", tratarAcao);
+        document.getElementById("detalhesBiblioteca")?.addEventListener("click", tratarAcao);
+        document.getElementById("modalArquivo")?.addEventListener("click", event => {
+            if (event.target.id === "modalArquivo") fecharModal();
+        });
+    }
 
-}
+    function renderizar(lista = arquivos) {
+        const container = document.getElementById("listaBiblioteca");
+        if (!container) return;
 
-
-
-
-
-
-
-
-// ==========================================================
-// CARREGAR ARQUIVOS
-// ==========================================================
-
-
-async function carregarBiblioteca(){
-
-
-
-    const lista =
-
-    document.getElementById(
-        "listaBiblioteca"
-    );
-
-
-
-    if(!lista)
-    return;
-
-
-
-
-
-    try{
-
-
-        const arquivos =
-
-        await dbBuscarBiblioteca();
-
-
-
-
-
-
-        if(!arquivos.length){
-
-
-            lista.innerHTML = `
-
-
-            <div class="estado-vazio">
-
-
-            Nenhum arquivo cadastrado.
-
-
-            </div>
-
-
-            `;
-
-
+        if (!lista.length) {
+            container.innerHTML = `<div class="estado-vazio">Nenhum arquivo cadastrado.</div>`;
             return;
-
-
         }
 
-
-
-
-
-
-
-
-        lista.innerHTML =
-
-
-
-        arquivos.map(arquivo=>`
-
-
-        <div class="item-lista arquivo-item"
-        data-id="${arquivo.id}">
-
-
-
-
-
-            <div>
-
-
-                <h3>
-
-                ${escaparTexto(
-                    arquivo.nome
-                )}
-
-                </h3>
-
-
-
-
-                <p>
-
-                ${escaparTexto(
-                    arquivo.categoria || ""
-                )}
-
-                </p>
-
-
-
-
-                <span>
-
-                ${escaparTexto(
-                    arquivo.descricao || ""
-                )}
-
-                </span>
-
-
-
-            </div>
-
-
-
-
-
-
-            <div class="acoes-item">
-
-
-
-                <button
-
-                class="abrirArquivo"
-
-                data-id="${arquivo.id}">
-
-
-                <i class="fa-solid fa-eye"></i>
-
-
-                </button>
-
-
-
-
-
-
-
-                <button
-
-                class="excluirArquivo"
-
-                data-id="${arquivo.id}">
-
-
-                <i class="fa-solid fa-trash"></i>
-
-
-                </button>
-
-
-
-            </div>
-
-
-
-        </div>
-
-
-
-        `)
-        .join("");
-
-
-
-
-
-        configurarAcoesBiblioteca();
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro carregar biblioteca:",
-            error
-        );
-
-
+        container.innerHTML = lista.map(arquivo => `
+            <article class="item-lista arquivo-item">
+                <div class="item-info">
+                    <h3>${escapar(arquivo.nome)}</h3>
+                    <span>${escapar(arquivo.categoria || "Sem categoria")}</span>
+                    <span>${escapar(arquivo.tamanho || "")}</span>
+                </div>
+                <div class="item-acoes">
+                    ${botao("abrir", arquivo.id, "fa-eye", "Abrir detalhes")}
+                    ${botao("editar", arquivo.id, "fa-pen", "Editar arquivo", "edit")}
+                    ${botao("excluir", arquivo.id, "fa-trash", "Excluir arquivo", "delete")}
+                </div>
+            </article>
+        `).join("");
     }
 
+    function tratarAcao(event) {
+        const alvo = event.target.closest("[data-acao-biblioteca]");
+        if (!alvo) return;
 
-
-}
-// ==========================================================
-// MODAL ARQUIVO
-// ==========================================================
-
-
-
-function abrirModalArquivo(){
-
-
-    const modal =
-
-    document.getElementById(
-        "modalArquivo"
-    );
-
-
-
-    if(modal){
-
-        modal.style.display =
-        "flex";
-
+        const { acaoBiblioteca: acao, id } = alvo.dataset;
+        if (acao === "abrir") mostrarDetalhes(id);
+        if (acao === "editar") editarArquivo(id);
+        if (acao === "excluir") excluirArquivo(id);
     }
 
-
-}
-
-
-
-
-
-
-
-function fecharModalArquivo(){
-
-
-    const modal =
-
-    document.getElementById(
-        "modalArquivo"
-    );
-
-
-
-    if(modal){
-
-        modal.style.display =
-        "none";
-
+    function novoArquivo() {
+        arquivoSelecionadoId = null;
+        document.getElementById("formArquivo")?.reset();
+        atualizarModal("Adicionar Arquivo", "Salvar Arquivo", true);
+        abrirModal();
     }
 
-
-
-    limparFormularioArquivo();
-
-
-
-}
-
-
-
-
-
-
-
-
-// ==========================================================
-// SALVAR ARQUIVO
-// ==========================================================
-
-
-
-async function salvarArquivo(evento){
-
-
-    evento.preventDefault();
-
-
-
-
-
-    try{
-
-
-
-        const input =
-
-        document.getElementById(
-            "arquivoUpload"
-        );
-
-
-
-
-
-
-        if(
-            !input ||
-            !input.files.length
-        ){
-
-
-            alert(
-                "Selecione um arquivo."
-            );
-
-
-            return;
-
-
-        }
-
-
-
-
-
-
-
-
-        const arquivo =
-
-        input.files[0];
-
-
-
-
-
-
-        const caminho =
-
-        `biblioteca/${Date.now()}_${arquivo.name}`;
-
-
-
-
-
-
-
-
-        await dbUploadArquivo(
-
-            BUCKETS.BIBLIOTECA,
-
-            caminho,
-
-            arquivo
-
-        );
-
-
-
-
-
-
-
-
-        const tipo =
-
-        arquivo.type ||
-
-        "application/octet-stream";
-
-
-
-
-
-
-
-
+    function editarArquivo(id) {
+        const arquivo = localizar(id);
+        if (!arquivo) return;
+
+        arquivoSelecionadoId = arquivo.id;
+        preencher("arquivoNome", arquivo.nome);
+        preencher("arquivoCategoria", arquivo.categoria);
+        preencher("arquivoDescricao", arquivo.descricao);
+        atualizarModal("Editar Arquivo", "Salvar Alterações", false);
+        abrirModal();
+    }
+
+    async function salvarArquivo(event) {
+        event.preventDefault();
 
         const dados = {
-
-
-
-            nome:
-
-            document.getElementById(
-                "arquivoNome"
-            ).value,
-
-
-
-
-
-            categoria:
-
-            document.getElementById(
-                "arquivoCategoria"
-            ).value,
-
-
-
-
-
-            descricao:
-
-            document.getElementById(
-                "arquivoDescricao"
-            ).value,
-
-
-
-
-
-            tipo:tipo,
-
-
-
-
-
-            tamanho:formatarTamanhoArquivo(arquivo.size),
-
-            arquivo:caminho
-
-
-
-
-
+            nome: valor("arquivoNome"),
+            categoria: valor("arquivoCategoria"),
+            descricao: valor("arquivoDescricao")
         };
 
-
-
-
-
-
-
-        await dbSalvarArquivoBiblioteca(
-            dados
-        );
-
-
-
-
-
-
-        fecharModalArquivo();
-
-
-
-        await carregarBiblioteca();
-
-
-
-    }
-    catch(error){
-
-
-
-        console.error(
-            "Erro salvar arquivo:",
-            error
-        );
-
-
-
-        alert(
-            "Erro ao salvar arquivo."
-        );
-
-
-    }
-
-
-
-}
-
-
-
-
-
-
-
-// ==========================================================
-// VISUALIZAR ARQUIVO
-// ==========================================================
-
-
-
-async function visualizarArquivo(id){
-
-
-
-    const arquivos =
-
-    await dbBuscarBiblioteca();
-
-
-
-
-    const arquivo =
-
-    arquivos.find(
-
-        item=>
-
-        item.id == id
-
-    );
-
-
-
-
-
-    const detalhes =
-
-    document.getElementById(
-        "detalhesBiblioteca"
-    );
-
-
-
-
-
-
-    if(!detalhes || !arquivo)
-    return;
-
-
-
-
-
-
-    detalhes.innerHTML = `
-
-
-
-    <h3>
-
-    ${escaparTexto(
-        arquivo.nome
-    )}
-
-    </h3>
-
-
-
-
-    <p>
-
-    Categoria:
-
-    ${escaparTexto(
-        arquivo.categoria || ""
-    )}
-
-    </p>
-
-
-
-
-    <p>
-
-    ${escaparTexto(
-        arquivo.descricao || ""
-    )}
-
-    </p>
-
-
-
-
-
-    <a
-
-    href="${arquivo.url}"
-
-    target="_blank">
-
-
-    Abrir arquivo
-
-
-    </a>
-
-
-
-    `;
-
-
-
-}
-// ==========================================================
-// EXCLUIR ARQUIVO
-// ==========================================================
-
-
-
-async function excluirArquivo(id){
-
-
-    const confirmar =
-
-    confirm(
-        "Deseja realmente excluir este arquivo?"
-    );
-
-
-
-    if(!confirmar)
-    return;
-
-
-
-
-
-
-    try{
-
-
-        const arquivos =
-
-        await dbBuscarBiblioteca();
-
-
-
-
-        const arquivo =
-
-        arquivos.find(
-
-            item =>
-
-            item.id == id
-
-        );
-
-
-
-
-
-        if(arquivo?.arquivo){
-
-
-
-            await dbExcluirArquivoStorage(
-
-                BUCKETS.BIBLIOTECA,
-
-                arquivo.arquivo
-
-            );
-
-
+        const upload = document.getElementById("arquivoUpload")?.files?.[0];
+        const anterior = localizar(arquivoSelecionadoId);
+
+        if (!dados.nome) {
+            alert("Informe o nome do arquivo.");
+            return;
         }
 
+        if (!arquivoSelecionadoId && !upload) {
+            alert("Selecione um arquivo.");
+            return;
+        }
 
+        const botaoSalvar = document.getElementById("salvarArquivo");
+        alternarSalvamento(botaoSalvar, true);
+        let novoCaminho = anterior?.arquivo || null;
 
-
-
-
-        await dbExcluirArquivoBiblioteca(id);
-
-
-
-
-
-
-        await carregarBiblioteca();
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro excluir arquivo:",
-            error
-        );
-
-
-
-        alert(
-            "Erro ao excluir arquivo."
-        );
-
-
-    }
-
-
-
-}
-
-
-
-
-
-
-
-
-
-// ==========================================================
-// AÇÕES DA LISTA
-// ==========================================================
-
-
-
-function configurarAcoesBiblioteca(){
-
-
-
-    document
-    .querySelectorAll(
-        ".abrirArquivo"
-    )
-    .forEach(botao=>{
-
-
-        botao.addEventListener(
-            "click",
-            ()=>{
-
-
-                visualizarArquivo(
-                    botao.dataset.id
-                );
-
-
+        try {
+            if (upload) {
+                novoCaminho = `${Date.now()}-${normalizarNome(upload.name)}`;
+                await dbUploadArquivo(BUCKETS.BIBLIOTECA, novoCaminho, upload);
+                dados.tipo = upload.type || "application/octet-stream";
+                dados.tamanho = formatarTamanho(upload.size);
             }
-        );
-
-
-    });
-
-
-
-
-
-
-
-    document
-    .querySelectorAll(
-        ".excluirArquivo"
-    )
-    .forEach(botao=>{
-
-
-        botao.addEventListener(
-            "click",
-            ()=>{
-
-
-                excluirArquivo(
-                    botao.dataset.id
-                );
-
-
+            else {
+                dados.tipo = anterior?.tipo || "application/octet-stream";
+                dados.tamanho = anterior?.tamanho || "";
             }
-        );
 
-
-    });
-
-
-
-}
-
-
-
-
-
-
-
-// ==========================================================
-// PESQUISA
-// ==========================================================
-
-
-
-async function pesquisarBiblioteca(){
-
-
-
-    const campo =
-
-    document.getElementById(
-        "pesquisaBiblioteca"
-    );
-
-
-
-    const lista =
-
-    document.getElementById(
-        "listaBiblioteca"
-    );
-
-
-
-    if(!campo || !lista)
-    return;
-
-
-
-
-
-    const termo =
-
-    campo.value
-    .toLowerCase()
-    .trim();
-
-
-
-
-
-    const arquivos =
-
-    await dbBuscarBiblioteca();
-
-
-
-
-
-    const resultado =
-
-    arquivos.filter(arquivo=>{
-
-
-        return (
-
-            arquivo.nome ||
-
-            ""
-
-        )
-        .toLowerCase()
-        .includes(termo);
-
-
-
-    });
-
-
-
-
-
-
-
-    lista.innerHTML =
-
-
-    resultado.map(arquivo=>`
-
-
-    <div class="item-lista">
-
-
-        <h3>
-
-        ${escaparTexto(
-            arquivo.nome
-        )}
-
-        </h3>
-
-
-    </div>
-
-
-    `)
-    .join("");
-
-
-
-}
-// ==========================================================
-// EVENTOS
-// ==========================================================
-
-
-
-function configurarEventosBiblioteca(){
-
-
-
-    document
-    .getElementById(
-        "novoArquivo"
-    )
-    ?.addEventListener(
-        "click",
-        ()=>{
-
-
-            arquivoSelecionado =
-            null;
-
-
-            limparFormularioArquivo();
-
-
-            abrirModalArquivo();
-
-
+            dados.arquivo = novoCaminho;
+
+            if (arquivoSelecionadoId) {
+                await dbEditarArquivoBiblioteca(arquivoSelecionadoId, dados);
+            }
+            else {
+                await dbSalvarArquivoBiblioteca(dados);
+            }
+
+            if (upload && anterior?.arquivo && anterior.arquivo !== novoCaminho) {
+                await dbExcluirArquivoStorage(BUCKETS.BIBLIOTECA, anterior.arquivo).catch(() => {});
+            }
+
+            const editando = Boolean(arquivoSelecionadoId);
+            fecharModal();
+            await recarregar();
+            alert(editando ? "Arquivo atualizado com sucesso." : "Arquivo adicionado com sucesso.");
         }
-    );
-
-
-
-
-
-
-
-    document
-    .getElementById(
-        "fecharModalArquivo"
-    )
-    ?.addEventListener(
-        "click",
-        fecharModalArquivo
-    );
-
-
-
-
-
-
-
-    document
-    .getElementById(
-        "cancelarArquivo"
-    )
-    ?.addEventListener(
-        "click",
-        fecharModalArquivo
-    );
-
-
-
-
-
-
-
-    document
-    .getElementById(
-        "formArquivo"
-    )
-    ?.addEventListener(
-        "submit",
-        salvarArquivo
-    );
-
-
-
-
-
-
-
-    document
-    .getElementById(
-        "pesquisaBiblioteca"
-    )
-    ?.addEventListener(
-        "keyup",
-        pesquisarBiblioteca
-    );
-
-
-
-
-
-
-
-    document
-    .getElementById(
-        "btnPesquisarBiblioteca"
-    )
-    ?.addEventListener(
-        "click",
-        pesquisarBiblioteca
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-// ==========================================================
-// LIMPAR FORMULÁRIO
-// ==========================================================
-
-
-
-function limparFormularioArquivo(){
-
-
-
-    arquivoSelecionado =
-    null;
-
-
-
-
-    const campos = [
-
-
-        "arquivoNome",
-
-        "arquivoDescricao"
-
-
-    ];
-
-
-
-
-    campos.forEach(id=>{
-
-
-        const campo =
-
-        document.getElementById(id);
-
-
-
-        if(campo){
-
-            campo.value = "";
-
+        catch (error) {
+            if (upload && novoCaminho && novoCaminho !== anterior?.arquivo) {
+                await dbExcluirArquivoStorage(BUCKETS.BIBLIOTECA, novoCaminho).catch(() => {});
+            }
+            tratarErro("Não foi possível salvar o arquivo.", error);
         }
-
-
-    });
-
-
-
-
-
-    const categoria =
-
-    document.getElementById(
-        "arquivoCategoria"
-    );
-
-
-
-    if(categoria){
-
-        categoria.value =
-        "projeto";
-
+        finally {
+            alternarSalvamento(botaoSalvar, false);
+        }
     }
 
+    function mostrarDetalhes(id) {
+        const arquivo = localizar(id);
+        const painel = document.getElementById("detalhesBiblioteca");
+        if (!arquivo || !painel) return;
 
+        arquivoSelecionadoId = arquivo.id;
+        painel.innerHTML = `
+            <h3>${escapar(arquivo.nome)}</h3>
+            <p><strong>Categoria:</strong> ${escapar(arquivo.categoria || "-")}</p>
+            <p><strong>Tipo:</strong> ${escapar(arquivo.tipo || "-")}</p>
+            <p><strong>Tamanho:</strong> ${escapar(arquivo.tamanho || "-")}</p>
+            <p>${escapar(arquivo.descricao || "Sem descrição.")}</p>
+            ${arquivo.url ? `<p><a href="${escapar(arquivo.url)}" target="_blank" rel="noopener">Abrir arquivo</a></p>` : ""}
+            <div class="detalhes-acoes">
+                ${botao("editar", arquivo.id, "fa-pen", "Editar arquivo", "edit")}
+                ${botao("excluir", arquivo.id, "fa-trash", "Excluir arquivo", "delete")}
+            </div>
+        `;
+    }
 
-}
+    async function excluirArquivo(id) {
+        const arquivo = localizar(id);
+        if (!arquivo || !confirm(`Excluir o arquivo "${arquivo.nome}"?`)) return;
 
+        try {
+            await dbExcluirArquivoBiblioteca(arquivo.id);
+            if (arquivo.arquivo) {
+                await dbExcluirArquivoStorage(BUCKETS.BIBLIOTECA, arquivo.arquivo).catch(() => {});
+            }
+            limparDetalhes();
+            await recarregar();
+            alert("Arquivo excluído com sucesso.");
+        }
+        catch (error) {
+            tratarErro("Não foi possível excluir o arquivo.", error);
+        }
+    }
 
+    async function recarregar() {
+        arquivos = await dbBuscarBiblioteca();
+        renderizar();
+    }
 
+    function pesquisar() {
+        const termo = valor("pesquisaBiblioteca").toLocaleLowerCase("pt-BR");
+        if (!termo) return renderizar();
 
+        renderizar(arquivos.filter(arquivo =>
+            [arquivo.nome, arquivo.categoria, arquivo.descricao, arquivo.tipo]
+                .some(campo => String(campo || "").toLocaleLowerCase("pt-BR").includes(termo))
+        ));
+    }
 
+    function abrirModal() {
+        const modal = document.getElementById("modalArquivo");
+        if (!modal) return;
+        modal.style.display = "flex";
+        modal.classList.add("show");
+    }
 
+    function fecharModal() {
+        const modal = document.getElementById("modalArquivo");
+        modal?.classList.remove("show");
+        if (modal) modal.style.display = "none";
+        document.getElementById("formArquivo")?.reset();
+    }
 
+    function atualizarModal(titulo, textoBotao, arquivoObrigatorio) {
+        const tituloModal = document.querySelector("#modalArquivo .modal-header h2");
+        const botaoSalvar = document.getElementById("salvarArquivo");
+        const inputArquivo = document.getElementById("arquivoUpload");
+        if (tituloModal) tituloModal.textContent = titulo;
+        if (botaoSalvar) botaoSalvar.textContent = textoBotao;
+        if (inputArquivo) inputArquivo.required = arquivoObrigatorio;
+    }
 
-// ==========================================================
-// SEGURANÇA HTML
-// ==========================================================
+    function alternarSalvamento(botao, salvando) {
+        if (!botao) return;
+        botao.disabled = salvando;
+        if (salvando) botao.textContent = "Salvando...";
+        else botao.textContent = arquivoSelecionadoId ? "Salvar Alterações" : "Salvar Arquivo";
+    }
 
+    function limparDetalhes() {
+        arquivoSelecionadoId = null;
+        const painel = document.getElementById("detalhesBiblioteca");
+        if (painel) painel.innerHTML = "<p>Selecione um arquivo para visualizar os detalhes.</p>";
+    }
 
+    function botao(acao, id, icone, titulo, classe = "") {
+        return `
+            <button type="button" class="btn-icon ${classe}" data-acao-biblioteca="${acao}"
+                data-id="${escapar(id)}" title="${titulo}" aria-label="${titulo}">
+                <i class="fa-solid ${icone}"></i>
+            </button>
+        `;
+    }
 
-function formatarTamanhoArquivo(bytes){
+    function localizar(id) {
+        return arquivos.find(arquivo => String(arquivo.id) === String(id));
+    }
 
-    if(!Number.isFinite(bytes) || bytes <= 0)
-    return "0 B";
+    function formatarTamanho(bytes) {
+        if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+        const unidades = ["B", "KB", "MB", "GB"];
+        const indice = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), unidades.length - 1);
+        return `${(bytes / (1024 ** indice)).toFixed(indice ? 1 : 0)} ${unidades[indice]}`;
+    }
 
-    const unidades = ["B", "KB", "MB", "GB"];
-    const indice = Math.min(
-        Math.floor(Math.log(bytes) / Math.log(1024)),
-        unidades.length - 1
-    );
+    function valor(id) {
+        return document.getElementById(id)?.value?.trim() || "";
+    }
 
-    const valor = bytes / Math.pow(1024, indice);
-    return `${valor.toFixed(indice === 0 ? 0 : 1)} ${unidades[indice]}`;
+    function preencher(id, conteudo) {
+        const campo = document.getElementById(id);
+        if (campo) campo.value = conteudo || "";
+    }
 
-}
+    function normalizarNome(nome) {
+        return nome.replace(/[^a-zA-Z0-9._-]+/g, "-");
+    }
 
+    function escapar(valor) {
+        return String(valor ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
 
-
-function escaparTexto(valor){
-
-
-    return String(valor ?? "")
-
-    .replaceAll("&","&amp;")
-
-    .replaceAll("<","&lt;")
-
-    .replaceAll(">","&gt;")
-
-    .replaceAll('"',"&quot;")
-
-    .replaceAll("'","&#039;");
-
-
-}
+    function tratarErro(mensagem, error) {
+        console.error(mensagem, error);
+        alert(`${mensagem}${error?.message ? `\n${error.message}` : ""}`);
+    }
+})();
