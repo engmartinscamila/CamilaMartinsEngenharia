@@ -1,1547 +1,497 @@
 /*
-==========================================================
+=====================================================
 CAMILA MARTINS ENGENHARIA
+DATABASE.JS - CAMADA DE ACESSO AOS DADOS (SUPABASE)
+=====================================================
+Reconstruído a partir do uso real dessas funções em
+clientes.js, agenda.js, biblioteca.js e admin.js.
 
-DATABASE.JS
-
-CAMADA CENTRAL DO SISTEMA
-
-HTML
- ↓
-JS DAS PÁGINAS
- ↓
-DATABASE.JS
- ↓
-SUPABASE.JS
- ↓
-SUPABASE
-
-VERSÃO CORRIGIDA
-==========================================================
+IMPORTANTE: os nomes de tabelas/buckets abaixo (em
+TABELAS e BUCKETS, definidos em js/supabase.js) são um
+"melhor palpite" com base no padrão do restante do
+código. Confira no seu painel do Supabase se os nomes
+reais das tabelas/buckets batem com esses valores e
+ajuste em js/supabase.js se necessário.
+=====================================================
 */
 
 
-// ==========================================================
-// VERIFICA CONEXÃO
-// ==========================================================
-
-
-function verificarSupabase(){
-
-    if(!window.supabaseClient){
-
-        console.error(
-            "Supabase não conectado."
-        );
-
-        return false;
-
-    }
-
-
-    return true;
-
+function resolverBucket(nome) {
+    const chave = String(nome || "").toUpperCase();
+    return BUCKETS[chave] || nome;
 }
-
-
-
-
-
-
-// ==========================================================
-// TRATAMENTO PADRÃO DE ERRO
-// ==========================================================
-
-
-function tratarErroDatabase(error, contexto){
-
-
-    console.error(
-        "Erro:",
-        contexto,
-        error
-    );
-
-
-    return [];
-
-}
-
-
-
-
 
 
 // ==========================================================
 // CLIENTES
 // ==========================================================
 
+async function dbBuscarClientes() {
 
-
-async function dbBuscarClientes(){
-
-
-    try{
-
-
-        const {data,error}=
-
-        await supabaseClient
-
-        .from("clientes")
-
+    const { data, error } = await supabaseClient
+        .from(TABELAS.CLIENTES)
         .select("*")
+        .order("created_at", { ascending: false });
 
-        .order(
-            "created_at",
-            {
-                ascending:false
-            }
-        );
+    if (error) throw error;
 
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return data || [];
-
-
-
-    }
-    catch(error){
-
-
-        return tratarErroDatabase(
-            error,
-            "buscar clientes"
-        );
-
-
-    }
-
-
+    return data;
 }
 
 
+async function dbCriarCliente(dados) {
 
+    const { data, error } = await supabaseClient
+        .from(TABELAS.CLIENTES)
+        .insert(dados)
+        .select();
 
+    if (error) throw error;
 
-
-
-async function dbBuscarClientePorId(id){
-
-
-    try{
-
-
-        const {data,error}=
-
-        await supabaseClient
-
-        .from("clientes")
-
-        .select("*")
-
-        .eq(
-            "id",
-            id
-        )
-
-        .single();
-
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return data;
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro buscar cliente:",
-            error
-        );
-
-
-        return null;
-
-
-    }
-
-
+    return data;
 }
 
 
+async function dbEditarCliente(id, dados) {
 
+    const { data, error } = await supabaseClient
+        .from(TABELAS.CLIENTES)
+        .update(dados)
+        .eq("id", id)
+        .select();
 
+    if (error) throw error;
 
-
-
-async function dbCriarCliente(cliente){
-
-
-    try{
-
-
-        const {data,error}=
-
-        await supabaseClient
-
-        .from("clientes")
-
-        .insert([cliente])
-
-        .select()
-
-        .single();
-
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return data;
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro criar cliente:",
-            error
-        );
-
-
-        return null;
-
-
-    }
-
-
+    return data;
 }
 
 
+async function dbExcluirCliente(id) {
 
-
-
-
-
-async function dbEditarCliente(id,cliente){
-
-
-    try{
-
-
-        const {data,error}=
-
-        await supabaseClient
-
-        .from("clientes")
-
-        .update(cliente)
-
-        .eq(
-            "id",
-            id
-        )
-
-        .select()
-
-        .single();
-
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return data;
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro editar cliente:",
-            error
-        );
-
-
-        return null;
-
-
-    }
-
-
-}
-
-
-
-
-
-
-
-async function dbExcluirCliente(id){
-
-
-    try{
-
-
-        const {error}=
-
-        await supabaseClient
-
-        .from("clientes")
-
+    const { error } = await supabaseClient
+        .from(TABELAS.CLIENTES)
         .delete()
+        .eq("id", id);
 
-        .eq(
-            "id",
-            id
-        );
+    if (error) throw error;
 
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return true;
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro excluir cliente:",
-            error
-        );
-
-
-        return false;
-
-
-    }
-
-
+    return true;
 }
-// ==========================================================
-// PROJETOS
-// ==========================================================
-
-
-
-async function dbBuscarProjetos(){
-
-
-    try{
-
-
-        const {data,error}=
-
-        await supabaseClient
-
-        .from("projetos")
-
-        .select(`
-
-            *,
-
-            clientes(
-                nome
-            )
-
-        `)
-
-        .order(
-            "created_at",
-            {
-                ascending:false
-            }
-        );
-
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return data || [];
-
-
-
-    }
-    catch(error){
-
-
-        return tratarErroDatabase(
-            error,
-            "buscar projetos"
-        );
-
-
-    }
-
-
-}
-
-
-
-
-
-
-
-async function dbBuscarProjetoPorId(id){
-
-
-    try{
-
-
-        const {data,error}=
-
-        await supabaseClient
-
-        .from("projetos")
-
-        .select(`
-
-            *,
-
-            clientes(
-                nome
-            )
-
-        `)
-
-        .eq(
-            "id",
-            id
-        )
-
-        .single();
-
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return data;
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro buscar projeto:",
-            error
-        );
-
-
-        return null;
-
-
-    }
-
-
-}
-
-
-
-
-
-
-
-async function dbCriarProjeto(projeto){
-
-
-    try{
-
-
-        const {data,error}=
-
-        await supabaseClient
-
-        .from("projetos")
-
-        .insert([projeto])
-
-        .select()
-
-        .single();
-
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return data;
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro criar projeto:",
-            error
-        );
-
-
-        return null;
-
-
-    }
-
-
-}
-
-
-
-
-
-
-
-async function dbEditarProjeto(id,projeto){
-
-
-    try{
-
-
-        const {data,error}=
-
-        await supabaseClient
-
-        .from("projetos")
-
-        .update(projeto)
-
-        .eq(
-            "id",
-            id
-        )
-
-        .select()
-
-        .single();
-
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return data;
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro editar projeto:",
-            error
-        );
-
-
-        return null;
-
-
-    }
-
-
-}
-
-
-
-
-
-
-
-async function dbExcluirProjeto(id){
-
-
-    try{
-
-
-        const {error}=
-
-        await supabaseClient
-
-        .from("projetos")
-
-        .delete()
-
-        .eq(
-            "id",
-            id
-        );
-
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return true;
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro excluir projeto:",
-            error
-        );
-
-
-        return false;
-
-
-    }
-
-
-}
-
-
-
-
-
-
-
-// ==========================================================
-// DOCUMENTOS
-// ==========================================================
-
-
-
-async function dbBuscarDocumentos(){
-
-
-    try{
-
-
-        const {data,error}=
-
-        await supabaseClient
-
-        .from("documentos")
-
-        .select(`
-
-            *,
-
-            clientes(
-                nome
-            ),
-
-            projetos(
-                nome
-            )
-
-        `)
-
-        .order(
-            "created_at",
-            {
-                ascending:false
-            }
-        );
-
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return data || [];
-
-
-
-    }
-    catch(error){
-
-
-        return tratarErroDatabase(
-            error,
-            "buscar documentos"
-        );
-
-
-    }
-
-
-}
-// ==========================================================
-// DOCUMENTOS - CONTINUAÇÃO
-// ==========================================================
-
-
-
-async function dbBuscarDocumentoPorId(id){
-
-
-    try{
-
-
-        const {data,error}=
-
-        await supabaseClient
-
-        .from("documentos")
-
-        .select(`
-
-            *,
-
-            clientes(
-                nome
-            ),
-
-            projetos(
-                nome
-            )
-
-        `)
-
-        .eq(
-            "id",
-            id
-        )
-
-        .single();
-
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return data;
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro buscar documento:",
-            error
-        );
-
-
-        return null;
-
-
-    }
-
-
-}
-
-
-
-
-
-
-
-async function dbCriarDocumento(documento){
-
-
-    try{
-
-
-        const {data,error}=
-
-        await supabaseClient
-
-        .from("documentos")
-
-        .insert([documento])
-
-        .select()
-
-        .single();
-
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return data;
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro criar documento:",
-            error
-        );
-
-
-        return null;
-
-
-    }
-
-
-}
-
-
-
-
-
-
-
-async function dbExcluirDocumento(id){
-
-
-    try{
-
-
-        const {error}=
-
-        await supabaseClient
-
-        .from("documentos")
-
-        .delete()
-
-        .eq(
-            "id",
-            id
-        );
-
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return true;
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro excluir documento:",
-            error
-        );
-
-
-        return false;
-
-
-    }
-
-
-}
-
-
-
-
-
-
-
-// ==========================================================
-// FOTOS
-// ==========================================================
-
-
-
-async function dbBuscarFotos(){
-
-
-    try{
-
-
-        const {data,error}=
-
-        await supabaseClient
-
-        .from("fotos")
-
-        .select(`
-
-            *,
-
-            clientes(
-                nome
-            ),
-
-            projetos(
-                nome
-            )
-
-        `)
-
-        .order(
-            "created_at",
-            {
-                ascending:false
-            }
-        );
-
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return data || [];
-
-
-
-    }
-    catch(error){
-
-
-        return tratarErroDatabase(
-            error,
-            "buscar fotos"
-        );
-
-
-    }
-
-
-}
-
-
-
-
-
-
-
-async function dbExcluirFoto(id){
-
-
-    try{
-
-
-        const {error}=
-
-        await supabaseClient
-
-        .from("fotos")
-
-        .delete()
-
-        .eq(
-            "id",
-            id
-        );
-
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return true;
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro excluir foto:",
-            error
-        );
-
-
-        return false;
-
-
-    }
-
-
-}
-
-
-
-
-
-
-
-// ==========================================================
-// BIBLIOTECA
-// ==========================================================
-
-
-
-async function dbBuscarBiblioteca(){
-
-
-    try{
-
-
-        const {data,error}=
-
-        await supabaseClient
-
-        .from("biblioteca")
-
-        .select("*")
-
-        .order(
-            "created_at",
-            {
-                ascending:false
-            }
-        );
-
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return data || [];
-
-
-
-    }
-    catch(error){
-
-
-        return tratarErroDatabase(
-            error,
-            "buscar biblioteca"
-        );
-
-
-    }
-
-
-}
-// ==========================================================
-// FINANCEIRO
-// ==========================================================
-
-
-
-async function dbBuscarFinanceiro(){
-
-
-    try{
-
-
-        const {data,error}=
-
-        await supabaseClient
-
-        .from("financeiro")
-
-        .select(`
-
-            *,
-
-            projetos(
-                nome
-            )
-
-        `)
-
-        .order(
-            "created_at",
-            {
-                ascending:false
-            }
-        );
-
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return data || [];
-
-
-
-    }
-    catch(error){
-
-
-        return tratarErroDatabase(
-            error,
-            "buscar financeiro"
-        );
-
-
-    }
-
-
-}
-
-
-
-
-
-
-
-async function dbResumoFinanceiro(){
-
-
-    try{
-
-
-        const dados =
-        await dbBuscarFinanceiro();
-
-
-
-        let entradas = 0;
-
-        let saidas = 0;
-
-
-
-        dados.forEach(item=>{
-
-
-            if(item.tipo === "entrada"){
-
-                entradas += Number(item.valor || 0);
-
-            }
-
-
-            if(item.tipo === "saida"){
-
-                saidas += Number(item.valor || 0);
-
-            }
-
-
-        });
-
-
-
-
-        return {
-
-            entradas,
-
-            saidas,
-
-            saldo:
-            entradas - saidas
-
-        };
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro resumo financeiro:",
-            error
-        );
-
-
-        return {
-
-            entradas:0,
-
-            saidas:0,
-
-            saldo:0
-
-        };
-
-
-    }
-
-
-}
-
-
-
-
-
 
 
 // ==========================================================
 // AGENDA
 // ==========================================================
 
+async function dbBuscarAgenda() {
 
-
-async function dbBuscarAgenda(){
-
-
-    try{
-
-
-        const {data,error}=
-
-        await supabaseClient
-
-        .from("agenda")
-
-        .select(`
-
-            *,
-
-            clientes(
-                nome
-            ),
-
-            projetos(
-                nome
-            )
-
-        `)
-
-        .order(
-            "data",
-            {
-                ascending:true
-            }
-        );
-
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return data || [];
-
-
-
-    }
-    catch(error){
-
-
-        return tratarErroDatabase(
-            error,
-            "buscar agenda"
-        );
-
-
-    }
-
-
-}
-
-
-
-
-
-
-
-// ==========================================================
-// CONFIGURAÇÕES
-// ==========================================================
-
-
-
-async function dbBuscarConfiguracoes(){
-
-
-    try{
-
-
-        const {data,error}=
-
-        await supabaseClient
-
-        .from("configuracoes")
-
+    const { data, error } = await supabaseClient
+        .from(TABELAS.AGENDA)
         .select("*")
+        .order("data", { ascending: true });
 
-        .limit(1);
+    if (error) throw error;
 
-
-
-        if(error){
-
-            throw error;
-
-        }
-
-
-
-        return data?.[0] || {};
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro buscar configurações:",
-            error
-        );
-
-
-        return {};
-
-    }
-
-
+    return data;
 }
 
 
+async function dbCriarEventoAgenda(dados) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.AGENDA)
+        .insert(dados)
+        .select();
+
+    if (error) throw error;
+
+    return data;
+}
 
 
+async function dbEditarEventoAgenda(id, dados) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.AGENDA)
+        .update(dados)
+        .eq("id", id)
+        .select();
+
+    if (error) throw error;
+
+    return data;
+}
 
 
+async function dbExcluirEventoAgenda(id) {
 
-async function dbSalvarConfiguracoes(dados){
+    const { error } = await supabaseClient
+        .from(TABELAS.AGENDA)
+        .delete()
+        .eq("id", id);
 
+    if (error) throw error;
 
-    try{
-
-
-        const atual =
-        await dbBuscarConfiguracoes();
-
-
-
-        let resposta;
+    return true;
+}
 
 
+// ==========================================================
+// PROJETOS (usado no dropdown da agenda, por exemplo)
+// ==========================================================
 
-        if(atual.id){
+async function dbBuscarProjetos() {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.PROJETOS)
+        .select("*")
+        .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return data;
+}
 
 
-            resposta =
-            await supabaseClient
+// ==========================================================
+// BIBLIOTECA (arquivos)
+// ==========================================================
 
-            .from("configuracoes")
+async function dbBuscarBiblioteca() {
 
+    const { data, error } = await supabaseClient
+        .from(TABELAS.BIBLIOTECA)
+        .select("*")
+        .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return data;
+}
+
+
+async function dbSalvarArquivoBiblioteca(dados) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.BIBLIOTECA)
+        .insert(dados)
+        .select();
+
+    if (error) throw error;
+
+    return data;
+}
+
+
+async function dbExcluirArquivoBiblioteca(id) {
+
+    const { error } = await supabaseClient
+        .from(TABELAS.BIBLIOTECA)
+        .delete()
+        .eq("id", id);
+
+    if (error) throw error;
+
+    return true;
+}
+
+
+// ==========================================================
+// DOCUMENTOS
+// ==========================================================
+
+async function dbBuscarDocumentos() {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.DOCUMENTOS)
+        .select("*")
+        .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return data;
+}
+
+
+async function dbCriarDocumento(dados) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.DOCUMENTOS)
+        .insert(dados)
+        .select();
+
+    if (error) throw error;
+
+    return data;
+}
+
+
+async function dbExcluirDocumento(id) {
+
+    const { error } = await supabaseClient
+        .from(TABELAS.DOCUMENTOS)
+        .delete()
+        .eq("id", id);
+
+    if (error) throw error;
+
+    return true;
+}
+
+
+// ==========================================================
+// FOTOS
+// ==========================================================
+
+async function dbBuscarFotos() {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.FOTOS)
+        .select("*")
+        .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return data;
+}
+
+
+async function dbCriarFoto(dados) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.FOTOS)
+        .insert(dados)
+        .select();
+
+    if (error) throw error;
+
+    return data;
+}
+
+
+async function dbExcluirFoto(id) {
+
+    const { error } = await supabaseClient
+        .from(TABELAS.FOTOS)
+        .delete()
+        .eq("id", id);
+
+    if (error) throw error;
+
+    return true;
+}
+
+
+// ==========================================================
+// FINANCEIRO
+// ==========================================================
+
+async function dbBuscarFinanceiro() {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.FINANCEIRO)
+        .select("*")
+        .order("data", { ascending: false });
+
+    if (error) throw error;
+
+    return data;
+}
+
+
+async function dbCriarLancamentoFinanceiro(dados) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.FINANCEIRO)
+        .insert(dados)
+        .select();
+
+    if (error) throw error;
+
+    return data;
+}
+
+
+async function dbEditarLancamentoFinanceiro(id, dados) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.FINANCEIRO)
+        .update(dados)
+        .eq("id", id)
+        .select();
+
+    if (error) throw error;
+
+    return data;
+}
+
+
+async function dbExcluirLancamentoFinanceiro(id) {
+
+    const { error } = await supabaseClient
+        .from(TABELAS.FINANCEIRO)
+        .delete()
+        .eq("id", id);
+
+    if (error) throw error;
+
+    return true;
+}
+
+
+// ==========================================================
+// CRONOGRAMA (etapas de obra)
+// ==========================================================
+
+async function dbBuscarCronograma() {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.CRONOGRAMA)
+        .select("*")
+        .order("inicio", { ascending: true });
+
+    if (error) throw error;
+
+    return data;
+}
+
+
+async function dbCriarEtapaCronograma(dados) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.CRONOGRAMA)
+        .insert(dados)
+        .select();
+
+    if (error) throw error;
+
+    return data;
+}
+
+
+async function dbEditarEtapaCronograma(id, dados) {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.CRONOGRAMA)
+        .update(dados)
+        .eq("id", id)
+        .select();
+
+    if (error) throw error;
+
+    return data;
+}
+
+
+async function dbExcluirEtapaCronograma(id) {
+
+    const { error } = await supabaseClient
+        .from(TABELAS.CRONOGRAMA)
+        .delete()
+        .eq("id", id);
+
+    if (error) throw error;
+
+    return true;
+}
+
+
+// ==========================================================
+// CONFIGURAÇÕES (linha única com os dados da empresa/sistema)
+// ==========================================================
+
+async function dbBuscarConfiguracoes() {
+
+    const { data, error } = await supabaseClient
+        .from(TABELAS.CONFIGURACOES)
+        .select("*")
+        .limit(1)
+        .maybeSingle();
+
+    if (error) throw error;
+
+    return data;
+}
+
+
+async function dbSalvarConfiguracoes(dados) {
+
+    const existente = await dbBuscarConfiguracoes();
+
+    if (existente && existente.id) {
+
+        const { data, error } = await supabaseClient
+            .from(TABELAS.CONFIGURACOES)
             .update(dados)
+            .eq("id", existente.id)
+            .select();
 
-            .eq(
-                "id",
-                atual.id
-            );
+        if (error) throw error;
 
-
-
-        }
-        else{
-
-
-            resposta =
-            await supabaseClient
-
-            .from("configuracoes")
-
-            .insert([dados]);
-
-
-        }
-
-
-
-        if(resposta.error){
-
-            throw resposta.error;
-
-        }
-
-
-
-        return true;
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro salvar configurações:",
-            error
-        );
-
-
-        return false;
-
-
+        return data;
     }
 
+    const { data, error } = await supabaseClient
+        .from(TABELAS.CONFIGURACOES)
+        .insert(dados)
+        .select();
 
+    if (error) throw error;
+
+    return data;
 }
-
-
-
-
-
 
 
 // ==========================================================
-// CONTADORES
+// STORAGE (upload, url e exclusão de arquivos)
 // ==========================================================
 
+async function dbUploadArquivo(bucket, caminho, arquivo) {
 
+    const { data, error } = await supabaseClient
+        .storage
+        .from(resolverBucket(bucket))
+        .upload(caminho, arquivo, { upsert: true });
 
-async function dbContarClientes(){
+    if (error) throw error;
 
-    const dados =
-    await dbBuscarClientes();
-
-    return dados.length;
-
+    return data;
 }
 
 
+function dbGerarUrlArquivo(bucket, caminho) {
 
-async function dbContarProjetos(){
+    const { data } = supabaseClient
+        .storage
+        .from(resolverBucket(bucket))
+        .getPublicUrl(caminho);
 
-    const dados =
-    await dbBuscarProjetos();
-
-    return dados.length;
-
+    return data?.publicUrl || "";
 }
 
 
+async function dbExcluirArquivoStorage(bucket, caminho) {
 
-async function dbContarDocumentos(){
+    const { error } = await supabaseClient
+        .storage
+        .from(resolverBucket(bucket))
+        .remove([caminho]);
 
-    const dados =
-    await dbBuscarDocumentos();
+    if (error) throw error;
 
-    return dados.length;
-
+    return true;
 }
-
-
-
-async function dbContarFotos(){
-
-    const dados =
-    await dbBuscarFotos();
-
-    return dados.length;
-
-}
-
-
-
 
 
 // ==========================================================
-// FINAL
+// SESSÃO
 // ==========================================================
 
+async function dbSairSistema() {
 
-console.log(
-    "DATABASE.JS CARREGADO COM SUCESSO"
-);
+    const { error } = await supabaseClient.auth.signOut();
+
+    if (error) throw error;
+
+    location.href = "login.html";
+}
