@@ -53,6 +53,30 @@ async function iniciarAuth(){
 
     carregarNomeAdministrador();
 
+    configurarBotaoSair();
+
+
+}
+
+
+
+function configurarBotaoSair(){
+
+    const botao =
+    document.querySelector("#logoutButton, #btnSair");
+
+    if(!botao) return;
+
+    botao.addEventListener("click", async () => {
+
+        try{
+            await dbSairSistema();
+        }
+        catch(error){
+            console.error("Erro ao sair:", error);
+        }
+
+    });
 
 }
 
@@ -118,7 +142,7 @@ async function carregarNomeAdministrador(){
     const usuario = await supabaseClient.auth.getUser();
 
 
-    const nome = document.querySelector("#nomeAdministrador");
+    const nome = document.querySelector("#nomeAdministrador, #adminName");
 
 
     if(nome && usuario.data.user){
