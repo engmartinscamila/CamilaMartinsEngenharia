@@ -73,9 +73,16 @@ CAMILA MARTINS ENGENHARIA
         const { data, error } = await clienteSupabase
             .storage
             .from(bucket)
-            .createSignedUrl(item.arquivo, 3600);
+            .createSignedUrl(item.arquivo, 21600);
 
-        if (error) return "";
+        if (error) {
+            console.error(
+                `Não foi possível abrir ${bucket}/${item.arquivo}:`,
+                error
+            );
+            return "";
+        }
+
         return urlSegura(data?.signedUrl);
     }
 
@@ -155,7 +162,12 @@ CAMILA MARTINS ENGENHARIA
                                     <i class="bi bi-box-arrow-up-right"></i>
                                     Abrir arquivo
                                 </a>
-                            ` : ""}
+                            ` : `
+                                <div class="arquivo-indisponivel">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    Arquivo temporariamente indisponível.
+                                </div>
+                            `}
                         </article>
                     `;
                 }).join("")}
@@ -190,7 +202,10 @@ CAMILA MARTINS ENGENHARIA
                                 ? `<a href="${escapar(url)}" target="_blank" rel="noopener noreferrer">
                                     <img src="${escapar(url)}" alt="${escapar(titulo)}" loading="lazy">
                                 </a>`
-                                : ""}
+                                : `<div class="arquivo-indisponivel">
+                                    <i class="bi bi-image"></i>
+                                    Imagem temporariamente indisponível.
+                                </div>`}
                             <div class="item-body">
                                 <h2>${escapar(titulo)}</h2>
                                 <div class="item-meta">

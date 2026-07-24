@@ -85,7 +85,9 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
                     <span>${escapar(documento.nome)}</span>
                     ${documento.url
                         ? `<a href="${escapar(documento.url)}" target="_blank" rel="noopener">Abrir</a>`
-                        : ""}
+                        : `<span class="arquivo-indisponivel">
+                            Arquivo indisponível${documento.urlErro ? `: ${escapar(documento.urlErro)}` : ""}
+                        </span>`}
                 </div>
             `).join("");
         }
@@ -203,7 +205,11 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
             <p><strong>Projeto:</strong> ${escapar(nomeProjeto(documento.projeto_id))}</p>
             <p><strong>Categoria:</strong> ${escapar(documento.tipo || "-")}</p>
             <p>${escapar(documento.descricao || "Sem descrição.")}</p>
-            ${documento.url ? `<p><a href="${escapar(documento.url)}" target="_blank" rel="noopener">Baixar arquivo</a></p>` : ""}
+            ${documento.url
+                ? `<p><a href="${escapar(documento.url)}" target="_blank" rel="noopener">Baixar arquivo</a></p>`
+                : `<div class="arquivo-indisponivel">
+                    Arquivo indisponível${documento.urlErro ? `: ${escapar(documento.urlErro)}` : ""}
+                </div>`}
             <div class="detalhes-acoes">
                 ${botao("editar", documento.id, "fa-pen", "Editar documento", "edit")}
                 ${botao("excluir", documento.id, "fa-trash", "Excluir documento", "delete")}

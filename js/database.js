@@ -669,18 +669,40 @@ async function dbSalvarConfiguracoes(dados) {
 
 async function dbUploadArquivo(bucket, caminho, arquivo) {
 
+    const bucketResolvido = resolverBucket(bucket);
     const { data, error } = await supabaseClient
         .storage
-        .from(resolverBucket(bucket))
-        .upload(caminho, arquivo, { upsert: true });
+        .from(bucketResolvido)
+        .upload(caminho, arquivo, {
+            upsert: true,
+            cacheControl: "3600",
+            contentType: arquivo?.type || undefined
+        });
 
     if (error) throw error;
 
-    return data;
+    /*
+    A confirmação só é exibida depois que o arquivo também pode ser lido.
+    Isso evita o falso "carregado com sucesso" quando a gravação ocorreu,
+    mas uma política do Storage impede a exibição no portal.
+    */
+    const signedUrl = await dbGerarUrlArquivo(
+        bucketResolvido,
+        caminho,
+        21600
+    );
+
+    if (!signedUrl) {
+        throw new Error(
+            "O arquivo foi enviado, mas não pôde ser disponibilizado para leitura."
+        );
+    }
+
+    return { ...data, signedUrl };
 }
 
 
-async function dbGerarUrlArquivo(bucket, caminho, validade = 3600) {
+async function dbGerarUrlArquivo(bucket, caminho, validade = 21600) {
 
     if (!caminho) return "";
 
@@ -698,13 +720,32 @@ async function dbGerarUrlArquivo(bucket, caminho, validade = 3600) {
 async function dbAdicionarUrlsTemporarias(lista, bucket) {
 
     return Promise.all(
-        (lista || []).map(async item => ({
-            ...item,
-            url: item.arquivo
-                ? await dbGerarUrlArquivo(bucket, item.arquivo)
-                    .catch(() => "")
-                : ""
-        }))
+        (lista || []).map(async item => {
+            if (!item.arquivo) {
+                return { ...item, url: "", urlErro: "" };
+            }
+
+            try {
+                return {
+                    ...item,
+                    url: await dbGerarUrlArquivo(bucket, item.arquivo),
+                    urlErro: ""
+                };
+            }
+            catch (error) {
+                console.error(
+                    `Arquivo indisponível no bucket ${resolverBucket(bucket)}:`,
+                    item.arquivo,
+                    error
+                );
+
+                return {
+                    ...item,
+                    url: "",
+                    urlErro: error?.message || "Arquivo indisponível."
+                };
+            }
+        })
     );
 }
 

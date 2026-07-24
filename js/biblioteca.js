@@ -175,7 +175,11 @@ BIBLIOTECA.JS - CRUD ADMINISTRATIVO
             <p><strong>Tipo:</strong> ${escapar(arquivo.tipo || "-")}</p>
             <p><strong>Tamanho:</strong> ${escapar(arquivo.tamanho || "-")}</p>
             <p>${escapar(arquivo.descricao || "Sem descrição.")}</p>
-            ${arquivo.url ? `<p><a href="${escapar(arquivo.url)}" target="_blank" rel="noopener">Abrir arquivo</a></p>` : ""}
+            ${arquivo.url
+                ? `<p><a href="${escapar(arquivo.url)}" target="_blank" rel="noopener">Abrir arquivo</a></p>`
+                : `<div class="arquivo-indisponivel">
+                    Arquivo indisponível${arquivo.urlErro ? `: ${escapar(arquivo.urlErro)}` : ""}
+                </div>`}
             <div class="detalhes-acoes">
                 ${botao("editar", arquivo.id, "fa-pen", "Editar arquivo", "edit")}
                 ${botao("excluir", arquivo.id, "fa-trash", "Excluir arquivo", "delete")}

@@ -11,6 +11,8 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
     let clientes = [];
     let clienteSelecionadoId = null;
     let eventosConfigurados = false;
+    let temporizadorCep = null;
+    let ultimaConsultaCep = "";
 
     document.addEventListener("DOMContentLoaded", iniciarClientes);
 
@@ -20,6 +22,9 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
         try {
             if (paginaCompletaDeClientes()) {
                 await carregarClientes();
+            }
+            else if (document.getElementById("listaClientes")) {
+                clientes = await dbBuscarClientes();
             }
         }
         catch (error) {
@@ -82,6 +87,7 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
 
     function renderizarClientes(lista) {
         const elemento = document.getElementById("listaClientes");
+        const exibirDetalhes = paginaCompletaDeClientes();
 
         if (!elemento) return;
 
@@ -102,15 +108,17 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
                     </div>
 
                     <div class="item-acoes">
-                        <button
-                            type="button"
-                            class="btn-icon"
-                            data-acao-cliente="abrir"
-                            data-cliente-id="${escaparTexto(cliente.id)}"
-                            title="Abrir detalhes"
-                            aria-label="Abrir detalhes de ${escaparTexto(cliente.nome)}">
-                            <i class="fa-solid fa-eye"></i>
-                        </button>
+                        ${exibirDetalhes ? `
+                            <button
+                                type="button"
+                                class="btn-icon"
+                                data-acao-cliente="abrir"
+                                data-cliente-id="${escaparTexto(cliente.id)}"
+                                title="Abrir detalhes"
+                                aria-label="Abrir detalhes de ${escaparTexto(cliente.nome)}">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        ` : ""}
 
                         <button
                             type="button"
@@ -196,6 +204,14 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
         document
             .getElementById("btnPesquisarCliente")
             ?.addEventListener("click", pesquisarClientes);
+
+        document
+            .getElementById("clienteCep")
+            ?.addEventListener("input", tratarDigitacaoCep);
+
+        document
+            .getElementById("clienteCep")
+            ?.addEventListener("blur", consultarCepDoFormulario);
 
         document
             .getElementById("listaClientes")
@@ -340,8 +356,12 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
             if (paginaCompletaDeClientes()) {
                 await carregarClientes();
             }
-            else if (typeof window.carregarDashboard === "function") {
-                await window.carregarDashboard();
+            else {
+                clientes = await dbBuscarClientes();
+
+                if (typeof window.carregarDashboard === "function") {
+                    await window.carregarDashboard();
+                }
             }
         }
         catch (error) {
@@ -377,6 +397,114 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
         };
     }
 
+    function tratarDigitacaoCep(event) {
+        const campo = event.currentTarget;
+        const digitos = somenteDigitos(campo.value).slice(0, 8);
+
+        campo.value = digitos.length > 5
+            ? `${digitos.slice(0, 5)}-${digitos.slice(5)}`
+            : digitos;
+
+        window.clearTimeout(temporizadorCep);
+
+        if (digitos.length !== 8) {
+            ultimaConsultaCep = "";
+            atualizarStatusCep(
+                digitos.length
+                    ? "Digite os 8 números do CEP."
+                    : "",
+                ""
+            );
+            return;
+        }
+
+        temporizadorCep = window.setTimeout(
+            consultarCepDoFormulario,
+            450
+        );
+    }
+
+    async function consultarCepDoFormulario() {
+        const campoCep = document.getElementById("clienteCep");
+        const cep = somenteDigitos(campoCep?.value);
+
+        if (!campoCep || cep.length !== 8 || cep === ultimaConsultaCep) {
+            return;
+        }
+
+        ultimaConsultaCep = cep;
+        atualizarStatusCep("Buscando endereço...", "");
+        campoCep.setAttribute("aria-busy", "true");
+
+        try {
+            const resposta = await fetch(
+                `https://viacep.com.br/ws/${encodeURIComponent(cep)}/json/`,
+                {
+                    method: "GET",
+                    headers: { Accept: "application/json" }
+                }
+            );
+
+            if (!resposta.ok) {
+                throw new Error("Serviço de CEP indisponível.");
+            }
+
+            const endereco = await resposta.json();
+
+            if (endereco.erro) {
+                throw new Error("CEP não encontrado.");
+            }
+
+            const partesEndereco = [
+                endereco.logradouro,
+                endereco.bairro
+            ].filter(Boolean);
+
+            preencherCampo(
+                "clienteEndereco",
+                partesEndereco.join(" — ")
+            );
+            preencherCampo(
+                "clienteCidade",
+                endereco.localidade || ""
+            );
+            preencherCampo(
+                "clienteEstado",
+                endereco.uf || endereco.estado || ""
+            );
+            campoCep.value = endereco.cep || campoCep.value;
+            atualizarStatusCep(
+                "Endereço preenchido. Você pode alterar qualquer campo.",
+                "sucesso"
+            );
+
+            document.getElementById("clienteEndereco")?.focus();
+        }
+        catch (error) {
+            ultimaConsultaCep = "";
+            console.warn("Não foi possível consultar o CEP:", error);
+            atualizarStatusCep(
+                `${error.message || "Não foi possível consultar o CEP"} Digite o endereço manualmente.`,
+                "erro"
+            );
+        }
+        finally {
+            campoCep.removeAttribute("aria-busy");
+        }
+    }
+
+    function somenteDigitos(valor) {
+        return String(valor || "").replace(/\D/g, "");
+    }
+
+    function atualizarStatusCep(texto, tipo) {
+        const status = document.getElementById("cepStatus");
+        if (!status) return;
+
+        status.textContent = texto;
+        status.className = `cep-status ${tipo || ""}`.trim();
+    }
+
     function valorCampo(id) {
         return document.getElementById(id)?.value.trim() || "";
     }
@@ -384,6 +512,8 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
     function limparFormularioCliente() {
         document.getElementById("formCliente")?.reset();
         clienteSelecionadoId = null;
+        ultimaConsultaCep = "";
+        atualizarStatusCep("", "");
 
         const status = document.getElementById("clienteStatus");
         if (status) status.value = "ativo";
@@ -409,6 +539,11 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
         preencherCampo("clienteStatus", cliente.status || "ativo");
         preencherCampo("clienteObservacoes", cliente.observacoes);
         atualizarTituloModal("Editar Cliente");
+        ultimaConsultaCep = somenteDigitos(cliente.cep);
+        atualizarStatusCep(
+            "Altere o CEP para buscar outro endereço.",
+            ""
+        );
         abrirModalCliente();
     }
 
@@ -444,8 +579,12 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
             if (paginaCompletaDeClientes()) {
                 await carregarClientes();
             }
-            else if (typeof window.carregarDashboard === "function") {
-                await window.carregarDashboard();
+            else {
+                clientes = await dbBuscarClientes();
+
+                if (typeof window.carregarDashboard === "function") {
+                    await window.carregarDashboard();
+                }
             }
         }
         catch (error) {

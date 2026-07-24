@@ -48,6 +48,14 @@
   />
 
   <style>
+    @font-face {
+      font-family: "Brittany";
+      src: url("assets/fonts/BrittanySignatureScript.ttf") format("truetype");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
     * {
       box-sizing: border-box;
     }
@@ -60,7 +68,7 @@
       min-height: 100vh;
       margin: 0;
       color: #f4f6f8;
-      font-family: Arial, Helvetica, sans-serif;
+      font-family: "Century Gothic", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
 
       background:
         radial-gradient(
@@ -233,7 +241,7 @@
       margin: 0;
       color: #ffffff;
 
-      font-family: "Parisienne", cursive;
+      font-family: "Brittany", "Parisienne", "Segoe Script", cursive;
       font-size: clamp(45px, 11vw, 62px);
       font-weight: 400;
       line-height: 1;
@@ -562,6 +570,12 @@
         <a href="portfolio.html">
           <i class="bi bi-images"></i>
           <span>Portfólio</span>
+          <i class="bi bi-arrow-right arrow"></i>
+        </a>
+
+        <a href="login.html">
+          <i class="bi bi-person-lock"></i>
+          <span>Área do Cliente</span>
           <i class="bi bi-arrow-right arrow"></i>
         </a>
 

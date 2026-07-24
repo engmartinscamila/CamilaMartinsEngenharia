@@ -66,7 +66,9 @@ FOTOS.JS - CRUD ADMINISTRATIVO
             <article class="foto-item" data-acao-foto="abrir" data-id="${escapar(foto.id)}">
                 ${foto.url
                     ? `<img src="${escapar(foto.url)}" alt="${escapar(foto.nome)}">`
-                    : `<div class="estado-vazio">Imagem indisponível</div>`}
+                    : `<div class="arquivo-indisponivel">
+                        Imagem indisponível${foto.urlErro ? `: ${escapar(foto.urlErro)}` : ""}
+                    </div>`}
                 <span>${escapar(foto.nome || "Foto sem título")}</span>
                 <div class="foto-acoes">
                     ${botao("editar", foto.id, "fa-pen", "Editar foto", "edit")}
@@ -183,7 +185,11 @@ FOTOS.JS - CRUD ADMINISTRATIVO
         fotoSelecionadaId = foto.id;
         painel.innerHTML = `
             <h3>${escapar(foto.nome)}</h3>
-            ${foto.url ? `<img src="${escapar(foto.url)}" alt="${escapar(foto.nome)}" style="max-width:100%;border-radius:14px;">` : ""}
+            ${foto.url
+                ? `<img src="${escapar(foto.url)}" alt="${escapar(foto.nome)}" style="max-width:100%;border-radius:2px;">`
+                : `<div class="arquivo-indisponivel">
+                    Imagem indisponível${foto.urlErro ? `: ${escapar(foto.urlErro)}` : ""}
+                </div>`}
             <p><strong>Cliente:</strong> ${escapar(nomeCliente(foto.cliente_id))}</p>
             <p><strong>Projeto:</strong> ${escapar(nomeProjeto(foto.projeto_id))}</p>
             <p>${escapar(foto.descricao || "Sem descrição.")}</p>

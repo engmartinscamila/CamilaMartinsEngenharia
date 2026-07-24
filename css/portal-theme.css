@@ -1,0 +1,191 @@
+@font-face {
+    font-family: "Brittany";
+    src: url("../assets/fonts/BrittanySignatureScript.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    --azul-principal: #010914;
+    --azul-secundario: #030d1a;
+    --azul-card: rgba(7, 17, 31, 0.92);
+    --azul: #010914;
+    --azul-escuro: #010914;
+    --dourado: #b89a63;
+    --dourado-claro: #d0b47a;
+    --branco: #d8dadd;
+    --texto-claro: #d8dadd;
+    --texto-suave: #aeb4bd;
+    --cinza: #aeb4bd;
+    --cinza-2: #7f8995;
+    --borda: rgba(184, 154, 99, 0.34);
+    --font-main: "Century Gothic", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+    --font-signature: "Brittany", "Parisienne", "Segoe Script", cursive;
+}
+
+html {
+    color-scheme: dark;
+}
+
+body {
+    font-family: var(--font-main) !important;
+    font-weight: 300;
+    color: var(--branco);
+    background:
+        radial-gradient(circle at 10% 0%, rgba(184, 154, 99, 0.1), transparent 26%),
+        linear-gradient(145deg, #000711, #010914 56%, #030d1a) !important;
+}
+
+button,
+input,
+textarea,
+select {
+    font-family: var(--font-main) !important;
+}
+
+.signature,
+.message-signature {
+    font-family: var(--font-signature) !important;
+    color: var(--dourado) !important;
+    font-weight: 400 !important;
+}
+
+.brand-subtitle,
+.page-title,
+.welcome-title,
+.status-title,
+.section-heading h2,
+.portal-card h3,
+.message-title,
+.support-title,
+.card-title,
+.project-name,
+.item-card h2,
+.request-form h2,
+h1,
+h2,
+h3 {
+    font-family: var(--font-main) !important;
+    font-weight: 300 !important;
+}
+
+.topbar {
+    border-bottom-color: var(--borda) !important;
+    background: rgba(0, 7, 17, 0.88) !important;
+}
+
+.page-wrapper,
+.portal-container,
+.page-container {
+    color: var(--branco);
+}
+
+.background-circle {
+    border-color: rgba(184, 154, 99, 0.12) !important;
+}
+
+.welcome-card,
+.status-card,
+.portal-card,
+.engineer-message,
+.support-card,
+.card,
+.area-panel,
+.item-card,
+.request-form,
+.client-strip,
+.login-card {
+    border-color: var(--borda) !important;
+    border-radius: 2px !important;
+    background:
+        linear-gradient(145deg, rgba(216, 218, 221, 0.05), rgba(216, 218, 221, 0.015)),
+        rgba(3, 13, 26, 0.94) !important;
+    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.38) !important;
+}
+
+.portal-card:hover {
+    border-color: rgba(184, 154, 99, 0.68) !important;
+    transform: translateY(-5px);
+}
+
+.card-icon,
+.status-icon,
+.eyebrow,
+.stage-label,
+.info-label,
+.detail-name,
+.footer-security,
+.card-arrow {
+    color: var(--dourado) !important;
+}
+
+.page-description,
+.welcome-text,
+.portal-card p,
+.message-text,
+.support-card p,
+.item-card p,
+.project-client,
+.form-message,
+.page-footer,
+.portal-footer,
+.client-strip {
+    color: var(--cinza) !important;
+}
+
+.back-button,
+.logout-button,
+.item-link {
+    border-color: var(--borda) !important;
+    border-radius: 0 !important;
+    background: rgba(216, 218, 221, 0.025) !important;
+    color: var(--dourado-claro) !important;
+}
+
+.whatsapp-button,
+.submit-button,
+.login-button {
+    border: 1px solid var(--dourado) !important;
+    border-radius: 0 !important;
+    background: var(--dourado) !important;
+    color: #010914 !important;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select,
+.input-wrapper input {
+    border-color: var(--borda) !important;
+    border-radius: 0 !important;
+    background: #010914 !important;
+    color: var(--branco) !important;
+}
+
+.progress-bar {
+    background: #000711 !important;
+}
+
+.progress-fill {
+    background: linear-gradient(90deg, var(--dourado), var(--dourado-claro)) !important;
+}
+
+.photo-card img {
+    background: #000711;
+}
+
+.arquivo-indisponivel {
+    min-height: 120px;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    border-bottom: 1px dashed var(--borda);
+    color: var(--cinza);
+    text-align: center;
+}
+
+@media (max-width: 800px) {
+    .topbar {
+        background: rgba(0, 7, 17, 0.96) !important;
+    }
+}
