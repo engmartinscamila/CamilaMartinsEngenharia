@@ -1,1060 +1,208 @@
 /*
-==========================================================
+=====================================================
 CAMILA MARTINS ENGENHARIA
-
 DOCUMENTOS.JS
-GERENCIAMENTO DE DOCUMENTOS
-
-VERSÃO CORRIGIDA
-==========================================================
+=====================================================
 */
 
+let documentos = [];
+let clientesDocumentos = [];
+let projetosDocumentos = [];
 
-let documentoSelecionado = null;
+document.addEventListener("DOMContentLoaded", () => {
+    iniciarDocumentos();
+});
 
+async function iniciarDocumentos() {
+    try {
+        mostrarLoading(true);
 
+        const [docs, clientes, projetos] = await Promise.all([
+            dbBuscarDocumentos(),
+            dbBuscarClientes().catch(() => []),
+            dbBuscarProjetos().catch(() => [])
+        ]);
 
-// ==========================================================
-// INICIALIZAÇÃO
-// ==========================================================
+        documentos = docs;
+        clientesDocumentos = clientes;
+        projetosDocumentos = projetos;
 
+        preencherSelect("documentoCliente", clientes, "nome");
+        preencherSelect("documentoProjeto", projetos, "nome");
 
-document.addEventListener(
-    "DOMContentLoaded",
-    async()=>{
-
-
-        await iniciarDocumentos();
-
-
+        renderizarDocumentos();
+        configurarEventosDocumentos();
     }
-);
-
-
-
-
-
-async function iniciarDocumentos(){
-
-
-    try{
-
-
-        await carregarDocumentos();
-
-
-        await carregarClientesDocumento();
-
-
-        await carregarProjetosDocumento();
-
-
-        configurarEventosDocumento();
-
-
-
+    catch (error) {
+        console.error("Erro ao iniciar documentos:", error);
     }
-    catch(error){
-
-
-        console.error(
-            "Erro iniciando documentos:",
-            error
-        );
-
-
+    finally {
+        mostrarLoading(false);
     }
-
-
 }
 
+function mostrarLoading(mostrar) {
+    const el = document.getElementById("loading");
+    if (el) el.style.display = mostrar ? "flex" : "none";
+}
 
+function preencherSelect(id, itens, campoLabel) {
+    const select = document.getElementById(id);
+    if (!select) return;
 
+    const atual = select.innerHTML.match(/<option[^>]*value=""[^>]*>[^<]*<\/option>/);
+    select.innerHTML = (atual ? atual[0] : `<option value="">Selecione</option>`) +
+        itens.map(item => `<option value="${item.id}">${item[campoLabel] ?? ""}</option>`).join("");
+}
 
+function renderizarDocumentos(lista = documentos) {
+    const container = document.getElementById("listaDocumentos");
+    if (!container) return;
 
+    if (!lista || lista.length === 0) {
+        container.innerHTML = `<div class="vazio">Nenhum documento cadastrado.</div>`;
+        return;
+    }
 
-// ==========================================================
-// LISTAR DOCUMENTOS
-// ==========================================================
-
-
-
-async function carregarDocumentos(){
-
-
-    const lista =
-
-    document.getElementById(
-        "listaDocumentos"
-    );
-
-
-
-    if(!lista)
-    return;
-
-
-
-    try{
-
-
-        const documentos =
-
-        await dbBuscarDocumentos();
-
-
-
-
-        if(!documentos.length){
-
-
-            lista.innerHTML = `
-
-            <div class="estado-vazio">
-
-                Nenhum documento cadastrado.
-
+    container.innerHTML = lista.map(doc => `
+        <div class="documento-item" data-id="${doc.id}">
+            <i class="fa-solid fa-file"></i>
+            <div class="documento-info">
+                <strong>${doc.nome ?? ""}</strong>
+                <span>${doc.categoria ?? ""}</span>
             </div>
+            <div class="documento-acoes">
+                <button type="button" class="btn-abrir-documento" data-id="${doc.id}">Abrir</button>
+                <button type="button" class="btn-excluir-documento" data-id="${doc.id}">Excluir</button>
+            </div>
+        </div>
+    `).join("");
 
-            `;
+    container.querySelectorAll(".btn-abrir-documento").forEach(btn => {
+        btn.addEventListener("click", () => mostrarDetalhesDocumento(btn.dataset.id));
+    });
 
+    container.querySelectorAll(".btn-excluir-documento").forEach(btn => {
+        btn.addEventListener("click", () => excluirDocumento(btn.dataset.id));
+    });
+}
 
-            return;
+function configurarEventosDocumentos() {
+    document.getElementById("novoDocumento")?.addEventListener("click", abrirModalDocumento);
+    document.getElementById("cancelarDocumento")?.addEventListener("click", fecharModalDocumento);
+    document.getElementById("fecharModalDocumento")?.addEventListener("click", fecharModalDocumento);
 
+    document.getElementById("formDocumento")?.addEventListener("submit", salvarDocumento);
 
+    document.getElementById("pesquisaDocumento")?.addEventListener("input", pesquisarDocumentos);
+    document.getElementById("btnPesquisarDocumento")?.addEventListener("click", pesquisarDocumentos);
+}
+
+function abrirModalDocumento() {
+    document.getElementById("formDocumento")?.reset();
+    const modal = document.getElementById("modalDocumento");
+    if (modal) modal.style.display = "flex";
+}
+
+function fecharModalDocumento() {
+    const modal = document.getElementById("modalDocumento");
+    if (modal) modal.style.display = "none";
+}
+
+async function salvarDocumento(e) {
+    e.preventDefault();
+
+    const nome = document.getElementById("documentoNome")?.value.trim();
+    const categoria = document.getElementById("documentoCategoria")?.value || "";
+    const clienteId = document.getElementById("documentoCliente")?.value || null;
+    const projetoId = document.getElementById("documentoProjeto")?.value || null;
+    const descricao = document.getElementById("documentoDescricao")?.value.trim() || "";
+    const arquivoInput = document.getElementById("documentoArquivo");
+    const arquivo = arquivoInput?.files?.[0];
+
+    if (!nome) {
+        alert("Informe o nome do documento.");
+        return;
+    }
+
+    try {
+        let caminho = null;
+
+        if (arquivo) {
+            caminho = `${Date.now()}-${arquivo.name}`;
+            await dbUploadArquivo(BUCKETS.DOCUMENTOS, caminho, arquivo);
         }
 
-
-
-
-
-
-        lista.innerHTML =
-
-
-        documentos.map(documento=>`
-
-
-
-        <div class="item-lista documento-item">
-
-
-            <div>
-
-
-                <h3>
-
-                ${escaparTexto(
-                    documento.nome ||
-                    "Documento"
-                )}
-
-                </h3>
-
-
-
-                <p>
-
-                ${escaparTexto(
-                    documento.categoria || ""
-                )}
-
-                </p>
-
-
-
-                <span>
-
-                ${
-                    escaparTexto(
-                        documento.clientes?.nome || ""
-                    )
-                }
-
-                </span>
-
-
-            </div>
-
-
-
-
-
-            <div class="acoes-item">
-
-
-                <button
-                class="visualizarDocumento"
-                data-id="${documento.id}">
-
-                    👁
-
-                </button>
-
-
-
-                <button
-                class="excluirDocumento"
-                data-id="${documento.id}">
-
-                    🗑
-
-                </button>
-
-
-
-            </div>
-
-
-
-        </div>
-
-
-
-        `)
-
-        .join("");
-
-
-
-
-        configurarAcoesDocumentos();
-
-
-
-    }
-    catch(error){
-
-
-        console.error(
-            "Erro carregar documentos:",
-            error
-        );
-
-
-    }
-
-
-
-}
-// ==========================================================
-// CARREGAR CLIENTES
-// ==========================================================
-
-
-async function carregarClientesDocumento(){
-
-
-    const select =
-
-    document.getElementById(
-        "documentoCliente"
-    );
-
-
-
-    if(!select)
-    return;
-
-
-
-    const clientes =
-
-    await dbBuscarClientes();
-
-
-
-
-    select.innerHTML = `
-
-        <option value="">
-            Selecione o cliente
-        </option>
-
-    `;
-
-
-
-
-    clientes.forEach(cliente=>{
-
-
-        select.innerHTML += `
-
-            <option value="${cliente.id}">
-
-                ${escaparTexto(
-                    cliente.nome
-                )}
-
-            </option>
-
-        `;
-
-
-    });
-
-
-
-}
-
-
-
-
-
-
-// ==========================================================
-// CARREGAR PROJETOS
-// ==========================================================
-
-
-
-async function carregarProjetosDocumento(){
-
-
-    const select =
-
-    document.getElementById(
-        "documentoProjeto"
-    );
-
-
-
-    if(!select)
-    return;
-
-
-
-
-    const projetos =
-
-    await dbBuscarProjetos();
-
-
-
-
-    select.innerHTML = `
-
-        <option value="">
-            Selecione o projeto
-        </option>
-
-    `;
-
-
-
-    projetos.forEach(projeto=>{
-
-
-        select.innerHTML += `
-
-            <option value="${projeto.id}">
-
-                ${escaparTexto(
-                    projeto.nome
-                )}
-
-            </option>
-
-        `;
-
-
-    });
-
-
-}
-
-
-
-
-
-
-
-// ==========================================================
-// ABRIR / FECHAR MODAL
-// ==========================================================
-
-
-
-function abrirModalDocumento(){
-
-
-    const modal =
-
-    document.getElementById(
-        "modalDocumento"
-    );
-
-
-
-    if(modal){
-
-        modal.style.display = "flex";
-
-    }
-
-
-}
-
-
-
-
-function fecharModalDocumento(){
-
-
-    const modal =
-
-    document.getElementById(
-        "modalDocumento"
-    );
-
-
-
-    if(modal){
-
-        modal.style.display = "none";
-
-    }
-
-
-
-    limparFormularioDocumento();
-
-
-
-}
-
-
-
-
-
-
-
-// ==========================================================
-// SALVAR DOCUMENTO
-// ==========================================================
-
-
-
-async function salvarDocumento(evento){
-
-
-    evento.preventDefault();
-
-
-
-    try{
-
-
-        const documento = {
-
-
-            nome:
-
-            document.getElementById(
-                "documentoNome"
-            ).value,
-
-
-
-            cliente_id:
-
-            document.getElementById(
-                "documentoCliente"
-            ).value || null,
-
-
-
-            projeto_id:
-
-            document.getElementById(
-                "documentoProjeto"
-            ).value || null,
-
-
-
-            categoria:
-
-            document.getElementById(
-                "documentoCategoria"
-            )?.value || "",
-
-
-
-            descricao:
-
-            document.getElementById(
-                "documentoDescricao"
-            )?.value || ""
-
-
-
-        };
-
-
-
-
-
-        await dbSalvarDocumento(
-            documento
-        );
-
-
+        await dbCriarDocumento({
+            nome,
+            categoria,
+            cliente_id: clienteId || null,
+            projeto_id: projetoId || null,
+            descricao,
+            caminho
+        });
 
         fecharModalDocumento();
 
-
-        await carregarDocumentos();
-
-
-
+        documentos = await dbBuscarDocumentos();
+        renderizarDocumentos();
     }
-    catch(error){
-
-
-        console.error(
-            "Erro salvar documento:",
-            error
-        );
-
-
-        alert(
-            "Erro ao salvar documento."
-        );
-
-
+    catch (error) {
+        console.error("Erro ao salvar documento:", error);
+        alert("Não foi possível salvar o documento.");
     }
-
-
-
 }
-// ==========================================================
-// EXCLUIR DOCUMENTO
-// ==========================================================
 
+function mostrarDetalhesDocumento(id) {
+    const doc = documentos.find(d => String(d.id) === String(id));
+    const painel = document.getElementById("detalhesDocumento");
+    if (!doc || !painel) return;
 
+    let link = "";
+    if (doc.caminho) {
+        link = dbGerarUrlArquivo(BUCKETS.DOCUMENTOS, doc.caminho);
+    }
 
-async function excluirDocumento(id){
+    painel.innerHTML = `
+        <h3>${doc.nome ?? ""}</h3>
+        <p>${doc.descricao ?? ""}</p>
+        ${link ? `<a href="${link}" target="_blank" rel="noopener">Baixar arquivo</a>` : ""}
+    `;
+}
 
+async function excluirDocumento(id) {
+    if (!confirm("Deseja realmente excluir este documento?")) return;
 
-    const confirmar = confirm(
-        "Deseja realmente excluir este documento?"
-    );
+    try {
+        const doc = documentos.find(d => String(d.id) === String(id));
 
-
-
-    if(!confirmar)
-    return;
-
-
-
-    try{
-
+        if (doc?.caminho) {
+            await dbExcluirArquivoStorage(BUCKETS.DOCUMENTOS, doc.caminho).catch(() => {});
+        }
 
         await dbExcluirDocumento(id);
 
-
-
-        await carregarDocumentos();
-
-
-
+        documentos = await dbBuscarDocumentos();
+        renderizarDocumentos();
     }
-    catch(error){
+    catch (error) {
+        console.error("Erro ao excluir documento:", error);
+        alert("Não foi possível excluir o documento.");
+    }
+}
 
+function pesquisarDocumentos() {
+    const termo = (document.getElementById("pesquisaDocumento")?.value || "").toLowerCase().trim();
 
-        console.error(
-            "Erro excluir documento:",
-            error
-        );
-
-
-        alert(
-            "Erro ao excluir documento."
-        );
-
-
+    if (!termo) {
+        renderizarDocumentos();
+        return;
     }
 
-
-
-}
-
-
-
-
-
-
-// ==========================================================
-// VISUALIZAR DOCUMENTO
-// ==========================================================
-
-
-
-async function visualizarDocumento(id){
-
-
-    const documentos =
-
-    await dbBuscarDocumentos();
-
-
-
-
-    const documento =
-
-    documentos.find(
-        item =>
-        item.id == id
+    const filtrados = documentos.filter(doc =>
+        (doc.nome || "").toLowerCase().includes(termo) ||
+        (doc.categoria || "").toLowerCase().includes(termo)
     );
 
-
-
-    if(!documento)
-    return;
-
-
-
-    const detalhes =
-
-    document.getElementById(
-        "detalhesDocumento"
-    );
-
-
-
-    if(!detalhes)
-    return;
-
-
-
-    detalhes.innerHTML = `
-
-
-        <h3>
-
-        ${escaparTexto(
-            documento.nome
-        )}
-
-        </h3>
-
-
-
-        <p>
-
-        Cliente:
-
-        ${escaparTexto(
-            documento.clientes?.nome || ""
-        )}
-
-        </p>
-
-
-
-        <p>
-
-        ${escaparTexto(
-            documento.descricao || ""
-        )}
-
-        </p>
-
-
-
-        ${
-            documento.url ?
-
-            `
-
-            <a
-            href="${documento.url}"
-            target="_blank">
-
-                Abrir arquivo
-
-            </a>
-
-            `
-
-            :
-
-            ""
-
-        }
-
-
-    `;
-
-
-
-}
-
-
-
-
-
-
-
-// ==========================================================
-// AÇÕES DA LISTA
-// ==========================================================
-
-
-
-function configurarAcoesDocumentos(){
-
-
-
-    document
-    .querySelectorAll(
-        ".visualizarDocumento"
-    )
-    .forEach(botao=>{
-
-
-        botao.addEventListener(
-            "click",
-            ()=>{
-
-
-                visualizarDocumento(
-                    botao.dataset.id
-                );
-
-
-            }
-        );
-
-
-    });
-
-
-
-
-
-
-
-    document
-    .querySelectorAll(
-        ".excluirDocumento"
-    )
-    .forEach(botao=>{
-
-
-        botao.addEventListener(
-            "click",
-            ()=>{
-
-
-                excluirDocumento(
-                    botao.dataset.id
-                );
-
-
-            }
-        );
-
-
-    });
-
-
-
-}
-
-
-
-
-
-
-
-// ==========================================================
-// EVENTOS
-// ==========================================================
-
-
-
-function configurarEventosDocumento(){
-
-
-
-    document
-    .getElementById(
-        "novoDocumento"
-    )
-    ?.addEventListener(
-        "click",
-        ()=>{
-
-
-            abrirModalDocumento();
-
-
-        }
-    );
-
-
-
-
-
-    document
-    .getElementById(
-        "fecharModalDocumento"
-    )
-    ?.addEventListener(
-        "click",
-        fecharModalDocumento
-    );
-
-
-
-
-
-    document
-    .getElementById(
-        "cancelarDocumento"
-    )
-    ?.addEventListener(
-        "click",
-        fecharModalDocumento
-    );
-
-
-
-
-
-    document
-    .getElementById(
-        "formDocumento"
-    )
-    ?.addEventListener(
-        "submit",
-        salvarDocumento
-    );
-
-
-
-}
-// ==========================================================
-// LIMPAR FORMULÁRIO
-// ==========================================================
-
-
-
-function limparFormularioDocumento(){
-
-
-    documentoSelecionado = null;
-
-
-
-    const campos = [
-
-
-        "documentoNome",
-
-        "documentoDescricao"
-
-
-    ];
-
-
-
-
-    campos.forEach(id=>{
-
-
-        const campo =
-
-        document.getElementById(id);
-
-
-
-        if(campo){
-
-            campo.value = "";
-
-        }
-
-
-    });
-
-
-
-
-    const cliente =
-
-    document.getElementById(
-        "documentoCliente"
-    );
-
-
-
-    const projeto =
-
-    document.getElementById(
-        "documentoProjeto"
-    );
-
-
-
-
-    if(cliente){
-
-        cliente.value = "";
-
-    }
-
-
-
-    if(projeto){
-
-        projeto.value = "";
-
-    }
-
-
-
-}
-
-
-
-
-
-
-
-
-// ==========================================================
-// PESQUISA
-// ==========================================================
-
-
-
-async function pesquisarDocumentos(){
-
-
-
-    const campo =
-
-    document.getElementById(
-        "pesquisaDocumento"
-    );
-
-
-
-    const lista =
-
-    document.getElementById(
-        "listaDocumentos"
-    );
-
-
-
-    if(!campo || !lista)
-    return;
-
-
-
-
-
-    const termo =
-
-    campo.value
-    .toLowerCase()
-    .trim();
-
-
-
-
-    const documentos =
-
-    await dbBuscarDocumentos();
-
-
-
-
-
-    const resultado =
-
-    documentos.filter(documento=>{
-
-
-        return (
-
-            documento.nome ||
-
-            ""
-
-        )
-        .toLowerCase()
-        .includes(termo);
-
-
-
-    });
-
-
-
-
-
-
-    lista.innerHTML =
-
-
-    resultado.map(documento=>`
-
-
-        <div class="item-lista documento-item">
-
-
-            <h3>
-
-                ${escaparTexto(
-                    documento.nome
-                )}
-
-            </h3>
-
-
-        </div>
-
-
-
-    `)
-
-    .join("");
-
-
-
-}
-
-
-
-
-
-
-
-// ==========================================================
-// SEGURANÇA HTML
-// ==========================================================
-
-
-
-function escaparTexto(valor){
-
-
-    return String(valor ?? "")
-
-    .replaceAll("&","&amp;")
-
-    .replaceAll("<","&lt;")
-
-    .replaceAll(">","&gt;")
-
-    .replaceAll('"',"&quot;")
-
-    .replaceAll("'","&#039;");
-
-
+    renderizarDocumentos(filtrados);
 }
