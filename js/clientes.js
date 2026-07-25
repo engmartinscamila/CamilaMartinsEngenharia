@@ -341,23 +341,57 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
         }
 
         try {
+            const estavaEditando = Boolean(clienteSelecionadoId);
+            let notificacaoCadastro = null;
+
             if (clienteSelecionadoId) {
                 await dbEditarCliente(clienteSelecionadoId, dados);
             }
             else {
-                await dbCriarCliente(dados);
-            }
+                const registrosCriados = await dbCriarCliente(dados);
+                const clienteCriado = Array.isArray(registrosCriados)
+                    ? registrosCriados[0]
+                    : registrosCriados;
 
-            const estavaEditando = Boolean(clienteSelecionadoId);
+                if (clienteCriado?.id) {
+                    notificacaoCadastro = await dbNotificarAtualizacao({
+                        tipo: "cliente_cadastrado",
+                        cliente_id: clienteCriado.id,
+                        projeto_id: null,
+                        titulo: "Bem-vindo ao Portal do Cliente",
+                        mensagem:
+                            "Seu cadastro no Portal do Cliente foi realizado. " +
+                            "Acesse a página de login e escolha “Primeiro acesso: " +
+                            "criar minha senha” usando este mesmo e-mail."
+                    });
+                }
+            }
 
             fecharModalCliente();
             limparFormularioCliente();
-            mostrarMensagem(
-                estavaEditando
-                    ? "Cliente atualizado com sucesso."
-                    : "Cliente cadastrado com sucesso.",
-                "sucesso"
-            );
+
+            if (estavaEditando) {
+                mostrarMensagem(
+                    "Cliente atualizado com sucesso.",
+                    "sucesso"
+                );
+            }
+            else if (notificacaoCadastro?.enviado) {
+                mostrarMensagem(
+                    "Cliente cadastrado e e-mail de primeiro acesso enviado.",
+                    "sucesso"
+                );
+            }
+            else {
+                mostrarMensagem(
+                    "Cliente cadastrado, mas o e-mail não foi enviado. " +
+                    (
+                        notificacaoCadastro?.motivo ||
+                        "Verifique a função de notificação e tente novamente."
+                    ),
+                    "aviso"
+                );
+            }
 
             if (paginaCompletaDeClientes()) {
                 await carregarClientes();
