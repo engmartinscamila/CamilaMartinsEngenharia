@@ -22,8 +22,8 @@ Painel Administrativo | Camila Martins Engenharia
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Parisienne&display=swap" rel="stylesheet">
 
 
-<link rel="stylesheet" href="css/admin.css?v=20260724-7">
-<link rel="stylesheet" href="css/admin-theme.css?v=20260724-7">
+<link rel="stylesheet" href="css/admin.css?v=20260724-8">
+<link rel="stylesheet" href="css/admin-theme.css?v=20260724-8">
 
 
 <link rel="stylesheet"
@@ -759,7 +759,13 @@ Armazenamento
 
 
 
-<div class="barra-storage">
+<div
+class="barra-storage"
+role="progressbar"
+aria-label="Uso do armazenamento"
+aria-valuemin="0"
+aria-valuemax="100"
+aria-valuenow="0">
 
 
 <div
@@ -778,15 +784,19 @@ id="storageBar">
 
 <span id="storageUsado">
 
-0 MB
+0 B
 
 </span>
 
 
-utilizados
+de <strong id="storageLimite">1 GB</strong>
 
 
 </p>
+
+<small id="storageDetalhes">
+0 arquivos • 0% utilizado
+</small>
 
 
 
@@ -1037,19 +1047,19 @@ Carregando...
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 
-<script src="js/supabase.js?v=20260724-7"></script>
+<script src="js/supabase.js?v=20260724-8"></script>
 
 
-<script src="js/database.js?v=20260724-7"></script>
+<script src="js/database.js?v=20260724-8"></script>
 
 
-<script src="js/auth.js?v=20260724-7"></script>
+<script src="js/auth.js?v=20260724-8"></script>
 
 
-<script src="js/clientes.js?v=20260724-7"></script>
+<script src="js/clientes.js?v=20260724-8"></script>
 
 
-<script src="js/admin.js?v=20260724-7"></script>
+<script src="js/admin.js?v=20260724-8"></script>
 
 
 

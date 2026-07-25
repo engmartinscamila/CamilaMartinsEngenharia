@@ -25,7 +25,10 @@ Site institucional, painel administrativo e portal privado do cliente.
 - Fotos, documentos, agenda, biblioteca e solicitações organizados por cliente
   e contrato, usando também o identificador do cadastro.
 - Galeria de fotos dentro do perfil administrativo de cada cliente.
-- Biblioteca com pasta do cliente e subpastas por contrato.
+- Biblioteca central com a pasta principal `Cliente — Contrato` e subpastas
+  separadas de documentos, fotos e outros arquivos.
+- Indicador administrativo com uso real dos três buckets e a cota total
+  visível.
 - Progresso ponderado e editável por etapa, com modelos iniciais conforme o
   serviço contratado.
 - Área construída, área do terreno e endereço da obra com busca por CEP ou
@@ -49,16 +52,18 @@ do banco incluída no pacote.
    número de contrato e número de orçamento aos projetos.
 5. Execute `supabase/migracao_organizacao_por_cliente.sql` para criar os novos
    campos, respostas, políticas e vínculos por cliente/contrato.
-6. Em **Authentication > Providers > Email**, mantenha o provedor de e-mail
+6. Execute `supabase/migracao_ajustes_finais.sql` para ativar o indicador
+   real de armazenamento.
+7. Em **Authentication > Providers > Email**, mantenha o provedor de e-mail
    ativado. Se o painel não mostrar uma opção separada para permitir novos
    cadastros, não é necessário alterar mais nada. O gatilho da migração
    principal bloqueia qualquer e-mail que não tenha sido previamente
    cadastrado na tabela `clientes`.
-7. Substitua os arquivos do site pelos arquivos deste pacote.
-8. Publique novamente a função `notificar-atualizacao`.
-9. Teste primeiro o login administrativo e depois use o botão
+8. Substitua os arquivos do site pelos arquivos deste pacote.
+9. Publique novamente a função `notificar-atualizacao`.
+10. Teste primeiro o login administrativo e depois use o botão
    **Visualizar portal do cliente** no cadastro de um cliente.
-10. No Supabase, execute novamente o **Security Advisor** para confirmar as
+11. No Supabase, execute novamente o **Security Advisor** para confirmar as
    políticas aplicadas.
 
 O arquivo `supabase/verificacao_portal.sql` é somente leitura e mostra, em
@@ -102,6 +107,10 @@ Supabase Authentication. A URL
 `https://camilamartinsengenharia.com.br/redefinir-senha.html` precisa
 permanecer na lista de Redirect URLs do Supabase.
 
+O mesmo fluxo atende clientes e a administradora. Para recuperar o acesso
+administrativo, informe no login o e-mail do usuário administrador cadastrado
+em **Authentication > Users**, abra o link recebido e registre a nova senha.
+
 Para uso em produção, configure um SMTP próprio em
 **Authentication > Emails > SMTP Settings**. Sem SMTP próprio, o envio usa
 o serviço padrão do Supabase e fica sujeito aos limites do projeto.
@@ -132,3 +141,5 @@ Ela foi mantida para não apagar o cadastro administrativo existente.
 - As tabelas e os buckets privados usam RLS para separar os dados de cada
   cliente.
 - Os buckets usados pelo site são: `documentos`, `fotos` e `biblioteca`.
+- A barra do painel usa 1 GB como cota do plano Free. Se o plano mudar, altere
+  apenas `limiteArmazenamentoBytes` em `js/supabase.js`.

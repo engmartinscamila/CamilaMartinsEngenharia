@@ -11,7 +11,12 @@ SUPABASE - CONFIGURAÇÃO GLOBAL
     const configuracao = {
         url: "https://hghtwlopqztfcosfxafd.supabase.co",
         chavePublica: "sb_publishable_-unXLR2NSSACLs01Sr60GA_uCFnJ74f",
-        administradorId: "5c9d7a0e-0495-4e96-8561-1d7f220be154"
+        administradorId: "5c9d7a0e-0495-4e96-8561-1d7f220be154",
+        /*
+         * Cota de arquivos do plano Free do Supabase. Se o plano mudar,
+         * este é o único valor que precisa ser atualizado no site.
+         */
+        limiteArmazenamentoBytes: 1024 ** 3
     };
 
     window.CM_CONFIG = window.CM_CONFIG || Object.freeze(configuracao);

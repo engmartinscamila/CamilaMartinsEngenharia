@@ -77,7 +77,9 @@ async function carregarDashboard(){
 
             carregarBiblioteca(),
 
-            carregarAtividades()
+            carregarAtividades(),
+
+            carregarArmazenamento()
 
         ]);
 
@@ -102,6 +104,85 @@ async function carregarDashboard(){
 
     }
 
+
+}
+
+
+// ==========================================================
+// ARMAZENAMENTO DE ARQUIVOS
+// ==========================================================
+
+async function carregarArmazenamento(){
+
+    const barra = document.getElementById("storageBar");
+    const trilho = barra?.parentElement;
+    const usado = document.getElementById("storageUsado");
+    const limiteTexto = document.getElementById("storageLimite");
+    const detalhes = document.getElementById("storageDetalhes");
+    const limite = Number(window.CM_CONFIG?.limiteArmazenamentoBytes) || (1024 ** 3);
+
+    if (limiteTexto) limiteTexto.textContent = formatarBytes(limite);
+
+    try {
+        const { data, error } = await supabaseClient
+            .rpc("uso_armazenamento_portal");
+
+        if (error) throw error;
+
+        const bytes = Math.max(0, Number(data?.bytes_utilizados) || 0);
+        const arquivos = Math.max(0, Number(data?.quantidade_arquivos) || 0);
+        const percentualExato = limite > 0 ? (bytes / limite) * 100 : 0;
+        const percentualBarra = Math.min(100, percentualExato);
+        const percentualTexto =
+            percentualExato > 0 && percentualExato < 0.1
+                ? "< 0,1"
+                : percentualExato.toLocaleString("pt-BR", {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 1
+                });
+
+        if (barra) barra.style.width = `${percentualBarra}%`;
+        if (trilho) trilho.setAttribute(
+            "aria-valuenow",
+            String(Math.round(percentualBarra))
+        );
+        if (usado) usado.textContent = formatarBytes(bytes);
+        if (detalhes) {
+            detalhes.textContent =
+                `${arquivos} ${arquivos === 1 ? "arquivo" : "arquivos"} • ` +
+                `${percentualTexto}% utilizado`;
+        }
+    }
+    catch (error) {
+        console.error("Erro armazenamento:", error);
+        if (barra) barra.style.width = "0%";
+        if (trilho) trilho.setAttribute("aria-valuenow", "0");
+        if (usado) usado.textContent = "Indisponível";
+        if (detalhes) {
+            detalhes.textContent =
+                "Execute a migração de ajustes finais no Supabase.";
+        }
+    }
+
+}
+
+
+function formatarBytes(bytes){
+
+    const valor = Number(bytes) || 0;
+    if (valor <= 0) return "0 B";
+
+    const unidades = ["B", "KB", "MB", "GB", "TB"];
+    const indice = Math.min(
+        Math.floor(Math.log(valor) / Math.log(1024)),
+        unidades.length - 1
+    );
+    const casas = indice === 0 ? 0 : (valor / (1024 ** indice) < 10 ? 2 : 1);
+
+    return `${(valor / (1024 ** indice)).toLocaleString("pt-BR", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: casas
+    })} ${unidades[indice]}`;
 
 }
 

@@ -224,6 +224,129 @@ CAMILA MARTINS ENGENHARIA
         `;
     }
 
+    async function renderizarBibliotecaCompleta(
+        itensDocumentos,
+        itensFotos,
+        itensExtras
+    ) {
+        const [documentosComUrl, fotosComUrl, extrasComUrl] = await Promise.all([
+            prepararUrls(itensDocumentos, window.BUCKETS.DOCUMENTOS),
+            prepararUrls(itensFotos, window.BUCKETS.FOTOS),
+            prepararUrls(itensExtras, window.BUCKETS.BIBLIOTECA)
+        ]);
+
+        const contrato =
+            window.cmRotuloContrato?.(projetoAtual) ||
+            projetoAtual?.nome ||
+            "Contrato";
+        const total =
+            documentosComUrl.length +
+            fotosComUrl.length +
+            extrasComUrl.length;
+
+        container.innerHTML = `
+            <details class="client-library-root" open>
+                <summary>
+                    <span>
+                        <i class="bi bi-folder2-open"></i>
+                        ${escapar(clienteAtual?.nome || "Cliente")} — ${escapar(contrato)}
+                    </span>
+                    <small>${total} ${total === 1 ? "item" : "itens"}</small>
+                </summary>
+                <div class="client-library-folders">
+                    ${subpastaCliente(
+                        "Documentos",
+                        "bi-file-earmark-text",
+                        documentosComUrl,
+                        itemArquivoCliente
+                    )}
+                    ${subpastaCliente(
+                        "Fotos",
+                        "bi-images",
+                        fotosComUrl,
+                        itemFotoCliente
+                    )}
+                    ${subpastaCliente(
+                        "Outros arquivos",
+                        "bi-folder",
+                        extrasComUrl,
+                        itemArquivoCliente
+                    )}
+                </div>
+            </details>
+        `;
+    }
+
+    async function prepararUrls(itens, bucket) {
+        return Promise.all(
+            itens.map(async item => ({
+                item,
+                url: await urlArquivo(item, bucket)
+            }))
+        );
+    }
+
+    function subpastaCliente(nome, icone, itens, renderizador) {
+        return `
+            <details class="client-library-folder">
+                <summary>
+                    <span><i class="bi ${icone}"></i> ${escapar(nome)}</span>
+                    <small>${itens.length}</small>
+                </summary>
+                <div class="${nome === "Fotos"
+                    ? "client-library-photos"
+                    : "client-library-files"}">
+                    ${itens.length
+                        ? itens.map(renderizador).join("")
+                        : `<p class="client-library-empty">Pasta vazia.</p>`}
+                </div>
+            </details>
+        `;
+    }
+
+    function itemArquivoCliente({ item, url }) {
+        const titulo = item.nome || item.titulo || "Arquivo";
+        return `
+            <article class="client-library-file">
+                <i class="bi bi-file-earmark"></i>
+                <div>
+                    <strong>${escapar(titulo)}</strong>
+                    <span>
+                        ${escapar(item.categoria || item.tipo || "Geral")}
+                        • ${escapar(formatarData(item.created_at))}
+                    </span>
+                </div>
+                ${url
+                    ? `<a href="${escapar(url)}" target="_blank"
+                        rel="noopener noreferrer" aria-label="Abrir ${escapar(titulo)}">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>`
+                    : `<span class="client-library-unavailable"
+                        title="Arquivo indisponível">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </span>`}
+            </article>
+        `;
+    }
+
+    function itemFotoCliente({ item, url }) {
+        const titulo = item.nome || item.titulo || "Foto";
+        return `
+            <article class="client-library-photo">
+                ${url
+                    ? `<a href="${escapar(url)}" target="_blank"
+                        rel="noopener noreferrer">
+                        <img src="${escapar(url)}" alt="${escapar(titulo)}"
+                            loading="lazy">
+                    </a>`
+                    : `<div class="client-library-no-photo">
+                        <i class="bi bi-image"></i>
+                    </div>`}
+                <strong>${escapar(titulo)}</strong>
+            </article>
+        `;
+    }
+
     function renderizarCronograma(itens) {
         if (!itens.length) {
             mostrarVazio(
@@ -404,11 +527,27 @@ CAMILA MARTINS ENGENHARIA
     async function carregarArea() {
         try {
             if (area === "biblioteca") {
-                const itens = await buscarLista(
-                    window.TABELAS.BIBLIOTECA,
-                    { cliente: true, ordem: "created_at" }
+                const [itensDocumentos, itensFotos, itensExtras] =
+                    await Promise.all([
+                        buscarLista(
+                            window.TABELAS.DOCUMENTOS,
+                            { cliente: true, ordem: "created_at" }
+                        ),
+                        buscarLista(
+                            window.TABELAS.FOTOS,
+                            { cliente: true, ordem: "created_at" }
+                        ),
+                        buscarLista(
+                            window.TABELAS.BIBLIOTECA,
+                            { cliente: true, ordem: "created_at" }
+                        )
+                    ]);
+
+                await renderizarBibliotecaCompleta(
+                    itensDocumentos,
+                    itensFotos,
+                    itensExtras
                 );
-                await renderizarArquivos(itens, window.BUCKETS.BIBLIOTECA, true);
                 return;
             }
 
