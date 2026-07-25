@@ -22,6 +22,17 @@ Site institucional, painel administrativo e portal privado do cliente.
 - Página administrativa de solicitações reorganizada.
 - Acesso à Área do Cliente no site principal e no cartão virtual.
 - Correção de links locais, menu móvel, cache de arquivos e favicon.
+- Fotos, documentos, agenda, biblioteca e solicitações organizados por cliente
+  e contrato, usando também o identificador do cadastro.
+- Galeria de fotos dentro do perfil administrativo de cada cliente.
+- Biblioteca com pasta do cliente e subpastas por contrato.
+- Progresso ponderado e editável por etapa, com modelos iniciais conforme o
+  serviço contratado.
+- Área construída, área do terreno e endereço da obra com busca por CEP ou
+  cópia do endereço do cliente.
+- Agenda no portal do cliente e avisos por e-mail.
+- Respostas nas solicitações; o status interno aparece somente no painel
+  administrativo.
 
 ## Ordem correta para atualizar
 
@@ -36,15 +47,18 @@ do banco incluída no pacote.
    necessário repeti-la.
 4. Execute também `supabase/migracao_recursos_portal.sql` para adicionar
    número de contrato e número de orçamento aos projetos.
-5. Em **Authentication > Providers > Email**, mantenha o provedor de e-mail
+5. Execute `supabase/migracao_organizacao_por_cliente.sql` para criar os novos
+   campos, respostas, políticas e vínculos por cliente/contrato.
+6. Em **Authentication > Providers > Email**, mantenha o provedor de e-mail
    ativado. Se o painel não mostrar uma opção separada para permitir novos
    cadastros, não é necessário alterar mais nada. O gatilho da migração
    principal bloqueia qualquer e-mail que não tenha sido previamente
    cadastrado na tabela `clientes`.
-6. Substitua os arquivos do site pelos arquivos deste pacote.
-7. Teste primeiro o login administrativo e depois use o botão
+7. Substitua os arquivos do site pelos arquivos deste pacote.
+8. Publique novamente a função `notificar-atualizacao`.
+9. Teste primeiro o login administrativo e depois use o botão
    **Visualizar portal do cliente** no cadastro de um cliente.
-8. No Supabase, execute novamente o **Security Advisor** para confirmar as
+10. No Supabase, execute novamente o **Security Advisor** para confirmar as
    políticas aplicadas.
 
 O arquivo `supabase/verificacao_portal.sql` é somente leitura e mostra, em

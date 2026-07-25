@@ -18,12 +18,14 @@ CAMILA MARTINS ENGENHARIA
 
     let clienteAtual = null;
     let projetosCliente = [];
+    let projetoAtual = null;
 
     const areasPermitidas = new Set([
         "biblioteca",
         "documentos",
         "cronograma",
         "fotos",
+        "agenda",
         "solicitacoes"
     ]);
 
@@ -113,6 +115,9 @@ CAMILA MARTINS ENGENHARIA
 
         if (opcoes.cliente) {
             consulta = consulta.eq("cliente_id", clienteAtual.id);
+        }
+        if (projetoAtual?.id && opcoes.projeto !== false) {
+            consulta = consulta.eq("projeto_id", projetoAtual.id);
         }
 
         if (opcoes.ordem) {
@@ -229,7 +234,12 @@ CAMILA MARTINS ENGENHARIA
             return;
         }
 
+        const progresso = window.cmCalcularProgresso?.(itens) || 0;
         container.innerHTML = `
+            <article class="item-card">
+                <h2>Progresso do contrato: ${progresso}%</h2>
+                <div class="barra-cliente"><span style="width:${progresso}%"></span></div>
+            </article>
             <div class="timeline">
                 ${itens.map(item => `
                     <article class="item-card">
@@ -242,14 +252,27 @@ CAMILA MARTINS ENGENHARIA
                                 — ${escapar(formatarData(item.fim || item.data_fim))}
                             </span>
                         </div>
-                        <div class="status">${escapar(item.status || "Pendente")}</div>
+                        <div class="item-meta">
+                            <span>${window.cmPercentualEtapa?.(item) || 0}% concluído</span>
+                            <span>Peso: ${escapar(item.peso_percentual || 0)}%</span>
+                        </div>
+                        <div class="barra-cliente"><span style="width:${window.cmPercentualEtapa?.(item) || 0}%"></span></div>
                     </article>
                 `).join("")}
             </div>
         `;
     }
 
-    function renderizarSolicitacoes(itens) {
+    async function renderizarSolicitacoes(itens) {
+        let respostas = [];
+        if (itens.length) {
+            const resultado = await clienteSupabase
+                .from(window.TABELAS.SOLICITACAO_RESPOSTAS)
+                .select("*")
+                .in("solicitacao_id", itens.map(item => item.id))
+                .order("created_at", { ascending: true });
+            respostas = resultado.error ? [] : (resultado.data || []);
+        }
         const lista = itens.length
             ? `
                 <div class="timeline">
@@ -260,7 +283,14 @@ CAMILA MARTINS ENGENHARIA
                             <div class="item-meta">
                                 <span><i class="bi bi-calendar3"></i> ${escapar(formatarData(item.created_at))}</span>
                             </div>
-                            <div class="status">${escapar(item.status || "Aberta")}</div>
+                            ${respostas.filter(resposta => String(resposta.solicitacao_id) === String(item.id)).map(resposta => `
+                                <div class="item-card"><strong>${resposta.autor === "administradora" ? "Camila Martins Engenharia" : "Você"}</strong><p>${escapar(resposta.mensagem)}</p></div>
+                            `).join("")}
+                            <form class="client-reply-form" data-id="${escapar(item.id)}">
+                                <div class="form-group"><label>Responder</label><textarea name="mensagem" rows="3" required></textarea></div>
+                                <button class="submit-button" type="submit">Enviar resposta</button>
+                                <p class="form-message"></p>
+                            </form>
                         </article>
                     `).join("")}
                 </div>
@@ -295,6 +325,33 @@ CAMILA MARTINS ENGENHARIA
         document
             .getElementById("clientRequestForm")
             ?.addEventListener("submit", salvarSolicitacaoCliente);
+        container.querySelectorAll(".client-reply-form").forEach(form =>
+            form.addEventListener("submit", salvarRespostaCliente));
+    }
+
+    async function salvarRespostaCliente(evento) {
+        evento.preventDefault();
+        const form = evento.currentTarget;
+        const mensagem = form.elements.mensagem.value.trim();
+        if (!mensagem) return;
+        const { error } = await clienteSupabase.from(window.TABELAS.SOLICITACAO_RESPOSTAS).insert([{
+            solicitacao_id: form.dataset.id,
+            cliente_id: clienteAtual.id,
+            autor: "cliente",
+            mensagem
+        }]);
+        if (error) {
+            form.querySelector(".form-message").textContent = "Não foi possível enviar.";
+            return;
+        }
+        await window.notificarAtualizacao({
+            tipo: "solicitacao_respondida",
+            cliente_id: clienteAtual.id,
+            projeto_id: projetoAtual?.id,
+            titulo: "Nova resposta do cliente",
+            mensagem
+        });
+        await carregarArea();
     }
 
     async function salvarSolicitacaoCliente(evento) {
@@ -316,9 +373,10 @@ CAMILA MARTINS ENGENHARIA
             .insert([{
                 titulo,
                 mensagem,
-                status: "Aberta",
+                status: "Pendente",
+                origem: "cliente",
                 cliente_id: clienteAtual.id,
-                projeto_id: projetosCliente[0]?.id || null
+                projeto_id: projetoAtual?.id || null
             }]);
 
         if (error) {
@@ -331,7 +389,7 @@ CAMILA MARTINS ENGENHARIA
         const notificacao = await window.notificarAtualizacao({
             tipo: "solicitacao_criada",
             cliente_id: clienteAtual.id,
-            projeto_id: projetosCliente[0]?.id || null,
+            projeto_id: projetoAtual?.id || null,
             titulo,
             mensagem
         });
@@ -348,7 +406,7 @@ CAMILA MARTINS ENGENHARIA
             if (area === "biblioteca") {
                 const itens = await buscarLista(
                     window.TABELAS.BIBLIOTECA,
-                    { ordem: "created_at" }
+                    { cliente: true, ordem: "created_at" }
                 );
                 await renderizarArquivos(itens, window.BUCKETS.BIBLIOTECA, true);
                 return;
@@ -381,11 +439,27 @@ CAMILA MARTINS ENGENHARIA
                 return;
             }
 
+            if (area === "agenda") {
+                const itens = await buscarLista(
+                    window.TABELAS.AGENDA,
+                    { cliente: true, ordem: "data", crescente: true }
+                );
+                container.innerHTML = itens.length ? `
+                    <div class="timeline">${itens.map(item => `
+                        <article class="item-card">
+                            <h2>${escapar(item.titulo || "Compromisso")}</h2>
+                            <p>${escapar(item.descricao || "")}</p>
+                            <div class="item-meta"><span>${escapar(formatarData(item.data))}</span><span>${escapar(item.horario || "")}</span></div>
+                        </article>`).join("")}</div>`
+                    : `<div class="empty-state"><i class="bi bi-calendar3"></i><strong>Nenhum compromisso agendado.</strong></div>`;
+                return;
+            }
+
             const itens = await buscarLista(
                 window.TABELAS.SOLICITACOES,
                 { cliente: true, ordem: "created_at" }
             );
-            renderizarSolicitacoes(itens);
+            await renderizarSolicitacoes(itens);
         }
         catch (error) {
             console.error(`Erro ao carregar ${area}:`, error);
@@ -439,11 +513,23 @@ CAMILA MARTINS ENGENHARIA
             .order("created_at", { ascending: false });
 
         projetosCliente = projetosError ? [] : (projetos || []);
+        const solicitado = new URLSearchParams(window.location.search).get("projeto");
+        projetoAtual = projetosCliente.find(item => String(item.id) === String(solicitado)) || projetosCliente[0] || null;
         nomeCliente.textContent = cliente.nome || "Cliente";
-        nomeProjeto.textContent =
-            projetosCliente[0]?.nome ||
-            cliente.projeto ||
-            "Portal do Cliente";
+        nomeProjeto.innerHTML = projetosCliente.length ? `
+            <label class="project-switcher"><span>Contrato</span>
+                <select id="projectSwitcher">${projetosCliente.map(item => `
+                    <option value="${escapar(item.id)}" ${item.id === projetoAtual?.id ? "selected" : ""}>
+                        ${escapar(window.cmRotuloContrato?.(item) || item.nome)}
+                    </option>`).join("")}</select>
+            </label>` : "Nenhum contrato cadastrado";
+        document.getElementById("projectSwitcher")?.addEventListener("change", event => {
+            projetoAtual = projetosCliente.find(item => String(item.id) === event.target.value) || projetoAtual;
+            const url = new URL(window.location.href);
+            url.searchParams.set("projeto", projetoAtual.id);
+            history.replaceState({}, "", url);
+            carregarArea();
+        });
 
         await carregarArea();
     }

@@ -46,6 +46,8 @@ PROJETOS.JS - CRUD ADMINISTRATIVO
         document.getElementById("modalProjeto")?.addEventListener("click", event => {
             if (event.target.id === "modalProjeto") fecharModal();
         });
+        document.getElementById("projetoCepObra")?.addEventListener("blur", buscarCepObra);
+        document.getElementById("projetoMesmoEndereco")?.addEventListener("change", copiarEnderecoCliente);
     }
 
     function preencherClientes() {
@@ -54,7 +56,7 @@ PROJETOS.JS - CRUD ADMINISTRATIVO
 
         select.innerHTML = `<option value="">Selecione o cliente</option>` +
             clientes.map(cliente => `
-                <option value="${escapar(cliente.id)}">${escapar(cliente.nome)}</option>
+                <option value="${escapar(cliente.id)}">${escapar(cliente.nome)} — ${escapar(cliente.email || "sem e-mail")} — cad. ${escapar(String(cliente.id).slice(0,8).toUpperCase())}</option>
             `).join("");
     }
 
@@ -120,6 +122,16 @@ PROJETOS.JS - CRUD ADMINISTRATIVO
         preencher("projetoStatus", projeto.status);
         preencher("projetoNumeroContrato", projeto.numero_contrato);
         preencher("projetoNumeroOrcamento", projeto.numero_orcamento);
+        preencher("projetoAreaTerreno", projeto.area_terreno_m2);
+        preencher("projetoAreaConstruida", projeto.area_construida_m2);
+        preencher("projetoCepObra", projeto.cep_obra);
+        preencher("projetoEnderecoObra", projeto.endereco_obra);
+        preencher("projetoNumeroObra", projeto.numero_obra);
+        preencher("projetoComplementoObra", projeto.complemento_obra);
+        preencher("projetoBairroObra", projeto.bairro_obra);
+        preencher("projetoCidadeObra", projeto.cidade_obra);
+        preencher("projetoEstadoObra", projeto.estado_obra);
+        document.getElementById("projetoMesmoEndereco").checked = Boolean(projeto.mesmo_endereco_cliente);
         preencher("projetoDescricao", projeto.descricao);
         preencher("projetoDataInicio", projeto.data_inicio);
         preencher("projetoDataFim", projeto.data_fim);
@@ -137,6 +149,16 @@ PROJETOS.JS - CRUD ADMINISTRATIVO
             status: valor("projetoStatus"),
             numero_contrato: valor("projetoNumeroContrato") || null,
             numero_orcamento: valor("projetoNumeroOrcamento") || null,
+            area_terreno_m2: numero("projetoAreaTerreno"),
+            area_construida_m2: numero("projetoAreaConstruida"),
+            cep_obra: valor("projetoCepObra"),
+            endereco_obra: valor("projetoEnderecoObra"),
+            numero_obra: valor("projetoNumeroObra"),
+            complemento_obra: valor("projetoComplementoObra"),
+            bairro_obra: valor("projetoBairroObra"),
+            cidade_obra: valor("projetoCidadeObra"),
+            estado_obra: valor("projetoEstadoObra").toUpperCase(),
+            mesmo_endereco_cliente: Boolean(document.getElementById("projetoMesmoEndereco")?.checked),
             descricao: valor("projetoDescricao"),
             data_inicio: valor("projetoDataInicio") || null,
             data_fim: valor("projetoDataFim") || null
@@ -157,7 +179,15 @@ PROJETOS.JS - CRUD ADMINISTRATIVO
                 await dbEditarProjeto(projetoSelecionadoId, dados);
             }
             else {
-                await dbCriarProjeto(dados);
+                const criado = await dbCriarProjeto(dados);
+                const projetoId = criado?.id || criado?.[0]?.id;
+                if (projetoId && document.getElementById("projetoCriarCronograma")?.checked) {
+                    const etapas = window.cmEtapasDoServico(dados.tipo).map(etapa => ({
+                        ...etapa, cliente_id:dados.cliente_id, projeto_id:projetoId
+                    }));
+                    const { error } = await window.supabaseClient.from(window.TABELAS.CRONOGRAMA).insert(etapas);
+                    if (error) throw error;
+                }
             }
 
             const notificacao = await dbNotificarAtualizacao({
@@ -217,6 +247,9 @@ PROJETOS.JS - CRUD ADMINISTRATIVO
             <p><strong>Status:</strong> ${escapar(rotuloStatus(projeto.status))}</p>
             <p><strong>Número do contrato:</strong> ${escapar(projeto.numero_contrato || "Não informado")}</p>
             <p><strong>Número do orçamento:</strong> ${escapar(projeto.numero_orcamento || "Não informado")}</p>
+            <p><strong>Área do terreno:</strong> ${escapar(projeto.area_terreno_m2 ? projeto.area_terreno_m2 + " m²" : "Não informada")}</p>
+            <p><strong>Área construída:</strong> ${escapar(projeto.area_construida_m2 ? projeto.area_construida_m2 + " m²" : "Não informada")}</p>
+            <p><strong>Endereço da obra:</strong> ${escapar([projeto.endereco_obra,projeto.numero_obra,projeto.bairro_obra,projeto.cidade_obra,projeto.estado_obra].filter(Boolean).join(", ") || "Não informado")}</p>
             <p><strong>Período:</strong> ${escapar(formatarData(projeto.data_inicio))} a ${escapar(formatarData(projeto.data_fim))}</p>
             <p>${escapar(projeto.descricao || "Sem descrição.")}</p>
             <div class="detalhes-acoes">
@@ -333,6 +366,38 @@ PROJETOS.JS - CRUD ADMINISTRATIVO
 
     function valor(id) {
         return document.getElementById(id)?.value?.trim() || "";
+    }
+
+    function numero(id) {
+        const n = Number(document.getElementById(id)?.value);
+        return Number.isFinite(n) && n >= 0 ? n : null;
+    }
+
+    async function buscarCepObra() {
+        const cep = valor("projetoCepObra").replace(/\D/g, "");
+        if (cep.length !== 8) return;
+        try {
+            const resposta = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+            const dados = await resposta.json();
+            if (dados.erro) return;
+            preencher("projetoEnderecoObra", dados.logradouro);
+            preencher("projetoBairroObra", dados.bairro);
+            preencher("projetoCidadeObra", dados.localidade);
+            preencher("projetoEstadoObra", dados.uf);
+        } catch (erro) { console.warn("CEP não localizado.", erro); }
+    }
+
+    function copiarEnderecoCliente() {
+        if (!document.getElementById("projetoMesmoEndereco")?.checked) return;
+        const cliente = clientes.find(item => String(item.id) === valor("projetoCliente"));
+        if (!cliente) return;
+        preencher("projetoCepObra", cliente.cep);
+        preencher("projetoEnderecoObra", cliente.endereco);
+        preencher("projetoNumeroObra", cliente.numero);
+        preencher("projetoComplementoObra", cliente.complemento);
+        preencher("projetoBairroObra", cliente.bairro);
+        preencher("projetoCidadeObra", cliente.cidade);
+        preencher("projetoEstadoObra", cliente.estado);
     }
 
     function preencher(id, conteudo) {

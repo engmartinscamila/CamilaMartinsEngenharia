@@ -588,7 +588,7 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="css/portal-theme.css?v=20260724-6">
+    <link rel="stylesheet" href="css/portal-theme.css?v=20260724-7">
 </head>
 
 <body>
@@ -950,8 +950,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase.js?v=20260724-6"></script>
-    <script type="module">
+    <script src="js/supabase.js?v=20260724-7"></script>
+    <script src="js/servicos.js?v=20260724-7"></script>
+  <script type="module">
         const clienteSupabase = window.supabaseClient;
 
         const loadingScreen =
@@ -1110,9 +1111,7 @@
             const completedStages = stages.filter(item =>
                 String(item.status || "").toLowerCase().startsWith("conclu")
             ).length;
-            const progress = stages.length
-                ? Math.round((completedStages / stages.length) * 100)
-                : 0;
+            const progress = window.cmCalcularProgresso(stages);
             const currentStageIndex = stages.findIndex(item =>
                 !String(item.status || "").toLowerCase().startsWith("conclu")
             );
@@ -1142,20 +1141,16 @@
 
             projectLocation.textContent =
                 valueOrDefault(
-                    [clientData.endereco, clientData.cidade, clientData.estado]
+                    [projectData?.endereco_obra, projectData?.numero_obra, projectData?.bairro_obra, projectData?.cidade_obra, projectData?.estado_obra]
                         .filter(Boolean)
                         .join(", ")
                 );
 
             landArea.textContent =
-                formatArea(
-                    null
-                );
+                formatArea(projectData?.area_terreno_m2);
 
             builtArea.textContent =
-                formatArea(
-                    null
-                );
+                formatArea(projectData?.area_construida_m2);
 
             contractNumber.textContent =
                 valueOrDefault(projectData?.numero_contrato);

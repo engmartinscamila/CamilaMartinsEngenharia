@@ -19,8 +19,8 @@ Projetos | Camila Martins Engenharia
 
 
 
-<link rel="stylesheet" href="css/admin.css?v=20260724-6">
-<link rel="stylesheet" href="css/admin-theme.css?v=20260724-6">
+<link rel="stylesheet" href="css/admin.css?v=20260724-7">
+<link rel="stylesheet" href="css/admin-theme.css?v=20260724-7">
 
 
 <link rel="stylesheet"
@@ -473,6 +473,16 @@ Reforma
 
 </option>
 
+<option value="eletrico">Projeto elétrico</option>
+<option value="hidrossanitario">Projeto hidrossanitário</option>
+<option value="render_3d">Renderização 3D</option>
+<option value="regularizacao">Regularização / Habite-se</option>
+<option value="incendio">Combate a incêndio</option>
+<option value="industrial">Projeto industrial</option>
+<option value="consultoria">Consultoria técnica</option>
+<option value="laudo">Laudo técnico</option>
+<option value="gestao_obra">Gestão de obra</option>
+
 
 <option value="outro">
 
@@ -485,6 +495,18 @@ Outro
 
 
 </div>
+
+<div class="campo"><label>Área do terreno (m²)</label><input id="projetoAreaTerreno" type="number" min="0" step="0.01"></div>
+<div class="campo"><label>Área construída (m²)</label><input id="projetoAreaConstruida" type="number" min="0" step="0.01"></div>
+<div class="campo campo-full"><label><input id="projetoMesmoEndereco" type="checkbox"> Usar o endereço residencial do cliente como endereço da obra</label></div>
+<div class="campo"><label>CEP da obra</label><input id="projetoCepObra" inputmode="numeric" maxlength="9" placeholder="00000-000"></div>
+<div class="campo"><label>Endereço da obra</label><input id="projetoEnderecoObra"></div>
+<div class="campo"><label>Número</label><input id="projetoNumeroObra"></div>
+<div class="campo"><label>Complemento</label><input id="projetoComplementoObra"></div>
+<div class="campo"><label>Bairro</label><input id="projetoBairroObra"></div>
+<div class="campo"><label>Cidade</label><input id="projetoCidadeObra"></div>
+<div class="campo"><label>Estado</label><input id="projetoEstadoObra" maxlength="2"></div>
+<div class="campo campo-full"><label><input id="projetoCriarCronograma" type="checkbox" checked> Criar automaticamente as etapas de andamento deste serviço</label></div>
 
 
 <div class="campo">
@@ -872,16 +894,17 @@ Carregando...
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 
-<script src="js/supabase.js?v=20260724-6"></script>
+<script src="js/supabase.js?v=20260724-7"></script>
 
 
-<script src="js/database.js?v=20260724-6"></script>
+<script src="js/database.js?v=20260724-7"></script>
 
 
-<script src="js/auth.js?v=20260724-6"></script>
+<script src="js/auth.js?v=20260724-7"></script>
 
 
-<script src="js/projetos.js?v=20260724-6"></script>
+<script src="js/servicos.js?v=20260724-7"></script>
+    <script src="js/projetos.js?v=20260724-7"></script>
 
 
 

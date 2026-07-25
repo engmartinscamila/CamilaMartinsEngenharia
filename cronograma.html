@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="assets/logo.png" type="image/png">
     <title>Cronograma | Camila Martins Engenharia</title>
-    <link rel="stylesheet" href="css/admin.css?v=20260724-6">
-    <link rel="stylesheet" href="css/cronograma.css?v=20260724-6">
-    <link rel="stylesheet" href="css/admin-theme.css?v=20260724-6">
+    <link rel="stylesheet" href="css/admin.css?v=20260724-7">
+    <link rel="stylesheet" href="css/cronograma.css?v=20260724-7">
+    <link rel="stylesheet" href="css/admin-theme.css?v=20260724-7">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 </head>
 <body>
@@ -100,6 +100,7 @@
                                 <th>Início</th>
                                 <th>Fim</th>
                                 <th>Status</th>
+                                <th>Avanço</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
@@ -129,6 +130,9 @@
                         <label for="clienteCronograma">Cliente</label>
                         <select id="clienteCronograma" required></select>
                     </div>
+                    <div class="campo"><label for="pesoEtapa">Peso da etapa (%)</label><input id="pesoEtapa" type="number" min="0" max="100" step="0.01" value="0"></div>
+                    <div class="campo"><label for="percentualEtapa">Avanço desta etapa (%)</label><input id="percentualEtapa" type="number" min="0" max="100" value="0"></div>
+                    <div class="campo"><label for="ordemEtapa">Ordem</label><input id="ordemEtapa" type="number" min="0" value="0"></div>
                     <div class="campo">
                         <label for="projetoCronograma">Projeto</label>
                         <select id="projetoCronograma" required></select>
@@ -169,10 +173,11 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase.js?v=20260724-6"></script>
-    <script src="js/database.js?v=20260724-6"></script>
-    <script src="js/auth.js?v=20260724-6"></script>
-    <script src="js/utils.js?v=20260724-6"></script>
-    <script src="js/cronograma.js?v=20260724-6"></script>
+    <script src="js/supabase.js?v=20260724-7"></script>
+    <script src="js/database.js?v=20260724-7"></script>
+    <script src="js/auth.js?v=20260724-7"></script>
+    <script src="js/utils.js?v=20260724-7"></script>
+    <script src="js/servicos.js?v=20260724-7"></script>
+    <script src="js/cronograma.js?v=20260724-7"></script>
 </body>
 </html>

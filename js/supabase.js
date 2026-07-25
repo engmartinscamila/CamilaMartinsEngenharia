@@ -27,7 +27,8 @@ SUPABASE - CONFIGURAÇÃO GLOBAL
         FINANCEIRO: "financeiro",
         CONFIGURACOES: "configuracoes",
         CRONOGRAMA: "cronograma",
-        SOLICITACOES: "solicitacoes"
+        SOLICITACOES: "solicitacoes",
+        SOLICITACAO_RESPOSTAS: "solicitacao_respostas"
     });
 
     /* Nomes exatos e sensíveis a maiúsculas dos buckets reais. */
@@ -119,6 +120,7 @@ SUPABASE - CONFIGURAÇÃO GLOBAL
             "documentos-cliente.html",
             "fotos-cliente.html",
             "cronograma-cliente.html",
+            "agenda-cliente.html",
             "solicitacoes-cliente.html"
         ]);
 

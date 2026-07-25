@@ -66,7 +66,7 @@ CRONOGRAMA.JS - CRUD ADMINISTRATIVO
         if (!corpo) return;
 
         if (!lista.length) {
-            corpo.innerHTML = `<tr><td colspan="7" class="estado-vazio">Nenhuma etapa cadastrada.</td></tr>`;
+            corpo.innerHTML = `<tr><td colspan="8" class="estado-vazio">Nenhuma etapa cadastrada.</td></tr>`;
             return;
         }
 
@@ -78,6 +78,7 @@ CRONOGRAMA.JS - CRUD ADMINISTRATIVO
                 <td>${escapar(formatarData(etapa.data_inicio))}</td>
                 <td>${escapar(formatarData(etapa.data_fim))}</td>
                 <td><span class="status ${classeStatus(etapa.status)}">${escapar(etapa.status || "Pendente")}</span></td>
+                <td>${window.cmPercentualEtapa?.(etapa) || 0}%</td>
                 <td>
                     ${botao("editar", etapa.id, "fa-pen", "Editar etapa")}
                     ${botao("excluir", etapa.id, "fa-trash", "Excluir etapa", "delete")}
@@ -114,6 +115,9 @@ CRONOGRAMA.JS - CRUD ADMINISTRATIVO
         preencher("inicioEtapa", etapa.data_inicio);
         preencher("fimEtapa", etapa.data_fim);
         preencher("statusEtapa", etapa.status);
+        preencher("pesoEtapa", etapa.peso_percentual);
+        preencher("percentualEtapa", etapa.percentual_conclusao);
+        preencher("ordemEtapa", etapa.ordem);
         preencher("descricaoEtapa", etapa.descricao);
         atualizarModal("Editar Etapa", "Salvar Alterações");
         abrirModal();
@@ -129,6 +133,9 @@ CRONOGRAMA.JS - CRUD ADMINISTRATIVO
             data_inicio: valor("inicioEtapa") || null,
             data_fim: valor("fimEtapa") || null,
             status: valor("statusEtapa") || "Pendente",
+            peso_percentual: Number(valor("pesoEtapa")) || 0,
+            percentual_conclusao: Number(valor("percentualEtapa")) || 0,
+            ordem: Number(valor("ordemEtapa")) || 0,
             descricao: valor("descricaoEtapa")
         };
 
@@ -211,7 +218,7 @@ CRONOGRAMA.JS - CRUD ADMINISTRATIVO
         const pendentes = etapas.filter(item => normalizarStatus(item.status) === "pendente").length;
         const andamento = etapas.filter(item => normalizarStatus(item.status) === "em andamento").length;
         const concluidas = etapas.filter(item => normalizarStatus(item.status) === "concluido").length;
-        const percentual = total ? Math.round((concluidas / total) * 100) : 0;
+        const percentual = window.cmCalcularProgresso?.(etapas) || 0;
 
         definirTexto("totalEtapas", total);
         definirTexto("pendentes", pendentes);
@@ -237,7 +244,7 @@ CRONOGRAMA.JS - CRUD ADMINISTRATIVO
         const select = document.getElementById(id);
         if (!select) return;
         select.innerHTML = `<option value="">Selecione</option>` +
-            itens.map(item => `<option value="${escapar(item.id)}">${escapar(item.nome)}</option>`).join("");
+            itens.map(item => `<option value="${escapar(item.id)}">${escapar(item.numero_contrato ? window.cmRotuloContrato?.(item) || item.nome : item.nome)}</option>`).join("");
     }
 
     function preencherProjetos(valorSelecionado = "") {

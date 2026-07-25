@@ -668,9 +668,10 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
 
         renderizarRelacionadosCarregando();
 
-        const [projetos, documentos] = await Promise.allSettled([
+        const [projetos, documentos, fotos] = await Promise.allSettled([
             dbBuscarProjetosCliente(cliente.id),
-            dbBuscarDocumentosCliente(cliente.id)
+            dbBuscarDocumentosCliente(cliente.id),
+            dbBuscarFotosCliente(cliente.id)
         ]);
 
         renderizarProjetosCliente(
@@ -678,6 +679,9 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
         );
         renderizarDocumentosCliente(
             documentos.status === "fulfilled" ? documentos.value : []
+        );
+        renderizarFotosCliente(
+            fotos.status === "fulfilled" ? fotos.value : []
         );
 
         if (projetos.status === "rejected") {
@@ -794,10 +798,23 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
             .join("");
     }
 
+    function renderizarFotosCliente(fotos) {
+        const elemento = document.getElementById("fotosCliente");
+        if (!elemento) return;
+        elemento.innerHTML = fotos.length ? fotos.map(foto => `
+            <article class="foto-item">
+                ${foto.url ? `<a href="${escaparTexto(foto.url)}" target="_blank" rel="noopener">
+                    <img src="${escaparTexto(foto.url)}" alt="${escaparTexto(foto.nome || "Foto")}">
+                </a>` : ""}
+                <span>${escaparTexto(foto.nome || "Foto")}</span>
+            </article>`).join("") : estadoLista("Nenhuma foto vinculada a este cliente.");
+    }
+
     function limparDetalhesCliente() {
         const detalhes = document.getElementById("detalhesCliente");
         const projetos = document.getElementById("projetosCliente");
         const documentos = document.getElementById("documentosCliente");
+        const fotos = document.getElementById("fotosCliente");
 
         if (detalhes) {
             detalhes.innerHTML =
@@ -806,6 +823,7 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
 
         if (projetos) projetos.innerHTML = "";
         if (documentos) documentos.innerHTML = "";
+        if (fotos) fotos.innerHTML = "";
     }
 
     function localizarCliente(id) {

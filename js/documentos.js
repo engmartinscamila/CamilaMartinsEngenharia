@@ -65,7 +65,11 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
             return;
         }
 
-        container.innerHTML = lista.map(documento => `
+        const grupos = lista.reduce((m,item) => { const k = `|`; (m[k] ||= []).push(item); return m; }, {});
+        container.innerHTML = Object.values(grupos).map(grupo => {
+            const primeiro = grupo[0];
+            return `<section class="pasta-cliente"><h3><i class="fa-solid fa-folder-open"></i> ${escapar(nomeCliente(primeiro.cliente_id))}</h3>
+                <p>${escapar(rotuloProjeto(primeiro.projeto_id))}</p>` + grupo.map(documento => `
             <article class="item-lista documento-item">
                 <div class="item-info">
                     <h3>${escapar(documento.nome)}</h3>
@@ -78,7 +82,8 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
                     ${botao("excluir", documento.id, "fa-trash", "Excluir documento", "delete")}
                 </div>
             </article>
-        `).join("");
+        `).join("") + `</section>`;
+        }).join("");
 
         if (recentes) {
             recentes.innerHTML = lista.slice(0, 5).map(documento => `
@@ -140,8 +145,8 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
         const arquivo = document.getElementById("documentoArquivo")?.files?.[0];
         const anterior = localizar(documentoSelecionadoId);
 
-        if (!dados.nome || !dados.cliente_id) {
-            alert("Informe o nome e selecione o cliente.");
+        if (!dados.nome || !dados.cliente_id || !dados.projeto_id) {
+            alert("Informe o nome, o cliente e o contrato.");
             return;
         }
 
@@ -161,7 +166,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
 
         try {
             if (arquivo) {
-                novoCaminho = `${dados.cliente_id}/${Date.now()}-${normalizarNome(arquivo.name)}`;
+                novoCaminho = `${dados.cliente_id}/${dados.projeto_id}/${Date.now()}-${normalizarNome(arquivo.name)}`;
                 await dbUploadArquivo(BUCKETS.DOCUMENTOS, novoCaminho, arquivo);
             }
 
@@ -354,7 +359,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
     }
 
     function projetoPertenceAoCliente(projetoId, clienteId) {
-        if (!projetoId) return true;
+        if (!projetoId) return false;
         return projetos.some(projeto =>
             String(projeto.id) === String(projetoId) &&
             String(projeto.cliente_id) === String(clienteId)
@@ -416,6 +421,11 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
 
     function nomeProjeto(id) {
         return projetos.find(projeto => String(projeto.id) === String(id))?.nome || "Não informado";
+    }
+
+    function rotuloProjeto(id) {
+        const projeto = projetos.find(item => String(item.id) === String(id));
+        return projeto ? (window.cmRotuloContrato?.(projeto) || projeto.nome) : "Contrato não informado";
     }
 
     function mostrarLoading(mostrar) {

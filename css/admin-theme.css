@@ -448,6 +448,14 @@ tbody td {
     gap: 18px;
 }
 
+.galeria-fotos{grid-template-columns:repeat(auto-fill,minmax(150px,190px))}
+.galeria-fotos .foto-item img{height:132px;object-fit:cover}
+.arquivo-preview img,.arquivo-preview iframe{min-height:280px;max-height:380px}
+.pasta-cliente,.pasta-contrato,.subpasta{margin:16px 0;padding:16px;border:1px solid var(--linha);background:rgba(2,15,27,.58)}
+.subpastas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.barra-progresso{height:9px;overflow:hidden;background:#000711;border:1px solid var(--linha)}
+.barra-progresso span{display:block;height:100%;background:linear-gradient(90deg,var(--dourado),var(--dourado-claro))}
+
 .foto-item {
     min-width: 0;
     padding: 14px;

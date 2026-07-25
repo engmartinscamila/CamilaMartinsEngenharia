@@ -680,7 +680,7 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="css/portal-theme.css?v=20260724-6">
+    <link rel="stylesheet" href="css/portal-theme.css?v=20260724-7">
 </head>
 
 <body>
@@ -945,6 +945,13 @@
                         <i class="bi bi-arrow-right card-arrow"></i>
                     </a>
 
+                    <a href="agenda-cliente.html" class="portal-card" data-page="agenda">
+                        <div class="card-icon"><i class="bi bi-calendar-event"></i></div>
+                        <h3>Agenda</h3>
+                        <p>Consulte reuniões, visitas e compromissos deste contrato.</p>
+                        <i class="bi bi-arrow-right card-arrow"></i>
+                    </a>
+
                 </div>
 
             </section>
@@ -1015,7 +1022,8 @@
     </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase.js?v=20260724-6"></script>
+  <script src="js/supabase.js?v=20260724-7"></script>
+  <script src="js/servicos.js?v=20260724-7"></script>
   <script type="module">
 async function iniciarPortal() {
 const clienteSupabase = window.supabaseClient;
@@ -1106,9 +1114,7 @@ const clientFirstName =
             const concluidas = stages.filter(item =>
                 String(item.status || "").toLowerCase().startsWith("conclu")
             ).length;
-            const progresso = stages.length
-                ? Math.round((concluidas / stages.length) * 100)
-                : 0;
+            const progresso = window.cmCalcularProgresso(stages);
             const etapaAtual = stages.find(item =>
                 !String(item.status || "").toLowerCase().startsWith("conclu")
             )?.nome || stages.at(-1)?.nome || "Não informada";

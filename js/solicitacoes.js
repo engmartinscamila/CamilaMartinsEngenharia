@@ -127,7 +127,8 @@ SOLICITACOES.JS - CADASTRO E GERENCIAMENTO
             titulo: valor("tituloSolicitacao"),
             cliente_id: valor("clienteSolicitacao") || null,
             projeto_id: valor("projetoSolicitacao") || null,
-            status: valor("statusSolicitacao") || "Aberta",
+            status: valor("statusSolicitacao") || "Pendente",
+            origem: "administradora",
             mensagem: valor("mensagemSolicitacao")
         };
 
@@ -185,10 +186,16 @@ SOLICITACOES.JS - CADASTRO E GERENCIAMENTO
         }
     }
 
-    function abrirMensagem(id) {
+    async function abrirMensagem(id) {
         const item = localizar(id);
         if (!item) return;
-        alert(`${item.titulo}\n\n${item.mensagem || "Sem mensagem."}`);
+        const { data } = await supabaseClient
+            .from(window.TABELAS.SOLICITACAO_RESPOSTAS)
+            .select("*").eq("solicitacao_id", item.id).order("created_at");
+        const conversa = (data || []).map(resposta =>
+            `\n\n${resposta.autor === "administradora" ? "Camila" : "Cliente"}: ${resposta.mensagem}`
+        ).join("");
+        alert(`${item.titulo}\n\n${item.mensagem || "Sem mensagem."}${conversa}`);
     }
 
     async function excluirSolicitacao(id) {

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" href="assets/logo.png" type="image/png">
+    <title>Agenda | Portal do Cliente</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/portal-cliente.css?v=20260724-7">
+    <link rel="stylesheet" href="css/portal-theme.css?v=20260724-7">
+</head>
+<body data-area="agenda">
+    <header class="topbar">
+        <a href="portal.html" class="brand"><span class="signature">Camila Martins</span><span class="brand-subtitle">Engenharia</span></a>
+        <div class="topbar-actions"><a class="back-button" href="portal.html"><i class="bi bi-arrow-left"></i><span>Voltar ao portal</span></a><button class="logout-button" id="logoutButton" type="button"><i class="bi bi-box-arrow-right"></i></button></div>
+    </header>
+    <main class="page-container">
+        <header class="page-header"><span class="eyebrow">Compromissos do contrato</span><h1 class="page-title">Agenda</h1><p class="page-description">Acompanhe reuniões, visitas e prazos agendados para você.</p></header>
+        <div class="client-strip"><strong id="clientName">Cliente</strong><span id="clientProject">Contrato</span></div>
+        <section class="area-panel" id="areaContent" aria-live="polite"><div class="loading"><i class="bi bi-arrow-repeat"></i><span>Carregando agenda...</span></div></section>
+        <footer class="page-footer"><span>© <span id="currentYear"></span> Camila Martins Engenharia</span><span><i class="bi bi-shield-lock"></i> Ambiente exclusivo</span></footer>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js?v=20260724-7"></script>
+    <script src="js/servicos.js?v=20260724-7"></script>
+    <script src="js/cliente-area.js?v=20260724-7"></script>
+</body>
+</html>

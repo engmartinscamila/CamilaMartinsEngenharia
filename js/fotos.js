@@ -62,7 +62,13 @@ FOTOS.JS - CRUD ADMINISTRATIVO
             return;
         }
 
-        galeria.innerHTML = lista.map(foto => `
+        const grupos = lista.reduce((m,item) => { const k = `|`; (m[k] ||= []).push(item); return m; }, {});
+        galeria.innerHTML = Object.values(grupos).map(grupo => {
+            const primeira = grupo[0];
+            return `<section class="pasta-cliente">
+                <h3><i class="fa-solid fa-folder-open"></i> ${escapar(nomeCliente(primeira.cliente_id))}</h3>
+                <p>${escapar(rotuloProjeto(primeira.projeto_id))}</p>
+                <div class="galeria-fotos">` + grupo.map(foto => `
             <article class="foto-item" data-acao-foto="abrir" data-id="${escapar(foto.id)}">
                 ${foto.url
                     ? `<img src="${escapar(foto.url)}" alt="${escapar(foto.nome)}">`
@@ -75,7 +81,8 @@ FOTOS.JS - CRUD ADMINISTRATIVO
                     ${botao("excluir", foto.id, "fa-trash", "Excluir foto", "delete")}
                 </div>
             </article>
-        `).join("");
+        `).join("") + `</div></section>`;
+        }).join("");
     }
 
     function tratarAcao(event) {
@@ -123,8 +130,8 @@ FOTOS.JS - CRUD ADMINISTRATIVO
         const arquivo = document.getElementById("arquivoFoto")?.files?.[0];
         const anterior = localizar(fotoSelecionadaId);
 
-        if (!dados.nome || !dados.cliente_id) {
-            alert("Informe o título e selecione o cliente.");
+        if (!dados.nome || !dados.cliente_id || !dados.projeto_id) {
+            alert("Informe o título, o cliente e o contrato.");
             return;
         }
 
@@ -144,7 +151,7 @@ FOTOS.JS - CRUD ADMINISTRATIVO
 
         try {
             if (arquivo) {
-                novoCaminho = `${dados.cliente_id}/${Date.now()}-${normalizarNome(arquivo.name)}`;
+                novoCaminho = `${dados.cliente_id}/${dados.projeto_id}/${Date.now()}-${normalizarNome(arquivo.name)}`;
                 await dbUploadArquivo(BUCKETS.FOTOS, novoCaminho, arquivo);
             }
 
@@ -265,7 +272,7 @@ FOTOS.JS - CRUD ADMINISTRATIVO
     }
 
     function projetoPertenceAoCliente(projetoId, clienteId) {
-        if (!projetoId) return true;
+        if (!projetoId) return false;
         return projetos.some(projeto =>
             String(projeto.id) === String(projetoId) &&
             String(projeto.cliente_id) === String(clienteId)
@@ -327,6 +334,11 @@ FOTOS.JS - CRUD ADMINISTRATIVO
 
     function nomeProjeto(id) {
         return projetos.find(projeto => String(projeto.id) === String(id))?.nome || "Não informado";
+    }
+
+    function rotuloProjeto(id) {
+        const projeto = projetos.find(item => String(item.id) === String(id));
+        return projeto ? (window.cmRotuloContrato?.(projeto) || projeto.nome) : "Contrato não informado";
     }
 
     function mostrarLoading(mostrar) {

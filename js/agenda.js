@@ -147,9 +147,17 @@ AGENDA.JS - CRUD ADMINISTRATIVO
             }
 
             const editando = Boolean(eventoSelecionadoId);
+            const notificacao = dados.cliente_id ? await dbNotificarAtualizacao({
+                tipo: editando ? "agenda_atualizada" : "agenda_criada",
+                cliente_id: dados.cliente_id,
+                projeto_id: dados.projeto_id,
+                titulo: dados.titulo,
+                mensagem: `${editando ? "Compromisso atualizado" : "Novo compromisso"} para ${formatarData(dados.data)}${dados.horario ? ` às ${dados.horario}` : ""}.`
+            }) : { enviado: false };
             fecharModal();
             await recarregar();
-            alert(editando ? "Evento atualizado com sucesso." : "Evento cadastrado com sucesso.");
+            alert((editando ? "Evento atualizado com sucesso." : "Evento cadastrado com sucesso.") +
+                (notificacao.enviado ? "\nO cliente recebeu um aviso por e-mail." : ""));
         }
         catch (error) {
             tratarErro("Não foi possível salvar o evento.", error);

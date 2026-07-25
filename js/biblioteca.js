@@ -9,6 +9,8 @@ BIBLIOTECA.JS - CRUD ADMINISTRATIVO
     "use strict";
 
     let arquivos = [];
+    let clientes = [];
+    let projetos = [];
     let arquivoSelecionadoId = null;
 
     document.addEventListener("DOMContentLoaded", iniciar);
@@ -17,7 +19,9 @@ BIBLIOTECA.JS - CRUD ADMINISTRATIVO
         configurarEventos();
 
         try {
-            arquivos = await dbBuscarBiblioteca();
+            [arquivos, clientes, projetos] = await Promise.all([dbBuscarBiblioteca(), dbBuscarClientes(), dbBuscarProjetos()]);
+            preencherClientes();
+            preencherProjetos();
             renderizar();
         }
         catch (error) {
@@ -33,6 +37,7 @@ BIBLIOTECA.JS - CRUD ADMINISTRATIVO
         document.getElementById("fecharModalArquivo")?.addEventListener("click", fecharModal);
         document.getElementById("cancelarArquivo")?.addEventListener("click", fecharModal);
         document.getElementById("formArquivo")?.addEventListener("submit", salvarArquivo);
+        document.getElementById("arquivoCliente")?.addEventListener("change", () => preencherProjetos());
         document.getElementById("pesquisaBiblioteca")?.addEventListener("input", pesquisar);
         document.getElementById("btnPesquisarBiblioteca")?.addEventListener("click", pesquisar);
         document.getElementById("listaBiblioteca")?.addEventListener("click", tratarAcao);
@@ -51,7 +56,14 @@ BIBLIOTECA.JS - CRUD ADMINISTRATIVO
             return;
         }
 
-        container.innerHTML = lista.map(arquivo => `
+        const grupos = lista.reduce((mapa,item) => {
+            const chave = `${item.cliente_id || ""}|${item.projeto_id || ""}`;
+            (mapa[chave] ||= []).push(item); return mapa;
+        },{});
+        container.innerHTML = Object.values(grupos).map(grupo => {
+            const primeiro = grupo[0];
+            return `<section class="pasta-cliente"><h3><i class="fa-solid fa-folder-open"></i> ${escapar(nomeCliente(primeiro.cliente_id))}</h3>
+            <p>${escapar(rotuloProjeto(primeiro.projeto_id))}</p><div class="subpasta"><h4>Arquivos</h4>` + grupo.map(arquivo => `
             <article class="item-lista arquivo-item">
                 <div class="item-info">
                     <h3>${escapar(arquivo.nome)}</h3>
@@ -64,7 +76,7 @@ BIBLIOTECA.JS - CRUD ADMINISTRATIVO
                     ${botao("excluir", arquivo.id, "fa-trash", "Excluir arquivo", "delete")}
                 </div>
             </article>
-        `).join("");
+        `).join("") + `</div></section>`}).join("");
     }
 
     function tratarAcao(event) {
@@ -91,6 +103,8 @@ BIBLIOTECA.JS - CRUD ADMINISTRATIVO
         arquivoSelecionadoId = arquivo.id;
         preencher("arquivoNome", arquivo.nome);
         preencher("arquivoCategoria", arquivo.categoria);
+        preencher("arquivoCliente", arquivo.cliente_id);
+        preencherProjetos(arquivo.projeto_id);
         preencher("arquivoDescricao", arquivo.descricao);
         atualizarModal("Editar Arquivo", "Salvar Alterações", false);
         abrirModal();
@@ -103,13 +117,15 @@ BIBLIOTECA.JS - CRUD ADMINISTRATIVO
             nome: valor("arquivoNome"),
             categoria: valor("arquivoCategoria"),
             descricao: valor("arquivoDescricao")
+            ,cliente_id: valor("arquivoCliente") || null
+            ,projeto_id: valor("arquivoProjeto") || null
         };
 
         const upload = document.getElementById("arquivoUpload")?.files?.[0];
         const anterior = localizar(arquivoSelecionadoId);
 
-        if (!dados.nome) {
-            alert("Informe o nome do arquivo.");
+        if (!dados.nome || !dados.cliente_id || !dados.projeto_id) {
+            alert("Informe o nome, o cliente e o contrato.");
             return;
         }
 
@@ -124,7 +140,7 @@ BIBLIOTECA.JS - CRUD ADMINISTRATIVO
 
         try {
             if (upload) {
-                novoCaminho = `${Date.now()}-${normalizarNome(upload.name)}`;
+                novoCaminho = `${dados.cliente_id}/${dados.projeto_id}/${Date.now()}-${normalizarNome(upload.name)}`;
                 await dbUploadArquivo(BUCKETS.BIBLIOTECA, novoCaminho, upload);
                 dados.tipo = upload.type || "application/octet-stream";
                 dados.tamanho = formatarTamanho(upload.size);
@@ -218,6 +234,30 @@ BIBLIOTECA.JS - CRUD ADMINISTRATIVO
             [arquivo.nome, arquivo.categoria, arquivo.descricao, arquivo.tipo]
                 .some(campo => String(campo || "").toLocaleLowerCase("pt-BR").includes(termo))
         ));
+    }
+
+    function preencherClientes() {
+        const campo = document.getElementById("arquivoCliente");
+        if (campo) campo.innerHTML = `<option value="">Selecione</option>` + clientes.map(item =>
+            `<option value="${escapar(item.id)}">${escapar(item.nome)} — cad. ${escapar(String(item.id).slice(0,8).toUpperCase())}</option>`).join("");
+    }
+
+    function preencherProjetos(selecionado = "") {
+        const campo = document.getElementById("arquivoProjeto");
+        if (!campo) return;
+        const lista = projetos.filter(item => String(item.cliente_id) === valor("arquivoCliente"));
+        campo.innerHTML = `<option value="">Selecione o contrato</option>` + lista.map(item =>
+            `<option value="${escapar(item.id)}">${escapar(window.cmRotuloContrato?.(item) || item.nome)}</option>`).join("");
+        preencher("arquivoProjeto", selecionado);
+    }
+
+    function nomeCliente(id) {
+        return clientes.find(item => String(item.id) === String(id))?.nome || "Cliente não informado";
+    }
+
+    function rotuloProjeto(id) {
+        const item = projetos.find(projeto => String(projeto.id) === String(id));
+        return item ? (window.cmRotuloContrato?.(item) || item.nome) : "Contrato não informado";
     }
 
     function abrirModal() {

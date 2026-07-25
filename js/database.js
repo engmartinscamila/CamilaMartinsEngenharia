@@ -271,6 +271,16 @@ async function dbBuscarFotosProjeto(projetoId) {
     );
 }
 
+async function dbBuscarFotosCliente(clienteId) {
+    const { data, error } = await supabaseClient
+        .from(TABELAS.FOTOS)
+        .select("*")
+        .eq("cliente_id", clienteId)
+        .order("created_at", { ascending: false });
+    if (error) throw error;
+    return dbAdicionarUrlsTemporarias(data || [], BUCKETS.FOTOS);
+}
+
 
 // ==========================================================
 // BIBLIOTECA (arquivos)
