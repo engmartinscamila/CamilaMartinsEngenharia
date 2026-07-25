@@ -110,6 +110,39 @@ async function dbExcluirCliente(id) {
 }
 
 
+async function dbExcluirClienteCompleto(id) {
+
+    const { data, error } = await supabaseClient.functions.invoke(
+        "excluir-cliente-completo",
+        {
+            body: { cliente_id: id }
+        }
+    );
+
+    if (error) {
+        let mensagem = error.message || "Não foi possível excluir o cliente.";
+
+        try {
+            const detalhes = await error.context?.json();
+            mensagem = detalhes?.erro || mensagem;
+        }
+        catch {
+            // Mantém a mensagem original quando a resposta não contém JSON.
+        }
+
+        throw new Error(mensagem);
+    }
+
+    if (!data?.sucesso) {
+        throw new Error(
+            data?.erro || "A exclusão completa não foi confirmada."
+        );
+    }
+
+    return data;
+}
+
+
 // ==========================================================
 // AGENDA
 // ==========================================================
@@ -772,6 +805,39 @@ async function dbExcluirArquivoStorage(bucket, caminho) {
         .storage
         .from(resolverBucket(bucket))
         .remove([caminho]);
+
+    if (error) throw error;
+
+    return true;
+}
+
+
+async function dbListarObjetosArmazenamento() {
+
+    const { data, error } = await supabaseClient
+        .rpc("listar_armazenamento_portal");
+
+    if (error) throw error;
+
+    return Array.isArray(data) ? data : [];
+}
+
+
+async function dbExcluirRegistroPorArquivo(bucket, caminho) {
+
+    const tabelasPorBucket = {
+        [BUCKETS.DOCUMENTOS]: TABELAS.DOCUMENTOS,
+        [BUCKETS.FOTOS]: TABELAS.FOTOS,
+        [BUCKETS.BIBLIOTECA]: TABELAS.BIBLIOTECA
+    };
+    const tabela = tabelasPorBucket[resolverBucket(bucket)];
+
+    if (!tabela || !caminho) return true;
+
+    const { error } = await supabaseClient
+        .from(tabela)
+        .delete()
+        .eq("arquivo", caminho);
 
     if (error) throw error;
 

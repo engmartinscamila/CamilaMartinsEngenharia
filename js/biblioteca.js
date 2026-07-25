@@ -15,6 +15,7 @@ BIBLIOTECA.JS - BIBLIOTECA CENTRAL POR CLIENTE E CONTRATO
     let projetos = [];
     let arquivoSelecionadoId = null;
     let termoPesquisa = "";
+    let objetosArmazenamento = [];
 
     document.addEventListener("DOMContentLoaded", iniciar);
 
@@ -51,11 +52,43 @@ BIBLIOTECA.JS - BIBLIOTECA CENTRAL POR CLIENTE E CONTRATO
         document.getElementById("arquivoCliente")?.addEventListener("change", () => preencherProjetos());
         document.getElementById("pesquisaBiblioteca")?.addEventListener("input", pesquisar);
         document.getElementById("btnPesquisarBiblioteca")?.addEventListener("click", pesquisar);
+        document.getElementById("gerenciarArmazenamento")?.addEventListener(
+            "click",
+            abrirGerenciadorArmazenamento
+        );
+        document.getElementById("fecharGerenciadorStorage")?.addEventListener(
+            "click",
+            fecharGerenciadorArmazenamento
+        );
+        document.getElementById("cancelarGerenciadorStorage")?.addEventListener(
+            "click",
+            fecharGerenciadorArmazenamento
+        );
+        document.getElementById("selecionarTodosStorage")?.addEventListener(
+            "change",
+            alternarTodosStorage
+        );
+        document.getElementById("listaGerenciadorStorage")?.addEventListener(
+            "change",
+            atualizarSelecaoStorage
+        );
+        document.getElementById("excluirStorageSelecionado")?.addEventListener(
+            "click",
+            excluirStorageSelecionado
+        );
         document.getElementById("listaBiblioteca")?.addEventListener("click", tratarAcao);
         document.getElementById("detalhesBiblioteca")?.addEventListener("click", tratarAcao);
         document.getElementById("modalArquivo")?.addEventListener("click", event => {
             if (event.target.id === "modalArquivo") fecharModal();
         });
+        document.getElementById("modalGerenciarStorage")?.addEventListener(
+            "click",
+            event => {
+                if (event.target.id === "modalGerenciarStorage") {
+                    fecharGerenciadorArmazenamento();
+                }
+            }
+        );
     }
 
     function renderizar() {
@@ -406,13 +439,13 @@ BIBLIOTECA.JS - BIBLIOTECA CENTRAL POR CLIENTE E CONTRATO
         if (!arquivo || !confirm(`Excluir o arquivo "${arquivo.nome}"?`)) return;
 
         try {
-            await dbExcluirArquivoBiblioteca(arquivo.id);
             if (arquivo.arquivo) {
                 await dbExcluirArquivoStorage(
                     BUCKETS.BIBLIOTECA,
                     arquivo.arquivo
-                ).catch(() => {});
+                );
             }
+            await dbExcluirArquivoBiblioteca(arquivo.id);
             limparDetalhes();
             await recarregar();
             alert("Arquivo excluído com sucesso.");
@@ -434,6 +467,231 @@ BIBLIOTECA.JS - BIBLIOTECA CENTRAL POR CLIENTE E CONTRATO
     function pesquisar() {
         termoPesquisa = valor("pesquisaBiblioteca").toLocaleLowerCase("pt-BR");
         renderizar();
+    }
+
+    async function abrirGerenciadorArmazenamento() {
+        const modal = document.getElementById("modalGerenciarStorage");
+        const lista = document.getElementById("listaGerenciadorStorage");
+        if (!modal || !lista) return;
+
+        modal.style.display = "flex";
+        modal.classList.add("show");
+        lista.innerHTML = `
+            <div class="storage-gerenciador-carregando">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Carregando arquivos do Supabase...
+            </div>
+        `;
+
+        try {
+            objetosArmazenamento = await dbListarObjetosArmazenamento();
+            renderizarGerenciadorArmazenamento();
+        }
+        catch (error) {
+            console.error("Erro ao listar armazenamento:", error);
+            lista.innerHTML = `
+                <div class="estado-vazio">
+                    Não foi possível consultar o armazenamento. Execute a
+                    nova migração do Supabase e tente novamente.
+                </div>
+            `;
+        }
+    }
+
+    function fecharGerenciadorArmazenamento() {
+        const modal = document.getElementById("modalGerenciarStorage");
+        modal?.classList.remove("show");
+        if (modal) modal.style.display = "none";
+    }
+
+    function renderizarGerenciadorArmazenamento() {
+        const lista = document.getElementById("listaGerenciadorStorage");
+        const resumo = document.getElementById("resumoGerenciadorStorage");
+        const selecionarTodos = document.getElementById("selecionarTodosStorage");
+        if (!lista) return;
+
+        const totalBytes = objetosArmazenamento.reduce(
+            (total, objeto) => total + (Number(objeto.tamanho_bytes) || 0),
+            0
+        );
+
+        if (resumo) {
+            resumo.innerHTML = `
+                <strong>${formatarTamanho(totalBytes)} utilizados</strong>
+                <span>
+                    ${objetosArmazenamento.length}
+                    ${objetosArmazenamento.length === 1 ? "arquivo" : "arquivos"}
+                    nos buckets do site
+                </span>
+            `;
+        }
+
+        if (selecionarTodos) {
+            selecionarTodos.checked = false;
+            selecionarTodos.disabled = !objetosArmazenamento.length;
+        }
+
+        if (!objetosArmazenamento.length) {
+            lista.innerHTML = `
+                <div class="estado-vazio">
+                    Nenhum arquivo ocupa espaço no Storage.
+                </div>
+            `;
+            atualizarSelecaoStorage();
+            return;
+        }
+
+        lista.innerHTML = objetosArmazenamento.map((objeto, indice) => {
+            const referencia = referenciaObjeto(objeto);
+            return `
+                <label class="storage-gerenciador-item">
+                    <input type="checkbox" data-storage-indice="${indice}">
+                    <span class="storage-gerenciador-icone">
+                        <i class="fa-solid ${iconeBucket(objeto.bucket_id)}"></i>
+                    </span>
+                    <span class="storage-gerenciador-info">
+                        <strong>${escapar(referencia.nome)}</strong>
+                        <small>
+                            ${escapar(referencia.cliente)} —
+                            ${escapar(referencia.contrato)}
+                        </small>
+                        <small>
+                            ${escapar(rotuloBucket(objeto.bucket_id))} •
+                            ${escapar(formatarDataStorage(objeto.criado_em))}
+                        </small>
+                    </span>
+                    <strong class="storage-gerenciador-tamanho">
+                        ${escapar(formatarTamanho(Number(objeto.tamanho_bytes) || 0))}
+                    </strong>
+                </label>
+            `;
+        }).join("");
+
+        atualizarSelecaoStorage();
+    }
+
+    function referenciaObjeto(objeto) {
+        const colecao = {
+            [BUCKETS.DOCUMENTOS]: documentos,
+            [BUCKETS.FOTOS]: fotos,
+            [BUCKETS.BIBLIOTECA]: arquivos
+        }[objeto.bucket_id] || [];
+        const registro = colecao.find(
+            item => String(item.arquivo) === String(objeto.caminho)
+        );
+        const partes = String(objeto.caminho || "").split("/");
+        const clienteId = registro?.cliente_id || partes[0] || "";
+        const projetoId = registro?.projeto_id || partes[1] || "";
+
+        return {
+            nome: registro?.nome || partes.at(-1) || "Arquivo sem nome",
+            cliente: nomeCliente(clienteId),
+            contrato: rotuloProjeto(projetoId)
+        };
+    }
+
+    function alternarTodosStorage(event) {
+        document
+            .querySelectorAll("#listaGerenciadorStorage [data-storage-indice]")
+            .forEach(campo => {
+                campo.checked = event.target.checked;
+            });
+        atualizarSelecaoStorage();
+    }
+
+    function atualizarSelecaoStorage() {
+        const selecionados = document.querySelectorAll(
+            "#listaGerenciadorStorage [data-storage-indice]:checked"
+        );
+        const botao = document.getElementById("excluirStorageSelecionado");
+        if (!botao) return;
+
+        botao.disabled = !selecionados.length;
+        botao.innerHTML = selecionados.length
+            ? `<i class="fa-solid fa-trash"></i> Excluir ${selecionados.length}
+                ${selecionados.length === 1 ? "arquivo" : "arquivos"} definitivamente`
+            : `<i class="fa-solid fa-trash"></i> Excluir selecionados definitivamente`;
+    }
+
+    async function excluirStorageSelecionado() {
+        const campos = [
+            ...document.querySelectorAll(
+                "#listaGerenciadorStorage [data-storage-indice]:checked"
+            )
+        ];
+        const selecionados = campos
+            .map(campo => objetosArmazenamento[Number(campo.dataset.storageIndice)])
+            .filter(Boolean);
+        if (!selecionados.length) return;
+
+        const mensagem =
+            `Excluir definitivamente ${selecionados.length} ` +
+            `${selecionados.length === 1 ? "arquivo" : "arquivos"}?\n\n` +
+            "Essa ação remove o arquivo do Supabase e não pode ser desfeita.";
+        if (!confirm(mensagem)) return;
+
+        const botao = document.getElementById("excluirStorageSelecionado");
+        if (botao) {
+            botao.disabled = true;
+            botao.textContent = "Excluindo...";
+        }
+
+        let excluidos = 0;
+        const falhas = [];
+
+        for (const objeto of selecionados) {
+            try {
+                await dbExcluirArquivoStorage(
+                    objeto.bucket_id,
+                    objeto.caminho
+                );
+                await dbExcluirRegistroPorArquivo(
+                    objeto.bucket_id,
+                    objeto.caminho
+                );
+                excluidos += 1;
+            }
+            catch (error) {
+                console.error("Erro ao excluir arquivo permanente:", objeto, error);
+                falhas.push(objeto.caminho);
+            }
+        }
+
+        await recarregar();
+        objetosArmazenamento = await dbListarObjetosArmazenamento();
+        renderizarGerenciadorArmazenamento();
+
+        alert(
+            `${excluidos} ${excluidos === 1 ? "arquivo excluído" : "arquivos excluídos"} ` +
+            "definitivamente." +
+            (falhas.length
+                ? `\n${falhas.length} não puderam ser excluídos e permanecem listados.`
+                : "")
+        );
+    }
+
+    function rotuloBucket(bucket) {
+        return {
+            [BUCKETS.DOCUMENTOS]: "Documento",
+            [BUCKETS.FOTOS]: "Foto",
+            [BUCKETS.BIBLIOTECA]: "Outro arquivo"
+        }[bucket] || bucket || "Arquivo";
+    }
+
+    function iconeBucket(bucket) {
+        return {
+            [BUCKETS.DOCUMENTOS]: "fa-file-lines",
+            [BUCKETS.FOTOS]: "fa-image",
+            [BUCKETS.BIBLIOTECA]: "fa-file"
+        }[bucket] || "fa-file";
+    }
+
+    function formatarDataStorage(valorData) {
+        if (!valorData) return "Data não informada";
+        const data = new Date(valorData);
+        return Number.isNaN(data.getTime())
+            ? "Data não informada"
+            : data.toLocaleDateString("pt-BR");
     }
 
     function preencherClientes() {
@@ -461,7 +719,10 @@ BIBLIOTECA.JS - BIBLIOTECA CENTRAL POR CLIENTE E CONTRATO
                     ${escapar(window.cmRotuloContrato?.(item) || item.nome)}
                 </option>
             `).join("");
-        preencher("arquivoProjeto", selecionado);
+        preencher(
+            "arquivoProjeto",
+            selecionado || (lista.length === 1 ? lista[0].id : "")
+        );
     }
 
     function projetoPertenceAoCliente(projetoId, clienteId) {

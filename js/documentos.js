@@ -44,7 +44,10 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
         document.getElementById("fecharModalDocumento")?.addEventListener("click", fecharModal);
         document.getElementById("cancelarDocumento")?.addEventListener("click", fecharModal);
         document.getElementById("formDocumento")?.addEventListener("submit", salvarDocumento);
-        document.getElementById("documentoCliente")?.addEventListener("change", preencherProjetos);
+        document.getElementById("documentoCliente")?.addEventListener(
+            "change",
+            () => preencherProjetos()
+        );
         document.getElementById("pesquisaDocumento")?.addEventListener("input", pesquisar);
         document.getElementById("btnPesquisarDocumento")?.addEventListener("click", pesquisar);
         document.getElementById("listaDocumentos")?.addEventListener("click", tratarAcao);
@@ -65,7 +68,11 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
             return;
         }
 
-        const grupos = lista.reduce((m,item) => { const k = `|`; (m[k] ||= []).push(item); return m; }, {});
+        const grupos = lista.reduce((mapa, item) => {
+            const chave = `${item.cliente_id || ""}|${item.projeto_id || ""}`;
+            (mapa[chave] ||= []).push(item);
+            return mapa;
+        }, {});
         container.innerHTML = Object.values(grupos).map(grupo => {
             const primeiro = grupo[0];
             return `<section class="pasta-cliente"><h3><i class="fa-solid fa-folder-open"></i> ${escapar(nomeCliente(primeiro.cliente_id))}</h3>
@@ -314,10 +321,13 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
         if (!documento || !confirm(`Excluir o documento "${documento.nome}"?`)) return;
 
         try {
-            await dbExcluirDocumento(documento.id);
             if (documento.arquivo) {
-                await dbExcluirArquivoStorage(BUCKETS.DOCUMENTOS, documento.arquivo).catch(() => {});
+                await dbExcluirArquivoStorage(
+                    BUCKETS.DOCUMENTOS,
+                    documento.arquivo
+                );
             }
+            await dbExcluirDocumento(documento.id);
             limparDetalhes();
             await recarregar();
             alert("Documento excluído com sucesso.");
@@ -353,9 +363,26 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
         const clienteId = valor("documentoCliente");
         const lista = clienteId
             ? projetos.filter(projeto => String(projeto.cliente_id) === String(clienteId))
-            : projetos;
-        preencherSelect("documentoProjeto", lista);
-        preencher("documentoProjeto", valorSelecionado);
+            : [];
+        preencherSelectProjetos("documentoProjeto", lista);
+        preencher(
+            "documentoProjeto",
+            valorSelecionado || (lista.length === 1 ? lista[0].id : "")
+        );
+    }
+
+    function preencherSelectProjetos(id, itens) {
+        const select = document.getElementById(id);
+        if (!select) return;
+        select.innerHTML = `<option value="">${
+            itens.length > 1
+                ? "Selecione o contrato correto"
+                : "Selecione"
+        }</option>` + itens.map(item => `
+            <option value="${escapar(item.id)}">
+                ${escapar(window.cmRotuloContrato?.(item) || item.nome)}
+            </option>
+        `).join("");
     }
 
     function projetoPertenceAoCliente(projetoId, clienteId) {

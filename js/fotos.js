@@ -43,7 +43,10 @@ FOTOS.JS - CRUD ADMINISTRATIVO
         document.getElementById("fecharModalFoto")?.addEventListener("click", fecharModal);
         document.getElementById("cancelarFoto")?.addEventListener("click", fecharModal);
         document.getElementById("formFoto")?.addEventListener("submit", salvarFoto);
-        document.getElementById("fotoCliente")?.addEventListener("change", preencherProjetos);
+        document.getElementById("fotoCliente")?.addEventListener(
+            "change",
+            () => preencherProjetos()
+        );
         document.getElementById("pesquisaFoto")?.addEventListener("input", pesquisar);
         document.getElementById("btnPesquisarFoto")?.addEventListener("click", pesquisar);
         document.getElementById("galeriaFotos")?.addEventListener("click", tratarAcao);
@@ -62,7 +65,11 @@ FOTOS.JS - CRUD ADMINISTRATIVO
             return;
         }
 
-        const grupos = lista.reduce((m,item) => { const k = `|`; (m[k] ||= []).push(item); return m; }, {});
+        const grupos = lista.reduce((mapa, item) => {
+            const chave = `${item.cliente_id || ""}|${item.projeto_id || ""}`;
+            (mapa[chave] ||= []).push(item);
+            return mapa;
+        }, {});
         galeria.innerHTML = Object.values(grupos).map(grupo => {
             const primeira = grupo[0];
             return `<section class="pasta-cliente">
@@ -227,10 +234,10 @@ FOTOS.JS - CRUD ADMINISTRATIVO
         if (!foto || !confirm(`Excluir a foto "${foto.nome}"?`)) return;
 
         try {
-            await dbExcluirFoto(foto.id);
             if (foto.arquivo) {
-                await dbExcluirArquivoStorage(BUCKETS.FOTOS, foto.arquivo).catch(() => {});
+                await dbExcluirArquivoStorage(BUCKETS.FOTOS, foto.arquivo);
             }
+            await dbExcluirFoto(foto.id);
             limparDetalhes();
             await recarregar();
             alert("Foto excluída com sucesso.");
@@ -266,9 +273,26 @@ FOTOS.JS - CRUD ADMINISTRATIVO
         const clienteId = valor("fotoCliente");
         const lista = clienteId
             ? projetos.filter(projeto => String(projeto.cliente_id) === String(clienteId))
-            : projetos;
-        preencherSelect("fotoProjeto", lista);
-        preencher("fotoProjeto", valorSelecionado);
+            : [];
+        preencherSelectProjetos("fotoProjeto", lista);
+        preencher(
+            "fotoProjeto",
+            valorSelecionado || (lista.length === 1 ? lista[0].id : "")
+        );
+    }
+
+    function preencherSelectProjetos(id, itens) {
+        const select = document.getElementById(id);
+        if (!select) return;
+        select.innerHTML = `<option value="">${
+            itens.length > 1
+                ? "Selecione o contrato correto"
+                : "Selecione"
+        }</option>` + itens.map(item => `
+            <option value="${escapar(item.id)}">
+                ${escapar(window.cmRotuloContrato?.(item) || item.nome)}
+            </option>
+        `).join("");
     }
 
     function projetoPertenceAoCliente(projetoId, clienteId) {

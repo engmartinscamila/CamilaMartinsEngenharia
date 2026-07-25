@@ -19,8 +19,8 @@ Biblioteca | Camila Martins Engenharia
 
 
 
-<link rel="stylesheet" href="css/admin.css?v=20260724-8">
-<link rel="stylesheet" href="css/admin-theme.css?v=20260724-8">
+<link rel="stylesheet" href="css/admin.css?v=20260724-10">
+<link rel="stylesheet" href="css/admin-theme.css?v=20260724-10">
 
 
 <link rel="stylesheet"
@@ -230,6 +230,14 @@ Central de arquivos e materiais da engenharia
 
 
 <div class="acoes-topo">
+
+<button id="gerenciarArmazenamento" type="button">
+
+<i class="fa-solid fa-hard-drive"></i>
+
+Gerenciar armazenamento
+
+</button>
 
 
 <button id="novoArquivo">
@@ -565,6 +573,54 @@ Salvar Arquivo
 
 
 
+<!-- GERENCIADOR DE ARMAZENAMENTO -->
+
+<div id="modalGerenciarStorage" class="modal">
+
+<div class="modal-content storage-gerenciador-modal">
+
+<div class="modal-header">
+
+<div>
+<h2>Gerenciar armazenamento</h2>
+<p>Selecione os arquivos que deseja apagar definitivamente do Supabase.</p>
+</div>
+
+<button id="fecharGerenciadorStorage" type="button" aria-label="Fechar">
+<i class="fa-solid fa-xmark"></i>
+</button>
+
+</div>
+
+<div id="resumoGerenciadorStorage" class="storage-gerenciador-resumo">
+<strong>Carregando...</strong>
+</div>
+
+<label class="storage-selecionar-todos">
+<input id="selecionarTodosStorage" type="checkbox">
+Selecionar todos os arquivos
+</label>
+
+<div id="listaGerenciadorStorage" class="storage-gerenciador-lista"></div>
+
+<div class="modal-footer storage-gerenciador-acoes">
+
+<button id="cancelarGerenciadorStorage" type="button">
+Cancelar
+</button>
+
+<button id="excluirStorageSelecionado" type="button" disabled>
+<i class="fa-solid fa-trash"></i>
+Excluir selecionados definitivamente
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
 <!-- DETALHES DO ARQUIVO -->
 
 
@@ -660,17 +716,17 @@ Carregando...
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 
-<script src="js/supabase.js?v=20260724-8"></script>
+<script src="js/supabase.js?v=20260724-10"></script>
 
 
-<script src="js/database.js?v=20260724-8"></script>
+<script src="js/database.js?v=20260724-10"></script>
 
 
-<script src="js/auth.js?v=20260724-8"></script>
+<script src="js/auth.js?v=20260724-10"></script>
 
 
-<script src="js/servicos.js?v=20260724-8"></script>
-    <script src="js/biblioteca.js?v=20260724-8"></script>
+<script src="js/servicos.js?v=20260724-10"></script>
+    <script src="js/biblioteca.js?v=20260724-10"></script>
 
 
 

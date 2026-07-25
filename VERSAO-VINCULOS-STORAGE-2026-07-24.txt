@@ -1,0 +1,25 @@
+CAMILA MARTINS ENGENHARIA
+VERSÃO: VÍNCULOS E GERENCIADOR DE STORAGE — 24/07/2026
+
+Esta versão contém:
+
+1. Seleção de cliente corrigida:
+   - a troca de cliente atualiza corretamente os contratos;
+   - se houver um único contrato, ele é selecionado automaticamente;
+   - se houver mais de um, a escolha do contrato correto é obrigatória.
+
+2. Registros antigos:
+   - fotos, documentos e demais registros sem contrato são vinculados
+     automaticamente quando o cliente possui somente um contrato.
+
+3. Biblioteca:
+   - arquivos são agrupados pela combinação real de cliente e contrato;
+   - foi adicionado o botão "Gerenciar armazenamento".
+
+4. Exclusão permanente:
+   - permite selecionar arquivos reais dos buckets documentos, fotos e
+     biblioteca;
+   - remove o arquivo do Supabase Storage e o respectivo registro do site.
+
+Identificador desta versão nos arquivos HTML:
+v=20260724-9

@@ -567,20 +567,38 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
         }
 
         const confirmar = window.confirm(
-            `Deseja realmente excluir o cliente "${cliente.nome}"?`
+            `EXCLUSÃO PERMANENTE\n\n` +
+            `Excluir o cliente "${cliente.nome}"?\n\n` +
+            "Também serão apagados contratos, documentos, fotos, solicitações, " +
+            "arquivos do Storage e o acesso do cliente no Supabase Authentication.\n\n" +
+            "Essa ação não pode ser desfeita."
         );
 
         if (!confirmar) return;
 
+        const confirmacaoDigitada = window.prompt(
+            'Para confirmar, digite a palavra EXCLUIR em letras maiúsculas:'
+        );
+
+        if (confirmacaoDigitada !== "EXCLUIR") {
+            mostrarMensagem("Exclusão cancelada.", "erro");
+            return;
+        }
+
         try {
-            await dbExcluirCliente(cliente.id);
+            const resultado = await dbExcluirClienteCompleto(cliente.id);
 
             if (clienteSelecionadoId === cliente.id) {
                 clienteSelecionadoId = null;
                 limparDetalhesCliente();
             }
 
-            mostrarMensagem("Cliente excluído com sucesso.", "sucesso");
+            mostrarMensagem(
+                `Cliente excluído completamente. ` +
+                `${resultado.arquivos_excluidos || 0} arquivo(s) removido(s) ` +
+                "e acesso ao Supabase cancelado.",
+                "sucesso"
+            );
 
             if (paginaCompletaDeClientes()) {
                 await carregarClientes();
@@ -596,12 +614,10 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
         catch (error) {
             console.error("Erro ao excluir cliente:", error);
 
-            const mensagem = error?.code === "23503"
-                ? "Este cliente possui projetos ou arquivos vinculados. Exclua esses registros antes de excluir o cliente."
-                : mensagemSupabase(
-                    error,
-                    "Não foi possível excluir o cliente."
-                );
+            const mensagem = mensagemSupabase(
+                error,
+                "Não foi possível concluir a exclusão completa do cliente."
+            );
 
             mostrarMensagem(mensagem, "erro");
         }

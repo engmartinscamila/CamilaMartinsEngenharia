@@ -29,6 +29,12 @@ Site institucional, painel administrativo e portal privado do cliente.
   separadas de documentos, fotos e outros arquivos.
 - Indicador administrativo com uso real dos três buckets e a cota total
   visível.
+- Vínculo automático entre cliente e contrato quando existe somente um
+  contrato cadastrado.
+- Gerenciador administrativo para selecionar e excluir definitivamente
+  arquivos dos buckets de documentos, fotos e biblioteca.
+- Exclusão completa de cliente com remoção de arquivos, contratos, cadastro
+  e usuário do Supabase Authentication por uma Edge Function protegida.
 - Progresso ponderado e editável por etapa, com modelos iniciais conforme o
   serviço contratado.
 - Área construída, área do terreno e endereço da obra com busca por CEP ou
@@ -54,16 +60,20 @@ do banco incluída no pacote.
    campos, respostas, políticas e vínculos por cliente/contrato.
 6. Execute `supabase/migracao_ajustes_finais.sql` para ativar o indicador
    real de armazenamento.
-7. Em **Authentication > Providers > Email**, mantenha o provedor de e-mail
+7. Execute `supabase/migracao_vinculos_e_gerenciador_storage.sql` para
+   corrigir registros antigos sem contrato e ativar a exclusão permanente.
+8. Em **Authentication > Providers > Email**, mantenha o provedor de e-mail
    ativado. Se o painel não mostrar uma opção separada para permitir novos
    cadastros, não é necessário alterar mais nada. O gatilho da migração
    principal bloqueia qualquer e-mail que não tenha sido previamente
    cadastrado na tabela `clientes`.
-8. Substitua os arquivos do site pelos arquivos deste pacote.
-9. Publique novamente a função `notificar-atualizacao`.
-10. Teste primeiro o login administrativo e depois use o botão
+9. Substitua os arquivos do site pelos arquivos deste pacote.
+10. Publique novamente a função `notificar-atualizacao`.
+11. Publique também a função `excluir-cliente-completo` seguindo
+    `supabase/LEIA-ME-EXCLUSAO-COMPLETA.txt`.
+12. Teste primeiro o login administrativo e depois use o botão
    **Visualizar portal do cliente** no cadastro de um cliente.
-11. No Supabase, execute novamente o **Security Advisor** para confirmar as
+13. No Supabase, execute novamente o **Security Advisor** para confirmar as
    políticas aplicadas.
 
 O arquivo `supabase/verificacao_portal.sql` é somente leitura e mostra, em
