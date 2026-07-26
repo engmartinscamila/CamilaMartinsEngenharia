@@ -21,6 +21,8 @@ Site institucional, painel administrativo e portal privado do cliente.
   todos os campos editáveis.
 - Página administrativa de solicitações reorganizada.
 - Acesso à Área do Cliente no site principal e no cartão virtual.
+- Página pública do Menu de Experiências, com PDF próprio, acesso pelo menu
+  principal e atalho no cartão virtual.
 - Correção de links locais, menu móvel, cache de arquivos e favicon.
 - Fotos, documentos, agenda, biblioteca e solicitações organizados por cliente
   e contrato, usando também o identificador do cadastro.
