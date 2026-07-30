@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow,noarchive">
+    <title>Proteção de PDFs | Camila Martins Engenharia</title>
+    <link rel="icon" href="assets/logo.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Montserrat:wght@400;500;600&family=Parisienne&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/pdf-protection.css?v=20260729-1">
+</head>
+<body class="pdf-protection-page">
+    <header class="pdf-protection-header">
+        <a class="pdf-protection-brand" href="admin.html">
+            <strong>Camila Martins</strong>
+            <span>Engenharia</span>
+        </a>
+        <div class="pdf-protection-actions">
+            <a class="pdf-protection-back" href="admin.html">
+                <i class="bi bi-arrow-left"></i>
+                Painel
+            </a>
+            <button
+                class="pdf-protection-button"
+                id="pdfAdminLogout"
+                type="button"
+            >
+                <i class="bi bi-box-arrow-right"></i>
+                Sair
+            </button>
+        </div>
+    </header>
+
+    <main class="pdf-admin-shell">
+        <section class="pdf-admin-intro">
+            <h1>Proteção dos PDFs públicos</h1>
+            <p>
+                Envie aqui os dois originais que antes ficavam dentro da pasta
+                pública do site. Eles serão armazenados no bucket privado e o
+                visitante receberá somente uma cópia marcada e rastreável.
+            </p>
+            <p id="pdfAdminStatus" role="status" aria-live="polite">
+                Confirmando acesso...
+            </p>
+        </section>
+
+        <div class="pdf-admin-grid">
+            <form
+                class="pdf-admin-card"
+                data-pdf-upload
+                data-slug="portfolio"
+                data-title="Portfólio Camila Martins Engenharia"
+            >
+                <h2>Portfólio</h2>
+                <p>Substitui o antigo PDF público da página de portfólio.</p>
+                <label for="pdfPortfolio">PDF original</label>
+                <input
+                    id="pdfPortfolio"
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    required
+                >
+                <button class="pdf-protection-button" type="submit">
+                    Enviar original para proteção
+                </button>
+            </form>
+
+            <form
+                class="pdf-admin-card"
+                data-pdf-upload
+                data-slug="experiencias"
+                data-title="Menu de Experiências Camila Martins Engenharia"
+            >
+                <h2>Menu de experiências</h2>
+                <p>Substitui o antigo PDF público da página de experiências.</p>
+                <label for="pdfExperiencias">PDF original</label>
+                <input
+                    id="pdfExperiencias"
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    required
+                >
+                <button class="pdf-protection-button" type="submit">
+                    Enviar original para proteção
+                </button>
+            </form>
+        </div>
+
+        <section class="pdf-admin-status-card">
+            <h2>Situação atual</h2>
+            <ul id="pdfAdminList">
+                <li>Consultando os arquivos protegidos...</li>
+            </ul>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js?v=20260725-14"></script>
+    <script src="js/pdf-protection-admin.js?v=20260729-1"></script>
+</body>
+</html>
+

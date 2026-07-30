@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <meta name="robots" content="noindex,nofollow,noarchive">
+    <title>Documento protegido | Camila Martins Engenharia</title>
+    <link rel="icon" href="assets/logo.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Montserrat:wght@400;500;600&family=Parisienne&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/pdf-protection.css?v=20260729-1">
+</head>
+<body class="pdf-protection-page">
+    <header class="pdf-protection-header">
+        <a class="pdf-protection-brand" href="index.html">
+            <strong>Camila Martins</strong>
+            <span>Engenharia</span>
+        </a>
+        <div class="pdf-protection-actions">
+            <a class="pdf-protection-back" href="javascript:history.back()">
+                <i class="bi bi-arrow-left"></i>
+                Voltar
+            </a>
+            <a
+                class="pdf-protection-button"
+                id="protectedPdfDownload"
+                href="#"
+                rel="noopener noreferrer"
+                hidden
+            >
+                <i class="bi bi-shield-check"></i>
+                Baixar cópia identificada
+            </a>
+        </div>
+    </header>
+
+    <main class="pdf-protection-main">
+        <div class="pdf-protection-meta">
+            <div>
+                <h1 id="protectedPdfTitle">Documento protegido</h1>
+                <p id="pdfIssueCode">Gerando código rastreável...</p>
+            </div>
+        </div>
+
+        <section class="pdf-protection-stage">
+            <div class="pdf-protection-state" id="pdfProtectionLoading">
+                <i class="bi bi-arrow-repeat"></i>
+                <strong>Preparando sua cópia protegida</strong>
+                <span>
+                    O PDF está recebendo identificação, marca-d'água e código
+                    de rastreamento.
+                </span>
+            </div>
+
+            <div class="pdf-protection-state" id="pdfProtectionError" hidden>
+                <i class="bi bi-shield-exclamation"></i>
+                <strong>Documento indisponível</strong>
+                <span>Não foi possível liberar este PDF.</span>
+            </div>
+
+            <iframe
+                id="protectedPdfFrame"
+                title="Visualização do PDF protegido"
+                referrerpolicy="no-referrer"
+                hidden
+            ></iframe>
+        </section>
+
+        <p class="pdf-protection-legal">
+            © 2026 Camila Martins Engenharia. Material protegido por direitos
+            autorais. Cada cópia contém identificação rastreável. É proibida a
+            reprodução, adaptação, comercialização ou redistribuição sem
+            autorização expressa.
+        </p>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js?v=20260725-14"></script>
+    <script src="js/pdf-protection-viewer.js?v=20260729-1"></script>
+</body>
+</html>
+

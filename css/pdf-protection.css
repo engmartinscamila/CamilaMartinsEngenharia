@@ -1,0 +1,312 @@
+:root {
+    --pdf-cream: #f5f0e9;
+    --pdf-paper: #fffdf9;
+    --pdf-brown: #5d4637;
+    --pdf-brown-dark: #2f241d;
+    --pdf-gold: #a98b68;
+    --pdf-line: rgba(93, 70, 55, 0.18);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    min-height: 100%;
+    margin: 0;
+}
+
+body.pdf-protection-page {
+    background: var(--pdf-cream);
+    color: var(--pdf-brown-dark);
+    font-family: "Montserrat", Arial, sans-serif;
+}
+
+.pdf-protection-header {
+    min-height: 76px;
+    padding: 14px clamp(18px, 4vw, 56px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    background: var(--pdf-paper);
+    border-bottom: 1px solid var(--pdf-line);
+}
+
+.pdf-protection-brand {
+    display: flex;
+    flex-direction: column;
+}
+
+.pdf-protection-brand strong {
+    color: var(--pdf-brown);
+    font-family: "Parisienne", cursive;
+    font-size: clamp(1.55rem, 3vw, 2rem);
+    font-weight: 400;
+}
+
+.pdf-protection-brand span {
+    font-size: 0.68rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+}
+
+.pdf-protection-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pdf-protection-button,
+.pdf-protection-back {
+    min-height: 42px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid var(--pdf-line);
+    border-radius: 999px;
+    color: var(--pdf-brown-dark);
+    background: var(--pdf-paper);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.pdf-protection-button {
+    border-color: var(--pdf-brown);
+    color: white;
+    background: var(--pdf-brown);
+}
+
+.pdf-protection-main {
+    min-height: calc(100vh - 76px);
+    padding: 18px clamp(12px, 3vw, 36px) 30px;
+}
+
+.pdf-protection-meta {
+    max-width: 1260px;
+    margin: 0 auto 12px;
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.pdf-protection-meta h1 {
+    margin: 0 0 4px;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+}
+
+.pdf-protection-meta p {
+    margin: 0;
+    color: #745f50;
+    font-size: 0.78rem;
+}
+
+.pdf-protection-stage {
+    position: relative;
+    width: min(1260px, 100%);
+    min-height: 68vh;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 1px solid var(--pdf-line);
+    border-radius: 16px;
+    background: #ded9d2;
+    box-shadow: 0 18px 50px rgba(47, 36, 29, 0.12);
+}
+
+.pdf-protection-stage iframe {
+    display: block;
+    width: 100%;
+    height: calc(100vh - 170px);
+    min-height: 640px;
+    border: 0;
+    background: white;
+}
+
+.pdf-protection-state {
+    min-height: 68vh;
+    padding: 40px 24px;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 12px;
+    text-align: center;
+}
+
+.pdf-protection-state i {
+    color: var(--pdf-gold);
+    font-size: 2rem;
+}
+
+.pdf-protection-state .bi-arrow-repeat {
+    animation: pdf-spin 1s linear infinite;
+}
+
+.pdf-protection-state strong {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 1.5rem;
+}
+
+.pdf-protection-state span {
+    max-width: 520px;
+    color: #745f50;
+    line-height: 1.6;
+}
+
+.pdf-protection-legal {
+    max-width: 1260px;
+    margin: 12px auto 0;
+    color: #806d5f;
+    font-size: 0.72rem;
+    line-height: 1.55;
+}
+
+.embedded-viewer .pdf-protection-header,
+.embedded-viewer .pdf-protection-meta,
+.embedded-viewer .pdf-protection-legal {
+    display: none;
+}
+
+.embedded-viewer .pdf-protection-main {
+    min-height: 100vh;
+    padding: 0;
+}
+
+.embedded-viewer .pdf-protection-stage {
+    width: 100%;
+    min-height: 100vh;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.embedded-viewer .pdf-protection-stage iframe {
+    height: 100vh;
+    min-height: 100vh;
+}
+
+.pdf-admin-shell {
+    width: min(980px, calc(100% - 28px));
+    margin: 0 auto;
+    padding: 34px 0 60px;
+}
+
+.pdf-admin-intro,
+.pdf-admin-card,
+.pdf-admin-status-card {
+    padding: clamp(20px, 4vw, 34px);
+    border: 1px solid var(--pdf-line);
+    border-radius: 18px;
+    background: var(--pdf-paper);
+    box-shadow: 0 14px 40px rgba(47, 36, 29, 0.08);
+}
+
+.pdf-admin-intro {
+    margin-bottom: 18px;
+}
+
+.pdf-admin-intro h1,
+.pdf-admin-card h2,
+.pdf-admin-status-card h2 {
+    margin: 0 0 8px;
+    font-family: "Cormorant Garamond", Georgia, serif;
+}
+
+.pdf-admin-grid {
+    margin-bottom: 18px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.pdf-admin-card label {
+    display: block;
+    margin: 18px 0 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.pdf-admin-card input {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid var(--pdf-line);
+    border-radius: 10px;
+    background: white;
+}
+
+.pdf-admin-card button {
+    width: 100%;
+    margin-top: 16px;
+}
+
+#pdfAdminStatus[data-type="erro"] {
+    color: #9c2f2f;
+}
+
+#pdfAdminStatus[data-type="sucesso"] {
+    color: #3e6946;
+}
+
+#pdfAdminList {
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+#pdfAdminList li {
+    padding: 12px 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    border-top: 1px solid var(--pdf-line);
+}
+
+#pdfAdminList span {
+    color: #745f50;
+    font-size: 0.78rem;
+    text-align: right;
+}
+
+@keyframes pdf-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 720px) {
+    .pdf-protection-header,
+    .pdf-protection-meta {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .pdf-protection-actions,
+    .pdf-protection-button,
+    .pdf-protection-back {
+        width: 100%;
+    }
+
+    .pdf-protection-stage iframe {
+        min-height: 560px;
+    }
+
+    .pdf-admin-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #pdfAdminList li {
+        flex-direction: column;
+    }
+
+    #pdfAdminList span {
+        text-align: left;
+    }
+}
+
