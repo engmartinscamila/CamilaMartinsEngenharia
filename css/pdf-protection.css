@@ -23,6 +23,15 @@ body.pdf-protection-page {
     font-family: "Montserrat", Arial, sans-serif;
 }
 
+/*
+ * Alguns navegadores permitem que regras de display do site se sobreponham
+ * ao atributo HTML hidden. Esta regra garante que apenas o estado atual
+ * (carregando, erro ou PDF pronto) fique visível.
+ */
+.pdf-protection-page [hidden] {
+    display: none !important;
+}
+
 .pdf-protection-header {
     min-height: 76px;
     padding: 14px clamp(18px, 4vw, 56px);
@@ -309,4 +318,3 @@ body.pdf-protection-page {
         text-align: left;
     }
 }
-
