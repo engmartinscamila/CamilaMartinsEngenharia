@@ -127,23 +127,49 @@
         { "src": "assets/projetos/empreendimento-vitalle/77.webp", "alt": "Integração entre sala de estar e cozinha" },
         { "src": "assets/projetos/empreendimento-vitalle/78.webp", "alt": "Painel de televisão e bancada da sala de estar" },
         { "src": "assets/projetos/empreendimento-vitalle/79.webp", "alt": "Circulação entre sala, jantar e cozinha" }
+      ],
+      "videos": [
+        {
+          "src": "assets/projetos/empreendimento-vitalle/videos/vitalle-interiores-01.mp4",
+          "poster": "assets/projetos/empreendimento-vitalle/videos/vitalle-interiores-01.webp",
+          "titulo": "Interiores integrados",
+          "descricao": "Passeio pela sala, jantar, cozinha e circulação interna do empreendimento."
+        },
+        {
+          "src": "assets/projetos/empreendimento-vitalle/videos/vitalle-interiores-02.mp4",
+          "poster": "assets/projetos/empreendimento-vitalle/videos/vitalle-interiores-02.webp",
+          "titulo": "Sala e cozinha",
+          "descricao": "Segundo percurso pelos ambientes sociais e pela cozinha planejada."
+        },
+        {
+          "src": "assets/projetos/empreendimento-vitalle/videos/vitalle-area-de-servico.mp4",
+          "poster": "assets/projetos/empreendimento-vitalle/videos/vitalle-area-de-servico.webp",
+          "titulo": "Área de serviço",
+          "descricao": "Visualização do espaço de apoio e de sua integração com a cozinha."
+        },
+        {
+          "src": "assets/projetos/empreendimento-vitalle/videos/vitalle-suite-e-banheiro.mp4",
+          "poster": "assets/projetos/empreendimento-vitalle/videos/vitalle-suite-e-banheiro.webp",
+          "titulo": "Suíte e banheiro",
+          "descricao": "Percurso pelo dormitório, marcenaria e banheiro da unidade."
+        }
       ]
     },
     {
       "slug": "casa-urban",
-      "nome": "Casa Urban",
+      "nome": "Casa Urben",
       "categoria": "Residência contemporânea • 220 m²",
       "descricao": "Residência com quatro suítes, cozinha gourmet, piscina e integração entre casa, deck e área externa.",
       "imagens": [
-        { "src": "assets/projetos/casa-urban/01.webp", "alt": "Detalhes do closet e do banheiro da Casa Urban" },
+        { "src": "assets/projetos/casa-urban/01.webp", "alt": "Detalhes do closet e do banheiro da Casa Urben" },
         { "src": "assets/projetos/casa-urban/02.webp", "alt": "Fachada frontal em estudo tridimensional" },
-        { "src": "assets/projetos/casa-urban/03.webp", "alt": "Fachada noturna da Casa Urban" },
+        { "src": "assets/projetos/casa-urban/03.webp", "alt": "Fachada noturna da Casa Urben" },
         { "src": "assets/projetos/casa-urban/04.webp", "alt": "Implantação humanizada com deck e piscina" },
-        { "src": "assets/projetos/casa-urban/05.webp", "alt": "Vista tridimensional da implantação da Casa Urban" },
+        { "src": "assets/projetos/casa-urban/05.webp", "alt": "Vista tridimensional da implantação da Casa Urben" },
         { "src": "assets/projetos/casa-urban/06.webp", "alt": "Sala com lareira e painel em pedra natural" },
         { "src": "assets/projetos/casa-urban/07.webp", "alt": "Vista longitudinal da piscina e da residência" },
         { "src": "assets/projetos/casa-urban/08.webp", "alt": "Piscina com prainha e paisagismo ao fundo" },
-        { "src": "assets/projetos/casa-urban/09.webp", "alt": "Vista lateral da piscina da Casa Urban" },
+        { "src": "assets/projetos/casa-urban/09.webp", "alt": "Vista lateral da piscina da Casa Urben" },
         { "src": "assets/projetos/casa-urban/10.webp", "alt": "Segundo ângulo da sala com lareira" },
         { "src": "assets/projetos/casa-urban/11.webp", "alt": "Espaço gourmet coberto integrado ao jardim" },
         { "src": "assets/projetos/casa-urban/12.webp", "alt": "Corredor lateral com jardim e iluminação arquitetônica" },
@@ -152,21 +178,29 @@
         { "src": "assets/projetos/casa-urban/15.webp", "alt": "Vista externa da residência e do jardim" },
         { "src": "assets/projetos/casa-urban/16.webp", "alt": "Vista ampla da piscina em frente à residência" },
         { "src": "assets/projetos/casa-urban/17.webp", "alt": "Pergolado de madeira na área externa" },
-        { "src": "assets/projetos/casa-urban/18.webp", "alt": "Vista frontal da piscina com a Casa Urban ao fundo" },
+        { "src": "assets/projetos/casa-urban/18.webp", "alt": "Vista frontal da piscina com a Casa Urben ao fundo" },
         { "src": "assets/projetos/casa-urban/19.webp", "alt": "Piscina com degraus e área de convivência" },
         { "src": "assets/projetos/casa-urban/20.webp", "alt": "Varanda coberta voltada para o jardim" },
         { "src": "assets/projetos/casa-urban/21.webp", "alt": "Fachada lateral com paisagismo e acessos" },
-        { "src": "assets/projetos/casa-urban/22.webp", "alt": "Fachada principal contemporânea da Casa Urban" },
+        { "src": "assets/projetos/casa-urban/22.webp", "alt": "Fachada principal contemporânea da Casa Urben" },
         { "src": "assets/projetos/casa-urban/23.webp", "alt": "Detalhe do volume envidraçado da fachada" },
         { "src": "assets/projetos/casa-urban/24.webp", "alt": "Fachada principal vista em perspectiva" },
         { "src": "assets/projetos/casa-urban/25.webp", "alt": "Vista ampla da fachada e do acesso de veículos" },
         { "src": "assets/projetos/casa-urban/26.webp", "alt": "Fachada com garagem e pergolado de madeira" },
         { "src": "assets/projetos/casa-urban/27.webp", "alt": "Detalhe do pé-direito alto e dos revestimentos da fachada" },
         { "src": "assets/projetos/casa-urban/28.webp", "alt": "Fachada em perspectiva com acesso lateral" },
-        { "src": "assets/projetos/casa-urban/29.webp", "alt": "Estudo tridimensional frontal da Casa Urban" },
+        { "src": "assets/projetos/casa-urban/29.webp", "alt": "Estudo tridimensional frontal da Casa Urben" },
         { "src": "assets/projetos/casa-urban/30.webp", "alt": "Fachada frontal com paisagismo e iluminação natural" },
         { "src": "assets/projetos/casa-urban/31.webp", "alt": "Estudo comparativo de materiais da fachada" },
         { "src": "assets/projetos/casa-urban/32.webp", "alt": "Variação de acabamento da fachada principal" }
+      ],
+      "videos": [
+        {
+          "src": "assets/projetos/casa-urban/videos/casa-urben-tour.mp4",
+          "poster": "assets/projetos/casa-urban/videos/casa-urben-tour.webp",
+          "titulo": "Passeio pela Casa Urben",
+          "descricao": "Trecho de um minuto com a fachada, a sala com lareira e os primeiros ambientes internos."
+        }
       ]
     }
   ]

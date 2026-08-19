@@ -1,7 +1,8 @@
 (function iniciarGaleriaProjetos() {
   'use strict';
 
-  const dadosUrl = 'assets/projetos/galeria.json?v=20260819-5';
+  const dadosUrl = 'assets/projetos/galeria.json?v=20260819-7';
+  const versaoImagens = '20260819-7';
   const projetosContainer = document.getElementById('galleryProjects');
   const navegacaoContainer = document.getElementById('galleryProjectNav');
   const carregamento = document.getElementById('galleryLoading');
@@ -28,6 +29,10 @@
     return elemento;
   }
 
+  function urlImagem(src) {
+    return `${src}${src.includes('?') ? '&' : '?'}v=${versaoImagens}`;
+  }
+
   function numeroComZero(numero) {
     return String(numero).padStart(2, '0');
   }
@@ -41,6 +46,36 @@
     if (distancia > quantidade / 2) distancia -= quantidade;
     if (distancia < -quantidade / 2) distancia += quantidade;
     return distancia;
+  }
+
+  function ajustarSlideAImagem(slide, foto) {
+    const viewport = slide.closest('.gallery-carousel-viewport');
+    if (!viewport || !foto.naturalWidth || !foto.naturalHeight) return;
+
+    const mobile = window.matchMedia('(max-width: 680px)').matches;
+    const densidade = Math.min(window.devicePixelRatio || 1, 1.5);
+    const limiteLargura = Math.min(
+      viewport.clientWidth * (mobile ? 0.84 : 0.7),
+      mobile ? 680 : 840,
+      foto.naturalWidth / densidade
+    );
+    const limiteAltura = Math.min(
+      viewport.clientHeight - (mobile ? 70 : 90),
+      mobile ? 410 : 520,
+      foto.naturalHeight / densidade
+    );
+    const proporcao = foto.naturalWidth / foto.naturalHeight;
+
+    let largura = limiteLargura;
+    let altura = largura / proporcao;
+    if (altura > limiteAltura) {
+      altura = limiteAltura;
+      largura = altura * proporcao;
+    }
+
+    slide.style.setProperty('--slide-width', `${Math.round(largura)}px`);
+    slide.style.setProperty('--slide-height', `${Math.round(altura)}px`);
+    slide.classList.add('is-image-ready');
   }
 
   function renderizarNavegacao() {
@@ -69,6 +104,61 @@
     return botao;
   }
 
+  function criarSecaoVideos(projeto) {
+    const videos = Array.isArray(projeto.videos) ? projeto.videos : [];
+    if (videos.length === 0) return null;
+
+    const secao = criarElemento('section', 'gallery-project-videos');
+    const cabecalho = criarElemento('header', 'gallery-video-heading');
+    const textos = criarElemento('div');
+    const marcador = criarElemento('p', 'eyebrow', 'Vídeos do projeto');
+    const titulo = criarElemento('h3', '', 'Veja o projeto em movimento');
+    const descricao = criarElemento(
+      'p',
+      '',
+      'Os vídeos são apresentados separadamente da galeria de imagens.'
+    );
+    const quantidade = criarElemento(
+      'span',
+      'gallery-video-count',
+      `${videos.length} ${videos.length === 1 ? 'vídeo' : 'vídeos'}`
+    );
+
+    titulo.id = `${projeto.slug}-videos-title`;
+    textos.append(marcador, titulo, descricao);
+    cabecalho.append(textos, quantidade);
+    secao.setAttribute('aria-labelledby', titulo.id);
+
+    const grade = criarElemento('div', 'gallery-video-grid');
+    if (videos.length === 1) grade.classList.add('is-single');
+
+    videos.forEach((item, indiceVideo) => {
+      const cartao = criarElemento('article', 'gallery-video-card');
+      const midia = criarElemento('div', 'gallery-video-media');
+      const video = document.createElement('video');
+      const legenda = criarElemento('div', 'gallery-video-caption');
+      const tituloVideo = criarElemento('h4', '', item.titulo);
+      const descricaoVideo = criarElemento('p', '', item.descricao);
+
+      video.src = urlImagem(item.src);
+      video.poster = urlImagem(item.poster);
+      video.controls = true;
+      video.preload = 'metadata';
+      video.playsInline = true;
+      video.disablePictureInPicture = true;
+      video.setAttribute('controlslist', 'nodownload noremoteplayback');
+      video.setAttribute('aria-label', `${item.titulo}, vídeo ${indiceVideo + 1} de ${videos.length} de ${projeto.nome}`);
+
+      midia.appendChild(video);
+      legenda.append(tituloVideo, descricaoVideo);
+      cartao.append(midia, legenda);
+      grade.appendChild(cartao);
+    });
+
+    secao.append(cabecalho, grade);
+    return secao;
+  }
+
   function renderizarProjetos() {
     const fragmento = document.createDocumentFragment();
 
@@ -82,10 +172,14 @@
       const categoria = criarElemento('p', 'eyebrow', projeto.categoria);
       const titulo = criarElemento('h2', '', projeto.nome);
       const descricao = criarElemento('p', '', projeto.descricao);
+      const videos = Array.isArray(projeto.videos) ? projeto.videos : [];
+      const textoVideos = videos.length > 0
+        ? ` • ${videos.length} ${videos.length === 1 ? 'vídeo' : 'vídeos'}`
+        : '';
       const quantidade = criarElemento(
         'span',
         'gallery-project-count',
-        `${projeto.imagens.length} ${projeto.imagens.length === 1 ? 'imagem' : 'imagens'}`
+        `${projeto.imagens.length} ${projeto.imagens.length === 1 ? 'imagem' : 'imagens'}${textoVideos}`
       );
 
       textos.append(categoria, titulo, descricao);
@@ -115,11 +209,12 @@
 
         const moldura = criarElemento('span', 'gallery-carousel-frame');
         const foto = document.createElement('img');
-        foto.dataset.src = imagem.src;
+        foto.dataset.src = urlImagem(imagem.src);
         foto.alt = imagem.alt;
         foto.loading = 'lazy';
         foto.decoding = 'async';
         foto.draggable = false;
+        foto.addEventListener('load', () => ajustarSlideAImagem(botao, foto));
 
         const numero = criarElemento(
           'span',
@@ -160,6 +255,8 @@
       status.append(copia, progresso, instrucao);
       carrossel.append(palco, status);
       container.append(cabecalho, carrossel);
+      const secaoVideos = criarSecaoVideos(projeto);
+      if (secaoVideos) container.appendChild(secaoVideos);
       secao.appendChild(container);
       fragmento.appendChild(secao);
     });
@@ -233,7 +330,7 @@
   function atualizarLightbox() {
     const projeto = projetos[projetoAtual];
     const imagem = projeto.imagens[imagemAtual];
-    lightboxImage.src = imagem.src;
+    lightboxImage.src = urlImagem(imagem.src);
     lightboxImage.alt = imagem.alt;
     lightboxTitle.textContent = `${projeto.nome} • ${imagemAtual + 1} de ${projeto.imagens.length} • ${imagem.alt}`;
   }
@@ -374,6 +471,13 @@
     slide.style.setProperty('--tilt-y', '0deg');
   });
 
+  projetosContainer.addEventListener('play', (evento) => {
+    if (!evento.target.matches('.gallery-video-media video')) return;
+    projetosContainer.querySelectorAll('.gallery-video-media video').forEach((video) => {
+      if (video !== evento.target) video.pause();
+    });
+  }, true);
+
   lightboxClose.addEventListener('click', fecharLightbox);
   lightboxPrev.addEventListener('click', () => navegarLightbox(-1));
   lightboxNext.addEventListener('click', () => navegarLightbox(1));
@@ -395,11 +499,23 @@
   });
 
   document.addEventListener('contextmenu', (evento) => {
-    if (evento.target.closest('.gallery-carousel, .gallery-lightbox')) evento.preventDefault();
+    if (evento.target.closest('.gallery-carousel, .gallery-project-videos, .gallery-lightbox')) evento.preventDefault();
   });
 
   document.addEventListener('dragstart', (evento) => {
     if (evento.target.matches('img')) evento.preventDefault();
+  });
+
+  let ajustePendente = false;
+  window.addEventListener('resize', () => {
+    if (ajustePendente) return;
+    ajustePendente = true;
+    window.requestAnimationFrame(() => {
+      projetosContainer.querySelectorAll('.gallery-carousel-slide img').forEach((foto) => {
+        if (foto.complete && foto.naturalWidth) ajustarSlideAImagem(foto.closest('.gallery-carousel-slide'), foto);
+      });
+      ajustePendente = false;
+    });
   });
 
   fetch(dadosUrl, { cache: 'no-cache' })

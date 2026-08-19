@@ -7,4 +7,12 @@
 5. Acrescente o projeto e suas imagens no arquivo `assets/projetos/galeria.json`.
 6. Verifique a galeria no computador e somente depois publique as alterações.
 
-O site não inclui botão de download e bloqueia as formas mais comuns de salvar ou arrastar as imagens. Como qualquer imagem exibida na internet pode ser capturada por meios técnicos ou por screenshot, a proteção permanente é a marca-d'água incorporada ao próprio arquivo.
+## Como adicionar vídeos sem misturá-los às fotos
+
+1. Crie uma subpasta `videos` dentro da pasta do projeto.
+2. Exporte o vídeo em MP4 com codec H.264, sem reprodução automática e com a marca-d'água incorporada.
+3. Gere uma imagem de capa em WebP para cada vídeo.
+4. No projeto correspondente em `assets/projetos/galeria.json`, adicione a lista `videos` com `src`, `poster`, `titulo` e `descricao`.
+5. Mantenha as fotos na lista `imagens`; a página monta automaticamente uma seção separada chamada “Vídeos do projeto”.
+
+O site não inclui botão de download e bloqueia as formas mais comuns de salvar ou arrastar imagens e vídeos. Como qualquer conteúdo exibido na internet pode ser capturado por meios técnicos ou por gravação de tela, a proteção permanente é a marca-d'água incorporada ao próprio arquivo.
