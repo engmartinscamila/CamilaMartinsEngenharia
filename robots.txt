@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://www.camilamartinsengenharia.com.br/sitemap.xml

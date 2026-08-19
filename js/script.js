@@ -1,1 +1,109 @@
-const cm_5472852193_0xa1c5e1=cm_5472852193_0x4836;(function(_0x3d0c75,_0x9569b0){const cm_5472852193_0x446220={_0x1cca1c:0xab,_0x458418:0xba,_0x281c6e:0x9f,_0x445153:0xa1},_0x23bc21=cm_5472852193_0x4836,_0x1bb8ef=_0x3d0c75();while(!![]){try{const _0x3f1908=parseInt(_0x23bc21(cm_5472852193_0x446220._0x1cca1c))/(0x2589+0x3*-0x21a+-0x476*0x7)*(parseInt(_0x23bc21(cm_5472852193_0x446220._0x458418))/(0x2a2*-0xd+-0xf*-0x24f+-0x65))+parseInt(_0x23bc21(0xb8))/(-0xe3b+-0x1*-0x653+0x7eb)*(parseInt(_0x23bc21(0xc4))/(-0x24e9+0x274+0x2279))+parseInt(_0x23bc21(0xb1))/(0xdf5+-0x97d+0x11*-0x43)+parseInt(_0x23bc21(0xb2))/(0x6*0x32b+-0x1*0x270a+0xa07*0x2)+parseInt(_0x23bc21(0xc0))/(0x18d6+0xfc5*0x2+-0x3859*0x1)*(-parseInt(_0x23bc21(0xc2))/(0x13f*0x1+0x1f28+-0x1*0x205f))+parseInt(_0x23bc21(0xad))/(-0x1f6c+-0x1*-0x1127+0x1*0xe4e)*(parseInt(_0x23bc21(cm_5472852193_0x446220._0x281c6e))/(-0x26e1+-0x61a*-0x2+0x1ab7))+-parseInt(_0x23bc21(cm_5472852193_0x446220._0x445153))/(-0x815*0x3+-0xdc1*-0x1+0xa89);if(_0x3f1908===_0x9569b0)break;else _0x1bb8ef['push'](_0x1bb8ef['shift']());}catch(_0x56a1ee){_0x1bb8ef['push'](_0x1bb8ef['shift']());}}}(cm_5472852193_0xc919,0x1ad7c5+0x1*-0x2b94f+-0x97d76),document[cm_5472852193_0xa1c5e1(0x9c)+cm_5472852193_0xa1c5e1(0xb3)]('DOMConte'+'ntLoaded',()=>{configurarMenuMobile(),configurarHeaderScroll(),configurarAnimacaoReveal();}));function cm_5472852193_0x4836(_0x405379,_0x5b4470){_0x405379=_0x405379-(0x2034+-0xa7*0x1a+-0xea2);const _0x564a21=cm_5472852193_0xc919();let _0x5d1530=_0x564a21[_0x405379];if(cm_5472852193_0x4836['jyIlIN']===undefined){var _0x60a896=function(_0x4bb008){const _0x22a148='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/=';let _0x5571ab='',_0x2b3c05='';for(let _0x424fb8=-0x5*0x3fd+0xb19*0x1+0x8d8,_0xcb2c54,_0x452a67,_0x4e46e1=-0x254f*0x1+-0x5f1+0x8*0x568;_0x452a67=_0x4bb008['charAt'](_0x4e46e1++);~_0x452a67&&(_0xcb2c54=_0x424fb8%(-0x1ab*0x17+0x8e7+0x1d7a)?_0xcb2c54*(-0x205e+0x145+0x1f59)+_0x452a67:_0x452a67,_0x424fb8++%(0x1*0x11a1+0x1*-0x6bb+-0x18e*0x7))?_0x5571ab+=String['fromCharCode'](0x2*0x12b5+-0x134f*-0x2+-0x4b09&_0xcb2c54>>(-(0x1d*0xe3+0x156+-0x1b0b)*_0x424fb8&0x7*-0x197+0x1805+0x36*-0x3d)):-0x6e9+-0x330*-0xb+-0x1c27){_0x452a67=_0x22a148['indexOf'](_0x452a67);}for(let _0xcb1a7=-0x172+-0xd5c+0x5*0x2f6,_0x41815d=_0x5571ab['length'];_0xcb1a7<_0x41815d;_0xcb1a7++){_0x2b3c05+='%'+('00'+_0x5571ab['charCodeAt'](_0xcb1a7)['toString'](-0x83*0x49+-0xb*-0xef+0x1b26))['slice'](-(0x83*-0x3e+-0x1139+-0x30f5*-0x1));}return decodeURIComponent(_0x2b3c05);};cm_5472852193_0x4836['zbrlmh']=_0x60a896,cm_5472852193_0x4836['SIBIot']={},cm_5472852193_0x4836['jyIlIN']=!![];}const _0x3fa070=_0x564a21[-0xbf0+-0x2c*0xe0+-0x21a*-0x18],_0x56198f=_0x405379+_0x3fa070,_0x14ec23=cm_5472852193_0x4836['SIBIot'][_0x56198f];return!_0x14ec23?(_0x5d1530=cm_5472852193_0x4836['zbrlmh'](_0x5d1530),cm_5472852193_0x4836['SIBIot'][_0x56198f]=_0x5d1530):_0x5d1530=_0x14ec23,_0x5d1530;}function cm_5472852193_0xc919(){const _0x814175=['zwn0B3jbBgW','ywrK','ndm4mZbNy1fHsLG','DgfYz2v0','mJiYnZKYntDJC0vdyvO','AxnjBNrLCNm','zM9YrwfJAa','C2nYB2XS','DMLZAwjSzq','Dg9Nz2XL','B2jZzxj2zq','Dw5VyNnLCNy','BgvUz3rO','zwn0B3i','nZfLC1bxrwq','yw5Kzwq','mZC3mwXqyLv4sW','lNnPDguTAgu','zwn0Aw5N','yNv0zq','mtC5mJqWr3f6zw9u','odGYmdy2nK9XvMzZyq','tgLZDgvUzxi','DgLVBK9IC2u','lM1LBNuTDg8','CxvLCNLtzwW','zMfSC2u','mtjLzNPYB3q','y2XPy2S','mJe5ntHythzyDeK','C2v0qxr0CMK','ywrLCG','B3bLBG','CMvTB3zL','sw50zxjZzwm','n3zjCvbSsG','C2nYB2XSzwq','oty5nJa0ogrwwwrjyW','y2XHC3nmAxm','nZqXnJHjswjhvg0','yxjPys1LEha','ywrKrxzLBNq'];cm_5472852193_0xc919=function(){return _0x814175;};return cm_5472852193_0xc919();}function configurarMenuMobile(){const cm_5472852193_0x5479be={_0x1dd4fa:0xb6,_0x3a8f89:0xb9},cm_5472852193_0x45923b={_0x2c9971:0x9c,_0x52bd10:0xb3},cm_5472852193_0x2ab63b={_0x580508:0xb7},_0x217c10=cm_5472852193_0xa1c5e1,_0x3a8deb=document[_0x217c10(cm_5472852193_0x5479be._0x1dd4fa)+_0x217c10(0xaa)](_0x217c10(0xb5)+'ggle'),_0x35bff2=document[_0x217c10(cm_5472852193_0x5479be._0x1dd4fa)+_0x217c10(0xaa)]('.nav-lin'+'ks');if(!_0x3a8deb||!_0x35bff2)return;_0x3a8deb['addEvent'+_0x217c10(0xb3)](_0x217c10(cm_5472852193_0x5479be._0x3a8f89),()=>{const _0x4bd435=_0x217c10,_0xf1bd1c=_0x35bff2[_0x4bd435(0xc3)+'t'][_0x4bd435(0xa6)](_0x4bd435(0xbd));_0x3a8deb[_0x4bd435(0xbb)+_0x4bd435(0xb0)](_0x4bd435(0xc5)+_0x4bd435(0xac),_0xf1bd1c?'true':_0x4bd435(cm_5472852193_0x2ab63b._0x580508));}),_0x35bff2[_0x217c10(0xb6)+_0x217c10(0x9d)]('a')['forEach'](_0x16517b=>{const cm_5472852193_0x4ede36={_0x4e439a:0xbd,_0x50122e:0xbb,_0x238c0e:0xb0},_0x521131=_0x217c10;_0x16517b[_0x521131(cm_5472852193_0x45923b._0x2c9971)+_0x521131(cm_5472852193_0x45923b._0x52bd10)](_0x521131(0xb9),()=>{const _0x4a2b95=_0x521131;_0x35bff2['classLis'+'t'][_0x4a2b95(0xbe)](_0x4a2b95(cm_5472852193_0x4ede36._0x4e439a)),_0x3a8deb[_0x4a2b95(cm_5472852193_0x4ede36._0x50122e)+_0x4a2b95(cm_5472852193_0x4ede36._0x238c0e)](_0x4a2b95(0xc5)+_0x4a2b95(0xac),_0x4a2b95(0xb7));});});}function configurarHeaderScroll(){const cm_5472852193_0x142707={_0x1c8a01:0xbc,_0x5c1161:0x9c},cm_5472852193_0x4335c1={_0x32cd7c:0xa6},_0x14c84a=cm_5472852193_0xa1c5e1,_0x1813a0=document[_0x14c84a(0xb6)+_0x14c84a(0xaa)](_0x14c84a(0xae)+_0x14c84a(cm_5472852193_0x142707._0x1c8a01));if(!_0x1813a0)return;const _0x82e84d=()=>{const _0x11b406=_0x14c84a;_0x1813a0[_0x11b406(0xc3)+'t'][_0x11b406(cm_5472852193_0x4335c1._0x32cd7c)](_0x11b406(0xc1),window['scrollY']>0xec+0x2615+-0x26f7);};_0x82e84d(),window[_0x14c84a(cm_5472852193_0x142707._0x5c1161)+_0x14c84a(0xb3)](_0x14c84a(0xa4),_0x82e84d,{'passive':!![]});}function configurarAnimacaoReveal(){const cm_5472852193_0x4477f4={_0x1403b6:0xa9,_0x4ad215:0xa3},cm_5472852193_0x3385e6={_0x2c8bda:0xaf,_0x1e061f:0xa0,_0x17dec9:0xa5},_0x3ba84e=cm_5472852193_0xa1c5e1,_0x313ca7=document['querySel'+'ectorAll']('.reveal');if(_0x313ca7[_0x3ba84e(cm_5472852193_0x4477f4._0x1403b6)]===0x25b4+0xa*-0x280+-0xcb4)return;if(!(_0x3ba84e(0xbf)+_0x3ba84e(0xb4)+'rver'in window)){_0x313ca7[_0x3ba84e(0xa3)](_0x2e0c3a=>_0x2e0c3a[_0x3ba84e(0xc3)+'t'][_0x3ba84e(0x9e)]('visible'));return;}const _0x1ae818=new IntersectionObserver(_0x17f07a=>{const _0x3afd76=_0x3ba84e;_0x17f07a[_0x3afd76(0xa3)](_0x45345b=>{const _0x13c3b1=_0x3afd76;_0x45345b[_0x13c3b1(0xa2)+_0x13c3b1(cm_5472852193_0x3385e6._0x2c8bda)]&&(_0x45345b[_0x13c3b1(cm_5472852193_0x3385e6._0x1e061f)][_0x13c3b1(0xc3)+'t'][_0x13c3b1(0x9e)](_0x13c3b1(cm_5472852193_0x3385e6._0x17dec9)),_0x1ae818[_0x13c3b1(0xa8)+'e'](_0x45345b[_0x13c3b1(0xa0)]));});},{'threshold':0.15});_0x313ca7[_0x3ba84e(cm_5472852193_0x4477f4._0x4ad215)](_0x2779e1=>_0x1ae818[_0x3ba84e(0xa7)](_0x2779e1));}
+(function iniciarSitePublico() {
+  'use strict';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    configurarMenuMobile();
+    configurarHeaderScroll();
+    configurarAnimacaoReveal();
+    configurarAcoesFlutuantes();
+  });
+
+  function configurarMenuMobile() {
+    const botao = document.querySelector('.menu-toggle');
+    const menu = document.querySelector('.nav-links');
+    if (!botao || !menu) return;
+
+    function definirEstado(aberto) {
+      menu.classList.toggle('open', aberto);
+      botao.setAttribute('aria-expanded', String(aberto));
+      botao.setAttribute('aria-label', aberto ? 'Fechar menu' : 'Abrir menu');
+      const icone = botao.querySelector('i');
+      if (icone) {
+        icone.classList.toggle('bi-list', !aberto);
+        icone.classList.toggle('bi-x-lg', aberto);
+      }
+    }
+
+    botao.addEventListener('click', () => {
+      definirEstado(!menu.classList.contains('open'));
+    });
+
+    menu.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => definirEstado(false));
+    });
+
+    document.addEventListener('keydown', (evento) => {
+      if (evento.key === 'Escape') definirEstado(false);
+    });
+
+    document.addEventListener('click', (evento) => {
+      if (!menu.classList.contains('open')) return;
+      if (!menu.contains(evento.target) && !botao.contains(evento.target)) definirEstado(false);
+    });
+  }
+
+  function configurarHeaderScroll() {
+    const cabecalho = document.querySelector('.site-header');
+    if (!cabecalho) return;
+
+    const atualizar = () => {
+      cabecalho.classList.toggle('scrolled', window.scrollY > 10);
+    };
+
+    atualizar();
+    window.addEventListener('scroll', atualizar, { passive: true });
+  }
+
+  function configurarAnimacaoReveal() {
+    const elementos = document.querySelectorAll('.reveal');
+    if (elementos.length === 0) return;
+
+    if (!('IntersectionObserver' in window)) {
+      elementos.forEach((elemento) => elemento.classList.add('visible'));
+      return;
+    }
+
+    const observador = new IntersectionObserver((entradas) => {
+      entradas.forEach((entrada) => {
+        if (!entrada.isIntersecting) return;
+        entrada.target.classList.add('visible');
+        observador.unobserve(entrada.target);
+      });
+    }, { threshold: 0.15 });
+
+    elementos.forEach((elemento) => observador.observe(elemento));
+  }
+
+  function configurarAcoesFlutuantes() {
+    const container = document.getElementById('floatingActions');
+    const botao = container?.querySelector('.float-menu-toggle');
+    if (!container || !botao) return;
+
+    function definirEstado(aberto) {
+      container.classList.toggle('is-open', aberto);
+      botao.setAttribute('aria-expanded', String(aberto));
+      botao.setAttribute('aria-label', aberto ? 'Ocultar outros atalhos' : 'Mostrar outros atalhos');
+    }
+
+    botao.addEventListener('click', () => {
+      definirEstado(!container.classList.contains('is-open'));
+    });
+
+    container.querySelectorAll('.float-secondary a').forEach((link) => {
+      link.addEventListener('click', () => definirEstado(false));
+    });
+
+    document.addEventListener('keydown', (evento) => {
+      if (evento.key === 'Escape') definirEstado(false);
+    });
+
+    document.addEventListener('click', (evento) => {
+      if (!container.classList.contains('is-open')) return;
+      if (!container.contains(evento.target)) definirEstado(false);
+    });
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 760) definirEstado(false);
+    }, { passive: true });
+  }
+}());

@@ -5,14 +5,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Camila Martins Engenharia Civil: projetos arquitetônicos, executivos, elétricos, hidráulicos, hidrossanitários, renderização 3D, regularização, consultoria técnica e gestão de obra." />
   <meta name="author" content="Camila Martins Engenharia Civil" />
+  <meta name="theme-color" content="#010914" />
+  <link rel="canonical" href="https://www.camilamartinsengenharia.com.br/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Camila Martins Engenharia Civil" />
+  <meta property="og:title" content="Camila Martins | Engenharia Civil" />
+  <meta property="og:description" content="Projetos de engenharia desenvolvidos com precisão técnica, clareza e identidade para clientes do Rio de Janeiro, São Paulo e de todo o Brasil." />
+  <meta property="og:url" content="https://www.camilamartinsengenharia.com.br/" />
+  <meta property="og:image" content="https://www.camilamartinsengenharia.com.br/assets/cartao-compartilhamento.jpg" />
+  <meta property="og:image:alt" content="Camila Martins Engenharia Civil" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Camila Martins | Engenharia Civil" />
+  <meta name="twitter:description" content="Projetos arquitetônicos, executivos e complementares para clientes de todo o Brasil." />
+  <meta name="twitter:image" content="https://www.camilamartinsengenharia.com.br/assets/cartao-compartilhamento.jpg" />
   <title>Camila Martins | Engenharia Civil</title>
   <link rel="icon" href="assets/logo.png" />
+  <link rel="preload" as="image" href="assets/images/bg-projeto.jpg" fetchpriority="high" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Parisienne&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-  <link rel="stylesheet" href="css/styles.css?v=20260725-14" />
+  <link rel="stylesheet" href="css/styles.css?v=20260819-5" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ProfessionalService",
+    "name": "Camila Martins Engenharia Civil",
+    "url": "https://www.camilamartinsengenharia.com.br/",
+    "image": "https://www.camilamartinsengenharia.com.br/assets/cartao-compartilhamento.jpg",
+    "logo": "https://www.camilamartinsengenharia.com.br/assets/logo.png",
+    "email": "eng.martins.camila@gmail.com",
+    "telephone": "+55 21 98642-9999",
+    "areaServed": [
+      { "@type": "AdministrativeArea", "name": "Rio de Janeiro" },
+      { "@type": "AdministrativeArea", "name": "São Paulo" },
+      { "@type": "Country", "name": "Brasil" }
+    ],
+    "sameAs": ["https://www.instagram.com/eng.martins.camila"],
+    "founder": {
+      "@type": "Person",
+      "name": "Camila Martins",
+      "jobTitle": "Engenheira Civil",
+      "identifier": ["CREA-RJ 2023511771", "CREA-SP 5071901414"]
+    }
+  }
+  </script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
@@ -30,12 +68,10 @@
         <li><a href="#inicio">Início</a></li>
         <li><a href="#sobre">Sobre mim</a></li>
         <li><a href="#servicos">Serviços</a></li>
-        <li><a href="#processo">Processo</a></li>
-        <li><a href="portfolio.html">Portfólio</a></li>
-        <li><a href="experiencias.html">Experiências</a></li>
+        <li><a href="#projetos-destaque">Projetos</a></li>
+        <li><a href="assets/pdfs-protegidos/portfolio-protegido-camila-martins.pdf">Portfólio</a></li>
         <li><a href="#contato">Contato</a></li>
         <li><a class="nav-client-link" href="login.html"><i class="bi bi-person-lock"></i> Área do Cliente</a></li>
-        <li><a href="contato.html">Meu Cartão Virtual</a></li>
       </ul>
     </nav>
   </header>
@@ -50,8 +86,7 @@
           <p class="hero-text">Projetos completos, pensados com precisão técnica, estética sóbria e cuidado em cada detalhe — para que sua ideia saia do papel com segurança, clareza e identidade.</p>
           <div class="actions">
             <a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/5521986429999?text=Ol%C3%A1%20Camila!%20Conheci%20seu%20site%20e%20gostaria%20de%20solicitar%20um%20or%C3%A7amento."><i class="bi bi-whatsapp"></i> Solicitar orçamento</a>
-            <a class="btn ghost" href="portfolio.html">Ver portfólio</a>
-            <a class="btn ghost" href="login.html"><i class="bi bi-person-lock"></i> Área do Cliente</a>
+            <a class="btn ghost" href="#projetos-destaque"><i class="bi bi-images"></i> Ver projetos</a>
           </div>
         </div>
         <aside class="hero-signature" aria-label="Resumo profissional">
@@ -65,10 +100,19 @@
       </div>
     </section>
 
+    <section class="professional-strip" aria-label="Resumo da atuação profissional">
+      <div class="container professional-strip-grid">
+        <div><strong>Mais de 5 anos</strong><span>de atuação profissional</span></div>
+        <div><strong>CREA-RJ e CREA-SP</strong><span>atuação regularizada</span></div>
+        <div><strong>Rio de Janeiro e São Paulo</strong><span>atendimento presencial</span></div>
+        <div><strong>Todo o Brasil</strong><span>projetos e consultorias remotas</span></div>
+      </div>
+    </section>
+
     <section class="section about-section" id="sobre">
       <div class="container about-grid reveal">
         <div class="portrait-wrap">
-          <img src="assets/images/foto-camila.jpg" alt="Foto profissional de Camila Martins" />
+          <img src="assets/images/foto-camila.jpg" width="620" height="811" loading="lazy" alt="Foto profissional de Camila Martins" />
         </div>
         <div class="about-copy">
           <p class="eyebrow">Sobre mim</p>
@@ -77,6 +121,49 @@
           <p>Gosto de conduzir cada etapa com proximidade e transparência, explicando as escolhas do projeto e ajudando o cliente a visualizar o resultado antes da execução. A intenção é que o processo seja mais leve, organizado e seguro — desde os primeiros estudos até os projetos complementares e aprovações necessárias.</p>
           <div class="about-line"></div>
           <p class="signature-text">Camila Martins</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section featured-projects-section" id="projetos-destaque">
+      <div class="container reveal">
+        <div class="section-heading">
+          <p class="eyebrow">Projetos em destaque</p>
+          <h2>Uma seleção para conhecer meu trabalho.</h2>
+          <p>Explore diferentes escalas, propostas e soluções desenvolvidas com atenção à técnica, à funcionalidade e à identidade de cada projeto.</p>
+        </div>
+
+        <div class="featured-projects-grid">
+          <a class="featured-project-card" href="galeria-projetos.html#tiny-house-signature" aria-label="Ver imagens do projeto Tiny House Signature">
+            <img src="assets/projetos/tiny-house-signature/01.webp" width="1377" height="955" loading="lazy" alt="Ambiente interno do projeto Tiny House Signature" />
+            <span class="featured-project-overlay">
+              <small>Residência compacta • 32 m²</small>
+              <strong>Tiny House Signature</strong>
+              <em>Ver projeto <i class="bi bi-arrow-right" aria-hidden="true"></i></em>
+            </span>
+          </a>
+
+          <a class="featured-project-card" href="galeria-projetos.html#empreendimento-vitalle" aria-label="Ver imagens do Empreendimento Vitalle">
+            <img src="assets/projetos/empreendimento-vitalle/01.webp" width="691" height="474" loading="lazy" alt="Fachada noturna do Empreendimento Vitalle" />
+            <span class="featured-project-overlay">
+              <small>Habitação • 3 unidades</small>
+              <strong>Empreendimento Vitalle</strong>
+              <em>Ver projeto <i class="bi bi-arrow-right" aria-hidden="true"></i></em>
+            </span>
+          </a>
+
+          <a class="featured-project-card" href="galeria-projetos.html#casa-urban" aria-label="Ver imagens do projeto Casa Urban">
+            <img src="assets/projetos/casa-urban/03.webp" width="1600" height="600" loading="lazy" alt="Fachada noturna do projeto Casa Urban" />
+            <span class="featured-project-overlay">
+              <small>Residência contemporânea • 220 m²</small>
+              <strong>Casa Urban</strong>
+              <em>Ver projeto <i class="bi bi-arrow-right" aria-hidden="true"></i></em>
+            </span>
+          </a>
+        </div>
+
+        <div class="featured-projects-action">
+          <a class="btn ghost" href="galeria-projetos.html"><i class="bi bi-images"></i> Ver todos os projetos</a>
         </div>
       </div>
     </section>
@@ -126,11 +213,21 @@
     </section>
 
     <section class="section portfolio-call" id="portfolio-chamada">
-      <div class="container reveal call-card">
-        <p class="eyebrow">Portfólio</p>
-        <h2>Veja o portfólio completo em uma página exclusiva.</h2>
-        <p>Separei o portfólio em uma área própria do site, com visualização em tela cheia para que cada página do PDF apareça com mais destaque e leitura mais confortável.</p>
-        <a class="btn primary" href="portfolio.html">Abrir portfólio</a>
+      <div class="container reveal showcase-calls">
+        <article class="call-card">
+          <i class="bi bi-file-earmark-pdf call-card-icon" aria-hidden="true"></i>
+          <p class="eyebrow">Portfólio</p>
+          <h2>Conheça meu portfólio completo.</h2>
+          <p>Veja os projetos, soluções técnicas e apresentações reunidos no PDF protegido do portfólio.</p>
+          <a class="btn primary" href="assets/pdfs-protegidos/portfolio-protegido-camila-martins.pdf">Abrir portfólio protegido</a>
+        </article>
+        <article class="call-card">
+          <i class="bi bi-images call-card-icon" aria-hidden="true"></i>
+          <p class="eyebrow">Galeria</p>
+          <h2>Veja imagens dos meus projetos.</h2>
+          <p>Explore fachadas, interiores, plantas e visualizações 3D, com as imagens separadas e organizadas por projeto.</p>
+          <a class="btn ghost" href="galeria-projetos.html">Abrir galeria de projetos</a>
+        </article>
       </div>
     </section>
 
@@ -163,31 +260,46 @@
     </section>
   </main>
 
- <div class="footer-info">
+  <footer class="footer-info">
 
     <div class="footer-signature">Eng. Camila Martins</div>
 
-    <p>CREA-RJ 2023511771</p>
+    <p class="footer-credentials">CREA-RJ 2023511771 <span aria-hidden="true">•</span> CREA-SP 5071901414</p>
+
+    <p class="footer-coverage">Atendimento no Rio de Janeiro e em São Paulo • Projetos e consultorias para todo o Brasil.</p>
+
+    <nav class="footer-links" aria-label="Links do rodapé">
+      <a href="assets/pdfs-protegidos/portfolio-protegido-camila-martins.pdf">Portfólio</a>
+      <a href="galeria-projetos.html">Galeria</a>
+      <a href="experiencias.html">Experiências</a>
+      <a href="contato.html">Cartão Virtual</a>
+      <a href="login.html">Área do Cliente</a>
+    </nav>
 
     <p class="copyright">© 2026 • Todos os direitos reservados.</p>
 
-</div>  <div class="floating-actions" aria-label="Atalhos de contato">
-  <a class="float-btn" target="_blank" rel="noopener" href="https://wa.me/5521986429999?text=Ol%C3%A1%20Camila!%20Conheci%20seu%20site%20e%20gostaria%20de%20solicitar%20um%20or%C3%A7amento." aria-label="WhatsApp">
-    <i class="bi bi-whatsapp"></i>
-  </a>
+  </footer>
 
-  <a class="float-btn" href="mailto:eng.martins.camila@gmail.com?subject=Solicita%C3%A7%C3%A3o%20de%20or%C3%A7amento" aria-label="E-mail">
-    <i class="bi bi-envelope"></i>
-  </a>
+  <div class="floating-actions" id="floatingActions" aria-label="Atalhos de contato">
+    <div class="float-secondary" id="floatingSecondaryActions">
+      <a class="float-btn" href="mailto:eng.martins.camila@gmail.com?subject=Solicita%C3%A7%C3%A3o%20de%20or%C3%A7amento" aria-label="E-mail">
+        <i class="bi bi-envelope"></i>
+      </a>
+      <a class="float-btn" target="_blank" rel="noopener" href="https://www.instagram.com/eng.martins.camila" aria-label="Instagram">
+        <i class="bi bi-instagram"></i>
+      </a>
+      <a class="float-btn" href="login.html" aria-label="Área do Cliente">
+        <i class="bi bi-person-lock"></i>
+      </a>
+    </div>
+    <button class="float-btn float-menu-toggle" type="button" aria-label="Mostrar outros atalhos" aria-controls="floatingSecondaryActions" aria-expanded="false">
+      <i class="bi bi-three-dots" aria-hidden="true"></i>
+    </button>
+    <a class="float-btn" target="_blank" rel="noopener" href="https://wa.me/5521986429999?text=Ol%C3%A1%20Camila!%20Conheci%20seu%20site%20e%20gostaria%20de%20solicitar%20um%20or%C3%A7amento." aria-label="WhatsApp">
+      <i class="bi bi-whatsapp"></i>
+    </a>
+  </div>
 
-  <a class="float-btn" target="_blank" rel="noopener" href="https://www.instagram.com/eng.martins.camila" aria-label="Instagram">
-    <i class="bi bi-instagram"></i>
-  </a>
-  <a class="float-btn" href="login.html" aria-label="Área do Cliente">
-    <i class="bi bi-person-lock"></i>
-  </a>
-</div>
-
-  <script src="js/script.js?v=20260725-14"></script>
+  <script src="js/script.js?v=20260819-5"></script>
 </body>
 </html>

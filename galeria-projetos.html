@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Galeria de imagens dos projetos desenvolvidos por Camila Martins Engenharia Civil." />
+  <meta name="robots" content="index,follow,noarchive" />
+  <meta name="theme-color" content="#010914" />
+  <link rel="canonical" href="https://www.camilamartinsengenharia.com.br/galeria-projetos.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Camila Martins Engenharia Civil" />
+  <meta property="og:title" content="Galeria de Projetos | Camila Martins Engenharia Civil" />
+  <meta property="og:description" content="Conheça projetos de arquitetura, interiores, fachadas e visualizações 3D organizados por projeto." />
+  <meta property="og:url" content="https://www.camilamartinsengenharia.com.br/galeria-projetos.html" />
+  <meta property="og:image" content="https://www.camilamartinsengenharia.com.br/assets/cartao-compartilhamento.jpg" />
+  <meta property="og:image:alt" content="Galeria de projetos de Camila Martins Engenharia Civil" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Galeria de Projetos | Camila Martins Engenharia Civil" />
+  <meta name="twitter:description" content="Projetos de arquitetura, interiores e engenharia organizados em uma galeria interativa." />
+  <meta name="twitter:image" content="https://www.camilamartinsengenharia.com.br/assets/cartao-compartilhamento.jpg" />
+  <title>Galeria de Projetos | Camila Martins Engenharia Civil</title>
+  <link rel="icon" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Parisienne&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="css/styles.css?v=20260819-5" />
+  <link rel="stylesheet" href="css/galeria-projetos.css?v=20260819-4" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Galeria de Projetos",
+    "url": "https://www.camilamartinsengenharia.com.br/galeria-projetos.html",
+    "description": "Galeria de projetos de arquitetura, interiores e engenharia desenvolvidos por Camila Martins Engenharia Civil.",
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "Camila Martins Engenharia Civil",
+      "url": "https://www.camilamartinsengenharia.com.br/"
+    }
+  }
+  </script>
+</head>
+<body class="project-gallery-page">
+  <a class="skip-link" href="#galeria">Pular para a galeria</a>
+
+  <header class="gallery-site-header">
+    <a class="gallery-back" href="index.html#portfolio-chamada">
+      <i class="bi bi-arrow-left"></i>
+      Voltar ao site
+    </a>
+    <a class="gallery-brand" href="index.html" aria-label="Camila Martins Engenharia Civil">
+      <strong>Camila Martins</strong>
+      <span>Engenharia Civil</span>
+    </a>
+    <a class="gallery-budget" target="_blank" rel="noopener" href="https://wa.me/5521986429999?text=Ol%C3%A1%20Camila!%20Vi%20a%20galeria%20de%20projetos%20no%20seu%20site%20e%20gostaria%20de%20solicitar%20um%20or%C3%A7amento.">
+      <i class="bi bi-whatsapp"></i>
+      Orçamento
+    </a>
+  </header>
+
+  <main id="galeria">
+    <section class="gallery-hero">
+      <div class="container gallery-hero-content">
+        <p class="eyebrow">Galeria de projetos</p>
+        <h1>Projetos vistos de perto.</h1>
+        <p>Explore as imagens organizadas por projeto e conheça detalhes de arquitetura, interiores, fachadas, plantas e visualizações 3D.</p>
+      </div>
+    </section>
+
+    <nav class="gallery-project-nav" aria-label="Navegar entre projetos">
+      <div class="container" id="galleryProjectNav"></div>
+    </nav>
+
+    <div class="gallery-loading" id="galleryLoading" role="status">
+      <i class="bi bi-arrow-repeat"></i>
+      <span>Carregando projetos...</span>
+    </div>
+
+    <div class="gallery-projects" id="galleryProjects"></div>
+
+    <noscript>
+      <p class="gallery-noscript">Ative o JavaScript do navegador para visualizar a galeria de projetos.</p>
+    </noscript>
+  </main>
+
+  <footer class="gallery-footer">
+    <p>© 2026 Camila Martins Engenharia Civil • Imagens protegidas por direitos autorais.</p>
+  </footer>
+
+  <div class="gallery-lightbox" id="galleryLightbox" role="dialog" aria-modal="true" aria-labelledby="galleryLightboxTitle" hidden>
+    <button class="gallery-lightbox-close" id="galleryLightboxClose" type="button" aria-label="Fechar imagem">
+      <i class="bi bi-x-lg"></i>
+    </button>
+    <button class="gallery-lightbox-nav gallery-lightbox-prev" id="galleryLightboxPrev" type="button" aria-label="Imagem anterior">
+      <i class="bi bi-chevron-left"></i>
+    </button>
+    <figure>
+      <img id="galleryLightboxImage" src="" alt="" draggable="false" />
+      <figcaption id="galleryLightboxTitle"></figcaption>
+    </figure>
+    <button class="gallery-lightbox-nav gallery-lightbox-next" id="galleryLightboxNext" type="button" aria-label="Próxima imagem">
+      <i class="bi bi-chevron-right"></i>
+    </button>
+  </div>
+
+  <script src="js/galeria-projetos.js?v=20260819-5" defer></script>
+</body>
+</html>
