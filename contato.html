@@ -521,6 +521,217 @@
       }
     }
   </style>
+  <style id="site-identity-card">
+    :root {
+      --navy: #010914;
+      --navy-2: #030d1a;
+      --navy-3: #061826;
+      --gold: #b89a63;
+      --gold-soft: #d7bd8c;
+      --light: #d8dadf;
+      --muted: #aeb4bd;
+      --line: rgba(184, 154, 99, 0.34);
+      --font-main: "Century Gothic", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+      --font-signature: "Brittany", "Parisienne", "Segoe Script", cursive;
+    }
+
+    body {
+      color: var(--light);
+      font-family: var(--font-main);
+      font-weight: 300;
+      background: var(--navy);
+    }
+
+    body::before {
+      background:
+        linear-gradient(90deg, rgba(1, 9, 20, 0.97), rgba(1, 9, 20, 0.82), rgba(1, 9, 20, 0.58)),
+        linear-gradient(0deg, rgba(1, 9, 20, 0.96), rgba(1, 9, 20, 0.2) 52%, rgba(1, 9, 20, 0.78)),
+        url("assets/images/bg-projeto.jpg") center / cover no-repeat;
+      filter: saturate(0.45) contrast(1.05);
+      transform: none;
+      opacity: 1;
+    }
+
+    body::after {
+      background: radial-gradient(circle at 76% 18%, rgba(184, 154, 99, 0.07), transparent 30%);
+    }
+
+    .contact-page {
+      padding: 36px 16px;
+    }
+
+    .virtual-card {
+      max-width: 500px;
+      padding: 40px 34px 30px;
+      background: rgba(3, 13, 26, 0.94);
+      border: 1px solid var(--line);
+      border-radius: 0;
+      box-shadow: 0 28px 90px rgba(0, 0, 0, 0.48);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .virtual-card::before {
+      width: 220px;
+      height: 220px;
+      top: -132px;
+      right: -132px;
+      border: 1px solid rgba(184, 154, 99, 0.18);
+      background: transparent;
+    }
+
+    .virtual-card::after {
+      left: 26%;
+      right: 26%;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .profile-photo-wrap {
+      width: 112px;
+      height: 142px;
+      margin: 0 auto 24px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 0;
+      background: rgba(216, 218, 223, 0.025);
+      box-shadow: none;
+    }
+
+    .profile-photo {
+      border: 0;
+      border-radius: 0;
+      object-position: center 26%;
+      filter: saturate(0.72) contrast(1.02);
+    }
+
+    .virtual-logo {
+      display: none;
+    }
+
+    .virtual-card h1 {
+      color: var(--gold);
+      font-family: var(--font-signature);
+      font-size: clamp(48px, 10vw, 62px);
+      font-weight: 400;
+      line-height: 1.5;
+      text-shadow: none;
+    }
+
+    .profession {
+      margin: 0 0 9px;
+      color: var(--light);
+      font-size: 12px;
+      font-weight: 300;
+      letter-spacing: 0.28em;
+    }
+
+    .crea {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+    }
+
+    .divider {
+      width: 108px;
+      margin: 24px auto;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .divider::after {
+      display: none;
+    }
+
+    .intro {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 300;
+      line-height: 1.75;
+      text-shadow: none;
+    }
+
+    .contact-buttons {
+      gap: 11px;
+    }
+
+    .contact-buttons a {
+      min-height: 58px;
+      color: var(--light);
+      font-size: 11px;
+      font-weight: 300;
+      letter-spacing: 0.16em;
+      background: rgba(216, 218, 223, 0.025);
+      border: 1px solid rgba(184, 154, 99, 0.28);
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .contact-buttons a::before {
+      border-radius: 0;
+      background: linear-gradient(110deg, transparent 24%, rgba(184, 154, 99, 0.08) 50%, transparent 76%);
+    }
+
+    .contact-buttons a:hover {
+      color: var(--navy);
+      background: var(--gold);
+      border-color: var(--gold);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
+    }
+
+    .contact-buttons a i:first-child,
+    .contact-buttons a .arrow {
+      color: var(--gold);
+    }
+
+    .contact-buttons a:hover i:first-child,
+    .contact-buttons a:hover .arrow {
+      color: var(--navy);
+    }
+
+    .back-site a {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 300;
+      letter-spacing: 0.15em;
+    }
+
+    .back-site a:hover {
+      color: var(--gold-soft);
+    }
+
+    .virtual-footer {
+      color: var(--muted);
+      font-weight: 300;
+    }
+
+    .footer-brand-name {
+      color: var(--gold);
+      font-family: var(--font-signature);
+    }
+
+    .footer-brand-discipline {
+      color: var(--light);
+      font-family: var(--font-main);
+      font-weight: 300;
+    }
+
+    @media (max-width: 520px) {
+      .virtual-card {
+        padding: 30px 18px 24px;
+        border-radius: 0;
+      }
+
+      .profile-photo-wrap {
+        width: 102px;
+        height: 130px;
+      }
+
+      .virtual-card h1 {
+        font-size: 47px;
+        line-height: 1.5;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -550,7 +761,7 @@
 
       <p class="profession">Engenharia Civil</p>
 
-      <p class="crea">CREA-RJ 2023511771</p>
+      <p class="crea">CREA-RJ 2023511771 <span aria-hidden="true">•</span> CREA-SP 5071901414</p>
 
       <div class="divider"></div>
 
