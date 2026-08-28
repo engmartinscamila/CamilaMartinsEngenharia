@@ -21,10 +21,12 @@ Biblioteca | Camila Martins Engenharia
 
 <link rel="stylesheet" href="css/admin.css?v=20260725-14">
 <link rel="stylesheet" href="css/admin-theme.css?v=20260725-14">
+<link rel="stylesheet" href="css/biblioteca-categorias.css?v=20260828-1">
 
 
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
 
 
@@ -405,7 +407,7 @@ Nome do Arquivo
 
 <input
 id="arquivoNome"
-required>
+placeholder="Preenchido pelo nome do arquivo">
 
 
 
@@ -436,9 +438,65 @@ Categoria
 id="arquivoCategoria">
 
 
+<option value="automatico" selected>
+
+Automática pelo nome do arquivo
+
+</option>
+
+
+<option value="contrato">
+
+Contratos
+
+</option>
+
+
+<option value="orcamento">
+
+Orçamentos e Propostas
+
+</option>
+
+
 <option value="projeto">
 
 Projetos
+
+</option>
+
+
+<option value="art">
+
+ART e RRT
+
+</option>
+
+
+<option value="guia_estilos">
+
+Guias de Estilos Arquitetônicos
+
+</option>
+
+
+<option value="guia_obras">
+
+Guias de Obra
+
+</option>
+
+
+<option value="laudo">
+
+Laudos e Pareceres
+
+</option>
+
+
+<option value="memorial">
+
+Memoriais Descritivos
 
 </option>
 
@@ -522,7 +580,12 @@ Arquivo
 
 <input
 type="file"
-id="arquivoUpload">
+id="arquivoUpload"
+multiple>
+
+<div id="cmDeteccaoCategorias" class="cm-detection-preview" aria-live="polite"></div>
+
+<p id="uploadLoteStatus" class="cm-upload-status" aria-live="polite" hidden></p>
 
 
 
@@ -727,6 +790,7 @@ Carregando...
 
 <script src="js/servicos.js?v=20260725-14"></script>
     <script src="js/biblioteca.js?v=20260725-14"></script>
+    <script src="js/biblioteca-categorias.js?v=20260828-1"></script>
 
 
 

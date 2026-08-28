@@ -1,0 +1,292 @@
+.cm-library {
+    display: grid;
+    gap: 1rem;
+}
+
+.cm-library-heading {
+    margin-bottom: .25rem;
+}
+
+.cm-library-heading h2 {
+    margin: .2rem 0 .35rem;
+}
+
+.cm-library-heading p {
+    margin: 0;
+    color: #6e655c;
+}
+
+.cm-client-folder,
+.cm-project-folder,
+.cm-category-folder {
+    overflow: hidden;
+    border: 1px solid rgba(142, 113, 82, .22);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .84);
+    box-shadow: 0 7px 22px rgba(64, 48, 34, .05);
+}
+
+.cm-client-folder > summary,
+.cm-project-folder > summary,
+.cm-category-folder > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .95rem 1rem;
+    cursor: pointer;
+    list-style: none;
+    font-weight: 600;
+    color: #49392b;
+}
+
+.cm-client-folder > summary::-webkit-details-marker,
+.cm-project-folder > summary::-webkit-details-marker,
+.cm-category-folder > summary::-webkit-details-marker {
+    display: none;
+}
+
+.cm-client-folder > summary span:first-child,
+.cm-project-folder > summary span:first-child,
+.cm-folder-title {
+    display: inline-flex;
+    align-items: center;
+    gap: .65rem;
+}
+
+.cm-client-folder > summary i,
+.cm-project-folder > summary i,
+.cm-category-folder > summary i {
+    color: #a37a50;
+}
+
+.cm-client-folder > summary {
+    background: linear-gradient(135deg, rgba(234, 224, 211, .72), rgba(255, 255, 255, .92));
+    font-size: 1.02rem;
+}
+
+.cm-project-folder > summary {
+    background: rgba(248, 244, 238, .9);
+}
+
+.cm-category-folder > summary {
+    min-height: 58px;
+    background: #fff;
+}
+
+.cm-category-folder[open] > summary {
+    border-bottom: 1px solid rgba(142, 113, 82, .16);
+}
+
+.cm-folder-count {
+    display: inline-grid;
+    min-width: 1.8rem;
+    height: 1.8rem;
+    place-items: center;
+    border-radius: 999px;
+    background: #a37a50;
+    color: #fff;
+    font-size: .78rem;
+}
+
+.cm-project-list,
+.cm-category-list {
+    display: grid;
+    gap: .85rem;
+    padding: .9rem;
+}
+
+.cm-file-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: .75rem;
+    padding: .85rem;
+    background: rgba(249, 247, 243, .68);
+}
+
+.cm-file-card {
+    display: flex;
+    gap: .8rem;
+    padding: .9rem;
+    border: 1px solid rgba(142, 113, 82, .14);
+    border-radius: 12px;
+    background: #fff;
+}
+
+.cm-file-icon {
+    display: grid;
+    flex: 0 0 2.55rem;
+    width: 2.55rem;
+    height: 2.55rem;
+    place-items: center;
+    border-radius: 10px;
+    background: rgba(163, 122, 80, .12);
+    color: #9b7046;
+    font-size: 1.1rem;
+}
+
+.cm-file-copy {
+    min-width: 0;
+}
+
+.cm-file-copy h5 {
+    margin: 0 0 .25rem;
+    overflow-wrap: anywhere;
+    color: #43362b;
+    font-size: .94rem;
+}
+
+.cm-file-copy p {
+    margin: 0 0 .35rem;
+    color: #71665c;
+    font-size: .82rem;
+}
+
+.cm-file-copy small {
+    display: block;
+    color: #8a8178;
+}
+
+.cm-file-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem;
+    margin-top: .7rem;
+}
+
+.cm-file-action {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .42rem .6rem;
+    border: 1px solid rgba(142, 113, 82, .25);
+    border-radius: 8px;
+    background: #fff;
+    color: #6e4e31;
+    font: inherit;
+    font-size: .76rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.cm-file-action:hover {
+    border-color: #a37a50;
+    background: #f8f2eb;
+}
+
+.cm-file-delete {
+    color: #a34444;
+}
+
+.cm-file-unavailable {
+    color: #8e847c;
+    font-size: .76rem;
+}
+
+.cm-library-empty,
+.cm-library-error {
+    display: grid;
+    justify-items: center;
+    gap: .5rem;
+    padding: 2.8rem 1rem;
+    border: 1px dashed rgba(142, 113, 82, .34);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .72);
+    color: #74685e;
+    text-align: center;
+}
+
+.cm-library-empty i {
+    color: #a37a50;
+    font-size: 2rem;
+}
+
+.cm-library-empty strong {
+    color: #4c3c2e;
+}
+
+.cm-detection-preview {
+    margin-top: .65rem;
+    padding: .75rem;
+    border-radius: 10px;
+    background: rgba(163, 122, 80, .08);
+    color: #6f6257;
+    font-size: .78rem;
+}
+
+.cm-detection-preview > strong {
+    display: block;
+    margin-bottom: .45rem;
+    color: #514235;
+}
+
+.cm-detection-preview ul {
+    display: grid;
+    gap: .35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.cm-detection-preview li {
+    display: flex;
+    justify-content: space-between;
+    gap: .75rem;
+}
+
+.cm-detection-preview li span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cm-detection-preview li strong {
+    flex: 0 0 auto;
+    color: #8a633d;
+}
+
+.cm-upload-status {
+    margin: .75rem 0 0;
+    color: #6f5134;
+    font-size: .8rem;
+}
+
+.cm-project-switch-label {
+    margin-right: .45rem;
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+
+.cm-project-switcher {
+    max-width: 260px;
+    padding: .42rem .7rem;
+    border: 1px solid rgba(142, 113, 82, .32);
+    border-radius: 8px;
+    background: #fff;
+    color: #49392b;
+}
+
+@media (max-width: 640px) {
+    .cm-file-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cm-client-folder > summary,
+    .cm-project-folder > summary,
+    .cm-category-folder > summary {
+        padding: .85rem;
+    }
+
+    .cm-project-list,
+    .cm-category-list,
+    .cm-file-grid {
+        padding: .65rem;
+    }
+
+    .cm-detection-preview li {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: .15rem;
+    }
+}
