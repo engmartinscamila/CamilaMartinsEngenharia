@@ -1,8 +1,8 @@
 (function iniciarGaleriaProjetos() {
   'use strict';
 
-  const dadosUrl = 'assets/projetos/galeria.json?v=20260819-7';
-  const versaoImagens = '20260819-7';
+  const dadosUrl = 'assets/projetos/galeria.json?v=20260828-1';
+  const versaoImagens = '20260828-1';
   const projetosContainer = document.getElementById('galleryProjects');
   const navegacaoContainer = document.getElementById('galleryProjectNav');
   const carregamento = document.getElementById('galleryLoading');
