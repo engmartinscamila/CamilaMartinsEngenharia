@@ -4,102 +4,182 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex,nofollow,noarchive">
-    <title>Proteção de PDFs | Camila Martins Engenharia</title>
+    <title>Conteúdo Protegido e Galeria | Camila Martins Engenharia</title>
     <link rel="icon" href="assets/logo.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Montserrat:wght@400;500;600&family=Parisienne&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Parisienne&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="css/pdf-protection.css?v=20260729-1">
+    <link rel="stylesheet" href="css/admin.css?v=20260725-14">
+    <link rel="stylesheet" href="css/admin-theme.css?v=20260725-14">
+    <link rel="stylesheet" href="css/midias-admin.css?v=20260828-2">
 </head>
-<body class="pdf-protection-page">
-    <header class="pdf-protection-header">
-        <a class="pdf-protection-brand" href="admin.html">
-            <strong>Camila Martins</strong>
-            <span>Engenharia</span>
-        </a>
-        <div class="pdf-protection-actions">
-            <a class="pdf-protection-back" href="admin.html">
-                <i class="bi bi-arrow-left"></i>
-                Painel
-            </a>
-            <button
-                class="pdf-protection-button"
-                id="pdfAdminLogout"
-                type="button"
-            >
-                <i class="bi bi-box-arrow-right"></i>
-                Sair
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="logo">
+                <h1 class="assinatura">Camila Martins</h1>
+                <span>ENGENHARIA</span>
+            </div>
+
+            <nav class="menu-lateral">
+                <a href="admin.html" class="menu-item"><i class="fa-solid fa-house"></i><span>Dashboard</span></a>
+                <a href="clientes.html" class="menu-item"><i class="fa-solid fa-users"></i><span>Clientes</span></a>
+                <a href="projetos.html" class="menu-item"><i class="fa-solid fa-compass-drafting"></i><span>Projetos</span></a>
+                <a href="documentos.html" class="menu-item"><i class="fa-solid fa-folder-open"></i><span>Documentos</span></a>
+                <a href="biblioteca.html" class="menu-item"><i class="fa-solid fa-book-open"></i><span>Biblioteca</span></a>
+                <a href="protecao-pdf-admin.html" class="menu-item ativo"><i class="fa-solid fa-file-shield"></i><span>Conteúdo do site</span></a>
+                <a href="fotos.html" class="menu-item"><i class="fa-solid fa-images"></i><span>Fotos</span></a>
+                <a href="financeiro.html" class="menu-item"><i class="fa-solid fa-chart-line"></i><span>Financeiro</span></a>
+                <a href="agenda.html" class="menu-item"><i class="fa-solid fa-calendar-days"></i><span>Agenda</span></a>
+                <a href="cronograma.html" class="menu-item"><i class="fa-solid fa-list-check"></i><span>Cronograma</span></a>
+                <a href="solicitacoes.html" class="menu-item"><i class="fa-solid fa-comments"></i><span>Solicitações</span></a>
+                <a href="configuracoes.html" class="menu-item"><i class="fa-solid fa-gear"></i><span>Configurações</span></a>
+            </nav>
+
+            <button id="pdfAdminLogout" class="btn-sair" type="button">
+                <i class="fa-solid fa-right-from-bracket"></i><span>Sair</span>
             </button>
-        </div>
-    </header>
+        </aside>
 
-    <main class="pdf-admin-shell">
-        <section class="pdf-admin-intro">
-            <h1>Proteção dos PDFs públicos</h1>
-            <p>
-                Envie aqui os dois originais que antes ficavam dentro da pasta
-                pública do site. Eles serão armazenados no bucket privado e o
-                visitante receberá somente uma cópia marcada e rastreável.
-            </p>
-            <p id="pdfAdminStatus" role="status" aria-live="polite">
-                Confirmando acesso...
-            </p>
-        </section>
+        <main class="conteudo conteudo-site-admin">
+            <header class="topbar site-admin-topbar">
+                <div>
+                    <h2>Conteúdo do site</h2>
+                    <p>Gerencie os PDFs protegidos e a galeria pública sem precisar alterar arquivos no GitHub.</p>
+                </div>
+                <a class="site-admin-public-link" href="galeria-projetos.html" target="_blank" rel="noopener">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Ver galeria pública
+                </a>
+            </header>
 
-        <div class="pdf-admin-grid">
-            <form
-                class="pdf-admin-card"
-                data-pdf-upload
-                data-slug="portfolio"
-                data-title="Portfólio Camila Martins Engenharia"
-            >
-                <h2>Portfólio</h2>
-                <p>Substitui o antigo PDF público da página de portfólio.</p>
-                <label for="pdfPortfolio">PDF original</label>
-                <input
-                    id="pdfPortfolio"
-                    type="file"
-                    accept="application/pdf,.pdf"
-                    required
-                >
-                <button class="pdf-protection-button" type="submit">
-                    Enviar original para proteção
+            <nav class="site-admin-tabs" aria-label="Áreas de conteúdo">
+                <button type="button" class="site-admin-tab ativo" data-site-tab="pdfs" aria-selected="true">
+                    <i class="fa-solid fa-file-shield"></i>
+                    <span>PDFs protegidos</span>
                 </button>
-            </form>
-
-            <form
-                class="pdf-admin-card"
-                data-pdf-upload
-                data-slug="experiencias"
-                data-title="Menu de Experiências Camila Martins Engenharia"
-            >
-                <h2>Menu de experiências</h2>
-                <p>Substitui o antigo PDF público da página de experiências.</p>
-                <label for="pdfExperiencias">PDF original</label>
-                <input
-                    id="pdfExperiencias"
-                    type="file"
-                    accept="application/pdf,.pdf"
-                    required
-                >
-                <button class="pdf-protection-button" type="submit">
-                    Enviar original para proteção
+                <button type="button" class="site-admin-tab" data-site-tab="galeria" aria-selected="false">
+                    <i class="fa-solid fa-photo-film"></i>
+                    <span>Fotos e vídeos dos empreendimentos</span>
                 </button>
+            </nav>
+
+            <section class="site-admin-panel" data-site-panel="pdfs">
+                <div class="site-admin-intro-card">
+                    <div>
+                        <span class="site-admin-eyebrow">Documentos públicos</span>
+                        <h1>Proteção dos PDFs</h1>
+                        <p>Envie os arquivos originais. O visitante continuará recebendo apenas a cópia identificada, marcada e rastreável.</p>
+                    </div>
+                    <p id="pdfAdminStatus" class="site-admin-status" role="status" aria-live="polite">Confirmando acesso...</p>
+                </div>
+
+                <div class="pdf-admin-grid">
+                    <form class="pdf-admin-card" data-pdf-upload data-slug="portfolio" data-title="Portfólio Camila Martins Engenharia">
+                        <div class="site-admin-card-icon"><i class="fa-solid fa-book-open"></i></div>
+                        <h2>Portfólio</h2>
+                        <p>Substitui o PDF público da página de portfólio.</p>
+                        <label for="pdfPortfolio">PDF original</label>
+                        <input id="pdfPortfolio" type="file" accept="application/pdf,.pdf" required>
+                        <button class="site-admin-primary" type="submit"><i class="fa-solid fa-shield-halved"></i> Enviar original para proteção</button>
+                    </form>
+
+                    <form class="pdf-admin-card" data-pdf-upload data-slug="experiencias" data-title="Menu de Experiências Camila Martins Engenharia">
+                        <div class="site-admin-card-icon"><i class="fa-solid fa-compass"></i></div>
+                        <h2>Menu de experiências</h2>
+                        <p>Substitui o PDF público da página de experiências.</p>
+                        <label for="pdfExperiencias">PDF original</label>
+                        <input id="pdfExperiencias" type="file" accept="application/pdf,.pdf" required>
+                        <button class="site-admin-primary" type="submit"><i class="fa-solid fa-shield-halved"></i> Enviar original para proteção</button>
+                    </form>
+                </div>
+
+                <section class="pdf-admin-status-card">
+                    <div class="site-admin-section-title">
+                        <div><span class="site-admin-eyebrow">Arquivos ativos</span><h2>Situação atual</h2></div>
+                    </div>
+                    <ul id="pdfAdminList"><li>Consultando os arquivos protegidos...</li></ul>
+                </section>
+            </section>
+
+            <section class="site-admin-panel" data-site-panel="galeria" hidden>
+                <div class="site-admin-intro-card">
+                    <div>
+                        <span class="site-admin-eyebrow">Galeria pública</span>
+                        <h1>Fotos e vídeos dos empreendimentos</h1>
+                        <p>Todos os projetos e mídias atuais aparecem abaixo. Novos envios passam a atualizar a galeria diretamente por esta tela.</p>
+                    </div>
+                    <p id="portfolioAdminStatus" class="site-admin-status" role="status" aria-live="polite">Carregando os empreendimentos...</p>
+                </div>
+
+                <div class="site-admin-section-title">
+                    <div><span class="site-admin-eyebrow">Empreendimentos</span><h2>Projetos publicados</h2></div>
+                    <button id="portfolioNewProject" class="site-admin-primary" type="button"><i class="fa-solid fa-plus"></i> Novo projeto</button>
+                </div>
+
+                <div id="portfolioProjects" class="portfolio-projects">
+                    <div class="site-admin-loading"><i class="fa-solid fa-spinner fa-spin"></i> Preparando a galeria...</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal" id="portfolioProjectModal" aria-hidden="true">
+        <div class="modal-content site-admin-modal-content">
+            <div class="modal-header">
+                <h2 id="portfolioProjectModalTitle">Novo projeto</h2>
+                <button type="button" data-close-modal="portfolioProjectModal" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="portfolioProjectForm">
+                <div class="form-grid">
+                    <div class="campo"><label for="portfolioProjectName">Nome do projeto</label><input id="portfolioProjectName" required></div>
+                    <div class="campo"><label for="portfolioProjectSlug">Identificador</label><input id="portfolioProjectSlug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*"></div>
+                    <div class="campo campo-full"><label for="portfolioProjectCategory">Categoria</label><input id="portfolioProjectCategory" placeholder="Ex.: Habitação • 3 unidades"></div>
+                    <div class="campo campo-full"><label for="portfolioProjectDescription">Descrição</label><textarea id="portfolioProjectDescription" rows="4"></textarea></div>
+                    <div class="campo"><label for="portfolioProjectOrder">Ordem de exibição</label><input id="portfolioProjectOrder" type="number" min="1" step="1" value="1"></div>
+                    <div class="campo"><label class="site-admin-checkbox" for="portfolioProjectActive"><input id="portfolioProjectActive" type="checkbox" checked><span>Projeto visível na galeria</span></label></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="site-admin-secondary" data-close-modal="portfolioProjectModal">Cancelar</button>
+                    <button type="submit" class="site-admin-primary">Salvar projeto</button>
+                </div>
             </form>
         </div>
+    </div>
 
-        <section class="pdf-admin-status-card">
-            <h2>Situação atual</h2>
-            <ul id="pdfAdminList">
-                <li>Consultando os arquivos protegidos...</li>
-            </ul>
-        </section>
-    </main>
+    <div class="modal" id="portfolioMediaModal" aria-hidden="true">
+        <div class="modal-content site-admin-modal-content">
+            <div class="modal-header">
+                <h2 id="portfolioMediaModalTitle">Adicionar mídia</h2>
+                <button type="button" data-close-modal="portfolioMediaModal" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="portfolioMediaForm">
+                <div class="form-grid">
+                    <div class="campo"><label for="portfolioMediaType">Tipo</label><select id="portfolioMediaType"><option value="imagem">Fotos</option><option value="video">Vídeo</option></select></div>
+                    <div class="campo"><label for="portfolioMediaOrder">Posição inicial</label><input id="portfolioMediaOrder" type="number" min="1" step="1" value="1"></div>
+                    <div class="campo campo-full"><label for="portfolioMediaFiles">Arquivo</label><input id="portfolioMediaFiles" type="file" accept="image/*" multiple><small id="portfolioMediaFileHelp">É possível selecionar várias fotos de uma vez.</small></div>
+                    <div class="campo" data-image-field><label for="portfolioImageKind">Tipo da imagem</label><select id="portfolioImageKind"><option value="render-3d">Render 3D</option><option value="fotografia-obra">Fotografia da obra</option><option value="fachada">Fachada</option><option value="interiores">Interiores</option><option value="planta-tecnica">Planta ou desenho técnico</option><option value="antes-depois">Antes e depois</option><option value="outros">Outros</option></select></div>
+                    <div class="campo" data-image-field><label for="portfolioMediaName">Nome do arquivo</label><input id="portfolioMediaName" placeholder="Preenchido ao selecionar a imagem"><small>Em um lote, cada imagem recebe automaticamente o nome do próprio arquivo.</small></div>
+                    <div class="campo campo-full" data-video-field hidden><label for="portfolioMediaPoster">Imagem de capa do vídeo</label><input id="portfolioMediaPoster" type="file" accept="image/*"><small>Use uma imagem horizontal para aparecer antes do vídeo começar.</small></div>
+                    <div class="campo campo-full" data-image-field><label for="portfolioMediaAlt">Descrição acessível da imagem</label><input id="portfolioMediaAlt" placeholder="Ex.: Fachada frontal do empreendimento"></div>
+                    <div class="campo campo-full" data-video-field hidden><label for="portfolioMediaTitle">Título do vídeo</label><input id="portfolioMediaTitle"></div>
+                    <div class="campo campo-full" data-video-field hidden><label for="portfolioMediaDescription">Descrição do vídeo</label><textarea id="portfolioMediaDescription" rows="3"></textarea></div>
+                    <div class="campo"><label class="site-admin-checkbox" for="portfolioMediaActive"><input id="portfolioMediaActive" type="checkbox" checked><span>Mídia visível</span></label></div>
+                </div>
+                <div class="site-admin-progress" id="portfolioUploadProgress" hidden><span></span><div><i></i></div></div>
+                <div class="modal-footer">
+                    <button type="button" class="site-admin-secondary" data-close-modal="portfolioMediaModal">Cancelar</button>
+                    <button type="submit" class="site-admin-primary" id="portfolioMediaSave">Salvar mídia</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.js?v=20260725-14"></script>
     <script src="js/pdf-protection-admin.js?v=20260729-1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tus-js-client@4.3.1/dist/tus.min.js"></script>
+    <script src="js/portfolio-admin.js?v=20260828-2"></script>
 </body>
 </html>
-

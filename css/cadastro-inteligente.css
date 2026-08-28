@@ -1,0 +1,82 @@
+.cadastro-lookup-status {
+    display: block;
+    min-height: 1.1rem;
+    margin-top: -4px;
+    color: var(--texto-claro);
+    font-size: .72rem;
+    line-height: 1.45;
+}
+
+.cadastro-lookup-status[data-type="loading"] {
+    color: var(--dourado);
+}
+
+.cadastro-lookup-status[data-type="success"] {
+    color: #73c995;
+}
+
+.cadastro-lookup-status[data-type="error"] {
+    color: #f08d8d;
+}
+
+.cadastro-check-card {
+    display: flex !important;
+    align-items: flex-start;
+    gap: .8rem;
+    width: 100%;
+    padding: .9rem 1rem;
+    border: 1px solid var(--linha);
+    background: rgba(184, 154, 99, .055);
+    color: var(--texto);
+    cursor: pointer;
+}
+
+.cadastro-check-card:hover {
+    border-color: rgba(184, 154, 99, .7);
+}
+
+.cadastro-check-card input {
+    flex: 0 0 auto;
+    width: 18px !important;
+    height: 18px;
+    margin-top: .12rem;
+    accent-color: var(--dourado);
+}
+
+.cadastro-check-card span,
+.cadastro-check-card strong,
+.cadastro-check-card small {
+    display: block;
+}
+
+.cadastro-check-card strong {
+    margin-bottom: .18rem;
+    color: var(--texto);
+    font-size: .84rem;
+}
+
+.cadastro-check-card small {
+    color: var(--texto-claro);
+    font-size: .7rem;
+    font-weight: 300;
+    line-height: 1.5;
+}
+
+#formCliente > .form-grid > .cadastro-check-card,
+#formCliente > .form-grid > .cadastro-lookup-status {
+    grid-column: 1 / -1;
+}
+
+.parceria-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-left: .5rem;
+    padding: .22rem .45rem;
+    border: 1px solid rgba(184, 154, 99, .58);
+    color: var(--dourado);
+    font-size: .62rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}

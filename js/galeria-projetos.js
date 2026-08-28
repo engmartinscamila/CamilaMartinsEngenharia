@@ -1,8 +1,10 @@
 (function iniciarGaleriaProjetos() {
   'use strict';
 
-  const dadosUrl = 'assets/projetos/galeria.json?v=20260828-1';
-  const versaoImagens = '20260828-1';
+  const dadosUrl = 'assets/projetos/galeria.json?v=20260828-2';
+  const versaoImagens = '20260828-2';
+  const bucketPortfolio = 'projetos';
+  const manifestoPortfolio = 'portfolio/galeria.json';
   const projetosContainer = document.getElementById('galleryProjects');
   const navegacaoContainer = document.getElementById('galleryProjectNav');
   const carregamento = document.getElementById('galleryLoading');
@@ -31,6 +33,41 @@
 
   function urlImagem(src) {
     return `${src}${src.includes('?') ? '&' : '?'}v=${versaoImagens}`;
+  }
+
+  function prepararProjetos(dados) {
+    if (!Array.isArray(dados?.projetos)) return [];
+
+    return dados.projetos
+      .filter((projeto) => projeto && projeto.ativo !== false)
+      .map((projeto) => ({
+        ...projeto,
+        imagens: Array.isArray(projeto.imagens)
+          ? projeto.imagens.filter((imagem) => imagem && imagem.ativo !== false && imagem.src)
+          : [],
+        videos: Array.isArray(projeto.videos)
+          ? projeto.videos.filter((video) => video && video.ativo !== false && video.src)
+          : []
+      }))
+      .filter((projeto) => projeto.imagens.length > 0);
+  }
+
+  async function carregarManifestoPortfolio() {
+    try {
+      if (!window.supabaseClient) throw new Error('Supabase indisponível.');
+      const { data } = window.supabaseClient.storage
+        .from(bucketPortfolio)
+        .getPublicUrl(manifestoPortfolio);
+      const separador = data.publicUrl.includes('?') ? '&' : '?';
+      const respostaRemota = await fetch(`${data.publicUrl}${separador}v=${Date.now()}`, { cache: 'no-store' });
+      if (!respostaRemota.ok) throw new Error('Manifesto remoto ainda não criado.');
+      return respostaRemota.json();
+    } catch (erro) {
+      console.info('Usando a cópia local da galeria.', erro);
+      const respostaLocal = await fetch(dadosUrl, { cache: 'no-cache' });
+      if (!respostaLocal.ok) throw new Error('Não foi possível carregar os projetos.');
+      return respostaLocal.json();
+    }
   }
 
   function numeroComZero(numero) {
@@ -518,13 +555,10 @@
     });
   });
 
-  fetch(dadosUrl, { cache: 'no-cache' })
-    .then((resposta) => {
-      if (!resposta.ok) throw new Error('Não foi possível carregar os projetos.');
-      return resposta.json();
-    })
+  carregarManifestoPortfolio()
     .then((dados) => {
-      projetos = Array.isArray(dados.projetos) ? dados.projetos : [];
+      projetos = prepararProjetos(dados);
+      if (projetos.length === 0) throw new Error('Nenhum projeto visível foi encontrado.');
       imagensAtivas = projetos.map(() => 0);
       renderizarNavegacao();
       renderizarProjetos();

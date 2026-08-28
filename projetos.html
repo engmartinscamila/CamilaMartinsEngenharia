@@ -21,6 +21,7 @@ Projetos | Camila Martins Engenharia
 
 <link rel="stylesheet" href="css/admin.css?v=20260725-14">
 <link rel="stylesheet" href="css/admin-theme.css?v=20260725-14">
+<link rel="stylesheet" href="css/cadastro-inteligente.css?v=20260828-2">
 
 
 <link rel="stylesheet"
@@ -575,13 +576,6 @@ Orçamento
 </option>
 
 
-<option value="parceria">
-
-Parceria (sem contrato definido)
-
-</option>
-
-
 <option value="em_andamento">
 
 Em andamento
@@ -606,6 +600,13 @@ Cancelado
 </select>
 
 
+</div>
+
+<div class="campo campo-full">
+<label class="cadastro-check-card" for="projetoParceria">
+<input id="projetoParceria" type="checkbox">
+<span><strong>Projeto em parceria</strong><small>Esta marcação não altera o status, o contrato ou o orçamento do projeto.</small></span>
+</label>
 </div>
 
 
@@ -905,6 +906,7 @@ Carregando...
 
 
 <script src="js/database.js?v=20260725-14"></script>
+<script src="js/cadastro-inteligente.js?v=20260828-2"></script>
 
 
 <script src="js/auth.js?v=20260725-14"></script>

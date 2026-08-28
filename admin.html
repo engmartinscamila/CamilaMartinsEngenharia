@@ -24,6 +24,7 @@ Painel Administrativo | Camila Martins Engenharia
 
 <link rel="stylesheet" href="css/admin.css?v=20260725-14">
 <link rel="stylesheet" href="css/admin-theme.css?v=20260725-14">
+<link rel="stylesheet" href="css/cadastro-inteligente.css?v=20260828-2">
 
 
 <link rel="stylesheet"
@@ -151,7 +152,7 @@ Biblioteca
 
 <span>
 
-Proteção de PDFs
+Conteúdo do site
 
 </span>
 
@@ -888,6 +889,8 @@ required>
 id="clienteCpf"
 placeholder="CPF/CNPJ">
 
+<small id="cnpjStatus" class="cadastro-lookup-status" aria-live="polite"></small>
+
 
 <input
 id="clienteTelefone"
@@ -951,13 +954,6 @@ Orçamento
 </option>
 
 
-<option value="parceria">
-
-Parceria (sem contrato definido)
-
-</option>
-
-
 <option value="pausado">
 
 Pausado
@@ -973,6 +969,11 @@ Concluído
 
 
 </select>
+
+<label class="cadastro-check-card" for="clienteParceria">
+<input id="clienteParceria" type="checkbox">
+<span><strong>Parceria</strong><small>Marque quando este atendimento for uma parceria profissional, independentemente do status.</small></span>
+</label>
 
 
 
@@ -1073,6 +1074,7 @@ Carregando...
 
 
 <script src="js/database.js?v=20260725-14"></script>
+<script src="js/cadastro-inteligente.js?v=20260828-2"></script>
 
 
 <script src="js/auth.js?v=20260725-14"></script>
@@ -1082,7 +1084,7 @@ Carregando...
 
 
 <script src="js/admin.js?v=20260725-14"></script>
-<script src="js/admin-dashboard-fix.js?v=20260828-1"></script>
+<script src="js/admin-dashboard-fix.js?v=20260828-2"></script>
 
 
 
