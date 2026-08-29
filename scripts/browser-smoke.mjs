@@ -74,7 +74,8 @@ const supabaseMock = `
     FOTOS:"fotos",
     BIBLIOTECA:"biblioteca"
   });
-  const isAdmin = /(?:admin|clientes|projetos|documentos|biblioteca|fotos|financeiro|agenda|cronograma|solicitacoes|configuracoes|protecao-pdf-admin)\\.html$/i.test(location.pathname);
+  const forceClient = new URLSearchParams(location.search).get("role") === "client";
+  const isAdmin = !forceClient && /(?:admin|clientes|projetos|documentos|biblioteca|fotos|financeiro|agenda|cronograma|solicitacoes|configuracoes|protecao-pdf-admin)\\.html$/i.test(location.pathname);
   const user = { id: isAdmin ? "admin-test" : "client-test", email: isAdmin ? "admin@teste.local" : "cliente@teste.local", user_metadata:{nome:isAdmin?"Camila Teste":"Cliente Teste"} };
   const session = { user, access_token:"mock-token" };
 
@@ -556,6 +557,36 @@ const clientPages = [
 for (const file of clientPages) {
   const page = await loadPage(context, file);
   await responsive(page, file);
+  await page.close();
+}
+
+// Segurança: uma sessão de Cliente não pode abrir "Conteúdo do site".
+{
+  const page = await context.newPage();
+  await installMocks(page);
+  const errors = [];
+  page.on("pageerror", error => errors.push(error.message));
+
+  await page.goto(
+    `${BASE}/protecao-pdf-admin.html?role=client`,
+    {waitUntil:"domcontentloaded",timeout:15000}
+  );
+
+  await page.waitForURL(
+    url => url.pathname.endsWith("/portal.html"),
+    {timeout:3500}
+  ).catch(()=>{});
+
+  assert(
+    page.url().includes("/portal.html"),
+    "Segurança: Cliente autenticado conseguiu permanecer em protecao-pdf-admin.html"
+  );
+
+  assert(
+    errors.length === 0,
+    `Segurança Conteúdo do site: erros JS: ${errors.join(" | ")}`
+  );
+
   await page.close();
 }
 
