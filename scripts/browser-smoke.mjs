@@ -554,7 +554,8 @@ for (const teste of formTests) {
   await page.locator("#sistemaCorPrincipal").fill("#123456");
   await page.locator("#sistemaNotificacoes").selectOption("inativo");
 
-  await page.waitForTimeout(80);
+  // Os campos possuem transição de cor; aguarda o estado visual final.
+  await page.waitForTimeout(500);
 
   const temaAplicado = await page.evaluate(() => document.documentElement.dataset.adminTheme);
   const corAplicada = await page.evaluate(() =>
