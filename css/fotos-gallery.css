@@ -1,0 +1,437 @@
+/*
+==========================================================
+CAMILA MARTINS ENGENHARIA
+FOTOS — ÁLBUNS + VISUALIZADOR
+==========================================================
+*/
+
+.fotos-explorer{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+    gap:18px;
+}
+
+.foto-album-card{
+    position:relative;
+    min-width:0;
+    padding:0;
+    overflow:hidden;
+    border:1px solid var(--linha);
+    background:var(--painel);
+    color:var(--texto);
+    text-align:left;
+    cursor:pointer;
+    transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
+}
+.foto-album-card:hover,
+.foto-album-card:focus-visible{
+    transform:translateY(-2px);
+    border-color:var(--dourado);
+    box-shadow:0 18px 42px rgba(0,0,0,.16);
+    outline:none;
+}
+
+.foto-album-capa{
+    position:relative;
+    aspect-ratio:16/10;
+    overflow:hidden;
+    background:#000711;
+}
+.foto-album-mosaico{
+    width:100%;
+    height:100%;
+    display:grid;
+    gap:2px;
+    background:#000711;
+}
+.foto-album-mosaico img{
+    width:100%;
+    height:100%;
+    min-width:0;
+    min-height:0;
+    object-fit:cover;
+    display:block;
+}
+.foto-album-mosaico-1{grid-template-columns:1fr}
+.foto-album-mosaico-2{grid-template-columns:1fr 1fr}
+.foto-album-mosaico-3{
+    grid-template-columns:1.45fr 1fr;
+    grid-template-rows:1fr 1fr;
+}
+.foto-album-mosaico-3 img:first-child{grid-row:1/3}
+.foto-album-mosaico-4{
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:1fr 1fr;
+}
+.foto-album-vazio{
+    width:100%;
+    height:100%;
+    display:grid;
+    place-items:center;
+    align-content:center;
+    gap:8px;
+    color:var(--texto-claro);
+    background:
+        linear-gradient(145deg,rgba(184,154,99,.08),rgba(255,255,255,.02)),
+        var(--painel-2);
+}
+.foto-album-vazio i{font-size:2rem;color:var(--dourado)}
+
+.foto-album-quantidade{
+    position:absolute;
+    top:12px;
+    right:12px;
+    z-index:2;
+    display:inline-flex;
+    align-items:center;
+    min-height:30px;
+    padding:5px 10px;
+    border:1px solid rgba(255,255,255,.28);
+    border-radius:999px;
+    background:rgba(0,7,17,.78);
+    color:#fff;
+    font-size:.72rem;
+    font-weight:600;
+    backdrop-filter:blur(8px);
+}
+
+.foto-album-info{
+    display:grid;
+    gap:6px;
+    padding:15px 16px 16px;
+}
+.foto-album-cliente{
+    color:var(--dourado);
+    font-size:.76rem;
+    font-weight:600;
+    letter-spacing:.03em;
+}
+.foto-album-info strong{
+    color:var(--texto);
+    font-size:1rem;
+    line-height:1.3;
+}
+.foto-album-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px 12px;
+    min-height:20px;
+    color:var(--texto-claro);
+    font-size:.72rem;
+}
+.foto-album-meta span{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+}
+.foto-album-abrir{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-top:6px;
+    padding-top:10px;
+    border-top:1px solid var(--linha);
+    color:var(--texto-claro);
+    font-size:.76rem;
+}
+.foto-album-card:hover .foto-album-abrir{color:var(--dourado)}
+
+.fotos-album-view[hidden],
+.foto-viewer[hidden]{display:none!important}
+
+.foto-album-toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+    margin-bottom:18px;
+    padding-bottom:16px;
+    border-bottom:1px solid var(--linha);
+}
+.foto-album-heading{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    min-width:0;
+}
+.foto-album-back{
+    width:38px;
+    height:38px;
+    flex:0 0 38px;
+    display:grid;
+    place-items:center;
+    border:1px solid var(--linha);
+    background:var(--painel-2);
+    color:var(--dourado);
+    cursor:pointer;
+}
+.foto-album-back:hover{background:var(--dourado);color:#010914}
+.foto-album-heading-copy{min-width:0}
+.foto-album-heading h3{
+    margin:0;
+    color:var(--texto);
+    font-size:1.25rem;
+    font-weight:500;
+}
+.foto-album-submeta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 12px;
+    margin-top:5px;
+    color:var(--texto-claro);
+    font-size:.76rem;
+}
+.foto-album-submeta span:empty{display:none}
+.foto-album-count-badge{
+    flex:0 0 auto;
+    padding:6px 10px;
+    border:1px solid var(--linha);
+    border-radius:999px;
+    color:var(--texto-claro);
+    font-size:.74rem;
+}
+
+.foto-album-grade{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(165px,1fr));
+    gap:12px;
+}
+.foto-miniatura-card{
+    min-width:0;
+    overflow:hidden;
+    border:1px solid var(--linha);
+    background:var(--painel);
+}
+.foto-miniatura-imagem{
+    width:100%;
+    aspect-ratio:1/1;
+    display:block;
+    padding:0;
+    border:0;
+    background:#000711;
+    cursor:pointer;
+    overflow:hidden;
+}
+.foto-miniatura-imagem img{
+    width:100%;
+    height:100%;
+    display:block;
+    object-fit:cover;
+    transition:transform .2s ease;
+}
+.foto-miniatura-imagem:hover img{transform:scale(1.025)}
+.foto-miniatura-indisponivel{
+    width:100%;
+    height:100%;
+    display:grid;
+    place-items:center;
+    align-content:center;
+    gap:8px;
+    color:var(--texto-claro);
+    background:var(--painel-2);
+    font-size:.75rem;
+}
+.foto-miniatura-indisponivel i{font-size:1.5rem;color:var(--dourado)}
+.foto-miniatura-rodape{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:9px 10px;
+}
+.foto-miniatura-rodape > span{
+    min-width:0;
+    flex:1;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    color:var(--texto);
+    font-size:.74rem;
+}
+.foto-miniatura-acoes{
+    display:flex;
+    gap:5px;
+}
+.foto-miniatura-acoes .btn-icon{
+    width:30px;
+    height:30px;
+    padding:0;
+}
+
+.foto-viewer{
+    position:fixed;
+    inset:0;
+    z-index:120000;
+    display:grid;
+    grid-template-rows:auto minmax(0,1fr) auto auto;
+    background:rgba(0,5,12,.985);
+    color:#fff;
+}
+.foto-viewer-aberto{overflow:hidden}
+.foto-viewer-toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+    min-height:68px;
+    padding:10px 16px;
+    border-bottom:1px solid rgba(255,255,255,.1);
+}
+.foto-viewer-copy{
+    min-width:0;
+}
+.foto-viewer-copy strong{
+    display:block;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    color:#fff;
+    font-size:.95rem;
+}
+.foto-viewer-copy span{
+    display:block;
+    margin-top:3px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    color:rgba(255,255,255,.62);
+    font-size:.72rem;
+}
+.foto-viewer-acoes{
+    display:flex;
+    align-items:center;
+    gap:7px;
+}
+.foto-viewer-acoes button,
+.foto-viewer-nav{
+    display:grid;
+    place-items:center;
+    border:1px solid rgba(255,255,255,.16);
+    background:rgba(255,255,255,.055);
+    color:#fff;
+    cursor:pointer;
+}
+.foto-viewer-acoes button{
+    width:38px;
+    height:38px;
+}
+.foto-viewer-acoes button:hover,
+.foto-viewer-nav:hover:not(:disabled){
+    background:#fff;
+    color:#010914;
+}
+.foto-viewer-acoes .viewer-delete:hover{
+    background:#b23a3a;
+    border-color:#b23a3a;
+    color:#fff;
+}
+
+.foto-viewer-stage{
+    position:relative;
+    min-height:0;
+    display:grid;
+    grid-template-columns:56px minmax(0,1fr) 56px;
+    align-items:center;
+    gap:8px;
+    padding:14px 18px;
+}
+.foto-viewer-nav{
+    width:46px;
+    height:60px;
+    justify-self:center;
+    font-size:1.1rem;
+}
+.foto-viewer-nav:disabled{
+    opacity:.25;
+    cursor:default;
+}
+.foto-viewer-image-wrap{
+    width:100%;
+    height:100%;
+    min-height:0;
+    display:grid;
+    place-items:center;
+    overflow:hidden;
+}
+#viewerImagem{
+    max-width:100%;
+    max-height:100%;
+    width:auto;
+    height:auto;
+    object-fit:contain;
+    box-shadow:0 18px 70px rgba(0,0,0,.42);
+}
+#viewerIndisponivel{
+    display:grid;
+    place-items:center;
+    align-content:center;
+    gap:10px;
+    color:rgba(255,255,255,.65);
+}
+#viewerIndisponivel i{font-size:2.2rem}
+
+.foto-viewer-info{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+    min-height:42px;
+    padding:7px 18px;
+    color:rgba(255,255,255,.65);
+    font-size:.73rem;
+}
+#viewerDescricao:empty{display:none}
+#viewerContador{
+    flex:0 0 auto;
+    color:rgba(255,255,255,.78);
+}
+
+.viewer-filmstrip{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    min-height:82px;
+    padding:9px 14px 12px;
+    overflow-x:auto;
+    border-top:1px solid rgba(255,255,255,.08);
+}
+.viewer-miniatura{
+    width:68px;
+    height:58px;
+    flex:0 0 68px;
+    padding:2px;
+    overflow:hidden;
+    border:2px solid transparent;
+    background:rgba(255,255,255,.06);
+    cursor:pointer;
+}
+.viewer-miniatura.ativo{border-color:#c3a264}
+.viewer-miniatura img,
+.viewer-miniatura span{
+    width:100%;
+    height:100%;
+    display:grid;
+    place-items:center;
+    object-fit:cover;
+    color:rgba(255,255,255,.65);
+}
+
+html[data-admin-theme="claro"] .foto-album-card,
+html[data-admin-theme="claro"] .foto-miniatura-card{
+    background:#fff;
+}
+html[data-admin-theme="claro"] .foto-album-vazio,
+html[data-admin-theme="claro"] .foto-miniatura-indisponivel{
+    background:#f4f6f8;
+}
+html[data-admin-theme="claro"] .foto-album-back{
+    background:#fff;
+}
+
+@media(max-width:800px){
+    .fotos-explorer{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+    .foto-album-grade{grid-template-columns:repeat(auto-fill,minmax(135px,1fr))}
+    .foto-viewer-stage{grid-template-columns:44px minmax(0,1fr) 44px;padding:10px 8px}
+    .foto-viewer-nav{width:38px;height:52px}
+    .foto-viewer-toolbar{padding:8px 10px}
+}
