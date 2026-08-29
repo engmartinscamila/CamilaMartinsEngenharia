@@ -84,15 +84,23 @@ jobs:
             --arg zone_name "${ZONE_NAME}" \
             '{hostname:$hostname,service:$service,zone_name:$zone_name}')"
 
-          response="$(curl --fail-with-body --silent --show-error \
+          http_status="$(curl --silent --show-error \
             -X PUT \
             -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
             -H "Content-Type: application/json" \
             --data "${payload}" \
+            --output cloudflare-response.json \
+            --write-out '%{http_code}' \
             "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/domains")"
 
-          jq -e '.success == true' <<<"${response}" >/dev/null
-          jq -r '"Dominio conectado: \(.result.hostname) -> \(.result.service)"' <<<"${response}"
+          if [[ ! "${http_status}" =~ ^2 ]]; then
+            echo "Cloudflare recusou a conexao (HTTP ${http_status}):"
+            jq -r '.errors[]? | "- codigo \(.code): \(.message)"' cloudflare-response.json
+            exit 1
+          fi
+
+          jq -e '.success == true' cloudflare-response.json >/dev/null
+          jq -r '"Dominio conectado: \(.result.hostname) -> \(.result.service)"' cloudflare-response.json
 
       - name: Verificar configuracao
         shell: bash
