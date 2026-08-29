@@ -1,0 +1,71 @@
+name: Diagnostico Cloudflare do dominio
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/cloudflare-diagnostico.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostico:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      ZONE_NAME: camilamartinsengenharia.com.br
+
+    steps:
+      - name: Diagnosticar sem alterar configuracao
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+            echo "TOKEN_STATUS=ausente"
+            exit 2
+          fi
+
+          api_get() {
+            curl --fail-with-body --silent --show-error               -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"               -H "Content-Type: application/json"               "https://api.cloudflare.com/client/v4$1"
+          }
+
+          verify="$(api_get /user/tokens/verify)"
+          jq -e '.success == true and .result.status == "active"' <<<"$verify" >/dev/null
+          echo "TOKEN_STATUS=ativo"
+
+          accounts="$(api_get /accounts)"
+          account_id="$(jq -r '.result[0].id // empty' <<<"$accounts")"
+          echo "ACCOUNT_FOUND=$([[ -n "$account_id" ]] && echo sim || echo nao)"
+
+          zones="$(api_get "/zones?name=${ZONE_NAME}")"
+          zone_id="$(jq -r '.result[0].id // empty' <<<"$zones")"
+          echo "ZONE_FOUND=$([[ -n "$zone_id" ]] && echo sim || echo nao)"
+
+          if [[ -n "$zone_id" ]]; then
+            echo "=== DNS RELEVANTE ==="
+            dns="$(api_get "/zones/${zone_id}/dns_records?per_page=100")"
+            jq -r --arg zone "${ZONE_NAME}" '
+              .result[]
+              | select(.name == $zone or .name == ("www." + $zone) or .name == ("midia." + $zone))
+              | [.type,.name,.content,("proxied=" + (.proxied|tostring))]
+              | @tsv
+            ' <<<"$dns"
+          fi
+
+          if [[ -n "$account_id" ]]; then
+            echo "=== PAGES PROJECTS ==="
+            projects="$(api_get "/accounts/${account_id}/pages/projects")"
+            jq -r '.result[]? | [.name,.subdomain,.production_branch] | @tsv' <<<"$projects"
+
+            echo "=== DOMINIOS DO PROJETO CAMILAMARTINSENGENHARIA ==="
+            if jq -e '.result[]? | select(.name == "camilamartinsengenharia")' <<<"$projects" >/dev/null; then
+              domains="$(api_get "/accounts/${account_id}/pages/projects/camilamartinsengenharia/domains")"
+              jq -r '.result[]? | [.name,.status] | @tsv' <<<"$domains"
+            else
+              echo "projeto_pages_nao_encontrado"
+            fi
+          fi
