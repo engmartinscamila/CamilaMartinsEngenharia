@@ -1,7 +1,7 @@
 /*
 =====================================================
 CAMILA MARTINS ENGENHARIA
-FOTOS.JS - CRUD ADMINISTRATIVO
+FOTOS.JS — ÁLBUNS + VISUALIZADOR DE IMAGENS
 =====================================================
 */
 
@@ -12,8 +12,11 @@ FOTOS.JS - CRUD ADMINISTRATIVO
     let clientes = [];
     let projetos = [];
     let fotoSelecionadaId = null;
+    let albumAtualKey = null;
+    let visualizadorIds = [];
+    let visualizadorIndex = -1;
 
-    document.addEventListener("DOMContentLoaded", iniciar);
+    document.addEventListener("DOMContentLoaded", iniciar, { once: true });
 
     async function iniciar() {
         configurarEventos();
@@ -28,12 +31,10 @@ FOTOS.JS - CRUD ADMINISTRATIVO
 
             preencherSelect("fotoCliente", clientes);
             preencherProjetos();
-            renderizar();
-        }
-        catch (error) {
+            renderizarAlbuns();
+        } catch (error) {
             tratarErro("Não foi possível carregar as fotos.", error);
-        }
-        finally {
+        } finally {
             mostrarLoading(false);
         }
     }
@@ -46,84 +47,359 @@ FOTOS.JS - CRUD ADMINISTRATIVO
         document.getElementById("fotoCliente")?.addEventListener("change", preencherProjetos);
         document.getElementById("pesquisaFoto")?.addEventListener("input", pesquisar);
         document.getElementById("btnPesquisarFoto")?.addEventListener("click", pesquisar);
+
         document.getElementById("galeriaFotos")?.addEventListener("click", tratarAcao);
-        document.getElementById("detalhesFoto")?.addEventListener("click", tratarAcao);
+        document.getElementById("albumFotos")?.addEventListener("click", tratarAcao);
+        document.getElementById("visualizadorFoto")?.addEventListener("click", tratarAcao);
+
         document.getElementById("modalFoto")?.addEventListener("click", event => {
             if (event.target.id === "modalFoto") fecharModal();
         });
+
+        document.getElementById("visualizadorFoto")?.addEventListener("click", event => {
+            if (event.target.id === "visualizadorFoto") fecharVisualizador();
+        });
+
+        document.addEventListener("keydown", tratarTecladoVisualizador);
     }
 
-    function renderizar(lista = fotos, abrirPastas = false) {
+    function agruparAlbuns(lista = fotos) {
+        const mapa = new Map();
+
+        for (const foto of lista) {
+            const clienteId = String(foto.cliente_id || "sem-cliente");
+            const projetoId = String(foto.projeto_id || "sem-projeto");
+            const key = clienteId + "::" + projetoId;
+
+            if (!mapa.has(key)) {
+                mapa.set(key, {
+                    key,
+                    cliente_id: foto.cliente_id || null,
+                    projeto_id: foto.projeto_id || null,
+                    fotos: []
+                });
+            }
+
+            mapa.get(key).fotos.push(foto);
+        }
+
+        return [...mapa.values()].sort((a, b) => {
+            const cliente = nomeCliente(a.cliente_id).localeCompare(
+                nomeCliente(b.cliente_id),
+                "pt-BR",
+                { sensitivity: "base" }
+            );
+            if (cliente !== 0) return cliente;
+
+            return nomeProjeto(a.projeto_id).localeCompare(
+                nomeProjeto(b.projeto_id),
+                "pt-BR",
+                { sensitivity: "base" }
+            );
+        });
+    }
+
+    function renderizarAlbuns(lista = fotos) {
         const galeria = document.getElementById("galeriaFotos");
+        const albumView = document.getElementById("albumFotos");
         if (!galeria) return;
 
-        if (!lista.length) {
-            galeria.innerHTML = '<div class="estado-vazio">Nenhuma foto cadastrada.</div>';
+        albumAtualKey = null;
+        if (albumView) albumView.hidden = true;
+        galeria.hidden = false;
+
+        const albuns = agruparAlbuns(lista);
+
+        if (!albuns.length) {
+            galeria.innerHTML = '<div class="estado-vazio">Nenhuma foto encontrada.</div>';
             return;
         }
 
-        const porCliente = lista.reduce((mapa, item) => {
-            const chave = String(item.cliente_id || "sem-cliente");
-            (mapa[chave] ||= []).push(item);
-            return mapa;
-        }, {});
-
-        galeria.innerHTML = Object.values(porCliente).map(grupoCliente => {
-            const primeira = grupoCliente[0];
-
-            const porProjeto = grupoCliente.reduce((mapa, item) => {
-                const chave = String(item.projeto_id || "sem-projeto");
-                (mapa[chave] ||= []).push(item);
-                return mapa;
-            }, {});
-
-            const conteudo = Object.values(porProjeto).map(grupoProjeto => {
-                const referencia = grupoProjeto[0];
-
-                return `
-                    <section class="cme-subpasta-projeto">
-                        <h4>${escapar(rotuloProjeto(referencia.projeto_id))}</h4>
-                        <div class="galeria-fotos">
-                            ${grupoProjeto.map(foto => `
-                                <article class="foto-item" data-acao-foto="abrir" data-id="${escapar(foto.id)}">
-                                    ${foto.url
-                                        ? `<img src="${escapar(foto.url)}" alt="${escapar(foto.nome)}">`
-                                        : `<div class="arquivo-indisponivel">
-                                            Imagem indisponível${foto.urlErro ? `: ${escapar(foto.urlErro)}` : ""}
-                                        </div>`}
-                                    <span>${escapar(foto.nome || "Foto sem título")}</span>
-                                    <div class="foto-acoes">
-                                        ${botao("editar", foto.id, "fa-pen", "Editar foto", "edit")}
-                                        ${botao("excluir", foto.id, "fa-trash", "Excluir foto", "delete")}
-                                    </div>
-                                </article>
-                            `).join("")}
-                        </div>
-                    </section>
-                `;
-            }).join("");
+        galeria.innerHTML = albuns.map(album => {
+            const projeto = obterProjeto(album.projeto_id);
+            const contrato = numeroContrato(projeto);
+            const parceria = Boolean(projeto?.parceria);
+            const quantidade = album.fotos.length;
+            const capas = album.fotos.filter(foto => Boolean(foto.url)).slice(0, 4);
 
             return `
-                <details class="pasta-cliente cme-pasta-cliente" ${abrirPastas ? "open" : ""}>
-                    <summary>
-                        <span><i class="fa-solid fa-folder"></i> ${escapar(nomeCliente(primeira.cliente_id))}</span>
-                        <span class="cme-pasta-contagem">${grupoCliente.length} ${grupoCliente.length === 1 ? "foto" : "fotos"}</span>
-                    </summary>
-                    <div class="cme-pasta-corpo">${conteudo}</div>
-                </details>
+                <button type="button"
+                    class="foto-album-card"
+                    data-acao-foto="abrir-album"
+                    data-album="${escapar(album.key)}"
+                    aria-label="Abrir álbum ${escapar(nomeProjeto(album.projeto_id))} de ${escapar(nomeCliente(album.cliente_id))}">
+                    <div class="foto-album-capa">
+                        ${renderizarMosaico(capas)}
+                        <span class="foto-album-quantidade">
+                            ${quantidade} ${quantidade === 1 ? "foto" : "fotos"}
+                        </span>
+                    </div>
+                    <div class="foto-album-info">
+                        <span class="foto-album-cliente">${escapar(nomeCliente(album.cliente_id))}</span>
+                        <strong>${escapar(nomeProjeto(album.projeto_id))}</strong>
+                        <div class="foto-album-meta">
+                            ${contrato ? `<span><i class="fa-solid fa-file-signature"></i> Contrato ${escapar(contrato)}</span>` : ""}
+                            ${parceria ? '<span><i class="fa-solid fa-handshake"></i> Parceria</span>' : ""}
+                        </div>
+                        <span class="foto-album-abrir">
+                            Abrir álbum <i class="fa-solid fa-chevron-right"></i>
+                        </span>
+                    </div>
+                </button>
             `;
         }).join("");
+    }
+
+    function renderizarMosaico(capas) {
+        if (!capas.length) {
+            return `
+                <div class="foto-album-vazio">
+                    <i class="fa-regular fa-images"></i>
+                    <span>Sem prévia</span>
+                </div>
+            `;
+        }
+
+        const classe = "foto-album-mosaico foto-album-mosaico-" + Math.min(capas.length, 4);
+
+        return `
+            <div class="${classe}">
+                ${capas.map(foto => `
+                    <img src="${escapar(foto.url)}"
+                        alt=""
+                        loading="lazy"
+                        decoding="async">
+                `).join("")}
+            </div>
+        `;
+    }
+
+    function abrirAlbum(key, lista = null) {
+        const galeria = document.getElementById("galeriaFotos");
+        const albumView = document.getElementById("albumFotos");
+        if (!galeria || !albumView) return;
+
+        const album = agruparAlbuns(fotos).find(item => item.key === String(key));
+        if (!album) {
+            renderizarAlbuns();
+            return;
+        }
+
+        albumAtualKey = album.key;
+        galeria.hidden = true;
+        albumView.hidden = false;
+
+        const projeto = obterProjeto(album.projeto_id);
+        const contrato = numeroContrato(projeto);
+        const fotosDoAlbum = Array.isArray(lista) ? lista : album.fotos;
+
+        preencherTexto("albumTitulo", nomeProjeto(album.projeto_id));
+        preencherTexto("albumCliente", nomeCliente(album.cliente_id));
+        preencherTexto(
+            "albumContrato",
+            contrato
+                ? "Contrato " + contrato
+                : (projeto?.parceria ? "Parceria" : "")
+        );
+        preencherTexto(
+            "albumQuantidade",
+            fotosDoAlbum.length + " " + (fotosDoAlbum.length === 1 ? "foto" : "fotos")
+        );
+
+        const grade = document.getElementById("albumGrade");
+        if (!grade) return;
+
+        if (!fotosDoAlbum.length) {
+            grade.innerHTML = '<div class="estado-vazio">Nenhuma foto corresponde à pesquisa neste álbum.</div>';
+            return;
+        }
+
+        grade.innerHTML = fotosDoAlbum.map(foto => `
+            <article class="foto-miniatura-card">
+                <button type="button"
+                    class="foto-miniatura-imagem"
+                    data-acao-foto="visualizar"
+                    data-id="${escapar(foto.id)}"
+                    aria-label="Visualizar ${escapar(foto.nome || "foto")}">
+                    ${foto.url
+                        ? `<img src="${escapar(foto.url)}" alt="${escapar(foto.nome || "Foto")}" loading="lazy" decoding="async">`
+                        : `<span class="foto-miniatura-indisponivel">
+                            <i class="fa-regular fa-image"></i>
+                            Imagem indisponível
+                           </span>`}
+                </button>
+                <div class="foto-miniatura-rodape">
+                    <span title="${escapar(foto.nome || "Foto sem título")}">
+                        ${escapar(foto.nome || "Foto sem título")}
+                    </span>
+                    <div class="foto-miniatura-acoes">
+                        ${botao("editar", foto.id, "fa-pen", "Editar foto", "edit")}
+                        ${botao("excluir", foto.id, "fa-trash", "Excluir foto", "delete")}
+                    </div>
+                </div>
+            </article>
+        `).join("");
+    }
+
+    function voltarAlbuns() {
+        fecharVisualizador();
+        const termo = valor("pesquisaFoto").toLocaleLowerCase("pt-BR");
+        if (!termo) {
+            renderizarAlbuns();
+            return;
+        }
+
+        const filtradas = filtrarFotos(termo);
+        renderizarAlbuns(filtradas);
     }
 
     function tratarAcao(event) {
         const alvo = event.target.closest("[data-acao-foto]");
         if (!alvo) return;
 
+        event.preventDefault();
         event.stopPropagation();
-        const { acaoFoto: acao, id } = alvo.dataset;
-        if (acao === "abrir") mostrarDetalhes(id);
+
+        const acao = alvo.dataset.acaoFoto;
+        const id = alvo.dataset.id;
+        const album = alvo.dataset.album;
+
+        if (acao === "abrir-album") abrirAlbum(album);
+        if (acao === "voltar-albuns") voltarAlbuns();
+        if (acao === "visualizar") abrirVisualizador(id);
         if (acao === "editar") editarFoto(id);
         if (acao === "excluir") excluirFoto(id);
+        if (acao === "viewer-anterior") navegarVisualizador(-1);
+        if (acao === "viewer-proxima") navegarVisualizador(1);
+        if (acao === "viewer-fechar") fecharVisualizador();
+        if (acao === "viewer-miniatura") abrirVisualizador(id, true);
+    }
+
+    function abrirVisualizador(id, manterLista = false) {
+        const foto = localizar(id);
+        if (!foto) return;
+
+        if (!manterLista) {
+            const album = albumAtualKey
+                ? agruparAlbuns(fotos).find(item => item.key === albumAtualKey)
+                : null;
+
+            visualizadorIds = (album?.fotos || [foto]).map(item => String(item.id));
+        }
+
+        const indice = visualizadorIds.findIndex(item => item === String(id));
+        visualizadorIndex = indice >= 0 ? indice : 0;
+
+        const viewer = document.getElementById("visualizadorFoto");
+        if (!viewer) return;
+
+        viewer.hidden = false;
+        viewer.classList.add("show");
+        document.body.classList.add("foto-viewer-aberto");
+
+        renderizarVisualizador();
+    }
+
+    function renderizarVisualizador() {
+        if (visualizadorIndex < 0 || visualizadorIndex >= visualizadorIds.length) return;
+
+        const foto = localizar(visualizadorIds[visualizadorIndex]);
+        if (!foto) return;
+
+        fotoSelecionadaId = foto.id;
+
+        preencherTexto("viewerTitulo", foto.nome || "Foto");
+        preencherTexto(
+            "viewerMeta",
+            nomeCliente(foto.cliente_id) + " · " + nomeProjeto(foto.projeto_id)
+        );
+        preencherTexto(
+            "viewerContador",
+            (visualizadorIndex + 1) + " / " + visualizadorIds.length
+        );
+        preencherTexto("viewerDescricao", foto.descricao || "");
+
+        const imagem = document.getElementById("viewerImagem");
+        const indisponivel = document.getElementById("viewerIndisponivel");
+
+        if (imagem && indisponivel) {
+            if (foto.url) {
+                imagem.src = foto.url;
+                imagem.alt = foto.nome || "Foto";
+                imagem.hidden = false;
+                indisponivel.hidden = true;
+            } else {
+                imagem.removeAttribute("src");
+                imagem.hidden = true;
+                indisponivel.hidden = false;
+            }
+        }
+
+        const anterior = document.getElementById("viewerAnterior");
+        const proxima = document.getElementById("viewerProxima");
+        const unica = visualizadorIds.length <= 1;
+        if (anterior) anterior.disabled = unica;
+        if (proxima) proxima.disabled = unica;
+
+        const editar = document.getElementById("viewerEditar");
+        const excluir = document.getElementById("viewerExcluir");
+        if (editar) editar.dataset.id = String(foto.id);
+        if (excluir) excluir.dataset.id = String(foto.id);
+
+        renderizarFilmstrip();
+    }
+
+    function renderizarFilmstrip() {
+        const faixa = document.getElementById("viewerMiniaturas");
+        if (!faixa) return;
+
+        faixa.innerHTML = visualizadorIds.map((id, indice) => {
+            const foto = localizar(id);
+            if (!foto) return "";
+
+            return `
+                <button type="button"
+                    class="viewer-miniatura ${indice === visualizadorIndex ? "ativo" : ""}"
+                    data-acao-foto="viewer-miniatura"
+                    data-id="${escapar(foto.id)}"
+                    aria-label="Abrir ${escapar(foto.nome || "foto")}">
+                    ${foto.url
+                        ? `<img src="${escapar(foto.url)}" alt="" loading="lazy">`
+                        : '<span><i class="fa-regular fa-image"></i></span>'}
+                </button>
+            `;
+        }).join("");
+
+        faixa.querySelector(".viewer-miniatura.ativo")
+            ?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
+
+    function navegarVisualizador(delta) {
+        if (visualizadorIds.length <= 1) return;
+
+        visualizadorIndex =
+            (visualizadorIndex + delta + visualizadorIds.length) % visualizadorIds.length;
+
+        renderizarVisualizador();
+    }
+
+    function fecharVisualizador() {
+        const viewer = document.getElementById("visualizadorFoto");
+        if (!viewer || viewer.hidden) return;
+
+        viewer.classList.remove("show");
+        viewer.hidden = true;
+        document.body.classList.remove("foto-viewer-aberto");
+        visualizadorIndex = -1;
+    }
+
+    function tratarTecladoVisualizador(event) {
+        const viewer = document.getElementById("visualizadorFoto");
+        if (!viewer || viewer.hidden) return;
+
+        if (event.key === "Escape") fecharVisualizador();
+        if (event.key === "ArrowLeft") navegarVisualizador(-1);
+        if (event.key === "ArrowRight") navegarVisualizador(1);
     }
 
     function novaFoto() {
@@ -138,6 +414,7 @@ FOTOS.JS - CRUD ADMINISTRATIVO
         const foto = localizar(id);
         if (!foto) return;
 
+        fecharVisualizador();
         fotoSelecionadaId = foto.id;
         preencher("fotoCliente", foto.cliente_id);
         preencherProjetos(foto.projeto_id);
@@ -161,7 +438,7 @@ FOTOS.JS - CRUD ADMINISTRATIVO
         const anterior = localizar(fotoSelecionadaId);
 
         if (!dados.nome || !dados.cliente_id || !dados.projeto_id) {
-            alert("Informe o título, o cliente e o contrato.");
+            alert("Informe o título, o cliente e o projeto.");
             return;
         }
 
@@ -181,18 +458,21 @@ FOTOS.JS - CRUD ADMINISTRATIVO
 
         try {
             if (arquivo) {
-                novoCaminho = `${dados.cliente_id}/${dados.projeto_id}/${Date.now()}-${normalizarNome(arquivo.name)}`;
+                novoCaminho =
+                    dados.cliente_id + "/" +
+                    dados.projeto_id + "/" +
+                    Date.now() + "-" +
+                    normalizarNome(arquivo.name);
+
                 await dbUploadArquivo(BUCKETS.FOTOS, novoCaminho, arquivo);
             }
 
             dados.arquivo = novoCaminho;
-
             const editando = Boolean(fotoSelecionadaId);
 
             if (editando) {
                 await dbEditarFoto(fotoSelecionadaId, dados);
-            }
-            else {
+            } else {
                 await dbCriarFoto(dados);
             }
 
@@ -209,87 +489,108 @@ FOTOS.JS - CRUD ADMINISTRATIVO
                     ? "Uma foto do acompanhamento do seu projeto foi atualizada."
                     : "Uma nova foto do acompanhamento foi publicada no portal."
             });
+
             fecharModal();
             await recarregar();
+
             alert(
-                `${editando ? "Foto atualizada" : "Foto cadastrada"} com sucesso.` +
+                (editando ? "Foto atualizada" : "Foto cadastrada") + " com sucesso." +
                 (notificacao.enviado
                     ? "\nO cliente também recebeu um aviso por e-mail."
                     : "\nO registro foi salvo, mas o aviso por e-mail ainda não está configurado.")
             );
-        }
-        catch (error) {
+        } catch (error) {
             if (arquivo && novoCaminho && novoCaminho !== anterior?.arquivo) {
                 await dbExcluirArquivoStorage(BUCKETS.FOTOS, novoCaminho).catch(() => {});
             }
+
             tratarErro("Não foi possível salvar a foto.", error);
-        }
-        finally {
+        } finally {
             alternarSalvamento(botaoSalvar, false);
         }
     }
 
-    function mostrarDetalhes(id) {
-        const foto = localizar(id);
-        const painel = document.getElementById("detalhesFoto");
-        if (!foto || !painel) return;
-
-        fotoSelecionadaId = foto.id;
-        painel.innerHTML = `
-            <h3>${escapar(foto.nome)}</h3>
-            ${foto.url
-                ? `<img src="${escapar(foto.url)}" alt="${escapar(foto.nome)}" style="max-width:100%;border-radius:2px;">`
-                : `<div class="arquivo-indisponivel">
-                    Imagem indisponível${foto.urlErro ? `: ${escapar(foto.urlErro)}` : ""}
-                </div>`}
-            <p><strong>Cliente:</strong> ${escapar(nomeCliente(foto.cliente_id))}</p>
-            <p><strong>Projeto:</strong> ${escapar(nomeProjeto(foto.projeto_id))}</p>
-            <p>${escapar(foto.descricao || "Sem descrição.")}</p>
-            <div class="detalhes-acoes">
-                ${botao("editar", foto.id, "fa-pen", "Editar foto", "edit")}
-                ${botao("excluir", foto.id, "fa-trash", "Excluir foto", "delete")}
-            </div>
-        `;
-    }
-
     async function excluirFoto(id) {
         const foto = localizar(id);
-        if (!foto || !confirm(`Excluir a foto "${foto.nome}"?`)) return;
+        if (!foto || !confirm('Excluir a foto "' + (foto.nome || "Sem título") + '"?')) return;
+
+        const albumAnterior = chaveAlbum(foto);
 
         try {
+            fecharVisualizador();
             await dbExcluirFoto(foto.id);
+
             if (foto.arquivo) {
                 await dbExcluirArquivoStorage(BUCKETS.FOTOS, foto.arquivo).catch(() => {});
             }
-            limparDetalhes();
-            await recarregar();
+
+            await recarregar(albumAnterior);
             alert("Foto excluída com sucesso.");
-        }
-        catch (error) {
+        } catch (error) {
             tratarErro("Não foi possível excluir a foto.", error);
         }
     }
 
-    async function recarregar() {
+    async function recarregar(preferirAlbum = albumAtualKey) {
         fotos = await dbBuscarFotos();
-        renderizar();
+
+        if (preferirAlbum) {
+            const album = agruparAlbuns(fotos).find(item => item.key === preferirAlbum);
+            if (album?.fotos?.length) {
+                abrirAlbum(preferirAlbum);
+                return;
+            }
+        }
+
+        renderizarAlbuns();
     }
 
     function pesquisar() {
         const termo = valor("pesquisaFoto").toLocaleLowerCase("pt-BR");
-        if (!termo) return renderizar();
 
-        renderizar(fotos.filter(foto =>
-            [foto.nome, foto.descricao, nomeCliente(foto.cliente_id), nomeProjeto(foto.projeto_id)]
-                .some(campo => String(campo || "").toLocaleLowerCase("pt-BR").includes(termo))
-        ), true);
+        if (!termo) {
+            if (albumAtualKey) abrirAlbum(albumAtualKey);
+            else renderizarAlbuns();
+            return;
+        }
+
+        const filtradas = filtrarFotos(termo);
+
+        if (albumAtualKey) {
+            const somenteAlbum = filtradas.filter(foto => chaveAlbum(foto) === albumAtualKey);
+            abrirAlbum(albumAtualKey, somenteAlbum);
+            return;
+        }
+
+        renderizarAlbuns(filtradas);
+    }
+
+    function filtrarFotos(termo) {
+        return fotos.filter(foto => {
+            const projeto = obterProjeto(foto.projeto_id);
+            return [
+                foto.nome,
+                foto.descricao,
+                nomeCliente(foto.cliente_id),
+                nomeProjeto(foto.projeto_id),
+                numeroContrato(projeto)
+            ].some(campo =>
+                String(campo || "").toLocaleLowerCase("pt-BR").includes(termo)
+            );
+        });
     }
 
     function preencherSelect(id, itens) {
         const select = document.getElementById(id);
         if (!select) return;
-        select.innerHTML = `<option value="">Selecione</option>` +
-            itens.map(item => `<option value="${escapar(item.id)}">${escapar(item.nome)}</option>`).join("");
+
+        select.innerHTML =
+            '<option value="">Selecione</option>' +
+            itens.map(item =>
+                '<option value="' + escapar(item.id) + '">' +
+                escapar(item.nome) +
+                "</option>"
+            ).join("");
     }
 
     function preencherProjetos(valorSelecionado = "") {
@@ -297,12 +598,14 @@ FOTOS.JS - CRUD ADMINISTRATIVO
         const lista = clienteId
             ? projetos.filter(projeto => String(projeto.cliente_id) === String(clienteId))
             : projetos;
+
         preencherSelect("fotoProjeto", lista);
         preencher("fotoProjeto", valorSelecionado);
     }
 
     function projetoPertenceAoCliente(projetoId, clienteId) {
         if (!projetoId) return false;
+
         return projetos.some(projeto =>
             String(projeto.id) === String(projetoId) &&
             String(projeto.cliente_id) === String(clienteId)
@@ -312,6 +615,7 @@ FOTOS.JS - CRUD ADMINISTRATIVO
     function abrirModal() {
         const modal = document.getElementById("modalFoto");
         if (!modal) return;
+
         modal.style.display = "flex";
         modal.classList.add("show");
     }
@@ -319,6 +623,7 @@ FOTOS.JS - CRUD ADMINISTRATIVO
     function fecharModal() {
         const modal = document.getElementById("modalFoto");
         modal?.classList.remove("show");
+
         if (modal) modal.style.display = "none";
         document.getElementById("formFoto")?.reset();
     }
@@ -327,6 +632,7 @@ FOTOS.JS - CRUD ADMINISTRATIVO
         const tituloModal = document.querySelector("#modalFoto .modal-header h2");
         const botaoSalvar = document.getElementById("salvarFoto");
         const inputArquivo = document.getElementById("arquivoFoto");
+
         if (tituloModal) tituloModal.textContent = titulo;
         if (botaoSalvar) botaoSalvar.textContent = textoBotao;
         if (inputArquivo) inputArquivo.required = arquivoObrigatorio;
@@ -334,21 +640,20 @@ FOTOS.JS - CRUD ADMINISTRATIVO
 
     function alternarSalvamento(botao, salvando) {
         if (!botao) return;
+
         botao.disabled = salvando;
         if (salvando) botao.textContent = "Salvando...";
         else botao.textContent = fotoSelecionadaId ? "Salvar Alterações" : "Salvar Foto";
     }
 
-    function limparDetalhes() {
-        fotoSelecionadaId = null;
-        const painel = document.getElementById("detalhesFoto");
-        if (painel) painel.innerHTML = "<p>Selecione uma imagem para visualizar os detalhes.</p>";
-    }
-
     function botao(acao, id, icone, titulo, classe = "") {
         return `
-            <button type="button" class="btn-icon ${classe}" data-acao-foto="${acao}"
-                data-id="${escapar(id)}" title="${titulo}" aria-label="${titulo}">
+            <button type="button"
+                class="btn-icon ${classe}"
+                data-acao-foto="${acao}"
+                data-id="${escapar(id)}"
+                title="${titulo}"
+                aria-label="${titulo}">
                 <i class="fa-solid ${icone}"></i>
             </button>
         `;
@@ -358,17 +663,25 @@ FOTOS.JS - CRUD ADMINISTRATIVO
         return fotos.find(foto => String(foto.id) === String(id));
     }
 
+    function chaveAlbum(foto) {
+        return String(foto?.cliente_id || "sem-cliente") + "::" +
+            String(foto?.projeto_id || "sem-projeto");
+    }
+
     function nomeCliente(id) {
-        return clientes.find(cliente => String(cliente.id) === String(id))?.nome || "Não informado";
+        return clientes.find(cliente => String(cliente.id) === String(id))?.nome || "Cliente não informado";
+    }
+
+    function obterProjeto(id) {
+        return projetos.find(projeto => String(projeto.id) === String(id)) || null;
     }
 
     function nomeProjeto(id) {
-        return projetos.find(projeto => String(projeto.id) === String(id))?.nome || "Não informado";
+        return obterProjeto(id)?.nome || "Projeto sem nome";
     }
 
-    function rotuloProjeto(id) {
-        const projeto = projetos.find(item => String(item.id) === String(id));
-        return projeto ? (window.cmRotuloContrato?.(projeto) || projeto.nome) : "Contrato não informado";
+    function numeroContrato(projeto) {
+        return String(projeto?.numero_contrato || "").trim();
     }
 
     function mostrarLoading(mostrar) {
@@ -385,8 +698,13 @@ FOTOS.JS - CRUD ADMINISTRATIVO
         if (campo) campo.value = conteudo || "";
     }
 
+    function preencherTexto(id, conteudo) {
+        const elemento = document.getElementById(id);
+        if (elemento) elemento.textContent = conteudo || "";
+    }
+
     function normalizarNome(nome) {
-        return nome.replace(/[^a-zA-Z0-9._-]+/g, "-");
+        return String(nome || "imagem").replace(/[^a-zA-Z0-9._-]+/g, "-");
     }
 
     function escapar(valor) {
@@ -400,6 +718,6 @@ FOTOS.JS - CRUD ADMINISTRATIVO
 
     function tratarErro(mensagem, error) {
         console.error(mensagem, error);
-        alert(`${mensagem}${error?.message ? `\n${error.message}` : ""}`);
+        alert(mensagem + (error?.message ? "\n" + error.message : ""));
     }
 })();
