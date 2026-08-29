@@ -149,6 +149,13 @@ async function installMocks(page) {
   await page.route("**/js/database.js*", route =>
     route.fulfill({ status:200, contentType:"application/javascript", body:databaseMock })
   );
+  await page.route("https://cdn.jsdelivr.net/npm/tus-js-client@4.3.1/dist/tus.min.js", route =>
+    route.fulfill({
+      status:200,
+      contentType:"application/javascript",
+      body:"window.tus={Upload:function(){this.start=function(){};this.abort=function(){}}};"
+    })
+  );
   await page.route(/fonts\.googleapis\.com|fonts\.gstatic\.com|cdnjs\.cloudflare\.com/, route => route.abort());
 }
 
@@ -183,7 +190,8 @@ const context = await browser.newContext();
 
 const adminPages = [
   "admin.html","clientes.html","projetos.html","documentos.html","biblioteca.html",
-  "fotos.html","financeiro.html","agenda.html","cronograma.html","solicitacoes.html","configuracoes.html"
+  "fotos.html","financeiro.html","agenda.html","cronograma.html","solicitacoes.html","configuracoes.html",
+  "protecao-pdf-admin.html"
 ];
 
 for (const file of adminPages) {
@@ -349,6 +357,15 @@ for (const teste of formTests) {
     `${teste.file}: salvar não chamou ${teste.expected}. Chamadas observadas: ${nomesChamados || "nenhuma"}`
   );
 
+  if (teste.file === "clientes.html" || teste.file === "projetos.html") {
+    const chamada = calls.find(call => call.name === teste.expected);
+    const dados = chamada?.args?.[0] || {};
+    assert(
+      dados.parceria === true,
+      `${teste.file}: campo Parceria não chegou ao payload de salvamento`
+    );
+  }
+
   assert(
     (page.__cmePageErrors || []).length === 0,
     `${teste.file}: erro JS após salvar: ${(page.__cmePageErrors || []).join(" | ")}`
@@ -387,6 +404,130 @@ for (const teste of formTests) {
   await page.close();
 }
 
+
+async function selecionarPrimeiraOpcaoValida(page, id) {
+  const campo = page.locator(`#${id}`);
+  if (await campo.count() !== 1) return false;
+  const options = await campo.locator("option").evaluateAll(opts =>
+    opts.map((o,index)=>({index,value:o.value,disabled:o.disabled}))
+      .filter(o=>!o.disabled && o.value)
+  );
+  if (!options.length) return false;
+  await campo.selectOption(options[0].value);
+  return true;
+}
+
+// Upload múltiplo + classificação automática de documentos.
+{
+  const page = await loadPage(context, "documentos.html");
+  await page.locator("#novoDocumento").click();
+  await preencherCampo(page, "documentoCliente", "c1");
+  await page.waitForTimeout(50);
+  await preencherCampo(page, "documentoProjeto", "p1");
+
+  const categoria = page.locator("#documentoCategoria");
+  if (await categoria.count()) {
+    const automatico = await categoria.locator('option[value="automatico"]').count();
+    if (automatico) await categoria.selectOption("automatico");
+  }
+
+  await preencherCampo(page, "documentoArquivo", [
+    "ART_Execucao_QA.pdf",
+    "Guia_Estilos_QA.pdf",
+    "Laudo_Vistoria_QA.pdf"
+  ]);
+
+  await page.locator("#formDocumento").evaluate(el => el.requestSubmit());
+
+  await page.waitForFunction(
+    () => (window.__DB_CALLS__ || []).filter(call => call.name === "dbCriarDocumento").length >= 3,
+    null,
+    {timeout:5000}
+  ).catch(()=>{});
+
+  const calls = await page.evaluate(() =>
+    (window.__DB_CALLS__ || []).filter(call => call.name === "dbCriarDocumento")
+  );
+
+  assert(calls.length >= 3, `documentos.html: upload múltiplo gravou ${calls.length} de 3 documentos`);
+
+  const tipos = calls.map(call => call.args?.[0]?.tipo || call.args?.[0]?.categoria || "");
+  for (const esperado of ["art","guia_estilos","laudo"]) {
+    assert(
+      tipos.includes(esperado),
+      `documentos.html: classificação automática não encontrou ${esperado}. Tipos: ${tipos.join(", ")}`
+    );
+  }
+
+  await responsive(page, "documentos.html após lote");
+  await page.close();
+}
+
+// Upload múltiplo da Biblioteca com pastas/categorias por arquivo.
+{
+  const page = await loadPage(context, "biblioteca.html");
+  await page.locator("#novoArquivo").click();
+  await preencherCampo(page, "arquivoCliente", "c1");
+  await page.waitForTimeout(50);
+  await preencherCampo(page, "arquivoProjeto", "p1");
+
+  const categoria = page.locator("#arquivoCategoria");
+  if (await categoria.count()) {
+    const automatico = await categoria.locator('option[value="automatico"]').count();
+    if (automatico) await categoria.selectOption("automatico");
+  }
+
+  await preencherCampo(page, "arquivoUpload", [
+    "Guia_Obras_QA.pdf",
+    "ART_Responsabilidade_QA.pdf",
+    "Memorial_Descritivo_QA.pdf"
+  ]);
+
+  await page.locator("#formArquivo").evaluate(el => el.requestSubmit());
+
+  await page.waitForFunction(
+    () => (window.__DB_CALLS__ || []).filter(call => call.name === "dbSalvarArquivoBiblioteca").length >= 3,
+    null,
+    {timeout:5000}
+  ).catch(()=>{});
+
+  const calls = await page.evaluate(() =>
+    (window.__DB_CALLS__ || []).filter(call => call.name === "dbSalvarArquivoBiblioteca")
+  );
+
+  assert(calls.length >= 3, `biblioteca.html: upload múltiplo gravou ${calls.length} de 3 arquivos`);
+  await responsive(page, "biblioteca.html após lote");
+  await page.close();
+}
+
+// Upload múltiplo de fotos.
+{
+  const page = await loadPage(context, "fotos.html");
+  await page.locator("#novaFoto").click();
+  await preencherCampo(page, "fotoCliente", "c1");
+  await page.waitForTimeout(50);
+
+  const projetoOk = await selecionarPrimeiraOpcaoValida(page, "fotoProjeto");
+  assert(projetoOk, "fotos.html: projetos não foram carregados depois da seleção do cliente");
+
+  await preencherCampo(page, "arquivoFoto", ["fachada-qa.webp","interior-qa.webp"]);
+  await page.locator("#formFoto").evaluate(el => el.requestSubmit());
+
+  await page.waitForFunction(
+    () => (window.__DB_CALLS__ || []).filter(call => call.name === "dbCriarFoto").length >= 2,
+    null,
+    {timeout:5000}
+  ).catch(()=>{});
+
+  const calls = await page.evaluate(() =>
+    (window.__DB_CALLS__ || []).filter(call => call.name === "dbCriarFoto")
+  );
+
+  assert(calls.length >= 2, `fotos.html: upload múltiplo gravou ${calls.length} de 2 fotos`);
+  await responsive(page, "fotos.html após lote");
+  await page.close();
+}
+
 const adminNav = [
   ["abrirClientes","clientes.html"],["abrirProjetos","projetos.html"],["abrirDocumentos","documentos.html"],
   ["abrirBiblioteca","biblioteca.html"],["abrirFotos","fotos.html"],["abrirFinanceiro","financeiro.html"],
@@ -415,6 +556,21 @@ const clientPages = [
 for (const file of clientPages) {
   const page = await loadPage(context, file);
   await responsive(page, file);
+  await page.close();
+}
+
+// Galeria pública: deve funcionar mesmo quando o manifesto remoto não responde,
+// usando a cópia local sem quebrar a página.
+{
+  const page = await loadPage(context, "galeria-projetos.html");
+  await page.waitForTimeout(1200);
+  const projetos = await page.locator("#galleryProjects article, #galleryProjects section").count();
+  const texto = await page.locator("#galleryProjects").textContent().catch(()=>"");
+  assert(
+    projetos > 0 || /Tiny House|Vitalle|Casa Urben|Essenza/i.test(texto || ""),
+    "galeria-projetos.html: nenhum projeto público foi renderizado"
+  );
+  await responsive(page, "galeria-projetos.html");
   await page.close();
 }
 
