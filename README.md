@@ -18,3 +18,8 @@ Cloudflare não deve substituir o portal, o Admin, o login nem o backend Supabas
 - JavaScript de produção permanece ofuscado onde já estava.
 - Dados privados permanecem protegidos por autenticação, RLS e Storage privado do Supabase.
 - O repositório pode conter código de desenvolvimento que não é publicado no artefato do site.
+
+
+## Estado de publicação
+
+O projeto Cloudflare Pages foi removido. O site oficial é publicado pelo GitHub Pages; Cloudflare permanece restrito às mídias públicas por R2/Worker.
