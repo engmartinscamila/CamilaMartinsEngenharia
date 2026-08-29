@@ -13,7 +13,11 @@
   "vars": {
     "SUPABASE_URL": "https://hghtwlopqztfcosfxafd.supabase.co",
     "ALLOWED_ORIGINS": "https://camilamartinsengenharia.com.br,https://www.camilamartinsengenharia.com.br",
-    "MAX_UPLOAD_BYTES": "99614720"
+    "MAX_UPLOAD_BYTES": "99614720",
+    "GITHUB_OWNER": "engmartinscamila",
+    "GITHUB_REPO": "CamilaMartinsEngenharia",
+    "GITHUB_BRANCH": "main",
+    "GITHUB_MANIFEST_PATH": "assets/projetos/galeria.json"
   },
   "r2_buckets": [
     {
