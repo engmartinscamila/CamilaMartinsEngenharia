@@ -15,7 +15,45 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  auditoria:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Auditoria estática
+        run: node scripts/site-audit.mjs
+
+      - name: Instalar Chromium de teste
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Servir site local
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/cme-http.log 2>&1 &
+          echo $! > /tmp/cme-http.pid
+          sleep 2
+          curl --fail http://127.0.0.1:4173/admin.html >/dev/null
+
+      - name: Testes de interface
+        run: node scripts/browser-smoke.mjs
+
+      - name: Log do servidor em caso de falha
+        if: failure()
+        run: cat /tmp/cme-http.log || true
+
   deploy:
+    needs: auditoria
+    if: ${{ needs.auditoria.result == 'success' }}
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
