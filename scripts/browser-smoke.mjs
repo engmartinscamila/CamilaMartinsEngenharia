@@ -164,9 +164,19 @@ const supabaseMock = `
       getUser: async()=>({data:{user},error:null}),
       signInWithPassword: async()=>({data:{session,user},error:null}),
       signUp: async()=>({data:{session:null,user},error:null}),
-      resetPasswordForEmail: async()=>({data:{},error:null}),
+      resetPasswordForEmail: async(email,options)=>{
+        window.__RECOVERY_CALL__={email,options};
+        return {data:{},error:null};
+      },
+      updateUser: async(payload)=>{
+        window.__UPDATE_USER_CALL__=payload;
+        return {data:{user:{...user}},error:null};
+      },
       signOut: async()=>({error:null}),
-      onAuthStateChange: ()=>({data:{subscription:{unsubscribe(){}}}})
+      onAuthStateChange: (callback)=>{
+        window.__AUTH_CHANGE_CALLBACK__=callback;
+        return {data:{subscription:{unsubscribe(){}}}};
+      }
     },
     from: table => chain(table),
     rpc: async name => ({data:name==="uso_armazenamento_portal"?{bytes_utilizados:1048576,quantidade_arquivos:3}:[],error:null}),
@@ -892,6 +902,71 @@ for (const file of clientPages) {
   } else {
     failures.push("login.html: botão Primeiro acesso ausente");
   }
+  await page.close();
+}
+
+// Recuperação de senha: login -> /recover -> redefinir senha.
+{
+  const page = await loadPage(context, "login.html");
+
+  await page.locator("#email").fill("qa-recovery@example.com");
+  await page.locator("#forgotPassword").click();
+  await page.waitForTimeout(120);
+
+  const recovery = await page.evaluate(() => window.__RECOVERY_CALL__ || null);
+
+  assert(Boolean(recovery), "login.html: Esqueci minha senha não chamou resetPasswordForEmail");
+  assert(
+    recovery?.email === "qa-recovery@example.com",
+    "login.html: recuperação usou e-mail diferente do digitado"
+  );
+  assert(
+    /\/redefinir-senha\.html$/i.test(new URL(recovery?.options?.redirectTo || "https://invalid/").pathname),
+    `login.html: redirectTo da recuperação está incorreto: ${recovery?.options?.redirectTo || "ausente"}`
+  );
+
+  const mensagem = (await page.locator("#formMessage").textContent().catch(()=>"")) || "";
+  assert(
+    /link de recuperação/i.test(mensagem),
+    `login.html: mensagem de recuperação inesperada: ${mensagem}`
+  );
+
+  await page.close();
+}
+
+{
+  const page = await loadPage(context, "redefinir-senha.html");
+
+  // Simula evento de recuperação aceito pelo Supabase.
+  await page.evaluate(() => {
+    window.__AUTH_CHANGE_CALLBACK__?.(
+      "PASSWORD_RECOVERY",
+      { user:{id:"client-test"}, access_token:"recovery-token" }
+    );
+  });
+
+  await page.waitForTimeout(80);
+
+  await page.locator("#novaSenha").fill("SenhaNova123!");
+  await page.locator("#confirmarSenha").fill("SenhaNova123!");
+  await page.locator("#formRedefinirSenha").evaluate(el => el.requestSubmit());
+
+  await page.waitForTimeout(150);
+
+  const update = await page.evaluate(() => window.__UPDATE_USER_CALL__ || null);
+
+  assert(Boolean(update), "redefinir-senha.html: formulário não chamou updateUser");
+  assert(
+    update?.password === "SenhaNova123!",
+    "redefinir-senha.html: nova senha não chegou corretamente ao Supabase"
+  );
+
+  const mensagem = (await page.locator("#mensagem").textContent().catch(()=>"")) || "";
+  assert(
+    /senha alterada|senha.*sucesso|alterada com sucesso/i.test(mensagem),
+    `redefinir-senha.html: confirmação de troca de senha inesperada: ${mensagem}`
+  );
+
   await page.close();
 }
 
