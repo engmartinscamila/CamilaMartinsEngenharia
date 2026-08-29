@@ -547,6 +547,21 @@ Nenhuma categoria vazia é renderizada.
         formulario?.addEventListener("submit", salvarNovosArquivos, true);
 
         configurarPesquisaAdmin();
+
+        const raiz = document.getElementById("listaBiblioteca");
+        raiz?.addEventListener("click", evento => {
+            const acao = evento.target.closest("[data-acao-biblioteca]");
+            if (acao?.dataset.acaoBiblioteca === "excluir") {
+                window.setTimeout(carregarAdmin, 1400);
+            }
+        }, true);
+
+        formulario?.addEventListener("submit", () => {
+            if (estaEditando()) {
+                window.setTimeout(carregarAdmin, 1600);
+            }
+        });
+
         carregarAdmin();
     }
 
