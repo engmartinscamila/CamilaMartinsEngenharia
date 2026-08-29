@@ -561,8 +561,30 @@ for (const teste of formTests) {
     getComputedStyle(document.documentElement).getPropertyValue("--dourado").trim()
   );
 
+  const aparenciaCampoClaro = await page.locator("#empresaNome").evaluate(el => {
+    const style = getComputedStyle(el);
+    return {
+      background: style.backgroundColor,
+      color: style.color,
+      border: style.borderColor
+    };
+  });
+
   assert(temaAplicado === "claro", `configuracoes.html: tema claro não foi aplicado (${temaAplicado})`);
   assert(corAplicada.toLowerCase() === "#123456", `configuracoes.html: cor não foi aplicada (${corAplicada})`);
+
+  assert(
+    aparenciaCampoClaro.background === "rgb(255, 255, 255)",
+    `configuracoes.html: campo no tema claro não ficou branco: ${aparenciaCampoClaro.background}`
+  );
+  assert(
+    aparenciaCampoClaro.color === "rgb(27, 36, 48)" || aparenciaCampoClaro.color === "rgb(17, 24, 39)",
+    `configuracoes.html: texto do campo no tema claro está sem contraste: ${aparenciaCampoClaro.color}`
+  );
+  assert(
+    aparenciaCampoClaro.background !== aparenciaCampoClaro.color,
+    "configuracoes.html: fundo e texto do campo ficaram com a mesma cor"
+  );
 
   await page.locator("#formConfiguracoes").evaluate(el => el.requestSubmit());
 
