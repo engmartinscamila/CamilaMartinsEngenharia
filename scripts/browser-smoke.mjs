@@ -619,6 +619,48 @@ async function selecionarPrimeiraOpcaoValida(page, id) {
   return true;
 }
 
+// Classificação automática: padrões reais do acervo legado e opção manual Imagens.
+{
+  const page = await loadPage(context,"documentos.html");
+
+  const resultado = await page.evaluate(() => ({
+    obra: window.CMEClassificarDocumento?.("CM_Guia_17_Eletrica_Eletrodutos_Circuitos_Protecoes.pdf"),
+    estilos: window.CMEClassificarDocumento?.("01_Guia_Estilos_de_Interiores_Camila_Martins.pdf"),
+    art: window.CMEClassificarDocumento?.("ART_Execucao_Obra.pdf"),
+    laudo: window.CMEClassificarDocumento?.("Laudo_Vistoria_Predial.pdf")
+  }));
+
+  assert(resultado.obra === "guia_obras", `Classificador: guia técnico deveria ser guia_obras, retornou ${resultado.obra}`);
+  assert(resultado.estilos === "guia_estilos", `Classificador: guia de interiores deveria ser guia_estilos, retornou ${resultado.estilos}`);
+  assert(resultado.art === "art", `Classificador: ART deveria ser art, retornou ${resultado.art}`);
+  assert(resultado.laudo === "laudo", `Classificador: Laudo deveria ser laudo, retornou ${resultado.laudo}`);
+
+  await page.close();
+}
+
+{
+  const page = await loadPage(context,"biblioteca.html");
+
+  const resultado = await page.evaluate(() => ({
+    obra: window.CMEClassificarBiblioteca?.(
+      "CM_Guia_13_Impermeabilizacao_Banheiros_Varandas_Lajes.pdf",
+      "outros"
+    ),
+    estilos: window.CMEClassificarBiblioteca?.(
+      "15_Guia_Complementar_de_Tecidos_Camila_Martins.pdf",
+      "outros"
+    )
+  }));
+
+  assert(resultado.obra === "guia_obras", `Biblioteca: legado técnico deveria ser guia_obras, retornou ${resultado.obra}`);
+  assert(resultado.estilos === "guia_estilos", `Biblioteca: legado de tecidos deveria ser guia_estilos, retornou ${resultado.estilos}`);
+
+  const imagensOption = await page.locator('#arquivoCategoria option[value="imagens"]').count();
+  assert(imagensOption === 1, "biblioteca.html: opção manual Imagens não está disponível");
+
+  await page.close();
+}
+
 // Upload múltiplo + classificação automática de documentos.
 {
   const page = await loadPage(context, "documentos.html");
