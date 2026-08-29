@@ -1,0 +1,9 @@
+COMO USAR O PACOTE LIMPO
+
+1. Extraia o ZIP em Documentos, fora da pasta antiga APP.
+2. Abra a pasta CAMILA_APP_LIMPO_REVISAO_10_1.
+3. Copie somente o arquivo .env.local da pasta antiga para esta pasta nova.
+4. Execute INICIAR_APP_LIMPO.cmd.
+
+Nao copie node_modules, .git, .expo, dist ou outros arquivos da pasta antiga.
+Nao repita a atualizacao legal que ja apresentou Success.

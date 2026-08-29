@@ -1,4 +1,14 @@
-# Camila Martins Engenharia — publicação protegida V14
+# Camila Martins Engenharia — site integrado 0.10.2
+
+O site institucional continua na raiz do domínio e a nova área restrita fica em
+`/portal`. O diretório publicável é gerado automaticamente em `dist`; não
+publique a raiz do repositório como se ela fosse o resultado final.
+
+As instruções exatas de Cloudflare, variáveis e Supabase estão em
+`PUBLICACAO_CLOUDFLARE.md`. O histórico técnico da integração está em
+`CHANGELOG_REV10_2.md`.
+
+## Publicação anterior
 
 Esta pasta é a versão de produção preparada exclusivamente para publicação no
 GitHub Pages.
@@ -13,11 +23,11 @@ GitHub Pages.
 - A pasta privada `supabase/`, com SQLs e Edge Functions, não faz parte desta
   versão de publicação.
 
-## Como publicar
+## Como era publicado
 
-Substitua o conteúdo atual do repositório do site pelo conteúdo desta pasta,
-mantendo a estrutura exatamente como está. Depois aguarde o GitHub Actions
-concluir e atualize o navegador com `Ctrl + F5`.
+O fluxo antigo enviava a raiz estática diretamente ao GitHub Pages. Na revisão
+0.10.2, o GitHub Pages fica disponível somente por acionamento manual e usa o
+mesmo build integrado do Cloudflare.
 
 Mantenha o ZIP original em local privado. Ele é a versão editável do projeto.
 Esta versão ofuscada deve ser utilizada apenas para publicação.

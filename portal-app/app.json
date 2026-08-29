@@ -1,0 +1,69 @@
+{
+  "expo": {
+    "name": "Camila Martins Engenharia",
+    "slug": "engmartins",
+    "version": "0.10.2",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "camilamartinsengenharia",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "br.com.camilamartinsengenharia.app",
+      "infoPlist": {
+        "CFBundleDevelopmentRegion": "pt_BR",
+        "NSCameraUsageDescription": "A câmera será usada somente quando você escolher registrar uma foto relacionada a um projeto.",
+        "NSPhotoLibraryUsageDescription": "A galeria será acessada somente quando você escolher enviar uma imagem ou documento."
+      }
+    },
+    "android": {
+      "package": "br.com.camilamartinsengenharia.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#010914"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": []
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#010914",
+          "image": "./assets/images/official-mark-transparent.png",
+          "imageWidth": 120
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#B89A63",
+          "defaultChannel": "atualizacoes"
+        }
+      ],
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true,
+      "baseUrl": "/portal"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2412c64c-571d-4b13-90c4-ad0bc0b43da5"
+      }
+    },
+    "owner": "engmartinss-team"
+  }
+}

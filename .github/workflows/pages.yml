@@ -1,9 +1,6 @@
 name: Deploy static site to Pages
 
 on:
-  push:
-    branches: ["main"]
-
   workflow_dispatch:
 
 permissions:
@@ -27,13 +24,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: portal-app/package-lock.json
+
+      - name: Build integrated site
+        run: npm run build:cloudflare
+        env:
+          EXPO_PUBLIC_APP_ENV: production
+          EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF: ${{ secrets.EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF }}
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "."
+          path: "dist"
 
       - name: Deploy
         id: deployment

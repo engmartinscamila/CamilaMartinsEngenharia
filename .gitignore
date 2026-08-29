@@ -1,3 +1,13 @@
 tmp/
 galeria-originais/
-
+dist/
+node_modules/
+portal-app/node_modules/
+portal-app/dist/
+portal-app/.expo/
+.env
+.env.*
+!.env.example
+!portal-app/.env.example
+ARQUIVO_ENV_LOCAL.zip
+CamilaMartinsEngenharia-melhorias-completas.zip

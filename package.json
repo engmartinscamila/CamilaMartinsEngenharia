@@ -1,0 +1,14 @@
+{
+  "name": "camila-martins-engenharia-site-integrado",
+  "version": "0.10.2",
+  "private": true,
+  "scripts": {
+    "build:portal": "npm --prefix portal-app ci --no-audit --no-fund && npm --prefix portal-app run build:web:cloudflare",
+    "assemble:site": "node scripts/assemble-site.mjs",
+    "verify:dist": "node scripts/verify-integrated-site.mjs",
+    "build:cloudflare": "npm run build:portal && npm run assemble:site && npm run verify:dist"
+  },
+  "engines": {
+    "node": "22.16.0"
+  }
+}
