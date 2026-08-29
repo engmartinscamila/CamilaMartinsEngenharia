@@ -155,6 +155,21 @@ ações básicas de interface mesmo se um script de uma página falhar.
     }
 
     function ativarInterface() {
+        // No dashboard antigo, configurarEventos() era chamado somente
+        // depois de todas as consultas. Se uma consulta ficasse pendurada,
+        // nenhum botão era ativado. Registramos esses eventos imediatamente.
+        if (
+            typeof window.configurarEventos === 'function' &&
+            !window.__CME_ADMIN_EVENTS_EARLY__
+        ) {
+            window.__CME_ADMIN_EVENTS_EARLY__ = true;
+            try {
+                window.configurarEventos();
+            } catch (erro) {
+                console.warn('Falha ao antecipar eventos do dashboard.', erro);
+            }
+        }
+
         configurarNavegacao();
         configurarModais();
         configurarPesquisaDashboard();
