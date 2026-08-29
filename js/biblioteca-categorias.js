@@ -44,8 +44,11 @@ Nenhuma categoria vazia é renderizada.
 
         for (const [id, label] of CATEGORIAS) {
             if (
-                informada === normalizar(id) ||
-                informada === normalizar(label)
+                id !== "outros" &&
+                (
+                    informada === normalizar(id) ||
+                    informada === normalizar(label)
+                )
             ) {
                 return id;
             }
@@ -55,8 +58,8 @@ Nenhuma categoria vazia é renderizada.
         const regras = [
             ["art", /(^|\s)(art|rrt)(\s|$)|anotacao de responsabilidade|registro de responsabilidade/],
             ["laudo", /laudo|parecer|vistoria|inspecao|relatorio tecnico|diagnostico/],
-            ["guia_estilos", /guia.*estilo|estilo.*arquitet|moodboard|paleta|conceito visual/],
-            ["guia_obras", /guia.*obra|manual.*obra|caderno.*obra|execucao.*obra/],
+            ["guia_estilos", /guia.*estilo|estilo.*arquitet|interiores|moodboard|paleta|conceito visual|tecidos|moveis|iluminacao|lampadas|pisos.*revestimentos|banheiros.*cozinhas/],
+            ["guia_obras", /guia.*obra|manual.*obra|caderno.*obra|execucao.*obra|concretagem|armaduras|cobrimento|alvenaria|vergas|contravergas|impermeabilizacao|cobertura|telhas|rufos|calhas|agua.*esgoto|esgoto.*pluvial|eletrica|eletrodutos|circuitos|ar condicionado|ventilacao|exaustao|chapisco|emboco|reboco|drywall|contrapiso|caimentos|pintura.*patologias|loucas.*metais.*tomadas/],
             ["contrato", /contrato|aditivo|distrato|termo de aceite/],
             ["orcamento", /orcamento|proposta|cotacao|estimativa de custo/],
             ["memorial", /memorial|caderno de especifica|especificacao tecnica/],
