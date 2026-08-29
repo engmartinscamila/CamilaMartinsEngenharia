@@ -281,10 +281,9 @@ for (const file of adminPages) {
   await page.close();
 }
 
-// Critérios estruturais: Documentos, Fotos e Cronograma devem ser pastas fechadas por cliente.
+// Critérios estruturais: Documentos e Cronograma devem ser pastas fechadas por cliente.
 for (const [file,container] of [
   ["documentos.html","#listaDocumentos"],
-  ["fotos.html","#galeriaFotos"],
   ["cronograma.html","#listaCronograma"]
 ]) {
   const page = await loadPage(context,file);
@@ -310,6 +309,73 @@ for (const [file,container] of [
     `${file}: nomes dos clientes não aparecem corretamente nas pastas: ${textos.join(" | ")}`
   );
 
+  await page.close();
+}
+
+// Fotos: álbuns padronizados -> grade -> visualizador estilo galeria.
+{
+  const page = await loadPage(context,"fotos.html");
+  await page.waitForTimeout(350);
+
+  const albuns = page.locator("#galeriaFotos .foto-album-card");
+  assert(
+    await albuns.count() === 2,
+    `fotos.html: esperado 2 álbuns de cliente/projeto, encontrado ${await albuns.count()}`
+  );
+
+  const badges = page.locator("#galeriaFotos .foto-album-card .foto-album-quantidade");
+  assert(
+    await badges.count() === 2,
+    `fotos.html: cada álbum deve ter exatamente um badge interno; encontrados ${await badges.count()}`
+  );
+
+  const badgesFora = page.locator("#galeriaFotos > .foto-album-quantidade");
+  assert(
+    await badgesFora.count() === 0,
+    "fotos.html: existe quantitativo solto fora do card do álbum"
+  );
+
+  const textos = await albuns.allTextContents();
+  assert(
+    textos.some(t => /Cliente Alpha/i.test(t)) && textos.some(t => /Cliente Beta/i.test(t)),
+    `fotos.html: nomes dos clientes não aparecem nos álbuns: ${textos.join(" | ")}`
+  );
+
+  await albuns.first().click();
+  await page.waitForTimeout(80);
+
+  assert(
+    await page.locator("#albumFotos").isVisible(),
+    "fotos.html: clicar no álbum não abriu a visualização interna"
+  );
+  assert(
+    await page.locator("#galeriaFotos").isHidden(),
+    "fotos.html: lista de álbuns permaneceu visível ao abrir um álbum"
+  );
+
+  const miniaturas = page.locator("#albumGrade .foto-miniatura-card");
+  assert(
+    await miniaturas.count() === 1,
+    `fotos.html: álbum Alpha deveria ter 1 miniatura, exibiu ${await miniaturas.count()}`
+  );
+
+  await page.locator("#albumGrade [data-acao-foto='visualizar']").first().click();
+  await page.waitForTimeout(80);
+
+  const viewer = page.locator("#visualizadorFoto");
+  assert(await viewer.isVisible(), "fotos.html: clicar na miniatura não abriu o visualizador");
+  assert(
+    (await page.locator("#viewerContador").textContent() || "").trim() === "1 / 1",
+    `fotos.html: contador do visualizador incorreto: ${await page.locator("#viewerContador").textContent()}`
+  );
+
+  await page.locator("[data-acao-foto='viewer-fechar']").click();
+  assert(await viewer.isHidden(), "fotos.html: visualizador não fechou");
+
+  await page.locator("[data-acao-foto='voltar-albuns']").click();
+  assert(await page.locator("#galeriaFotos").isVisible(), "fotos.html: voltar não retornou aos álbuns");
+
+  await responsive(page,"fotos.html álbuns e visualizador");
   await page.close();
 }
 
