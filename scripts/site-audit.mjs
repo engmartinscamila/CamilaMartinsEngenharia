@@ -78,7 +78,7 @@ const restrictedAdmin = [
 for (const file of restrictedAdmin) {
   if (!exists(file)) { fail(`Página administrativa ausente: ${file}`); continue; }
   const content = fs.readFileSync(path.join(ROOT, file), "utf8");
-  for (const required of ["js/supabase.js", "js/auth.js"]) {
+  for (const required of ["js/supabase.js", "js/auth.js", "js/ui-core.js"]) {
     if (!content.includes(required)) fail(`${file}: não carrega ${required}`);
   }
   if (file !== "protecao-pdf-admin.html" && !content.includes("js/database.js")) {
