@@ -21,6 +21,7 @@ Documentos | Camila Martins Engenharia
 
 <link rel="stylesheet" href="css/admin.css?v=20260725-14">
 <link rel="stylesheet" href="css/admin-theme.css?v=20260725-14">
+<link rel="stylesheet" href="css/documentos-lote.css?v=20260829-1">
 
 
 <link rel="stylesheet"
@@ -395,6 +396,7 @@ Nome do Documento
 
 <input
 id="documentoNome"
+placeholder="Preenchido automaticamente ao selecionar o arquivo"
 required>
 
 
@@ -514,6 +516,48 @@ Laudo
 </option>
 
 
+<option value="art">
+
+ART / RRT
+
+</option>
+
+
+<option value="orcamento">
+
+Orçamento / Proposta
+
+</option>
+
+
+<option value="memorial">
+
+Memorial
+
+</option>
+
+
+<option value="guia_obras">
+
+Guia de obras
+
+</option>
+
+
+<option value="guia_estilos">
+
+Guia de estilos
+
+</option>
+
+
+<option value="norma">
+
+Norma técnica
+
+</option>
+
+
 <option value="outros">
 
 Outros
@@ -576,10 +620,11 @@ Arquivo
 <input
 type="file"
 id="documentoArquivo"
+multiple
 required>
 
 <small class="ajuda-campo">
-Ao editar, deixe este campo vazio para manter o arquivo atual ou escolha outro para substituí-lo. PDFs serão identificados e rastreados automaticamente quando o cliente abrir ou baixar.
+Você pode selecionar vários PDFs ou documentos de uma vez. O nome de cada arquivo será preenchido automaticamente e a categoria escolhida será aplicada ao lote. Ao editar um documento existente, selecione somente um arquivo.
 </small>
 
 
@@ -771,6 +816,7 @@ Carregando...
 
 <script src="js/servicos.js?v=20260725-14"></script>
     <script src="js/documentos.js?v=20260725-14"></script>
+    <script src="js/documentos-lote.js?v=20260829-1"></script>
 
 
 
