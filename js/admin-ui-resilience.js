@@ -170,6 +170,18 @@ ações básicas de interface mesmo se um script de uma página falhar.
             }
         }
 
+        if (
+            typeof window.configurarEventosConfiguracoes === 'function' &&
+            !window.__CME_CONFIG_EVENTS_EARLY__
+        ) {
+            window.__CME_CONFIG_EVENTS_EARLY__ = true;
+            try {
+                window.configurarEventosConfiguracoes();
+            } catch (erro) {
+                console.warn('Falha ao antecipar eventos de configurações.', erro);
+            }
+        }
+
         configurarNavegacao();
         configurarModais();
         configurarPesquisaDashboard();
