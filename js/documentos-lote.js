@@ -303,13 +303,13 @@
                 status.textContent = arquivos.length + ' documentos enviados e classificados com sucesso.';
                 status.dataset.type = 'sucesso';
                 alert(arquivos.length + ' documentos enviados com sucesso.');
-                window.location.reload();
+                window.setTimeout(() => window.location.reload(), 900);
             } catch (erro) {
                 console.error('Erro no envio em lote de documentos.', erro);
                 status.textContent = 'O envio parou após ' + concluidos + ' de ' + arquivos.length + ' documentos.';
                 status.dataset.type = 'erro';
                 alert('Não foi possível concluir todo o lote. ' + concluidos + ' de ' + arquivos.length + ' documentos foram enviados.');
-                if (concluidos > 0) window.location.reload();
+                if (concluidos > 0) window.setTimeout(() => window.location.reload(), 900);
             } finally {
                 botaoSalvar.disabled = false;
                 botaoSalvar.textContent = 'Salvar Documentos';
