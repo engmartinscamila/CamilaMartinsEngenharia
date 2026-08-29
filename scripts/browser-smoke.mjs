@@ -463,12 +463,66 @@ for (const teste of formTests) {
       dados.parceria === true,
       `${teste.file}: campo Parceria não chegou ao payload de salvamento`
     );
+
+    if (teste.file === "projetos.html") {
+      assert(
+        dados.numero_contrato == null || dados.numero_contrato === "",
+        "projetos.html: parceria sem contrato não foi aceita"
+      );
+      assert(
+        dados.numero_orcamento == null || dados.numero_orcamento === "",
+        "projetos.html: parceria sem orçamento não foi aceita"
+      );
+    }
   }
 
   assert(
     (page.__cmePageErrors || []).length === 0,
     `${teste.file}: erro JS após salvar: ${(page.__cmePageErrors || []).join(" | ")}`
   );
+
+  await page.close();
+}
+
+// Biblioteca Admin: acervo consolidado e somente categorias com conteúdo.
+{
+  const page = await loadPage(context,"biblioteca.html");
+  await page.waitForTimeout(850);
+
+  const pastasCliente = page.locator("#listaBiblioteca > details.cme-pasta-cliente");
+  assert(
+    await pastasCliente.count() === 2,
+    `biblioteca.html: esperado 2 pastas de clientes, encontrado ${await pastasCliente.count()}`
+  );
+
+  const categorias = await page.locator("#listaBiblioteca .cm-category-folder")
+    .evaluateAll(items => items.map(item => item.dataset.categoria));
+
+  for (const esperada of ["projeto","art","guia_estilos","imagens"]) {
+    assert(
+      categorias.includes(esperada),
+      `biblioteca.html: categoria existente "${esperada}" não apareceu. Renderizadas: ${categorias.join(", ")}`
+    );
+  }
+
+  for (const vazia of ["contrato","orcamento","guia_obras","laudo","memorial","norma","modelo","outros"]) {
+    assert(
+      !categorias.includes(vazia),
+      `biblioteca.html: categoria vazia "${vazia}" apareceu indevidamente`
+    );
+  }
+
+  const categoriasSemItens = await page.locator("#listaBiblioteca .cm-category-folder").evaluateAll(items =>
+    items.filter(item => item.querySelectorAll(".cm-file-card").length === 0)
+      .map(item => item.dataset.categoria)
+  );
+  assert(
+    categoriasSemItens.length === 0,
+    `biblioteca.html: existem pastas vazias: ${categoriasSemItens.join(", ")}`
+  );
+
+  const totalCards = await page.locator("#listaBiblioteca .cm-file-card").count();
+  assert(totalCards === 5, `biblioteca.html: acervo consolidado deveria ter 5 itens, exibiu ${totalCards}`);
 
   await page.close();
 }
@@ -704,6 +758,34 @@ const clientPages = [
 for (const file of clientPages) {
   const page = await loadPage(context, file);
   await responsive(page, file);
+  await page.close();
+}
+
+// Biblioteca Cliente: Documentos + Fotos + Biblioteca do contrato, sem pastas vazias.
+{
+  const page = await loadPage(context,"biblioteca-cliente.html");
+  await page.waitForTimeout(1000);
+
+  const categorias = await page.locator("#areaContent .cm-category-folder")
+    .evaluateAll(items => items.map(item => item.dataset.categoria));
+
+  for (const esperada of ["projeto","guia_estilos","imagens"]) {
+    assert(
+      categorias.includes(esperada),
+      `biblioteca-cliente.html: categoria "${esperada}" não apareceu. Renderizadas: ${categorias.join(", ")}`
+    );
+  }
+
+  for (const vazia of ["art","contrato","orcamento","guia_obras","laudo","memorial","norma","modelo","outros"]) {
+    assert(
+      !categorias.includes(vazia),
+      `biblioteca-cliente.html: categoria vazia "${vazia}" apareceu`
+    );
+  }
+
+  const total = await page.locator("#areaContent .cm-file-card").count();
+  assert(total === 3, `biblioteca-cliente.html: deveria consolidar 3 itens, exibiu ${total}`);
+
   await page.close();
 }
 
