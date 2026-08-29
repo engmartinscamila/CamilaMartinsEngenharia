@@ -163,7 +163,10 @@ const supabaseMock = `
       getSession: async()=>({data:{session},error:null}),
       getUser: async()=>({data:{user},error:null}),
       signInWithPassword: async()=>({data:{session,user},error:null}),
-      signUp: async()=>({data:{session:null,user},error:null}),
+      signUp: async(payload)=>{
+        window.__SIGNUP_CALL__=payload;
+        return {data:{session:null,user},error:null};
+      },
       resetPasswordForEmail: async(email,options)=>{
         window.__RECOVERY_CALL__={email,options};
         return {data:{},error:null};
@@ -902,6 +905,69 @@ for (const file of clientPages) {
   } else {
     failures.push("login.html: botão Primeiro acesso ausente");
   }
+  await page.close();
+}
+
+// Primeiro acesso: e-mail previamente cadastrado -> signUp -> confirmação por e-mail.
+{
+  const page = await loadPage(context, "login.html");
+
+  await page.locator("#firstAccess").click();
+  await page.locator("#email").fill("cliente.qa@example.com");
+  await page.locator("#senha").fill("SenhaNova123!");
+  await page.locator("#confirmarSenha").fill("SenhaNova123!");
+  await page.locator("#loginForm").evaluate(el => el.requestSubmit());
+
+  await page.waitForTimeout(120);
+
+  const signup = await page.evaluate(() => window.__SIGNUP_CALL__ || null);
+
+  assert(Boolean(signup), "login.html: Primeiro acesso não chamou signUp");
+  assert(
+    signup?.email === "cliente.qa@example.com",
+    "login.html: Primeiro acesso enviou e-mail incorreto"
+  );
+  assert(
+    signup?.password === "SenhaNova123!",
+    "login.html: Primeiro acesso enviou senha incorreta"
+  );
+  assert(
+    /\/login\.html$/i.test(
+      new URL(signup?.options?.emailRedirectTo || "https://invalid/").pathname
+    ),
+    `login.html: emailRedirectTo do Primeiro acesso está incorreto: ${signup?.options?.emailRedirectTo || "ausente"}`
+  );
+
+  const mensagem = (await page.locator("#formMessage").textContent().catch(()=>"")) || "";
+  assert(
+    /acesso criado|confirmação/i.test(mensagem),
+    `login.html: mensagem após Primeiro acesso inesperada: ${mensagem}`
+  );
+
+  await page.close();
+}
+
+// Primeiro acesso deve barrar senhas divergentes antes de chamar o Supabase.
+{
+  const page = await loadPage(context, "login.html");
+
+  await page.locator("#firstAccess").click();
+  await page.locator("#email").fill("cliente.qa@example.com");
+  await page.locator("#senha").fill("SenhaNova123!");
+  await page.locator("#confirmarSenha").fill("OutraSenha123!");
+  await page.locator("#loginForm").evaluate(el => el.requestSubmit());
+
+  await page.waitForTimeout(80);
+
+  const signup = await page.evaluate(() => window.__SIGNUP_CALL__ || null);
+  const mensagem = (await page.locator("#formMessage").textContent().catch(()=>"")) || "";
+
+  assert(!signup, "login.html: Primeiro acesso chamou signUp mesmo com senhas diferentes");
+  assert(
+    /não são iguais/i.test(mensagem),
+    `login.html: validação de senhas divergentes não apareceu: ${mensagem}`
+  );
+
   await page.close();
 }
 
