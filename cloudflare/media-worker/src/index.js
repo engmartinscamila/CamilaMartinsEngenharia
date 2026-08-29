@@ -28,27 +28,27 @@ export default {
       }
 
       if (url.pathname === "/api/manifest" && method === "GET") {
-        return getManifestFromGitHub(request, env);
+        return await getManifestFromGitHub(request, env);
       }
 
       if (url.pathname === "/api/manifest" && method === "PUT") {
         await requireAdmin(request, env);
-        return putManifestOnGitHub(request, env);
+        return await putManifestOnGitHub(request, env);
       }
 
       if (url.pathname === "/api/upload" && method === "PUT") {
         await requireAdmin(request, env);
-        return uploadObject(request, env, url);
+        return await uploadObject(request, env, url);
       }
 
       if (url.pathname === "/api/object" && method === "DELETE") {
         await requireAdmin(request, env);
-        return deleteObject(request, env, url);
+        return await deleteObject(request, env, url);
       }
 
       if (url.pathname.startsWith("/media/") && method === "GET") {
         const key = decodeURIComponent(url.pathname.slice("/media/".length));
-        return serveObject(request, env, key);
+        return await serveObject(request, env, key);
       }
 
       return json({ ok: false, error: "Rota não encontrada." }, 404, request, env);
