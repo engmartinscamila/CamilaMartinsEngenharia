@@ -318,13 +318,10 @@ BIBLIOTECA — CATEGORIAS E UPLOAD EM LOTE
         const titulo = document.createElement("span");
         titulo.className = "cm-folder-title";
 
-        const icone = document.createElement("i");
-        icone.className = "fa-solid fa-folder";
-
         const texto = document.createElement("span");
         texto.textContent = rotulo(categoria);
 
-        titulo.append(icone, texto);
+        titulo.append(texto);
 
         const count = document.createElement("span");
         count.className = "cm-folder-count";
