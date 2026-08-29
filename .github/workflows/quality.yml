@@ -47,6 +47,22 @@ jobs:
       - name: Testes de interface
         run: node scripts/browser-smoke.mjs
 
+      - name: Testar Worker público Cloudflare
+        if: github.ref_name == 'galeria-fotos-20260829'
+        run: |
+          set -euo pipefail
+          BASE="https://cme-public-media.eng-martins-camila.workers.dev"
+
+          echo "== /health =="
+          curl --fail --show-error --silent --retry 3 "$BASE/health" -o /tmp/cme-health.json
+          cat /tmp/cme-health.json
+          node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('/tmp/cme-health.json','utf8'));if(!(d.ok===true&&d.service==='cme-public-media'&&d.storage==='cloudflare-r2'&&d.catalog==='github')){console.error(d);process.exit(1)}"
+
+          echo
+          echo "== /api/manifest =="
+          curl --fail --show-error --silent --retry 3 "$BASE/api/manifest" -o /tmp/cme-manifest.json
+          node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('/tmp/cme-manifest.json','utf8'));if(!Array.isArray(d.projetos)||!d.projetos.length){console.error(d);process.exit(1)};console.log('projetos:',d.projetos.length);console.log('primeiro:',d.projetos[0]?.nome||d.projetos[0]?.slug||'sem nome')"
+
       - name: Log do servidor em caso de falha
         if: failure()
         run: cat /tmp/cme-http.log || true
