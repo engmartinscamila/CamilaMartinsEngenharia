@@ -1,0 +1,100 @@
+.documento-lote-preview {
+    margin-top: 14px;
+    padding: 16px;
+    border: 1px solid var(--linha);
+    background: rgba(3, 13, 26, .62);
+}
+
+.documento-lote-preview > strong {
+    display: block;
+    margin-bottom: 12px;
+    color: var(--texto);
+    font-size: .78rem;
+}
+
+.documento-lote-lista {
+    display: grid;
+    gap: 9px;
+    max-height: 280px;
+    overflow: auto;
+    padding-right: 4px;
+}
+
+.documento-lote-item {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid var(--linha);
+    background: var(--painel-2);
+}
+
+.documento-lote-item > span:first-child {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--linha);
+    color: var(--dourado);
+    font-size: .68rem;
+}
+
+.documento-lote-textos {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+
+.documento-lote-textos input {
+    width: 100%;
+    min-width: 0;
+}
+
+.documento-lote-textos small {
+    overflow: hidden;
+    color: var(--texto-claro);
+    font-size: .66rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.documento-lote-item[data-status="enviando"] {
+    border-color: var(--dourado);
+}
+
+.documento-lote-item[data-status="concluido"] {
+    border-color: #63bf87;
+}
+
+.documento-lote-status {
+    min-height: 20px;
+    margin: 10px 0 0;
+    color: var(--texto-claro);
+    font-size: .72rem;
+}
+
+.documento-lote-status[data-type="sucesso"] {
+    color: #8ad7a8;
+}
+
+.documento-lote-status[data-type="erro"] {
+    color: #f09a9a;
+}
+
+#documentoNome[readonly] {
+    opacity: .72;
+    cursor: default;
+}
+
+@media (max-width: 620px) {
+    .documento-lote-item {
+        grid-template-columns: 28px minmax(0, 1fr);
+        padding: 8px;
+    }
+
+    .documento-lote-item > span:first-child {
+        width: 26px;
+        height: 26px;
+    }
+}
