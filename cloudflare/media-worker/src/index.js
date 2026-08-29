@@ -1,4 +1,3 @@
-const MANIFEST_KEY = "portfolio/galeria.json";
 const PUBLIC_PREFIX = "portfolio/";
 
 const DEFAULT_ALLOWED_ORIGINS = [
@@ -23,17 +22,18 @@ export default {
         return json({
           ok: true,
           service: "cme-public-media",
-          storage: "cloudflare-r2"
+          storage: "cloudflare-r2",
+          catalog: "github"
         }, 200, request, env);
       }
 
       if (url.pathname === "/api/manifest" && method === "GET") {
-        return getManifest(request, env);
+        return getManifestFromGitHub(request, env);
       }
 
       if (url.pathname === "/api/manifest" && method === "PUT") {
         await requireAdmin(request, env);
-        return putManifest(request, env);
+        return putManifestOnGitHub(request, env);
       }
 
       if (url.pathname === "/api/upload" && method === "PUT") {
@@ -64,32 +64,32 @@ export default {
   }
 };
 
-async function getManifest(request, env) {
-  const object = await env.MEDIA_BUCKET.get(MANIFEST_KEY);
+async function getManifestFromGitHub(request, env) {
+  const file = await githubReadFile(env);
 
-  if (!object) {
-    return json(
-      { ok: false, error: "Manifesto ainda não criado.", projetos: [] },
-      404,
-      request,
-      env
-    );
+  let data;
+  try {
+    data = JSON.parse(file.text);
+  } catch {
+    throw httpError(502, "O galeria.json do GitHub está inválido.");
   }
 
-  const text = await object.text();
+  if (!Array.isArray(data?.projetos)) {
+    throw httpError(502, 'O galeria.json precisa conter o array "projetos".');
+  }
 
-  return new Response(text, {
+  return new Response(JSON.stringify(data), {
     status: 200,
     headers: {
       ...corsHeaders(request, env),
       "content-type": "application/json; charset=utf-8",
-      "cache-control": "public, max-age=60, s-maxage=60",
-      etag: object.httpEtag
+      "cache-control": "public, max-age=30, s-maxage=30",
+      "x-cme-catalog-source": "github"
     }
   });
 }
 
-async function putManifest(request, env) {
+async function putManifestOnGitHub(request, env) {
   const raw = await request.text();
 
   let data;
@@ -103,23 +103,115 @@ async function putManifest(request, env) {
     throw httpError(400, 'O manifesto precisa conter o array "projetos".');
   }
 
-  const normalized = JSON.stringify(data, null, 2);
+  const current = await githubReadFile(env);
+  const normalized = JSON.stringify(data, null, 2) + "\n";
 
-  await env.MEDIA_BUCKET.put(MANIFEST_KEY, normalized, {
-    httpMetadata: {
-      contentType: "application/json; charset=utf-8",
-      cacheControl: "public, max-age=60"
-    },
-    customMetadata: {
-      updatedAt: new Date().toISOString()
-    }
+  if (normalized === normalizeExistingJson(current.text)) {
+    return json({
+      ok: true,
+      changed: false,
+      sha: current.sha,
+      message: "O catálogo já estava atualizado."
+    }, 200, request, env);
+  }
+
+  const apiUrl = githubContentsUrl(env);
+  const response = await fetch(apiUrl, {
+    method: "PUT",
+    headers: githubHeaders(env),
+    body: JSON.stringify({
+      message: "Atualiza galeria pelo painel administrativo",
+      content: utf8ToBase64(normalized),
+      sha: current.sha,
+      branch: env.GITHUB_BRANCH || "main"
+    })
   });
+
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const message =
+      result?.message ||
+      "O GitHub recusou a atualização do galeria.json.";
+    throw httpError(response.status === 409 ? 409 : 502, message);
+  }
 
   return json({
     ok: true,
-    key: MANIFEST_KEY,
-    url: publicUrl(request, MANIFEST_KEY)
+    changed: true,
+    commitSha: result?.commit?.sha || null,
+    contentSha: result?.content?.sha || null
   }, 200, request, env);
+}
+
+async function githubReadFile(env) {
+  requireGitHubConfig(env);
+
+  const response = await fetch(
+    githubContentsUrl(env) +
+      "?ref=" +
+      encodeURIComponent(env.GITHUB_BRANCH || "main"),
+    {
+      headers: githubHeaders(env)
+    }
+  );
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw httpError(
+      502,
+      data?.message ||
+        "Não foi possível ler o galeria.json no GitHub."
+    );
+  }
+
+  if (!data?.content || !data?.sha) {
+    throw httpError(502, "Resposta inesperada do GitHub.");
+  }
+
+  return {
+    sha: data.sha,
+    text: base64ToUtf8(String(data.content).replace(/\s/g, ""))
+  };
+}
+
+function githubContentsUrl(env) {
+  const owner = encodeURIComponent(env.GITHUB_OWNER || "");
+  const repo = encodeURIComponent(env.GITHUB_REPO || "");
+  const path = String(env.GITHUB_MANIFEST_PATH || "")
+    .split("/")
+    .filter(Boolean)
+    .map(encodeURIComponent)
+    .join("/");
+
+  return `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+}
+
+function githubHeaders(env) {
+  return {
+    authorization: "Bearer " + env.GITHUB_TOKEN,
+    accept: "application/vnd.github+json",
+    "x-github-api-version": "2022-11-28",
+    "user-agent": "cme-public-media-worker"
+  };
+}
+
+function requireGitHubConfig(env) {
+  const required = [
+    "GITHUB_TOKEN",
+    "GITHUB_OWNER",
+    "GITHUB_REPO",
+    "GITHUB_MANIFEST_PATH"
+  ];
+
+  const missing = required.filter(name => !env[name]);
+  if (missing.length) {
+    throw httpError(
+      500,
+      "Worker sem configuração do GitHub: " + missing.join(", ")
+    );
+  }
 }
 
 async function uploadObject(request, env, url) {
@@ -134,10 +226,10 @@ async function uploadObject(request, env, url) {
     "application/octet-stream";
 
   const contentLength = Number(request.headers.get("content-length") || 0);
-  const maxUploadBytes = Number(env.MAX_UPLOAD_BYTES || 524288000);
+  const maxUploadBytes = Number(env.MAX_UPLOAD_BYTES || 99614720);
 
   if (contentLength > 0 && contentLength > maxUploadBytes) {
-    throw httpError(413, "Arquivo excede o limite configurado.");
+    throw httpError(413, "Arquivo excede o limite configurado de upload.");
   }
 
   await env.MEDIA_BUCKET.put(key, request.body, {
@@ -151,7 +243,9 @@ async function uploadObject(request, env, url) {
   });
 
   const head = await env.MEDIA_BUCKET.head(key);
-  if (!head) throw httpError(500, "O R2 não confirmou o arquivo após o upload.");
+  if (!head) {
+    throw httpError(500, "O R2 não confirmou o arquivo após o upload.");
+  }
 
   return json({
     ok: true,
@@ -166,10 +260,6 @@ async function deleteObject(request, env, url) {
 
   if (!key || !key.startsWith(PUBLIC_PREFIX)) {
     throw httpError(400, 'O parâmetro "key" deve começar com "portfolio/".');
-  }
-
-  if (key === MANIFEST_KEY) {
-    throw httpError(400, "O manifesto não pode ser apagado por esta rota.");
   }
 
   await env.MEDIA_BUCKET.delete(key);
@@ -223,7 +313,10 @@ async function serveObject(request, env, key) {
     ) {
       const start = object.range.offset;
       const end = start + object.range.length - 1;
-      headers.set("content-range", `bytes ${start}-${end}/${object.size}`);
+      headers.set(
+        "content-range",
+        `bytes ${start}-${end}/${object.size}`
+      );
     }
   }
 
@@ -268,7 +361,11 @@ async function requireAdmin(request, env) {
 
 function publicUrl(request, key) {
   const url = new URL(request.url);
-  return `${url.origin}/media/${key.split("/").map(encodeURIComponent).join("/")}`;
+  return (
+    url.origin +
+    "/media/" +
+    key.split("/").map(encodeURIComponent).join("/")
+  );
 }
 
 function normalizeKey(value) {
@@ -277,6 +374,37 @@ function normalizeKey(value) {
     .replace(/\\/g, "/")
     .replace(/\/{2,}/g, "/")
     .trim();
+}
+
+function normalizeExistingJson(text) {
+  try {
+    return JSON.stringify(JSON.parse(text), null, 2) + "\n";
+  } catch {
+    return text;
+  }
+}
+
+function utf8ToBase64(text) {
+  const bytes = new TextEncoder().encode(text);
+  let binary = "";
+  const chunk = 0x8000;
+
+  for (let offset = 0; offset < bytes.length; offset += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + chunk));
+  }
+
+  return btoa(binary);
+}
+
+function base64ToUtf8(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  return new TextDecoder().decode(bytes);
 }
 
 function corsHeaders(request, env) {
@@ -294,7 +422,7 @@ function corsHeaders(request, env) {
     "access-control-allow-methods": "GET,PUT,DELETE,OPTIONS",
     "access-control-allow-headers": "authorization,content-type",
     "access-control-max-age": "86400",
-    "vary": "Origin"
+    vary: "Origin"
   };
 }
 
