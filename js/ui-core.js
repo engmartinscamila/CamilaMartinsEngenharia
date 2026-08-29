@@ -1,14 +1,16 @@
 /*
 ==========================================================
 CAMILA MARTINS ENGENHARIA
-UI CORE — FUNÇÕES COMPARTILHADAS DE INTERFACE
+UI CORE — INTERFACE ADMINISTRATIVA COMPARTILHADA
 ==========================================================
-Este arquivo NÃO registra ações de negócio e NÃO duplica
-eventos das páginas. Apenas controla a camada de carregamento.
 */
 
 (function () {
     "use strict";
+
+    const CHAVE_TEMA = "cme_admin_tema";
+    const CHAVE_COR = "cme_admin_cor_principal";
+    const CHAVE_NOTIFICACOES = "cme_admin_notificacoes";
 
     function elementosLoading() {
         return [
@@ -18,7 +20,7 @@ eventos das páginas. Apenas controla a camada de carregamento.
         ].filter(Boolean);
     }
 
-    function ocultar() {
+    function ocultarCarregamento() {
         for (const elemento of elementosLoading()) {
             elemento.style.setProperty("display", "none", "important");
             elemento.style.setProperty("pointer-events", "none", "important");
@@ -26,7 +28,7 @@ eventos das páginas. Apenas controla a camada de carregamento.
         }
     }
 
-    function mostrar() {
+    function mostrarCarregamento() {
         for (const elemento of elementosLoading()) {
             elemento.style.removeProperty("display");
             elemento.style.removeProperty("pointer-events");
@@ -34,20 +36,136 @@ eventos das páginas. Apenas controla a camada de carregamento.
         }
     }
 
-    window.ocultarCarregamentoPagina = ocultar;
-    window.mostrarCarregamentoPagina = mostrar;
+    function corValida(valor) {
+        return /^#[0-9a-f]{6}$/i.test(String(valor || "").trim());
+    }
 
-    // Segurança contra uma consulta que falhe antes de remover o overlay.
-    // O conteúdo pode continuar carregando, mas a navegação nunca fica bloqueada.
+    function aplicarPreferencias(preferencias = {}) {
+        const tema = preferencias.tema || localStorage.getItem(CHAVE_TEMA) || "escuro";
+        const cor = preferencias.cor_principal || localStorage.getItem(CHAVE_COR) || "#b89a63";
+        const notificacoes = preferencias.notificacoes;
+
+        document.documentElement.dataset.adminTheme = tema === "claro" ? "claro" : "escuro";
+
+        if (corValida(cor)) {
+            document.documentElement.style.setProperty("--dourado", cor);
+            localStorage.setItem(CHAVE_COR, cor);
+        }
+
+        localStorage.setItem(CHAVE_TEMA, tema === "claro" ? "claro" : "escuro");
+
+        if (typeof notificacoes === "boolean") {
+            localStorage.setItem(CHAVE_NOTIFICACOES, notificacoes ? "ativo" : "inativo");
+        }
+    }
+
+    function normalizarMenuAdministrativo() {
+        const menu = document.querySelector(".menu-lateral");
+        if (!menu) return;
+
+        const hrefConteudo = "protecao-pdf-admin.html";
+        let conteudo = Array.from(menu.querySelectorAll("a.menu-item"))
+            .find(link => (link.getAttribute("href") || "").split("?")[0] === hrefConteudo);
+
+        if (!conteudo) {
+            conteudo = document.createElement("a");
+            conteudo.href = hrefConteudo;
+            conteudo.className = "menu-item";
+            conteudo.innerHTML = '<i class="fa-solid fa-file-shield"></i><span>Conteúdo do site</span>';
+
+            const biblioteca = Array.from(menu.querySelectorAll("a.menu-item"))
+                .find(link => (link.getAttribute("href") || "").split("?")[0] === "biblioteca.html");
+
+            if (biblioteca) biblioteca.insertAdjacentElement("afterend", conteudo);
+            else menu.appendChild(conteudo);
+        }
+
+        const pagina = (location.pathname.split("/").filter(Boolean).pop() || "admin.html").toLowerCase();
+
+        menu.querySelectorAll("a.menu-item").forEach(link => {
+            const destino = (link.getAttribute("href") || "").split("?")[0].toLowerCase();
+            const ativo = destino === pagina;
+            link.classList.toggle("ativo", ativo);
+            if (ativo) link.setAttribute("aria-current", "page");
+            else link.removeAttribute("aria-current");
+        });
+    }
+
+    async function sincronizarPreferenciasDoBanco() {
+        if (typeof window.dbBuscarConfiguracoes !== "function") return;
+
+        try {
+            const config = await window.dbBuscarConfiguracoes();
+            if (!config) return;
+
+            aplicarPreferencias({
+                tema: config.tema,
+                cor_principal: config.cor_principal,
+                notificacoes: config.notificacoes !== false
+            });
+        } catch (erro) {
+            console.warn("Preferências administrativas não puderam ser sincronizadas.", erro);
+        }
+    }
+
+    function protegerNotificacoes() {
+        const original = window.dbNotificarAtualizacao;
+        if (typeof original !== "function" || original.__cmeConfiguravel) return;
+
+        const wrapper = async function (dados) {
+            const estadoLocal = localStorage.getItem(CHAVE_NOTIFICACOES);
+
+            if (estadoLocal === "inativo") {
+                return {
+                    enviado: false,
+                    motivo: "Notificações desativadas nas Configurações."
+                };
+            }
+
+            try {
+                if (typeof window.dbBuscarConfiguracoes === "function") {
+                    const config = await window.dbBuscarConfiguracoes();
+                    if (config?.notificacoes === false) {
+                        localStorage.setItem(CHAVE_NOTIFICACOES, "inativo");
+                        return {
+                            enviado: false,
+                            motivo: "Notificações desativadas nas Configurações."
+                        };
+                    }
+                }
+            } catch (erro) {
+                console.warn("Não foi possível consultar a preferência de notificações.", erro);
+            }
+
+            return original(dados);
+        };
+
+        wrapper.__cmeConfiguravel = true;
+        wrapper.__cmeOriginal = original;
+        window.dbNotificarAtualizacao = wrapper;
+    }
+
+    function iniciar() {
+        normalizarMenuAdministrativo();
+        aplicarPreferencias();
+        protegerNotificacoes();
+
+        window.setTimeout(ocultarCarregamento, 2500);
+        window.setTimeout(sincronizarPreferenciasDoBanco, 0);
+    }
+
+    window.ocultarCarregamentoPagina = ocultarCarregamento;
+    window.mostrarCarregamentoPagina = mostrarCarregamento;
+    window.CMEAplicarPreferenciasAdmin = aplicarPreferencias;
+    window.CMENormalizarMenuAdmin = normalizarMenuAdministrativo;
+
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", () => {
-            window.setTimeout(ocultar, 2500);
-        }, { once: true });
+        document.addEventListener("DOMContentLoaded", iniciar, { once: true });
     } else {
-        window.setTimeout(ocultar, 2500);
+        iniciar();
     }
 
     window.addEventListener("load", () => {
-        window.setTimeout(ocultar, 400);
+        window.setTimeout(ocultarCarregamento, 400);
     }, { once: true });
 }());
