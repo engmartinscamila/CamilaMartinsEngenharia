@@ -37,6 +37,8 @@ jobs:
           cp -R assets site-public/assets
           cp -R css site-public/css
           cp -R js site-public/js
+          touch site-public/.nojekyll
+          printf '%s\n' "${GITHUB_SHA}" > site-public/build-version.txt
 
           for file in CNAME robots.txt sitemap.xml camila-martins.vcf; do
             if [[ -f "$file" ]]; then
