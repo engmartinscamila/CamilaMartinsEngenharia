@@ -5,6 +5,7 @@ on:
     branches:
       - auditoria-geral-20260829
       - auditoria-estrutural-20260829
+      - galeria-fotos-20260829
   workflow_dispatch:
 
 permissions:
