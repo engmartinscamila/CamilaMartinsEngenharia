@@ -41,9 +41,13 @@ const databaseMock = `
     if(lower.includes("excluir") || lower.includes("remover")) return true;
     return [];
   }
+  window.__DB_CALLS__ = [];
   const names = ${JSON.stringify([...dbNames])};
   for(const name of names){
-    window[name]=async function(...args){ return result(name,args); };
+    window[name]=async function(...args){
+      window.__DB_CALLS__.push({name,args});
+      return result(name,args);
+    };
   }
 })();
 `;
@@ -163,7 +167,9 @@ async function responsive(page, label) {
 async function loadPage(context, file) {
   const page = await context.newPage();
   const pageErrors = [];
+  page.__cmePageErrors = pageErrors;
   page.on("pageerror", error => pageErrors.push(error.message));
+  page.on("dialog", dialog => dialog.accept().catch(()=>{}));
   await installMocks(page);
   await page.goto(`${BASE}/${file}?teste=${Date.now()}`, { waitUntil:"domcontentloaded", timeout:15000 });
   await page.waitForTimeout(900);
@@ -220,6 +226,153 @@ for (const [file, buttonId, modalId] of modalTests) {
     assert(opened, `${file}: #${buttonId} não abriu #${modalId}`);
   }
   await responsive(page, `${file} após clique ${buttonId}`);
+  await page.close();
+}
+
+
+async function preencherCampo(page, id, valor) {
+  const campo = page.locator(`#${id}`);
+  if (await campo.count() !== 1) {
+    failures.push(`${page.url()}: campo #${id} ausente`);
+    return;
+  }
+
+  const tag = await campo.evaluate(el => el.tagName.toLowerCase());
+  const type = await campo.getAttribute("type") || "";
+
+  if (tag === "select") {
+    const options = await campo.locator("option").evaluateAll(opts =>
+      opts.map((o,index)=>({index,value:o.value,disabled:o.disabled}))
+          .filter(o=>!o.disabled && o.value)
+    );
+    if (!options.length) {
+      failures.push(`${page.url()}: select #${id} sem opção válida`);
+      return;
+    }
+    const byValue = options.find(o => String(o.value) === String(valor));
+    await campo.selectOption(byValue ? byValue.value : {index:options[0].index});
+    return;
+  }
+
+  if (type === "file") {
+    const arquivos = Array.isArray(valor) ? valor : [valor];
+    await campo.setInputFiles(arquivos.map((name,index)=>({
+      name: name || `teste-${index}.txt`,
+      mimeType: (name || "").endsWith(".webp") ? "image/webp" : "application/pdf",
+      buffer: Buffer.from("arquivo de teste automatizado")
+    })));
+    return;
+  }
+
+  if (type === "checkbox") {
+    if (valor) await campo.check();
+    else await campo.uncheck();
+    return;
+  }
+
+  await campo.fill(String(valor));
+}
+
+const formTests = [
+  {
+    file:"clientes.html", open:"novoCliente", form:"formCliente", expected:"dbCriarCliente",
+    fields:{clienteNome:"Cliente QA",clienteEmail:"cliente.qa@example.com",clienteParceria:true}
+  },
+  {
+    file:"projetos.html", open:"novoProjeto", form:"formProjeto", expected:"dbCriarProjeto",
+    fields:{projetoNome:"Projeto QA",projetoCliente:"c1",projetoParceria:true}
+  },
+  {
+    file:"documentos.html", open:"novoDocumento", form:"formDocumento", expected:"dbCriarDocumento",
+    fields:{documentoNome:"Projeto Executivo QA",documentoCliente:"c1",documentoProjeto:"p1",documentoArquivo:["Projeto_Executivo_QA.pdf"]}
+  },
+  {
+    file:"biblioteca.html", open:"novoArquivo", form:"formArquivo", expected:"dbSalvarArquivoBiblioteca",
+    fields:{arquivoNome:"Guia de Estilos QA",arquivoCliente:"c1",arquivoProjeto:"p1",arquivoUpload:["Guia_Estilos_QA.pdf"]}
+  },
+  {
+    file:"fotos.html", open:"novaFoto", form:"formFoto", expected:"dbCriarFoto",
+    fields:{fotoProjeto:"p1",fotoCliente:"c1",fotoTitulo:"Foto QA",arquivoFoto:["foto-qa.webp"]}
+  },
+  {
+    file:"financeiro.html", open:"novoLancamento", form:"formFinanceiro", expected:"dbCriarLancamentoFinanceiro",
+    fields:{financeiroDescricao:"Lançamento QA",financeiroValor:"100",financeiroData:"2026-08-29"}
+  },
+  {
+    file:"agenda.html", open:"novoEvento", form:"formEvento", expected:"dbCriarEventoAgenda",
+    fields:{eventoTitulo:"Evento QA",eventoData:"2026-08-29"}
+  },
+  {
+    file:"solicitacoes.html", open:"novaSolicitacao", form:"formSolicitacao", expected:"dbCriarSolicitacao",
+    fields:{tituloSolicitacao:"Solicitação QA",clienteSolicitacao:"c1",mensagemSolicitacao:"Teste automatizado"}
+  }
+];
+
+for (const teste of formTests) {
+  const page = await loadPage(context, teste.file);
+  const open = page.locator(`#${teste.open}`);
+  if (await open.count() !== 1) {
+    failures.push(`${teste.file}: botão #${teste.open} ausente no teste de salvamento`);
+    await page.close();
+    continue;
+  }
+
+  await open.click({timeout:3000}).catch(error =>
+    failures.push(`${teste.file}: não abriu formulário para salvar: ${error.message}`)
+  );
+
+  for (const [id,valor] of Object.entries(teste.fields)) {
+    await preencherCampo(page,id,valor);
+  }
+
+  const form = page.locator(`#${teste.form}`);
+  if (await form.count() !== 1) {
+    failures.push(`${teste.file}: formulário #${teste.form} ausente`);
+    await page.close();
+    continue;
+  }
+
+  await form.evaluate(el => el.requestSubmit());
+  await page.waitForTimeout(500);
+  await responsive(page, `${teste.file} após salvar`);
+
+  const calls = await page.evaluate(() => window.__DB_CALLS__ || []);
+  assert(
+    calls.some(call => call.name === teste.expected),
+    `${teste.file}: salvar não chamou ${teste.expected}`
+  );
+
+  assert(
+    (page.__cmePageErrors || []).length === 0,
+    `${teste.file}: erro JS após salvar: ${(page.__cmePageErrors || []).join(" | ")}`
+  );
+
+  await page.close();
+}
+
+// Configurações não usa modal: valida o fluxo de salvar diretamente.
+{
+  const page = await loadPage(context, "configuracoes.html");
+  if (await page.locator("#empresaNome").count()) {
+    await page.locator("#empresaNome").fill("Camila Martins Engenharia QA");
+  }
+  const form = page.locator("#formConfiguracoes");
+  if (await form.count()) {
+    await form.evaluate(el => el.requestSubmit());
+    await page.waitForTimeout(400);
+    await responsive(page, "configuracoes.html após salvar");
+    const calls = await page.evaluate(() => window.__DB_CALLS__ || []);
+    assert(
+      calls.some(call => call.name === "dbSalvarConfiguracoes"),
+      "configuracoes.html: salvar não chamou dbSalvarConfiguracoes"
+    );
+  } else {
+    failures.push("configuracoes.html: formConfiguracoes ausente");
+  }
+  assert(
+    (page.__cmePageErrors || []).length === 0,
+    `configuracoes.html: erro JS após salvar: ${(page.__cmePageErrors || []).join(" | ")}`
+  );
   await page.close();
 }
 
