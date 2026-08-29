@@ -561,30 +561,48 @@ for (const teste of formTests) {
     getComputedStyle(document.documentElement).getPropertyValue("--dourado").trim()
   );
 
-  const aparenciaCampoClaro = await page.locator("#empresaNome").evaluate(el => {
-    const style = getComputedStyle(el);
-    return {
-      background: style.backgroundColor,
-      color: style.color,
-      border: style.borderColor
-    };
-  });
+  const aparenciaCamposClaros = await page.locator("#empresaNome, #empresaCnpj").evaluateAll(elements =>
+    elements.map(el => {
+      const style = getComputedStyle(el);
+      let autofill = false;
+      try { autofill = el.matches(":-webkit-autofill"); } catch {}
+      return {
+        id: el.id,
+        background: style.backgroundColor,
+        color: style.color,
+        textFill: style.webkitTextFillColor,
+        boxShadow: style.boxShadow,
+        opacity: style.opacity,
+        autofill
+      };
+    })
+  );
 
   assert(temaAplicado === "claro", `configuracoes.html: tema claro não foi aplicado (${temaAplicado})`);
   assert(corAplicada.toLowerCase() === "#123456", `configuracoes.html: cor não foi aplicada (${corAplicada})`);
 
-  assert(
-    aparenciaCampoClaro.background === "rgb(255, 255, 255)",
-    `configuracoes.html: campo no tema claro não ficou branco: ${aparenciaCampoClaro.background}`
-  );
-  assert(
-    aparenciaCampoClaro.color === "rgb(27, 36, 48)" || aparenciaCampoClaro.color === "rgb(17, 24, 39)",
-    `configuracoes.html: texto do campo no tema claro está sem contraste: ${aparenciaCampoClaro.color}`
-  );
-  assert(
-    aparenciaCampoClaro.background !== aparenciaCampoClaro.color,
-    "configuracoes.html: fundo e texto do campo ficaram com a mesma cor"
-  );
+  for (const campo of aparenciaCamposClaros) {
+    const fundoBranco =
+      campo.background === "rgb(255, 255, 255)" ||
+      (/inset/i.test(campo.boxShadow) && /rgb\(255, 255, 255\)/i.test(campo.boxShadow));
+
+    const textoEscuro =
+      ["rgb(27, 36, 48)", "rgb(17, 24, 39)"].includes(campo.textFill) ||
+      ["rgb(27, 36, 48)", "rgb(17, 24, 39)"].includes(campo.color);
+
+    assert(
+      fundoBranco,
+      `configuracoes.html: #${campo.id} não tem fundo visual claro. bg=${campo.background}; shadow=${campo.boxShadow}; autofill=${campo.autofill}`
+    );
+    assert(
+      textoEscuro,
+      `configuracoes.html: #${campo.id} não tem texto escuro legível. color=${campo.color}; textFill=${campo.textFill}; autofill=${campo.autofill}`
+    );
+    assert(
+      campo.opacity === "1",
+      `configuracoes.html: #${campo.id} está com opacidade inesperada: ${campo.opacity}`
+    );
+  }
 
   await page.locator("#formConfiguracoes").evaluate(el => el.requestSubmit());
 
