@@ -1,40 +1,20 @@
-# Camila Martins Engenharia — site integrado 0.10.2
+# Camila Martins Engenharia
 
-O site institucional continua na raiz do domínio e a nova área restrita fica em
-`/portal`. O diretório publicável é gerado automaticamente em `dist`; não
-publique a raiz do repositório como se ela fosse o resultado final.
+Arquitetura oficial do projeto restaurada.
 
-As instruções exatas de Cloudflare, variáveis e Supabase estão em
-`PUBLICACAO_CLOUDFLARE.md`. O histórico técnico da integração está em
-`CHANGELOG_REV10_2.md`.
+## Publicação do site
 
-## Publicação anterior
+- O site institucional, o login, o painel administrativo e o portal do cliente são publicados como site estático pelo **GitHub Pages**.
+- A autenticação, banco de dados, clientes, projetos, documentos, biblioteca, financeiro e arquivos privados continuam no **Supabase**.
+- O **Cloudflare R2/Worker** é usado somente para as imagens e vídeos da galeria pública de projetos/empreendimentos.
+- O código-fonte do aplicativo em `portal-app/` não entra no artefato público do GitHub Pages.
 
-Esta pasta é a versão de produção preparada exclusivamente para publicação no
-GitHub Pages.
+## Regra de arquitetura
 
-## Proteções aplicadas
+Cloudflare não deve substituir o portal, o Admin, o login nem o backend Supabase. A integração Cloudflare fica restrita às mídias públicas da galeria.
 
-- Os 22 arquivos JavaScript próprios foram minificados e ofuscados.
-- Os 3 blocos JavaScript internos das páginas HTML também foram ofuscados.
-- Os nomes dos arquivos e a estrutura das pastas foram preservados.
-- Os marcadores de cache foram atualizados para `v=20260725-14`.
-- Não foram gerados mapas de código-fonte.
-- A pasta privada `supabase/`, com SQLs e Edge Functions, não faz parte desta
-  versão de publicação.
+## Proteções
 
-## Como era publicado
-
-O fluxo antigo enviava a raiz estática diretamente ao GitHub Pages. Na revisão
-0.10.2, o GitHub Pages fica disponível somente por acionamento manual e usa o
-mesmo build integrado do Cloudflare.
-
-Mantenha o ZIP original em local privado. Ele é a versão editável do projeto.
-Esta versão ofuscada deve ser utilizada apenas para publicação.
-
-## Limite da proteção
-
-Todo site público precisa entregar HTML, CSS e JavaScript ao navegador.
-Ofuscação dificulta a leitura e a reutilização da lógica, mas não torna a cópia
-tecnicamente impossível. Dados privados continuam protegidos pelas políticas
-RLS e pelo Storage privado do Supabase.
+- JavaScript de produção permanece ofuscado onde já estava.
+- Dados privados permanecem protegidos por autenticação, RLS e Storage privado do Supabase.
+- O repositório pode conter código de desenvolvimento que não é publicado no artefato do site.
