@@ -113,6 +113,17 @@
                     <p id="portfolioAdminStatus" class="site-admin-status" role="status" aria-live="polite">Carregando os empreendimentos...</p>
                 </div>
 
+                <div class="site-admin-r2-card">
+                    <div>
+                        <span class="site-admin-eyebrow">Cloudflare R2</span>
+                        <strong>Migração segura da mídia pública</strong>
+                        <p id="portfolioR2Status" class="site-admin-status">Verificando conexão com o R2...</p>
+                    </div>
+                    <button id="portfolioMigrateR2" class="site-admin-secondary" type="button" disabled>
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Migrar mídia atual para R2
+                    </button>
+                </div>
+
                 <div class="site-admin-section-title">
                     <div><span class="site-admin-eyebrow">Empreendimentos</span><h2>Projetos publicados</h2></div>
                     <button id="portfolioNewProject" class="site-admin-primary" type="button"><i class="fa-solid fa-plus"></i> Novo projeto</button>
@@ -183,5 +194,6 @@
     <script src="js/pdf-protection-admin.js?v=20260729-1"></script>
     <script src="https://cdn.jsdelivr.net/npm/tus-js-client@4.3.1/dist/tus.min.js"></script>
     <script src="js/portfolio-admin.js?v=20260828-2"></script>
+    <script src="js/r2-migration-admin.js?v=20260829-1"></script>
 </body>
 </html>
