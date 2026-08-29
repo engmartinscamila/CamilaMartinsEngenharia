@@ -684,3 +684,101 @@ tbody td {
         border-bottom: 1px solid var(--linha);
     }
 }
+
+
+/* ==========================================================
+   CME PASTAS POR CLIENTE
+========================================================== */
+.cme-pasta-cliente{
+    margin:12px 0;
+    border:1px solid var(--linha);
+    background:rgba(2,15,27,.62);
+}
+.cme-pasta-cliente > summary{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding:15px 17px;
+    cursor:pointer;
+    list-style:none;
+    color:var(--dourado);
+    font-weight:600;
+}
+.cme-pasta-cliente > summary::-webkit-details-marker{display:none}
+.cme-pasta-cliente > summary::after{
+    content:"+";
+    font-size:1.15rem;
+    font-weight:400;
+}
+.cme-pasta-cliente[open] > summary{
+    border-bottom:1px solid var(--linha);
+}
+.cme-pasta-cliente[open] > summary::after{content:"−"}
+.cme-pasta-cliente .cme-pasta-contagem{
+    margin-left:auto;
+    padding:3px 9px;
+    border:1px solid var(--linha);
+    border-radius:999px;
+    color:var(--texto-claro);
+    font-size:.72rem;
+    font-weight:400;
+}
+.cme-pasta-corpo{padding:14px 16px}
+.cme-subpasta-projeto{
+    margin:10px 0 16px;
+    padding-top:8px;
+}
+.cme-subpasta-projeto > h4{
+    margin:0 0 10px;
+    color:var(--texto-claro);
+    font-size:.78rem;
+    font-weight:500;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+}
+.cme-folder-row > td{padding:0;border:0}
+.cme-folder-row:hover{background:transparent}
+.cme-cronograma-tabela{
+    width:100%;
+    border-collapse:collapse;
+}
+.cme-cronograma-tabela thead th{
+    padding:10px 12px;
+    font-size:.72rem;
+}
+.cme-cronograma-tabela tbody td{
+    padding:12px;
+}
+#statusConfiguracoes{
+    margin:16px 0;
+    padding:11px 13px;
+    border:1px solid var(--linha);
+    color:var(--texto-claro);
+}
+#statusConfiguracoes[data-type="sucesso"]{border-color:rgba(159,211,169,.42);color:#9fd3a9}
+#statusConfiguracoes[data-type="erro"]{border-color:rgba(240,162,162,.42);color:#f0a2a2}
+
+/* Tema claro opcional das Configurações */
+html[data-admin-theme="claro"]{
+    color-scheme:light;
+    --azul:#eef1f4;
+    --azul-hover:#e4e8ec;
+    --cinza:#f7f8fa;
+    --cinza2:#d9dee4;
+    --cinza3:#6b7280;
+    --texto:#1b2430;
+    --texto-claro:#56606d;
+    --painel:#ffffff;
+    --painel-2:#f6f8fa;
+    --linha:rgba(25,35,48,.16);
+}
+html[data-admin-theme="claro"] body{background:#eef1f4;color:var(--texto)}
+html[data-admin-theme="claro"] .sidebar{background:#ffffff}
+html[data-admin-theme="claro"] .conteudo,
+html[data-admin-theme="claro"] .card,
+html[data-admin-theme="claro"] .card-grande,
+html[data-admin-theme="claro"] .card-lateral,
+html[data-admin-theme="claro"] .modal-content{background:var(--painel);color:var(--texto)}
+html[data-admin-theme="claro"] select{color-scheme:light}
+html[data-admin-theme="claro"] .cme-pasta-cliente{background:#fff}
