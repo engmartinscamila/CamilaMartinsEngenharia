@@ -49,14 +49,6 @@ jobs:
           fi
           account_id="$(jq -r '.result[0].id' <<<"${accounts}")"
 
-          zones="$(api_get "/zones?name=${ZONE_NAME}")"
-          zone_count="$(jq '[.result[]] | length' <<<"${zones}")"
-          if [[ "${zone_count}" -ne 1 ]]; then
-            echo "ERRO: nao foi encontrada exatamente uma zona chamada ${ZONE_NAME}; encontradas: ${zone_count}."
-            exit 1
-          fi
-          zone_id="$(jq -r '.result[0].id' <<<"${zones}")"
-
           scripts="$(api_get "/accounts/${account_id}/workers/scripts")"
           mapfile -t script_names < <(jq -r '.result[].id' <<<"${scripts}")
 
@@ -77,54 +69,33 @@ jobs:
           fi
 
           worker_name="${r2_workers[0]}"
-          printf 'ACCOUNT_ID=%s\nZONE_ID=%s\nWORKER_NAME=%s\n' \
-            "${account_id}" "${zone_id}" "${worker_name}" >> "${GITHUB_ENV}"
-          echo "Worker R2 localizado: ${worker_name}"
-
-      - name: Conectar dominio personalizado
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          payload="$(jq -n \
-            --arg hostname "${MEDIA_HOSTNAME}" \
-            --arg service "${WORKER_NAME}" \
-            --arg zone_id "${ZONE_ID}" \
-            --arg zone_name "${ZONE_NAME}" \
-            '{hostname:$hostname,service:$service,zone_id:$zone_id,zone_name:$zone_name}')"
-
-          http_status="$(curl --silent --show-error \
-            -X PUT \
-            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            --data "${payload}" \
-            --output cloudflare-response.json \
-            --write-out '%{http_code}' \
-            "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/domains")"
-
-          if [[ ! "${http_status}" =~ ^2 ]]; then
-            echo "Cloudflare recusou a conexao (HTTP ${http_status}):"
-            jq -r '.errors[]? | "- codigo \(.code): \(.message)"' cloudflare-response.json
+          workers_subdomain="$(api_get "/accounts/${account_id}/workers/subdomain" | jq -r '.result.subdomain // empty')"
+          if [[ -z "${workers_subdomain}" ]]; then
+            echo "ERRO: a conta ainda nao possui um subdominio workers.dev."
             exit 1
           fi
 
-          jq -e '.success == true' cloudflare-response.json >/dev/null
-          jq -r '"Dominio conectado: \(.result.hostname) -> \(.result.service)"' cloudflare-response.json
+          worker_url="https://${worker_name}.${workers_subdomain}.workers.dev"
+          printf 'ACCOUNT_ID=%s\nWORKER_NAME=%s\nWORKER_URL=%s\n' \
+            "${account_id}" "${worker_name}" "${worker_url}" >> "${GITHUB_ENV}"
+          echo "Worker R2 localizado: ${worker_name}"
+          echo "Endereco publico do Worker: ${worker_url}"
 
-      - name: Verificar configuracao
+      - name: Verificar endereco publico do Worker
         shell: bash
         run: |
           set -euo pipefail
 
-          domains="$(curl --fail-with-body --silent --show-error \
-            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/domains")"
+          http_status="$(curl --silent --show-error --location \
+            --output worker-response.txt \
+            --write-out '%{http_code}' \
+            "${WORKER_URL}/")"
 
-          jq -e \
-            --arg hostname "${MEDIA_HOSTNAME}" \
-            --arg service "${WORKER_NAME}" \
-            '.success == true and any(.result[]; .hostname == $hostname and .service == $service)' \
-            <<<"${domains}" >/dev/null
+          echo "Resposta do Worker: HTTP ${http_status}"
+          if [[ "${http_status}" == "000" || "${http_status}" =~ ^5 ]]; then
+            echo "ERRO: o Worker nao respondeu de forma publica."
+            sed -n '1,20p' worker-response.txt || true
+            exit 1
+          fi
 
-          echo "Configuracao confirmada pela API da Cloudflare."
+          echo "Worker publico confirmado."
