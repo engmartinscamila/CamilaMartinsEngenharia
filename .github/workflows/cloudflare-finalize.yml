@@ -1,0 +1,122 @@
+name: Finalizar configuracao Cloudflare
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/cloudflare-finalize.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  connect-media-domain:
+    name: Conectar dominio de midia ao Worker R2
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      ZONE_NAME: camilamartinsengenharia.com.br
+      MEDIA_HOSTNAME: midia.camilamartinsengenharia.com.br
+
+    steps:
+      - name: Validar autorizacao e localizar recursos
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+            echo "ERRO: adicione o secret CLOUDFLARE_API_TOKEN no repositorio."
+            exit 1
+          fi
+
+          api_get() {
+            curl --fail-with-body --silent --show-error \
+              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              "https://api.cloudflare.com/client/v4$1"
+          }
+
+          token_status="$(api_get /user/tokens/verify)"
+          jq -e '.success == true and .result.status == "active"' <<<"${token_status}" >/dev/null
+
+          accounts="$(api_get /accounts)"
+          account_count="$(jq '[.result[]] | length' <<<"${accounts}")"
+          if [[ "${account_count}" -ne 1 ]]; then
+            echo "ERRO: a autorizacao deve dar acesso a exatamente uma conta Cloudflare; encontradas: ${account_count}."
+            exit 1
+          fi
+          account_id="$(jq -r '.result[0].id' <<<"${accounts}")"
+
+          zones="$(api_get "/zones?name=${ZONE_NAME}")"
+          zone_count="$(jq '[.result[]] | length' <<<"${zones}")"
+          if [[ "${zone_count}" -ne 1 ]]; then
+            echo "ERRO: nao foi encontrada exatamente uma zona chamada ${ZONE_NAME}; encontradas: ${zone_count}."
+            exit 1
+          fi
+          zone_id="$(jq -r '.result[0].id' <<<"${zones}")"
+
+          scripts="$(api_get "/accounts/${account_id}/workers/scripts")"
+          mapfile -t script_names < <(jq -r '.result[].id' <<<"${scripts}")
+
+          r2_workers=()
+          for script_name in "${script_names[@]}"; do
+            settings="$(api_get "/accounts/${account_id}/workers/scripts/${script_name}/settings")"
+            if jq -e '.result.bindings[]? | select(.type == "r2_bucket")' <<<"${settings}" >/dev/null; then
+              r2_workers+=("${script_name}")
+            fi
+          done
+
+          if [[ "${#r2_workers[@]}" -ne 1 ]]; then
+            echo "ERRO: esperava encontrar exatamente um Worker com binding R2; encontrados: ${#r2_workers[@]}."
+            if [[ "${#r2_workers[@]}" -gt 0 ]]; then
+              printf 'Workers candidatos: %s\n' "${r2_workers[*]}"
+            fi
+            exit 1
+          fi
+
+          worker_name="${r2_workers[0]}"
+          printf 'ACCOUNT_ID=%s\nZONE_ID=%s\nWORKER_NAME=%s\n' \
+            "${account_id}" "${zone_id}" "${worker_name}" >> "${GITHUB_ENV}"
+          echo "Worker R2 localizado: ${worker_name}"
+
+      - name: Conectar dominio personalizado
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          payload="$(jq -n \
+            --arg hostname "${MEDIA_HOSTNAME}" \
+            --arg service "${WORKER_NAME}" \
+            --arg zone_id "${ZONE_ID}" \
+            --arg zone_name "${ZONE_NAME}" \
+            '{hostname:$hostname,service:$service,zone_id:$zone_id,zone_name:$zone_name}')"
+
+          response="$(curl --fail-with-body --silent --show-error \
+            -X PUT \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data "${payload}" \
+            "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/domains")"
+
+          jq -e '.success == true' <<<"${response}" >/dev/null
+          jq -r '"Dominio conectado: \(.result.hostname) -> \(.result.service)"' <<<"${response}"
+
+      - name: Verificar configuracao
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          domains="$(curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/domains")"
+
+          jq -e \
+            --arg hostname "${MEDIA_HOSTNAME}" \
+            --arg service "${WORKER_NAME}" \
+            '.success == true and any(.result[]; .hostname == $hostname and .service == $service)' \
+            <<<"${domains}" >/dev/null
+
+          echo "Configuracao confirmada pela API da Cloudflare."
