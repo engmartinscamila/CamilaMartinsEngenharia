@@ -52,6 +52,24 @@ const supabaseMock = `
 (function(){
   window.ADMIN_UID = "admin-test";
   window.CM_CONFIG = { limiteArmazenamentoBytes: 1073741824, storageLimitBytes:1073741824 };
+  window.TABELAS = Object.freeze({
+    CLIENTES:"clientes",
+    AGENDA:"agenda",
+    PROJETOS:"projetos",
+    DOCUMENTOS:"documentos",
+    FOTOS:"fotos",
+    BIBLIOTECA:"biblioteca",
+    FINANCEIRO:"financeiro",
+    CONFIGURACOES:"configuracoes",
+    CRONOGRAMA:"cronograma",
+    SOLICITACOES:"solicitacoes",
+    SOLICITACAO_RESPOSTAS:"solicitacao_respostas"
+  });
+  window.BUCKETS = Object.freeze({
+    DOCUMENTOS:"documentos",
+    FOTOS:"fotos",
+    BIBLIOTECA:"biblioteca"
+  });
   const isAdmin = /(?:admin|clientes|projetos|documentos|biblioteca|fotos|financeiro|agenda|cronograma|solicitacoes|configuracoes|protecao-pdf-admin)\\.html$/i.test(location.pathname);
   const user = { id: isAdmin ? "admin-test" : "client-test", email: isAdmin ? "admin@teste.local" : "cliente@teste.local", user_metadata:{nome:isAdmin?"Camila Teste":"Cliente Teste"} };
   const session = { user, access_token:"mock-token" };
@@ -78,6 +96,19 @@ const supabaseMock = `
     };
     return api;
   }
+
+  window.obterContextoPortal = async function(session){
+    if(!session?.user) return {redirecionar:"login.html"};
+    if(session.user.id === window.ADMIN_UID && !location.search.includes("preview=1")){
+      return {redirecionar:"admin.html"};
+    }
+    return {
+      cliente: sample.clientes[0],
+      modoPreview: false,
+      parametrosPreview: ""
+    };
+  };
+  window.aplicarContextoPortal = function(){};
 
   window.supabaseClient = {
     auth:{
