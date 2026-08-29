@@ -3,7 +3,6 @@ name: Auditoria completa do portal
 on:
   push:
     branches:
-      - main
       - auditoria-geral-20260829
   workflow_dispatch:
 
@@ -30,9 +29,6 @@ jobs:
 
       - name: Auditoria estática
         run: node scripts/site-audit.mjs
-
-      - name: Build de publicação
-        run: npm run build:cloudflare
 
       - name: Instalar Chromium de teste
         run: |
