@@ -98,3 +98,19 @@
         height: 26px;
     }
 }
+
+.documento-categoria-lote {
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+    border: 1px solid var(--linha);
+    background: rgba(1, 9, 20, .72);
+    color: var(--texto);
+    padding: 8px 10px;
+    font: inherit;
+}
+
+.documento-categoria-lote:focus {
+    outline: 1px solid var(--dourado);
+    outline-offset: 1px;
+}

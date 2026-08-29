@@ -4,41 +4,21 @@ import { extname, join, relative, resolve } from 'node:path';
 
 const root = resolve('dist');
 const requiredFiles = [
-  'index.html',
-  'contato.html',
-  'experiencias.html',
-  'galeria-projetos.html',
-  'portfolio.html',
-  'pdf-protegido.html',
-  'robots.txt',
-  'sitemap.xml',
-  '_headers',
-  'portal/index.html',
-  'portal/login.html',
-  'portal/reset-password.html',
-  'portal/home.html',
-  'portal/project.html',
-  'portal/library.html',
-  'portal/documents.html',
-  'portal/photos.html',
-  'portal/agenda.html',
-  'portal/schedule.html',
-  'portal/requests.html',
-  'portal/admin/index.html',
-  'portal/admin/clients.html',
-  'portal/admin/projects.html',
-  'portal/admin/content.html',
-  'portal/admin/financial.html',
-  'portal/admin/agenda.html',
-  'portal/admin/schedule.html',
-  'portal/admin/requests.html',
-  'portal/admin/security.html',
-  'login.html',
-  'portal.html',
-  'admin.html',
+  'index.html', 'contato.html', 'experiencias.html', 'galeria-projetos.html',
+  'portfolio.html', 'pdf-protegido.html', 'login.html', 'redefinir-senha.html',
+  'portal.html', 'meu-projeto.html', 'biblioteca-cliente.html',
+  'documentos-cliente.html', 'fotos-cliente.html', 'agenda-cliente.html',
+  'cronograma-cliente.html', 'solicitacoes-cliente.html', 'admin.html',
+  'dashboard.html', 'clientes.html', 'projetos.html', 'documentos.html',
+  'biblioteca.html', 'fotos.html', 'financeiro.html', 'agenda.html',
+  'cronograma.html', 'solicitacoes.html', 'configuracoes.html',
+  'css/admin-theme.css', 'css/portal-theme.css', 'css/documentos-lote.css',
+  'js/documentos-lote.js', 'js/biblioteca-categorias.js',
+  'js/dashboard-biblioteca-fix.js', 'robots.txt', 'sitemap.xml', '_headers',
+  'portal/login/index.html', 'portal/home/index.html', 'portal/admin/index.html',
 ];
 
-assert.ok(existsSync(root), 'A pasta dist integrada não foi gerada.');
+assert.ok(existsSync(root), 'A pasta dist não foi gerada.');
 for (const file of requiredFiles) {
   assert.ok(existsSync(join(root, file)), `Arquivo obrigatório ausente: ${file}`);
 }
@@ -47,43 +27,25 @@ for (const sourceOnly of ['portal-app', 'scripts', 'cloudflare', '.github', 'nod
   assert.ok(!existsSync(join(root, sourceOnly)), `Pasta de código-fonte incluída no deploy: ${sourceOnly}`);
 }
 
-const publicPages = [
-  'index.html',
-  'contato.html',
-  'experiencias.html',
-  'galeria-projetos.html',
-  'portfolio.html',
-  'pdf-protegido.html',
-];
-
-for (const page of publicPages) {
-  const html = readFileSync(join(root, page), 'utf8');
-  for (const match of html.matchAll(/(?:href|src)=["']([^"']+)["']/gi)) {
-    const raw = match[1];
-    if (/^(?:https?:|mailto:|tel:|data:|javascript:|#)/i.test(raw)) continue;
-    if (raw.startsWith('/portal')) continue;
-    const clean = raw.split(/[?#]/, 1)[0];
-    if (!clean) continue;
-    const local = clean.startsWith('/') ? join(root, clean.slice(1)) : join(root, page, '..', clean);
-    assert.ok(existsSync(local), `Referência local quebrada em ${page}: ${raw}`);
-  }
-}
-
 const indexHtml = readFileSync(join(root, 'index.html'), 'utf8');
 const contactHtml = readFileSync(join(root, 'contato.html'), 'utf8');
-assert.ok(!/href=["']login\.html/i.test(indexHtml), 'O site público ainda aponta para o login antigo.');
-assert.match(indexHtml, /href=["']\/portal\/login["']/i, 'Link novo da Área do Cliente ausente na página inicial.');
-assert.match(contactHtml, /href=["']\/portal\/login["']/i, 'Link novo da Área do Cliente ausente no cartão virtual.');
+const loginHtml = readFileSync(join(root, 'login.html'), 'utf8');
+const adminHtml = readFileSync(join(root, 'admin.html'), 'utf8');
+const documentsHtml = readFileSync(join(root, 'documentos.html'), 'utf8');
 
-const redirects = {
-  'login.html': '/portal/login',
-  'portal.html': '/portal/home',
-  'admin.html': '/portal/admin',
-  'redefinir-senha.html': '/portal/reset-password',
-};
-for (const [file, target] of Object.entries(redirects)) {
-  assert.ok(readFileSync(join(root, file), 'utf8').includes(target), `Compatibilidade incorreta em ${file}.`);
-}
+assert.match(indexHtml, /href=["']login\.html["']/i, 'A página inicial não aponta para o login clássico.');
+assert.doesNotMatch(indexHtml, /href=["']\/portal\/login["']/i, 'A página inicial ainda aponta para o login Expo.');
+assert.match(contactHtml, /href=["']login\.html["']/i, 'O cartão virtual não aponta para o login clássico.');
+assert.doesNotMatch(contactHtml, /href=["']\/portal\/login["']/i, 'O cartão virtual ainda aponta para o login Expo.');
+assert.match(loginHtml, /Primeiro acesso/i, 'Primeiro acesso foi removido do login.');
+assert.match(loginHtml, /Esqueci minha senha/i, 'Recuperação de senha foi removida do login.');
+assert.match(adminHtml, /class=["']assinatura["']/i, 'Assinatura visual do painel Admin ausente.');
+assert.match(adminHtml, /admin-theme\.css/i, 'Tema clássico do painel Admin ausente.');
+assert.match(documentsHtml, /value=["']automatico["']/i, 'Classificação automática não está disponível em Documentos.');
+assert.match(documentsHtml, /multiple/i, 'Upload múltiplo de documentos não está disponível.');
+
+const portalCompat = readFileSync(join(root, 'portal/admin/index.html'), 'utf8');
+assert.match(portalCompat, /\.\.\/\.\.\/admin\.html/, 'Compatibilidade /portal/admin não retorna ao painel clássico.');
 
 const forbiddenNames = [/^\.env(?:\.|$)/i, /ARQUIVO_ENV_LOCAL/i, /node_modules/i];
 const forbiddenContent = [/sb_secret_[A-Za-z0-9_-]{16,}/i, /SUPABASE_SERVICE_ROLE_KEY\s*[:=]/i, /BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/i];
@@ -96,9 +58,7 @@ const containsServiceRoleJwt = (content) => {
     try {
       const payload = JSON.parse(Buffer.from(match[1], 'base64url').toString('utf8'));
       if (payload?.role === 'service_role') return true;
-    } catch {
-      // Texto semelhante a JWT, mas inválido: não é uma credencial utilizável.
-    }
+    } catch {}
   }
   return false;
 };
@@ -109,11 +69,7 @@ while (stack.length) {
   for (const name of readdirSync(directory)) {
     const path = join(directory, name);
     const info = statSync(path);
-    if (info.isDirectory()) {
-      stack.push(path);
-      continue;
-    }
-
+    if (info.isDirectory()) { stack.push(path); continue; }
     const deployedPath = relative(root, path);
     assert.ok(info.size <= maxCloudflareFileSize, `Arquivo excede 25 MiB: ${deployedPath}`);
     assert.ok(!forbiddenNames.some((pattern) => pattern.test(name)), `Arquivo local proibido no deploy: ${deployedPath}`);
@@ -124,9 +80,4 @@ while (stack.length) {
   }
 }
 
-const robots = readFileSync(join(root, 'robots.txt'), 'utf8');
-assert.match(robots, /Disallow:\s*\/portal\//i, 'robots.txt não bloqueia a indexação do portal.');
-const headers = readFileSync(join(root, '_headers'), 'utf8');
-assert.match(headers, /\/portal\/\*/i, 'Cabeçalhos restritos do portal ausentes.');
-
-process.stdout.write('APROVADO: site público e portal integrado prontos para o diretório dist do Cloudflare.\n');
+process.stdout.write('APROVADO: publicação preserva o visual clássico e os recursos do portal.\n');

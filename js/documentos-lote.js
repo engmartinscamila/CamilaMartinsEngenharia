@@ -1,6 +1,30 @@
 (function () {
     'use strict';
 
+    const CATEGORIAS = [
+        ['contrato', 'Contrato'],
+        ['orcamento', 'Orçamento / Proposta'],
+        ['projeto', 'Projeto'],
+        ['art', 'ART / RRT'],
+        ['guia_estilos', 'Guia de estilos'],
+        ['guia_obras', 'Guia de obras'],
+        ['laudo', 'Laudo / Parecer'],
+        ['memorial', 'Memorial'],
+        ['norma', 'Norma técnica'],
+        ['modelo', 'Modelo'],
+        ['outros', 'Outros']
+    ];
+
+    function normalizar(texto) {
+        return String(texto || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/[_-]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
     function nomeAmigavel(nomeArquivo) {
         return String(nomeArquivo || '')
             .replace(/\.[^.]+$/, '')
@@ -21,12 +45,51 @@
         return extensao ? base + '.' + extensao : base;
     }
 
+    function detectarCategoria(nomeArquivo) {
+        const nome = normalizar(nomeArquivo);
+        const regras = [
+            ['art', /(^|\s)(art|rrt)(\s|$)|anotacao de responsabilidade|registro de responsabilidade/],
+            ['guia_estilos', /guia.*estilo|estilo.*arquitet|moodboard|paleta|conceito visual/],
+            ['guia_obras', /guia.*obra|manual.*obra|caderno.*obra|execucao.*obra/],
+            ['laudo', /laudo|parecer|vistoria|inspecao|relatorio tecnico|diagnostico/],
+            ['contrato', /contrato|aditivo|distrato|termo de aceite/],
+            ['orcamento', /orcamento|proposta|cotacao|estimativa de custo/],
+            ['memorial', /memorial|caderno de especifica|especificacao tecnica/],
+            ['norma', /(^|\s)(nbr|abnt|norma)(\s|$)/],
+            ['modelo', /modelo|template|padrao de documento/],
+            ['projeto', /projeto|planta|corte|fachada|detalhamento|layout|levantamento|implantacao/]
+        ];
+        for (const [categoria, regra] of regras) {
+            if (regra.test(nome)) return categoria;
+        }
+        return 'outros';
+    }
+
+    function rotuloCategoria(valor) {
+        return CATEGORIAS.find(([id]) => id === valor)?.[1] || 'Outros';
+    }
+
     function estaEditando() {
         const texto = [
             document.querySelector('#modalDocumento .modal-header h2')?.textContent,
             document.getElementById('salvarDocumento')?.textContent
         ].join(' ');
         return /editar|altera[cç][oõ]es/i.test(texto);
+    }
+
+    function criarSelectCategoria(valor, indice) {
+        const select = document.createElement('select');
+        select.className = 'documento-categoria-lote';
+        select.dataset.indice = String(indice);
+        select.setAttribute('aria-label', 'Categoria do documento ' + (indice + 1));
+        CATEGORIAS.forEach(([id, rotulo]) => {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = rotulo;
+            option.selected = id === valor;
+            select.appendChild(option);
+        });
+        return select;
     }
 
     function iniciar() {
@@ -38,6 +101,20 @@
         if (!formulario || !arquivo || !nome || !categoria || !botaoSalvar) return;
 
         arquivo.multiple = true;
+
+        if (!categoria.querySelector('option[value="automatico"]')) {
+            const automatico = document.createElement('option');
+            automatico.value = 'automatico';
+            automatico.textContent = 'Automática pelo nome do arquivo';
+            categoria.insertBefore(automatico, categoria.firstChild);
+        }
+        if (!categoria.querySelector('option[value="modelo"]')) {
+            const modelo = document.createElement('option');
+            modelo.value = 'modelo';
+            modelo.textContent = 'Modelo';
+            const outros = categoria.querySelector('option[value="outros"]');
+            categoria.insertBefore(modelo, outros || null);
+        }
 
         const ajuda = arquivo.parentElement.querySelector('.ajuda-campo');
         const previa = document.createElement('div');
@@ -62,6 +139,10 @@
             nome.readOnly = false;
         }
 
+        function categoriaParaArquivo(item) {
+            return categoria.value === 'automatico' ? detectarCategoria(item.name) : (categoria.value || 'outros');
+        }
+
         function renderizarArquivos() {
             const arquivos = Array.from(arquivo.files || []);
             limparLote();
@@ -75,7 +156,13 @@
 
             if (arquivos.length === 1) {
                 if (!estaEditando()) nome.value = nomeAmigavel(arquivos[0].name);
-                status.textContent = 'Nome preenchido automaticamente pelo arquivo selecionado.';
+                if (!estaEditando() && categoria.value === 'automatico') {
+                    const detectada = detectarCategoria(arquivos[0].name);
+                    categoria.value = detectada;
+                    status.textContent = 'Categoria detectada automaticamente: ' + rotuloCategoria(detectada) + '. Você pode alterá-la antes de salvar.';
+                } else {
+                    status.textContent = 'Nome preenchido automaticamente pelo arquivo selecionado.';
+                }
                 return;
             }
 
@@ -84,7 +171,7 @@
             previa.hidden = false;
 
             const titulo = document.createElement('strong');
-            titulo.textContent = 'Revise os nomes antes de enviar';
+            titulo.textContent = 'Revise os nomes e categorias antes de enviar';
             const lista = document.createElement('div');
             lista.className = 'documento-lote-lista';
 
@@ -106,22 +193,42 @@
                 campo.required = true;
                 campo.setAttribute('aria-label', 'Nome do documento ' + (indice + 1));
 
+                const categoriaDetectada = categoriaParaArquivo(item);
+                const selectCategoria = criarSelectCategoria(categoriaDetectada, indice);
+
                 const original = document.createElement('small');
                 original.textContent = item.name;
 
-                textos.append(campo, original);
+                textos.append(campo, selectCategoria, original);
                 linha.append(numero, textos);
                 lista.appendChild(linha);
             });
 
             previa.append(titulo, lista);
-            status.textContent = arquivos.length + ' arquivos prontos. A categoria escolhida será aplicada a todos.';
+            status.textContent = arquivos.length + ' arquivos prontos. Cada arquivo pode ter uma categoria diferente.';
         }
 
         arquivo.addEventListener('change', renderizarArquivos);
 
+        categoria.addEventListener('change', function () {
+            const arquivos = Array.from(arquivo.files || []);
+            if (arquivos.length <= 1 || previa.hidden) return;
+            const selects = Array.from(previa.querySelectorAll('.documento-categoria-lote'));
+            selects.forEach(function (select, indice) {
+                select.value = categoria.value === 'automatico'
+                    ? detectarCategoria(arquivos[indice]?.name)
+                    : (categoria.value || 'outros');
+            });
+            status.textContent = categoria.value === 'automatico'
+                ? 'Categorias recalculadas automaticamente pelo nome de cada arquivo.'
+                : 'Categoria “' + rotuloCategoria(categoria.value) + '” aplicada ao lote. Você ainda pode ajustar arquivo por arquivo.';
+        });
+
         document.getElementById('novoDocumento')?.addEventListener('click', function () {
-            window.setTimeout(limparLote, 0);
+            window.setTimeout(function () {
+                limparLote();
+                categoria.value = 'automatico';
+            }, 0);
         });
 
         formulario.addEventListener('submit', async function (evento) {
@@ -139,10 +246,10 @@
             const clienteId = document.getElementById('documentoCliente')?.value || '';
             const projetoId = document.getElementById('documentoProjeto')?.value || '';
             const descricao = document.getElementById('documentoDescricao')?.value.trim() || '';
-            const tipo = categoria.value || 'outros';
             const camposNome = Array.from(previa.querySelectorAll('.documento-nome-lote'));
+            const camposCategoria = Array.from(previa.querySelectorAll('.documento-categoria-lote'));
 
-            if (!clienteId || !projetoId || camposNome.some(function (campo) { return !campo.value.trim(); })) {
+            if (!clienteId || !projetoId || camposNome.length !== arquivos.length || camposNome.some((campo) => !campo.value.trim())) {
                 alert('Preencha cliente, projeto e confira o nome de todos os documentos.');
                 return;
             }
@@ -156,6 +263,7 @@
                 for (let indice = 0; indice < arquivos.length; indice += 1) {
                     const item = arquivos[indice];
                     const linha = previa.querySelectorAll('.documento-lote-item')[indice];
+                    const tipo = camposCategoria[indice]?.value || detectarCategoria(item.name);
                     linha?.setAttribute('data-status', 'enviando');
                     status.textContent = 'Enviando ' + (indice + 1) + ' de ' + arquivos.length + ': ' + item.name;
                     botaoSalvar.textContent = 'Enviando ' + (indice + 1) + ' de ' + arquivos.length;
@@ -170,7 +278,8 @@
                             cliente_id: clienteId,
                             projeto_id: projetoId,
                             descricao: descricao,
-                            arquivo: caminho
+                            arquivo: caminho,
+                            nome_original: item.name
                         });
                     } catch (erroRegistro) {
                         await dbExcluirArquivoStorage(BUCKETS.DOCUMENTOS, caminho).catch(function () {});
@@ -191,7 +300,7 @@
                     }).catch(function () {});
                 }
 
-                status.textContent = arquivos.length + ' documentos enviados com sucesso.';
+                status.textContent = arquivos.length + ' documentos enviados e classificados com sucesso.';
                 status.dataset.type = 'sucesso';
                 alert(arquivos.length + ' documentos enviados com sucesso.');
                 window.location.reload();
@@ -207,6 +316,8 @@
             }
         }, true);
     }
+
+    window.CMEClassificarDocumento = detectarCategoria;
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', iniciar, { once: true });

@@ -1,14 +1,9 @@
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const output = join(root, 'dist');
-const portalOutput = join(root, 'portal-app', 'dist');
-
-if (!existsSync(portalOutput)) {
-  throw new Error('O export do portal não existe. Execute primeiro npm run build:portal.');
-}
 
 rmSync(output, { recursive: true, force: true });
 mkdirSync(output, { recursive: true });
@@ -23,80 +18,80 @@ const copyFile = (sourceRelative, targetRelative = sourceRelative) => {
   cpSync(source, target, { recursive: true });
 };
 
-[
-  'index.html',
-  'contato.html',
-  'experiencias.html',
-  'galeria-projetos.html',
-  'portfolio.html',
-  'pdf-protegido.html',
+// Publica o site/portal clássico aprovado visualmente. A revisão 0.10.2
+// substituía estas páginas por redirects para o portal Expo e alterava toda
+// a experiência visual. O portal Expo continua no repositório, mas não
+// substitui mais o site web em produção.
+for (const name of readdirSync(root)) {
+  if (extname(name).toLowerCase() === '.html') copyFile(name);
+}
+
+for (const path of [
+  'assets',
+  'css',
+  'js',
   'camila-martins.vcf',
   'CNAME',
   'robots.txt',
   'sitemap.xml',
-  'assets',
-  'css/styles.css',
-  'css/galeria-projetos.css',
-  'css/pdf-protection.css',
-  'js/script.js',
-  'js/supabase.js',
-  'js/galeria-projetos.js',
-  'js/pdf-protection-viewer.js',
-].forEach((path) => copyFile(path));
+]) {
+  copyFile(path);
+}
 
 copyFile('cloudflare/_headers', '_headers');
-cpSync(portalOutput, join(output, 'portal'), { recursive: true });
 
-const legacyRoutes = new Map([
-  ['login.html', '/portal/login'],
-  ['redefinir-senha.html', '/portal/reset-password'],
-  ['portal.html', '/portal/home'],
-  ['meu-projeto.html', '/portal/project'],
-  ['biblioteca-cliente.html', '/portal/library'],
-  ['documentos-cliente.html', '/portal/documents'],
-  ['fotos-cliente.html', '/portal/photos'],
-  ['agenda-cliente.html', '/portal/agenda'],
-  ['cronograma-cliente.html', '/portal/schedule'],
-  ['solicitacoes-cliente.html', '/portal/requests'],
-  ['admin.html', '/portal/admin'],
-  ['dashboard.html', '/portal/admin'],
-  ['clientes.html', '/portal/admin/clients'],
-  ['projetos.html', '/portal/admin/projects'],
-  ['documentos.html', '/portal/admin'],
-  ['biblioteca.html', '/portal/admin/content'],
-  ['protecao-pdf-admin.html', '/portal/admin/content'],
-  ['fotos.html', '/portal/admin/content'],
-  ['financeiro.html', '/portal/admin/financial'],
-  ['agenda.html', '/portal/admin/agenda'],
-  ['cronograma.html', '/portal/admin/schedule'],
-  ['solicitacoes.html', '/portal/admin/requests'],
-  ['configuracoes.html', '/portal/admin/security'],
-]);
-
-const escapeHtml = (value) => value
-  .replaceAll('&', '&amp;')
-  .replaceAll('"', '&quot;')
-  .replaceAll('<', '&lt;')
-  .replaceAll('>', '&gt;');
-
-for (const [legacyFile, destination] of legacyRoutes) {
-  const safeDestination = escapeHtml(destination);
-  const html = `<!doctype html>
+const redirectHtml = (destination) => `<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <meta http-equiv="refresh" content="0; url=${safeDestination}">
+  <meta http-equiv="refresh" content="0; url=${destination}">
   <title>Redirecionando | Camila Martins Engenharia</title>
   <script>window.location.replace(${JSON.stringify(destination)} + window.location.search + window.location.hash);</script>
 </head>
-<body>
-  <p>Redirecionando para a área segura. <a href="${safeDestination}">Continuar</a>.</p>
-</body>
-</html>
-`;
-  writeFileSync(join(output, legacyFile), html, 'utf8');
+<body><p>Redirecionando… <a href="${destination}">Continuar</a>.</p></body>
+</html>`;
+
+// Compatibilidade para links/favoritos criados durante a revisão 0.10.2.
+// Todos voltam para as telas clássicas, sem renderizar o layout Expo.
+const compatibilityRoutes = new Map([
+  ['portal/index.html', '../login.html'],
+  ['portal/login.html', '../login.html'],
+  ['portal/login/index.html', '../../login.html'],
+  ['portal/reset-password.html', '../redefinir-senha.html'],
+  ['portal/reset-password/index.html', '../../redefinir-senha.html'],
+  ['portal/home.html', '../portal.html'],
+  ['portal/home/index.html', '../../portal.html'],
+  ['portal/project.html', '../meu-projeto.html'],
+  ['portal/project/index.html', '../../meu-projeto.html'],
+  ['portal/library.html', '../biblioteca-cliente.html'],
+  ['portal/library/index.html', '../../biblioteca-cliente.html'],
+  ['portal/documents.html', '../documentos-cliente.html'],
+  ['portal/documents/index.html', '../../documentos-cliente.html'],
+  ['portal/photos.html', '../fotos-cliente.html'],
+  ['portal/photos/index.html', '../../fotos-cliente.html'],
+  ['portal/agenda.html', '../agenda-cliente.html'],
+  ['portal/agenda/index.html', '../../agenda-cliente.html'],
+  ['portal/schedule.html', '../cronograma-cliente.html'],
+  ['portal/schedule/index.html', '../../cronograma-cliente.html'],
+  ['portal/requests.html', '../solicitacoes-cliente.html'],
+  ['portal/requests/index.html', '../../solicitacoes-cliente.html'],
+  ['portal/admin/index.html', '../../admin.html'],
+  ['portal/admin/clients.html', '../../clientes.html'],
+  ['portal/admin/projects.html', '../../projetos.html'],
+  ['portal/admin/content.html', '../../biblioteca.html'],
+  ['portal/admin/financial.html', '../../financeiro.html'],
+  ['portal/admin/agenda.html', '../../agenda.html'],
+  ['portal/admin/schedule.html', '../../cronograma.html'],
+  ['portal/admin/requests.html', '../../solicitacoes.html'],
+  ['portal/admin/security.html', '../../configuracoes.html'],
+]);
+
+for (const [targetRelative, destination] of compatibilityRoutes) {
+  const target = join(output, targetRelative);
+  mkdirSync(dirname(target), { recursive: true });
+  writeFileSync(target, redirectHtml(destination), 'utf8');
 }
 
-process.stdout.write(`Site integrado montado em ${output}.\n`);
+process.stdout.write(`Site clássico integrado montado em ${output}.\n`);
