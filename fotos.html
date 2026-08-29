@@ -21,6 +21,7 @@ Fotos | Camila Martins Engenharia
 
 <link rel="stylesheet" href="css/admin.css?v=20260725-14">
 <link rel="stylesheet" href="css/admin-theme.css?v=20260725-14">
+<link rel="stylesheet" href="css/documentos-lote.css?v=20260829-2">
 
 
 <link rel="stylesheet"
@@ -466,6 +467,7 @@ Título da Foto
 
 <input
 id="fotoTitulo"
+placeholder="Preenchido automaticamente ao selecionar a imagem"
 required>
 
 <label for="fotoDescricao">
@@ -503,7 +505,10 @@ Imagem
 type="file"
 id="arquivoFoto"
 accept="image/*"
+multiple
 required>
+
+<small class="ajuda-campo">Selecione uma ou várias imagens. Cada título será preenchido automaticamente pelo nome do arquivo e poderá ser revisado antes do envio.</small>
 
 
 
@@ -660,6 +665,7 @@ Carregando...
 
 <script src="js/servicos.js?v=20260725-14"></script>
     <script src="js/fotos.js?v=20260725-14"></script>
+    <script src="js/fotos-lote.js?v=20260829-2"></script>
 
 
 
