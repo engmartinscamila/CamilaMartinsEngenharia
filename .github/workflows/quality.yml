@@ -60,7 +60,11 @@ jobs:
 
           echo
           echo "== /api/manifest =="
-          curl --fail --show-error --silent --retry 3 "$BASE/api/manifest" -o /tmp/cme-manifest.json
+          CODE=$(curl --show-error --silent --retry 1 -w "%{http_code}" "$BASE/api/manifest" -o /tmp/cme-manifest.json)
+          echo "HTTP $CODE"
+          cat /tmp/cme-manifest.json
+          echo
+          test "$CODE" = "200"
           node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('/tmp/cme-manifest.json','utf8'));if(!Array.isArray(d.projetos)||!d.projetos.length){console.error(d);process.exit(1)};console.log('projetos:',d.projetos.length);console.log('primeiro:',d.projetos[0]?.nome||d.projetos[0]?.slug||'sem nome')"
 
       - name: Log do servidor em caso de falha
