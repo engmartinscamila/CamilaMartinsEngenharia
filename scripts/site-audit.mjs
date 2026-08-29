@@ -133,7 +133,10 @@ if (exists(galleryPath)) {
 
     for (const ref of values) {
       if (!/\.(?:webp|png|jpe?g|mp4|webm)(?:[?#].*)?$/i.test(ref)) continue;
-      const local = normalizeRef(galleryPath, ref);
+      const cleaned = cleanRef(ref);
+      const local = cleaned.startsWith("assets/")
+        ? cleaned
+        : normalizeRef(galleryPath, ref);
       if (local && !exists(local)) fail(`${galleryPath}: mídia inexistente -> ${ref}`);
     }
   } catch (error) {
