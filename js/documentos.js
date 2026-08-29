@@ -90,7 +90,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
                             <article class="item-lista documento-item">
                                 <div class="item-info">
                                     <h3>${escapar(documento.nome)}</h3>
-                                    <span>${escapar(documento.tipo || "Sem categoria")}</span>
+                                    <span>${escapar(categoriaExibida(documento))}</span>
                                 </div>
                                 <div class="item-acoes">
                                     ${botao("abrir", documento.id, "fa-eye", "Abrir detalhes")}
@@ -154,7 +154,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
         preencher("documentoNome", documento.nome);
         preencher("documentoCliente", documento.cliente_id);
         preencherProjetos(documento.projeto_id);
-        preencher("documentoCategoria", documento.tipo);
+        preencher("documentoCategoria", categoriaExibida(documento, true));
         preencher("documentoDescricao", documento.descricao);
         atualizarModal("Editar Documento", "Salvar Alterações", false);
         abrirModal();
@@ -366,7 +366,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
         if (!termo) return renderizar();
 
         renderizar(documentos.filter(documento =>
-            [documento.nome, documento.tipo, documento.descricao, nomeCliente(documento.cliente_id), nomeProjeto(documento.projeto_id)]
+            [documento.nome, categoriaExibida(documento), documento.descricao, nomeCliente(documento.cliente_id), nomeProjeto(documento.projeto_id)]
                 .some(campo => String(campo || "").toLocaleLowerCase("pt-BR").includes(termo))
         ), true);
     }
@@ -442,6 +442,24 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
 
     function localizar(id) {
         return documentos.find(documento => String(documento.id) === String(id));
+    }
+
+    function categoriaExibida(documento, valorSelect = false) {
+        const atual = String(documento?.tipo || "").trim();
+
+        if (atual && atual !== "outros" && atual !== "automatico") {
+            return atual;
+        }
+
+        const detectada = window.CMEClassificarDocumento?.(
+            documento?.nome_original ||
+            documento?.arquivo ||
+            documento?.nome ||
+            ""
+        );
+
+        if (detectada && detectada !== "outros") return detectada;
+        return valorSelect ? "outros" : "outros";
     }
 
     function nomeCliente(id) {
