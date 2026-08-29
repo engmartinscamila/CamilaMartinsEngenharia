@@ -49,8 +49,8 @@
         const nome = normalizar(nomeArquivo);
         const regras = [
             ['art', /(^|\s)(art|rrt)(\s|$)|anotacao de responsabilidade|registro de responsabilidade/],
-            ['guia_estilos', /guia.*estilo|estilo.*arquitet|moodboard|paleta|conceito visual/],
-            ['guia_obras', /guia.*obra|manual.*obra|caderno.*obra|execucao.*obra/],
+            ['guia_estilos', /guia.*estilo|estilo.*arquitet|interiores|moodboard|paleta|conceito visual|tecidos|moveis|iluminacao|lampadas|pisos.*revestimentos|banheiros.*cozinhas/],
+            ['guia_obras', /guia.*obra|manual.*obra|caderno.*obra|execucao.*obra|concretagem|armaduras|cobrimento|alvenaria|vergas|contravergas|impermeabilizacao|cobertura|telhas|rufos|calhas|agua.*esgoto|esgoto.*pluvial|eletrica|eletrodutos|circuitos|ar condicionado|ventilacao|exaustao|chapisco|emboco|reboco|drywall|contrapiso|caimentos|pintura.*patologias|loucas.*metais.*tomadas/],
             ['laudo', /laudo|parecer|vistoria|inspecao|relatorio tecnico|diagnostico/],
             ['contrato', /contrato|aditivo|distrato|termo de aceite/],
             ['orcamento', /orcamento|proposta|cotacao|estimativa de custo/],
