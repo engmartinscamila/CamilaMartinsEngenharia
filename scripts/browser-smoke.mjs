@@ -1,0 +1,252 @@
+import { chromium } from "playwright";
+import fs from "node:fs";
+import path from "node:path";
+
+const BASE = process.env.SITE_BASE || "http://127.0.0.1:4173";
+const ROOT = process.cwd();
+const failures = [];
+
+function assert(condition, message) {
+  if (!condition) failures.push(message);
+}
+
+const dbNames = new Set();
+for (const name of fs.readdirSync(path.join(ROOT, "js")).filter(name => name.endsWith(".js"))) {
+  const content = fs.readFileSync(path.join(ROOT, "js", name), "utf8");
+  for (const match of content.matchAll(/\b(db[A-ZÀ-Ý_a-z0-9]+)\b/g)) dbNames.add(match[1]);
+}
+
+const databaseMock = `
+(function(){
+  const cliente = {id:"c1", nome:"Cliente Teste", email:"cliente@teste.local", status:"ativo", parceria:false};
+  const projeto = {id:"p1", cliente_id:"c1", nome:"Projeto Teste", status:"em_andamento", numero_contrato:"TESTE-001", parceria:false};
+  const documento = {id:"d1", cliente_id:"c1", projeto_id:"p1", nome:"Documento Teste", titulo:"Documento Teste", tipo:"projeto", nome_original:"teste.pdf"};
+  const foto = {id:"f1", cliente_id:"c1", projeto_id:"p1", nome:"Foto Teste", arquivo:"teste.webp"};
+  const biblioteca = {id:"b1", cliente_id:"c1", projeto_id:"p1", nome:"Arquivo Teste", tipo:"guia_estilos"};
+  const samples = {clientes:[cliente], projetos:[projeto], documentos:[documento], fotos:[foto], biblioteca:[biblioteca]};
+  function result(name,args){
+    const lower=name.toLowerCase();
+    if(lower.includes("clientes")) return samples.clientes;
+    if(lower.includes("projetos")) return samples.projetos;
+    if(lower.includes("documentos")) return samples.documentos;
+    if(lower.includes("fotos")) return samples.fotos;
+    if(lower.includes("biblioteca")) return samples.biblioteca;
+    if(lower.includes("agenda")) return [];
+    if(lower.includes("cronograma")) return [];
+    if(lower.includes("solicitacoes")) return [];
+    if(lower.includes("financeiro")) return [];
+    if(lower.includes("configuracoes")) return {};
+    if(lower.includes("porid") || lower.includes("detalhe")) return {...cliente,...projeto};
+    if(lower.includes("criar") || lower.includes("editar")) return {...(args[0]||{}), id:(args[0]||{}).id||"mock-id"};
+    if(lower.includes("excluir") || lower.includes("remover")) return true;
+    return [];
+  }
+  const names = ${JSON.stringify([...dbNames])};
+  for(const name of names){
+    window[name]=async function(...args){ return result(name,args); };
+  }
+})();
+`;
+
+const supabaseMock = `
+(function(){
+  window.ADMIN_UID = "admin-test";
+  window.CM_CONFIG = { limiteArmazenamentoBytes: 1073741824, storageLimitBytes:1073741824 };
+  const isAdmin = /(?:admin|clientes|projetos|documentos|biblioteca|fotos|financeiro|agenda|cronograma|solicitacoes|configuracoes|protecao-pdf-admin)\\.html$/i.test(location.pathname);
+  const user = { id: isAdmin ? "admin-test" : "client-test", email: isAdmin ? "admin@teste.local" : "cliente@teste.local", user_metadata:{nome:isAdmin?"Camila Teste":"Cliente Teste"} };
+  const session = { user, access_token:"mock-token" };
+
+  const sample = {
+    clientes:[{id:"c1", user_id:"client-test", nome:"Cliente Teste", email:"cliente@teste.local", status:"ativo", parceria:false}],
+    projetos:[{id:"p1", cliente_id:"c1", nome:"Projeto Teste", status:"em_andamento", numero_contrato:"TESTE-001", parceria:false}],
+    documentos:[{id:"d1", cliente_id:"c1", projeto_id:"p1", nome:"Documento Teste", titulo:"Documento Teste", tipo:"projeto", nome_original:"teste.pdf"}],
+    fotos:[{id:"f1", cliente_id:"c1", projeto_id:"p1", nome:"Foto Teste", arquivo:"teste.webp"}],
+    biblioteca:[{id:"b1", cliente_id:"c1", projeto_id:"p1", nome:"Arquivo Teste", tipo:"guia_estilos"}],
+    agenda:[], cronograma:[], solicitacoes:[], financeiro:[], configuracoes:[]
+  };
+
+  function chain(table){
+    const state={single:false};
+    const api={
+      select(){return api}, eq(){return api}, neq(){return api}, gt(){return api}, gte(){return api},
+      lt(){return api}, lte(){return api}, in(){return api}, is(){return api}, not(){return api},
+      match(){return api}, order(){return api}, limit(){return api}, range(){return api},
+      insert(){return api}, update(){return api}, upsert(){return api}, delete(){return api},
+      maybeSingle(){ return Promise.resolve({data:(sample[table]||[])[0]||null,error:null}); },
+      single(){ return Promise.resolve({data:(sample[table]||[])[0]||null,error:null}); },
+      then(resolve,reject){ return Promise.resolve({data:sample[table]||[],error:null,count:(sample[table]||[]).length}).then(resolve,reject); }
+    };
+    return api;
+  }
+
+  window.supabaseClient = {
+    auth:{
+      getSession: async()=>({data:{session},error:null}),
+      getUser: async()=>({data:{user},error:null}),
+      signInWithPassword: async()=>({data:{session,user},error:null}),
+      signUp: async()=>({data:{session:null,user},error:null}),
+      resetPasswordForEmail: async()=>({data:{},error:null}),
+      signOut: async()=>({error:null}),
+      onAuthStateChange: ()=>({data:{subscription:{unsubscribe(){}}}})
+    },
+    from: table => chain(table),
+    rpc: async name => ({data:name==="uso_armazenamento_portal"?{bytes_utilizados:1048576,quantidade_arquivos:3}:[],error:null}),
+    storage:{
+      from: ()=>({
+        upload:async()=>({data:{path:"mock/path"},error:null}),
+        remove:async()=>({data:[],error:null}),
+        list:async()=>({data:[],error:null}),
+        createSignedUrl:async()=>({data:{signedUrl:"https://example.invalid/mock"},error:null}),
+        getPublicUrl:()=>({data:{publicUrl:"https://example.invalid/mock"}})
+      })
+    }
+  };
+})();
+`;
+
+async function installMocks(page) {
+  await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route =>
+    route.fulfill({ status:200, contentType:"application/javascript", body:"window.supabase={createClient:()=>window.supabaseClient};" })
+  );
+  await page.route("**/js/supabase.js*", route =>
+    route.fulfill({ status:200, contentType:"application/javascript", body:supabaseMock })
+  );
+  await page.route("**/js/database.js*", route =>
+    route.fulfill({ status:200, contentType:"application/javascript", body:databaseMock })
+  );
+  await page.route(/fonts\.googleapis\.com|fonts\.gstatic\.com|cdnjs\.cloudflare\.com/, route => route.abort());
+}
+
+async function responsive(page, label) {
+  try {
+    const value = await Promise.race([
+      page.evaluate(() => new Promise(resolve => setTimeout(() => resolve("ok"), 0))),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 2500))
+    ]);
+    assert(value === "ok", `${label}: thread principal não respondeu`);
+  } catch {
+    failures.push(`${label}: página congelou / não respondeu`);
+  }
+}
+
+async function loadPage(context, file) {
+  const page = await context.newPage();
+  const pageErrors = [];
+  page.on("pageerror", error => pageErrors.push(error.message));
+  await installMocks(page);
+  await page.goto(`${BASE}/${file}?teste=${Date.now()}`, { waitUntil:"domcontentloaded", timeout:15000 });
+  await page.waitForTimeout(900);
+  await responsive(page, file);
+  assert(pageErrors.length === 0, `${file}: erros JS: ${pageErrors.join(" | ")}`);
+  return page;
+}
+
+const browser = await chromium.launch({headless:true});
+const context = await browser.newContext();
+
+const adminPages = [
+  "admin.html","clientes.html","projetos.html","documentos.html","biblioteca.html",
+  "fotos.html","financeiro.html","agenda.html","cronograma.html","solicitacoes.html","configuracoes.html"
+];
+
+for (const file of adminPages) {
+  const page = await loadPage(context, file);
+  const loading = page.locator("#loading");
+  if (await loading.count()) {
+    await page.waitForTimeout(1200);
+    const visible = await loading.isVisible().catch(()=>false);
+    assert(!visible, `${file}: loading permaneceu bloqueando a interface`);
+  }
+
+  const menuLinks = await page.locator("a.menu-item").count();
+  assert(menuLinks >= 5, `${file}: menu lateral incompleto (${menuLinks} links)`);
+
+  await page.close();
+}
+
+const modalTests = [
+  ["admin.html","novoCliente","modalCliente"],
+  ["clientes.html","novoCliente","modalCliente"],
+  ["projetos.html","novoProjeto","modalProjeto"],
+  ["documentos.html","novoDocumento","modalDocumento"],
+  ["biblioteca.html","novoArquivo","modalArquivo"],
+  ["fotos.html","novaFoto","modalFoto"],
+  ["financeiro.html","novoLancamento","modalFinanceiro"],
+  ["agenda.html","novoEvento","modalEvento"],
+  ["solicitacoes.html","novaSolicitacao","modalSolicitacao"]
+];
+
+for (const [file, buttonId, modalId] of modalTests) {
+  const page = await loadPage(context, file);
+  const button = page.locator(`#${buttonId}`);
+  const modal = page.locator(`#${modalId}`);
+  assert(await button.count() === 1, `${file}: botão #${buttonId} ausente`);
+  assert(await modal.count() === 1, `${file}: modal #${modalId} ausente`);
+  if (await button.count() && await modal.count()) {
+    await button.click({timeout:3000}).catch(error => failures.push(`${file}: clique #${buttonId} falhou: ${error.message}`));
+    await page.waitForTimeout(100);
+    const opened = await modal.evaluate(el => el.classList.contains("show") || getComputedStyle(el).display !== "none").catch(()=>false);
+    assert(opened, `${file}: #${buttonId} não abriu #${modalId}`);
+  }
+  await responsive(page, `${file} após clique ${buttonId}`);
+  await page.close();
+}
+
+const adminNav = [
+  ["abrirClientes","clientes.html"],["abrirProjetos","projetos.html"],["abrirDocumentos","documentos.html"],
+  ["abrirBiblioteca","biblioteca.html"],["abrirFotos","fotos.html"],["abrirFinanceiro","financeiro.html"],
+  ["abrirAgenda","agenda.html"],["abrirConfiguracoes","configuracoes.html"]
+];
+
+for (const [buttonId, destination] of adminNav) {
+  const page = await loadPage(context, "admin.html");
+  const button = page.locator(`#${buttonId}`);
+  assert(await button.count() === 1, `admin.html: #${buttonId} ausente`);
+  if (await button.count()) {
+    await Promise.all([
+      page.waitForURL(url => url.pathname.endsWith("/" + destination), {timeout:3000}).catch(()=>null),
+      button.click({timeout:3000}).catch(()=>null)
+    ]);
+    assert(page.url().includes(destination), `admin.html: #${buttonId} não navegou para ${destination}`);
+  }
+  await page.close();
+}
+
+const clientPages = [
+  "portal.html","meu-projeto.html","biblioteca-cliente.html","documentos-cliente.html",
+  "fotos-cliente.html","agenda-cliente.html","cronograma-cliente.html","solicitacoes-cliente.html"
+];
+
+for (const file of clientPages) {
+  const page = await loadPage(context, file);
+  await responsive(page, file);
+  await page.close();
+}
+
+// Login real com Supabase mockado: primeiro acesso e recuperação.
+{
+  const page = await loadPage(context, "login.html");
+  const first = page.locator("#firstAccess");
+  if (await first.count()) {
+    await first.click();
+    await page.waitForTimeout(50);
+    const group = page.locator("#confirmarSenhaGroup");
+    assert(await group.count() === 1, "login.html: grupo de confirmação de senha ausente");
+    if (await group.count()) {
+      const hidden = await group.getAttribute("hidden");
+      assert(hidden === null, "login.html: Primeiro acesso não exibiu confirmação de senha");
+    }
+  } else {
+    failures.push("login.html: botão Primeiro acesso ausente");
+  }
+  await page.close();
+}
+
+await browser.close();
+
+if (failures.length) {
+  console.error("\nFALHAS DE SMOKE TEST:");
+  failures.forEach((failure,index)=>console.error(`${index+1}. ${failure}`));
+  process.exit(1);
+}
+console.log("SMOKE TEST APROVADO: Admin, Cliente e Login responderam sem congelamento.");
