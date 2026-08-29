@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: auditoria-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   auditoria:
     runs-on: ubuntu-latest
