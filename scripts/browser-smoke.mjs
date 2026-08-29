@@ -18,29 +18,72 @@ for (const name of fs.readdirSync(path.join(ROOT, "js")).filter(name => name.end
 
 const databaseMock = `
 (function(){
-  const cliente = {id:"c1", nome:"Cliente Teste", email:"cliente@teste.local", status:"ativo", parceria:false};
-  const projeto = {id:"p1", cliente_id:"c1", nome:"Projeto Teste", status:"em_andamento", numero_contrato:"TESTE-001", parceria:false};
-  const documento = {id:"d1", cliente_id:"c1", projeto_id:"p1", nome:"Documento Teste", titulo:"Documento Teste", tipo:"projeto", nome_original:"teste.pdf"};
-  const foto = {id:"f1", cliente_id:"c1", projeto_id:"p1", nome:"Foto Teste", arquivo:"teste.webp"};
-  const biblioteca = {id:"b1", cliente_id:"c1", projeto_id:"p1", nome:"Arquivo Teste", tipo:"guia_estilos"};
-  const samples = {clientes:[cliente], projetos:[projeto], documentos:[documento], fotos:[foto], biblioteca:[biblioteca]};
+  const clientes = [
+    {id:"c1", nome:"Cliente Alpha", email:"alpha@teste.local", status:"ativo", parceria:false},
+    {id:"c2", nome:"Cliente Beta", email:"beta@teste.local", status:"ativo", parceria:true}
+  ];
+  const projetos = [
+    {id:"p1", cliente_id:"c1", nome:"Projeto Alpha", status:"em_andamento", numero_contrato:"ALPHA-001", parceria:false},
+    {id:"p2", cliente_id:"c2", nome:"Projeto Beta", status:"em_andamento", numero_contrato:"", parceria:true}
+  ];
+  const documentos = [
+    {id:"d1", cliente_id:"c1", projeto_id:"p1", nome:"Projeto Executivo Alpha", titulo:"Projeto Executivo Alpha", tipo:"projeto", nome_original:"Projeto_Executivo.pdf"},
+    {id:"d2", cliente_id:"c2", projeto_id:"p2", nome:"ART Beta", titulo:"ART Beta", tipo:"art", nome_original:"ART_Beta.pdf"}
+  ];
+  const fotos = [
+    {id:"f1", cliente_id:"c1", projeto_id:"p1", nome:"Fachada Alpha", arquivo:"c1/p1/fachada.webp"},
+    {id:"f2", cliente_id:"c2", projeto_id:"p2", nome:"Interior Beta", arquivo:"c2/p2/interior.webp"}
+  ];
+  const biblioteca = [
+    {id:"b1", cliente_id:"c1", projeto_id:"p1", nome:"Guia de Estilos Alpha", categoria:"guia_estilos", tipo:"application/pdf", arquivo:"c1/p1/guia_estilos/guia.pdf", tamanho:"1 MB"}
+  ];
+  const cronograma = [
+    {id:"cr1",cliente_id:"c1",projeto_id:"p1",nome:"Fundação",status:"Em andamento",ordem:1,peso_percentual:30,percentual_conclusao:50,data_inicio:"2026-08-01",data_fim:"2026-08-20"},
+    {id:"cr2",cliente_id:"c2",projeto_id:"p2",nome:"Alvenaria",status:"Pendente",ordem:1,peso_percentual:20,percentual_conclusao:0,data_inicio:"2026-09-01",data_fim:"2026-09-20"}
+  ];
+  let configuracoes = {
+    id:"cfg1",
+    nome_empresa:"Camila Martins Engenharia",
+    cnpj:"00.000.000/0001-00",
+    crea:"CREA-TESTE",
+    email:"contato@teste.local",
+    telefone:"(21) 0000-0000",
+    endereco:"Rua Teste",
+    cidade:"Rio de Janeiro",
+    estado:"RJ",
+    descricao:"Configuração QA",
+    tema:"escuro",
+    cor_principal:"#b89a63",
+    notificacoes:true
+  };
+
+  const samples = {clientes,projetos,documentos,fotos,biblioteca,cronograma};
+
   function result(name,args){
     const lower=name.toLowerCase();
+
+    if(lower === "dbbuscarconfiguracoes") return {...configuracoes};
+    if(lower === "dbsalvarconfiguracoes"){
+      configuracoes = {...configuracoes,...(args[0]||{})};
+      return [{...configuracoes}];
+    }
+
     if(lower.includes("clientes")) return samples.clientes;
     if(lower.includes("projetos")) return samples.projetos;
     if(lower.includes("documentos")) return samples.documentos;
     if(lower.includes("fotos")) return samples.fotos;
     if(lower.includes("biblioteca")) return samples.biblioteca;
+    if(lower.includes("cronograma")) return samples.cronograma;
     if(lower.includes("agenda")) return [];
-    if(lower.includes("cronograma")) return [];
     if(lower.includes("solicitacoes")) return [];
     if(lower.includes("financeiro")) return [];
-    if(lower.includes("configuracoes")) return {};
-    if(lower.includes("porid") || lower.includes("detalhe")) return {...cliente,...projeto};
+    if(lower.includes("porid") || lower.includes("detalhe")) return {...clientes[0],...projetos[0]};
     if(lower.includes("criar") || lower.includes("editar")) return {...(args[0]||{}), id:(args[0]||{}).id||"mock-id"};
     if(lower.includes("excluir") || lower.includes("remover")) return true;
+    if(lower.includes("notificar")) return {enviado:true};
     return [];
   }
+
   window.__DB_CALLS__ = [];
   const names = ${JSON.stringify([...dbNames])};
   for(const name of names){
@@ -205,8 +248,63 @@ for (const file of adminPages) {
   }
 
   const menuLinks = await page.locator("a.menu-item").count();
-  assert(menuLinks >= 5, `${file}: menu lateral incompleto (${menuLinks} links)`);
+  assert(menuLinks >= 11, `${file}: menu lateral incompleto (${menuLinks} links)`);
 
+  const conteudoLinks = await page.locator('a.menu-item[href="protecao-pdf-admin.html"]').count();
+  assert(
+    conteudoLinks === 1,
+    `${file}: "Conteúdo do site" deve aparecer exatamente uma vez no menu (encontrado: ${conteudoLinks})`
+  );
+
+  const paginaAtual = file.toLowerCase();
+  const ativo = await page.locator("a.menu-item.ativo").evaluateAll(links =>
+    links.map(link => (link.getAttribute("href") || "").split("?")[0].toLowerCase())
+  );
+  assert(
+    ativo.length === 1 && ativo[0] === paginaAtual,
+    `${file}: item ativo do menu inconsistente: ${ativo.join(", ")}`
+  );
+
+  await page.close();
+}
+
+// Critérios estruturais: Documentos, Fotos e Cronograma devem ser pastas fechadas por cliente.
+for (const [file,container] of [
+  ["documentos.html","#listaDocumentos"],
+  ["fotos.html","#galeriaFotos"],
+  ["cronograma.html","#listaCronograma"]
+]) {
+  const page = await loadPage(context,file);
+  await page.waitForTimeout(350);
+
+  const pastas = page.locator(`${container} details.cme-pasta-cliente`);
+  const quantidade = await pastas.count();
+
+  assert(
+    quantidade === 2,
+    `${file}: esperado 2 pastas de clientes, encontrado ${quantidade}`
+  );
+
+  const abertas = await pastas.evaluateAll(items => items.filter(item => item.open).length);
+  assert(
+    abertas === 0,
+    `${file}: as pastas devem iniciar fechadas; ${abertas} vieram abertas`
+  );
+
+  const textos = await pastas.locator("summary").allTextContents();
+  assert(
+    textos.some(t => /Cliente Alpha/i.test(t)) && textos.some(t => /Cliente Beta/i.test(t)),
+    `${file}: nomes dos clientes não aparecem corretamente nas pastas: ${textos.join(" | ")}`
+  );
+
+  await page.close();
+}
+
+// Dashboard: Biblioteca deve somar biblioteca + documentos + fotos.
+{
+  const page = await loadPage(context,"admin.html");
+  const total = (await page.locator("#totalBiblioteca").textContent() || "").trim();
+  assert(total === "5", `admin.html: contador Biblioteca deveria ser 5 e exibiu "${total}"`);
   await page.close();
 }
 
@@ -375,36 +473,85 @@ for (const teste of formTests) {
   await page.close();
 }
 
-// Configurações não usa modal: valida o fluxo de salvar diretamente.
+// Configurações: carregar, aplicar, salvar/confirmar, backup, notificações e cache.
 {
   const page = await loadPage(context, "configuracoes.html");
-  if (await page.locator("#empresaNome").count()) {
-    await page.locator("#empresaNome").fill("Camila Martins Engenharia QA");
-  }
-  const form = page.locator("#formConfiguracoes");
-  if (await form.count()) {
-    await form.evaluate(el => el.requestSubmit());
-    await page.waitForFunction(
-      () => (window.__DB_CALLS__ || []).some(call => call.name === "dbSalvarConfiguracoes"),
-      null,
-      { timeout: 3500 }
-    ).catch(() => {});
-    await responsive(page, "configuracoes.html após salvar");
-    const calls = await page.evaluate(() => window.__DB_CALLS__ || []);
-    assert(
-      calls.some(call => call.name === "dbSalvarConfiguracoes"),
-      "configuracoes.html: salvar não chamou dbSalvarConfiguracoes"
-    );
-  } else {
-    failures.push("configuracoes.html: formConfiguracoes ausente");
-  }
+
+  assert(
+    await page.locator("#empresaNome").inputValue() === "Camila Martins Engenharia",
+    "configuracoes.html: dados salvos não foram carregados"
+  );
+
+  await page.locator("#empresaNome").fill("Camila Martins Engenharia QA");
+  await page.locator("#sistemaTema").selectOption("claro");
+  await page.locator("#sistemaCorPrincipal").fill("#123456");
+  await page.locator("#sistemaNotificacoes").selectOption("inativo");
+
+  await page.waitForTimeout(80);
+
+  const temaAplicado = await page.evaluate(() => document.documentElement.dataset.adminTheme);
+  const corAplicada = await page.evaluate(() =>
+    getComputedStyle(document.documentElement).getPropertyValue("--dourado").trim()
+  );
+
+  assert(temaAplicado === "claro", `configuracoes.html: tema claro não foi aplicado (${temaAplicado})`);
+  assert(corAplicada.toLowerCase() === "#123456", `configuracoes.html: cor não foi aplicada (${corAplicada})`);
+
+  await page.locator("#formConfiguracoes").evaluate(el => el.requestSubmit());
+
+  await page.waitForFunction(
+    () => (window.__DB_CALLS__ || []).some(call => call.name === "dbSalvarConfiguracoes"),
+    null,
+    {timeout:3500}
+  ).catch(()=>{});
+
+  const calls = await page.evaluate(() => window.__DB_CALLS__ || []);
+  const salvar = calls.find(call => call.name === "dbSalvarConfiguracoes");
+  const dados = salvar?.args?.[0] || {};
+
+  assert(dados.nome_empresa === "Camila Martins Engenharia QA", "Configurações: nome não chegou ao salvamento");
+  assert(dados.tema === "claro", "Configurações: tema não chegou ao salvamento");
+  assert(dados.cor_principal === "#123456", "Configurações: cor não chegou ao salvamento");
+  assert(dados.notificacoes === false, "Configurações: notificações inativas não chegaram ao salvamento");
+
+  const status = (await page.locator("#statusConfiguracoes").textContent().catch(()=>"")) || "";
+  assert(/confirmadas no banco/i.test(status), `Configurações: salvamento não foi confirmado: ${status}`);
+
+  const notificacao = await page.evaluate(async () =>
+    typeof window.dbNotificarAtualizacao === "function"
+      ? await window.dbNotificarAtualizacao({tipo:"qa"})
+      : null
+  );
+  assert(
+    notificacao?.enviado === false && /desativadas/i.test(notificacao?.motivo || ""),
+    "Configurações: opção de notificações desativadas não está sendo respeitada"
+  );
+
+  const downloadPromise = page.waitForEvent("download",{timeout:4000}).catch(()=>null);
+  await page.locator("#gerarBackup").click();
+  const download = await downloadPromise;
+  assert(Boolean(download), "Configurações: Gerar Backup não iniciou download");
+
+  await page.evaluate(() => {
+    sessionStorage.setItem("qa-cache","1");
+    localStorage.setItem("cme_cache_qa","1");
+  });
+  await page.locator("#limparCache").click();
+  await page.waitForTimeout(180);
+
+  const cache = await page.evaluate(() => ({
+    session: sessionStorage.getItem("qa-cache"),
+    local: localStorage.getItem("cme_cache_qa")
+  }));
+  assert(cache.session === null && cache.local === null, "Configurações: Limpar Cache não limpou o cache local");
+
   assert(
     (page.__cmePageErrors || []).length === 0,
-    `configuracoes.html: erro JS após salvar: ${(page.__cmePageErrors || []).join(" | ")}`
+    `configuracoes.html: erro JS: ${(page.__cmePageErrors || []).join(" | ")}`
   );
+
   await page.close();
 }
-
 
 async function selecionarPrimeiraOpcaoValida(page, id) {
   const campo = page.locator(`#${id}`);
@@ -631,4 +778,4 @@ if (failures.length) {
   failures.forEach((failure,index)=>console.error(`${index+1}. ${failure}`));
   process.exit(1);
 }
-console.log("SMOKE TEST APROVADO: Admin, Cliente e Login responderam sem congelamento.");
+console.log("AUDITORIA DE ACEITAÇÃO APROVADA: estrutura, Configurações, pastas, uploads, segurança, Admin e Cliente.");
