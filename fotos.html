@@ -22,6 +22,7 @@ Fotos | Camila Martins Engenharia
 <link rel="stylesheet" href="css/admin.css?v=20260725-14">
 <link rel="stylesheet" href="css/admin-theme.css?v=20260829-4">
 <link rel="stylesheet" href="css/documentos-lote.css?v=20260829-2">
+<link rel="stylesheet" href="css/fotos-gallery.css?v=20260829-1">
 
 
 <link rel="stylesheet"
@@ -272,11 +273,7 @@ Nova Foto
 <div class="card-header">
 
 
-<h2>
-
-Galeria
-
-</h2>
+<h2>Álbuns de Fotos</h2>
 
 
 
@@ -287,7 +284,7 @@ Galeria
 <input
 type="search"
 id="pesquisaFoto"
-placeholder="Pesquisar foto...">
+placeholder="Pesquisar cliente, projeto, contrato ou foto...">
 
 
 
@@ -315,11 +312,32 @@ id="btnPesquisarFoto">
 
 
 
-<div
-id="galeriaFotos"
-class="galeria-fotos">
+<div id="galeriaFotos" class="fotos-explorer" aria-live="polite"></div>
 
+<div id="albumFotos" class="fotos-album-view" hidden>
+    <div class="foto-album-toolbar">
+        <div class="foto-album-heading">
+            <button type="button"
+                class="foto-album-back"
+                data-acao-foto="voltar-albuns"
+                aria-label="Voltar para os álbuns"
+                title="Voltar para os álbuns">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
 
+            <div class="foto-album-heading-copy">
+                <h3 id="albumTitulo">Álbum</h3>
+                <div class="foto-album-submeta">
+                    <span id="albumCliente"></span>
+                    <span id="albumContrato"></span>
+                </div>
+            </div>
+        </div>
+
+        <span id="albumQuantidade" class="foto-album-count-badge">0 fotos</span>
+    </div>
+
+    <div id="albumGrade" class="foto-album-grade" aria-live="polite"></div>
 </div>
 
 
@@ -564,59 +582,6 @@ Salvar Foto
 
 
 
-<!-- DETALHES DA FOTO -->
-
-
-
-<section class="painel-principal">
-
-
-
-<div class="card-grande">
-
-
-
-<div class="card-header">
-
-
-<h2>
-
-Detalhes da Foto
-
-</h2>
-
-
-
-</div>
-
-
-
-
-
-<div
-id="detalhesFoto"
-class="detalhes">
-
-
-<p>
-
-Selecione uma imagem para visualizar os detalhes.
-
-</p>
-
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-</section>
 </main>
 
 
@@ -627,6 +592,83 @@ Selecione uma imagem para visualizar os detalhes.
 
 
 
+
+<!-- VISUALIZADOR DE FOTOS -->
+<div id="visualizadorFoto"
+    class="foto-viewer"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Visualizador de fotos"
+    hidden>
+
+    <div class="foto-viewer-toolbar">
+        <div class="foto-viewer-copy">
+            <strong id="viewerTitulo">Foto</strong>
+            <span id="viewerMeta"></span>
+        </div>
+
+        <div class="foto-viewer-acoes">
+            <button type="button"
+                id="viewerEditar"
+                data-acao-foto="editar"
+                title="Editar foto"
+                aria-label="Editar foto">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+
+            <button type="button"
+                id="viewerExcluir"
+                class="viewer-delete"
+                data-acao-foto="excluir"
+                title="Excluir foto"
+                aria-label="Excluir foto">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+
+            <button type="button"
+                data-acao-foto="viewer-fechar"
+                title="Fechar"
+                aria-label="Fechar visualizador">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="foto-viewer-stage">
+        <button type="button"
+            id="viewerAnterior"
+            class="foto-viewer-nav"
+            data-acao-foto="viewer-anterior"
+            aria-label="Foto anterior"
+            title="Foto anterior">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+
+        <div class="foto-viewer-image-wrap">
+            <img id="viewerImagem" alt="" hidden>
+            <div id="viewerIndisponivel" hidden>
+                <i class="fa-regular fa-image"></i>
+                <span>Imagem indisponível</span>
+            </div>
+        </div>
+
+        <button type="button"
+            id="viewerProxima"
+            class="foto-viewer-nav"
+            data-acao-foto="viewer-proxima"
+            aria-label="Próxima foto"
+            title="Próxima foto">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+    </div>
+
+    <div class="foto-viewer-info">
+        <span id="viewerDescricao"></span>
+        <span id="viewerContador">0 / 0</span>
+    </div>
+
+    <div id="viewerMiniaturas" class="viewer-filmstrip" aria-label="Miniaturas do álbum"></div>
+</div>
 
 <!-- LOADING -->
 
@@ -670,7 +712,7 @@ Carregando...
 
 
 <script src="js/servicos.js?v=20260725-14"></script>
-    <script src="js/fotos.js?v=20260829-11"></script>
+    <script src="js/fotos.js?v=20260829-12"></script>
     <script src="js/fotos-lote.js?v=20260829-3"></script>
 
 </body>
