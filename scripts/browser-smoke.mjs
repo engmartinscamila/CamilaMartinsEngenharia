@@ -292,7 +292,7 @@ const formTests = [
   },
   {
     file:"fotos.html", open:"novaFoto", form:"formFoto", expected:"dbCriarFoto",
-    fields:{fotoProjeto:"p1",fotoCliente:"c1",fotoTitulo:"Foto QA",arquivoFoto:["foto-qa.webp"]}
+    fields:{fotoCliente:"c1",fotoProjeto:"p1",fotoTitulo:"Foto QA",arquivoFoto:["foto-qa.webp"]}
   },
   {
     file:"financeiro.html", open:"novoLancamento", form:"formFinanceiro", expected:"dbCriarLancamentoFinanceiro",
@@ -333,13 +333,20 @@ for (const teste of formTests) {
   }
 
   await form.evaluate(el => el.requestSubmit());
-  await page.waitForTimeout(500);
+
+  await page.waitForFunction(
+    expected => (window.__DB_CALLS__ || []).some(call => call.name === expected),
+    teste.expected,
+    { timeout: 3500 }
+  ).catch(() => {});
+
   await responsive(page, `${teste.file} após salvar`);
 
   const calls = await page.evaluate(() => window.__DB_CALLS__ || []);
+  const nomesChamados = calls.map(call => call.name).join(", ");
   assert(
     calls.some(call => call.name === teste.expected),
-    `${teste.file}: salvar não chamou ${teste.expected}`
+    `${teste.file}: salvar não chamou ${teste.expected}. Chamadas observadas: ${nomesChamados || "nenhuma"}`
   );
 
   assert(
@@ -359,7 +366,11 @@ for (const teste of formTests) {
   const form = page.locator("#formConfiguracoes");
   if (await form.count()) {
     await form.evaluate(el => el.requestSubmit());
-    await page.waitForTimeout(400);
+    await page.waitForFunction(
+      () => (window.__DB_CALLS__ || []).some(call => call.name === "dbSalvarConfiguracoes"),
+      null,
+      { timeout: 3500 }
+    ).catch(() => {});
     await responsive(page, "configuracoes.html após salvar");
     const calls = await page.evaluate(() => window.__DB_CALLS__ || []);
     assert(
