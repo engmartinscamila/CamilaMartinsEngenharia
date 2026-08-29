@@ -793,11 +793,14 @@ html[data-admin-theme="claro"] .form-group textarea,
 html[data-admin-theme="claro"] .acoes-card input,
 html[data-admin-theme="claro"] .search input,
 html[data-admin-theme="claro"] input[type="file"]{
-    background:#ffffff;
-    color:#1b2430;
-    caret-color:#1b2430;
-    border-color:#c9d0d8;
-    color-scheme:light;
+    background-color:#ffffff !important;
+    color:#1b2430 !important;
+    -webkit-text-fill-color:#1b2430 !important;
+    caret-color:#1b2430 !important;
+    border-color:#c9d0d8 !important;
+    opacity:1 !important;
+    filter:none !important;
+    color-scheme:light !important;
 }
 
 html[data-admin-theme="claro"] .campo input::placeholder,
@@ -818,9 +821,10 @@ html[data-admin-theme="claro"] .form-group select:focus,
 html[data-admin-theme="claro"] .form-group textarea:focus,
 html[data-admin-theme="claro"] .acoes-card input:focus,
 html[data-admin-theme="claro"] .search input:focus{
-    background:#ffffff;
-    color:#111827;
-    border-color:var(--dourado);
+    background-color:#ffffff !important;
+    color:#111827 !important;
+    -webkit-text-fill-color:#111827 !important;
+    border-color:var(--dourado) !important;
     box-shadow:0 0 0 3px color-mix(in srgb, var(--dourado) 18%, transparent);
     outline:none;
 }
@@ -831,10 +835,11 @@ html[data-admin-theme="claro"] .campo textarea:disabled,
 html[data-admin-theme="claro"] .form-group input:disabled,
 html[data-admin-theme="claro"] .form-group select:disabled,
 html[data-admin-theme="claro"] .form-group textarea:disabled{
-    background:#eef1f4;
-    color:#66707c;
-    border-color:#d6dce2;
-    opacity:1;
+    background-color:#eef1f4 !important;
+    color:#66707c !important;
+    -webkit-text-fill-color:#66707c !important;
+    border-color:#d6dce2 !important;
+    opacity:1 !important;
 }
 
 html[data-admin-theme="claro"] select option{
@@ -847,9 +852,10 @@ html[data-admin-theme="claro"] input:-webkit-autofill:hover,
 html[data-admin-theme="claro"] input:-webkit-autofill:focus,
 html[data-admin-theme="claro"] textarea:-webkit-autofill,
 html[data-admin-theme="claro"] select:-webkit-autofill{
-    -webkit-text-fill-color:#1b2430;
-    -webkit-box-shadow:0 0 0 1000px #ffffff inset;
-    box-shadow:0 0 0 1000px #ffffff inset;
+    -webkit-text-fill-color:#1b2430 !important;
+    -webkit-box-shadow:0 0 0 1000px #ffffff inset !important;
+    box-shadow:0 0 0 1000px #ffffff inset !important;
+    background-color:#ffffff !important;
     transition:background-color 9999s ease-out 0s;
 }
 
