@@ -1,5 +1,5 @@
-// CAMILA MARTINS ENGENHARIA — NOTIFICAÇÕES V2
-// Compatível com as chaves secretas atuais e legadas do Supabase.
+// CAMILA MARTINS ENGENHARIA — NOTIFICAÇÕES V3
+// E-mail (Resend) e SMS (Twilio) independentes, com direção definida por quem envia.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { protegerDadosConfidenciais } from "./privacy.js";
 
@@ -8,7 +8,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const ADMIN_UID =
+const ADMIN_UID_LEGADO =
   Deno.env.get("ADMIN_UID") ??
   "5c9d7a0e-0495-4e96-8561-1d7f220be154";
 
@@ -68,12 +68,12 @@ async function enviarSms(telefoneInformado: unknown, mensagem: string) {
   const fromNumber = Deno.env.get("TWILIO_FROM_NUMBER");
 
   if (!accountSid || !authToken || !fromNumber) {
-    return { enviado: false, status: "nao_configurado", motivo: "Canal SMS ainda não configurado." };
+    return { enviado: false, status: "nao_configurado", motivo: "Canal SMS ainda não configurado.", id: null };
   }
 
   const telefone = normalizarTelefoneBrasil(telefoneInformado);
   if (!telefone) {
-    return { enviado: false, status: "sem_destino", motivo: "Telefone ausente ou inválido." };
+    return { enviado: false, status: "sem_destino", motivo: "Telefone ausente ou inválido.", id: null };
   }
 
   const form = new URLSearchParams({
@@ -98,12 +98,72 @@ async function enviarSms(telefoneInformado: unknown, mensagem: string) {
 
     if (!response.ok) {
       console.error("Provedor de SMS recusou a notificação:", response.status);
-      return { enviado: false, status: "falhou", motivo: "O provedor de SMS recusou o envio." };
+      return { enviado: false, status: "falhou", motivo: "O provedor de SMS recusou o envio.", id: null };
     }
 
-    return { enviado: true, status: "enviado", id: data.sid ?? null };
+    return { enviado: true, status: "enviado", motivo: "", id: data.sid ?? null };
   } catch {
-    return { enviado: false, status: "falhou", motivo: "Falha de comunicação com o provedor de SMS." };
+    return { enviado: false, status: "falhou", motivo: "Falha de comunicação com o provedor de SMS.", id: null };
+  }
+}
+
+async function enviarEmail(params: {
+  destinatario: string | null | undefined;
+  assunto: string;
+  saudacao: string;
+  titulo: string;
+  mensagem: string;
+  destinoPortal: string;
+}) {
+  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  const fromEmail = Deno.env.get("NOTIFICATION_FROM_EMAIL");
+
+  if (!resendApiKey || !fromEmail) {
+    return { enviado: false, status: "nao_configurado", motivo: "Canal de e-mail ainda não configurado.", id: null };
+  }
+
+  if (!params.destinatario) {
+    return { enviado: false, status: "sem_destino", motivo: "Destinatário sem e-mail cadastrado.", id: null };
+  }
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: [params.destinatario],
+        subject: params.assunto,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#11283f">
+            <h1 style="font-family:Georgia,serif;font-weight:400">${escaparHtml(params.assunto)}</h1>
+            <p>Olá, ${escaparHtml(params.saudacao)}.</p>
+            <p>${escaparHtml(params.mensagem)}</p>
+            <p><strong>${escaparHtml(params.titulo)}</strong></p>
+            <p>
+              <a href="${escaparHtml(params.destinoPortal)}"
+                 style="display:inline-block;padding:12px 18px;background:#0b2b4c;color:#fff;text-decoration:none">
+                Acessar o portal
+              </a>
+            </p>
+            <p style="font-size:12px;color:#64748b">Camila Martins Engenharia</p>
+          </div>
+        `,
+      }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      console.error("Provedor de e-mail recusou a notificação:", response.status);
+      return { enviado: false, status: "falhou", motivo: "O provedor de e-mail recusou o envio.", id: null };
+    }
+
+    return { enviado: true, status: "enviado", motivo: "", id: data.id ?? null };
+  } catch {
+    return { enviado: false, status: "falhou", motivo: "Falha de comunicação com o provedor de e-mail.", id: null };
   }
 }
 
@@ -118,21 +178,12 @@ Deno.serve(async (request) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = obterChaveAdministrativa();
-  const resendApiKey = Deno.env.get("RESEND_API_KEY");
   const adminEmail = Deno.env.get("NOTIFICATION_ADMIN_EMAIL");
-  const fromEmail = Deno.env.get("NOTIFICATION_FROM_EMAIL");
   const siteUrl =
     Deno.env.get("SITE_URL") ?? "https://camilamartinsengenharia.com.br";
 
   if (!supabaseUrl || !serviceRoleKey) {
     return resposta({ erro: "Supabase não configurado na função." }, 503);
-  }
-
-  if (!resendApiKey || !adminEmail || !fromEmail) {
-    return resposta({
-      enviado: false,
-      motivo: "Configure RESEND_API_KEY, NOTIFICATION_ADMIN_EMAIL e NOTIFICATION_FROM_EMAIL.",
-    });
   }
 
   const authorization = request.headers.get("Authorization") ?? "";
@@ -176,8 +227,18 @@ Deno.serve(async (request) => {
     body.mensagem || "Há uma nova atualização disponível.",
   );
 
-  const callerIsAdmin = authData.user.id === ADMIN_UID;
-  const isClientRequest = ["solicitacao_criada", "solicitacao_respondida"].includes(body.tipo);
+  const { data: adminRecord } = await admin
+    .from("pdf_admins")
+    .select("user_id")
+    .eq("user_id", authData.user.id)
+    .maybeSingle();
+
+  const callerIsAdmin =
+    Boolean(adminRecord) || authData.user.id === ADMIN_UID_LEGADO;
+  const tipoPermitidoAoCliente = [
+    "solicitacao_criada",
+    "solicitacao_respondida",
+  ].includes(body.tipo);
 
   const { data: cliente, error: clienteError } = await admin
     .from("clientes")
@@ -191,65 +252,9 @@ Deno.serve(async (request) => {
 
   if (
     !callerIsAdmin &&
-    (!isClientRequest || cliente.auth_id !== authData.user.id)
+    (!tipoPermitidoAoCliente || cliente.auth_id !== authData.user.id)
   ) {
     return resposta({ erro: "Operação não autorizada." }, 403);
-  }
-
-  const destinatario = isClientRequest ? adminEmail : cliente.email;
-
-  if (!destinatario) {
-    return resposta({
-      enviado: false,
-      motivo: "Destinatário sem e-mail cadastrado.",
-    });
-  }
-
-  const assunto = isClientRequest
-    ? `${body.tipo === "solicitacao_respondida" ? "Nova resposta" : "Nova solicitação"} de ${cliente.nome || "cliente"}`
-    : `Atualização do seu projeto: ${tituloProtegido}`;
-  const destinoPortal = isClientRequest
-    ? `${siteUrl}/solicitacoes.html`
-    : `${siteUrl}/portal.html`;
-
-  const emailResponse = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: fromEmail,
-      to: [destinatario],
-      subject: assunto,
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#11283f">
-          <h1 style="font-family:Georgia,serif;font-weight:400">${escaparHtml(assunto)}</h1>
-          <p>Olá, ${escaparHtml(isClientRequest ? "Camila" : cliente.nome || "cliente")}.</p>
-          <p>${escaparHtml(mensagemProtegida)}</p>
-          <p><strong>${escaparHtml(tituloProtegido)}</strong></p>
-          <p>
-            <a href="${escaparHtml(destinoPortal)}"
-               style="display:inline-block;padding:12px 18px;background:#0b2b4c;color:#fff;text-decoration:none">
-              Acessar o portal
-            </a>
-          </p>
-          <p style="font-size:12px;color:#64748b">
-            Camila Martins Engenharia
-          </p>
-        </div>
-      `,
-    }),
-  });
-
-  const emailData = await emailResponse.json().catch(() => ({}));
-
-  if (!emailResponse.ok) {
-    console.error("Erro do provedor de e-mail:", emailData);
-    return resposta({
-      enviado: false,
-      motivo: "O provedor de e-mail recusou o envio.",
-    }, 502);
   }
 
   const caminhosCliente = new Set([
@@ -258,48 +263,90 @@ Deno.serve(async (request) => {
     "agenda-cliente.html",
     "documentos-cliente.html",
     "biblioteca-cliente.html",
+    "cronograma-cliente.html",
+    "fotos-cliente.html",
+    "meu-projeto.html",
   ]);
-  const caminhoSolicitado = String(body.portal_path ?? "portal.html").replace(/^\/+/, "");
+  const caminhoSolicitado = String(body.portal_path ?? "portal.html")
+    .replace(/^\/+/, "");
   const caminhoCliente = caminhosCliente.has(caminhoSolicitado)
     ? caminhoSolicitado
     : "portal.html";
+
+  // A direção depende de quem iniciou a ação. Assim, uma solicitação criada
+  // pela administradora avisa o cliente; uma solicitação criada pelo cliente
+  // avisa a administradora.
+  const destinatarioEmail = callerIsAdmin ? cliente.email : adminEmail;
+  const assunto = callerIsAdmin
+    ? `Atualização do seu projeto: ${tituloProtegido}`
+    : `${body.tipo === "solicitacao_respondida" ? "Nova resposta" : "Nova solicitação"} de ${cliente.nome || "cliente"}`;
+  const destinoEmail = callerIsAdmin
+    ? `${siteUrl}/${caminhoCliente}`
+    : `${siteUrl}/solicitacoes.html`;
+
+  const email = await enviarEmail({
+    destinatario: destinatarioEmail,
+    assunto,
+    saudacao: callerIsAdmin ? (cliente.nome || "cliente") : "Camila",
+    titulo: tituloProtegido,
+    mensagem: mensagemProtegida,
+    destinoPortal: destinoEmail,
+  });
+
+  const smsSolicitado = callerIsAdmin && body.notificar_celular === true;
   const destinoCelular = `${siteUrl}/${caminhoCliente}`;
-  const sms = callerIsAdmin && body.notificar_celular === true
+  const sms = smsSolicitado
     ? await enviarSms(
       cliente.telefone,
       `Camila Martins Engenharia: ${tituloProtegido}. ${mensagemProtegida} Acesse: ${destinoCelular}`,
     )
-    : { enviado: false, status: "nao_configurado", motivo: "SMS não solicitado para esta atualização." };
+    : {
+      enviado: false,
+      status: "nao_configurado",
+      motivo: "SMS não solicitado para esta atualização.",
+      id: null,
+    };
 
-  await Promise.all([
-    admin.from("notificacoes_envios").insert({
+  const registros = [
+    {
       cliente_id: cliente.id,
       projeto_id: body.projeto_id ?? null,
       tipo: body.tipo,
       canal: "email",
-      destino_mascarado: mascararDestino(destinatario),
-      status: "enviado",
-      provedor_id: emailData.id ?? null,
-    }),
-    admin.from("notificacoes_envios").insert({
+      destino_mascarado: mascararDestino(destinatarioEmail),
+      status: email.status,
+      provedor_id: email.id,
+      detalhe: email.motivo || null,
+    },
+  ];
+
+  if (smsSolicitado) {
+    registros.push({
       cliente_id: cliente.id,
       projeto_id: body.projeto_id ?? null,
       tipo: body.tipo,
       canal: "sms",
       destino_mascarado: mascararDestino(cliente.telefone),
       status: sms.status,
-      provedor_id: "id" in sms ? sms.id ?? null : null,
-      detalhe: "motivo" in sms ? sms.motivo ?? null : null,
-    }),
-  ]).catch(() => {});
+      provedor_id: sms.id,
+      detalhe: sms.motivo || null,
+    });
+  }
 
-  const smsObrigatorio = callerIsAdmin && body.notificar_celular === true;
-  const todosCanaisSolicitadosEnviados = !smsObrigatorio || sms.enviado === true;
+  await admin.from("notificacoes_envios").insert(registros).catch(() => {});
+
+  const canaisSolicitados = smsSolicitado ? [email, sms] : [email];
+  const algumCanalEnviado = canaisSolicitados.some(canal => canal.enviado);
+  const todosEnviados = canaisSolicitados.every(canal => canal.enviado);
+  const motivos = canaisSolicitados
+    .filter(canal => !canal.enviado && canal.motivo)
+    .map(canal => canal.motivo);
 
   return resposta({
-    enviado: todosCanaisSolicitadosEnviados,
-    motivo: todosCanaisSolicitadosEnviados ? "" : sms.motivo,
-    id: emailData.id ?? null,
-    canais: { email: { enviado: true, id: emailData.id ?? null }, sms },
+    enviado: algumCanalEnviado,
+    parcial: algumCanalEnviado && !todosEnviados,
+    motivo: motivos.join(" "),
+    id: email.id,
+    canais: { email, sms },
   });
 });
