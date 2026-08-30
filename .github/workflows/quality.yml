@@ -6,6 +6,7 @@ on:
       - auditoria-geral-20260829
       - auditoria-estrutural-20260829
       - galeria-fotos-20260829
+      - verificacao-r2-pos-migracao-20260830
   workflow_dispatch:
 
 permissions:
@@ -66,6 +67,111 @@ jobs:
           echo
           test "$CODE" = "200"
           node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('/tmp/cme-manifest.json','utf8'));if(!Array.isArray(d.projetos)||!d.projetos.length){console.error(d);process.exit(1)};console.log('projetos:',d.projetos.length);console.log('primeiro:',d.projetos[0]?.nome||d.projetos[0]?.slug||'sem nome')"
+
+      - name: Verificar todas as mídias migradas no R2
+        if: github.ref_name == 'verificacao-r2-pos-migracao-20260830'
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const https = require('https');
+
+          const manifest = JSON.parse(fs.readFileSync('assets/projetos/galeria.json','utf8'));
+          const refs = [];
+          for (const p of manifest.projetos || []) {
+            for (const img of p.imagens || []) {
+              if (img.src) refs.push({kind:'image', url:img.src, path:img.storagePath || ''});
+            }
+            for (const v of p.videos || []) {
+              if (v.src) refs.push({kind:'video', url:v.src, path:v.storagePath || ''});
+              if (v.poster) refs.push({kind:'poster', url:v.poster, path:v.posterStoragePath || ''});
+            }
+          }
+
+          if (refs.length !== 81) {
+            throw new Error('Esperado 81 referências de mídia, encontrado ' + refs.length);
+          }
+
+          const workerPrefix = 'https://cme-public-media.eng-martins-camila.workers.dev/media/';
+          for (const item of refs) {
+            if (!item.url.startsWith(workerPrefix)) {
+              throw new Error('URL fora do R2/Worker: ' + item.url);
+            }
+            if (!item.path.startsWith('portfolio/')) {
+              throw new Error('storagePath inválido: ' + item.path);
+            }
+          }
+
+          function fetchRange(item) {
+            return new Promise((resolve, reject) => {
+              const req = https.get(item.url, {
+                headers: { Range: 'bytes=0-0', 'User-Agent':'cme-r2-audit' }
+              }, res => {
+                let body = Buffer.alloc(0);
+                res.on('data', chunk => {
+                  if (body.length < 4096) body = Buffer.concat([body, chunk]).subarray(0,4096);
+                });
+                res.on('end', () => {
+                  resolve({
+                    status: res.statusCode,
+                    type: String(res.headers['content-type'] || ''),
+                    length: String(res.headers['content-length'] || ''),
+                    range: String(res.headers['content-range'] || ''),
+                    body: body.toString('utf8',0,512)
+                  });
+                });
+              });
+              req.on('error', reject);
+              req.setTimeout(20000, () => req.destroy(new Error('timeout')));
+            });
+          }
+
+          (async()=>{
+            const failures=[];
+            const stats={200:0,206:0,other:0,image:0,video:0,poster:0};
+            for (let i=0;i<refs.length;i++) {
+              const item=refs[i];
+              const r=await fetchRange(item);
+              if (r.status === 200) stats[200]++;
+              else if (r.status === 206) stats[206]++;
+              else stats.other++;
+              stats[item.kind]++;
+
+              const typeOk = item.kind === 'video'
+                ? r.type.startsWith('video/')
+                : r.type.startsWith('image/');
+              if (!([200,206].includes(r.status)) || !typeOk) {
+                failures.push({index:i+1,kind:item.kind,url:item.url,status:r.status,type:r.type,range:r.range,body:r.body});
+              }
+            }
+
+            console.log('TOTAL', refs.length);
+            console.log('STATS', JSON.stringify(stats));
+            if (failures.length) {
+              console.error('FALHAS', JSON.stringify(failures,null,2));
+              process.exit(1);
+            }
+            console.log('TODAS_AS_MIDIAS_OK');
+          })().catch(err=>{console.error(err);process.exit(1)});
+          NODE
+
+          echo "== health =="
+          curl --fail --silent --show-error "https://cme-public-media.eng-martins-camila.workers.dev/health"
+
+          echo
+          echo "== manifest remoto =="
+          curl --fail --silent --show-error "https://cme-public-media.eng-martins-camila.workers.dev/api/manifest" -o /tmp/manifest-r2.json
+          node - <<'NODE'
+          const fs=require('fs');
+          const local=JSON.parse(fs.readFileSync('assets/projetos/galeria.json','utf8'));
+          const remote=JSON.parse(fs.readFileSync('/tmp/manifest-r2.json','utf8'));
+          const norm=o=>JSON.stringify(o);
+          if(norm(local)!==norm(remote)){
+            console.error('Manifesto remoto diverge do GitHub');
+            process.exit(1);
+          }
+          console.log('MANIFESTO_REMOTO_IGUAL_GITHUB');
+          NODE
 
       - name: Log do servidor em caso de falha
         if: failure()
