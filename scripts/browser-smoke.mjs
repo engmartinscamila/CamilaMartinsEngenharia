@@ -213,6 +213,94 @@ async function installMocks(page) {
       body:"window.tus={Upload:function(){this.start=function(){};this.abort=function(){}}};"
     })
   );
+
+  page.__workerCalls = [];
+  await page.route("https://cme-public-media.eng-martins-camila.workers.dev/**", async route => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const method = request.method();
+    page.__workerCalls.push({method,url:url.pathname + url.search});
+
+    if (url.pathname === "/health") {
+      return route.fulfill({
+        status:200,
+        contentType:"application/json",
+        body:JSON.stringify({ok:true,service:"cme-public-media",storage:"cloudflare-r2",catalog:"github"})
+      });
+    }
+
+    if (url.pathname === "/api/manifest" && method === "GET") {
+      return route.fulfill({
+        status:200,
+        contentType:"application/json",
+        body:JSON.stringify({
+          projetos:[
+            {
+              slug:"qa-projeto",
+              nome:"Projeto QA",
+              categoria:"Residencial",
+              descricao:"Projeto para teste",
+              ativo:true,
+              imagens:[
+                {
+                  src:"https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/qa-projeto/imagem/existente.webp",
+                  storagePath:"portfolio/qa-projeto/imagem/existente.webp",
+                  alt:"Imagem existente",
+                  ativo:true
+                }
+              ],
+              videos:[]
+            }
+          ]
+        })
+      });
+    }
+
+    if (url.pathname === "/api/upload" && method === "PUT") {
+      const key = url.searchParams.get("key") || "";
+      return route.fulfill({
+        status:201,
+        contentType:"application/json",
+        body:JSON.stringify({
+          ok:true,
+          key,
+          size:Number(request.headers()["content-length"] || 100),
+          url:"https://cme-public-media.eng-martins-camila.workers.dev/media/" + key.split("/").map(encodeURIComponent).join("/")
+        })
+      });
+    }
+
+    if (url.pathname === "/api/manifest" && method === "PUT") {
+      return route.fulfill({
+        status:200,
+        contentType:"application/json",
+        body:JSON.stringify({ok:true,changed:true,commitSha:"qa-commit"})
+      });
+    }
+
+    if (url.pathname === "/api/delete-batch" && method === "POST") {
+      return route.fulfill({
+        status:200,
+        contentType:"application/json",
+        body:JSON.stringify({ok:true,deleted:1,commitSha:"qa-delete",rollbackUsed:false})
+      });
+    }
+
+    if (url.pathname === "/api/object" && method === "DELETE") {
+      return route.fulfill({
+        status:200,
+        contentType:"application/json",
+        body:JSON.stringify({ok:true,deleted:true})
+      });
+    }
+
+    return route.fulfill({
+      status:404,
+      contentType:"application/json",
+      body:JSON.stringify({ok:false,error:"mock route not found"})
+    });
+  });
+
   await page.route(/fonts\.googleapis\.com|fonts\.gstatic\.com|cdnjs\.cloudflare\.com/, route => route.abort());
 }
 
@@ -947,6 +1035,102 @@ for (const file of clientPages) {
 
   const total = await page.locator("#areaContent .cm-file-card").count();
   assert(total === 3, `biblioteca-cliente.html: deveria consolidar 3 itens, exibiu ${total}`);
+
+  await page.close();
+}
+
+// Ponte R2/GitHub: upload, manifesto e exclusão transacional.
+{
+  const page = await loadPage(context, "protecao-pdf-admin.html");
+  await page.waitForTimeout(250);
+
+  const bridgeReady = await page.evaluate(() =>
+    Boolean(window.CME_PORTFOLIO_R2_BRIDGE) &&
+    window.CME_PORTFOLIO_R2_BRIDGE.bucket === "projetos"
+  );
+  assert(bridgeReady, "Conteúdo do site: ponte R2/GitHub não foi carregada");
+
+  const publicUrl = await page.evaluate(() =>
+    window.supabaseClient.storage
+      .from("projetos")
+      .getPublicUrl("portfolio/qa-projeto/imagem/teste.webp")
+      .data.publicUrl
+  );
+  assert(
+    publicUrl.includes("cme-public-media.eng-martins-camila.workers.dev/media/portfolio/"),
+    `Conteúdo do site: URL pública não aponta para o Worker: ${publicUrl}`
+  );
+
+  const result = await page.evaluate(async () => {
+    const base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2nHkAAAAASUVORK5CYII=";
+    const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    const file = new File([bytes], "qa.png", {type:"image/png"});
+
+    const bucket = window.supabaseClient.storage.from("projetos");
+    const upload = await bucket.upload("portfolio/qa-projeto/imagem/qa.png", file, {
+      contentType:"image/png",
+      upsert:true
+    });
+
+    const manifest = new Blob([
+      JSON.stringify({
+        projetos:[
+          {
+            slug:"qa-projeto",
+            nome:"Projeto QA",
+            imagens:[
+              {
+                src:"https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/qa-projeto/imagem/qa.png",
+                storagePath:"portfolio/qa-projeto/imagem/qa.png",
+                alt:"QA"
+              }
+            ],
+            videos:[]
+          }
+        ]
+      })
+    ], {type:"application/json"});
+
+    const saved = await bucket.upload("portfolio/galeria.json", manifest, {
+      contentType:"application/json",
+      upsert:true
+    });
+
+    await bucket.remove(["portfolio/qa-projeto/imagem/qa.png"]);
+
+    const emptyManifest = new Blob([
+      JSON.stringify({projetos:[{slug:"qa-projeto",nome:"Projeto QA",imagens:[],videos:[]}]})
+    ], {type:"application/json"});
+
+    const deleted = await bucket.upload("portfolio/galeria.json", emptyManifest, {
+      contentType:"application/json",
+      upsert:true
+    });
+
+    return {
+      uploadError: upload.error?.message || null,
+      saveError: saved.error?.message || null,
+      deleteError: deleted.error?.message || null
+    };
+  });
+
+  assert(!result.uploadError, `Conteúdo do site: upload pela ponte falhou: ${result.uploadError}`);
+  assert(!result.saveError, `Conteúdo do site: atualização do GitHub falhou: ${result.saveError}`);
+  assert(!result.deleteError, `Conteúdo do site: exclusão transacional falhou: ${result.deleteError}`);
+
+  const calls = page.__workerCalls || [];
+  assert(
+    calls.some(x => x.method === "PUT" && x.url.startsWith("/api/upload?key=")),
+    "Conteúdo do site: upload não chamou /api/upload"
+  );
+  assert(
+    calls.some(x => x.method === "PUT" && x.url === "/api/manifest"),
+    "Conteúdo do site: catálogo não chamou PUT /api/manifest"
+  );
+  assert(
+    calls.some(x => x.method === "POST" && x.url === "/api/delete-batch"),
+    "Conteúdo do site: exclusão não chamou /api/delete-batch"
+  );
 
   await page.close();
 }
