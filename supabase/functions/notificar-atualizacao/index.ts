@@ -333,7 +333,13 @@ Deno.serve(async (request) => {
     });
   }
 
-  await admin.from("notificacoes_envios").insert(registros).catch(() => {});
+  const { error: auditError } = await admin
+    .from("notificacoes_envios")
+    .insert(registros);
+
+  if (auditError) {
+    console.warn("Não foi possível registrar a auditoria da notificação.");
+  }
 
   const canaisSolicitados = smsSolicitado ? [email, sms] : [email];
   const algumCanalEnviado = canaisSolicitados.some(canal => canal.enviado);
