@@ -46,6 +46,11 @@ export default {
         return await deleteObject(request, env, url);
       }
 
+      if (url.pathname === "/api/delete-batch" && method === "POST") {
+        await requireAdmin(request, env);
+        return await deleteBatchWithRollback(request, env);
+      }
+
       if (url.pathname.startsWith("/media/") && method === "GET") {
         const key = decodeURIComponent(url.pathname.slice("/media/".length));
         return await serveObject(request, env, key);
@@ -103,44 +108,17 @@ async function putManifestOnGitHub(request, env) {
     throw httpError(400, 'O manifesto precisa conter o array "projetos".');
   }
 
-  const current = await githubReadFile(env);
-  const normalized = JSON.stringify(data, null, 2) + "\n";
-
-  if (normalized === normalizeExistingJson(current.text)) {
-    return json({
-      ok: true,
-      changed: false,
-      sha: current.sha,
-      message: "O catálogo já estava atualizado."
-    }, 200, request, env);
-  }
-
-  const apiUrl = githubContentsUrl(env);
-  const response = await fetch(apiUrl, {
-    method: "PUT",
-    headers: githubHeaders(env),
-    body: JSON.stringify({
-      message: "Atualiza galeria pelo painel administrativo",
-      content: utf8ToBase64(normalized),
-      sha: current.sha,
-      branch: env.GITHUB_BRANCH || "main"
-    })
-  });
-
-  const result = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    const message =
-      result?.message ||
-      "O GitHub recusou a atualização do galeria.json.";
-    throw httpError(response.status === 409 ? 409 : 502, message);
-  }
+  const result = await commitManifestData(env, data);
 
   return json({
     ok: true,
-    changed: true,
-    commitSha: result?.commit?.sha || null,
-    contentSha: result?.content?.sha || null
+    changed: result.changed,
+    sha: result.sha || null,
+    commitSha: result.commitSha || null,
+    contentSha: result.contentSha || null,
+    message: result.changed
+      ? "Catálogo atualizado no GitHub."
+      : "O catálogo já estava atualizado."
   }, 200, request, env);
 }
 
@@ -270,6 +248,156 @@ async function deleteObject(request, env, url) {
   }
 
   return json({ ok: true, key, deleted: true }, 200, request, env);
+}
+
+async function deleteBatchWithRollback(request, env) {
+  let payload;
+  try {
+    payload = await request.json();
+  } catch {
+    throw httpError(400, "Corpo JSON inválido.");
+  }
+
+  const manifest = payload?.manifest;
+  const rawKeys = Array.isArray(payload?.keys) ? payload.keys : [];
+
+  if (!Array.isArray(manifest?.projetos)) {
+    throw httpError(400, "Manifesto inválido.");
+  }
+
+  const keys = [...new Set(
+    rawKeys
+      .map(normalizeKey)
+      .filter(Boolean)
+  )];
+
+  if (keys.length > 250) {
+    throw httpError(400, "Muitos arquivos em uma única exclusão.");
+  }
+
+  for (const key of keys) {
+    if (!key.startsWith(PUBLIC_PREFIX)) {
+      throw httpError(400, 'Todos os arquivos devem começar com "portfolio/".');
+    }
+  }
+
+  const tx = crypto.randomUUID();
+  const backups = [];
+
+  try {
+    for (const key of keys) {
+      const object = await env.MEDIA_BUCKET.get(key);
+
+      if (!object) {
+        continue;
+      }
+
+      const backupKey = "__cme_rollback/" + tx + "/" + key;
+
+      await env.MEDIA_BUCKET.put(backupKey, object.body, {
+        httpMetadata: object.httpMetadata,
+        customMetadata: object.customMetadata
+      });
+
+      const backupHead = await env.MEDIA_BUCKET.head(backupKey);
+      if (!backupHead) {
+        throw new Error("Não foi possível criar cópia de segurança de " + key + ".");
+      }
+
+      backups.push({ key, backupKey });
+
+      await env.MEDIA_BUCKET.delete(key);
+
+      const stillExists = await env.MEDIA_BUCKET.head(key);
+      if (stillExists) {
+        throw new Error("O R2 ainda encontrou " + key + " após a exclusão.");
+      }
+    }
+
+    const commit = await commitManifestData(env, manifest);
+
+    for (const item of backups) {
+      await env.MEDIA_BUCKET.delete(item.backupKey).catch(() => {});
+    }
+
+    return json({
+      ok: true,
+      deleted: keys.length,
+      commitSha: commit.commitSha || null,
+      rollbackUsed: false
+    }, 200, request, env);
+  } catch (error) {
+    let rollbackFailed = false;
+
+    for (const item of backups) {
+      try {
+        const backup = await env.MEDIA_BUCKET.get(item.backupKey);
+
+        if (backup) {
+          await env.MEDIA_BUCKET.put(item.key, backup.body, {
+            httpMetadata: backup.httpMetadata,
+            customMetadata: backup.customMetadata
+          });
+        }
+
+        await env.MEDIA_BUCKET.delete(item.backupKey).catch(() => {});
+      } catch {
+        rollbackFailed = true;
+      }
+    }
+
+    const suffix = rollbackFailed
+      ? " Também houve falha ao restaurar pelo menos um arquivo; verifique o R2 antes de repetir."
+      : " Os arquivos removidos foram restaurados automaticamente.";
+
+    throw httpError(
+      Number(error?.status || 500),
+      (error?.message || "Falha na exclusão transacional.") + suffix
+    );
+  }
+}
+
+async function commitManifestData(env, data) {
+  if (!Array.isArray(data?.projetos)) {
+    throw httpError(400, 'O manifesto precisa conter o array "projetos".');
+  }
+
+  const current = await githubReadFile(env);
+  const normalized = JSON.stringify(data, null, 2) + "\n";
+
+  if (normalized === normalizeExistingJson(current.text)) {
+    return {
+      changed: false,
+      sha: current.sha,
+      commitSha: null
+    };
+  }
+
+  const response = await fetch(githubContentsUrl(env), {
+    method: "PUT",
+    headers: githubHeaders(env),
+    body: JSON.stringify({
+      message: "Atualiza galeria pelo painel administrativo",
+      content: utf8ToBase64(normalized),
+      sha: current.sha,
+      branch: env.GITHUB_BRANCH || "main"
+    })
+  });
+
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw httpError(
+      response.status === 409 ? 409 : 502,
+      result?.message || "O GitHub recusou a atualização do galeria.json."
+    );
+  }
+
+  return {
+    changed: true,
+    commitSha: result?.commit?.sha || null,
+    contentSha: result?.content?.sha || null
+  };
 }
 
 async function serveObject(request, env, key) {
@@ -419,7 +547,7 @@ function corsHeaders(request, env) {
 
   return {
     "access-control-allow-origin": allowOrigin,
-    "access-control-allow-methods": "GET,PUT,DELETE,OPTIONS",
+    "access-control-allow-methods": "GET,PUT,POST,DELETE,OPTIONS",
     "access-control-allow-headers": "authorization,content-type",
     "access-control-max-age": "86400",
     vary: "Origin"
