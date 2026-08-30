@@ -123,21 +123,57 @@ const galleryPath = "assets/projetos/galeria.json";
 if (exists(galleryPath)) {
   try {
     const raw = JSON.parse(fs.readFileSync(path.join(ROOT, galleryPath), "utf8"));
-    const values = [];
-    const walk = value => {
-      if (Array.isArray(value)) return value.forEach(walk);
-      if (value && typeof value === "object") return Object.values(value).forEach(walk);
-      if (typeof value === "string") values.push(value);
-    };
-    walk(raw);
+    const workerPrefix = "https://cme-public-media.eng-martins-camila.workers.dev/media/";
 
-    for (const ref of values) {
-      if (!/\.(?:webp|png|jpe?g|mp4|webm)(?:[?#].*)?$/i.test(ref)) continue;
+    const validarMidia = (ref, storagePath, contexto) => {
+      if (!ref) return;
+
+      if (/^https?:\/\//i.test(ref)) {
+        if (!ref.startsWith(workerPrefix)) {
+          fail(`${galleryPath}: ${contexto} aponta para origem remota não autorizada -> ${ref}`);
+          return;
+        }
+
+        if (!String(storagePath || "").startsWith("portfolio/")) {
+          fail(`${galleryPath}: ${contexto} remota sem storagePath válido -> ${ref}`);
+        }
+        return;
+      }
+
       const cleaned = cleanRef(ref);
       const local = cleaned.startsWith("assets/")
         ? cleaned
         : normalizeRef(galleryPath, ref);
-      if (local && !exists(local)) fail(`${galleryPath}: mídia inexistente -> ${ref}`);
+
+      if (local && !exists(local)) {
+        fail(`${galleryPath}: ${contexto} local inexistente -> ${ref}`);
+      }
+    };
+
+    for (const [projectIndex, project] of (raw.projetos || []).entries()) {
+      for (const [imageIndex, image] of (project.imagens || []).entries()) {
+        validarMidia(
+          image?.src,
+          image?.storagePath,
+          `projeto ${projectIndex + 1}, imagem ${imageIndex + 1}`
+        );
+      }
+
+      for (const [videoIndex, video] of (project.videos || []).entries()) {
+        validarMidia(
+          video?.src,
+          video?.storagePath,
+          `projeto ${projectIndex + 1}, vídeo ${videoIndex + 1}`
+        );
+
+        if (video?.poster) {
+          validarMidia(
+            video.poster,
+            video.posterStoragePath,
+            `projeto ${projectIndex + 1}, poster do vídeo ${videoIndex + 1}`
+          );
+        }
+      }
     }
   } catch (error) {
     fail(`${galleryPath}: JSON inválido: ${error.message}`);
