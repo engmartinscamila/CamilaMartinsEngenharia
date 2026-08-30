@@ -279,7 +279,8 @@
                             projeto_id: projetoId,
                             descricao: descricao,
                             arquivo: caminho,
-                            nome_original: item.name
+                            nome_original: item.name,
+                            autoral: Boolean(window.CMEArquivoAutoralSelecionado?.())
                         });
                     } catch (erroRegistro) {
                         await dbExcluirArquivoStorage(BUCKETS.DOCUMENTOS, caminho).catch(function () {});

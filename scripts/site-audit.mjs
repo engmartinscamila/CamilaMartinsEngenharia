@@ -108,6 +108,15 @@ for (const js of jsFiles) {
   }
 }
 
+try {
+  execFileSync(process.execPath, ["scripts/notification-privacy-test.mjs"], {
+    cwd: ROOT,
+    stdio: "pipe"
+  });
+} catch (error) {
+  fail(`Filtro de privacidade das notificações falhou\n${String(error.stderr || error.message)}`);
+}
+
 for (const css of cssFiles) {
   const rel = `css/${css}`;
   const content = fs.readFileSync(path.join(ROOT, rel), "utf8");

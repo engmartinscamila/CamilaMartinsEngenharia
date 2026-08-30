@@ -151,7 +151,8 @@ Nenhuma categoria vazia é renderizada.
                 tamanho: item.tamanho || "",
                 url: item.url || "",
                 urlErro: item.urlErro || "",
-                arquivo: item.arquivo || ""
+                arquivo: item.arquivo || "",
+                autoral: item.autoral === true
             })),
             ...documentos.map(item => ({
                 origem: "documento",
@@ -164,7 +165,8 @@ Nenhuma categoria vazia é renderizada.
                 tamanho: item.tamanho || "",
                 url: item.url || "",
                 urlErro: item.urlErro || "",
-                arquivo: item.arquivo || ""
+                arquivo: item.arquivo || "",
+                autoral: item.autoral === true
             })),
             ...fotos.map(item => ({
                 origem: "foto",
@@ -209,6 +211,7 @@ Nenhuma categoria vazia é renderizada.
                     <div class="cm-file-copy">
                         <h5>${escapar(item.nome)}</h5>
                         <p>${escapar(item.descricao || rotulo(item.categoria))}</p>
+                        ${item.autoral ? '<span class="cme-authorship-badge"><i class="fa-solid fa-shield-halved"></i> PDF autoral rastreável</span>' : ""}
                         <div class="cm-file-actions">
                             <a class="cm-file-action" href="documentos.html?documento=${encodeURIComponent(item.id)}">
                                 <i class="fa-solid fa-eye"></i> Abrir
@@ -229,6 +232,7 @@ Nenhuma categoria vazia é renderizada.
                     <h5>${escapar(item.nome)}</h5>
                     <span hidden>${escapar(item.categoria)}</span>
                     <p>${escapar(item.descricao || rotulo(item.categoria))}</p>
+                    ${item.autoral ? '<span class="cme-authorship-badge"><i class="fa-solid fa-shield-halved"></i> PDF autoral rastreável</span>' : ""}
                     ${item.tamanho ? `<small>${escapar(item.tamanho)}</small>` : ""}
                     <div class="cm-file-actions">
                         ${item.url
@@ -502,7 +506,8 @@ Nenhuma categoria vazia é renderizada.
                         tamanho: formatarTamanho(arquivo.size),
                         arquivo: caminho,
                         cliente_id: clienteId,
-                        projeto_id: projetoId
+                        projeto_id: projetoId,
+                        autoral: Boolean(window.CMEArquivoAutoralSelecionado?.())
                     });
                 } catch (erroRegistro) {
                     await window.dbExcluirArquivoStorage?.(bucket, caminho).catch(() => {});

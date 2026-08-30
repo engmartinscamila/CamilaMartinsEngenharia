@@ -27,15 +27,15 @@ const databaseMock = `
     {id:"p2", cliente_id:"c2", nome:"Projeto Beta", status:"em_andamento", numero_contrato:"", parceria:true}
   ];
   const documentos = [
-    {id:"d1", cliente_id:"c1", projeto_id:"p1", nome:"Projeto Executivo Alpha", titulo:"Projeto Executivo Alpha", tipo:"projeto", nome_original:"Projeto_Executivo.pdf"},
-    {id:"d2", cliente_id:"c2", projeto_id:"p2", nome:"ART Beta", titulo:"ART Beta", tipo:"art", nome_original:"ART_Beta.pdf"}
+    {id:"d1", cliente_id:"c1", projeto_id:"p1", nome:"Projeto Executivo Alpha", titulo:"Projeto Executivo Alpha", tipo:"projeto", nome_original:"Projeto_Executivo.pdf", arquivo:"c1/p1/projeto-executivo.pdf", autoral:true},
+    {id:"d2", cliente_id:"c2", projeto_id:"p2", nome:"ART Beta", titulo:"ART Beta", tipo:"art", nome_original:"ART_Beta.pdf", arquivo:"c2/p2/art.pdf", autoral:false}
   ];
   const fotos = [
     {id:"f1", cliente_id:"c1", projeto_id:"p1", nome:"Fachada Alpha", arquivo:"c1/p1/fachada.webp"},
     {id:"f2", cliente_id:"c2", projeto_id:"p2", nome:"Interior Beta", arquivo:"c2/p2/interior.webp"}
   ];
   const biblioteca = [
-    {id:"b1", cliente_id:"c1", projeto_id:"p1", nome:"Guia de Estilos Alpha", categoria:"guia_estilos", tipo:"application/pdf", arquivo:"c1/p1/guia_estilos/guia.pdf", tamanho:"1 MB"}
+    {id:"b1", cliente_id:"c1", projeto_id:"p1", nome:"Guia de Estilos Alpha", categoria:"guia_estilos", tipo:"application/pdf", arquivo:"c1/p1/guia_estilos/guia.pdf", tamanho:"1 MB", autoral:true}
   ];
   const cronograma = [
     {id:"cr1",cliente_id:"c1",projeto_id:"p1",nome:"Fundação",status:"Em andamento",ordem:1,peso_percentual:30,percentual_conclusao:50,data_inicio:"2026-08-01",data_fim:"2026-08-20"},
@@ -76,7 +76,11 @@ const databaseMock = `
     if(lower.includes("cronograma")) return samples.cronograma;
     if(lower.includes("agenda")) return [];
     if(lower.includes("solicitacoes")) return [];
-    if(lower.includes("financeiro")) return [];
+    if(lower.includes("financeiro")) return [
+      {id:"fi1",projeto_id:"p1",descricao:"Parcela Alpha",tipo:"entrada",valor:2000,data:"2026-08-01",status:"pago",categoria:"parcelas",data_pagamento:"2026-08-01"},
+      {id:"fi2",projeto_id:"p1",descricao:"Parcela futura",tipo:"entrada",valor:1500,data:"2026-09-10",data_vencimento:"2026-09-10",status:"pendente",categoria:"parcelas"},
+      {id:"fi3",projeto_id:"p1",descricao:"Fornecedor",tipo:"saida",valor:500,data:"2026-09-12",data_vencimento:"2026-09-12",status:"previsto",categoria:"fornecedores"}
+    ];
     if(lower.includes("porid") || lower.includes("detalhe")) return {...clientes[0],...projetos[0]};
     if(lower.includes("criar") || lower.includes("editar")) return {...(args[0]||{}), id:(args[0]||{}).id||"mock-id"};
     if(lower.includes("excluir") || lower.includes("remover")) return true;
@@ -125,9 +129,9 @@ const supabaseMock = `
   const sample = {
     clientes:[{id:"c1", user_id:"client-test", nome:"Cliente Teste", email:"cliente@teste.local", status:"ativo", parceria:false}],
     projetos:[{id:"p1", cliente_id:"c1", nome:"Projeto Teste", status:"em_andamento", numero_contrato:"TESTE-001", parceria:false}],
-    documentos:[{id:"d1", cliente_id:"c1", projeto_id:"p1", nome:"Documento Teste", titulo:"Documento Teste", tipo:"projeto", nome_original:"teste.pdf"}],
+    documentos:[{id:"d1", cliente_id:"c1", projeto_id:"p1", nome:"Documento Teste", titulo:"Documento Teste", tipo:"projeto", nome_original:"teste.pdf", arquivo:"c1/p1/teste.pdf", autoral:true}],
     fotos:[{id:"f1", cliente_id:"c1", projeto_id:"p1", nome:"Foto Teste", arquivo:"teste.webp"}],
-    biblioteca:[{id:"b1", cliente_id:"c1", projeto_id:"p1", nome:"Arquivo Teste", tipo:"guia_estilos"}],
+    biblioteca:[{id:"b1", cliente_id:"c1", projeto_id:"p1", nome:"Arquivo Teste", tipo:"guia_estilos", arquivo:"c1/p1/guia.pdf", autoral:true}],
     agenda:[], cronograma:[], solicitacoes:[], financeiro:[], configuracoes:[]
   };
 
@@ -558,11 +562,11 @@ const formTests = [
   },
   {
     file:"documentos.html", open:"novoDocumento", form:"formDocumento", expected:"dbCriarDocumento",
-    fields:{documentoNome:"Projeto Executivo QA",documentoCliente:"c1",documentoProjeto:"p1",documentoArquivo:["Projeto_Executivo_QA.pdf"]}
+    fields:{documentoNome:"Projeto Executivo QA",documentoCliente:"c1",documentoProjeto:"p1",documentoAutoral:true,documentoArquivo:["Projeto_Executivo_QA.pdf"]}
   },
   {
     file:"biblioteca.html", open:"novoArquivo", form:"formArquivo", expected:"dbSalvarArquivoBiblioteca",
-    fields:{arquivoNome:"Guia de Estilos QA",arquivoCliente:"c1",arquivoProjeto:"p1",arquivoUpload:["Guia_Estilos_QA.pdf"]}
+    fields:{arquivoNome:"Guia de Estilos QA",arquivoCliente:"c1",arquivoProjeto:"p1",arquivoAutoral:true,arquivoUpload:["Guia_Estilos_QA.pdf"]}
   },
   {
     file:"fotos.html", open:"novaFoto", form:"formFoto", expected:"dbCriarFoto",
@@ -570,7 +574,7 @@ const formTests = [
   },
   {
     file:"financeiro.html", open:"novoLancamento", form:"formFinanceiro", expected:"dbCriarLancamentoFinanceiro",
-    fields:{financeiroDescricao:"Lançamento QA",financeiroValor:"100",financeiroData:"2026-08-29"}
+    fields:{financeiroDescricao:"Lançamento QA",financeiroValor:"100",financeiroData:"2026-08-29",financeiroStatus:"pago",financeiroCategoria:"honorarios",financeiroVencimento:"2026-08-29",financeiroFormaPagamento:"pix"}
   },
   {
     file:"agenda.html", open:"novoEvento", form:"formEvento", expected:"dbCriarEventoAgenda",
@@ -641,6 +645,20 @@ for (const teste of formTests) {
         "projetos.html: parceria sem orçamento não foi aceita"
       );
     }
+  }
+
+  if (teste.file === "documentos.html" || teste.file === "biblioteca.html") {
+    const chamada = calls.find(call => call.name === teste.expected);
+    const dados = chamada?.args?.[0] || {};
+    assert(dados.autoral === true, `${teste.file}: marcação autoral não chegou ao payload`);
+  }
+
+  if (teste.file === "financeiro.html") {
+    const chamada = calls.find(call => call.name === teste.expected);
+    const dados = chamada?.args?.[0] || {};
+    assert(dados.status === "pago", "financeiro.html: situação não chegou ao payload");
+    assert(dados.categoria === "honorarios", "financeiro.html: categoria não chegou ao payload");
+    assert(dados.forma_pagamento === "pix", "financeiro.html: forma de pagamento não chegou ao payload");
   }
 
   assert(
@@ -1332,6 +1350,58 @@ for (const file of clientPages) {
     `redefinir-senha.html: confirmação de troca de senha inesperada: ${mensagem}`
   );
 
+  await page.close();
+}
+
+// Parceria: cliente marcado deve preencher automaticamente o novo projeto.
+{
+  const page = await loadPage(context, "projetos.html");
+  await page.locator("#novoProjeto").click();
+  await page.locator("#projetoCliente").selectOption("c2");
+  await page.waitForTimeout(520);
+  assert(await page.locator("#projetoParceria").isChecked(), "projetos.html: parceria do cliente não foi herdada");
+  assert(await page.locator("#projetoParceriaHerdada").isVisible(), "projetos.html: aviso de parceria herdada não apareceu");
+  await page.close();
+}
+
+// Financeiro: indicadores dinâmicos, visão por projeto e novos campos.
+{
+  const page = await loadPage(context, "financeiro.html");
+  await page.waitForTimeout(700);
+  const indicadores = await page.locator(".financeiro-indicadores article").count();
+  assert(indicadores === 4, `financeiro.html: esperado 4 indicadores, encontrado ${indicadores}`);
+  const resumo = (await page.locator("#financeiroResumoProjetos").textContent() || "");
+  assert(/Projeto Alpha/i.test(resumo), `financeiro.html: visão por projeto não foi montada: ${resumo}`);
+  assert(await page.locator("#financeiroStatus").count() === 1, "financeiro.html: campo Situação ausente");
+  assert(await page.locator("#financeiroVencimento").count() === 1, "financeiro.html: campo Vencimento ausente");
+  await page.close();
+}
+
+// Tema claro: componentes dinâmicos do Admin não podem manter fundo escuro.
+{
+  const page = await loadPage(context, "biblioteca.html");
+  await page.evaluate(() => { document.documentElement.dataset.adminTheme = "claro"; });
+  await page.waitForTimeout(100);
+  const aparencia = await page.locator("#listaBiblioteca .cm-file-card").first().evaluate(el => ({
+    background: getComputedStyle(el).backgroundColor,
+    color: getComputedStyle(el).color
+  }));
+  assert(aparencia.background === "rgb(255, 255, 255)", `biblioteca.html: card permaneceu escuro no tema claro (${aparencia.background})`);
+  assert(["rgb(27, 36, 48)", "rgb(17, 24, 39)"].includes(aparencia.color), `biblioteca.html: texto sem contraste no tema claro (${aparencia.color})`);
+  await page.close();
+}
+
+// Portal do cliente: seletor de tema e identificação de conteúdo autoral.
+{
+  const page = await loadPage(context, "documentos-cliente.html");
+  await page.waitForTimeout(1500);
+  const botaoTema = page.locator("#portalThemeToggle");
+  assert(await botaoTema.count() === 1, "documentos-cliente.html: seletor de tema ausente");
+  await botaoTema.click();
+  assert(await page.evaluate(() => document.documentElement.dataset.portalTheme) === "claro", "documentos-cliente.html: tema claro não foi ativado");
+  const painel = await page.locator("#areaContent").evaluate(el => getComputedStyle(el).backgroundColor);
+  assert(painel === "rgb(255, 255, 255)", `documentos-cliente.html: painel permaneceu escuro (${painel})`);
+  assert(await page.locator(".cme-authorship-badge").count() >= 1, "documentos-cliente.html: selo de cópia autoral rastreável ausente");
   await page.close();
 }
 
