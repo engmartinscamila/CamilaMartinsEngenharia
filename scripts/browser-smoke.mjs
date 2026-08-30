@@ -1062,9 +1062,17 @@ for (const file of clientPages) {
   );
 
   const result = await page.evaluate(async () => {
-    const base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2nHkAAAAASUVORK5CYII=";
-    const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-    const file = new File([bytes], "qa.png", {type:"image/png"});
+    const canvas = document.createElement("canvas");
+    canvas.width = 8;
+    canvas.height = 8;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 8, 8);
+
+    const blob = await new Promise((resolve, reject) =>
+      canvas.toBlob(value => value ? resolve(value) : reject(new Error("canvas test blob failed")), "image/png")
+    );
+    const file = new File([blob], "qa.png", {type:"image/png"});
 
     const bucket = window.supabaseClient.storage.from("projetos");
     const upload = await bucket.upload("portfolio/qa-projeto/imagem/qa.png", file, {
