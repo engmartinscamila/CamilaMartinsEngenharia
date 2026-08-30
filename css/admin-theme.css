@@ -962,3 +962,42 @@ html[data-admin-theme="claro"] .empty-state,
 html[data-admin-theme="claro"] .estado-vazio{
     color:#56606d !important;
 }
+
+
+/* CME: contraste claro para containers dinâmicos legados */
+html[data-admin-theme="claro"] .pasta-cliente,
+html[data-admin-theme="claro"] .pasta-contrato,
+html[data-admin-theme="claro"] .subpasta,
+html[data-admin-theme="claro"] .biblioteca-pasta,
+html[data-admin-theme="claro"] .biblioteca-subpasta,
+html[data-admin-theme="claro"] .biblioteca-arquivo-card,
+html[data-admin-theme="claro"] .biblioteca-foto-card,
+html[data-admin-theme="claro"] .storage-gerenciador-resumo,
+html[data-admin-theme="claro"] .storage-gerenciador-item,
+html[data-admin-theme="claro"] .storage-selecionar-todos,
+html[data-admin-theme="claro"] .arquivo-preview{
+    background:#ffffff !important;
+    color:#1b2430 !important;
+    border-color:#d4dae1 !important;
+}
+html[data-admin-theme="claro"] .biblioteca-sem-preview,
+html[data-admin-theme="claro"] .barra-progresso,
+html[data-admin-theme="claro"] .barra-storage,
+html[data-admin-theme="claro"] .progress{
+    background:#e7ebef !important;
+}
+html[data-admin-theme="claro"] .storage-gerenciador-item:hover{
+    background:#f7f2e8 !important;
+}
+html[data-admin-theme="claro"] .storage-gerenciador-resumo span,
+html[data-admin-theme="claro"] .storage-gerenciador-info small,
+html[data-admin-theme="claro"] .biblioteca-pasta-titulo small,
+html[data-admin-theme="claro"] .biblioteca-subpasta > summary small{
+    color:#56606d !important;
+}
+html[data-admin-theme="claro"] .storage-gerenciador-info strong,
+html[data-admin-theme="claro"] .storage-selecionar-todos,
+html[data-admin-theme="claro"] .biblioteca-pasta-titulo,
+html[data-admin-theme="claro"] .biblioteca-subpasta > summary{
+    color:#1b2430 !important;
+}
