@@ -4,12 +4,6 @@
   "main": "src/index.js",
   "compatibility_date": "2026-08-29",
   "workers_dev": true,
-  "routes": [
-    {
-      "pattern": "midia.camilamartinsengenharia.com.br",
-      "custom_domain": true
-    }
-  ],
   "vars": {
     "SUPABASE_URL": "https://hghtwlopqztfcosfxafd.supabase.co",
     "ALLOWED_ORIGINS": "https://camilamartinsengenharia.com.br,https://www.camilamartinsengenharia.com.br",
