@@ -5,7 +5,7 @@
   const versaoImagens = '20260828-2';
   const bucketPortfolio = 'projetos';
   const manifestoPortfolio = 'portfolio/galeria.json';
-  const r2MediaBase = 'https://midia.camilamartinsengenharia.com.br';
+  const r2MediaBase = 'https://cme-public-media.eng-martins-camila.workers.dev';
   const r2ManifestoUrl = r2MediaBase + '/api/manifest';
   const projetosContainer = document.getElementById('galleryProjects');
   const navegacaoContainer = document.getElementById('galleryProjectNav');
