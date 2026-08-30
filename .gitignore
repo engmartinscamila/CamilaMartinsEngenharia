@@ -11,3 +11,4 @@ portal-app/.expo/
 !portal-app/.env.example
 ARQUIVO_ENV_LOCAL.zip
 CamilaMartinsEngenharia-melhorias-completas.zip
+supabase/.temp/
