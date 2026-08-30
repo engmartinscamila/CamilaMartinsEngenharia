@@ -351,3 +351,41 @@ html[data-portal-theme="claro"] .loading{color:#56606d !important}
     .portal-theme-toggle span{display:none}
     .portal-theme-toggle{width:42px;padding:0}
 }
+
+
+/* CME: contraste completo dos componentes dinâmicos no tema claro */
+html[data-portal-theme="claro"] .client-library-root,
+html[data-portal-theme="claro"] .client-library-folder,
+html[data-portal-theme="claro"] .client-library-file,
+html[data-portal-theme="claro"] .client-library-photo{
+    background:#ffffff !important;
+    color:#1b2430 !important;
+    border-color:#d4dae1 !important;
+}
+html[data-portal-theme="claro"] .client-library-no-photo,
+html[data-portal-theme="claro"] .photo-card img{
+    background:#e7ebef !important;
+    color:#795f32 !important;
+}
+html[data-portal-theme="claro"] .client-library-root > summary,
+html[data-portal-theme="claro"] .client-library-folder > summary,
+html[data-portal-theme="claro"] .client-library-file strong,
+html[data-portal-theme="claro"] .client-library-photo strong{
+    color:#1b2430 !important;
+}
+html[data-portal-theme="claro"] .client-library-file span,
+html[data-portal-theme="claro"] .client-library-empty,
+html[data-portal-theme="claro"] .client-library-root > summary small,
+html[data-portal-theme="claro"] .client-library-folder > summary small{
+    color:#56606d !important;
+}
+html[data-portal-theme="claro"] .project-switcher select{
+    background:#ffffff !important;
+    color:#1b2430 !important;
+    -webkit-text-fill-color:#1b2430 !important;
+    border-color:#c7cdd5 !important;
+    color-scheme:light;
+}
+html[data-portal-theme="claro"] .barra-cliente{
+    background:#dfe4e9 !important;
+}
