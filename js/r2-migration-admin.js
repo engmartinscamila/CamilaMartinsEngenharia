@@ -6,7 +6,7 @@ Não apaga a origem. Só publica o manifesto ao final.
 (function(){
 "use strict";
 
-const API="https://midia.camilamartinsengenharia.com.br";
+const API="https://cme-public-media.eng-martins-camila.workers.dev";
 const MANIFEST="assets/projetos/galeria.json?v=20260828-2";
 const LIMIT=95*1024*1024;
 const WATERMARK="Camila Martins Engenharia";
