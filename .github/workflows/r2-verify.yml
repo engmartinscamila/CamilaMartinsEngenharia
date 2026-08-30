@@ -1,0 +1,110 @@
+name: Verificação R2 pós-migração
+
+on:
+  push:
+    branches:
+      - verificacao-r2-pos-migracao-20260830
+  workflow_dispatch:
+
+jobs:
+  verificar-r2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verificar 81 mídias e manifesto
+        run: |
+          set -euo pipefail
+
+          node <<'NODE'
+          const fs = require('fs');
+          const https = require('https');
+
+          const manifest = JSON.parse(fs.readFileSync('assets/projetos/galeria.json','utf8'));
+          const refs = [];
+          for (const p of manifest.projetos || []) {
+            for (const img of p.imagens || []) {
+              if (img.src) refs.push({kind:'image', url:img.src, path:img.storagePath || ''});
+            }
+            for (const v of p.videos || []) {
+              if (v.src) refs.push({kind:'video', url:v.src, path:v.storagePath || ''});
+              if (v.poster) refs.push({kind:'poster', url:v.poster, path:v.posterStoragePath || ''});
+            }
+          }
+
+          if (refs.length !== 81) throw new Error('Esperado 81 referências, encontrado ' + refs.length);
+
+          const prefix='https://cme-public-media.eng-martins-camila.workers.dev/media/';
+          for (const item of refs) {
+            if (!item.url.startsWith(prefix)) throw new Error('URL fora do Worker/R2: ' + item.url);
+            if (!item.path.startsWith('portfolio/')) throw new Error('storagePath inválido: ' + item.path);
+          }
+
+          function check(item){
+            return new Promise((resolve,reject)=>{
+              const req=https.get(item.url,{
+                headers:{Range:'bytes=0-0','User-Agent':'cme-r2-audit'}
+              },res=>{
+                let bytes=0;
+                res.on('data',chunk=>{bytes+=chunk.length});
+                res.on('end',()=>resolve({
+                  status:res.statusCode,
+                  type:String(res.headers['content-type']||''),
+                  range:String(res.headers['content-range']||''),
+                  bytes
+                }));
+              });
+              req.on('error',reject);
+              req.setTimeout(20000,()=>req.destroy(new Error('timeout')));
+            });
+          }
+
+          (async()=>{
+            const failures=[];
+            const stats={images:0,videos:0,posters:0,http200:0,http206:0};
+
+            for(let i=0;i<refs.length;i++){
+              const item=refs[i];
+              const r=await check(item);
+
+              if(item.kind==='image') stats.images++;
+              else if(item.kind==='video') stats.videos++;
+              else stats.posters++;
+
+              if(r.status===200) stats.http200++;
+              if(r.status===206) stats.http206++;
+
+              const typeOk=item.kind==='video'
+                ? r.type.startsWith('video/')
+                : r.type.startsWith('image/');
+
+              if(![200,206].includes(r.status)||!typeOk){
+                failures.push({i:i+1,...item,...r});
+              }
+            }
+
+            console.log('STATS',JSON.stringify(stats));
+            if(failures.length){
+              console.error(JSON.stringify(failures,null,2));
+              process.exit(1);
+            }
+            console.log('TODAS_AS_81_MIDIAS_RESPONDERAM');
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+
+          curl --fail --silent --show-error             "https://cme-public-media.eng-martins-camila.workers.dev/health"             -o /tmp/health.json
+          cat /tmp/health.json
+
+          curl --fail --silent --show-error             "https://cme-public-media.eng-martins-camila.workers.dev/api/manifest"             -o /tmp/manifest-remoto.json
+
+          node <<'NODE'
+          const fs=require('fs');
+          const local=JSON.parse(fs.readFileSync('assets/projetos/galeria.json','utf8'));
+          const remote=JSON.parse(fs.readFileSync('/tmp/manifest-remoto.json','utf8'));
+          if(JSON.stringify(local)!==JSON.stringify(remote)){
+            console.error('Manifesto remoto diverge do GitHub');
+            process.exit(1);
+          }
+          console.log('MANIFESTO_REMOTO_IGUAL_AO_GITHUB');
+          NODE
