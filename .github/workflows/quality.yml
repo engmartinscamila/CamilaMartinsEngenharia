@@ -3,6 +3,7 @@ name: Auditoria completa do portal
 on:
   push:
     branches:
+      - main
       - auditoria-geral-20260829
       - auditoria-estrutural-20260829
       - galeria-fotos-20260829
