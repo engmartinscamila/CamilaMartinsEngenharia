@@ -5,6 +5,8 @@
   const versaoImagens = '20260828-2';
   const bucketPortfolio = 'projetos';
   const manifestoPortfolio = 'portfolio/galeria.json';
+  const r2MediaBase = 'https://cme-public-media.eng-martins-camila.workers.dev';
+  const r2ManifestoUrl = r2MediaBase + '/api/manifest';
   const projetosContainer = document.getElementById('galleryProjects');
   const navegacaoContainer = document.getElementById('galleryProjectNav');
   const carregamento = document.getElementById('galleryLoading');
@@ -54,19 +56,35 @@
 
   async function carregarManifestoPortfolio() {
     try {
-      if (!window.supabaseClient) throw new Error('Supabase indisponível.');
-      const { data } = window.supabaseClient.storage
-        .from(bucketPortfolio)
-        .getPublicUrl(manifestoPortfolio);
-      const separador = data.publicUrl.includes('?') ? '&' : '?';
-      const respostaRemota = await fetch(`${data.publicUrl}${separador}v=${Date.now()}`, { cache: 'no-store' });
-      if (!respostaRemota.ok) throw new Error('Manifesto remoto ainda não criado.');
-      return respostaRemota.json();
-    } catch (erro) {
-      console.info('Usando a cópia local da galeria.', erro);
-      const respostaLocal = await fetch(dadosUrl, { cache: 'no-cache' });
-      if (!respostaLocal.ok) throw new Error('Não foi possível carregar os projetos.');
-      return respostaLocal.json();
+      const respostaR2 = await fetch(
+        r2ManifestoUrl + '?v=' + Date.now(),
+        { cache: 'no-store' }
+      );
+      if (!respostaR2.ok) throw new Error('Manifesto R2 ainda não disponível.');
+      const dadosR2 = await respostaR2.json();
+      if (!Array.isArray(dadosR2?.projetos)) throw new Error('Manifesto R2 inválido.');
+      return dadosR2;
+    } catch (erroR2) {
+      console.info('R2 ainda não disponível; tentando manifesto legado.', erroR2);
+
+      try {
+        if (!window.supabaseClient) throw new Error('Supabase indisponível.');
+        const { data } = window.supabaseClient.storage
+          .from(bucketPortfolio)
+          .getPublicUrl(manifestoPortfolio);
+        const separador = data.publicUrl.includes('?') ? '&' : '?';
+        const respostaRemota = await fetch(
+          `${data.publicUrl}${separador}v=${Date.now()}`,
+          { cache: 'no-store' }
+        );
+        if (!respostaRemota.ok) throw new Error('Manifesto legado remoto ainda não criado.');
+        return respostaRemota.json();
+      } catch (erroLegado) {
+        console.info('Usando a cópia local da galeria.', erroLegado);
+        const respostaLocal = await fetch(dadosUrl, { cache: 'no-cache' });
+        if (!respostaLocal.ok) throw new Error('Não foi possível carregar os projetos.');
+        return respostaLocal.json();
+      }
     }
   }
 

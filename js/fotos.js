@@ -1,1 +1,723 @@
-function cm_930ee0b89b_0x5770(_0x330a98,_0x903c2c){_0x330a98=_0x330a98-(0x1f73*-0x1+-0x2653+-0x79*-0x97);const _0x40aa36=cm_930ee0b89b_0x5376();let _0x4b0944=_0x40aa36[_0x330a98];if(cm_930ee0b89b_0x5770['IBjYkz']===undefined){var _0x216d2f=function(_0x5c7e1b){const _0x4439ed='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/=';let _0xdc1406='',_0x1a4c81='';for(let _0x44d3aa=-0x1*0x317+-0x1ee+0x505*0x1,_0x3ee521,_0x541f08,_0x481959=-0x1470+-0x26e7+0x3b57;_0x541f08=_0x5c7e1b['charAt'](_0x481959++);~_0x541f08&&(_0x3ee521=_0x44d3aa%(-0x47d+-0x14fe+0x197f)?_0x3ee521*(0x1598+0x1*-0x22ee+0x1*0xd96)+_0x541f08:_0x541f08,_0x44d3aa++%(-0x17d6+0x5*0x5bf+0x4e1*-0x1))?_0xdc1406+=String['fromCharCode'](0x6e1+-0x190d*0x1+-0x1*-0x132b&_0x3ee521>>(-(0x143*0x1a+-0x2679+0x5ad)*_0x44d3aa&-0x145*0x1d+-0x8e2+0x2db9)):-0x184f*0x1+0x1*-0x22f3+-0xa*-0x5ed){_0x541f08=_0x4439ed['indexOf'](_0x541f08);}for(let _0x28b971=-0x2080+-0x92f*-0x2+0xe22,_0x240756=_0xdc1406['length'];_0x28b971<_0x240756;_0x28b971++){_0x1a4c81+='%'+('00'+_0xdc1406['charCodeAt'](_0x28b971)['toString'](-0x1c10+-0x43+0x1*0x1c63))['slice'](-(-0x265b+-0x1f1*-0x4+-0x175*-0x15));}return decodeURIComponent(_0x1a4c81);};cm_930ee0b89b_0x5770['pcvYWD']=_0x216d2f,cm_930ee0b89b_0x5770['ADEHNh']={},cm_930ee0b89b_0x5770['IBjYkz']=!![];}const _0x52831d=_0x40aa36[-0x252d+-0x2*0xa81+0x9*0x677],_0x3fa80b=_0x330a98+_0x52831d,_0x177775=cm_930ee0b89b_0x5770['ADEHNh'][_0x3fa80b];return!_0x177775?(_0x4b0944=cm_930ee0b89b_0x5770['pcvYWD'](_0x4b0944),cm_930ee0b89b_0x5770['ADEHNh'][_0x3fa80b]=_0x4b0944):_0x4b0944=_0x177775,_0x4b0944;}function cm_930ee0b89b_0x5376(){const _0x5e3464=['icaGsw1Hz2u','zwrPDgfY','ysbMB3rVici','B3mGzgv0ywW','DhjVigzVAsa','mtG1ou5yrMLdCG','icaGica8zgK','pha+u2vSzwm','ywDLBs4','DMfSDwu9iIi','C3m9iMvZDge','Dgv4DenVBNq','ChjLDMvUDeq','CMvTB3zL','igzVDg8Gzg8','CMvZzxq','pc9OmZ4kica','ywjYAxi','yxmGBYbHDMK','DxjS','CM1Hzg8','pg9WDgLVBIa','u2vTigrLC2m','zgv0ywXOzxm','tg93zxjdyxm','icaGica8Cd4','zMvJAgfYtw8','zM90B0rLC2m','qwrPy2LVBMe','ChjVAMv0B18','C2fSDM8Sig0','C3m9iMzVDg8','zMXLEa','zw52AwfKBW','B3rVCW','pgLTzYbZCMm','rM90BYbZzw0','zgvZy3jPy2e','zMLNDxjHzg8','ChqTqLi','rwrPDgfYigy','ysbMB3rVlG','idXKAxyGy2W','CMvXDwLYzwq','tYbWCM9Qzxq','ihtdRxr1Bg8','u2fSDMfUzg8','y2XHC3nmAxm','Axy+','BMrHig7dO28G','vw1Hig5VDMe','vw1HigzVDg8','ignVBsbZDwm','pc9VChrPB24','rK9ut1m','ywXPEMfKyq','pgrPDIbJBge','BgLJywrH','C3r5Bgu','y29UDhjHDg8','y2XPzw50zv8','C2vJDgLVBJ4','DMfSDwvZ','ywrK','Aw5WDxq','zM9YBuzVDg8','icaGicaGpha','B3jTywrV','BYbZzwXLy2K','BYb0W610DwXV','igrVigfJB20','AwvUDguIpGO','Bc1OzwfKzxi','tSoJBYbPBMzV','zMeTCgvU','zxn0W6eGy29U','CMv0BW','AgfTzw50BYa','zsbJBgLLBNq','BM9Uzq','CM9UzZ4G','Dwu9iG','sw5MB3jTzsa','ywjLBd0I','jMfTCdS','jNf1B3q7','zwn0B3i','iGOGicaGica','B24+','zM90B1rPDhu','ywrKrxzLBNq','iM1HEc13Awq','rM90BW','DxjSrxjYBW','rxHJBhvPCIa','zM90BW','Cg9ZC8oTDMvS','CgvZCxvPC2e','icaGica8B3a','y2XVC2vZDa','y2HHBMDL','u2vSzwnPB24','ywXS','zt0IyNv0Dg8','icaGica8Adm','yNrUugvZCxu','tSoJBYbMB2KG','lw9Wzw4IpJW','mZvUwuPhCNq','zxnZBY4','pLnLBgvJAw8','Bw9KywXgB3q','yw8TzM90B10','icaGicaGica','u2fSDMfYiee','lwzVDg9ZiJ4','idWVzgL2pGO','zxrVoJWVC3q','BwvZC2fNzq','y2XPy2S','DgLVBIb2ywW','icaGica8yxi','ihnHBhzHCIa','zgf0ys1Hy2e','yxnZpsjMys0','icaG','mJu1mtzTALfOyMy','C3rVCfbYB3a','zgLZywjSzwq','mta4ntKXsLvPwMzq','DgG6mtaWjtS','B3mU','Dg9UpGOGica','icaGica8l28','BNrLiguGBYa','zMLSzxm','icaGpc9IDxq','i21VzgfSrM8','u2fSDMfYiey','CgfUAgfTzw4','ndm5ntzWuhz0ve4','AM9PBG','rM90BYbHDhu','ChrPB24+cIa','C2fSDMfYrM8','yxjXDwL2BW','lxnVBgLKigy','ys48l2rPDJ4','zgfSrM90BW','CMvWBgfJzue','lcbVignSAwu','AwnHzgeGBM8','ysbMB3rVigm','CIbHCYbMB3q','C29SAwqG','ys1MB2XKzxi','BYbWzxj0zw4','lw1HAwWU','mte5mtK1muDkqvLkuG','igv4y2X1Axi','B2vZiJ4kica','lwfJB2vZiJ4','pc9ZDhjVBMC','DgLJBgu+cIa','y2fVlwzVDg8','zMLUza','BsbZDwnLC3m','zM90B19HDhu','yxrHlwLKpsi','yM9YzgvYlxi','B25NpLbYB2O','BhrLCMhdP8o1zq','Axy+cIaGica','jImWmZK7','DMfSDwu','mNLStKjRAa','CxvLCNLtzwW','igLTywDLBsa','iIb0AxrSzt0','ywXOzxmTywm','ignHCNjLz2e','z2fSzxjPyuy','zw50','BhxdRwrHignV','Dg9mB2nHBgu','DMfSDwu9iG','phn0CM9UzZ4','DhjPBq','ChvZAa','pgGZpJXPigm','idWVzgL2pG','CMNdP8oJBY4','BY1PDgvTiIa','nZq2mZjRvvDADuC','y2fUy2vSyxi','zM90B19WDwi','yxjXDwL2B0y','CMf0BYbJB3i','q29UDhjHDg8','idXZCgfUpG','pc9WpGOGica','AxnHCKzVDg8','iJ4kicaGica','icaGpgKGy2W','tgLZDgvUzxi','zsb1BweGAw0','zwzHDwX0','B25Hzg8GBSoJ','zMeTDhjHC2G','BM9Tzq','iMDHBgvYAwe','y2f0y2G','w2rHDgeTywm','iJ48l2K+cIa','re9nq29UDgu','idXWpJXZDhi','iIbHBhq9iG','phnLy3rPB24','ywjYAxiIigq','zxjYB3i','iIbHCMLHlwW','B24G','B3rV','zgvSzxrL','Dsb1BsbHDMK','pc9KAxy+pc8','rM90BYbLEgm','zM90B0nSAwu','DwfSAxPHzge','q2XPzw50ztO','ywDHDgLVBG','B27dRxzLBa','ndK5mhfYq3HIrG','ihbVCNrHBc4','zxrV','rM90BYbJywq','jMD0oW','CMLJyw8','icaGicaG','icaGicaGia','Dg8Gzg8GC2u','yxnZpsjKzxq','icaGicaGieK','zM90B1bYB2O','lI4U','z2v0rwXLBwu','mJvqCxDhv1O','BYbMB2KGyxq','zgLZCgXHEq','AxzVlwLUzgK','rwrPDgfYiey','zd0I','igeGzM90BY4','C29Tzq','nJuWmdvZyunyBuq','l2K+ia','DgfYz2v0','Aw9Uzsb1Bwe','BsbPBMrPC3a','Aw5Uzxjive0','BNrmB2fKzwq','BNrcEuLK','cK8GCMvNAxm','ig7dO28GAw5M','iJ5ozw5ODw0','DguGDgfTySoP','y2uGysbLC3m','y21sB3r1Bg8','zgLZCg9UW612','CgfYysb2Axm','zwrPDa','icaGica','AgvZlJWVCd4','zsbVignVBNq','C28GCg9Yigu','BwfW','C2HVDW','psjIDg4TAwm','ywrPDxm6mNa','BNrL','zg8TDMf6Aw8','BMu8l29WDgK','zgf0yxnLDa','BgvUz3rO','ywrHC3rYywq','zxHJBhvPCG','C3bVBML2zwW','cIaGicaGica'];cm_930ee0b89b_0x5376=function(){return _0x5e3464;};return cm_930ee0b89b_0x5376();}(function(_0x4ba134,_0x3cfb1d){const cm_930ee0b89b_0x319824={_0x368ca4:0x274,_0x6c3985:0x237,_0x206232:0x25e},_0x22ca5e=cm_930ee0b89b_0x5770,_0x15c607=_0x4ba134();while(!![]){try{const _0x510702=-parseInt(_0x22ca5e(cm_930ee0b89b_0x319824._0x368ca4))/(0x3f*-0x86+0x89b*-0x1+0x2996)*(parseInt(_0x22ca5e(0x225))/(-0xc*-0xbd+0x1c36+-0x2510))+parseInt(_0x22ca5e(0x1f7))/(-0x1677+0x2*-0x103c+0x1*0x36f2)+parseInt(_0x22ca5e(0x1f4))/(-0x251a+-0x1*-0xc8c+0x1892)*(-parseInt(_0x22ca5e(0x26c))/(0xdf*0x15+-0x878+0x9ce*-0x1))+parseInt(_0x22ca5e(0x202))/(0x94b*-0x1+0x1336+-0x11*0x95)+parseInt(_0x22ca5e(0x1e2))/(-0x6*0x38f+0x25cc+0x579*-0x3)*(-parseInt(_0x22ca5e(cm_930ee0b89b_0x319824._0x6c3985))/(0xd3d+0xb7b*0x1+-0x10*0x18b))+parseInt(_0x22ca5e(0x214))/(-0x3*-0x161+0x1295+-0x16af*0x1)+-parseInt(_0x22ca5e(cm_930ee0b89b_0x319824._0x206232))/(-0x1c8*-0x12+0xb8a+-0x2b90)*(-parseInt(_0x22ca5e(0x29b))/(0x1*0x1453+-0x7*0x21d+-0x5*0x119));if(_0x510702===_0x3cfb1d)break;else _0x15c607['push'](_0x15c607['shift']());}catch(_0x156612){_0x15c607['push'](_0x15c607['shift']());}}}(cm_930ee0b89b_0x5376,0x27c12*0x1+0xb*-0x4294+0x22856),function moduloFotos(){'use strict';const cm_930ee0b89b_0x3e21e3={_0x28a019:0x27a},cm_930ee0b89b_0x1eed2c={_0x30d018:0x1ec},cm_930ee0b89b_0xfff280={_0x2779e9:0x20b},cm_930ee0b89b_0x805630={_0x4ff0d6:0x26b,_0x10e160:0x224},cm_930ee0b89b_0x3ccaa0={_0x1ba35c:0x26b,_0x3bf423:0x26e},cm_930ee0b89b_0x992dc1={_0x13f061:0x21b,_0x29fc33:0x281,_0x474f7e:0x1b9},cm_930ee0b89b_0x4171e1={_0x5be86f:0x247},cm_930ee0b89b_0x501d13={_0x5f4bdc:0x252,_0x29ed00:0x240,_0x281442:0x1e7,_0x4c0cbe:0x1f2},cm_930ee0b89b_0x339c08={_0x3f64ee:0x26b,_0x487fc3:0x27b,_0x639b4b:0x2ad,_0x25787a:0x29d},cm_930ee0b89b_0x18c98a={_0x5993ec:0x22c,_0x4afa56:0x1e8},cm_930ee0b89b_0x45bf4e={_0x5c48c9:0x27b,_0x2fa1f1:0x254,_0x15be6c:0x1a1},cm_930ee0b89b_0x5254e3={_0x29db89:0x26b,_0x3f2c00:0x27b,_0x3749a4:0x1e5,_0x471dbb:0x26e,_0x1b796c:0x1c5},cm_930ee0b89b_0x38122c={_0x544b6a:0x1e5,_0xe84a53:0x1a5},cm_930ee0b89b_0x26c80d={_0x53d393:0x27b,_0x49c711:0x2ab,_0x11e4bd:0x23b,_0x4a141a:0x1ab},cm_930ee0b89b_0x5c932e={_0x56f9f4:0x260,_0xeb87f:0x291},cm_930ee0b89b_0x11baae={_0x27e59b:0x289},cm_930ee0b89b_0x206bfb={_0x503c38:0x2ae,_0x358b90:0x19d},cm_930ee0b89b_0x9b606e={_0x4d505a:0x298,_0x37fac2:0x247,_0x38d2d3:0x272},cm_930ee0b89b_0x4dec0c={_0x4d0f5a:0x2ad,_0x574a30:0x295,_0x2b975a:0x1de,_0x3994fe:0x199,_0x1a47ce:0x1e7,_0x5630eb:0x268,_0x5056d1:0x2af,_0x447c3a:0x25b,_0x3d532d:0x23e,_0x59d312:0x23e,_0x320efd:0x1a0,_0x320be7:0x216,_0xe8d9d7:0x254,_0x2e2337:0x246,_0x22e2c4:0x1d4,_0x161d2e:0x255},cm_930ee0b89b_0xa111e7={_0x29e172:0x2b1,_0x3146a4:0x259,_0x1102a1:0x28d,_0x3dbebe:0x260,_0x12110d:0x27b,_0x1e3da9:0x1fd,_0x540d4d:0x20c,_0x33d43b:0x1db,_0x2f2901:0x2b3,_0x4deb7f:0x212,_0x1afa0a:0x206,_0x5351ea:0x1b2,_0x1b2d96:0x21d,_0x152a8e:0x1a9,_0x4e227c:0x201,_0x566b72:0x1a8,_0x1b878d:0x204,_0x31c0ec:0x27c,_0x11f267:0x249},cm_930ee0b89b_0x2d2e0a={_0x487621:0x270},cm_930ee0b89b_0x1bfebb={_0x783691:0x2b2},cm_930ee0b89b_0x19a564={_0x1df179:0x25c,_0x4c0005:0x2a7},cm_930ee0b89b_0x384bb1={_0x8a2820:0x1e7,_0xed039:0x233,_0x39127d:0x275,_0x319fea:0x1b8,_0x46fdc2:0x289,_0x2c86fa:0x203,_0x120341:0x257},cm_930ee0b89b_0x549832={_0x4e9d9e:0x1b2,_0x353d00:0x232},cm_930ee0b89b_0x3b83fc={_0x317123:0x242,_0x203c21:0x27b,_0x35ec06:0x27b,_0xb7c905:0x1ed,_0x2913fc:0x26b,_0x97d9bd:0x242,_0x22c5bd:0x1ed},cm_930ee0b89b_0x1f5501={_0x16eec3:0x1d6,_0x39c1d3:0x20f},_0x4d1d61=cm_930ee0b89b_0x5770;let _0x5291fe=[],_0x87a8c=[],_0x46d47f=[],_0x2cbbdd=null;document[_0x4d1d61(0x1d0)+_0x4d1d61(0x242)](_0x4d1d61(0x24c)+_0x4d1d61(cm_930ee0b89b_0x3e21e3._0x28a019),_0x57bac9);async function _0x57bac9(){const _0x608cf9=_0x4d1d61;_0xbbbc1(),_0x7b53c0(!![]);try{[_0x5291fe,_0x87a8c,_0x46d47f]=await Promise[_0x608cf9(0x1dc)]([dbBuscarFotos(),dbBuscarClientes(),dbBuscarProjetos()]),_0x10056b(_0x608cf9(0x259)+_0x608cf9(0x28d),_0x87a8c),_0x120568(),_0x589071();}catch(_0x33e4fb){_0x55f2a4(_0x608cf9(0x1e0)+_0x608cf9(cm_930ee0b89b_0x1f5501._0x16eec3)+_0x608cf9(0x22a)+_0x608cf9(cm_930ee0b89b_0x1f5501._0x39c1d3)+_0x608cf9(0x1f9),_0x33e4fb);}finally{_0x7b53c0(![]);}}function _0xbbbc1(){const cm_930ee0b89b_0x106fc8={_0x54eceb:0x276},_0x299bbb=_0x4d1d61;document[_0x299bbb(0x26b)+'ntById']('novaFoto')?.[_0x299bbb(0x1d0)+_0x299bbb(0x242)](_0x299bbb(0x1ed),_0x10f968),document[_0x299bbb(0x26b)+_0x299bbb(0x27b)](_0x299bbb(0x2b0)+_0x299bbb(0x20a))?.[_0x299bbb(0x1d0)+_0x299bbb(0x242)](_0x299bbb(0x1ed),_0x46257e),document[_0x299bbb(0x26b)+_0x299bbb(0x27b)](_0x299bbb(0x238)+_0x299bbb(0x1d2))?.[_0x299bbb(0x1d0)+_0x299bbb(cm_930ee0b89b_0x3b83fc._0x317123)](_0x299bbb(0x1ed),_0x46257e),document[_0x299bbb(0x26b)+_0x299bbb(0x27b)](_0x299bbb(0x1b7))?.[_0x299bbb(0x1d0)+_0x299bbb(0x242)]('submit',_0x2c052e),document['getEleme'+_0x299bbb(cm_930ee0b89b_0x3b83fc._0x203c21)](_0x299bbb(0x259)+_0x299bbb(0x28d))?.[_0x299bbb(0x1d0)+_0x299bbb(0x242)](_0x299bbb(0x1da),()=>_0x120568()),document[_0x299bbb(0x26b)+_0x299bbb(0x27b)](_0x299bbb(0x1d7)+_0x299bbb(0x1d2))?.['addEvent'+'Listener'](_0x299bbb(0x1b6),_0x2d7207),document[_0x299bbb(0x26b)+_0x299bbb(cm_930ee0b89b_0x3b83fc._0x35ec06)](_0x299bbb(0x1df)+_0x299bbb(0x23f))?.[_0x299bbb(0x1d0)+_0x299bbb(cm_930ee0b89b_0x3b83fc._0x317123)](_0x299bbb(cm_930ee0b89b_0x3b83fc._0xb7c905),_0x2d7207),document[_0x299bbb(cm_930ee0b89b_0x3b83fc._0x2913fc)+_0x299bbb(0x27b)](_0x299bbb(0x22b)+_0x299bbb(0x2b8))?.['addEvent'+_0x299bbb(cm_930ee0b89b_0x3b83fc._0x97d9bd)](_0x299bbb(cm_930ee0b89b_0x3b83fc._0x22c5bd),_0x4e2ef1),document[_0x299bbb(cm_930ee0b89b_0x3b83fc._0x2913fc)+'ntById'](_0x299bbb(0x2ad)+_0x299bbb(0x1d2))?.[_0x299bbb(0x1d0)+_0x299bbb(0x242)](_0x299bbb(0x1ed),_0x4e2ef1),document[_0x299bbb(0x26b)+'ntById'](_0x299bbb(0x1e5)+'o')?.[_0x299bbb(0x1d0)+'Listener'](_0x299bbb(0x1ed),_0xe01d0=>{const _0x1caa5b=_0x299bbb;if(_0xe01d0[_0x1caa5b(cm_930ee0b89b_0x106fc8._0x54eceb)]['id']===_0x1caa5b(0x1e5)+'o')_0x46257e();});}function _0x589071(_0x392a59=_0x5291fe){const _0x3e0c38=_0x4d1d61,_0x2de8f1=document['getEleme'+_0x3e0c38(0x27b)]('galeriaF'+_0x3e0c38(0x2b8));if(!_0x2de8f1)return;if(!_0x392a59[_0x3e0c38(0x291)]){_0x2de8f1[_0x3e0c38(0x279)+'L']=_0x3e0c38(0x1ae)+_0x3e0c38(0x2a0)+_0x3e0c38(0x28e)+_0x3e0c38(0x27e)+_0x3e0c38(0x20e)+_0x3e0c38(0x292)+_0x3e0c38(0x209);return;}const _0x355b4e=_0x392a59['reduce']((_0x908876,_0x4d4097)=>{const _0x27c762=_0x3e0c38,_0x147264=(_0x4d4097[_0x27c762(cm_930ee0b89b_0x549832._0x4e9d9e)+'id']||'')+'|'+(_0x4d4097[_0x27c762(0x2b3)+'id']||'');return(_0x908876[_0x147264]||=[])[_0x27c762(cm_930ee0b89b_0x549832._0x353d00)](_0x4d4097),_0x908876;},{});_0x2de8f1[_0x3e0c38(0x279)+'L']=Object[_0x3e0c38(0x1b4)](_0x355b4e)[_0x3e0c38(0x289)](_0x250789=>{const _0x42bdd3=_0x3e0c38,_0x160cc8=_0x250789[0xea*-0x2+-0xf55+0x1129];return _0x42bdd3(0x24f)+'\x20class=\x22'+'pasta-cl'+_0x42bdd3(0x1bd)+_0x42bdd3(cm_930ee0b89b_0x384bb1._0x8a2820)+_0x42bdd3(0x1e7)+_0x42bdd3(cm_930ee0b89b_0x384bb1._0xed039)+'lass=\x22fa'+_0x42bdd3(0x208)+_0x42bdd3(0x211)+_0x42bdd3(0x1e1)+_0x42bdd3(cm_930ee0b89b_0x384bb1._0x39127d)+_0x22bcbc(_0x2575f6(_0x160cc8['cliente_'+'id']))+('</h3>\x0a\x20\x20'+_0x42bdd3(0x1e7)+_0x42bdd3(cm_930ee0b89b_0x384bb1._0x319fea)+'>')+_0x22bcbc(_0xf48594(_0x160cc8[_0x42bdd3(0x2b3)+'id']))+(_0x42bdd3(0x23e)+_0x42bdd3(0x1e7)+_0x42bdd3(0x29c)+'v\x20class='+_0x42bdd3(0x248)+_0x42bdd3(0x1e9))+_0x250789[_0x42bdd3(cm_930ee0b89b_0x384bb1._0x46fdc2)](_0x19c366=>_0x42bdd3(0x295)+_0x42bdd3(0x1ef)+'ticle\x20cl'+'ass=\x22fot'+_0x42bdd3(0x236)+_0x42bdd3(0x1f1)+'o-foto=\x22'+_0x42bdd3(0x250)+_0x42bdd3(0x21e)+_0x22bcbc(_0x19c366['id'])+(_0x42bdd3(0x240)+_0x42bdd3(0x1e7)+_0x42bdd3(0x1f3))+(_0x19c366[_0x42bdd3(0x2a9)]?_0x42bdd3(0x199)+'=\x22'+_0x22bcbc(_0x19c366['url'])+'\x22\x20alt=\x22'+_0x22bcbc(_0x19c366[_0x42bdd3(0x247)])+'\x22>':'<div\x20cla'+'ss=\x22arqu'+'ivo-indi'+_0x42bdd3(0x294)+'\x22>\x0a\x20\x20\x20\x20\x20'+_0x42bdd3(0x1e7)+_0x42bdd3(0x1e7)+_0x42bdd3(0x296)+_0x42bdd3(0x278)+_0x42bdd3(0x25d)+(_0x19c366[_0x42bdd3(0x1d3)]?':\x20'+_0x22bcbc(_0x19c366[_0x42bdd3(0x1d3)]):'')+('\x0a\x20\x20\x20\x20\x20\x20\x20'+_0x42bdd3(0x1e7)+'\x20\x20\x20\x20\x20</d'+_0x42bdd3(0x1a6)))+(_0x42bdd3(0x295)+_0x42bdd3(0x1e7)+_0x42bdd3(0x23d))+_0x22bcbc(_0x19c366[_0x42bdd3(0x247)]||_0x42bdd3(0x19a)+_0x42bdd3(0x1a3))+('</span>\x0a'+_0x42bdd3(0x1e7)+_0x42bdd3(0x1e7)+_0x42bdd3(0x1ae)+_0x42bdd3(0x2b5)+_0x42bdd3(0x217)+_0x42bdd3(0x295)+'\x20\x20\x20\x20\x20\x20\x20\x20'+_0x42bdd3(0x285))+_0x806083(_0x42bdd3(0x297),_0x19c366['id'],'fa-pen',_0x42bdd3(0x19e)+'oto',_0x42bdd3(0x284))+(_0x42bdd3(0x295)+_0x42bdd3(0x1e7)+_0x42bdd3(0x285))+_0x806083(_0x42bdd3(0x293),_0x19c366['id'],_0x42bdd3(0x246),_0x42bdd3(0x1d4)+_0x42bdd3(0x1d5),_0x42bdd3(0x255))+(_0x42bdd3(0x295)+_0x42bdd3(0x1e7)+_0x42bdd3(0x1ea)+_0x42bdd3(0x1e7)+'\x20\x20\x20\x20</ar'+_0x42bdd3(0x219)+_0x42bdd3(0x265)))[_0x42bdd3(cm_930ee0b89b_0x384bb1._0x2c86fa)]('')+(_0x42bdd3(cm_930ee0b89b_0x384bb1._0x120341)+_0x42bdd3(0x1b3));})[_0x3e0c38(0x203)]('');}function _0x4e2ef1(_0x53eaad){const _0x3640c7=_0x4d1d61,_0x1fca1b=_0x53eaad[_0x3640c7(0x276)][_0x3640c7(0x1d9)](_0x3640c7(0x24a)+_0x3640c7(0x1e6));if(!_0x1fca1b)return;_0x53eaad[_0x3640c7(0x1f5)+_0x3640c7(cm_930ee0b89b_0x19a564._0x1df179)]();const {acaoFoto:_0x34330b,id:_0x3c3dc0}=_0x1fca1b[_0x3640c7(0x290)];if(_0x34330b===_0x3640c7(cm_930ee0b89b_0x19a564._0x4c0005))_0x24d965(_0x3c3dc0);if(_0x34330b===_0x3640c7(0x297))_0x19b37f(_0x3c3dc0);if(_0x34330b==='excluir')_0x3f9acf(_0x3c3dc0);}function _0x10f968(){const _0x4bb424=_0x4d1d61;_0x2cbbdd=null,document['getEleme'+'ntById'](_0x4bb424(0x1b7))?.[_0x4bb424(0x2a5)](),_0x120568(),_0x2febcd(_0x4bb424(cm_930ee0b89b_0x1bfebb._0x783691)+'r\x20Foto',_0x4bb424(0x200)+_0x4bb424(0x254),!![]),_0x242b9d();}function _0x19b37f(_0x330a98){const _0x339881=_0x4d1d61,_0x903c2c=_0x461ba8(_0x330a98);if(!_0x903c2c)return;_0x2cbbdd=_0x903c2c['id'],_0x2f5edc(_0x339881(0x259)+_0x339881(0x28d),_0x903c2c[_0x339881(0x1b2)+'id']),_0x120568(_0x903c2c[_0x339881(0x2b3)+'id']),_0x2f5edc('fotoTitu'+'lo',_0x903c2c[_0x339881(0x247)]),_0x2f5edc(_0x339881(0x2b1)+_0x339881(0x263),_0x903c2c['descrica'+'o']),_0x2febcd(_0x339881(cm_930ee0b89b_0x2d2e0a._0x487621)+_0x339881(0x254),'Salvar\x20A'+_0x339881(0x221)+'s',![]),_0x242b9d();}async function _0x2c052e(_0x40aa36){const _0x4fa040=_0x4d1d61;_0x40aa36[_0x4fa040(0x2a2)+_0x4fa040(0x244)]();const _0x4b0944={'nome':_0xd70961(_0x4fa040(0x1cf)+'lo'),'descricao':_0xd70961(_0x4fa040(cm_930ee0b89b_0xa111e7._0x29e172)+_0x4fa040(0x263)),'cliente_id':_0xd70961(_0x4fa040(cm_930ee0b89b_0xa111e7._0x3146a4)+_0x4fa040(cm_930ee0b89b_0xa111e7._0x1102a1))||null,'projeto_id':_0xd70961(_0x4fa040(0x269)+_0x4fa040(cm_930ee0b89b_0xa111e7._0x3dbebe))||null},_0x216d2f=document[_0x4fa040(0x26b)+_0x4fa040(cm_930ee0b89b_0xa111e7._0x12110d)](_0x4fa040(0x23a)+_0x4fa040(0x254))?.[_0x4fa040(cm_930ee0b89b_0xa111e7._0x1e3da9)]?.[-0x248c+-0x12dd+0x3769],_0x52831d=_0x461ba8(_0x2cbbdd);if(!_0x4b0944[_0x4fa040(0x247)]||!_0x4b0944['cliente_'+'id']||!_0x4b0944['projeto_'+'id']){alert(_0x4fa040(0x1c8)+_0x4fa040(0x1bb)+_0x4fa040(cm_930ee0b89b_0xa111e7._0x540d4d)+_0x4fa040(0x1fc)+_0x4fa040(0x1b1)+'.');return;}if(!_0x2cbbdd&&!_0x216d2f){alert(_0x4fa040(cm_930ee0b89b_0xa111e7._0x33d43b)+_0x4fa040(0x243)+_0x4fa040(0x29e));return;}if(!_0x507774(_0x4b0944[_0x4fa040(cm_930ee0b89b_0xa111e7._0x2f2901)+'id'],_0x4b0944[_0x4fa040(0x1b2)+'id'])){alert(_0x4fa040(0x1a2)+_0x4fa040(0x1ba)+_0x4fa040(0x245)+_0x4fa040(cm_930ee0b89b_0xa111e7._0x4deb7f)+_0x4fa040(0x280)+_0x4fa040(0x1c4)+'e.');return;}const _0x3fa80b=document[_0x4fa040(0x26b)+'ntById'](_0x4fa040(cm_930ee0b89b_0xa111e7._0x1afa0a)+'to');_0x314492(_0x3fa80b,!![]);let _0x177775=_0x52831d?.[_0x4fa040(0x207)]||null;try{_0x216d2f&&(_0x177775=_0x4b0944[_0x4fa040(cm_930ee0b89b_0xa111e7._0x5351ea)+'id']+'/'+_0x4b0944[_0x4fa040(cm_930ee0b89b_0xa111e7._0x2f2901)+'id']+'/'+Date['now']()+'-'+_0xbfb8a0(_0x216d2f['name']),await dbUploadArquivo(BUCKETS[_0x4fa040(0x1ac)],_0x177775,_0x216d2f));_0x4b0944[_0x4fa040(0x207)]=_0x177775;const _0x5c7e1b=Boolean(_0x2cbbdd);_0x5c7e1b?await dbEditarFoto(_0x2cbbdd,_0x4b0944):await dbCriarFoto(_0x4b0944);_0x216d2f&&_0x52831d?.['arquivo']&&_0x52831d[_0x4fa040(0x207)]!==_0x177775&&await dbExcluirArquivoStorage(BUCKETS['FOTOS'],_0x52831d[_0x4fa040(0x207)])['catch'](()=>{});const _0x4439ed=await dbNotificarAtualizacao({'tipo':_0x5c7e1b?_0x4fa040(cm_930ee0b89b_0xa111e7._0x1b2d96)+_0x4fa040(0x1ad):_0x4fa040(0x239)+_0x4fa040(0x1af),'cliente_id':_0x4b0944[_0x4fa040(0x1b2)+'id'],'projeto_id':_0x4b0944[_0x4fa040(0x2b3)+'id'],'titulo':_0x4b0944[_0x4fa040(0x247)],'mensagem':_0x5c7e1b?_0x4fa040(cm_930ee0b89b_0xa111e7._0x152a8e)+_0x4fa040(0x1bc)+_0x4fa040(cm_930ee0b89b_0xa111e7._0x4e227c)+_0x4fa040(0x266)+'u\x20projet'+_0x4fa040(0x26d)+_0x4fa040(0x25a)+'.':_0x4fa040(cm_930ee0b89b_0xa111e7._0x566b72)+_0x4fa040(0x2a4)+'\x20acompan'+_0x4fa040(0x1c3)+'foi\x20publ'+_0x4fa040(0x20d)+_0x4fa040(0x25f)});_0x46257e(),await _0x12eea8(),alert((_0x5c7e1b?_0x4fa040(cm_930ee0b89b_0xa111e7._0x1b878d)+_0x4fa040(0x1ad):_0x4fa040(0x261)+'astrada')+(_0x4fa040(0x1aa)+_0x4fa040(0x1e3))+(_0x4439ed[_0x4fa040(0x2b7)]?'\x0aO\x20clien'+_0x4fa040(0x27f)+'m\x20recebe'+_0x4fa040(0x256)+'so\x20por\x20e'+_0x4fa040(0x213):_0x4fa040(cm_930ee0b89b_0xa111e7._0x31c0ec)+_0x4fa040(0x29a)+_0x4fa040(0x2b4)+_0x4fa040(0x2a8)+_0x4fa040(0x288)+'-mail\x20ai'+_0x4fa040(0x1a7)+_0x4fa040(0x1c1)+_0x4fa040(0x19c)+'.'));}catch(_0xdc1406){_0x216d2f&&_0x177775&&_0x177775!==_0x52831d?.[_0x4fa040(0x207)]&&await dbExcluirArquivoStorage(BUCKETS[_0x4fa040(0x1ac)],_0x177775)[_0x4fa040(cm_930ee0b89b_0xa111e7._0x11f267)](()=>{}),_0x55f2a4('Não\x20foi\x20'+_0x4fa040(0x1d6)+_0x4fa040(0x1f0)+_0x4fa040(0x19f),_0xdc1406);}finally{_0x314492(_0x3fa80b,![]);}}function _0x24d965(_0x1a4c81){const _0x210238=_0x4d1d61,_0x44d3aa=_0x461ba8(_0x1a4c81),_0x3ee521=document[_0x210238(0x26b)+'ntById'](_0x210238(cm_930ee0b89b_0x4dec0c._0x4d0f5a)+_0x210238(0x1d2));if(!_0x44d3aa||!_0x3ee521)return;_0x2cbbdd=_0x44d3aa['id'],_0x3ee521[_0x210238(0x279)+'L']=_0x210238(cm_930ee0b89b_0x4dec0c._0x574a30)+_0x210238(cm_930ee0b89b_0x4dec0c._0x2b975a)+'>'+_0x22bcbc(_0x44d3aa[_0x210238(0x247)])+(_0x210238(0x2a6)+_0x210238(0x1e7)+'\x20\x20')+(_0x44d3aa['url']?_0x210238(cm_930ee0b89b_0x4dec0c._0x3994fe)+'=\x22'+_0x22bcbc(_0x44d3aa['url'])+_0x210238(0x24e)+_0x22bcbc(_0x44d3aa[_0x210238(0x247)])+('\x22\x20style='+_0x210238(0x1d1)+_0x210238(0x1f8)+_0x210238(0x21f)+_0x210238(0x28c)+'x;\x22>'):_0x210238(0x1ae)+'ss=\x22arqu'+_0x210238(0x26f)+_0x210238(0x294)+_0x210238(0x240)+_0x210238(cm_930ee0b89b_0x4dec0c._0x1a47ce)+_0x210238(cm_930ee0b89b_0x4dec0c._0x5630eb)+'magem\x20in'+_0x210238(0x282)+'el'+(_0x44d3aa[_0x210238(0x1d3)]?':\x20'+_0x22bcbc(_0x44d3aa['urlErro']):'')+(_0x210238(0x295)+_0x210238(0x1e7)+_0x210238(0x234)))+(_0x210238(0x295)+_0x210238(cm_930ee0b89b_0x4dec0c._0x5056d1)+_0x210238(0x230)+_0x210238(cm_930ee0b89b_0x4dec0c._0x447c3a)+_0x210238(0x218)+'>\x20')+_0x22bcbc(_0x2575f6(_0x44d3aa[_0x210238(0x1b2)+'id']))+(_0x210238(cm_930ee0b89b_0x4dec0c._0x3d532d)+_0x210238(cm_930ee0b89b_0x4dec0c._0x1a47ce)+_0x210238(0x24d)+_0x210238(0x220)+_0x210238(0x1eb)+_0x210238(0x1c6))+_0x22bcbc(_0x480f2b(_0x44d3aa[_0x210238(0x2b3)+'id']))+(_0x210238(cm_930ee0b89b_0x4dec0c._0x59d312)+_0x210238(0x1e7)+'\x20<p>')+_0x22bcbc(_0x44d3aa[_0x210238(0x19b)+'o']||_0x210238(0x2ac)+_0x210238(0x235))+(_0x210238(0x23e)+_0x210238(0x1e7)+_0x210238(cm_930ee0b89b_0x4dec0c._0x320efd)+_0x210238(0x267)+_0x210238(0x229)+_0x210238(cm_930ee0b89b_0x4dec0c._0x320be7)+_0x210238(0x1e7)+_0x210238(0x264))+_0x806083(_0x210238(0x297),_0x44d3aa['id'],_0x210238(0x1c0),'Editar\x20f'+_0x210238(cm_930ee0b89b_0x4dec0c._0xe8d9d7),_0x210238(0x284))+(_0x210238(0x295)+'\x20\x20\x20\x20\x20\x20\x20\x20'+'\x20')+_0x806083(_0x210238(0x293),_0x44d3aa['id'],_0x210238(cm_930ee0b89b_0x4dec0c._0x2e2337),_0x210238(cm_930ee0b89b_0x4dec0c._0x22e2c4)+_0x210238(0x1d5),_0x210238(cm_930ee0b89b_0x4dec0c._0x161d2e))+(_0x210238(0x295)+'\x20\x20\x20\x20\x20</d'+_0x210238(0x222)+'\x20\x20\x20\x20');}async function _0x3f9acf(_0x541f08){const _0x1f6e88=_0x4d1d61,_0x481959=_0x461ba8(_0x541f08);if(!_0x481959||!confirm(_0x1f6e88(0x1d4)+_0x1f6e88(cm_930ee0b89b_0x9b606e._0x4d505a)+_0x481959[_0x1f6e88(cm_930ee0b89b_0x9b606e._0x37fac2)]+'\x22?'))return;try{_0x481959[_0x1f6e88(0x207)]&&await dbExcluirArquivoStorage(BUCKETS[_0x1f6e88(0x1ac)],_0x481959[_0x1f6e88(0x207)]),await dbExcluirFoto(_0x481959['id']),_0x268e06(),await _0x12eea8(),alert(_0x1f6e88(0x258)+_0x1f6e88(0x22d)+_0x1f6e88(0x21c)+'o.');}catch(_0x28b971){_0x55f2a4(_0x1f6e88(0x1e0)+_0x1f6e88(0x1d6)+_0x1f6e88(0x215)+_0x1f6e88(cm_930ee0b89b_0x9b606e._0x38d2d3),_0x28b971);}}async function _0x12eea8(){_0x5291fe=await dbBuscarFotos(),_0x589071();}function _0x2d7207(){const _0xf9654=_0x4d1d61,_0x240756=_0xd70961(_0xf9654(0x1d7)+_0xf9654(0x1d2))[_0xf9654(0x22e)+_0xf9654(cm_930ee0b89b_0x206bfb._0x503c38)+'e'](_0xf9654(cm_930ee0b89b_0x206bfb._0x358b90));if(!_0x240756)return _0x589071();_0x589071(_0x5291fe['filter'](_0x4f1c26=>[_0x4f1c26['nome'],_0x4f1c26['descrica'+'o'],_0x2575f6(_0x4f1c26[_0xf9654(0x1b2)+'id']),_0x480f2b(_0x4f1c26[_0xf9654(0x2b3)+'id'])][_0xf9654(0x273)](_0x1d01c2=>String(_0x1d01c2||'')[_0xf9654(0x22e)+_0xf9654(0x2ae)+'e'](_0xf9654(0x19d))['includes'](_0x240756))));}function _0x10056b(_0x4131fd,_0x1bd43b){const _0x18b3c2=_0x4d1d61,_0x5cd58b=document[_0x18b3c2(0x26b)+_0x18b3c2(0x27b)](_0x4131fd);if(!_0x5cd58b)return;_0x5cd58b[_0x18b3c2(0x279)+'L']='<option\x20'+'value=\x22\x22'+_0x18b3c2(0x1e4)+_0x18b3c2(0x28f)+_0x18b3c2(0x1ce)+_0x1bd43b[_0x18b3c2(cm_930ee0b89b_0x11baae._0x27e59b)](_0x12f821=>_0x18b3c2(0x2ab)+_0x18b3c2(0x22f)+_0x22bcbc(_0x12f821['id'])+'\x22>'+_0x22bcbc(_0x12f821[_0x18b3c2(0x247)])+(_0x18b3c2(0x1ab)+'>'))[_0x18b3c2(0x203)]('');}function _0x120568(_0x31ac90=''){const _0x360588=_0x4d1d61,_0x38bc06=_0xd70961(_0x360588(0x259)+_0x360588(0x28d)),_0x43e252=_0x38bc06?_0x46d47f['filter'](_0x1060bf=>String(_0x1060bf['cliente_'+'id'])===String(_0x38bc06)):[];_0x507e5c(_0x360588(0x269)+'eto',_0x43e252),_0x2f5edc(_0x360588(0x269)+_0x360588(cm_930ee0b89b_0x5c932e._0x56f9f4),_0x31ac90||(_0x43e252[_0x360588(cm_930ee0b89b_0x5c932e._0xeb87f)]===-0x248a+-0x25d7*0x1+0x4a62?_0x43e252[0x1*0x2bb+0xf8+-0x3b3*0x1]['id']:''));}function _0x507e5c(_0x50a141,_0x23b6df){const _0xcd579b=_0x4d1d61,_0x4eceee=document[_0xcd579b(0x26b)+_0xcd579b(cm_930ee0b89b_0x26c80d._0x53d393)](_0x50a141);if(!_0x4eceee)return;_0x4eceee[_0xcd579b(0x279)+'L']=_0xcd579b(cm_930ee0b89b_0x26c80d._0x49c711)+_0xcd579b(0x29f)+'>'+(_0x23b6df[_0xcd579b(0x291)]>0xa7*0x6+-0xe3*-0x13+-0x14c2?'Selecion'+_0xcd579b(0x287)+_0xcd579b(cm_930ee0b89b_0x26c80d._0x11e4bd)+_0xcd579b(0x1c2):_0xcd579b(0x1db)+'e')+(_0xcd579b(cm_930ee0b89b_0x26c80d._0x4a141a)+'>')+_0x23b6df[_0xcd579b(0x289)](_0x51ff66=>'\x0a\x20\x20\x20\x20\x20\x20\x20'+_0xcd579b(0x1d8)+_0xcd579b(0x1ee)+_0xcd579b(0x1c7)+_0x22bcbc(_0x51ff66['id'])+(_0xcd579b(0x240)+_0xcd579b(0x1e7)+_0xcd579b(0x1f3))+_0x22bcbc(window[_0xcd579b(0x281)+_0xcd579b(0x23c)]?.(_0x51ff66)||_0x51ff66['nome'])+(_0xcd579b(0x295)+_0xcd579b(0x1fb)+_0xcd579b(0x205)+_0xcd579b(0x265)))[_0xcd579b(0x203)]('');}function _0x507774(_0xb2119,_0x42ccb6){const _0x28c992=_0x4d1d61;if(!_0xb2119)return![];return _0x46d47f[_0x28c992(0x273)](_0x4bb323=>String(_0x4bb323['id'])===String(_0xb2119)&&String(_0x4bb323[_0x28c992(0x1b2)+'id'])===String(_0x42ccb6));}function _0x242b9d(){const _0x3df798=_0x4d1d61,_0x447b66=document[_0x3df798(0x26b)+'ntById'](_0x3df798(cm_930ee0b89b_0x38122c._0x544b6a)+'o');if(!_0x447b66)return;_0x447b66[_0x3df798(0x1b0)][_0x3df798(0x26e)]=_0x3df798(0x2b6),_0x447b66[_0x3df798(cm_930ee0b89b_0x38122c._0xe84a53)+'t'][_0x3df798(0x1b5)](_0x3df798(0x28a));}function _0x46257e(){const _0x510318=_0x4d1d61,_0x59e854=document[_0x510318(cm_930ee0b89b_0x5254e3._0x29db89)+_0x510318(cm_930ee0b89b_0x5254e3._0x3f2c00)](_0x510318(cm_930ee0b89b_0x5254e3._0x3749a4)+'o');_0x59e854?.[_0x510318(0x1a5)+'t'][_0x510318(0x2a3)](_0x510318(0x28a));if(_0x59e854)_0x59e854[_0x510318(0x1b0)][_0x510318(cm_930ee0b89b_0x5254e3._0x471dbb)]=_0x510318(cm_930ee0b89b_0x5254e3._0x1b796c);document[_0x510318(0x26b)+_0x510318(0x27b)](_0x510318(0x1b7))?.[_0x510318(0x2a5)]();}function _0x2febcd(_0x13ffeb,_0x422ea3,_0x1891a0){const _0x3b9f3d=_0x4d1d61,_0x4458b7=document[_0x3b9f3d(0x226)+_0x3b9f3d(0x1cc)](_0x3b9f3d(0x1ff)+'to\x20.moda'+_0x3b9f3d(0x1be)+'\x20h2'),_0x5b5f74=document[_0x3b9f3d(0x26b)+_0x3b9f3d(cm_930ee0b89b_0x45bf4e._0x5c48c9)](_0x3b9f3d(0x206)+'to'),_0x25f80a=document['getEleme'+'ntById'](_0x3b9f3d(0x23a)+_0x3b9f3d(cm_930ee0b89b_0x45bf4e._0x2fa1f1));if(_0x4458b7)_0x4458b7[_0x3b9f3d(0x2a1)+_0x3b9f3d(0x22c)]=_0x13ffeb;if(_0x5b5f74)_0x5b5f74[_0x3b9f3d(0x2a1)+_0x3b9f3d(0x22c)]=_0x422ea3;if(_0x25f80a)_0x25f80a[_0x3b9f3d(cm_930ee0b89b_0x45bf4e._0x15be6c)]=_0x1891a0;}function _0x314492(_0x24a6e1,_0x1fd2ee){const _0xd17441=_0x4d1d61;if(!_0x24a6e1)return;_0x24a6e1[_0xd17441(0x1f6)]=_0x1fd2ee;if(_0x1fd2ee)_0x24a6e1[_0xd17441(0x2a1)+_0xd17441(cm_930ee0b89b_0x18c98a._0x5993ec)]=_0xd17441(0x1a4)+_0xd17441(0x26a);else _0x24a6e1[_0xd17441(0x2a1)+_0xd17441(0x22c)]=_0x2cbbdd?_0xd17441(cm_930ee0b89b_0x18c98a._0x4afa56)+_0xd17441(0x221)+'s':_0xd17441(0x200)+_0xd17441(0x254);}function _0x268e06(){const _0x5780cc=_0x4d1d61;_0x2cbbdd=null;const _0x57b417=document[_0x5780cc(cm_930ee0b89b_0x339c08._0x3f64ee)+_0x5780cc(cm_930ee0b89b_0x339c08._0x487fc3)](_0x5780cc(cm_930ee0b89b_0x339c08._0x639b4b)+_0x5780cc(0x1d2));if(_0x57b417)_0x57b417[_0x5780cc(0x279)+'L']=_0x5780cc(cm_930ee0b89b_0x339c08._0x25787a)+_0x5780cc(0x277)+_0x5780cc(0x227)+_0x5780cc(0x283)+'ualizar\x20'+_0x5780cc(0x299)+_0x5780cc(0x286);}function _0x806083(_0x30572e,_0x449f5c,_0x5ea334,_0x12094e,_0x1ad610=''){const _0x5a7161=_0x4d1d61;return _0x5a7161(0x295)+'\x20\x20\x20\x20\x20<bu'+'tton\x20typ'+_0x5a7161(0x1dd)+'n\x22\x20class'+_0x5a7161(0x28b)+_0x5a7161(0x253)+_0x1ad610+('\x22\x20data-a'+_0x5a7161(0x21a)+'=\x22')+_0x30572e+(_0x5a7161(0x1cd)+'\x20\x20\x20\x20\x20\x20\x20\x20'+'\x20\x20data-i'+_0x5a7161(0x271))+_0x22bcbc(_0x449f5c)+(_0x5a7161(0x228)+'\x22')+_0x12094e+(_0x5a7161(cm_930ee0b89b_0x501d13._0x5f4bdc)+_0x5a7161(0x1c9))+_0x12094e+(_0x5a7161(cm_930ee0b89b_0x501d13._0x29ed00)+_0x5a7161(cm_930ee0b89b_0x501d13._0x281442)+_0x5a7161(0x241)+_0x5a7161(cm_930ee0b89b_0x501d13._0x4c0cbe)+_0x5a7161(0x210))+_0x5ea334+(_0x5a7161(0x24b)+_0x5a7161(0x1e7)+_0x5a7161(0x1fe)+_0x5a7161(0x1fa)+_0x5a7161(0x285));}function _0x461ba8(_0xc96471){const _0x1007c3=_0x4d1d61;return _0x5291fe[_0x1007c3(0x21b)](_0x3c2d3b=>String(_0x3c2d3b['id'])===String(_0xc96471));}function _0x2575f6(_0x17127e){const _0x46f012=_0x4d1d61;return _0x87a8c[_0x46f012(0x21b)](_0x5b1d63=>String(_0x5b1d63['id'])===String(_0x17127e))?.[_0x46f012(cm_930ee0b89b_0x4171e1._0x5be86f)]||_0x46f012(0x1bf)+_0x46f012(0x2aa);}function _0x480f2b(_0x16a98f){const _0x2fd719=_0x4d1d61;return _0x46d47f['find'](_0x1dcb2e=>String(_0x1dcb2e['id'])===String(_0x16a98f))?.[_0x2fd719(0x247)]||_0x2fd719(0x1bf)+_0x2fd719(0x2aa);}function _0xf48594(_0x572c34){const _0x586a96=_0x4d1d61,_0x33cb1d=_0x46d47f[_0x586a96(cm_930ee0b89b_0x992dc1._0x13f061)](_0x575f17=>String(_0x575f17['id'])===String(_0x572c34));return _0x33cb1d?window[_0x586a96(cm_930ee0b89b_0x992dc1._0x29fc33)+'Contrato']?.(_0x33cb1d)||_0x33cb1d[_0x586a96(0x247)]:'Contrato'+_0x586a96(0x27d)+_0x586a96(cm_930ee0b89b_0x992dc1._0x474f7e);}function _0x7b53c0(_0x196fd8){const _0x50c72a=_0x4d1d61,_0x145a17=document[_0x50c72a(cm_930ee0b89b_0x3ccaa0._0x1ba35c)+_0x50c72a(0x27b)]('loading');if(_0x145a17)_0x145a17[_0x50c72a(0x1b0)][_0x50c72a(cm_930ee0b89b_0x3ccaa0._0x3bf423)]=_0x196fd8?_0x50c72a(0x2b6):_0x50c72a(0x1c5);}function _0xd70961(_0x31f477){const _0xd2e120=_0x4d1d61;return document[_0xd2e120(cm_930ee0b89b_0x805630._0x4ff0d6)+'ntById'](_0x31f477)?.[_0xd2e120(cm_930ee0b89b_0x805630._0x10e160)]?.[_0xd2e120(0x231)]()||'';}function _0x2f5edc(_0x43af0a,_0x336926){const _0x505ffc=_0x4d1d61,_0x1e4ad4=document[_0x505ffc(0x26b)+_0x505ffc(0x27b)](_0x43af0a);if(_0x1e4ad4)_0x1e4ad4[_0x505ffc(0x224)]=_0x336926||'';}function _0xbfb8a0(_0x4dda56){return _0x4dda56['replace'](/[^a-zA-Z0-9._-]+/g,'-');}function _0x22bcbc(_0x3b1a09){const _0x4c911f=_0x4d1d61;return String(_0x3b1a09??'')[_0x4c911f(0x20b)+'ll']('&',_0x4c911f(0x1ca))[_0x4c911f(0x20b)+'ll']('<','&lt;')['replaceA'+'ll']('>',_0x4c911f(0x262))[_0x4c911f(cm_930ee0b89b_0xfff280._0x2779e9)+'ll']('\x22',_0x4c911f(0x1cb))[_0x4c911f(0x20b)+'ll']('\x27',_0x4c911f(0x223));}function _0x55f2a4(_0x29e393,_0x58e423){const _0x37ab8d=_0x4d1d61;console[_0x37ab8d(0x251)](_0x29e393,_0x58e423),alert(''+_0x29e393+(_0x58e423?.[_0x37ab8d(0x1ec)]?'\x0a'+_0x58e423[_0x37ab8d(cm_930ee0b89b_0x1eed2c._0x30d018)]:''));}}());
+/*
+=====================================================
+CAMILA MARTINS ENGENHARIA
+FOTOS.JS — ÁLBUNS + VISUALIZADOR DE IMAGENS
+=====================================================
+*/
+
+(function moduloFotos() {
+    "use strict";
+
+    let fotos = [];
+    let clientes = [];
+    let projetos = [];
+    let fotoSelecionadaId = null;
+    let albumAtualKey = null;
+    let visualizadorIds = [];
+    let visualizadorIndex = -1;
+
+    document.addEventListener("DOMContentLoaded", iniciar, { once: true });
+
+    async function iniciar() {
+        configurarEventos();
+        mostrarLoading(true);
+
+        try {
+            [fotos, clientes, projetos] = await Promise.all([
+                dbBuscarFotos(),
+                dbBuscarClientes(),
+                dbBuscarProjetos()
+            ]);
+
+            preencherSelect("fotoCliente", clientes);
+            preencherProjetos();
+            renderizarAlbuns();
+        } catch (error) {
+            tratarErro("Não foi possível carregar as fotos.", error);
+        } finally {
+            mostrarLoading(false);
+        }
+    }
+
+    function configurarEventos() {
+        document.getElementById("novaFoto")?.addEventListener("click", novaFoto);
+        document.getElementById("fecharModalFoto")?.addEventListener("click", fecharModal);
+        document.getElementById("cancelarFoto")?.addEventListener("click", fecharModal);
+        document.getElementById("formFoto")?.addEventListener("submit", salvarFoto);
+        document.getElementById("fotoCliente")?.addEventListener("change", preencherProjetos);
+        document.getElementById("pesquisaFoto")?.addEventListener("input", pesquisar);
+        document.getElementById("btnPesquisarFoto")?.addEventListener("click", pesquisar);
+
+        document.getElementById("galeriaFotos")?.addEventListener("click", tratarAcao);
+        document.getElementById("albumFotos")?.addEventListener("click", tratarAcao);
+        document.getElementById("visualizadorFoto")?.addEventListener("click", tratarAcao);
+
+        document.getElementById("modalFoto")?.addEventListener("click", event => {
+            if (event.target.id === "modalFoto") fecharModal();
+        });
+
+        document.getElementById("visualizadorFoto")?.addEventListener("click", event => {
+            if (event.target.id === "visualizadorFoto") fecharVisualizador();
+        });
+
+        document.addEventListener("keydown", tratarTecladoVisualizador);
+    }
+
+    function agruparAlbuns(lista = fotos) {
+        const mapa = new Map();
+
+        for (const foto of lista) {
+            const clienteId = String(foto.cliente_id || "sem-cliente");
+            const projetoId = String(foto.projeto_id || "sem-projeto");
+            const key = clienteId + "::" + projetoId;
+
+            if (!mapa.has(key)) {
+                mapa.set(key, {
+                    key,
+                    cliente_id: foto.cliente_id || null,
+                    projeto_id: foto.projeto_id || null,
+                    fotos: []
+                });
+            }
+
+            mapa.get(key).fotos.push(foto);
+        }
+
+        return [...mapa.values()].sort((a, b) => {
+            const cliente = nomeCliente(a.cliente_id).localeCompare(
+                nomeCliente(b.cliente_id),
+                "pt-BR",
+                { sensitivity: "base" }
+            );
+            if (cliente !== 0) return cliente;
+
+            return nomeProjeto(a.projeto_id).localeCompare(
+                nomeProjeto(b.projeto_id),
+                "pt-BR",
+                { sensitivity: "base" }
+            );
+        });
+    }
+
+    function renderizarAlbuns(lista = fotos) {
+        const galeria = document.getElementById("galeriaFotos");
+        const albumView = document.getElementById("albumFotos");
+        if (!galeria) return;
+
+        albumAtualKey = null;
+        if (albumView) albumView.hidden = true;
+        galeria.hidden = false;
+
+        const albuns = agruparAlbuns(lista);
+
+        if (!albuns.length) {
+            galeria.innerHTML = '<div class="estado-vazio">Nenhuma foto encontrada.</div>';
+            return;
+        }
+
+        galeria.innerHTML = albuns.map(album => {
+            const projeto = obterProjeto(album.projeto_id);
+            const contrato = numeroContrato(projeto);
+            const parceria = Boolean(projeto?.parceria);
+            const quantidade = album.fotos.length;
+            const capas = album.fotos.filter(foto => Boolean(foto.url)).slice(0, 4);
+
+            return `
+                <button type="button"
+                    class="foto-album-card"
+                    data-acao-foto="abrir-album"
+                    data-album="${escapar(album.key)}"
+                    aria-label="Abrir álbum ${escapar(nomeProjeto(album.projeto_id))} de ${escapar(nomeCliente(album.cliente_id))}">
+                    <div class="foto-album-capa">
+                        ${renderizarMosaico(capas)}
+                        <span class="foto-album-quantidade">
+                            ${quantidade} ${quantidade === 1 ? "foto" : "fotos"}
+                        </span>
+                    </div>
+                    <div class="foto-album-info">
+                        <span class="foto-album-cliente">${escapar(nomeCliente(album.cliente_id))}</span>
+                        <strong>${escapar(nomeProjeto(album.projeto_id))}</strong>
+                        <div class="foto-album-meta">
+                            ${contrato ? `<span><i class="fa-solid fa-file-signature"></i> Contrato ${escapar(contrato)}</span>` : ""}
+                            ${parceria ? '<span><i class="fa-solid fa-handshake"></i> Parceria</span>' : ""}
+                        </div>
+                        <span class="foto-album-abrir">
+                            Abrir álbum <i class="fa-solid fa-chevron-right"></i>
+                        </span>
+                    </div>
+                </button>
+            `;
+        }).join("");
+    }
+
+    function renderizarMosaico(capas) {
+        if (!capas.length) {
+            return `
+                <div class="foto-album-vazio">
+                    <i class="fa-regular fa-images"></i>
+                    <span>Sem prévia</span>
+                </div>
+            `;
+        }
+
+        const classe = "foto-album-mosaico foto-album-mosaico-" + Math.min(capas.length, 4);
+
+        return `
+            <div class="${classe}">
+                ${capas.map(foto => `
+                    <img src="${escapar(foto.url)}"
+                        alt=""
+                        loading="lazy"
+                        decoding="async">
+                `).join("")}
+            </div>
+        `;
+    }
+
+    function abrirAlbum(key, lista = null) {
+        const galeria = document.getElementById("galeriaFotos");
+        const albumView = document.getElementById("albumFotos");
+        if (!galeria || !albumView) return;
+
+        const album = agruparAlbuns(fotos).find(item => item.key === String(key));
+        if (!album) {
+            renderizarAlbuns();
+            return;
+        }
+
+        albumAtualKey = album.key;
+        galeria.hidden = true;
+        albumView.hidden = false;
+
+        const projeto = obterProjeto(album.projeto_id);
+        const contrato = numeroContrato(projeto);
+        const fotosDoAlbum = Array.isArray(lista) ? lista : album.fotos;
+
+        preencherTexto("albumTitulo", nomeProjeto(album.projeto_id));
+        preencherTexto("albumCliente", nomeCliente(album.cliente_id));
+        preencherTexto(
+            "albumContrato",
+            contrato
+                ? "Contrato " + contrato
+                : (projeto?.parceria ? "Parceria" : "")
+        );
+        preencherTexto(
+            "albumQuantidade",
+            fotosDoAlbum.length + " " + (fotosDoAlbum.length === 1 ? "foto" : "fotos")
+        );
+
+        const grade = document.getElementById("albumGrade");
+        if (!grade) return;
+
+        if (!fotosDoAlbum.length) {
+            grade.innerHTML = '<div class="estado-vazio">Nenhuma foto corresponde à pesquisa neste álbum.</div>';
+            return;
+        }
+
+        grade.innerHTML = fotosDoAlbum.map(foto => `
+            <article class="foto-miniatura-card">
+                <button type="button"
+                    class="foto-miniatura-imagem"
+                    data-acao-foto="visualizar"
+                    data-id="${escapar(foto.id)}"
+                    aria-label="Visualizar ${escapar(foto.nome || "foto")}">
+                    ${foto.url
+                        ? `<img src="${escapar(foto.url)}" alt="${escapar(foto.nome || "Foto")}" loading="lazy" decoding="async">`
+                        : `<span class="foto-miniatura-indisponivel">
+                            <i class="fa-regular fa-image"></i>
+                            Imagem indisponível
+                           </span>`}
+                </button>
+                <div class="foto-miniatura-rodape">
+                    <span title="${escapar(foto.nome || "Foto sem título")}">
+                        ${escapar(foto.nome || "Foto sem título")}
+                    </span>
+                    <div class="foto-miniatura-acoes">
+                        ${botao("editar", foto.id, "fa-pen", "Editar foto", "edit")}
+                        ${botao("excluir", foto.id, "fa-trash", "Excluir foto", "delete")}
+                    </div>
+                </div>
+            </article>
+        `).join("");
+    }
+
+    function voltarAlbuns() {
+        fecharVisualizador();
+        const termo = valor("pesquisaFoto").toLocaleLowerCase("pt-BR");
+        if (!termo) {
+            renderizarAlbuns();
+            return;
+        }
+
+        const filtradas = filtrarFotos(termo);
+        renderizarAlbuns(filtradas);
+    }
+
+    function tratarAcao(event) {
+        const alvo = event.target.closest("[data-acao-foto]");
+        if (!alvo) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const acao = alvo.dataset.acaoFoto;
+        const id = alvo.dataset.id;
+        const album = alvo.dataset.album;
+
+        if (acao === "abrir-album") abrirAlbum(album);
+        if (acao === "voltar-albuns") voltarAlbuns();
+        if (acao === "visualizar") abrirVisualizador(id);
+        if (acao === "editar") editarFoto(id);
+        if (acao === "excluir") excluirFoto(id);
+        if (acao === "viewer-anterior") navegarVisualizador(-1);
+        if (acao === "viewer-proxima") navegarVisualizador(1);
+        if (acao === "viewer-fechar") fecharVisualizador();
+        if (acao === "viewer-miniatura") abrirVisualizador(id, true);
+    }
+
+    function abrirVisualizador(id, manterLista = false) {
+        const foto = localizar(id);
+        if (!foto) return;
+
+        if (!manterLista) {
+            const album = albumAtualKey
+                ? agruparAlbuns(fotos).find(item => item.key === albumAtualKey)
+                : null;
+
+            visualizadorIds = (album?.fotos || [foto]).map(item => String(item.id));
+        }
+
+        const indice = visualizadorIds.findIndex(item => item === String(id));
+        visualizadorIndex = indice >= 0 ? indice : 0;
+
+        const viewer = document.getElementById("visualizadorFoto");
+        if (!viewer) return;
+
+        viewer.hidden = false;
+        viewer.classList.add("show");
+        document.body.classList.add("foto-viewer-aberto");
+
+        renderizarVisualizador();
+    }
+
+    function renderizarVisualizador() {
+        if (visualizadorIndex < 0 || visualizadorIndex >= visualizadorIds.length) return;
+
+        const foto = localizar(visualizadorIds[visualizadorIndex]);
+        if (!foto) return;
+
+        fotoSelecionadaId = foto.id;
+
+        preencherTexto("viewerTitulo", foto.nome || "Foto");
+        preencherTexto(
+            "viewerMeta",
+            nomeCliente(foto.cliente_id) + " · " + nomeProjeto(foto.projeto_id)
+        );
+        preencherTexto(
+            "viewerContador",
+            (visualizadorIndex + 1) + " / " + visualizadorIds.length
+        );
+        preencherTexto("viewerDescricao", foto.descricao || "");
+
+        const imagem = document.getElementById("viewerImagem");
+        const indisponivel = document.getElementById("viewerIndisponivel");
+
+        if (imagem && indisponivel) {
+            if (foto.url) {
+                imagem.src = foto.url;
+                imagem.alt = foto.nome || "Foto";
+                imagem.hidden = false;
+                indisponivel.hidden = true;
+            } else {
+                imagem.removeAttribute("src");
+                imagem.hidden = true;
+                indisponivel.hidden = false;
+            }
+        }
+
+        const anterior = document.getElementById("viewerAnterior");
+        const proxima = document.getElementById("viewerProxima");
+        const unica = visualizadorIds.length <= 1;
+        if (anterior) anterior.disabled = unica;
+        if (proxima) proxima.disabled = unica;
+
+        const editar = document.getElementById("viewerEditar");
+        const excluir = document.getElementById("viewerExcluir");
+        if (editar) editar.dataset.id = String(foto.id);
+        if (excluir) excluir.dataset.id = String(foto.id);
+
+        renderizarFilmstrip();
+    }
+
+    function renderizarFilmstrip() {
+        const faixa = document.getElementById("viewerMiniaturas");
+        if (!faixa) return;
+
+        faixa.innerHTML = visualizadorIds.map((id, indice) => {
+            const foto = localizar(id);
+            if (!foto) return "";
+
+            return `
+                <button type="button"
+                    class="viewer-miniatura ${indice === visualizadorIndex ? "ativo" : ""}"
+                    data-acao-foto="viewer-miniatura"
+                    data-id="${escapar(foto.id)}"
+                    aria-label="Abrir ${escapar(foto.nome || "foto")}">
+                    ${foto.url
+                        ? `<img src="${escapar(foto.url)}" alt="" loading="lazy">`
+                        : '<span><i class="fa-regular fa-image"></i></span>'}
+                </button>
+            `;
+        }).join("");
+
+        faixa.querySelector(".viewer-miniatura.ativo")
+            ?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
+
+    function navegarVisualizador(delta) {
+        if (visualizadorIds.length <= 1) return;
+
+        visualizadorIndex =
+            (visualizadorIndex + delta + visualizadorIds.length) % visualizadorIds.length;
+
+        renderizarVisualizador();
+    }
+
+    function fecharVisualizador() {
+        const viewer = document.getElementById("visualizadorFoto");
+        if (!viewer || viewer.hidden) return;
+
+        viewer.classList.remove("show");
+        viewer.hidden = true;
+        document.body.classList.remove("foto-viewer-aberto");
+        visualizadorIndex = -1;
+    }
+
+    function tratarTecladoVisualizador(event) {
+        const viewer = document.getElementById("visualizadorFoto");
+        if (!viewer || viewer.hidden) return;
+
+        if (event.key === "Escape") fecharVisualizador();
+        if (event.key === "ArrowLeft") navegarVisualizador(-1);
+        if (event.key === "ArrowRight") navegarVisualizador(1);
+    }
+
+    function novaFoto() {
+        fotoSelecionadaId = null;
+        document.getElementById("formFoto")?.reset();
+        preencherProjetos();
+        atualizarModal("Adicionar Foto", "Salvar Foto", true);
+        abrirModal();
+    }
+
+    function editarFoto(id) {
+        const foto = localizar(id);
+        if (!foto) return;
+
+        fecharVisualizador();
+        fotoSelecionadaId = foto.id;
+        preencher("fotoCliente", foto.cliente_id);
+        preencherProjetos(foto.projeto_id);
+        preencher("fotoTitulo", foto.nome);
+        preencher("fotoDescricao", foto.descricao);
+        atualizarModal("Editar Foto", "Salvar Alterações", false);
+        abrirModal();
+    }
+
+    async function salvarFoto(event) {
+        event.preventDefault();
+
+        const dados = {
+            nome: valor("fotoTitulo"),
+            descricao: valor("fotoDescricao"),
+            cliente_id: valor("fotoCliente") || null,
+            projeto_id: valor("fotoProjeto") || null
+        };
+
+        const arquivo = document.getElementById("arquivoFoto")?.files?.[0];
+        const anterior = localizar(fotoSelecionadaId);
+
+        if (!dados.nome || !dados.cliente_id || !dados.projeto_id) {
+            alert("Informe o título, o cliente e o projeto.");
+            return;
+        }
+
+        if (!fotoSelecionadaId && !arquivo) {
+            alert("Selecione uma imagem.");
+            return;
+        }
+
+        if (!projetoPertenceAoCliente(dados.projeto_id, dados.cliente_id)) {
+            alert("O projeto selecionado não pertence a esse cliente.");
+            return;
+        }
+
+        const botaoSalvar = document.getElementById("salvarFoto");
+        alternarSalvamento(botaoSalvar, true);
+        let novoCaminho = anterior?.arquivo || null;
+
+        try {
+            if (arquivo) {
+                novoCaminho =
+                    dados.cliente_id + "/" +
+                    dados.projeto_id + "/" +
+                    Date.now() + "-" +
+                    normalizarNome(arquivo.name);
+
+                await dbUploadArquivo(BUCKETS.FOTOS, novoCaminho, arquivo);
+            }
+
+            dados.arquivo = novoCaminho;
+            const editando = Boolean(fotoSelecionadaId);
+
+            if (editando) {
+                await dbEditarFoto(fotoSelecionadaId, dados);
+            } else {
+                await dbCriarFoto(dados);
+            }
+
+            if (arquivo && anterior?.arquivo && anterior.arquivo !== novoCaminho) {
+                await dbExcluirArquivoStorage(BUCKETS.FOTOS, anterior.arquivo).catch(() => {});
+            }
+
+            const notificacao = await dbNotificarAtualizacao({
+                tipo: editando ? "foto_atualizada" : "foto_publicada",
+                cliente_id: dados.cliente_id,
+                projeto_id: dados.projeto_id,
+                titulo: dados.nome,
+                mensagem: editando
+                    ? "Uma foto do acompanhamento do seu projeto foi atualizada."
+                    : "Uma nova foto do acompanhamento foi publicada no portal."
+            });
+
+            fecharModal();
+            await recarregar();
+
+            alert(
+                (editando ? "Foto atualizada" : "Foto cadastrada") + " com sucesso." +
+                (notificacao.enviado
+                    ? "\nO cliente também recebeu um aviso por e-mail."
+                    : "\nO registro foi salvo, mas o aviso por e-mail ainda não está configurado.")
+            );
+        } catch (error) {
+            if (arquivo && novoCaminho && novoCaminho !== anterior?.arquivo) {
+                await dbExcluirArquivoStorage(BUCKETS.FOTOS, novoCaminho).catch(() => {});
+            }
+
+            tratarErro("Não foi possível salvar a foto.", error);
+        } finally {
+            alternarSalvamento(botaoSalvar, false);
+        }
+    }
+
+    async function excluirFoto(id) {
+        const foto = localizar(id);
+        if (!foto || !confirm('Excluir a foto "' + (foto.nome || "Sem título") + '"?')) return;
+
+        const albumAnterior = chaveAlbum(foto);
+
+        try {
+            fecharVisualizador();
+            await dbExcluirFoto(foto.id);
+
+            if (foto.arquivo) {
+                await dbExcluirArquivoStorage(BUCKETS.FOTOS, foto.arquivo).catch(() => {});
+            }
+
+            await recarregar(albumAnterior);
+            alert("Foto excluída com sucesso.");
+        } catch (error) {
+            tratarErro("Não foi possível excluir a foto.", error);
+        }
+    }
+
+    async function recarregar(preferirAlbum = albumAtualKey) {
+        fotos = await dbBuscarFotos();
+
+        if (preferirAlbum) {
+            const album = agruparAlbuns(fotos).find(item => item.key === preferirAlbum);
+            if (album?.fotos?.length) {
+                abrirAlbum(preferirAlbum);
+                return;
+            }
+        }
+
+        renderizarAlbuns();
+    }
+
+    function pesquisar() {
+        const termo = valor("pesquisaFoto").toLocaleLowerCase("pt-BR");
+
+        if (!termo) {
+            if (albumAtualKey) abrirAlbum(albumAtualKey);
+            else renderizarAlbuns();
+            return;
+        }
+
+        const filtradas = filtrarFotos(termo);
+
+        if (albumAtualKey) {
+            const somenteAlbum = filtradas.filter(foto => chaveAlbum(foto) === albumAtualKey);
+            abrirAlbum(albumAtualKey, somenteAlbum);
+            return;
+        }
+
+        renderizarAlbuns(filtradas);
+    }
+
+    function filtrarFotos(termo) {
+        return fotos.filter(foto => {
+            const projeto = obterProjeto(foto.projeto_id);
+            return [
+                foto.nome,
+                foto.descricao,
+                nomeCliente(foto.cliente_id),
+                nomeProjeto(foto.projeto_id),
+                numeroContrato(projeto)
+            ].some(campo =>
+                String(campo || "").toLocaleLowerCase("pt-BR").includes(termo)
+            );
+        });
+    }
+
+    function preencherSelect(id, itens) {
+        const select = document.getElementById(id);
+        if (!select) return;
+
+        select.innerHTML =
+            '<option value="">Selecione</option>' +
+            itens.map(item =>
+                '<option value="' + escapar(item.id) + '">' +
+                escapar(item.nome) +
+                "</option>"
+            ).join("");
+    }
+
+    function preencherProjetos(valorSelecionado = "") {
+        const clienteId = valor("fotoCliente");
+        const lista = clienteId
+            ? projetos.filter(projeto => String(projeto.cliente_id) === String(clienteId))
+            : projetos;
+
+        preencherSelect("fotoProjeto", lista);
+        preencher("fotoProjeto", valorSelecionado);
+    }
+
+    function projetoPertenceAoCliente(projetoId, clienteId) {
+        if (!projetoId) return false;
+
+        return projetos.some(projeto =>
+            String(projeto.id) === String(projetoId) &&
+            String(projeto.cliente_id) === String(clienteId)
+        );
+    }
+
+    function abrirModal() {
+        const modal = document.getElementById("modalFoto");
+        if (!modal) return;
+
+        modal.style.display = "flex";
+        modal.classList.add("show");
+    }
+
+    function fecharModal() {
+        const modal = document.getElementById("modalFoto");
+        modal?.classList.remove("show");
+
+        if (modal) modal.style.display = "none";
+        document.getElementById("formFoto")?.reset();
+    }
+
+    function atualizarModal(titulo, textoBotao, arquivoObrigatorio) {
+        const tituloModal = document.querySelector("#modalFoto .modal-header h2");
+        const botaoSalvar = document.getElementById("salvarFoto");
+        const inputArquivo = document.getElementById("arquivoFoto");
+
+        if (tituloModal) tituloModal.textContent = titulo;
+        if (botaoSalvar) botaoSalvar.textContent = textoBotao;
+        if (inputArquivo) inputArquivo.required = arquivoObrigatorio;
+    }
+
+    function alternarSalvamento(botao, salvando) {
+        if (!botao) return;
+
+        botao.disabled = salvando;
+        if (salvando) botao.textContent = "Salvando...";
+        else botao.textContent = fotoSelecionadaId ? "Salvar Alterações" : "Salvar Foto";
+    }
+
+    function botao(acao, id, icone, titulo, classe = "") {
+        return `
+            <button type="button"
+                class="btn-icon ${classe}"
+                data-acao-foto="${acao}"
+                data-id="${escapar(id)}"
+                title="${titulo}"
+                aria-label="${titulo}">
+                <i class="fa-solid ${icone}"></i>
+            </button>
+        `;
+    }
+
+    function localizar(id) {
+        return fotos.find(foto => String(foto.id) === String(id));
+    }
+
+    function chaveAlbum(foto) {
+        return String(foto?.cliente_id || "sem-cliente") + "::" +
+            String(foto?.projeto_id || "sem-projeto");
+    }
+
+    function nomeCliente(id) {
+        return clientes.find(cliente => String(cliente.id) === String(id))?.nome || "Cliente não informado";
+    }
+
+    function obterProjeto(id) {
+        return projetos.find(projeto => String(projeto.id) === String(id)) || null;
+    }
+
+    function nomeProjeto(id) {
+        return obterProjeto(id)?.nome || "Projeto sem nome";
+    }
+
+    function numeroContrato(projeto) {
+        return String(projeto?.numero_contrato || "").trim();
+    }
+
+    function mostrarLoading(mostrar) {
+        const elemento = document.getElementById("loading");
+        if (elemento) elemento.style.display = mostrar ? "flex" : "none";
+    }
+
+    function valor(id) {
+        return document.getElementById(id)?.value?.trim() || "";
+    }
+
+    function preencher(id, conteudo) {
+        const campo = document.getElementById(id);
+        if (campo) campo.value = conteudo || "";
+    }
+
+    function preencherTexto(id, conteudo) {
+        const elemento = document.getElementById(id);
+        if (elemento) elemento.textContent = conteudo || "";
+    }
+
+    function normalizarNome(nome) {
+        return String(nome || "imagem").replace(/[^a-zA-Z0-9._-]+/g, "-");
+    }
+
+    function escapar(valor) {
+        return String(valor ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    function tratarErro(mensagem, error) {
+        console.error(mensagem, error);
+        alert(mensagem + (error?.message ? "\n" + error.message : ""));
+    }
+})();

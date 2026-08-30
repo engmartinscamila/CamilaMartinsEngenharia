@@ -1,6 +1,8 @@
 name: Deploy static site to Pages
 
 on:
+  push:
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -13,7 +15,45 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  auditoria:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Auditoria estática
+        run: node scripts/site-audit.mjs
+
+      - name: Instalar Chromium de teste
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Servir site local
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/cme-http.log 2>&1 &
+          echo $! > /tmp/cme-http.pid
+          sleep 2
+          curl --fail http://127.0.0.1:4173/admin.html >/dev/null
+
+      - name: Testes de interface
+        run: node scripts/browser-smoke.mjs
+
+      - name: Log do servidor em caso de falha
+        if: failure()
+        run: cat /tmp/cme-http.log || true
+
   deploy:
+    needs: auditoria
+    if: ${{ needs.auditoria.result == 'success' }}
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -24,28 +64,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          cache: npm
-          cache-dependency-path: portal-app/package-lock.json
+      - name: Prepare classic website
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf site-public
+          mkdir -p site-public
 
-      - name: Build integrated site
-        run: npm run build:cloudflare
-        env:
-          EXPO_PUBLIC_APP_ENV: production
-          EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF: ${{ secrets.EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF }}
-          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
-          EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          find . -maxdepth 1 -type f -name '*.html' -exec cp {} site-public/ \;
+          cp -R assets site-public/assets
+          cp -R css site-public/css
+          cp -R js site-public/js
+          touch site-public/.nojekyll
+          printf '%s\n' "${GITHUB_SHA}" > site-public/build-version.txt
+
+          for file in CNAME robots.txt sitemap.xml camila-martins.vcf; do
+            if [[ -f "$file" ]]; then
+              cp "$file" site-public/
+            fi
+          done
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload site
+      - name: Upload classic site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "dist"
+          path: "site-public"
 
       - name: Deploy
         id: deployment

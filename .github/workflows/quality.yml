@@ -1,0 +1,72 @@
+name: Auditoria completa do portal
+
+on:
+  push:
+    branches:
+      - auditoria-geral-20260829
+      - auditoria-estrutural-20260829
+      - galeria-fotos-20260829
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: auditoria-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  auditoria:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Auditoria estática
+        run: node scripts/site-audit.mjs
+
+      - name: Instalar Chromium de teste
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Servir site local
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/cme-http.log 2>&1 &
+          echo $! > /tmp/cme-http.pid
+          sleep 2
+          curl --fail http://127.0.0.1:4173/admin.html >/dev/null
+
+      - name: Testes de interface
+        run: node scripts/browser-smoke.mjs
+
+      - name: Testar Worker público Cloudflare
+        if: github.ref_name == 'galeria-fotos-20260829'
+        run: |
+          set -euo pipefail
+          BASE="https://cme-public-media.eng-martins-camila.workers.dev"
+
+          echo "== /health =="
+          curl --fail --show-error --silent --retry 3 "$BASE/health" -o /tmp/cme-health.json
+          cat /tmp/cme-health.json
+          node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('/tmp/cme-health.json','utf8'));if(!(d.ok===true&&d.service==='cme-public-media'&&d.storage==='cloudflare-r2'&&d.catalog==='github')){console.error(d);process.exit(1)}"
+
+          echo
+          echo "== /api/manifest =="
+          CODE=$(curl --show-error --silent --retry 1 -w "%{http_code}" "$BASE/api/manifest" -o /tmp/cme-manifest.json)
+          echo "HTTP $CODE"
+          cat /tmp/cme-manifest.json
+          echo
+          test "$CODE" = "200"
+          node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('/tmp/cme-manifest.json','utf8'));if(!Array.isArray(d.projetos)||!d.projetos.length){console.error(d);process.exit(1)};console.log('projetos:',d.projetos.length);console.log('primeiro:',d.projetos[0]?.nome||d.projetos[0]?.slug||'sem nome')"
+
+      - name: Log do servidor em caso de falha
+        if: failure()
+        run: cat /tmp/cme-http.log || true

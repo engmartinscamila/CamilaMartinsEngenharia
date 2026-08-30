@@ -20,7 +20,8 @@ Financeiro | Camila Martins Engenharia
 
 
 <link rel="stylesheet" href="css/admin.css?v=20260725-14">
-<link rel="stylesheet" href="css/admin-theme.css?v=20260725-14">
+<link rel="stylesheet" href="css/admin-theme.css?v=20260829-4">
+<link rel="stylesheet" href="css/financeiro-avancado.css?v=20260830-1">
 
 
 <link rel="stylesheet"
@@ -123,6 +124,11 @@ Documentos
 
 Biblioteca
 
+</a>
+
+<a href="protecao-pdf-admin.html" class="menu-item">
+<i class="fa-solid fa-file-shield"></i>
+Conteúdo do site
 </a>
 
 
@@ -333,6 +339,39 @@ R$ 0,00
 
 
 
+</section>
+
+
+<section class="financeiro-inteligente" aria-labelledby="tituloGestaoFinanceira">
+<div class="financeiro-inteligente-cabecalho">
+<div>
+<span class="financeiro-eyebrow">Visão gerencial</span>
+<h2 id="tituloGestaoFinanceira">Previsão e vencimentos</h2>
+<p>Veja o que já foi realizado, o que está por vencer e o resultado previsto sem alterar seus lançamentos existentes.</p>
+</div>
+<button id="exportarFinanceiroCsv" type="button"><i class="fa-solid fa-file-export"></i> Exportar CSV</button>
+</div>
+
+<div class="financeiro-filtros">
+<label>Projeto<select id="filtroFinanceiroProjeto"><option value="">Todos os projetos</option></select></label>
+<label>Situação<select id="filtroFinanceiroStatus"><option value="">Todas</option><option value="previsto">Previsto</option><option value="pendente">Pendente</option><option value="pago">Pago</option><option value="atrasado">Atrasado</option><option value="cancelado">Cancelado</option></select></label>
+<label>Mês<input id="filtroFinanceiroMes" type="month"></label>
+<button id="limparFiltrosFinanceiros" type="button">Limpar filtros</button>
+</div>
+
+<div class="financeiro-indicadores">
+<article><span>A receber</span><strong id="financeiroAReceber">R$ 0,00</strong><small>Entradas pendentes ou previstas</small></article>
+<article><span>Em atraso</span><strong id="financeiroEmAtraso">R$ 0,00</strong><small>Vencimentos não pagos</small></article>
+<article><span>Resultado previsto</span><strong id="financeiroResultadoPrevisto">R$ 0,00</strong><small>Entradas menos saídas não canceladas</small></article>
+<article><span>Próximos 30 dias</span><strong id="financeiroProximos30">R$ 0,00</strong><small>Movimentação programada</small></article>
+</div>
+
+<div class="financeiro-tabela-wrap">
+<table class="financeiro-tabela">
+<thead><tr><th>Projeto</th><th>Entradas</th><th>Saídas</th><th>Resultado</th><th>Pendências</th></tr></thead>
+<tbody id="financeiroResumoProjetos"><tr><td colspan="5">Carregando visão por projeto...</td></tr></tbody>
+</table>
+</div>
 </section>
 
 
@@ -583,6 +622,53 @@ id="financeiroData">
 
 
 </div>
+
+<div class="campo">
+<label>Situação</label>
+<select id="financeiroStatus">
+<option value="pendente">Pendente</option>
+<option value="previsto">Previsto</option>
+<option value="pago">Pago</option>
+<option value="atrasado">Atrasado</option>
+<option value="cancelado">Cancelado</option>
+</select>
+</div>
+
+<div class="campo">
+<label>Categoria</label>
+<select id="financeiroCategoria">
+<option value="honorarios">Honorários</option>
+<option value="parcelas">Parcelas</option>
+<option value="taxas">Taxas e tributos</option>
+<option value="fornecedores">Fornecedores</option>
+<option value="deslocamento">Deslocamento</option>
+<option value="software">Software e ferramentas</option>
+<option value="outros">Outros</option>
+</select>
+</div>
+
+<div class="campo">
+<label>Vencimento</label>
+<input type="date" id="financeiroVencimento">
+</div>
+
+<div class="campo">
+<label>Data do pagamento</label>
+<input type="date" id="financeiroPagamento">
+</div>
+
+<div class="campo">
+<label>Forma de pagamento</label>
+<select id="financeiroFormaPagamento">
+<option value="">Não informada</option>
+<option value="pix">Pix</option>
+<option value="transferencia">Transferência</option>
+<option value="boleto">Boleto</option>
+<option value="cartao">Cartão</option>
+<option value="dinheiro">Dinheiro</option>
+<option value="outro">Outro</option>
+</select>
+</div>
 <div class="campo">
 
 
@@ -795,14 +881,14 @@ Carregando...
 
 
 <script src="js/database.js?v=20260725-14"></script>
+<script src="js/ui-core.js?v=20260829-3"></script>
+<script src="js/financeiro-avancado.js?v=20260830-1"></script>
 
 
-<script src="js/auth.js?v=20260725-14"></script>
+<script src="js/auth.js?v=20260829-9"></script>
 
 
 <script src="js/financeiro.js?v=20260725-14"></script>
-
-
 
 </body>
 

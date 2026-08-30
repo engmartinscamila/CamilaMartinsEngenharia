@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cme-public-media",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-29",
+  "workers_dev": true,
+  "vars": {
+    "SUPABASE_URL": "https://hghtwlopqztfcosfxafd.supabase.co",
+    "ALLOWED_ORIGINS": "https://camilamartinsengenharia.com.br,https://www.camilamartinsengenharia.com.br",
+    "MAX_UPLOAD_BYTES": "99614720",
+    "GITHUB_OWNER": "engmartinscamila",
+    "GITHUB_REPO": "CamilaMartinsEngenharia",
+    "GITHUB_BRANCH": "main",
+    "GITHUB_MANIFEST_PATH": "assets/projetos/galeria.json"
+  },
+  "r2_buckets": [
+    {
+      "binding": "MEDIA_BUCKET",
+      "bucket_name": "camila-martins-public-media"
+    }
+  ]
+}

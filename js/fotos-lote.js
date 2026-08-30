@@ -190,13 +190,13 @@
                 status.textContent = arquivos.length + ' fotos enviadas com sucesso.';
                 status.dataset.type = 'sucesso';
                 alert(arquivos.length + ' fotos enviadas com sucesso.');
-                window.location.reload();
+                window.setTimeout(() => window.location.reload(), 900);
             } catch (erro) {
                 console.error('Erro no envio em lote de fotos.', erro);
                 status.textContent = 'O envio parou após ' + concluidas + ' de ' + arquivos.length + ' fotos.';
                 status.dataset.type = 'erro';
                 alert('Não foi possível concluir todo o lote. ' + concluidas + ' de ' + arquivos.length + ' fotos foram enviadas.');
-                if (concluidas > 0) window.location.reload();
+                if (concluidas > 0) window.setTimeout(() => window.location.reload(), 900);
             } finally {
                 botaoSalvar.disabled = false;
                 botaoSalvar.textContent = 'Salvar Fotos';

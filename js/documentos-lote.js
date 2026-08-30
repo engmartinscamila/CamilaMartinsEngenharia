@@ -49,8 +49,8 @@
         const nome = normalizar(nomeArquivo);
         const regras = [
             ['art', /(^|\s)(art|rrt)(\s|$)|anotacao de responsabilidade|registro de responsabilidade/],
-            ['guia_estilos', /guia.*estilo|estilo.*arquitet|moodboard|paleta|conceito visual/],
-            ['guia_obras', /guia.*obra|manual.*obra|caderno.*obra|execucao.*obra/],
+            ['guia_estilos', /guia.*estilo|estilo.*arquitet|interiores|moodboard|paleta|conceito visual|tecidos|moveis|iluminacao|lampadas|pisos.*revestimentos|banheiros.*cozinhas/],
+            ['guia_obras', /guia.*obra|manual.*obra|caderno.*obra|execucao.*obra|concretagem|armaduras|cobrimento|alvenaria|vergas|contravergas|impermeabilizacao|cobertura|telhas|rufos|calhas|agua.*esgoto|esgoto.*pluvial|eletrica|eletrodutos|circuitos|ar condicionado|ventilacao|exaustao|chapisco|emboco|reboco|drywall|contrapiso|caimentos|pintura.*patologias|loucas.*metais.*tomadas/],
             ['laudo', /laudo|parecer|vistoria|inspecao|relatorio tecnico|diagnostico/],
             ['contrato', /contrato|aditivo|distrato|termo de aceite/],
             ['orcamento', /orcamento|proposta|cotacao|estimativa de custo/],
@@ -279,7 +279,8 @@
                             projeto_id: projetoId,
                             descricao: descricao,
                             arquivo: caminho,
-                            nome_original: item.name
+                            nome_original: item.name,
+                            autoral: Boolean(window.CMEArquivoAutoralSelecionado?.())
                         });
                     } catch (erroRegistro) {
                         await dbExcluirArquivoStorage(BUCKETS.DOCUMENTOS, caminho).catch(function () {});
@@ -303,13 +304,13 @@
                 status.textContent = arquivos.length + ' documentos enviados e classificados com sucesso.';
                 status.dataset.type = 'sucesso';
                 alert(arquivos.length + ' documentos enviados com sucesso.');
-                window.location.reload();
+                window.setTimeout(() => window.location.reload(), 900);
             } catch (erro) {
                 console.error('Erro no envio em lote de documentos.', erro);
                 status.textContent = 'O envio parou após ' + concluidos + ' de ' + arquivos.length + ' documentos.';
                 status.dataset.type = 'erro';
                 alert('Não foi possível concluir todo o lote. ' + concluidos + ' de ' + arquivos.length + ' documentos foram enviados.');
-                if (concluidos > 0) window.location.reload();
+                if (concluidos > 0) window.setTimeout(() => window.location.reload(), 900);
             } finally {
                 botaoSalvar.disabled = false;
                 botaoSalvar.textContent = 'Salvar Documentos';

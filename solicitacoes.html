@@ -6,7 +6,7 @@
 <link rel="icon" href="assets/logo.png" type="image/png">
     <title>Solicitações | Camila Martins Engenharia</title>
     <link rel="stylesheet" href="css/admin.css?v=20260725-14">
-    <link rel="stylesheet" href="css/admin-theme.css?v=20260725-14">
+    <link rel="stylesheet" href="css/admin-theme.css?v=20260829-4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 </head>
 <body>
@@ -24,6 +24,11 @@
                     <a href="projetos.html" class="menu-item"><i class="fa-solid fa-compass-drafting"></i>Projetos</a>
                     <a href="documentos.html" class="menu-item"><i class="fa-solid fa-folder-open"></i>Documentos</a>
                     <a href="biblioteca.html" class="menu-item"><i class="fa-solid fa-book-open"></i>Biblioteca</a>
+
+<a href="protecao-pdf-admin.html" class="menu-item">
+<i class="fa-solid fa-file-shield"></i>
+Conteúdo do site
+</a>
                     <a href="fotos.html" class="menu-item"><i class="fa-solid fa-images"></i>Fotos</a>
                     <a href="financeiro.html" class="menu-item"><i class="fa-solid fa-chart-line"></i>Financeiro</a>
                     <a href="agenda.html" class="menu-item"><i class="fa-solid fa-calendar-days"></i>Agenda</a>
@@ -133,6 +138,12 @@
                         <label for="mensagemSolicitacao">Mensagem</label>
                         <textarea id="mensagemSolicitacao" rows="6" maxlength="2000" required></textarea>
                     </div>
+                    <div class="campo campo-full">
+                        <label class="cadastro-check-card" for="notificarCelularSolicitacao">
+                            <input id="notificarCelularSolicitacao" type="checkbox" checked>
+                            <span><strong>Avisar o cliente no celular</strong><small>Envia uma mensagem ao número cadastrado. Dados de documentos são ocultados antes do envio.</small></span>
+                        </label>
+                    </div>
                 </div>
 
                 <div class="modal-footer">
@@ -151,9 +162,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.js?v=20260725-14"></script>
     <script src="js/database.js?v=20260725-14"></script>
-    <script src="js/auth.js?v=20260725-14"></script>
+<script src="js/ui-core.js?v=20260829-3"></script>
+    <script src="js/notificacoes-cliente.js?v=20260830-1"></script>
+    <script src="js/auth.js?v=20260829-9"></script>
     <script src="js/utils.js?v=20260725-14"></script>
     <script src="js/servicos.js?v=20260725-14"></script>
     <script src="js/solicitacoes.js?v=20260725-14"></script>
+
 </body>
 </html>

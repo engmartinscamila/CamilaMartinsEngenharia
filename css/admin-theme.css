@@ -684,3 +684,281 @@ tbody td {
         border-bottom: 1px solid var(--linha);
     }
 }
+
+
+/* ==========================================================
+   CME PASTAS POR CLIENTE
+========================================================== */
+.cme-pasta-cliente{
+    margin:12px 0;
+    border:1px solid var(--linha);
+    background:rgba(2,15,27,.62);
+}
+.cme-pasta-cliente > summary{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding:15px 17px;
+    cursor:pointer;
+    list-style:none;
+    color:var(--dourado);
+    font-weight:600;
+}
+.cme-pasta-cliente > summary::-webkit-details-marker{display:none}
+.cme-pasta-cliente > summary::after{
+    content:"+";
+    font-size:1.15rem;
+    font-weight:400;
+}
+.cme-pasta-cliente[open] > summary{
+    border-bottom:1px solid var(--linha);
+}
+.cme-pasta-cliente[open] > summary::after{content:"−"}
+.cme-pasta-cliente .cme-pasta-contagem{
+    margin-left:auto;
+    padding:3px 9px;
+    border:1px solid var(--linha);
+    border-radius:999px;
+    color:var(--texto-claro);
+    font-size:.72rem;
+    font-weight:400;
+}
+.cme-pasta-corpo{padding:14px 16px}
+.cme-subpasta-projeto{
+    margin:10px 0 16px;
+    padding-top:8px;
+}
+.cme-subpasta-projeto > h4{
+    margin:0 0 10px;
+    color:var(--texto-claro);
+    font-size:.78rem;
+    font-weight:500;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+}
+.cme-folder-row > td{padding:0;border:0}
+.cme-folder-row:hover{background:transparent}
+.cme-cronograma-tabela{
+    width:100%;
+    border-collapse:collapse;
+}
+.cme-cronograma-tabela thead th{
+    padding:10px 12px;
+    font-size:.72rem;
+}
+.cme-cronograma-tabela tbody td{
+    padding:12px;
+}
+#statusConfiguracoes{
+    margin:16px 0;
+    padding:11px 13px;
+    border:1px solid var(--linha);
+    color:var(--texto-claro);
+}
+#statusConfiguracoes[data-type="sucesso"]{border-color:rgba(159,211,169,.42);color:#9fd3a9}
+#statusConfiguracoes[data-type="erro"]{border-color:rgba(240,162,162,.42);color:#f0a2a2}
+
+/* Tema claro opcional das Configurações */
+html[data-admin-theme="claro"]{
+    color-scheme:light;
+    --azul:#eef1f4;
+    --azul-hover:#e4e8ec;
+    --cinza:#f7f8fa;
+    --cinza2:#d9dee4;
+    --cinza3:#6b7280;
+    --texto:#1b2430;
+    --texto-claro:#56606d;
+    --painel:#ffffff;
+    --painel-2:#f6f8fa;
+    --linha:rgba(25,35,48,.16);
+}
+html[data-admin-theme="claro"] body{background:#eef1f4;color:var(--texto)}
+html[data-admin-theme="claro"] .sidebar{background:#ffffff}
+html[data-admin-theme="claro"] .conteudo,
+html[data-admin-theme="claro"] .card,
+html[data-admin-theme="claro"] .card-grande,
+html[data-admin-theme="claro"] .card-lateral,
+html[data-admin-theme="claro"] .modal-content{background:var(--painel);color:var(--texto)}
+html[data-admin-theme="claro"] select{color-scheme:light}
+html[data-admin-theme="claro"] .cme-pasta-cliente{background:#fff}
+
+/* Campos de formulário no tema claro */
+html[data-admin-theme="claro"] .campo input,
+html[data-admin-theme="claro"] .campo select,
+html[data-admin-theme="claro"] .campo textarea,
+html[data-admin-theme="claro"] .form-group input,
+html[data-admin-theme="claro"] .form-group select,
+html[data-admin-theme="claro"] .form-group textarea,
+html[data-admin-theme="claro"] .acoes-card input,
+html[data-admin-theme="claro"] .search input,
+html[data-admin-theme="claro"] input[type="file"]{
+    background-color:#ffffff !important;
+    color:#1b2430 !important;
+    -webkit-text-fill-color:#1b2430 !important;
+    caret-color:#1b2430 !important;
+    border-color:#c9d0d8 !important;
+    opacity:1 !important;
+    filter:none !important;
+    color-scheme:light !important;
+}
+
+html[data-admin-theme="claro"] .campo input::placeholder,
+html[data-admin-theme="claro"] .campo textarea::placeholder,
+html[data-admin-theme="claro"] .form-group input::placeholder,
+html[data-admin-theme="claro"] .form-group textarea::placeholder,
+html[data-admin-theme="claro"] .acoes-card input::placeholder,
+html[data-admin-theme="claro"] .search input::placeholder{
+    color:#7b8490;
+    opacity:1;
+}
+
+html[data-admin-theme="claro"] .campo input:focus,
+html[data-admin-theme="claro"] .campo select:focus,
+html[data-admin-theme="claro"] .campo textarea:focus,
+html[data-admin-theme="claro"] .form-group input:focus,
+html[data-admin-theme="claro"] .form-group select:focus,
+html[data-admin-theme="claro"] .form-group textarea:focus,
+html[data-admin-theme="claro"] .acoes-card input:focus,
+html[data-admin-theme="claro"] .search input:focus{
+    background-color:#ffffff !important;
+    color:#111827 !important;
+    -webkit-text-fill-color:#111827 !important;
+    border-color:var(--dourado) !important;
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--dourado) 18%, transparent);
+    outline:none;
+}
+
+html[data-admin-theme="claro"] .campo input:disabled,
+html[data-admin-theme="claro"] .campo select:disabled,
+html[data-admin-theme="claro"] .campo textarea:disabled,
+html[data-admin-theme="claro"] .form-group input:disabled,
+html[data-admin-theme="claro"] .form-group select:disabled,
+html[data-admin-theme="claro"] .form-group textarea:disabled{
+    background-color:#eef1f4 !important;
+    color:#66707c !important;
+    -webkit-text-fill-color:#66707c !important;
+    border-color:#d6dce2 !important;
+    opacity:1 !important;
+}
+
+html[data-admin-theme="claro"] select option{
+    background:#ffffff;
+    color:#1b2430;
+}
+
+html[data-admin-theme="claro"] input:-webkit-autofill,
+html[data-admin-theme="claro"] input:-webkit-autofill:hover,
+html[data-admin-theme="claro"] input:-webkit-autofill:focus,
+html[data-admin-theme="claro"] textarea:-webkit-autofill,
+html[data-admin-theme="claro"] select:-webkit-autofill{
+    -webkit-text-fill-color:#1b2430 !important;
+    -webkit-box-shadow:0 0 0 1000px #ffffff inset !important;
+    box-shadow:0 0 0 1000px #ffffff inset !important;
+    background-color:#ffffff !important;
+    transition:background-color 9999s ease-out 0s;
+}
+
+html[data-admin-theme="claro"] input[type="checkbox"],
+html[data-admin-theme="claro"] input[type="radio"]{
+    accent-color:var(--dourado);
+}
+
+/* Autoria de arquivos e correções de contraste em componentes dinâmicos */
+.cme-authorship-card{
+    margin-top:14px;
+    border-color:rgba(184,154,99,.48);
+    background:rgba(184,154,99,.07);
+}
+.cme-authorship-card strong{color:var(--dourado)}
+.cme-authorship-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    width:max-content;
+    margin-top:9px;
+    padding:4px 8px;
+    border:1px solid rgba(184,154,99,.45);
+    color:var(--dourado);
+    font-size:.7rem;
+    font-weight:600;
+    letter-spacing:.02em;
+}
+
+html[data-admin-theme="claro"] .layout,
+html[data-admin-theme="claro"] .conteudo{
+    background:#eef1f4 !important;
+}
+html[data-admin-theme="claro"] .card,
+html[data-admin-theme="claro"] .card-grande,
+html[data-admin-theme="claro"] .card-lateral,
+html[data-admin-theme="claro"] .item-lista,
+html[data-admin-theme="claro"] .foto-item,
+html[data-admin-theme="claro"] .cliente-detalhe-campo,
+html[data-admin-theme="claro"] .table-container,
+html[data-admin-theme="claro"] .toolbar,
+html[data-admin-theme="claro"] .progress-box,
+html[data-admin-theme="claro"] .cards-resumo .card-resumo,
+html[data-admin-theme="claro"] .cme-pasta-cliente,
+html[data-admin-theme="claro"] .cm-category-folder,
+html[data-admin-theme="claro"] .cm-file-card,
+html[data-admin-theme="claro"] .biblioteca-subpasta,
+html[data-admin-theme="claro"] .biblioteca-arquivo-card,
+html[data-admin-theme="claro"] .biblioteca-foto-card,
+html[data-admin-theme="claro"] .storage-gerenciador-card,
+html[data-admin-theme="claro"] .storage-card,
+html[data-admin-theme="claro"] .cm-detection-preview,
+html[data-admin-theme="claro"] .cadastro-check-card{
+    background:#ffffff !important;
+    color:#1b2430 !important;
+    border-color:#d1d7de !important;
+    box-shadow:0 12px 32px rgba(19,31,45,.07) !important;
+}
+html[data-admin-theme="claro"] .cme-authorship-card{
+    border-color:rgba(143,111,54,.42) !important;
+    background:#fffaf0 !important;
+}
+html[data-admin-theme="claro"] .item-info h3,
+html[data-admin-theme="claro"] .item-info strong,
+html[data-admin-theme="claro"] .card h3,
+html[data-admin-theme="claro"] .card strong,
+html[data-admin-theme="claro"] .cm-file-card h3,
+html[data-admin-theme="claro"] .biblioteca-arquivo-card h3,
+html[data-admin-theme="claro"] .cadastro-check-card strong,
+html[data-admin-theme="claro"] td,
+html[data-admin-theme="claro"] th,
+html[data-admin-theme="claro"] summary{
+    color:#1b2430 !important;
+}
+html[data-admin-theme="claro"] .item-info span,
+html[data-admin-theme="claro"] .item-info small,
+html[data-admin-theme="claro"] .cm-file-card p,
+html[data-admin-theme="claro"] .cm-file-card small,
+html[data-admin-theme="claro"] .biblioteca-arquivo-card p,
+html[data-admin-theme="claro"] .cadastro-check-card small,
+html[data-admin-theme="claro"] .cme-pasta-contagem,
+html[data-admin-theme="claro"] .ajuda-campo{
+    color:#56606d !important;
+}
+html[data-admin-theme="claro"] table,
+html[data-admin-theme="claro"] thead,
+html[data-admin-theme="claro"] tbody,
+html[data-admin-theme="claro"] tr{
+    background:#ffffff !important;
+    color:#1b2430 !important;
+}
+html[data-admin-theme="claro"] thead th{
+    background:#f2f4f7 !important;
+    border-color:#d9dee4 !important;
+}
+html[data-admin-theme="claro"] tbody td,
+html[data-admin-theme="claro"] .cme-pasta-cliente > summary,
+html[data-admin-theme="claro"] .cm-category-folder > summary{
+    border-color:#e0e4e9 !important;
+}
+html[data-admin-theme="claro"] .loading,
+html[data-admin-theme="claro"] .loader,
+html[data-admin-theme="claro"] .empty-state,
+html[data-admin-theme="claro"] .estado-vazio{
+    color:#56606d !important;
+}

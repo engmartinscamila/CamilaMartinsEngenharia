@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="css/admin.css?v=20260725-14">
-    <link rel="stylesheet" href="css/admin-theme.css?v=20260725-14">
+    <link rel="stylesheet" href="css/admin-theme.css?v=20260829-4">
     <link rel="stylesheet" href="css/midias-admin.css?v=20260828-2">
 </head>
 <body>
@@ -113,6 +113,17 @@
                     <p id="portfolioAdminStatus" class="site-admin-status" role="status" aria-live="polite">Carregando os empreendimentos...</p>
                 </div>
 
+                <div class="site-admin-r2-card">
+                    <div>
+                        <span class="site-admin-eyebrow">Cloudflare R2</span>
+                        <strong>Migração segura da mídia pública</strong>
+                        <p id="portfolioR2Status" class="site-admin-status">Verificando conexão com o R2...</p>
+                    </div>
+                    <button id="portfolioMigrateR2" class="site-admin-secondary" type="button" disabled>
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Migrar mídia atual para R2
+                    </button>
+                </div>
+
                 <div class="site-admin-section-title">
                     <div><span class="site-admin-eyebrow">Empreendimentos</span><h2>Projetos publicados</h2></div>
                     <button id="portfolioNewProject" class="site-admin-primary" type="button"><i class="fa-solid fa-plus"></i> Novo projeto</button>
@@ -178,8 +189,12 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.js?v=20260725-14"></script>
+<script src="js/ui-core.js?v=20260829-3"></script>
+<script src="js/auth.js?v=20260829-9"></script>
     <script src="js/pdf-protection-admin.js?v=20260729-1"></script>
     <script src="https://cdn.jsdelivr.net/npm/tus-js-client@4.3.1/dist/tus.min.js"></script>
+    <script src="js/portfolio-r2-bridge.js?v=20260830-1"></script>
     <script src="js/portfolio-admin.js?v=20260828-2"></script>
+    <script src="js/r2-migration-admin.js?v=20260829-1"></script>
 </body>
 </html>

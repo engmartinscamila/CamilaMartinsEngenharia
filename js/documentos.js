@@ -1,1 +1,509 @@
-function cm_36641c0b1d_0x4862(_0x427b0d,_0x43a491){_0x427b0d=_0x427b0d-(-0x1214+-0x9*0x9b+0x817*0x3);const _0x27ddf7=cm_36641c0b1d_0x10da();let _0x1c35e6=_0x27ddf7[_0x427b0d];if(cm_36641c0b1d_0x4862['jwgDZs']===undefined){var _0x10eb7d=function(_0x116f33){const _0x549d76='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/=';let _0x5298b2='',_0x2a4170='';for(let _0x521ceb=-0x1ccd+0x65*0x47+0xca*0x1,_0x37f529,_0x4b1987,_0x3ab4e2=0x79d+0x13a*0xc+0x1655*-0x1;_0x4b1987=_0x116f33['charAt'](_0x3ab4e2++);~_0x4b1987&&(_0x37f529=_0x521ceb%(-0x5*-0x383+0xe07+0x382*-0x9)?_0x37f529*(-0x664+0x4b*0x15+0x7d)+_0x4b1987:_0x4b1987,_0x521ceb++%(0x1*0x16f5+-0x2*-0x2b3+-0x1c57))?_0x5298b2+=String['fromCharCode'](0x1*-0x1736+-0x2122+0x3957&_0x37f529>>(-(-0x19b4+0x1*0x238f+-0x9d9)*_0x521ceb&0x1f41+-0x1a7f+-0x4bc)):0x1655+0x14b9+0x2*-0x1587){_0x4b1987=_0x549d76['indexOf'](_0x4b1987);}for(let _0xdc9201=-0x1*0xbf9+-0x53a+0x103*0x11,_0x364237=_0x5298b2['length'];_0xdc9201<_0x364237;_0xdc9201++){_0x2a4170+='%'+('00'+_0x5298b2['charCodeAt'](_0xdc9201)['toString'](-0x1dd0+0x706+0x16da))['slice'](-(0x2c*0x7b+0x23ed+0x657*-0x9));}return decodeURIComponent(_0x2a4170);};cm_36641c0b1d_0x4862['YDWeyS']=_0x10eb7d,cm_36641c0b1d_0x4862['hipdQq']={},cm_36641c0b1d_0x4862['jwgDZs']=!![];}const _0x125848=_0x27ddf7[0xa1d+0x2*-0xd57+0x1*0x1091],_0xc0d746=_0x427b0d+_0x125848,_0x535c48=cm_36641c0b1d_0x4862['hipdQq'][_0xc0d746];return!_0x535c48?(_0x1c35e6=cm_36641c0b1d_0x4862['YDWeyS'](_0x1c35e6),cm_36641c0b1d_0x4862['hipdQq'][_0xc0d746]=_0x1c35e6):_0x1c35e6=_0x535c48,_0x1c35e6;}(function(_0x3f283a,_0x4c8252){const cm_36641c0b1d_0x27b9d7={_0x44c431:0x1ef,_0x2eb40d:0x149,_0x1df673:0xd1},_0xe266fb=cm_36641c0b1d_0x4862,_0x3baef3=_0x3f283a();while(!![]){try{const _0x17dce0=parseInt(_0xe266fb(0x168))/(0xf77+-0x2dd*0xd+0x15c3)+-parseInt(_0xe266fb(0x10d))/(-0x184b+0x1d90*-0x1+0x35dd)*(parseInt(_0xe266fb(0x173))/(-0x26ef+0x8f+0x2663*0x1))+parseInt(_0xe266fb(cm_36641c0b1d_0x27b9d7._0x44c431))/(-0x1bf6+-0x199c+0x3596)*(-parseInt(_0xe266fb(0x16d))/(0x25ed+-0x1f0a*0x1+-0x6de))+parseInt(_0xe266fb(0xfa))/(-0x1cbf+0x25*0x109+0x4c4*-0x2)*(-parseInt(_0xe266fb(cm_36641c0b1d_0x27b9d7._0x2eb40d))/(-0x1a2d+0x5f*0x53+-0x499))+-parseInt(_0xe266fb(0x12c))/(0x29*-0x1c+0x1b4a+-0x16c6)*(parseInt(_0xe266fb(cm_36641c0b1d_0x27b9d7._0x1df673))/(0xd46+-0x241*0x8+-0x4cb*-0x1))+parseInt(_0xe266fb(0x11a))/(0x1308+-0x1*-0x506+0x601*-0x4)*(parseInt(_0xe266fb(0x20c))/(0x2*0x121+0x1*0xdd5+-0x100c))+-parseInt(_0xe266fb(0x139))/(-0xb77+-0x1f*0x6d+0xc5b*0x2);if(_0x17dce0===_0x4c8252)break;else _0x3baef3['push'](_0x3baef3['shift']());}catch(_0x221332){_0x3baef3['push'](_0x3baef3['shift']());}}}(cm_36641c0b1d_0x10da,0x49cc9+-0x1857ae+0x28f0d*0xd),function moduloDocumentos(){'use strict';const cm_36641c0b1d_0x74f2f7={_0x3bfeaf:0xc6},cm_36641c0b1d_0x571e24={_0x52669a:0x12f},cm_36641c0b1d_0x18568c={_0x3d951e:0x147},cm_36641c0b1d_0x3a2a0a={_0x2742df:0x215,_0x395e63:0x10b},cm_36641c0b1d_0x299b1a={_0x1267d3:0x1b4},cm_36641c0b1d_0x3faafb={_0xeba8b9:0x13e},cm_36641c0b1d_0x2bbee2={_0x2dd9e4:0x146,_0x15184e:0x13e},cm_36641c0b1d_0x5cb2be={_0xb35735:0x1b6,_0x3899fc:0x1d4,_0x5cbf86:0xde,_0x2fbaf7:0x164,_0x512a71:0x12b},cm_36641c0b1d_0x599652={_0x10ab39:0x170,_0xa0cc6e:0x1a8,_0x31cb18:0x1c7},cm_36641c0b1d_0x4c31b8={_0x3dc68b:0x157,_0x517828:0x156,_0x1462e0:0x170,_0x577e0e:0x1a2,_0xd95226:0xea,_0x33ee24:0x121},cm_36641c0b1d_0x18479a={_0x5f08b8:0x1a4,_0x51c889:0x130,_0x15a5c9:0x137,_0x310374:0x10b},cm_36641c0b1d_0x79dad1={_0x1559d4:0x170},cm_36641c0b1d_0x25a116={_0x414fdf:0x1d9,_0x203a93:0x12a},cm_36641c0b1d_0x302f1a={_0x35465e:0x105},cm_36641c0b1d_0x489050={_0x362795:0x156,_0x33cc5c:0xe1,_0x32ac21:0x19d},cm_36641c0b1d_0x23aa6a={_0x281a97:0xcd,_0x45c047:0x184,_0x19be8b:0x185,_0x3f7aeb:0x132},cm_36641c0b1d_0x385ad8={_0x1b5c4b:0x13d,_0x369165:0x18c,_0x4106a7:0x195,_0x2c160d:0x10a,_0x1fcb2d:0x19a},cm_36641c0b1d_0x1b7fcc={_0x4253c4:0x1fa,_0x2d493d:0x144,_0x2bfcfa:0x171,_0x6f5247:0x1c3,_0x20dbe6:0x11d},cm_36641c0b1d_0x272e12={_0x1e0bd7:0x183,_0x357716:0xf9,_0x1e1fbf:0x169,_0x207fb:0x20d,_0x5c810b:0xf3,_0xfa0ad7:0x1c0,_0x4aa8a5:0x151,_0x5dde6f:0x1da,_0x4cb20c:0x1c6,_0x13d2a4:0x1a0,_0x5869ba:0x1a7,_0x35520e:0x112,_0x5eee6a:0x1d5,_0x2e47c5:0xf6,_0x117500:0x1cf,_0x29acb0:0x1aa,_0x481185:0x108,_0x584539:0x134},cm_36641c0b1d_0x328f0a={_0x306988:0x1b2,_0xe08341:0x1f7,_0x1270b9:0x126,_0x387c57:0x1d0,_0x226db5:0x13b,_0x360f4b:0x12e,_0x545761:0xbe,_0x4abfba:0x10c,_0x2bb3ff:0x20d,_0x137fb2:0x163,_0xd8abdf:0x114,_0x8b4b48:0xd8,_0x3c1e77:0xf8,_0x4f959e:0x107,_0x103093:0x20d,_0x4bbb32:0x1e4,_0x44d9f9:0x21d,_0x16447e:0x1ee,_0x4f5dd1:0x20d,_0x57948a:0x1c4,_0x51d401:0x100,_0x79511:0x15d,_0x2499f2:0x21e,_0x1a02b7:0xd6,_0x347873:0x219},cm_36641c0b1d_0x5bc2b4={_0x4bea48:0x20f,_0x5a0acb:0x1c5,_0x45cb73:0x1a8,_0x3210f6:0x1a8,_0x4bbb1d:0x161,_0x3d1373:0xd3,_0x2964d4:0x125,_0x23e733:0x1e3,_0x2f2d65:0x16a,_0xa4cd48:0x1a8,_0x2df65c:0x209,_0x320176:0xe4,_0x5e96fe:0x18b,_0x270d28:0x155},cm_36641c0b1d_0x3352b8={_0x595383:0x1a8,_0x2917d1:0x166},cm_36641c0b1d_0x4390b4={_0xb7dd5e:0x156,_0x21abbe:0xd5,_0x2c5002:0x133,_0x48ebd2:0x1b1},cm_36641c0b1d_0x9324e1={_0x37b3cb:0x170,_0x3a13aa:0x1ae,_0x53c948:0x1e9,_0x33c3f5:0x1b2,_0x4c9d39:0x1a9,_0x120bed:0x1e2,_0x405d47:0xd0},cm_36641c0b1d_0x10181d={_0x309e4:0x20e,_0x362bb0:0x10e,_0x2c28e0:0x1bd,_0x30ad6c:0x126,_0x5d7cb7:0x128},cm_36641c0b1d_0xc96b8f={_0x142e63:0xdf},cm_36641c0b1d_0x407e5e={_0x274db9:0x15f,_0x329113:0x156,_0x1cba06:0x170,_0xf3e58:0x1ab,_0x5daf58:0x158,_0x3cafc2:0x11c,_0x1867cf:0x156,_0x419852:0x15f,_0x35158f:0x150,_0x19baef:0x14e,_0x3a560f:0x156,_0x47fcb9:0x1b0,_0xcfe54d:0x158,_0x20a759:0x156},cm_36641c0b1d_0x14d671={_0x1b6314:0x1bc,_0x3c2339:0x117},_0x24d7da=cm_36641c0b1d_0x4862;let _0x2113be=[],_0x294f05=[],_0x32a718=[],_0x284e09=null;document[_0x24d7da(0x158)+_0x24d7da(0x15f)](_0x24d7da(cm_36641c0b1d_0x74f2f7._0x3bfeaf)+_0x24d7da(0x11f),_0x24e312);async function _0x24e312(){const _0x1fa5b3=_0x24d7da;_0x33dd3b(),_0xc0d746(!![]);try{[_0x2113be,_0x294f05,_0x32a718]=await Promise[_0x1fa5b3(cm_36641c0b1d_0x14d671._0x1b6314)]([dbBuscarDocumentos(),dbBuscarClientes(),dbBuscarProjetos()]),_0x523840('document'+'oCliente',_0x294f05),_0x3c08bd(),_0x50f160(),_0x5b89a2();}catch(_0x521ceb){_0x2a4170(_0x1fa5b3(0x201)+_0x1fa5b3(cm_36641c0b1d_0x14d671._0x3c2339)+'\x20carrega'+_0x1fa5b3(0x187)+'umentos.',_0x521ceb);}finally{_0xc0d746(![]);}}function _0x33dd3b(){const _0x1ba188=_0x24d7da;document['getEleme'+_0x1ba188(0x170)](_0x1ba188(0x15a)+_0x1ba188(0xcc))?.[_0x1ba188(0x158)+_0x1ba188(cm_36641c0b1d_0x407e5e._0x274db9)](_0x1ba188(0x11c),_0x384238),document[_0x1ba188(cm_36641c0b1d_0x407e5e._0x329113)+_0x1ba188(cm_36641c0b1d_0x407e5e._0x1cba06)](_0x1ba188(cm_36641c0b1d_0x407e5e._0xf3e58)+_0x1ba188(0x148)+_0x1ba188(0x1b8))?.[_0x1ba188(cm_36641c0b1d_0x407e5e._0x5daf58)+_0x1ba188(0x15f)](_0x1ba188(cm_36641c0b1d_0x407e5e._0x3cafc2),_0x3b46f0),document[_0x1ba188(0x156)+_0x1ba188(0x170)](_0x1ba188(0x1dc)+'Document'+'o')?.[_0x1ba188(0x158)+_0x1ba188(cm_36641c0b1d_0x407e5e._0x274db9)](_0x1ba188(0x11c),_0x3b46f0),document[_0x1ba188(0x156)+_0x1ba188(0x170)](_0x1ba188(0xd5)+_0x1ba188(0xcc))?.['addEvent'+_0x1ba188(0x15f)](_0x1ba188(0x19f),_0x20aad2),document[_0x1ba188(cm_36641c0b1d_0x407e5e._0x1867cf)+_0x1ba188(0x170)](_0x1ba188(0x1a8)+_0x1ba188(0x1c5))?.[_0x1ba188(0x158)+_0x1ba188(cm_36641c0b1d_0x407e5e._0x419852)](_0x1ba188(0x1ea),()=>_0x3c08bd()),document[_0x1ba188(0x156)+_0x1ba188(0x170)](_0x1ba188(cm_36641c0b1d_0x407e5e._0x35158f)+_0x1ba188(0x1ff)+'o')?.[_0x1ba188(0x158)+_0x1ba188(0x15f)](_0x1ba188(0xf7),_0x4bd4b6),document[_0x1ba188(cm_36641c0b1d_0x407e5e._0x329113)+'ntById'](_0x1ba188(cm_36641c0b1d_0x407e5e._0x19baef)+_0x1ba188(0x123)+'mento')?.[_0x1ba188(0x158)+_0x1ba188(0x15f)](_0x1ba188(0x11c),_0x4bd4b6),document[_0x1ba188(cm_36641c0b1d_0x407e5e._0x3a560f)+_0x1ba188(0x170)](_0x1ba188(cm_36641c0b1d_0x407e5e._0x47fcb9)+_0x1ba188(0x109))?.[_0x1ba188(cm_36641c0b1d_0x407e5e._0xcfe54d)+_0x1ba188(0x15f)](_0x1ba188(0x11c),_0xb4d6ad),document[_0x1ba188(cm_36641c0b1d_0x407e5e._0x20a759)+'ntById']('detalhes'+_0x1ba188(0x1ff)+'o')?.[_0x1ba188(cm_36641c0b1d_0x407e5e._0x5daf58)+_0x1ba188(0x15f)](_0x1ba188(cm_36641c0b1d_0x407e5e._0x3cafc2),_0xb4d6ad),document[_0x1ba188(0x156)+_0x1ba188(0x170)](_0x1ba188(0x1bf)+'umento')?.[_0x1ba188(0x158)+'Listener'](_0x1ba188(0x11c),_0x37f529=>{const _0x5b33d3=_0x1ba188;if(_0x37f529[_0x5b33d3(0x162)]['id']===_0x5b33d3(0x1bf)+'umento')_0x3b46f0();});}function _0x50f160(_0x4b1987=_0x2113be){const _0x1c0273=_0x24d7da,_0x3ab4e2=document['getEleme'+_0x1c0273(0x170)](_0x1c0273(0x1b0)+_0x1c0273(0x109)),_0xdc9201=document[_0x1c0273(0x156)+_0x1c0273(cm_36641c0b1d_0x9324e1._0x37b3cb)](_0x1c0273(0xe7)+_0x1c0273(0x1ff)+'o');if(!_0x3ab4e2)return;if(!_0x4b1987[_0x1c0273(0x1f2)]){_0x3ab4e2['innerHTM'+'L']=_0x1c0273(0x1f0)+_0x1c0273(0x1a9)+_0x1c0273(cm_36641c0b1d_0x9324e1._0x3a13aa)+'\x22>Nenhum'+_0x1c0273(0x1c2)+_0x1c0273(0xec)+_0x1c0273(cm_36641c0b1d_0x9324e1._0x53c948)+_0x1c0273(0xf5);if(_0xdc9201)_0xdc9201[_0x1c0273(cm_36641c0b1d_0x9324e1._0x33c3f5)+'L']=_0x1c0273(0x1f0)+_0x1c0273(cm_36641c0b1d_0x9324e1._0x4c9d39)+_0x1c0273(cm_36641c0b1d_0x9324e1._0x3a13aa)+'\x22>Nenhum'+_0x1c0273(0x1eb)+'\x20recente'+_0x1c0273(cm_36641c0b1d_0x9324e1._0x120bed);return;}const _0x364237=_0x4b1987[_0x1c0273(0x1a5)]((_0x1aed96,_0x49039e)=>{const _0x26ddca=_0x1c0273,_0x24676e=(_0x49039e[_0x26ddca(0x1d6)+'id']||'')+'|'+(_0x49039e[_0x26ddca(0x1e3)+'id']||'');return(_0x1aed96[_0x24676e]||=[])[_0x26ddca(cm_36641c0b1d_0xc96b8f._0x142e63)](_0x49039e),_0x1aed96;},{});_0x3ab4e2['innerHTM'+'L']=Object[_0x1c0273(0x1e5)](_0x364237)[_0x1c0273(cm_36641c0b1d_0x9324e1._0x405d47)](_0x17c85d=>{const _0xa31d0f=_0x1c0273,_0x514939=_0x17c85d[0x1e29*0x1+0x19*0xd1+-0x3292];return _0xa31d0f(0x153)+_0xa31d0f(cm_36641c0b1d_0x10181d._0x309e4)+_0xa31d0f(0x218)+_0xa31d0f(0xe3)+_0xa31d0f(cm_36641c0b1d_0x10181d._0x362bb0)+_0xa31d0f(cm_36641c0b1d_0x10181d._0x2c28e0)+_0xa31d0f(0x10f)+_0xa31d0f(0x142)+'open\x22></'+_0xa31d0f(0x1d3)+_0x5298b2(_0x1c35e6(_0x514939[_0xa31d0f(0x1d6)+'id']))+(_0xa31d0f(cm_36641c0b1d_0x10181d._0x30ad6c)+_0xa31d0f(0x20d)+_0xa31d0f(0xcf)+'>')+_0x5298b2(_0x125848(_0x514939[_0xa31d0f(0x1e3)+'id']))+_0xa31d0f(0x100)+_0x17c85d[_0xa31d0f(0xd0)](_0x39fb5f=>_0xa31d0f(0x219)+'\x20\x20\x20\x20\x20<ar'+_0xa31d0f(0x152)+_0xa31d0f(0xe8)+_0xa31d0f(0x1ec)+_0xa31d0f(0x1a8)+_0xa31d0f(0x165)+_0xa31d0f(0x219)+_0xa31d0f(0x20d)+'\x20<div\x20cl'+_0xa31d0f(0xe8)+_0xa31d0f(0x212)+_0xa31d0f(0x219)+'\x20\x20\x20\x20\x20\x20\x20\x20'+_0xa31d0f(0x1f7)+'>'+_0x5298b2(_0x39fb5f['nome'])+('</h3>\x0a\x20\x20'+_0xa31d0f(0x20d)+_0xa31d0f(0x20d)+_0xa31d0f(0x1fb))+_0x5298b2(_0x39fb5f[_0xa31d0f(0x1cb)]||_0xa31d0f(0x124)+'goria')+(_0xa31d0f(0x18e)+_0xa31d0f(0x20d)+_0xa31d0f(0x20d)+_0xa31d0f(0x1cd)+'n>')+_0x5298b2(_0x1c35e6(_0x39fb5f[_0xa31d0f(0x1d6)+'id']))+('</span>\x0a'+_0xa31d0f(0x20d)+_0xa31d0f(0x20d)+_0xa31d0f(0x200)+_0xa31d0f(0x20d)+_0xa31d0f(0x1c4)+'div\x20clas'+_0xa31d0f(0x16f)+_0xa31d0f(0x1fd)+_0xa31d0f(0x20d)+_0xa31d0f(0x20d)+'\x20\x20\x20\x20')+_0x43a491(_0xa31d0f(0x1b9),_0x39fb5f['id'],_0xa31d0f(0x131),'Abrir\x20de'+_0xa31d0f(0x1dd))+(_0xa31d0f(0x219)+_0xa31d0f(0x20d)+'\x20\x20\x20\x20\x20')+_0x43a491(_0xa31d0f(0x171),_0x39fb5f['id'],'fa-pen',_0xa31d0f(0x1d1)+_0xa31d0f(0xc4),_0xa31d0f(0x18f))+(_0xa31d0f(0x219)+_0xa31d0f(0x20d)+_0xa31d0f(0x104))+_0x43a491(_0xa31d0f(0xd6),_0x39fb5f['id'],_0xa31d0f(0x140),_0xa31d0f(0xcd)+_0xa31d0f(0x1a8)+'o',_0xa31d0f(0xcb))+(_0xa31d0f(0x219)+_0xa31d0f(0x20d)+_0xa31d0f(0x1bb)+_0xa31d0f(0x20d)+_0xa31d0f(0x119)+_0xa31d0f(0x160)+_0xa31d0f(0x193)))[_0xa31d0f(0x19d)]('')+(_0xa31d0f(cm_36641c0b1d_0x10181d._0x5d7cb7)+'n>');})[_0x1c0273(0x19d)](''),_0xdc9201&&(_0xdc9201[_0x1c0273(0x1b2)+'L']=_0x4b1987[_0x1c0273(0xef)](0xbaf*0x2+0x1*0x16ed+-0x1*0x2e4b,-0x5*0x6a6+-0x74*-0x39+0xad*0xb)[_0x1c0273(0xd0)](_0x4d8707=>_0x1c0273(0x219)+_0x1c0273(0x20d)+_0x1c0273(0xf9)+'ass=\x22ite'+_0x1c0273(0x205)+_0x1c0273(0x21e)+_0x1c0273(0x20d)+_0x1c0273(0xdd)+_0x1c0273(0x13c)+_0x5298b2(_0x4d8707[_0x1c0273(0xca)])+('</span>\x0a'+_0x1c0273(0x20d)+_0x1c0273(0x20d)+_0x1c0273(0x122))+(_0x4d8707[_0x1c0273(0x163)]?_0x1c0273(0x1fc)+'\x22'+_0x5298b2(_0x4d8707[_0x1c0273(0x163)])+('\x22\x20target'+'=\x22_blank'+_0x1c0273(0xf8)+_0x1c0273(0x107)+_0x1c0273(0x1b5)+'a>'):_0x1c0273(0x1ed)+_0x1c0273(0x202)+_0x1c0273(0x13f)+_0x1c0273(0x20a)+_0x1c0273(0x1ba)+_0x1c0273(0x20d)+_0x1c0273(0x20d)+_0x1c0273(0x20d)+_0x1c0273(0x1de)+_0x1c0273(0x11e)+_0x1c0273(0x1c1)+(_0x4d8707[_0x1c0273(0x14f)]?':\x20'+_0x5298b2(_0x4d8707['urlErro']):'')+(_0x1c0273(0x219)+_0x1c0273(0x20d)+_0x1c0273(0x20d)+_0x1c0273(0x143)))+(_0x1c0273(0x219)+'\x20\x20\x20\x20\x20\x20\x20\x20'+_0x1c0273(0x1bb)+'\x20\x20\x20\x20\x20\x20\x20\x20'+_0x1c0273(0x122)))[_0x1c0273(0x19d)](''));}function _0xb4d6ad(_0x2b420e){const _0x4e61c2=_0x24d7da,_0x34f95e=_0x2b420e[_0x4e61c2(0x162)]['closest'](_0x4e61c2(0xfc)+_0x4e61c2(0x1cc)+_0x4e61c2(0xc5));if(!_0x34f95e)return;const {acaoDocumento:_0xe00a63,id:_0xfad625}=_0x34f95e[_0x4e61c2(0xee)];if(_0xe00a63===_0x4e61c2(0x1b9))_0x14e2d0(_0xfad625);if(_0xe00a63===_0x4e61c2(0x171))_0x1b5def(_0xfad625);if(_0xe00a63==='excluir')_0x45402a(_0xfad625);}function _0x384238(){const _0x316125=_0x24d7da;_0x284e09=null,document[_0x316125(cm_36641c0b1d_0x4390b4._0xb7dd5e)+'ntById'](_0x316125(cm_36641c0b1d_0x4390b4._0x21abbe)+_0x316125(0xcc))?.[_0x316125(cm_36641c0b1d_0x4390b4._0x2c5002)](),_0x3c08bd(),_0x3500e6(_0x316125(0x208)+_0x316125(0xc3)+_0x316125(cm_36641c0b1d_0x4390b4._0x48ebd2),'Salvar\x20D'+_0x316125(0xc4),!![]),_0x373796();}function _0x1b5def(_0xf5150f){const _0x508e4e=_0x24d7da,_0x584586=_0x27ddf7(_0xf5150f);if(!_0x584586)return;_0x284e09=_0x584586['id'],_0x116f33('document'+'oNome',_0x584586[_0x508e4e(0xca)]),_0x116f33(_0x508e4e(0x1a8)+'oCliente',_0x584586['cliente_'+'id']),_0x3c08bd(_0x584586[_0x508e4e(0x1e3)+'id']),_0x116f33(_0x508e4e(cm_36641c0b1d_0x3352b8._0x595383)+_0x508e4e(0xdc)+'ia',_0x584586[_0x508e4e(0x1cb)]),_0x116f33(_0x508e4e(0x1a8)+_0x508e4e(0x14a)+'ao',_0x584586[_0x508e4e(0xbe)+'o']),_0x3500e6('Editar\x20D'+_0x508e4e(0xc4),_0x508e4e(cm_36641c0b1d_0x3352b8._0x2917d1)+'lteraçõe'+'s',![]),_0x373796();}async function _0x20aad2(_0x1d3501){const _0x3bd981=_0x24d7da;_0x1d3501['preventD'+'efault']();const _0x4b96c4={'nome':_0x535c48(_0x3bd981(0x1a8)+_0x3bd981(cm_36641c0b1d_0x5bc2b4._0x4bea48)),'tipo':_0x535c48(_0x3bd981(0x1a8)+'oCategor'+'ia'),'cliente_id':_0x535c48(_0x3bd981(0x1a8)+_0x3bd981(cm_36641c0b1d_0x5bc2b4._0x5a0acb))||null,'projeto_id':_0x535c48(_0x3bd981(cm_36641c0b1d_0x5bc2b4._0x45cb73)+_0x3bd981(0x105))||null,'descricao':_0x535c48(_0x3bd981(0x1a8)+_0x3bd981(0x14a)+'ao')},_0x65f28f=document['getEleme'+_0x3bd981(0x170)](_0x3bd981(cm_36641c0b1d_0x5bc2b4._0x3210f6)+_0x3bd981(cm_36641c0b1d_0x5bc2b4._0x4bbb1d))?.['files']?.[0x17f*-0x13+0x28d*0x9+0x578],_0x405c30=_0x27ddf7(_0x284e09);if(!_0x4b96c4[_0x3bd981(0xca)]||!_0x4b96c4[_0x3bd981(0x1d6)+'id']||!_0x4b96c4['projeto_'+'id']){alert(_0x3bd981(0x180)+_0x3bd981(0x19c)+_0x3bd981(0xc8)+_0x3bd981(cm_36641c0b1d_0x5bc2b4._0x3d1373)+_0x3bd981(0x16e));return;}if(!_0x284e09&&!_0x65f28f){alert('Selecion'+_0x3bd981(0x1f4)+_0x3bd981(cm_36641c0b1d_0x5bc2b4._0x2964d4)+_0x3bd981(0xc4)+'.');return;}if(!_0x237802(_0x4b96c4[_0x3bd981(cm_36641c0b1d_0x5bc2b4._0x23e733)+'id'],_0x4b96c4[_0x3bd981(0x1d6)+'id'])){alert(_0x3bd981(0xc0)+_0x3bd981(0x1c8)+_0x3bd981(0x101)+_0x3bd981(0xed)+_0x3bd981(0x138)+'e\x20client'+'e.');return;}const _0x19afd0=document[_0x3bd981(0x156)+_0x3bd981(0x170)](_0x3bd981(0xe0)+_0x3bd981(0x1e1));_0x30a263(_0x19afd0,!![]);let _0x52c497=_0x405c30?.[_0x3bd981(0x155)]||null;try{_0x65f28f&&(_0x52c497=_0x4b96c4['cliente_'+'id']+'/'+_0x4b96c4['projeto_'+'id']+'/'+Date[_0x3bd981(0x1a6)]()+'-'+_0x549d76(_0x65f28f[_0x3bd981(cm_36641c0b1d_0x5bc2b4._0x2f2d65)]),await dbUploadArquivo(BUCKETS[_0x3bd981(0x154)+'OS'],_0x52c497,_0x65f28f));_0x4b96c4[_0x3bd981(0x155)]=_0x52c497;const _0x207e8e=Boolean(_0x284e09);_0x207e8e?await dbEditarDocumento(_0x284e09,_0x4b96c4):await dbCriarDocumento(_0x4b96c4);_0x65f28f&&_0x405c30?.[_0x3bd981(0x155)]&&_0x405c30[_0x3bd981(0x155)]!==_0x52c497&&await dbExcluirArquivoStorage(BUCKETS[_0x3bd981(0x154)+'OS'],_0x405c30['arquivo'])['catch'](()=>{});const _0x4994c5=await dbNotificarAtualizacao({'tipo':_0x207e8e?_0x3bd981(0x1a8)+'o_atuali'+_0x3bd981(0xe4):_0x3bd981(cm_36641c0b1d_0x5bc2b4._0xa4cd48)+_0x3bd981(0x1ce)+'ado','cliente_id':_0x4b96c4[_0x3bd981(0x1d6)+'id'],'projeto_id':_0x4b96c4[_0x3bd981(0x1e3)+'id'],'titulo':_0x4b96c4['nome'],'mensagem':_0x207e8e?_0x3bd981(0x17b)+_0x3bd981(0xf0)+'seu\x20proj'+'eto\x20foi\x20'+'atualiza'+_0x3bd981(0x211):_0x3bd981(0xe2)+_0x3bd981(cm_36641c0b1d_0x5bc2b4._0xa4cd48)+_0x3bd981(cm_36641c0b1d_0x5bc2b4._0x2df65c)+_0x3bd981(0xc7)+_0x3bd981(0x204)+_0x3bd981(0x19e)+'tal.'});_0x3b46f0(),await _0x26ad02(),alert((_0x207e8e?_0x3bd981(0x1ff)+_0x3bd981(0xd7)+_0x3bd981(cm_36641c0b1d_0x5bc2b4._0x320176):_0x3bd981(0x1ff)+_0x3bd981(0x1d2)+_0x3bd981(cm_36641c0b1d_0x5bc2b4._0x5e96fe))+('\x20com\x20suc'+'esso.')+_0x35bbd2(_0x4994c5));}catch(_0x26cdbb){_0x65f28f&&_0x52c497&&_0x52c497!==_0x405c30?.[_0x3bd981(cm_36641c0b1d_0x5bc2b4._0x270d28)]&&await dbExcluirArquivoStorage(BUCKETS[_0x3bd981(0x154)+'OS'],_0x52c497)[_0x3bd981(0x179)](()=>{}),_0x2a4170(_0x3bd981(0x201)+_0x3bd981(0x117)+'\x20salvar\x20'+'o\x20docume'+'nto.',_0x26cdbb);}finally{_0x30a263(_0x19afd0,![]);}}function _0x14e2d0(_0x4af349){const _0x36839c=_0x24d7da,_0x422356=_0x27ddf7(_0x4af349),_0x35c56b=document[_0x36839c(0x156)+_0x36839c(0x170)]('detalhes'+_0x36839c(0x1ff)+'o');if(!_0x422356||!_0x35c56b)return;_0x284e09=_0x422356['id'];const _0x2ab148=_0x497d1c(_0x422356);_0x35c56b[_0x36839c(cm_36641c0b1d_0x328f0a._0x306988)+'L']='\x0a\x20\x20\x20\x20\x20\x20\x20'+_0x36839c(cm_36641c0b1d_0x328f0a._0xe08341)+'>'+_0x5298b2(_0x422356[_0x36839c(0xca)])+(_0x36839c(cm_36641c0b1d_0x328f0a._0x1270b9)+'\x20\x20\x20\x20\x20\x20\x20\x20'+_0x36839c(0x1b7)+'rong>Cli'+_0x36839c(0x1df)+_0x36839c(cm_36641c0b1d_0x328f0a._0x387c57))+_0x5298b2(_0x1c35e6(_0x422356[_0x36839c(0x1d6)+'id']))+(_0x36839c(0x12e)+_0x36839c(0x20d)+_0x36839c(cm_36641c0b1d_0x328f0a._0x226db5)+_0x36839c(0xff)+_0x36839c(0x175)+_0x36839c(0x145))+_0x5298b2(_0x10eb7d(_0x422356[_0x36839c(0x1e3)+'id']))+(_0x36839c(cm_36641c0b1d_0x328f0a._0x360f4b)+_0x36839c(0x20d)+_0x36839c(0x13b)+_0x36839c(0x118)+'goria:</'+'strong>\x20')+_0x5298b2(_0x422356[_0x36839c(0x1cb)]||'-')+(_0x36839c(cm_36641c0b1d_0x328f0a._0x360f4b)+'\x20\x20\x20\x20\x20\x20\x20\x20'+_0x36839c(0xc2))+_0x5298b2(_0x422356[_0x36839c(cm_36641c0b1d_0x328f0a._0x545761)+'o']||_0x36839c(cm_36641c0b1d_0x328f0a._0x4abfba)+_0x36839c(0x15e))+(_0x36839c(0x12e)+_0x36839c(cm_36641c0b1d_0x328f0a._0x2bb3ff)+'\x20')+(_0x422356[_0x36839c(cm_36641c0b1d_0x328f0a._0x137fb2)]?_0x2ab148+(_0x36839c(0x219)+_0x36839c(0x20d)+_0x36839c(0xd9)+'class=\x22a'+_0x36839c(cm_36641c0b1d_0x328f0a._0xd8abdf)+_0x36839c(0xe6)+_0x36839c(0x20d)+_0x36839c(0x20d)+'\x20\x20\x20\x20\x20\x20\x20<'+_0x36839c(0x17e))+_0x5298b2(_0x422356[_0x36839c(0x163)])+(_0x36839c(cm_36641c0b1d_0x328f0a._0x8b4b48)+_0x36839c(0x1e0)+_0x36839c(cm_36641c0b1d_0x328f0a._0x3c1e77)+_0x36839c(cm_36641c0b1d_0x328f0a._0x4f959e)+'>\x0a\x20\x20\x20\x20\x20\x20'+_0x36839c(cm_36641c0b1d_0x328f0a._0x103093)+_0x36839c(0x20d)+'\x20\x20\x20\x20\x20\x20Ab'+_0x36839c(cm_36641c0b1d_0x328f0a._0x4bbb32)+'ova\x20guia'+_0x36839c(0x219)+_0x36839c(0x20d)+_0x36839c(cm_36641c0b1d_0x328f0a._0x2bb3ff)+_0x36839c(cm_36641c0b1d_0x328f0a._0x44d9f9)+_0x36839c(0x20d)+_0x36839c(0x20d)+'\x20\x20\x20\x20\x20\x20<a'+_0x36839c(0x197))+_0x5298b2(_0x422356['url'])+(_0x36839c(cm_36641c0b1d_0x328f0a._0x16447e)+_0x36839c(0x1fe)+_0x36839c(cm_36641c0b1d_0x328f0a._0x103093)+'\x20\x20\x20\x20\x20\x20\x20\x20'+'\x20\x20\x20\x20\x20\x20\x20\x20'+_0x36839c(0x1e8)+'rquivo\x0a\x20'+_0x36839c(0x20d)+_0x36839c(cm_36641c0b1d_0x328f0a._0x4f5dd1)+_0x36839c(cm_36641c0b1d_0x328f0a._0x57948a)+_0x36839c(0x14d)+_0x36839c(0x20d)+_0x36839c(cm_36641c0b1d_0x328f0a._0x4f5dd1)+_0x36839c(cm_36641c0b1d_0x328f0a._0x51d401)):'<div\x20cla'+_0x36839c(0x116)+_0x36839c(0x210)+_0x36839c(0x1d7)+_0x36839c(0x1d4)+_0x36839c(cm_36641c0b1d_0x328f0a._0x4f5dd1)+_0x36839c(0xf4)+_0x36839c(0x199)+_0x36839c(0xfb)+_0x36839c(0x110)+(_0x422356['urlErro']?':\x20'+_0x5298b2(_0x422356[_0x36839c(0x14f)]):'')+('\x0a\x20\x20\x20\x20\x20\x20\x20'+_0x36839c(0x20d)+_0x36839c(0x1be)))+('\x0a\x20\x20\x20\x20\x20\x20\x20'+_0x36839c(cm_36641c0b1d_0x328f0a._0x79511)+_0x36839c(0x181)+'\x22detalhe'+'s-acoes\x22'+_0x36839c(cm_36641c0b1d_0x328f0a._0x2499f2)+_0x36839c(0x20d)+'\x20\x20')+_0x43a491('editar',_0x422356['id'],'fa-pen',_0x36839c(0x1d1)+'ocumento',_0x36839c(0x18f))+('\x0a\x20\x20\x20\x20\x20\x20\x20'+_0x36839c(0x20d)+'\x20')+_0x43a491(_0x36839c(cm_36641c0b1d_0x328f0a._0x1a02b7),_0x422356['id'],'fa-trash',_0x36839c(0xcd)+'document'+'o',_0x36839c(0xcb))+(_0x36839c(cm_36641c0b1d_0x328f0a._0x347873)+_0x36839c(0x1f9)+'iv>\x0a\x20\x20\x20\x20'+_0x36839c(0x122));}function _0x497d1c(_0x2d9f8e){const _0x5cf3aa=_0x24d7da;if(!_0x2d9f8e['url'])return'';const _0x4a21c8=String(_0x2d9f8e[_0x5cf3aa(0x155)]||'')['split']('?')[-0x19cf+0x1*-0x1736+0x3105]['split']('.')[_0x5cf3aa(0xe5)]()[_0x5cf3aa(0x191)+_0x5cf3aa(0x186)+'e'](_0x5cf3aa(0x141)),_0x974206=_0x5298b2(_0x2d9f8e['url']),_0x4f6d56=_0x5298b2(_0x2d9f8e[_0x5cf3aa(0xca)]||_0x5cf3aa(0x1ff)+'o');if([_0x5cf3aa(0x207),'jpeg',_0x5cf3aa(0x17a),_0x5cf3aa(0x194),_0x5cf3aa(0x1f1),'svg'][_0x5cf3aa(cm_36641c0b1d_0x272e12._0x1e0bd7)](_0x4a21c8))return _0x5cf3aa(0x219)+_0x5cf3aa(0x20d)+_0x5cf3aa(cm_36641c0b1d_0x272e12._0x357716)+_0x5cf3aa(0x202)+_0x5cf3aa(cm_36641c0b1d_0x272e12._0x1e1fbf)+_0x5cf3aa(0x217)+_0x5cf3aa(cm_36641c0b1d_0x272e12._0x207fb)+_0x5cf3aa(0x20d)+_0x5cf3aa(cm_36641c0b1d_0x272e12._0x5c810b)+_0x5cf3aa(cm_36641c0b1d_0x272e12._0xfa0ad7)+_0x974206+('\x22\x20alt=\x22V'+_0x5cf3aa(0x1c7)+_0x5cf3aa(cm_36641c0b1d_0x272e12._0x4aa8a5))+_0x4f6d56+(_0x5cf3aa(0x1d4)+_0x5cf3aa(0x20d)+'\x20\x20\x20</div'+'>\x0a\x20\x20\x20\x20\x20\x20'+_0x5cf3aa(cm_36641c0b1d_0x272e12._0x5dde6f));if(_0x4a21c8===_0x5cf3aa(0x1c9))return _0x5cf3aa(0x219)+_0x5cf3aa(0x20d)+_0x5cf3aa(0xf9)+'ass=\x22arq'+_0x5cf3aa(0x169)+_0x5cf3aa(0x217)+_0x5cf3aa(0x20d)+'\x20\x20\x20\x20\x20\x20\x20\x20'+_0x5cf3aa(cm_36641c0b1d_0x272e12._0x4cb20c)+_0x5cf3aa(0x198)+_0x974206+('\x22\x20title='+'\x22Visuali'+_0x5cf3aa(cm_36641c0b1d_0x272e12._0x13d2a4)+'\x20')+_0x4f6d56+(_0x5cf3aa(0x17d)+_0x5cf3aa(0x15b)+'\x20\x20\x20\x20\x20\x20\x20\x20'+_0x5cf3aa(cm_36641c0b1d_0x272e12._0x5869ba)+_0x5cf3aa(cm_36641c0b1d_0x272e12._0x35520e)+_0x5cf3aa(0x193));return _0x5cf3aa(0x219)+'\x20\x20\x20\x20\x20<di'+_0x5cf3aa(0x181)+_0x5cf3aa(cm_36641c0b1d_0x272e12._0x5eee6a)+_0x5cf3aa(cm_36641c0b1d_0x272e12._0x2e47c5)+_0x5cf3aa(0x1eb)+_0x5cf3aa(0xf6)+'-generic'+_0x5cf3aa(0x1f5)+_0x5cf3aa(0x20d)+_0x5cf3aa(0x190)+_0x5cf3aa(0x17c)+_0x5cf3aa(cm_36641c0b1d_0x272e12._0x117500)+_0x5cf3aa(0x103)+_0x5cf3aa(cm_36641c0b1d_0x272e12._0x29acb0)+_0x5cf3aa(cm_36641c0b1d_0x272e12._0x481185)+_0x5cf3aa(cm_36641c0b1d_0x272e12._0x207fb)+_0x5cf3aa(0x20d)+_0x5cf3aa(cm_36641c0b1d_0x272e12._0x584539)+'e\x20os\x20bot'+_0x5cf3aa(0x188)+'xo\x20para\x20'+_0x5cf3aa(0x111)+_0x5cf3aa(0x18a)+_0x5cf3aa(0x1af)+_0x5cf3aa(0x15c)+_0x5cf3aa(0xdb)+_0x5cf3aa(0x20d)+_0x5cf3aa(0x1bb)+_0x5cf3aa(cm_36641c0b1d_0x272e12._0x207fb);}function _0x5b89a2(){const _0x2fbc91=_0x24d7da,_0x4b54a6=new URLSearchParams(window[_0x2fbc91(cm_36641c0b1d_0x1b7fcc._0x4253c4)][_0x2fbc91(0x21a)]),_0x1ea84f=_0x4b54a6[_0x2fbc91(cm_36641c0b1d_0x1b7fcc._0x2d493d)](_0x2fbc91(0x1a8)+'o'),_0x326f4c=_0x4b54a6[_0x2fbc91(0x144)](_0x2fbc91(0x172));if(!_0x1ea84f||!_0x27ddf7(_0x1ea84f))return;_0x326f4c===_0x2fbc91(cm_36641c0b1d_0x1b7fcc._0x2bfcfa)?_0x1b5def(_0x1ea84f):(_0x14e2d0(_0x1ea84f),document['getEleme'+'ntById'](_0x2fbc91(cm_36641c0b1d_0x1b7fcc._0x6f5247)+'Document'+'o')?.[_0x2fbc91(0x216)+_0x2fbc91(cm_36641c0b1d_0x1b7fcc._0x20dbe6)]({'behavior':'smooth','block':_0x2fbc91(0x106)})),window[_0x2fbc91(0xda)]['replaceS'+_0x2fbc91(0xce)]({},'',window['location']['pathname']);}function _0x35bbd2(_0x180307){const _0x3f81c6=_0x24d7da;if(_0x180307?.[_0x3f81c6(0x129)])return _0x3f81c6(cm_36641c0b1d_0x385ad8._0x1b5c4b)+_0x3f81c6(cm_36641c0b1d_0x385ad8._0x369165)+_0x3f81c6(cm_36641c0b1d_0x385ad8._0x4106a7)+'u\x20um\x20avi'+_0x3f81c6(cm_36641c0b1d_0x385ad8._0x2c160d)+'-mail.';return'\x0aO\x20regis'+_0x3f81c6(0x1d8)+_0x3f81c6(0xfd)+_0x3f81c6(cm_36641c0b1d_0x385ad8._0x1fcb2d)+'so\x20por\x20e'+_0x3f81c6(0x192)+_0x3f81c6(0x17f)+_0x3f81c6(0x102)+_0x3f81c6(0x16c)+'.';}async function _0x45402a(_0x44963c){const _0xaf6f35=_0x24d7da,_0x15c1de=_0x27ddf7(_0x44963c);if(!_0x15c1de||!confirm(_0xaf6f35(cm_36641c0b1d_0x23aa6a._0x281a97)+_0xaf6f35(cm_36641c0b1d_0x23aa6a._0x45c047)+'nto\x20\x22'+_0x15c1de['nome']+'\x22?'))return;try{_0x15c1de[_0xaf6f35(0x155)]&&await dbExcluirArquivoStorage(BUCKETS['DOCUMENT'+'OS'],_0x15c1de[_0xaf6f35(0x155)]),await dbExcluirDocumento(_0x15c1de['id']),_0x427b0d(),await _0x26ad02(),alert(_0xaf6f35(0x1ff)+_0xaf6f35(cm_36641c0b1d_0x23aa6a._0x19be8b)+_0xaf6f35(0x1f6)+_0xaf6f35(0xc1));}catch(_0x31c66b){_0x2a4170(_0xaf6f35(0x201)+'possível'+_0xaf6f35(cm_36641c0b1d_0x23aa6a._0x3f7aeb)+_0xaf6f35(0x1a1)+_0xaf6f35(0xc9),_0x31c66b);}}async function _0x26ad02(){_0x2113be=await dbBuscarDocumentos(),_0x50f160();}function _0x4bd4b6(){const _0x54d549=_0x24d7da,_0x34930b=_0x535c48(_0x54d549(0x150)+_0x54d549(0x1ff)+'o')[_0x54d549(0x191)+'LowerCas'+'e']('pt-BR');if(!_0x34930b)return _0x50f160();_0x50f160(_0x2113be[_0x54d549(0x1e7)](_0x375b72=>[_0x375b72['nome'],_0x375b72[_0x54d549(0x1cb)],_0x375b72[_0x54d549(0xbe)+'o'],_0x1c35e6(_0x375b72[_0x54d549(0x1d6)+'id'])][_0x54d549(0x12d)](_0x17086c=>String(_0x17086c||'')[_0x54d549(0x191)+'LowerCas'+'e']('pt-BR')[_0x54d549(0x183)](_0x34930b))));}function _0x523840(_0x20c907,_0x156899){const _0xc83122=_0x24d7da,_0x1e6e0b=document[_0xc83122(cm_36641c0b1d_0x489050._0x362795)+_0xc83122(0x170)](_0x20c907);if(!_0x1e6e0b)return;_0x1e6e0b[_0xc83122(0x1b2)+'L']='<option\x20'+'value=\x22\x22'+_0xc83122(0x213)+_0xc83122(cm_36641c0b1d_0x489050._0x33cc5c)+_0xc83122(0x14b)+_0x156899['map'](_0x1dc6dc=>'<option\x20'+_0xc83122(0x176)+_0x5298b2(_0x1dc6dc['id'])+'\x22>'+_0x5298b2(_0x1dc6dc[_0xc83122(0xca)])+(_0xc83122(0x12a)+'>'))[_0xc83122(cm_36641c0b1d_0x489050._0x32ac21)]('');}function _0x3c08bd(_0x554bc0=''){const _0x467730=_0x24d7da,_0xda514f=_0x535c48(_0x467730(0x1a8)+_0x467730(0x1c5)),_0x313404=_0xda514f?_0x32a718[_0x467730(0x1e7)](_0x1842e8=>String(_0x1842e8[_0x467730(0x1d6)+'id'])===String(_0xda514f)):[];_0xf1f842(_0x467730(0x1a8)+'oProjeto',_0x313404),_0x116f33(_0x467730(0x1a8)+_0x467730(cm_36641c0b1d_0x302f1a._0x35465e),_0x554bc0||(_0x313404[_0x467730(0x1f2)]===-0x7*0x3db+0xa*-0x292+0x34b2?_0x313404[0x1f41+-0x1a7f+-0x4c2]['id']:''));}function _0xf1f842(_0x1067b3,_0x2a1c79){const _0x5dd890=_0x24d7da,_0x2a2571=document[_0x5dd890(0x156)+_0x5dd890(0x170)](_0x1067b3);if(!_0x2a2571)return;_0x2a2571[_0x5dd890(0x1b2)+'L']=_0x5dd890(0x136)+'value=\x22\x22'+'>'+(_0x2a1c79['length']>0x1655+0x14b9+0x1*-0x2b0d?_0x5dd890(0x167)+_0x5dd890(cm_36641c0b1d_0x25a116._0x414fdf)+_0x5dd890(0x16b)+'reto':_0x5dd890(0x167)+'e')+(_0x5dd890(cm_36641c0b1d_0x25a116._0x203a93)+'>')+_0x2a1c79['map'](_0x5d101c=>_0x5dd890(0x219)+_0x5dd890(0xfe)+_0x5dd890(0x182)+_0x5dd890(0x1b3)+_0x5298b2(_0x5d101c['id'])+(_0x5dd890(0x1d4)+_0x5dd890(0x20d)+'\x20\x20\x20')+_0x5298b2(window[_0x5dd890(0x19b)+_0x5dd890(0x1b4)]?.(_0x5d101c)||_0x5d101c[_0x5dd890(0xca)])+(_0x5dd890(0x219)+'\x20\x20\x20\x20\x20</o'+_0x5dd890(0x11b)+_0x5dd890(0x193)))['join']('');}function _0x237802(_0x318e31,_0xdf8814){const _0x15f5dc=_0x24d7da;if(!_0x318e31)return![];return _0x32a718[_0x15f5dc(0x12d)](_0x59d800=>String(_0x59d800['id'])===String(_0x318e31)&&String(_0x59d800[_0x15f5dc(0x1d6)+'id'])===String(_0xdf8814));}function _0x373796(){const _0x5dbe7a=_0x24d7da,_0x5d7c83=document[_0x5dbe7a(0x156)+_0x5dbe7a(cm_36641c0b1d_0x79dad1._0x1559d4)](_0x5dbe7a(0x1bf)+_0x5dbe7a(0x1a4));if(!_0x5d7c83)return;_0x5d7c83[_0x5dbe7a(0x137)]['display']=_0x5dbe7a(0x178),_0x5d7c83[_0x5dbe7a(0x115)+'t']['add'](_0x5dbe7a(0x130));}function _0x3b46f0(){const _0x592ee7=_0x24d7da,_0x59d5fc=document[_0x592ee7(0x156)+'ntById'](_0x592ee7(0x1bf)+_0x592ee7(cm_36641c0b1d_0x18479a._0x5f08b8));_0x59d5fc?.[_0x592ee7(0x115)+'t'][_0x592ee7(0x1f3)](_0x592ee7(cm_36641c0b1d_0x18479a._0x51c889));if(_0x59d5fc)_0x59d5fc[_0x592ee7(cm_36641c0b1d_0x18479a._0x15a5c9)][_0x592ee7(0x203)]=_0x592ee7(cm_36641c0b1d_0x18479a._0x310374);document[_0x592ee7(0x156)+_0x592ee7(0x170)](_0x592ee7(0xd5)+_0x592ee7(0xcc))?.[_0x592ee7(0x133)]();}function _0x3500e6(_0x3f2cea,_0xa18f86,_0x4a7b37){const _0x51c1f3=_0x24d7da,_0xf390e0=document['querySel'+_0x51c1f3(0x1f8)](_0x51c1f3(cm_36641c0b1d_0x4c31b8._0x3dc68b)+_0x51c1f3(0x159)+'.modal-h'+_0x51c1f3(0x196)),_0x116009=document[_0x51c1f3(cm_36641c0b1d_0x4c31b8._0x517828)+'ntById']('salvarDo'+_0x51c1f3(0x1e1)),_0x32e239=document[_0x51c1f3(0x156)+_0x51c1f3(cm_36641c0b1d_0x4c31b8._0x1462e0)]('document'+_0x51c1f3(0x161));if(_0xf390e0)_0xf390e0[_0x51c1f3(cm_36641c0b1d_0x4c31b8._0x577e0e)+_0x51c1f3(cm_36641c0b1d_0x4c31b8._0xd95226)]=_0x3f2cea;if(_0x116009)_0x116009[_0x51c1f3(0x1a2)+_0x51c1f3(0xea)]=_0xa18f86;if(_0x32e239)_0x32e239[_0x51c1f3(cm_36641c0b1d_0x4c31b8._0x33ee24)]=_0x4a7b37;}function _0x30a263(_0x5a4002,_0x3784b1){const _0x57263d=_0x24d7da;if(!_0x5a4002)return;_0x5a4002['disabled']=_0x3784b1;if(_0x3784b1)_0x5a4002['textCont'+_0x57263d(0xea)]=_0x57263d(0xf2)+_0x57263d(0x113);else _0x5a4002['textCont'+_0x57263d(0xea)]=_0x284e09?_0x57263d(0x166)+_0x57263d(0x174)+'s':'Salvar\x20D'+'ocumento';}function _0x427b0d(){const _0x573503=_0x24d7da;_0x284e09=null;const _0x29db5e=document[_0x573503(0x156)+_0x573503(cm_36641c0b1d_0x599652._0x10ab39)]('detalhes'+_0x573503(0x1ff)+'o');if(_0x29db5e)_0x29db5e[_0x573503(0x1b2)+'L']=_0x573503(0x177)+'ione\x20um\x20'+_0x573503(cm_36641c0b1d_0x599652._0xa0cc6e)+_0x573503(0x20b)+_0x573503(cm_36641c0b1d_0x599652._0x31cb18)+_0x573503(0x1db)+_0x573503(0xbf)+'p>';}function _0x43a491(_0x464f3f,_0x54051b,_0x9ee061,_0x316a99,_0x501a60=''){const _0x32686f=_0x24d7da;return _0x32686f(0x219)+_0x32686f(0xeb)+_0x32686f(cm_36641c0b1d_0x5cb2be._0xb35735)+_0x32686f(0x120)+'n\x22\x20class'+_0x32686f(0x127)+_0x32686f(0x21b)+_0x501a60+(_0x32686f(0xe9)+'cao-docu'+'mento=\x22')+_0x464f3f+(_0x32686f(0x206)+_0x32686f(0x20d)+_0x32686f(0x135)+_0x32686f(0x1ca))+_0x5298b2(_0x54051b)+('\x22\x20title='+'\x22')+_0x316a99+(_0x32686f(0x13a)+_0x32686f(0x18d))+_0x316a99+(_0x32686f(cm_36641c0b1d_0x5cb2be._0x3899fc)+_0x32686f(0x20d)+'\x20\x20\x20<i\x20cl'+_0x32686f(0x1bd)+_0x32686f(0xf1))+_0x9ee061+(_0x32686f(cm_36641c0b1d_0x5cb2be._0x5cbf86)+_0x32686f(0x20d)+_0x32686f(cm_36641c0b1d_0x5cb2be._0x2fbaf7)+_0x32686f(cm_36641c0b1d_0x5cb2be._0x512a71)+_0x32686f(0x104));}function _0x27ddf7(_0x26814a){return _0x2113be['find'](_0x358e43=>String(_0x358e43['id'])===String(_0x26814a));}function _0x1c35e6(_0x59ee96){const _0x18fb2b=_0x24d7da;return _0x294f05[_0x18fb2b(cm_36641c0b1d_0x2bbee2._0x2dd9e4)](_0x4b9dfc=>String(_0x4b9dfc['id'])===String(_0x59ee96))?.[_0x18fb2b(0xca)]||_0x18fb2b(cm_36641c0b1d_0x2bbee2._0x15184e)+_0x18fb2b(0xd4);}function _0x10eb7d(_0x7c2732){const _0x1947fb=_0x24d7da;return _0x32a718[_0x1947fb(0x146)](_0x5581ed=>String(_0x5581ed['id'])===String(_0x7c2732))?.[_0x1947fb(0xca)]||_0x1947fb(cm_36641c0b1d_0x3faafb._0xeba8b9)+_0x1947fb(0xd4);}function _0x125848(_0x1e6de9){const _0x2f2312=_0x24d7da,_0x2e8521=_0x32a718['find'](_0x1f8b33=>String(_0x1f8b33['id'])===String(_0x1e6de9));return _0x2e8521?window[_0x2f2312(0x19b)+_0x2f2312(cm_36641c0b1d_0x299b1a._0x1267d3)]?.(_0x2e8521)||_0x2e8521['nome']:_0x2f2312(0x1b4)+_0x2f2312(0x21c)+_0x2f2312(0x14c);}function _0xc0d746(_0x593972){const _0x42a7e4=_0x24d7da,_0x562af8=document['getEleme'+_0x42a7e4(0x170)](_0x42a7e4(cm_36641c0b1d_0x3a2a0a._0x2742df));if(_0x562af8)_0x562af8[_0x42a7e4(0x137)][_0x42a7e4(0x203)]=_0x593972?'flex':_0x42a7e4(cm_36641c0b1d_0x3a2a0a._0x395e63);}function _0x535c48(_0x3d861d){const _0x25f5b2=_0x24d7da;return document[_0x25f5b2(0x156)+_0x25f5b2(0x170)](_0x3d861d)?.[_0x25f5b2(0xd2)]?.[_0x25f5b2(0x1a3)]()||'';}function _0x116f33(_0x117877,_0x1c0ed6){const _0x4db369=_0x24d7da,_0x27740c=document[_0x4db369(0x156)+'ntById'](_0x117877);if(_0x27740c)_0x27740c['value']=_0x1c0ed6||'';}function _0x549d76(_0x324388){const _0x174c62=_0x24d7da;return _0x324388[_0x174c62(cm_36641c0b1d_0x18568c._0x3d951e)](/[^a-zA-Z0-9._-]+/g,'-');}function _0x5298b2(_0x5c947f){const _0xd63669=_0x24d7da;return String(_0x5c947f??'')[_0xd63669(0x189)+'ll']('&','&amp;')[_0xd63669(0x189)+'ll']('<',_0xd63669(0x1ad))['replaceA'+'ll']('>','&gt;')['replaceA'+'ll']('\x22',_0xd63669(cm_36641c0b1d_0x571e24._0x52669a))[_0xd63669(0x189)+'ll']('\x27',_0xd63669(0x1ac));}function _0x2a4170(_0xb37d8,_0x11f247){const _0x568f29=_0x24d7da;console[_0x568f29(0x1e6)](_0xb37d8,_0x11f247),alert(''+_0xb37d8+(_0x11f247?.[_0x568f29(0x214)]?'\x0a'+_0x11f247[_0x568f29(0x214)]:''));}}());function cm_36641c0b1d_0x10da(){const _0x5ec1b0=['B24G','ig7dO28GAw5M','idWVyt4kica','pGOGicaGica','zgvZy3jPy2e','ywXOzxmUpc8','tYbWCM9Qzxq','DwnLC3nVlG','idXWpG','CIbeB2n1Bwu','B2n1BwvUDg8','zw50B10','re9nq29UDgu','C3bVBMLIAwW','BYbJBgLLBNq','zw50BY4','BM9Tzq','zgvSzxrL','BwvUDg8','rxHJBhvPCIa','Dgf0zq','icaGicaGpha','BwfW','ndy5mtDIyNrfD1i','DMfSDwu','zsbLig8Gy28','CM1Hzg8','zM9YBurVy3u','zxHJBhvPCG','BYbHDhvHBgK','iIb0yxjNzxq','icaGica8Cca','AgLZDg9YEq','CgfUpGOGica','B0nHDgvNB3i','icaGicaGphm','iJ48l2K+cIa','ChvZAa','C2fSDMfYrg8','BMu8l29WDgK','vw0GBM92BYa','AwvUDguIpJW','EMfKBW','Cg9W','Aw5RCYi+cIa','yxjXDwL2B3m','yxnZpsjPDgu','iIbKyxrHlwe','zw50','icaGica8yNu','Dg8Gy2fKyxm','BYbWzxj0zw4','zgf0yxnLDa','C2XPy2u','zw50BYbKBYa','C29SAwqG','u2fSDMfUzg8','icaGpgLTzYa','icaGicaGiee','zgL2pG','lxbYzxzPzxC','Aw5WDxq','iIbYzwW9iM4','idXKAxyGy2W','nJC0mtz4BfLOtxm','BMrPC3bVBSoT','w2rHDgeTywm','C2fSDM8Sig0','icaGica8B3a','B25NpLbYB2O','pc9WpG','B25Hzg8GBSoJ','zxn0W6eGy29U','ys1MAwXLlwe','icaGica','B1bYB2PLDg8','C3rHCNq','B29Wzw5LCIi','BIi+pc9PpGO','Dw1LBNrVCW','C28GCg9Yigu','BM9Uzq','u2vTigrLC2m','odeYmtrqEfDMB0K','Adm+pgKGy2W','C29SAwqGzMe','DMvS','ywjYAxiGB3u','DJ4kicaGica','lI4U','CNf1AxzVlwW','y2XHC3nmAxm','C3m9iMfYCxu','Cg9ZC8oTDMvS','B25NpKnHDgu','icaGidWVyxi','nty1mtbbC0DeEuG','ChrPB24+cIa','y2XPy2S','Dg9wAwv3','Aw5KAxnWB24','BNrmB2fKzwq','zt0IyNv0Dg8','CMvXDwLYzwq','icaGia','AxnHCKrVy3u','u2vTignHDgu','AxzVigrVigq','pc9OmZ4kica','psjIDg4TAwm','pc9Zzwn0Aw8','zw52AwfKBW','pc9VChrPB24','Dg9UpGOGica','og5RwKLlvW','C29Tzq','pc9WpGOGica','jNf1B3q7','C2HVDW','zMeTzxLL','igv4y2X1Axi','CMvZzxq','phnWyw4+vxm','icbKyxrHlwK','pg9WDgLVBIa','C3r5Bgu','y2uGysbLC3m','odq1mduYu3HWt1Pp','iIbHCMLHlwW','idXWpJXZDhi','CgfUpG','cK8Gy2XPzw4','tSoJBYbPBMzV','DwL2BY1PBMq','zMeTDhjHC2G','ChqTqLi','lwzVBgrLCI0','idWVC3bHBJ4','z2v0','CM9UzZ4G','zMLUza','CMvWBgfJzq','zgfSrg9JDw0','mtq3vwHmzMLj','B0rLC2nYAwm','B24+','B3jTywrV','l2e+cIaGica','yNrUugvZCxu','DxjSrxjYBW','CgvZCxvPC2e','W6FdO28GzguG','DgLJBguGy2W','phnLy3rPB24','re9dvu1ftLq','yxjXDwL2BW','z2v0rwXLBwu','i21VzgfSrg8','ywrKrxzLBNq','y3vTzw50BYa','BM92B0rVy3u','Bwu+cIaGica','DwL2BY48l3m','icaGica8zgK','CMNdP8oJBY4','tgLZDgvUzxi','DgLJBgu+cIa','B0fYCxvPDM8','DgfYz2v0','DxjS','icaGpc9IDxq','BY1PDgvTiJ4','u2fSDMfYiee','u2vSzwnPB24','mtu1nde1mxvIvK5jzW','DwL2BY1WCMu','BMfTzq','CMf0BYbJB3i','zMLNDxjHzg8','mZaZmfblDMf5tG','BNrYyxrVlG','CZ0IAxrLBs0','BNrcEuLK','zwrPDgfY','ywnHBW','mtiZu3jpse1A','BhrLCMhdP8o1zq','zxrVoJWVC3q','DMfSDwu9iG','pha+u2vSzwm','zMXLEa','y2f0y2G','Cg5N','vw0Gzg9JDw0','BgfZCZ0IzMe','iJ48l2LMCMe','ysbOCMvMpsi','BMrHig7dO28G','sw5MB3jTzsa','DIbJBgfZCZ0','DgLVBIb2ywW','Aw5JBhvKzxm','BYbKB2n1Bwu','BYbLEgnSDCoT','tg93zxjdyxm','CIbVCYbKB2m','W7vLCYbHyMfP','CMvWBgfJzue','igjHAxHHCIa','CMfKBW','DguGDgfTySoP','ywjLBd0I','pc9ZCgfUpGO','zwrPDa','icaGidXPigm','Dg9mB2nHBgu','lw1HAwWGywK','icaGicaGia','z2LM','BsbYzwnLyMu','zwfKzxiGAdi','igHYzwy9iG','BwuGC3jJpsi','CNf1AxzVigK','yxmGBYbHDMK','y21sB3r1Bg8','BYbUB21Llca','AM9PBG','ihnLDsbWB3i','C3vIBwL0','EMhdP8oJBYbKzq','ig8Gzg9JDw0','Dgv4DenVBNq','DhjPBq','Dw1LBNrV','CMvKDwnL','BM93','icaGidWVzgK','zg9JDw1LBNq','C3m9iMvZDge','CNjVDY1KB3C','zMvJAgfYtw8','jImWmZK7','jMX0oW','zg8TDMf6Aw8','zxn0zsbHCNe','BgLZDgfeB2m','BNrV','Aw5Uzxjive0','Dwu9iG','q29UDhjHDg8','pKfICMLYpc8','DhrVBIb0Exa','ica8Cd48C3q','zw50BW','ywjYAxi','Bci+cIaGica','idWVzgL2pGO','ywXS','yxnZpsjMys0','idWVzgL2pG','Bw9KywXeB2m','C3jJpsi','W612zwW','igrVy3vTzw4','zgv0ywXOzxm','icaGicaGidW','B0nSAwvUDgu','icaGpgLMCMe','Axn1ywXPEMe','BYbZzwXLy2K','CgrM','zd0I','DgLWBW','yw8Tzg9JDw0','icaGidXZCge','B19WDwjSAwm','lxnVBgLKigy','DhjVBMC+ia','rwrPDgfYigq','BYbJywrHC3q','At4G','iJ4kicaGica','iMfYCxvPDM8','y2XPzw50zv8','C3bVBML2zwW','DhjVigzVAsa','zsbVignVBNq','icaGicaG','CIbVCYbKzxq','y2fUy2vSyxi','DgfSAgvZ','qxjXDwL2BYa','zw50ztO8l3m','psjFyMXHBMS','y3vTzw50BW','lJWVzgL2pG','ChjVAMv0B18','CMLYigvTig4','DMfSDwvZ','zxjYB3i','zMLSDgvY','qMfPEgfYige','DhjHzg8Upc8','y2HHBMDL','igfYCxvPDM8','Bs1SAxn0ysa','phnWyw4Gy2W','iIbKB3DUBg8','odmYu0fxuvnL','pgrPDIbJBge','D2vICa','BgvUz3rO','CMvTB3zL','zsbVigfYCxu','BYi+cIaGica','zg8Gy29Tihm','icaGica8Adm','zwn0B3i','icaGica8l2q','Bg9JyxrPB24','ica8C3bHBJ4','pgeGAhjLzJ0','ywnVzxmIpGO','ywq+cIaGica','rg9JDw1LBNq','pc9KAxy+cIa','tSoJBYbMB2KG','yxnZpsjHCNe','zgLZCgXHEq','AxPHzg8GBM8','Bs1SAxn0ysi','iGOGicaGica','ANbN','q2fKyxn0CMe','BYbMB2KGzgK','AxnWB25PDMu','BYbWyxjHihy','mJC5ng1wyK9oDW','icaGicaGica','ignSyxnZpsi','B05VBwu','AxzVlwLUzgK','zg8U','Bs1PBMzViJ4','pLnLBgvJAw8','BwvZC2fNzq','Bg9HzgLUzW','C2nYB2XSsw4','DMLLDYi+cIa','CgfZDgeTy2W','cIaGicaGica','C2vHCMnO'];cm_36641c0b1d_0x10da=function(){return _0x5ec1b0;};return cm_36641c0b1d_0x10da();}
+/*
+=====================================================
+CAMILA MARTINS ENGENHARIA
+DOCUMENTOS.JS - CRUD ADMINISTRATIVO
+=====================================================
+*/
+
+(function moduloDocumentos() {
+    "use strict";
+
+    let documentos = [];
+    let clientes = [];
+    let projetos = [];
+    let documentoSelecionadoId = null;
+
+    document.addEventListener("DOMContentLoaded", iniciar);
+
+    async function iniciar() {
+        configurarEventos();
+        mostrarLoading(true);
+
+        try {
+            [documentos, clientes, projetos] = await Promise.all([
+                dbBuscarDocumentos(),
+                dbBuscarClientes(),
+                dbBuscarProjetos()
+            ]);
+
+            preencherSelect("documentoCliente", clientes);
+            preencherProjetos();
+            renderizar();
+            abrirDocumentoDaUrl();
+        }
+        catch (error) {
+            tratarErro("Não foi possível carregar os documentos.", error);
+        }
+        finally {
+            mostrarLoading(false);
+        }
+    }
+
+    function configurarEventos() {
+        document.getElementById("novoDocumento")?.addEventListener("click", novoDocumento);
+        document.getElementById("fecharModalDocumento")?.addEventListener("click", fecharModal);
+        document.getElementById("cancelarDocumento")?.addEventListener("click", fecharModal);
+        document.getElementById("formDocumento")?.addEventListener("submit", salvarDocumento);
+        document.getElementById("documentoCliente")?.addEventListener("change", preencherProjetos);
+        document.getElementById("pesquisaDocumento")?.addEventListener("input", pesquisar);
+        document.getElementById("btnPesquisarDocumento")?.addEventListener("click", pesquisar);
+        document.getElementById("listaDocumentos")?.addEventListener("click", tratarAcao);
+        document.getElementById("detalhesDocumento")?.addEventListener("click", tratarAcao);
+        document.getElementById("modalDocumento")?.addEventListener("click", event => {
+            if (event.target.id === "modalDocumento") fecharModal();
+        });
+    }
+
+    function renderizar(lista = documentos, abrirPastas = false) {
+        const container = document.getElementById("listaDocumentos");
+        const recentes = document.getElementById("arquivosDocumento");
+        if (!container) return;
+
+        if (!lista.length) {
+            container.innerHTML = '<div class="estado-vazio">Nenhum documento cadastrado.</div>';
+            if (recentes) recentes.innerHTML = '<div class="estado-vazio">Nenhum arquivo recente.</div>';
+            return;
+        }
+
+        const porCliente = lista.reduce((mapa, item) => {
+            const chave = String(item.cliente_id || "sem-cliente");
+            (mapa[chave] ||= []).push(item);
+            return mapa;
+        }, {});
+
+        container.innerHTML = Object.values(porCliente).map(grupoCliente => {
+            const primeiro = grupoCliente[0];
+
+            const porProjeto = grupoCliente.reduce((mapa, item) => {
+                const chave = String(item.projeto_id || "sem-projeto");
+                (mapa[chave] ||= []).push(item);
+                return mapa;
+            }, {});
+
+            const conteudo = Object.values(porProjeto).map(grupoProjeto => {
+                const referencia = grupoProjeto[0];
+
+                return `
+                    <section class="cme-subpasta-projeto">
+                        <h4>${escapar(rotuloProjeto(referencia.projeto_id))}</h4>
+                        ${grupoProjeto.map(documento => `
+                            <article class="item-lista documento-item">
+                                <div class="item-info">
+                                    <h3>${escapar(documento.nome)}</h3>
+                                    <span>${escapar(categoriaExibida(documento))}</span>
+                                </div>
+                                <div class="item-acoes">
+                                    ${botao("abrir", documento.id, "fa-eye", "Abrir detalhes")}
+                                    ${botao("editar", documento.id, "fa-pen", "Editar documento", "edit")}
+                                    ${botao("excluir", documento.id, "fa-trash", "Excluir documento", "delete")}
+                                </div>
+                            </article>
+                        `).join("")}
+                    </section>
+                `;
+            }).join("");
+
+            return `
+                <details class="pasta-cliente cme-pasta-cliente" ${abrirPastas ? "open" : ""}>
+                    <summary>
+                        <span><i class="fa-solid fa-folder"></i> ${escapar(nomeCliente(primeiro.cliente_id))}</span>
+                        <span class="cme-pasta-contagem">${grupoCliente.length} ${grupoCliente.length === 1 ? "documento" : "documentos"}</span>
+                    </summary>
+                    <div class="cme-pasta-corpo">${conteudo}</div>
+                </details>
+            `;
+        }).join("");
+
+        if (recentes) {
+            recentes.innerHTML = lista.slice(0, 5).map(documento => `
+                <div class="item-lista">
+                    <span>${escapar(documento.nome)}</span>
+                    ${documento.url
+                        ? `<a href="${escapar(documento.url)}" target="_blank" rel="noopener">Abrir</a>`
+                        : `<span class="arquivo-indisponivel">
+                            Arquivo indisponível${documento.urlErro ? `: ${escapar(documento.urlErro)}` : ""}
+                        </span>`}
+                </div>
+            `).join("");
+        }
+    }
+
+    function tratarAcao(event) {
+        const alvo = event.target.closest("[data-acao-documento]");
+        if (!alvo) return;
+
+        const { acaoDocumento: acao, id } = alvo.dataset;
+        if (acao === "abrir") mostrarDetalhes(id);
+        if (acao === "editar") editarDocumento(id);
+        if (acao === "excluir") excluirDocumento(id);
+    }
+
+    function novoDocumento() {
+        documentoSelecionadoId = null;
+        document.getElementById("formDocumento")?.reset();
+        preencherProjetos();
+        atualizarModal("Cadastrar Documento", "Salvar Documento", true);
+        abrirModal();
+    }
+
+    function editarDocumento(id) {
+        const documento = localizar(id);
+        if (!documento) return;
+
+        documentoSelecionadoId = documento.id;
+        preencher("documentoNome", documento.nome);
+        preencher("documentoCliente", documento.cliente_id);
+        preencherProjetos(documento.projeto_id);
+        preencher("documentoCategoria", categoriaExibida(documento, true));
+        preencher("documentoDescricao", documento.descricao);
+        atualizarModal("Editar Documento", "Salvar Alterações", false);
+        abrirModal();
+    }
+
+    async function salvarDocumento(event) {
+        event.preventDefault();
+
+        const dados = {
+            nome: valor("documentoNome"),
+            tipo: valor("documentoCategoria"),
+            cliente_id: valor("documentoCliente") || null,
+            projeto_id: valor("documentoProjeto") || null,
+            descricao: valor("documentoDescricao")
+        };
+
+        const arquivo = document.getElementById("documentoArquivo")?.files?.[0];
+        const anterior = localizar(documentoSelecionadoId);
+
+        if (!dados.nome || !dados.cliente_id || !dados.projeto_id) {
+            alert("Informe o nome, o cliente e o contrato.");
+            return;
+        }
+
+        if (!documentoSelecionadoId && !arquivo) {
+            alert("Selecione o arquivo do documento.");
+            return;
+        }
+
+        if (!projetoPertenceAoCliente(dados.projeto_id, dados.cliente_id)) {
+            alert("O projeto selecionado não pertence a esse cliente.");
+            return;
+        }
+
+        const botaoSalvar = document.getElementById("salvarDocumento");
+        alternarSalvamento(botaoSalvar, true);
+        let novoCaminho = anterior?.arquivo || null;
+
+        try {
+            if (arquivo) {
+                novoCaminho = `${dados.cliente_id}/${dados.projeto_id}/${Date.now()}-${normalizarNome(arquivo.name)}`;
+                await dbUploadArquivo(BUCKETS.DOCUMENTOS, novoCaminho, arquivo);
+            }
+
+            dados.arquivo = novoCaminho;
+
+            const editando = Boolean(documentoSelecionadoId);
+
+            if (editando) {
+                await dbEditarDocumento(documentoSelecionadoId, dados);
+            }
+            else {
+                await dbCriarDocumento(dados);
+            }
+
+            if (arquivo && anterior?.arquivo && anterior.arquivo !== novoCaminho) {
+                await dbExcluirArquivoStorage(BUCKETS.DOCUMENTOS, anterior.arquivo).catch(() => {});
+            }
+
+            const notificacao = await dbNotificarAtualizacao({
+                tipo: editando ? "documento_atualizado" : "documento_publicado",
+                cliente_id: dados.cliente_id,
+                projeto_id: dados.projeto_id,
+                titulo: dados.nome,
+                mensagem: editando
+                    ? "Um documento do seu projeto foi atualizado."
+                    : "Um novo documento foi disponibilizado no seu portal."
+            });
+            fecharModal();
+            await recarregar();
+            alert(
+                `${editando ? "Documento atualizado" : "Documento cadastrado"} com sucesso.` +
+                avisoNotificacao(notificacao)
+            );
+        }
+        catch (error) {
+            if (arquivo && novoCaminho && novoCaminho !== anterior?.arquivo) {
+                await dbExcluirArquivoStorage(BUCKETS.DOCUMENTOS, novoCaminho).catch(() => {});
+            }
+            tratarErro("Não foi possível salvar o documento.", error);
+        }
+        finally {
+            alternarSalvamento(botaoSalvar, false);
+        }
+    }
+
+    function mostrarDetalhes(id) {
+        const documento = localizar(id);
+        const painel = document.getElementById("detalhesDocumento");
+        if (!documento || !painel) return;
+
+        documentoSelecionadoId = documento.id;
+        const visualizacao = criarVisualizacao(documento);
+
+        painel.innerHTML = `
+            <h3>${escapar(documento.nome)}</h3>
+            <p><strong>Cliente:</strong> ${escapar(nomeCliente(documento.cliente_id))}</p>
+            <p><strong>Projeto:</strong> ${escapar(nomeProjeto(documento.projeto_id))}</p>
+            <p><strong>Categoria:</strong> ${escapar(documento.tipo || "-")}</p>
+            <p>${escapar(documento.descricao || "Sem descrição.")}</p>
+            ${documento.url
+                ? `${visualizacao}
+                    <p class="arquivo-links">
+                        <a href="${escapar(documento.url)}" target="_blank" rel="noopener">
+                            Abrir em nova guia
+                        </a>
+                        <a href="${escapar(documento.url)}" download>
+                            Baixar arquivo
+                        </a>
+                    </p>`
+                : `<div class="arquivo-indisponivel">
+                    Arquivo indisponível${documento.urlErro ? `: ${escapar(documento.urlErro)}` : ""}
+                </div>`}
+            <div class="detalhes-acoes">
+                ${botao("editar", documento.id, "fa-pen", "Editar documento", "edit")}
+                ${botao("excluir", documento.id, "fa-trash", "Excluir documento", "delete")}
+            </div>
+        `;
+    }
+
+    function criarVisualizacao(documento) {
+        if (!documento.url) return "";
+
+        const extensao = String(documento.arquivo || "")
+            .split("?")[0]
+            .split(".")
+            .pop()
+            .toLocaleLowerCase("pt-BR");
+        const url = escapar(documento.url);
+        const titulo = escapar(documento.nome || "Documento");
+
+        if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(extensao)) {
+            return `
+                <div class="arquivo-preview">
+                    <img src="${url}" alt="Visualização de ${titulo}">
+                </div>
+            `;
+        }
+
+        if (extensao === "pdf") {
+            return `
+                <div class="arquivo-preview">
+                    <iframe src="${url}" title="Visualização de ${titulo}"></iframe>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="arquivo-preview arquivo-preview-generico">
+                <i class="fa-solid fa-file-arrow-down"></i>
+                <span>Use os botões abaixo para abrir ou baixar este arquivo.</span>
+            </div>
+        `;
+    }
+
+    function abrirDocumentoDaUrl() {
+        const parametros = new URLSearchParams(window.location.search);
+        const id = parametros.get("documento");
+        const acao = parametros.get("acao");
+
+        if (!id || !localizar(id)) return;
+
+        if (acao === "editar") {
+            editarDocumento(id);
+        }
+        else {
+            mostrarDetalhes(id);
+            document
+                .getElementById("detalhesDocumento")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        window.history.replaceState({}, "", window.location.pathname);
+    }
+
+    function avisoNotificacao(resultado) {
+        if (resultado?.enviado) {
+            return "\nO cliente também recebeu um aviso por e-mail.";
+        }
+
+        return "\nO registro foi salvo, mas o aviso por e-mail ainda não está configurado.";
+    }
+
+    async function excluirDocumento(id) {
+        const documento = localizar(id);
+        if (!documento || !confirm(`Excluir o documento "${documento.nome}"?`)) return;
+
+        try {
+            await dbExcluirDocumento(documento.id);
+            if (documento.arquivo) {
+                await dbExcluirArquivoStorage(BUCKETS.DOCUMENTOS, documento.arquivo).catch(() => {});
+            }
+            limparDetalhes();
+            await recarregar();
+            alert("Documento excluído com sucesso.");
+        }
+        catch (error) {
+            tratarErro("Não foi possível excluir o documento.", error);
+        }
+    }
+
+    async function recarregar() {
+        documentos = await dbBuscarDocumentos();
+        renderizar();
+    }
+
+    function pesquisar() {
+        const termo = valor("pesquisaDocumento").toLocaleLowerCase("pt-BR");
+        if (!termo) return renderizar();
+
+        renderizar(documentos.filter(documento =>
+            [documento.nome, categoriaExibida(documento), documento.descricao, nomeCliente(documento.cliente_id), nomeProjeto(documento.projeto_id)]
+                .some(campo => String(campo || "").toLocaleLowerCase("pt-BR").includes(termo))
+        ), true);
+    }
+
+    function preencherSelect(id, itens) {
+        const select = document.getElementById(id);
+        if (!select) return;
+        select.innerHTML = `<option value="">Selecione</option>` +
+            itens.map(item => `<option value="${escapar(item.id)}">${escapar(item.nome)}</option>`).join("");
+    }
+
+    function preencherProjetos(valorSelecionado = "") {
+        const clienteId = valor("documentoCliente");
+        const lista = clienteId
+            ? projetos.filter(projeto => String(projeto.cliente_id) === String(clienteId))
+            : projetos;
+        preencherSelect("documentoProjeto", lista);
+        preencher("documentoProjeto", valorSelecionado);
+    }
+
+    function projetoPertenceAoCliente(projetoId, clienteId) {
+        if (!projetoId) return false;
+        return projetos.some(projeto =>
+            String(projeto.id) === String(projetoId) &&
+            String(projeto.cliente_id) === String(clienteId)
+        );
+    }
+
+    function abrirModal() {
+        const modal = document.getElementById("modalDocumento");
+        if (!modal) return;
+        modal.style.display = "flex";
+        modal.classList.add("show");
+    }
+
+    function fecharModal() {
+        const modal = document.getElementById("modalDocumento");
+        modal?.classList.remove("show");
+        if (modal) modal.style.display = "none";
+        document.getElementById("formDocumento")?.reset();
+    }
+
+    function atualizarModal(titulo, textoBotao, arquivoObrigatorio) {
+        const tituloModal = document.querySelector("#modalDocumento .modal-header h2");
+        const botaoSalvar = document.getElementById("salvarDocumento");
+        const inputArquivo = document.getElementById("documentoArquivo");
+        if (tituloModal) tituloModal.textContent = titulo;
+        if (botaoSalvar) botaoSalvar.textContent = textoBotao;
+        if (inputArquivo) inputArquivo.required = arquivoObrigatorio;
+    }
+
+    function alternarSalvamento(botao, salvando) {
+        if (!botao) return;
+        botao.disabled = salvando;
+        if (salvando) botao.textContent = "Salvando...";
+        else botao.textContent = documentoSelecionadoId ? "Salvar Alterações" : "Salvar Documento";
+    }
+
+    function limparDetalhes() {
+        documentoSelecionadoId = null;
+        const painel = document.getElementById("detalhesDocumento");
+        if (painel) painel.innerHTML = "<p>Selecione um documento para visualizar os detalhes.</p>";
+    }
+
+    function botao(acao, id, icone, titulo, classe = "") {
+        return `
+            <button type="button" class="btn-icon ${classe}" data-acao-documento="${acao}"
+                data-id="${escapar(id)}" title="${titulo}" aria-label="${titulo}">
+                <i class="fa-solid ${icone}"></i>
+            </button>
+        `;
+    }
+
+    function localizar(id) {
+        return documentos.find(documento => String(documento.id) === String(id));
+    }
+
+    function categoriaExibida(documento, valorSelect = false) {
+        const atual = String(documento?.tipo || "").trim();
+
+        if (atual && atual !== "outros" && atual !== "automatico") {
+            return atual;
+        }
+
+        const detectada = window.CMEClassificarDocumento?.(
+            documento?.nome_original ||
+            documento?.arquivo ||
+            documento?.nome ||
+            ""
+        );
+
+        if (detectada && detectada !== "outros") return detectada;
+        return valorSelect ? "outros" : "outros";
+    }
+
+    function nomeCliente(id) {
+        return clientes.find(cliente => String(cliente.id) === String(id))?.nome || "Não informado";
+    }
+
+    function nomeProjeto(id) {
+        return projetos.find(projeto => String(projeto.id) === String(id))?.nome || "Não informado";
+    }
+
+    function rotuloProjeto(id) {
+        const projeto = projetos.find(item => String(item.id) === String(id));
+        return projeto ? (window.cmRotuloContrato?.(projeto) || projeto.nome) : "Contrato não informado";
+    }
+
+    function mostrarLoading(mostrar) {
+        const elemento = document.getElementById("loading");
+        if (elemento) elemento.style.display = mostrar ? "flex" : "none";
+    }
+
+    function valor(id) {
+        return document.getElementById(id)?.value?.trim() || "";
+    }
+
+    function preencher(id, conteudo) {
+        const campo = document.getElementById(id);
+        if (campo) campo.value = conteudo || "";
+    }
+
+    function normalizarNome(nome) {
+        return nome.replace(/[^a-zA-Z0-9._-]+/g, "-");
+    }
+
+    function escapar(valor) {
+        return String(valor ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    function tratarErro(mensagem, error) {
+        console.error(mensagem, error);
+        alert(`${mensagem}${error?.message ? `\n${error.message}` : ""}`);
+    }
+})();
