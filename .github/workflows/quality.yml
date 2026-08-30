@@ -6,6 +6,7 @@ on:
       - auditoria-geral-20260829
       - auditoria-estrutural-20260829
       - galeria-fotos-20260829
+      - diagnostico-r2-binding-20260830
   workflow_dispatch:
 
 permissions:
@@ -46,6 +47,20 @@ jobs:
 
       - name: Testes de interface
         run: node scripts/browser-smoke.mjs
+
+      - name: Testar binding R2 do Worker
+        if: github.ref_name == 'diagnostico-r2-binding-20260830'
+        run: |
+          set -euo pipefail
+          URL="https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/__binding_probe__"
+          CODE=$(curl --show-error --silent -w "%{http_code}" "$URL" -o /tmp/cme-r2-probe.txt)
+          echo "HTTP $CODE"
+          cat /tmp/cme-r2-probe.txt || true
+          echo
+          if [ "$CODE" = "500" ]; then
+            exit 1
+          fi
+          test "$CODE" = "404"
 
       - name: Testar Worker público Cloudflare
         if: github.ref_name == 'galeria-fotos-20260829'
