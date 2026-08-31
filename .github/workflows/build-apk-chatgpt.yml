@@ -9,7 +9,7 @@ on:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 50
     env:
       EXPO_PUBLIC_APP_ENV: homologation
       EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF: nvhjcoxnzigwwbdbhkhq
@@ -27,7 +27,7 @@ jobs:
           cache-dependency-path: portal-app/package-lock.json
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
@@ -35,17 +35,82 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install dependencies
+      - name: Restore stable homologation signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: camila-martins-homologation-signing-v1
+
+      - name: Ensure stable homologation signing key
+        run: |
+          mkdir -p "$HOME/.android"
+          if [ ! -f "$HOME/.android/debug.keystore" ]; then
+            keytool -genkeypair -noprompt \
+              -keystore "$HOME/.android/debug.keystore" \
+              -storepass android \
+              -alias androiddebugkey \
+              -keypass android \
+              -dname "CN=Camila Martins Engenharia Homologacao,O=Camila Martins Engenharia,C=BR" \
+              -keyalg RSA -keysize 2048 -validity 10000
+          fi
+
+      - name: Install deterministic dependencies
         working-directory: portal-app
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Verify environment
         working-directory: portal-app
         run: npm run check:homologation
 
+      - name: Verify Supabase public connectivity
+        working-directory: portal-app
+        run: |
+          curl --fail --silent --show-error \
+            -H "apikey: $EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" \
+            "$EXPO_PUBLIC_SUPABASE_URL/auth/v1/settings" > /dev/null
+          echo "APROVADO: URL e chave pública do Supabase responderam corretamente."
+
+      - name: Verify Firebase and mobile identifiers
+        working-directory: portal-app
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const assert = require('node:assert/strict');
+          const app = JSON.parse(fs.readFileSync('app.json', 'utf8')).expo;
+          const google = JSON.parse(fs.readFileSync('google-services.json', 'utf8'));
+          const firebaseSource = fs.readFileSync('src/lib/firebase.ts', 'utf8');
+          assert.equal(app.android.package, 'br.com.camilamartinsengenharia.app');
+          assert.equal(app.ios.bundleIdentifier, 'br.com.camilamartinsengenharia.app');
+          assert.equal(app.android.googleServicesFile, './google-services.json');
+          assert.equal(app.version, '0.10.4');
+          assert.equal(app.android.versionCode, 3);
+          assert.equal(google.project_info.project_id, 'cm-engenharia-62f61');
+          assert.equal(google.project_info.project_number, '75516356862');
+          assert.ok(google.client.some((entry) => entry.client_info?.android_client_info?.package_name === app.android.package));
+          assert.ok(firebaseSource.includes("projectId: 'cm-engenharia-62f61'"));
+          assert.ok(firebaseSource.includes("messagingSenderId: '75516356862'"));
+          assert.ok(!fs.existsSync('firebase.ts'), 'firebase.ts duplicado na raiz do portal-app.');
+          console.log('APROVADO: Firebase, Google Services e identificadores móveis consistentes.');
+          NODE
+
+      - name: Lint
+        working-directory: portal-app
+        run: npm run lint
+
       - name: Typecheck
         working-directory: portal-app
         run: npm run typecheck
+
+      - name: Security regression tests
+        working-directory: portal-app
+        run: |
+          npm run security:patch -- --check
+          npm run security:test
+          npm run security:audit
+
+      - name: Expo Doctor
+        working-directory: portal-app
+        run: npm run doctor
 
       - name: Generate Android project
         working-directory: portal-app
@@ -59,17 +124,43 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
 
+      - name: Verify final APK
+        working-directory: portal-app
+        run: |
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+
+          AAPT=$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)
+          test -n "$AAPT"
+          BADGING=$($AAPT dump badging "$APK" | head -n 1)
+          echo "$BADGING"
+          echo "$BADGING" | grep -F "name='br.com.camilamartinsengenharia.app'"
+          echo "$BADGING" | grep -F "versionCode='3'"
+          echo "$BADGING" | grep -F "versionName='0.10.4'"
+
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
+
+          BUNDLE_PATH=$(unzip -Z1 "$APK" | grep 'index.android.bundle$' | head -n 1)
+          test -n "$BUNDLE_PATH"
+          unzip -p "$APK" "$BUNDLE_PATH" > /tmp/index.android.bundle
+          strings /tmp/index.android.bundle | grep -F "$EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF"
+          strings /tmp/index.android.bundle | grep -F "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+          strings /tmp/index.android.bundle | grep -F "cm-engenharia-62f61"
+          echo "APROVADO: APK final contém Supabase e Firebase corretos."
+
       - name: Collect APK
         run: |
           mkdir -p artifact
-          cp portal-app/android/app/build/outputs/apk/release/app-release.apk artifact/Camila-Martins-Engenharia-0.10.3.apk
+          cp portal-app/android/app/build/outputs/apk/release/app-release.apk artifact/Camila-Martins-Engenharia-0.10.4.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Camila-Martins-Engenharia-APK-0.10.3
-          path: artifact/Camila-Martins-Engenharia-0.10.3.apk
+          name: Camila-Martins-Engenharia-APK-0.10.4
+          path: artifact/Camila-Martins-Engenharia-0.10.4.apk
           if-no-files-found: error
           retention-days: 3
 
-# Temporary build workflow; safe to delete with the chatgpt-apk-build branch.
+# Temporary homologation build workflow; does not modify the main branch or public site.
