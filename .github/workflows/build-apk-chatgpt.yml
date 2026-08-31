@@ -62,3 +62,5 @@ jobs:
           path: artifact/Camila-Martins-Engenharia-0.10.2.apk
           if-no-files-found: error
           retention-days: 3
+
+# Temporary build workflow; safe to delete with the chatgpt-apk-build branch.
