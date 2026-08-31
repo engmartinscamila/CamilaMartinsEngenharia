@@ -1,0 +1,64 @@
+name: Build temporary Android APK
+
+on:
+  push:
+    branches:
+      - chatgpt-apk-build
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: portal-app/package-lock.json
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        working-directory: portal-app
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck
+        working-directory: portal-app
+        run: npm run typecheck
+
+      - name: Generate Android project
+        working-directory: portal-app
+        env:
+          CI: '1'
+        run: npx expo prebuild --platform android --clean
+
+      - name: Build release APK
+        working-directory: portal-app/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Collect APK
+        run: |
+          mkdir -p artifact
+          cp portal-app/android/app/build/outputs/apk/release/app-release.apk artifact/Camila-Martins-Engenharia-0.10.2.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Camila-Martins-Engenharia-APK
+          path: artifact/Camila-Martins-Engenharia-0.10.2.apk
+          if-no-files-found: error
+          retention-days: 3
