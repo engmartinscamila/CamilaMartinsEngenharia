@@ -7,55 +7,55 @@
       "descricao": "Uma residência compacta com ambientes integrados, circulação clara e soluções pensadas para ampliar a percepção de espaço.",
       "imagens": [
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/tiny-house-signature/imagem/01.webp",
+          "src": "assets/projetos/tiny-house-signature/01.webp",
           "alt": "Hall de entrada e área de jantar da Tiny House Signature",
           "storagePath": "portfolio/tiny-house-signature/imagem/01.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/tiny-house-signature/imagem/02.webp",
+          "src": "assets/projetos/tiny-house-signature/02.webp",
           "alt": "Cozinha compacta com mesa de jantar",
           "storagePath": "portfolio/tiny-house-signature/imagem/02.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/tiny-house-signature/imagem/03.webp",
+          "src": "assets/projetos/tiny-house-signature/03.webp",
           "alt": "Cozinha integrada em tons escuros",
           "storagePath": "portfolio/tiny-house-signature/imagem/03.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/tiny-house-signature/imagem/04.webp",
+          "src": "assets/projetos/tiny-house-signature/04.webp",
           "alt": "Sala com painel ripado e marcenaria",
           "storagePath": "portfolio/tiny-house-signature/imagem/04.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/tiny-house-signature/imagem/05.webp",
+          "src": "assets/projetos/tiny-house-signature/05.webp",
           "alt": "Dormitório em tons verdes e neutros",
           "storagePath": "portfolio/tiny-house-signature/imagem/05.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/tiny-house-signature/imagem/06.webp",
+          "src": "assets/projetos/tiny-house-signature/06.webp",
           "alt": "Vista aérea do dormitório e espaço de trabalho",
           "storagePath": "portfolio/tiny-house-signature/imagem/06.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/tiny-house-signature/imagem/07.webp",
+          "src": "assets/projetos/tiny-house-signature/07.webp",
           "alt": "Dormitório com armários planejados",
           "storagePath": "portfolio/tiny-house-signature/imagem/07.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/tiny-house-signature/imagem/08.webp",
+          "src": "assets/projetos/tiny-house-signature/08.webp",
           "alt": "Banheiro da residência compacta",
           "storagePath": "portfolio/tiny-house-signature/imagem/08.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/tiny-house-signature/imagem/09.webp",
+          "src": "assets/projetos/tiny-house-signature/09.webp",
           "alt": "Divisória de madeira entre os ambientes",
           "storagePath": "portfolio/tiny-house-signature/imagem/09.webp",
           "watermark": "embedded"
@@ -69,25 +69,25 @@
       "descricao": "Reforma de uma cozinha de 8 m² com novo layout, armazenamento planejado e integração entre materiais, marcenaria e equipamentos.",
       "imagens": [
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/light-kitchen-breeze/imagem/01.webp",
+          "src": "assets/projetos/light-kitchen-breeze/01.webp",
           "alt": "Cozinha reformada com bancada e janela",
           "storagePath": "portfolio/light-kitchen-breeze/imagem/01.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/light-kitchen-breeze/imagem/02.webp",
+          "src": "assets/projetos/light-kitchen-breeze/02.webp",
           "alt": "Vista da marcenaria clara da cozinha",
           "storagePath": "portfolio/light-kitchen-breeze/imagem/02.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/light-kitchen-breeze/imagem/03.webp",
+          "src": "assets/projetos/light-kitchen-breeze/03.webp",
           "alt": "Planta executiva da reforma da cozinha",
           "storagePath": "portfolio/light-kitchen-breeze/imagem/03.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/light-kitchen-breeze/imagem/04.webp",
+          "src": "assets/projetos/light-kitchen-breeze/04.webp",
           "alt": "Estudo de layout e materiais da cozinha",
           "storagePath": "portfolio/light-kitchen-breeze/imagem/04.webp",
           "watermark": "embedded"
@@ -101,31 +101,31 @@
       "descricao": "Projeto residencial para duas unidades independentes, com soluções de iluminação, circulação e integração entre os ambientes internos.",
       "imagens": [
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/residencia-essenza/imagem/01.webp",
+          "src": "assets/projetos/residencia-essenza/01.webp",
           "alt": "Fachada noturna da Residência Essenza",
           "storagePath": "portfolio/residencia-essenza/imagem/01.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/residencia-essenza/imagem/02.webp",
+          "src": "assets/projetos/residencia-essenza/02.webp",
           "alt": "Sala de estar integrada",
           "storagePath": "portfolio/residencia-essenza/imagem/02.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/residencia-essenza/imagem/03.webp",
+          "src": "assets/projetos/residencia-essenza/03.webp",
           "alt": "Dormitório em tons neutros",
           "storagePath": "portfolio/residencia-essenza/imagem/03.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/residencia-essenza/imagem/04.webp",
+          "src": "assets/projetos/residencia-essenza/04.webp",
           "alt": "Planta humanizada da primeira unidade",
           "storagePath": "portfolio/residencia-essenza/imagem/04.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/residencia-essenza/imagem/05.webp",
+          "src": "assets/projetos/residencia-essenza/05.webp",
           "alt": "Planta humanizada da segunda unidade",
           "storagePath": "portfolio/residencia-essenza/imagem/05.webp",
           "watermark": "embedded"
@@ -139,127 +139,127 @@
       "descricao": "Três sobrados contemporâneos com acessos independentes, setores integrados e interiores definidos para equilibrar privacidade, conforto e convivência.",
       "imagens": [
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/01-fachada-dia.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/01-fachada-dia.webp",
           "alt": "Fachada frontal diurna do Empreendimento Vitalle",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/01-fachada-dia.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/02-fachada-entardecer.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/02-fachada-entardecer.webp",
           "alt": "Fachada em perspectiva ao entardecer com iluminação arquitetônica",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/02-fachada-entardecer.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/03-hall.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/03-hall.webp",
           "alt": "Hall interno com espelho e iluminação indireta",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/03-hall.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/04-cozinha-detalhe.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/04-cozinha-detalhe.webp",
           "alt": "Cozinha com bancada, armários verdes e janela",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/04-cozinha-detalhe.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/05-cozinha-jantar.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/05-cozinha-jantar.webp",
           "alt": "Cozinha integrada à área de jantar e à sala",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/05-cozinha-jantar.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/06-sala-estar.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/06-sala-estar.webp",
           "alt": "Sala de estar com painel de televisão e marcenaria",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/06-sala-estar.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/07-sala-integrada.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/07-sala-integrada.webp",
           "alt": "Sala de estar integrada à área de jantar",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/07-sala-integrada.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/08-suite-marcenaria.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/08-suite-marcenaria.webp",
           "alt": "Suíte principal com varanda e marcenaria planejada",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/08-suite-marcenaria.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/09-suite-varanda.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/09-suite-varanda.webp",
           "alt": "Suíte principal com cabeceira em tons terrosos e acesso à varanda",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/09-suite-varanda.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/10-quarto-infantil-estudos.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/10-quarto-infantil-estudos.webp",
           "alt": "Quarto infantil com bancada de estudos e marcenaria",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/10-quarto-infantil-estudos.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/11-quarto-infantil-cama.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/11-quarto-infantil-cama.webp",
           "alt": "Quarto infantil com cama, janela e decoração lúdica",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/11-quarto-infantil-cama.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/12-escritorio-bancada.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/12-escritorio-bancada.webp",
           "alt": "Escritório com bancada longa e painel artístico",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/12-escritorio-bancada.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/13-escritorio-apoio.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/13-escritorio-apoio.webp",
           "alt": "Escritório com armário de apoio e poltrona",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/13-escritorio-apoio.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/14-banheiro-social.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/14-banheiro-social.webp",
           "alt": "Banheiro social com gabinete de madeira, espelho redondo e box",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/14-banheiro-social.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/15-banheiro-social-vista.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/15-banheiro-social-vista.webp",
           "alt": "Vista ampla do banheiro social com bancada e box de vidro",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/15-banheiro-social-vista.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/16-banheiro-suite.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/16-banheiro-suite.webp",
           "alt": "Banheiro da suíte com espelho iluminado e bancada suspensa",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/16-banheiro-suite.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/17-banheiro-suite-box.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/17-banheiro-suite-box.webp",
           "alt": "Box do banheiro da suíte com revestimento verde e metais dourados",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/17-banheiro-suite-box.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/18-lavanderia-acesso.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/18-lavanderia-acesso.webp",
           "alt": "Lavanderia compacta com marcenaria e acesso à cozinha",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/18-lavanderia-acesso.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/19-lavanderia-bancada.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/19-lavanderia-bancada.webp",
           "alt": "Lavanderia com bancada, tanque, armários e máquina de lavar",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/19-lavanderia-bancada.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/20-area-gourmet.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/20-area-gourmet.webp",
           "alt": "Área gourmet integrada à garagem com mesa, cozinha e churrasqueira",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/20-area-gourmet.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/empreendimento-vitalle/imagem/21-area-gourmet-churrasqueira.webp",
+          "src": "assets/projetos/empreendimento-vitalle/curadoria-20260828/21-area-gourmet-churrasqueira.webp",
           "alt": "Detalhe da bancada e churrasqueira da área gourmet",
           "storagePath": "portfolio/empreendimento-vitalle/imagem/21-area-gourmet-churrasqueira.webp",
           "watermark": "embedded"
@@ -315,193 +315,193 @@
       "descricao": "Residência com quatro suítes, cozinha gourmet, piscina e integração entre casa, deck e área externa.",
       "imagens": [
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/01.webp",
+          "src": "assets/projetos/casa-urban/01.webp",
           "alt": "Detalhes do closet e do banheiro da Casa Urben",
           "storagePath": "portfolio/casa-urban/imagem/01.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/02.webp",
+          "src": "assets/projetos/casa-urban/02.webp",
           "alt": "Fachada frontal em estudo tridimensional",
           "storagePath": "portfolio/casa-urban/imagem/02.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/03.webp",
+          "src": "assets/projetos/casa-urban/03.webp",
           "alt": "Fachada noturna da Casa Urben",
           "storagePath": "portfolio/casa-urban/imagem/03.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/04.webp",
+          "src": "assets/projetos/casa-urban/04.webp",
           "alt": "Implantação humanizada com deck e piscina",
           "storagePath": "portfolio/casa-urban/imagem/04.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/05.webp",
+          "src": "assets/projetos/casa-urban/05.webp",
           "alt": "Vista tridimensional da implantação da Casa Urben",
           "storagePath": "portfolio/casa-urban/imagem/05.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/06.webp",
+          "src": "assets/projetos/casa-urban/06.webp",
           "alt": "Sala com lareira e painel em pedra natural",
           "storagePath": "portfolio/casa-urban/imagem/06.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/07.webp",
+          "src": "assets/projetos/casa-urban/07.webp",
           "alt": "Vista longitudinal da piscina e da residência",
           "storagePath": "portfolio/casa-urban/imagem/07.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/08.webp",
+          "src": "assets/projetos/casa-urban/08.webp",
           "alt": "Piscina com prainha e paisagismo ao fundo",
           "storagePath": "portfolio/casa-urban/imagem/08.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/09.webp",
+          "src": "assets/projetos/casa-urban/09.webp",
           "alt": "Vista lateral da piscina da Casa Urben",
           "storagePath": "portfolio/casa-urban/imagem/09.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/10.webp",
+          "src": "assets/projetos/casa-urban/10.webp",
           "alt": "Segundo ângulo da sala com lareira",
           "storagePath": "portfolio/casa-urban/imagem/10.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/11.webp",
+          "src": "assets/projetos/casa-urban/11.webp",
           "alt": "Espaço gourmet coberto integrado ao jardim",
           "storagePath": "portfolio/casa-urban/imagem/11.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/12.webp",
+          "src": "assets/projetos/casa-urban/12.webp",
           "alt": "Corredor lateral com jardim e iluminação arquitetônica",
           "storagePath": "portfolio/casa-urban/imagem/12.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/13.webp",
+          "src": "assets/projetos/casa-urban/13.webp",
           "alt": "Sala de estar com integração aos ambientes internos",
           "storagePath": "portfolio/casa-urban/imagem/13.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/14.webp",
+          "src": "assets/projetos/casa-urban/14.webp",
           "alt": "Vista interna da sala com iluminação decorativa",
           "storagePath": "portfolio/casa-urban/imagem/14.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/15.webp",
+          "src": "assets/projetos/casa-urban/15.webp",
           "alt": "Vista externa da residência e do jardim",
           "storagePath": "portfolio/casa-urban/imagem/15.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/16.webp",
+          "src": "assets/projetos/casa-urban/16.webp",
           "alt": "Vista ampla da piscina em frente à residência",
           "storagePath": "portfolio/casa-urban/imagem/16.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/17.webp",
+          "src": "assets/projetos/casa-urban/17.webp",
           "alt": "Pergolado de madeira na área externa",
           "storagePath": "portfolio/casa-urban/imagem/17.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/18.webp",
+          "src": "assets/projetos/casa-urban/18.webp",
           "alt": "Vista frontal da piscina com a Casa Urben ao fundo",
           "storagePath": "portfolio/casa-urban/imagem/18.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/19.webp",
+          "src": "assets/projetos/casa-urban/19.webp",
           "alt": "Piscina com degraus e área de convivência",
           "storagePath": "portfolio/casa-urban/imagem/19.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/20.webp",
+          "src": "assets/projetos/casa-urban/20.webp",
           "alt": "Varanda coberta voltada para o jardim",
           "storagePath": "portfolio/casa-urban/imagem/20.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/21.webp",
+          "src": "assets/projetos/casa-urban/21.webp",
           "alt": "Fachada lateral com paisagismo e acessos",
           "storagePath": "portfolio/casa-urban/imagem/21.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/22.webp",
+          "src": "assets/projetos/casa-urban/22.webp",
           "alt": "Fachada principal contemporânea da Casa Urben",
           "storagePath": "portfolio/casa-urban/imagem/22.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/23.webp",
+          "src": "assets/projetos/casa-urban/23.webp",
           "alt": "Detalhe do volume envidraçado da fachada",
           "storagePath": "portfolio/casa-urban/imagem/23.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/24.webp",
+          "src": "assets/projetos/casa-urban/24.webp",
           "alt": "Fachada principal vista em perspectiva",
           "storagePath": "portfolio/casa-urban/imagem/24.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/25.webp",
+          "src": "assets/projetos/casa-urban/25.webp",
           "alt": "Vista ampla da fachada e do acesso de veículos",
           "storagePath": "portfolio/casa-urban/imagem/25.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/26.webp",
+          "src": "assets/projetos/casa-urban/26.webp",
           "alt": "Fachada com garagem e pergolado de madeira",
           "storagePath": "portfolio/casa-urban/imagem/26.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/27.webp",
+          "src": "assets/projetos/casa-urban/27.webp",
           "alt": "Detalhe do pé-direito alto e dos revestimentos da fachada",
           "storagePath": "portfolio/casa-urban/imagem/27.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/28.webp",
+          "src": "assets/projetos/casa-urban/28.webp",
           "alt": "Fachada em perspectiva com acesso lateral",
           "storagePath": "portfolio/casa-urban/imagem/28.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/29.webp",
+          "src": "assets/projetos/casa-urban/29.webp",
           "alt": "Estudo tridimensional frontal da Casa Urben",
           "storagePath": "portfolio/casa-urban/imagem/29.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/30.webp",
+          "src": "assets/projetos/casa-urban/30.webp",
           "alt": "Fachada frontal com paisagismo e iluminação natural",
           "storagePath": "portfolio/casa-urban/imagem/30.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/31.webp",
+          "src": "assets/projetos/casa-urban/31.webp",
           "alt": "Estudo comparativo de materiais da fachada",
           "storagePath": "portfolio/casa-urban/imagem/31.webp",
           "watermark": "embedded"
         },
         {
-          "src": "https://cme-public-media.eng-martins-camila.workers.dev/media/portfolio/casa-urban/imagem/32.webp",
+          "src": "assets/projetos/casa-urban/32.webp",
           "alt": "Variação de acabamento da fachada principal",
           "storagePath": "portfolio/casa-urban/imagem/32.webp",
           "watermark": "embedded"

@@ -82,7 +82,7 @@ function makeTasks(manifest){
         name,
         src:img.src,
         key:"portfolio/"+slug+"/imagem/"+safeName(name),
-        watermark:true,
+        watermark:img.watermark!=="embedded",
         apply(r){
           img.src=r.url;
           img.storagePath=r.key;
@@ -112,7 +112,7 @@ function makeTasks(manifest){
           name,
           src:video.poster,
           key:"portfolio/"+slug+"/poster/"+safeName(name),
-          watermark:true,
+          watermark:video.posterWatermark!=="embedded",
           apply(r){
             video.poster=r.url;
             video.posterStoragePath=r.key;
