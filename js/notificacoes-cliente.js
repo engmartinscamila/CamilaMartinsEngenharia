@@ -6,13 +6,13 @@
         ? {
             checkbox: "notificarCelularAgenda",
             caminho: "agenda-cliente.html",
-            tipo: "agenda_criada"
+            tipoCriacao: "agenda_criada"
         }
         : pagina === "solicitacoes.html"
             ? {
                 checkbox: "notificarCelularSolicitacao",
                 caminho: "solicitacoes-cliente.html",
-                tipo: "solicitacao_criada"
+                tipoCriacao: "solicitacao_criada"
             }
             : null;
 
@@ -22,13 +22,27 @@
     if (typeof original !== "function" || original.__cmePush) return;
 
     const wrapper = async function (dados = {}) {
+        // Na Agenda, apenas eventos do tipo Reunião podem notificar o cliente.
+        if (
+            pagina === "agenda.html" &&
+            document.getElementById("eventoTipo")?.value !== "reuniao"
+        ) {
+            return {
+                enviado: false,
+                ignorado: true,
+                motivo: "Apenas reuniões enviam notificação ao cliente."
+            };
+        }
+
+        const tipoOriginal = String(dados.tipo || configuracao.tipoCriacao);
+        const ehCriacao = tipoOriginal === configuracao.tipoCriacao;
         const habilitado =
             document.getElementById(configuracao.checkbox)?.checked !== false;
 
         return original({
             ...dados,
-            tipo: configuracao.tipo,
-            notificar_push: habilitado,
+            tipo: tipoOriginal,
+            notificar_push: ehCriacao && habilitado,
             portal_path: configuracao.caminho
         });
     };
