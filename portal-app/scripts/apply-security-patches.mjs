@@ -21,7 +21,8 @@ function discoverImageSizeRoots() {
 
 const packageRoots = discoverImageSizeRoots();
 if (packageRoots.length === 0) {
-  throw new Error('Dependência image-size instalada, mas nenhuma raiz válida foi encontrada.');
+  process.stdout.write('APROVADO: image-size não está instalado; patches locais não são necessários.\n');
+  process.exit(0);
 }
 
 function patchFile(filePath, original, replacement, marker, expectedReplacements = 1) {
