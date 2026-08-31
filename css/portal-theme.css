@@ -389,3 +389,47 @@ html[data-portal-theme="claro"] .project-switcher select{
 html[data-portal-theme="claro"] .barra-cliente{
     background:#dfe4e9 !important;
 }
+
+
+/* CME: notificações push gratuitas */
+.cme-push-toggle{
+    min-height:42px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:0 13px;
+    border:1px solid var(--borda);
+    border-radius:0;
+    background:rgba(216,218,221,.025);
+    color:var(--dourado-claro);
+    font-family:var(--font-main);
+    font-size:.76rem;
+    font-weight:400;
+    cursor:pointer;
+}
+.cme-push-toggle:hover:not(:disabled){
+    border-color:var(--dourado);
+    color:var(--dourado);
+}
+.cme-push-toggle.is-active{
+    border-color:rgba(184,154,99,.68);
+    color:var(--dourado);
+}
+.cme-push-toggle:disabled{
+    opacity:.62;
+    cursor:not-allowed;
+}
+html[data-portal-theme="claro"] .cme-push-toggle{
+    background:#ffffff !important;
+    color:#795f32 !important;
+    border-color:#c7cdd5 !important;
+}
+html[data-portal-theme="claro"] .cme-push-toggle.is-active{
+    background:#fffaf0 !important;
+    border-color:rgba(143,111,54,.42) !important;
+}
+@media (max-width:800px){
+    .cme-push-toggle span{display:none}
+    .cme-push-toggle{width:42px;padding:0}
+}
