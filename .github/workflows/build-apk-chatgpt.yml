@@ -10,6 +10,11 @@ jobs:
   build-apk:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      EXPO_PUBLIC_APP_ENV: homologation
+      EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF: nvhjcoxnzigwwbdbhkhq
+      EXPO_PUBLIC_SUPABASE_URL: https://nvhjcoxnzigwwbdbhkhq.supabase.co
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_DZu6VbG6f2peLeqpINAC6Q_tPmaH8yt
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,6 +39,10 @@ jobs:
         working-directory: portal-app
         run: npm install --no-audit --no-fund
 
+      - name: Verify environment
+        working-directory: portal-app
+        run: npm run check:homologation
+
       - name: Typecheck
         working-directory: portal-app
         run: npm run typecheck
@@ -53,13 +62,13 @@ jobs:
       - name: Collect APK
         run: |
           mkdir -p artifact
-          cp portal-app/android/app/build/outputs/apk/release/app-release.apk artifact/Camila-Martins-Engenharia-0.10.2.apk
+          cp portal-app/android/app/build/outputs/apk/release/app-release.apk artifact/Camila-Martins-Engenharia-0.10.3.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Camila-Martins-Engenharia-APK
-          path: artifact/Camila-Martins-Engenharia-0.10.2.apk
+          name: Camila-Martins-Engenharia-APK-0.10.3
+          path: artifact/Camila-Martins-Engenharia-0.10.3.apk
           if-no-files-found: error
           retention-days: 3
 
