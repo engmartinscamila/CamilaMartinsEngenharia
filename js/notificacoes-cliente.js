@@ -18,6 +18,20 @@
 
     if (!configuracao) return;
 
+    if (pagina === "agenda.html") {
+        const form = document.getElementById("formEvento");
+        form?.addEventListener("submit", function (event) {
+            const tipo = document.getElementById("eventoTipo")?.value || "";
+            const horario = document.getElementById("eventoHorario")?.value || "";
+
+            if (tipo === "reuniao" && !horario) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                alert("Informe o horário da reunião. Reuniões precisam de horário para gerar o convite de agenda.");
+            }
+        }, true);
+    }
+
     const original = window.dbNotificarAtualizacao;
     if (typeof original !== "function" || original.__cmePush) return;
 
