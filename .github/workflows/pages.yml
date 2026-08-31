@@ -78,11 +78,15 @@ jobs:
           touch site-public/.nojekyll
           printf '%s\n' "${GITHUB_SHA}" > site-public/build-version.txt
 
-          for file in CNAME robots.txt sitemap.xml camila-martins.vcf; do
+          for file in CNAME robots.txt sitemap.xml camila-martins.vcf firebase-messaging-sw.js; do
             if [[ -f "$file" ]]; then
               cp "$file" site-public/
             fi
           done
+
+          test -f site-public/firebase-messaging-sw.js
+          test -f site-public/js/firebase-push-config.js
+          test -f site-public/js/push-cliente.js
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
