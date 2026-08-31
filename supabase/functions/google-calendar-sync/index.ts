@@ -27,10 +27,24 @@ function adminKey() {
   }
 }
 
-function googleConfig() {
-  const clientId = Deno.env.get("GOOGLE_CALENDAR_CLIENT_ID");
-  const clientSecret = Deno.env.get("GOOGLE_CALENDAR_CLIENT_SECRET");
-  const refreshToken = Deno.env.get("GOOGLE_CALENDAR_REFRESH_TOKEN");
+async function secretGet(admin: ReturnType<typeof createClient>, name: string) {
+  const { data, error } = await admin.rpc("google_calendar_secret_get", { p_name: name });
+  if (error) throw error;
+  return data ? String(data) : "";
+}
+
+async function googleConfig(admin: ReturnType<typeof createClient>) {
+  const envClientId = Deno.env.get("GOOGLE_CALENDAR_CLIENT_ID") || "";
+  const envClientSecret = Deno.env.get("GOOGLE_CALENDAR_CLIENT_SECRET") || "";
+  const envRefreshToken = Deno.env.get("GOOGLE_CALENDAR_REFRESH_TOKEN") || "";
+
+  const clientId = envClientId ||
+    await secretGet(admin, "google_calendar_client_id").catch(() => "");
+  const clientSecret = envClientSecret ||
+    await secretGet(admin, "google_calendar_client_secret").catch(() => "");
+  const refreshToken = envRefreshToken ||
+    await secretGet(admin, "google_calendar_refresh_token").catch(() => "");
+
   const calendarId = Deno.env.get("GOOGLE_CALENDAR_ID") || "primary";
   if (!clientId || !clientSecret || !refreshToken) return null;
   return { clientId, clientSecret, refreshToken, calendarId };
@@ -140,7 +154,7 @@ Deno.serve(async request => {
     return resposta({ erro: "Evento da agenda não encontrado." }, 404);
   }
 
-  const config = googleConfig();
+  const config = await googleConfig(supabase);
   if (!config) {
     await supabase.from("agenda").update({
       google_sync_status: "aguardando_oauth",
