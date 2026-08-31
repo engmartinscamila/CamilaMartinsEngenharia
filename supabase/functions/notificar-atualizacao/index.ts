@@ -1,5 +1,6 @@
-// CAMILA MARTINS ENGENHARIA — NOTIFICAÇÕES V4
+// CAMILA MARTINS ENGENHARIA — NOTIFICAÇÕES V5
 // E-mail (Resend) + Push gratuito (Firebase Cloud Messaging).
+// Cliente recebe notificações somente para reunião agendada e nova solicitação.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { protegerDadosConfidenciais } from "./privacy.js";
 
@@ -13,6 +14,11 @@ const ADMIN_UID_LEGADO =
   "5c9d7a0e-0495-4e96-8561-1d7f220be154";
 
 let googleTokenCache: { token: string; expiraEm: number } | null = null;
+
+const TIPOS_CLIENTE_PERMITIDOS = new Set([
+  "agenda_criada",
+  "solicitacao_criada",
+]);
 
 function resposta(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -83,18 +89,49 @@ async function enviarEmail(params: {
         to: [params.destinatario],
         subject: params.assunto,
         html: `
-          <div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#11283f">
-            <h1 style="font-family:Georgia,serif;font-weight:400">${escaparHtml(params.assunto)}</h1>
-            <p>Olá, ${escaparHtml(params.saudacao)}.</p>
-            <p>${escaparHtml(params.mensagem)}</p>
-            <p><strong>${escaparHtml(params.titulo)}</strong></p>
-            <p>
-              <a href="${escaparHtml(params.destinoPortal)}"
-                 style="display:inline-block;padding:12px 18px;background:#0b2b4c;color:#fff;text-decoration:none">
-                Acessar o portal
-              </a>
-            </p>
-            <p style="font-size:12px;color:#64748b">Camila Martins Engenharia</p>
+          <div style="background:#f5f6f8;padding:28px 14px">
+            <div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;background:#ffffff;border:1px solid #e2e6eb;color:#11283f">
+              <div style="background:#0b2b4c;text-align:center;padding:24px 18px">
+                <img
+                  src="https://camilamartinsengenharia.com.br/assets/logo.png"
+                  alt="Camila Martins Engenharia"
+                  width="190"
+                  style="display:block;max-width:190px;width:100%;height:auto;margin:0 auto;border:0"
+                />
+              </div>
+
+              <div style="padding:30px 28px">
+                <h1 style="font-family:Georgia,serif;font-size:25px;line-height:1.25;font-weight:400;margin:0 0 22px;color:#11283f">
+                  ${escaparHtml(params.assunto)}
+                </h1>
+
+                <p style="font-size:15px;line-height:1.65;margin:0 0 14px">
+                  Olá, ${escaparHtml(params.saudacao)}.
+                </p>
+
+                <p style="font-size:15px;line-height:1.65;margin:0 0 18px">
+                  ${escaparHtml(params.mensagem)}
+                </p>
+
+                <p style="font-size:15px;line-height:1.65;margin:0 0 24px">
+                  <strong>${escaparHtml(params.titulo)}</strong>
+                </p>
+
+                <p style="margin:0 0 26px">
+                  <a href="${escaparHtml(params.destinoPortal)}"
+                     style="display:inline-block;padding:13px 20px;background:#0b2b4c;color:#ffffff;text-decoration:none;font-size:14px">
+                    Acessar o portal
+                  </a>
+                </p>
+
+                <div style="border-top:1px solid #e4e7eb;padding-top:18px">
+                  <p style="margin:0;font-size:12px;line-height:1.55;color:#64748b">
+                    Camila Martins Engenharia<br>
+                    Ambiente exclusivo para clientes autorizados.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         `,
       }),
@@ -405,10 +442,19 @@ Deno.serve(async (request) => {
 
   const callerIsAdmin =
     Boolean(adminRecord) || authData.user.id === ADMIN_UID_LEGADO;
-  const tipoPermitidoAoCliente = [
-    "solicitacao_criada",
-    "solicitacao_respondida",
-  ].includes(body.tipo);
+
+  const tipoPermitidoAoCliente = TIPOS_CLIENTE_PERMITIDOS.has(body.tipo);
+
+  // Somente ações administrativas de Agenda e Solicitações podem gerar
+  // e-mail/push para clientes. Outros eventos administrativos são ignorados.
+  if (callerIsAdmin && !tipoPermitidoAoCliente) {
+    return resposta({
+      enviado: false,
+      ignorado: true,
+      motivo: "Este tipo de atualização não envia notificação ao cliente.",
+      canais: {},
+    });
+  }
 
   const { data: cliente, error: clienteError } = await admin
     .from("clientes")
@@ -420,10 +466,7 @@ Deno.serve(async (request) => {
     return resposta({ erro: "Cliente não encontrado." }, 404);
   }
 
-  if (
-    !callerIsAdmin &&
-    (!tipoPermitidoAoCliente || cliente.auth_id !== authData.user.id)
-  ) {
+  if (!callerIsAdmin && cliente.auth_id !== authData.user.id) {
     return resposta({ erro: "Operação não autorizada." }, 403);
   }
 
@@ -444,7 +487,11 @@ Deno.serve(async (request) => {
 
   const destinatarioEmail = callerIsAdmin ? cliente.email : adminEmail;
   const assunto = callerIsAdmin
-    ? `Atualização do seu projeto: ${tituloProtegido}`
+    ? (
+      body.tipo === "agenda_criada"
+        ? "Nova reunião agendada - Camila Martins Engenharia"
+        : "Nova solicitação - Camila Martins Engenharia"
+    )
     : `${body.tipo === "solicitacao_respondida" ? "Nova resposta" : "Nova solicitação"} de ${cliente.nome || "cliente"}`;
   const destinoEmail = callerIsAdmin
     ? `${siteUrl}/${caminhoCliente}`
