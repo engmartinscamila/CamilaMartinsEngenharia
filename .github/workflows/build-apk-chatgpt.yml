@@ -14,7 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      NODE_ENV: production
       EXPO_PUBLIC_APP_ENV: homologation
       EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF: nvhjcoxnzigwwbdbhkhq
       EXPO_PUBLIC_SUPABASE_URL: https://nvhjcoxnzigwwbdbhkhq.supabase.co
