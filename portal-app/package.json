@@ -1,6 +1,6 @@
 {
   "name": "camila-martins-engenharia-app",
-  "version": "0.10.2",
+  "version": "0.10.4",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
@@ -45,7 +45,7 @@
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "~57.0.2",
     "expo-web-browser": "~57.0.2",
-    "firebase": "^12.18.0",
+    "firebase": "12.18.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.2",
