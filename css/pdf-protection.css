@@ -421,3 +421,106 @@ body.pdf-protection-page {
         text-align: left;
     }
 }
+
+
+/* CME: sincronização de tema claro/escuro no leitor protegido */
+.pdf-protection-theme-toggle {
+    min-height: 44px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    border: 1px solid var(--site-gold);
+    border-radius: 0;
+    background: rgba(1, 9, 20, 0.12);
+    color: var(--site-light);
+    font-family: var(--site-font-main);
+    font-size: 0.66rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: 0.28s ease;
+}
+
+.pdf-protection-theme-toggle:hover,
+.pdf-protection-theme-toggle:focus-visible {
+    background: rgba(184, 154, 99, 0.08);
+    transform: translateY(-2px);
+}
+
+html[data-portal-theme="claro"] {
+    color-scheme: light;
+    --site-navy: #eef1f4;
+    --site-navy-2: #f7f8fa;
+    --site-navy-3: #ffffff;
+    --site-light: #1b2430;
+    --site-muted: #56606d;
+    --site-line: rgba(25, 35, 48, 0.18);
+    --site-shadow: 0 24px 70px rgba(19, 31, 45, 0.12);
+}
+
+html[data-portal-theme="claro"] body.pdf-protection-page {
+    background: #eef1f4;
+    color: #1b2430;
+}
+
+html[data-portal-theme="claro"] .pdf-protection-header {
+    background: rgba(255, 255, 255, 0.97);
+    border-bottom-color: #d4dae1;
+    box-shadow: 0 8px 24px rgba(19, 31, 45, 0.08);
+}
+
+html[data-portal-theme="claro"] .pdf-protection-brand span,
+html[data-portal-theme="claro"] .pdf-protection-meta h1,
+html[data-portal-theme="claro"] .pdf-protection-state,
+html[data-portal-theme="claro"] .pdf-protection-state strong {
+    color: #1b2430;
+}
+
+html[data-portal-theme="claro"] .pdf-protection-meta p,
+html[data-portal-theme="claro"] .pdf-protection-state i {
+    color: #8a6b35;
+}
+
+html[data-portal-theme="claro"] .pdf-protection-state span,
+html[data-portal-theme="claro"] .pdf-protection-legal {
+    color: #56606d;
+}
+
+html[data-portal-theme="claro"] .pdf-protection-stage {
+    background: #dfe4e9;
+    border-color: #c7cdd5;
+    box-shadow: var(--site-shadow);
+}
+
+html[data-portal-theme="claro"] .pdf-protection-stage iframe {
+    background: #ffffff;
+}
+
+html[data-portal-theme="claro"] .pdf-protection-back,
+html[data-portal-theme="claro"] .pdf-protection-theme-toggle {
+    background: #ffffff;
+    color: #795f32;
+    border-color: #c7cdd5;
+}
+
+html[data-portal-theme="claro"] .pdf-protection-back:hover,
+html[data-portal-theme="claro"] .pdf-protection-theme-toggle:hover,
+html[data-portal-theme="claro"] .pdf-protection-back:focus-visible,
+html[data-portal-theme="claro"] .pdf-protection-theme-toggle:focus-visible {
+    background: #f7f8fa;
+    border-color: var(--site-gold);
+}
+
+html[data-portal-theme="claro"] .pdf-protection-button {
+    color: #010914;
+    background: var(--site-gold);
+}
+
+@media (max-width: 760px) {
+    .pdf-protection-theme-toggle {
+        width: 100%;
+    }
+}
