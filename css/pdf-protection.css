@@ -1,4 +1,25 @@
+@font-face {
+    font-family: "Brittany";
+    src: url("../assets/fonts/BrittanySignatureScript.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+
 :root {
+    /* Identidade visual principal do site */
+    --site-navy: #010914;
+    --site-navy-2: #030d1a;
+    --site-navy-3: #07111f;
+    --site-gold: #b89a63;
+    --site-gold-soft: #d0b47a;
+    --site-light: #d8dadd;
+    --site-muted: #aeb4bd;
+    --site-line: rgba(184, 154, 99, 0.34);
+    --site-shadow: 0 28px 90px rgba(0, 0, 0, 0.48);
+    --site-font-main: "Century Gothic", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+    --site-font-signature: "Brittany", "Parisienne", "Segoe Script", cursive;
+
+    /* Variáveis mantidas para as telas administrativas que já usam este CSS. */
     --pdf-cream: #f5f0e9;
     --pdf-paper: #fffdf9;
     --pdf-brown: #5d4637;
@@ -18,9 +39,15 @@ body {
 }
 
 body.pdf-protection-page {
-    background: var(--pdf-cream);
-    color: var(--pdf-brown-dark);
-    font-family: "Montserrat", Arial, sans-serif;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at 50% 0, rgba(184, 154, 99, 0.07), transparent 34%),
+        linear-gradient(180deg, var(--site-navy-2), var(--site-navy));
+    color: var(--site-light);
+    font-family: var(--site-font-main);
+    font-weight: 300;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
 }
 
 /*
@@ -33,73 +60,103 @@ body.pdf-protection-page {
 }
 
 .pdf-protection-header {
-    min-height: 76px;
-    padding: 14px clamp(18px, 4vw, 56px);
+    min-height: 86px;
+    padding: 0 clamp(18px, 3vw, 48px);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 20px;
-    background: var(--pdf-paper);
-    border-bottom: 1px solid var(--pdf-line);
+    gap: 24px;
+    background: rgba(1, 9, 20, 0.96);
+    border-bottom: 1px solid var(--site-line);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.2);
 }
 
 .pdf-protection-brand {
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    min-width: 190px;
+    text-decoration: none;
 }
 
 .pdf-protection-brand strong {
-    color: var(--pdf-brown);
-    font-family: "Parisienne", cursive;
-    font-size: clamp(1.55rem, 3vw, 2rem);
+    display: block;
+    color: var(--site-gold);
+    font-family: var(--site-font-signature);
+    font-size: clamp(1.55rem, 2.4vw, 1.9rem);
     font-weight: 400;
+    line-height: 0.92;
+    letter-spacing: 0.02em;
 }
 
 .pdf-protection-brand span {
-    font-size: 0.68rem;
-    letter-spacing: 0.24em;
+    display: block;
+    margin-top: 7px;
+    color: var(--site-light);
+    font-size: 0.6rem;
+    font-weight: 300;
+    line-height: 1.1;
+    letter-spacing: 0.25em;
     text-transform: uppercase;
 }
 
 .pdf-protection-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 .pdf-protection-button,
 .pdf-protection-back {
-    min-height: 42px;
-    padding: 0 16px;
+    min-height: 44px;
+    padding: 0 18px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    border: 1px solid var(--pdf-line);
-    border-radius: 999px;
-    color: var(--pdf-brown-dark);
-    background: var(--pdf-paper);
-    font: inherit;
-    font-size: 0.82rem;
-    font-weight: 600;
+    gap: 9px;
+    border: 1px solid var(--site-gold);
+    border-radius: 0;
+    font-family: var(--site-font-main);
+    font-size: 0.66rem;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
     text-decoration: none;
     cursor: pointer;
+    transition: 0.28s ease;
+}
+
+.pdf-protection-back {
+    color: var(--site-light);
+    background: rgba(1, 9, 20, 0.12);
 }
 
 .pdf-protection-button {
-    border-color: var(--pdf-brown);
-    color: white;
-    background: var(--pdf-brown);
+    color: var(--site-navy);
+    background: var(--site-gold);
+}
+
+.pdf-protection-back:hover,
+.pdf-protection-back:focus-visible {
+    background: rgba(184, 154, 99, 0.08);
+    transform: translateY(-2px);
+}
+
+.pdf-protection-button:hover,
+.pdf-protection-button:focus-visible {
+    background: var(--site-gold-soft);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
 }
 
 .pdf-protection-main {
-    min-height: calc(100vh - 76px);
-    padding: 18px clamp(12px, 3vw, 36px) 30px;
+    min-height: calc(100vh - 86px);
+    padding: 34px clamp(14px, 3vw, 42px) 30px;
 }
 
 .pdf-protection-meta {
-    max-width: 1260px;
-    margin: 0 auto 12px;
+    width: min(1320px, 96%);
+    margin: 0 auto 18px;
     display: flex;
     align-items: end;
     justify-content: space-between;
@@ -107,36 +164,42 @@ body.pdf-protection-page {
 }
 
 .pdf-protection-meta h1 {
-    margin: 0 0 4px;
-    font-family: "Cormorant Garamond", Georgia, serif;
-    font-size: clamp(1.4rem, 3vw, 2rem);
+    margin: 0 0 7px;
+    color: var(--site-light);
+    font-family: var(--site-font-main);
+    font-size: clamp(1.45rem, 2.4vw, 2.2rem);
+    font-weight: 300;
+    letter-spacing: -0.025em;
+    line-height: 1.12;
 }
 
 .pdf-protection-meta p {
     margin: 0;
-    color: #745f50;
-    font-size: 0.78rem;
+    color: var(--site-gold);
+    font-size: 0.7rem;
+    font-weight: 300;
+    letter-spacing: 0.08em;
 }
 
 .pdf-protection-stage {
     position: relative;
-    width: min(1260px, 100%);
+    width: min(1320px, 96%);
     min-height: 68vh;
     margin: 0 auto;
     overflow: hidden;
-    border: 1px solid var(--pdf-line);
-    border-radius: 16px;
-    background: #ded9d2;
-    box-shadow: 0 18px 50px rgba(47, 36, 29, 0.12);
+    border: 1px solid rgba(184, 154, 99, 0.32);
+    border-radius: 0;
+    background: #000711;
+    box-shadow: var(--site-shadow);
 }
 
 .pdf-protection-stage iframe {
     display: block;
     width: 100%;
-    height: calc(100vh - 170px);
+    height: calc(100vh - 210px);
     min-height: 640px;
     border: 0;
-    background: white;
+    background: #111;
 }
 
 .pdf-protection-state {
@@ -145,12 +208,13 @@ body.pdf-protection-page {
     display: grid;
     place-content: center;
     justify-items: center;
-    gap: 12px;
+    gap: 13px;
+    color: var(--site-light);
     text-align: center;
 }
 
 .pdf-protection-state i {
-    color: var(--pdf-gold);
+    color: var(--site-gold);
     font-size: 2rem;
 }
 
@@ -159,22 +223,28 @@ body.pdf-protection-page {
 }
 
 .pdf-protection-state strong {
-    font-family: "Cormorant Garamond", Georgia, serif;
-    font-size: 1.5rem;
+    color: var(--site-light);
+    font-family: var(--site-font-main);
+    font-size: 1.25rem;
+    font-weight: 300;
+    letter-spacing: 0.03em;
 }
 
 .pdf-protection-state span {
-    max-width: 520px;
-    color: #745f50;
-    line-height: 1.6;
+    max-width: 560px;
+    color: var(--site-muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
 }
 
 .pdf-protection-legal {
-    max-width: 1260px;
-    margin: 12px auto 0;
-    color: #806d5f;
-    font-size: 0.72rem;
-    line-height: 1.55;
+    width: min(1320px, 96%);
+    margin: 18px auto 0;
+    color: var(--site-muted);
+    font-size: 0.68rem;
+    font-weight: 300;
+    line-height: 1.6;
+    letter-spacing: 0.025em;
 }
 
 .embedded-viewer .pdf-protection-header,
@@ -201,6 +271,7 @@ body.pdf-protection-page {
     min-height: 100vh;
 }
 
+/* Área administrativa mantida com o comportamento e layout existentes. */
 .pdf-admin-shell {
     width: min(980px, calc(100% - 28px));
     margin: 0 auto;
@@ -289,21 +360,53 @@ body.pdf-protection-page {
     }
 }
 
-@media (max-width: 720px) {
-    .pdf-protection-header,
-    .pdf-protection-meta {
+@media (max-width: 760px) {
+    .pdf-protection-header {
+        min-height: 76px;
+        padding: 12px 5%;
         align-items: flex-start;
         flex-direction: column;
     }
 
-    .pdf-protection-actions,
+    .pdf-protection-brand {
+        min-width: 0;
+    }
+
+    .pdf-protection-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
     .pdf-protection-button,
     .pdf-protection-back {
         width: 100%;
     }
 
+    .pdf-protection-main {
+        min-height: calc(100vh - 76px);
+        padding: 24px 0 24px;
+    }
+
+    .pdf-protection-meta {
+        width: 90%;
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .pdf-protection-stage {
+        width: 100%;
+        border-left: 0;
+        border-right: 0;
+    }
+
     .pdf-protection-stage iframe {
+        height: calc(100vh - 260px);
         min-height: 560px;
+    }
+
+    .pdf-protection-legal {
+        width: 90%;
     }
 
     .pdf-admin-grid {
