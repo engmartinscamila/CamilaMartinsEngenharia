@@ -2,6 +2,7 @@ import type { User } from '@supabase/supabase-js';
 
 import { toUserMessage } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
+import { signInFirebaseBridge, updateFirebasePasswordBridge } from '@/services/firebase-bridge';
 import type { AppRole, ClientProfile } from '@/types/domain';
 
 export async function resolveIdentity(user: User): Promise<{
@@ -50,11 +51,15 @@ export async function resolveIdentity(user: User): Promise<{
 }
 
 export async function signInWithPassword(email: string, password: string) {
+  const normalizedEmail = email.trim().toLowerCase();
   const { error } = await supabase.auth.signInWithPassword({
-    email: email.trim().toLowerCase(),
+    email: normalizedEmail,
     password,
   });
-  return error ? toUserMessage(error) : null;
+  if (error) return toUserMessage(error);
+
+  void signInFirebaseBridge(normalizedEmail, password);
+  return null;
 }
 
 export async function sendAccessLink(email: string, redirectTo: string) {
@@ -66,5 +71,8 @@ export async function sendAccessLink(email: string, redirectTo: string) {
 
 export async function updatePassword(password: string) {
   const { error } = await supabase.auth.updateUser({ password });
-  return error ? toUserMessage(error) : null;
+  if (error) return toUserMessage(error);
+
+  void updateFirebasePasswordBridge(password);
+  return null;
 }
