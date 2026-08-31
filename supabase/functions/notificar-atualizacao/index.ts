@@ -1,4 +1,4 @@
-// CAMILA MARTINS ENGENHARIA — NOTIFICAÇÕES V7
+// CAMILA MARTINS ENGENHARIA — NOTIFICAÇÕES V8
 // E-mail (Resend) + Push gratuito (Firebase Cloud Messaging).
 // Cliente recebe notificações somente para reunião agendada e nova solicitação.
 // Reuniões incluem convite .ics e link de adição ao Google Calendar, sem Google Cloud API.
@@ -684,6 +684,19 @@ async function enviarConviteAgendaProprietaria(params: {
             <p><strong>${escaparHtml(params.titulo)}</strong></p>
             <p>${escaparHtml(formatarDataPtBr(params.data))}${params.horario ? ` às ${escaparHtml(params.horario.slice(0,5))}` : ""}</p>
             ${params.clienteNome ? `<p>Cliente: ${escaparHtml(params.clienteNome)}</p>` : ""}
+            <p style="margin:18px 0">
+              <a href="${escaparHtml(montarCalendarioEmail({
+                titulo: params.titulo,
+                descricao: params.descricao,
+                data: params.data,
+                horario: params.horario || "09:00",
+                duracaoMinutos: 60,
+                destinoPortal: params.destinoPortal,
+              })?.googleUrl || params.destinoPortal)}"
+                 style="display:inline-block;padding:12px 18px;background:#0b2b4c;color:#fff;text-decoration:none">
+                Adicionar à minha agenda
+              </a>
+            </p>
             <p><a href="${escaparHtml(params.destinoPortal)}">Abrir Agenda do portal</a></p>
           </div>
         `,
@@ -821,6 +834,66 @@ Deno.serve(async (request) => {
     return resposta({ erro: "Operação não autorizada." }, 403);
   }
 
+  // Resolve a reunião no servidor. Isso evita depender do navegador para
+  // transportar o ID recém-criado até o convite da agenda administrativa.
+  let agendaRegistroEfetivo: any = null;
+
+  if (ehAgendaAdministrativa) {
+    if (body.agenda_id) {
+      const { data: porId } = await admin
+        .from("agenda")
+        .select("id,titulo,tipo,data,horario,descricao,cliente_id,projeto_id,created_at")
+        .eq("id", body.agenda_id)
+        .maybeSingle();
+
+      agendaRegistroEfetivo = porId ?? null;
+    }
+
+    if (!agendaRegistroEfetivo && body.agenda_dados?.data) {
+      let consulta = admin
+        .from("agenda")
+        .select("id,titulo,tipo,data,horario,descricao,cliente_id,projeto_id,created_at")
+        .eq("cliente_id", body.cliente_id)
+        .eq("tipo", "reuniao")
+        .eq("data", String(body.agenda_dados.data))
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      const horarioBusca = String(body.agenda_dados.horario || "").slice(0, 5);
+      if (horarioBusca) {
+        consulta = consulta.eq("horario", `${horarioBusca}:00`);
+      }
+
+      const { data: candidatos } = await consulta;
+      agendaRegistroEfetivo = candidatos?.[0] ?? null;
+    }
+
+    if (!agendaRegistroEfetivo && body.tipo === "agenda_criada") {
+      const { data: recentes } = await admin
+        .from("agenda")
+        .select("id,titulo,tipo,data,horario,descricao,cliente_id,projeto_id,created_at")
+        .eq("cliente_id", body.cliente_id)
+        .eq("tipo", "reuniao")
+        .gte("created_at", new Date(Date.now() - 10 * 60 * 1000).toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      agendaRegistroEfetivo = recentes?.[0] ?? null;
+    }
+  }
+
+  const agendaIdEfetivo =
+    String(body.agenda_id || agendaRegistroEfetivo?.id || "").trim() || null;
+
+  const agendaDadosEfetivos: AgendaDados | undefined = ehAgendaAdministrativa
+    ? {
+      data: String(agendaDadosEfetivos?.data || agendaRegistroEfetivo?.data || ""),
+      horario: String(agendaDadosEfetivos?.horario || agendaRegistroEfetivo?.horario || ""),
+      descricao: String(body.agenda_dados?.descricao ?? agendaRegistroEfetivo?.descricao ?? ""),
+      duracao_minutos: Number(body.agenda_dados?.duracao_minutos || 60),
+    }
+    : body.agenda_dados;
+
   const caminhosCliente = new Set([
     "portal.html",
     "solicitacoes-cliente.html",
@@ -851,15 +924,15 @@ Deno.serve(async (request) => {
   const calendario = (
     callerIsAdmin &&
     body.tipo === "agenda_criada" &&
-    body.agenda_dados?.data &&
-    body.agenda_dados?.horario
+    agendaDadosEfetivos?.data &&
+    agendaDadosEfetivos?.horario
   )
     ? montarCalendarioEmail({
       titulo: tituloProtegido || "Reunião - Camila Martins Engenharia",
-      descricao: protegerDadosConfidenciais(body.agenda_dados.descricao || ""),
+      descricao: protegerDadosConfidenciais(agendaDadosEfetivos?.descricao || ""),
       data: String(body.agenda_dados.data),
       horario: String(body.agenda_dados.horario),
-      duracaoMinutos: Number(body.agenda_dados.duracao_minutos || 60),
+      duracaoMinutos: Number(agendaDadosEfetivos?.duracao_minutos || 60),
       destinoPortal: destinoEmail,
     })
     : null;
@@ -912,14 +985,14 @@ Deno.serve(async (request) => {
 
   const conviteProprietaria = (
     ehAgendaAdministrativa &&
-    body.agenda_id &&
-    body.agenda_dados?.data
+    agendaIdEfetivo &&
+    agendaDadosEfetivos?.data
   )
     ? await enviarConviteAgendaProprietaria({
-      agendaId: String(body.agenda_id),
+      agendaId: String(agendaIdEfetivo),
       action: acaoAgenda,
       titulo: tituloProtegido || "Reunião - Camila Martins Engenharia",
-      descricao: protegerDadosConfidenciais(body.agenda_dados.descricao || ""),
+      descricao: protegerDadosConfidenciais(agendaDadosEfetivos?.descricao || ""),
       clienteNome: cliente.nome || "",
       data: String(body.agenda_dados.data),
       horario: String(body.agenda_dados.horario || ""),
@@ -947,7 +1020,7 @@ Deno.serve(async (request) => {
     });
   }
 
-  if (ehAgendaAdministrativa && body.agenda_id) {
+  if (ehAgendaAdministrativa && agendaIdEfetivo) {
     registros.push({
       cliente_id: cliente.id,
       projeto_id: body.projeto_id ?? null,
