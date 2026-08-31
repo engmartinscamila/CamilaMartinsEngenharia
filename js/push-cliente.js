@@ -3,10 +3,15 @@
 
     const config = window.CME_FIREBASE_PUSH_CONFIG;
     if (!config?.enabled || !config.projectId || !config.vapidKey) return;
-    if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
 
     let tokenAtual = "";
     let inicializando = false;
+
+    function criarErro(codigo, mensagem) {
+        const erro = new Error(mensagem);
+        erro.cmeCode = codigo;
+        return erro;
+    }
 
     function carregarScript(src) {
         return new Promise((resolve, reject) => {
@@ -27,9 +32,18 @@
     }
 
     async function carregarFirebase() {
-        if (window.firebase?.messaging) return;
-        await carregarScript("https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js");
-        await carregarScript("https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js");
+        if (!window.isSecureContext) {
+            throw criarErro("contexto-inseguro", "As notificações exigem uma conexão HTTPS segura.");
+        }
+        if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+            throw criarErro("navegador-sem-push", "Este navegador não oferece suporte completo a notificações Web Push.");
+        }
+
+        if (!window.firebase?.messaging) {
+            await carregarScript("https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js");
+            await carregarScript("https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js");
+        }
+
         if (!window.firebase.apps?.length) {
             window.firebase.initializeApp({
                 apiKey: config.apiKey,
@@ -39,6 +53,16 @@
                 messagingSenderId: config.messagingSenderId,
                 appId: config.appId
             });
+        }
+
+        if (typeof window.firebase.messaging.isSupported === "function") {
+            const suportado = await window.firebase.messaging.isSupported();
+            if (!suportado) {
+                throw criarErro(
+                    "firebase-nao-suportado",
+                    "O Firebase Push não é compatível com este navegador."
+                );
+            }
         }
     }
 
@@ -65,6 +89,15 @@
 
     function atualizarBotao(botao = document.getElementById("cmePushToggle")) {
         if (!botao) return;
+
+        if (!("Notification" in window)) {
+            botao.innerHTML = '<i class="bi bi-bell-slash"></i><span>Indisponível</span>';
+            botao.disabled = false;
+            botao.title = "Abra o portal em um navegador compatível para ativar avisos";
+            botao.setAttribute("aria-label", botao.title);
+            return;
+        }
+
         if (Notification.permission === "granted") {
             botao.innerHTML = '<i class="bi bi-bell-fill"></i><span>Avisos ativos</span>';
             botao.classList.add("is-active");
@@ -73,7 +106,7 @@
         } else if (Notification.permission === "denied") {
             botao.innerHTML = '<i class="bi bi-bell-slash"></i><span>Avisos bloqueados</span>';
             botao.classList.remove("is-active");
-            botao.disabled = true;
+            botao.disabled = false;
             botao.title = "O navegador bloqueou as notificações para este site";
         } else {
             botao.innerHTML = '<i class="bi bi-bell"></i><span>Ativar avisos</span>';
@@ -86,21 +119,37 @@
 
     async function contextoCliente() {
         const { data: { session } } = await window.supabaseClient.auth.getSession();
-        if (!session?.user) throw new Error("Sessão não encontrada.");
+        if (!session?.user) throw criarErro("sem-sessao", "Sessão não encontrada.");
+
         const contexto = await window.obterContextoPortal(session);
-        if (contexto?.redirecionar) throw new Error("Sessão sem acesso ao portal.");
-        if (contexto?.modoPreview) throw new Error("Notificações não são ativadas no modo de pré-visualização.");
-        if (!contexto?.cliente?.id) throw new Error("Cliente não encontrado.");
+        if (contexto?.redirecionar) throw criarErro("sem-acesso", "Sessão sem acesso ao portal.");
+        if (contexto?.modoPreview) {
+            throw criarErro(
+                "modo-preview",
+                "As notificações não podem ser ativadas no modo de pré-visualização."
+            );
+        }
+        if (!contexto?.cliente?.id) throw criarErro("sem-cliente", "Cliente não encontrado.");
         return { session, cliente: contexto.cliente };
     }
 
     async function registrarToken() {
-        if (inicializando || Notification.permission !== "granted") return;
+        if (inicializando) return;
+        if (!("Notification" in window) || Notification.permission !== "granted") return;
+
         inicializando = true;
         try {
             await carregarFirebase();
             const { cliente } = await contextoCliente();
-            const sw = await navigator.serviceWorker.register("/firebase-messaging-sw.js", { scope: "/" });
+
+            const sw = await navigator.serviceWorker.register(
+                "/firebase-messaging-sw.js?v=20260831-2",
+                {
+                    scope: "/",
+                    updateViaCache: "none"
+                }
+            );
+            await sw.update().catch(() => {});
             await navigator.serviceWorker.ready;
 
             const messaging = window.firebase.messaging();
@@ -108,7 +157,13 @@
                 vapidKey: config.vapidKey,
                 serviceWorkerRegistration: sw
             });
-            if (!token) throw new Error("O navegador não gerou um token de notificação.");
+
+            if (!token) {
+                throw criarErro(
+                    "sem-token",
+                    "O navegador autorizou notificações, mas não gerou o token do dispositivo."
+                );
+            }
 
             const { error } = await window.supabaseClient.rpc("registrar_push_token", {
                 p_cliente_id: cliente.id,
@@ -134,30 +189,68 @@
             });
 
             atualizarBotao();
+            return token;
         } finally {
             inicializando = false;
         }
     }
 
+    function mensagemDeErro(error) {
+        const codigo = error?.cmeCode || error?.code || "";
+        const texto = String(error?.message || "");
+
+        if (
+            codigo === "firebase-nao-suportado" ||
+            codigo === "navegador-sem-push" ||
+            /unsupported-browser|not supported|not supported in this browser/i.test(texto)
+        ) {
+            return "Este navegador não oferece suporte completo às notificações. Abra o portal diretamente no Chrome (fora do navegador interno do WhatsApp/Google) e toque novamente em “Ativar avisos”.";
+        }
+
+        if (codigo === "modo-preview") {
+            return "As notificações precisam ser ativadas entrando normalmente com a conta do cliente, e não pelo modo de pré-visualização do administrador.";
+        }
+
+        if (Notification.permission === "denied") {
+            return "As notificações estão bloqueadas para este site. Abra as permissões do navegador, permita Notificações para camilamartinsengenharia.com.br e tente novamente.";
+        }
+
+        const detalhe = codigo || error?.code || "";
+        return "Não foi possível concluir a ativação neste navegador." +
+            (detalhe ? " Código: " + detalhe + "." : "") +
+            " Tente abrir o portal diretamente no Chrome e repetir a ativação.";
+    }
+
     async function ativarPush() {
         const botao = document.getElementById("cmePushToggle");
         if (botao) botao.disabled = true;
+
         try {
+            await carregarFirebase();
+
             const permissao = await Notification.requestPermission();
             atualizarBotao(botao);
-            if (permissao !== "granted") return;
+
+            if (permissao !== "granted") {
+                if (permissao === "denied") {
+                    alert("As notificações foram bloqueadas. Permita notificações para este site nas configurações do navegador e tente novamente.");
+                }
+                return;
+            }
+
             await registrarToken();
+            alert("Avisos ativados com sucesso neste dispositivo.");
         } catch (error) {
             console.error("Não foi possível ativar as notificações do portal.", error);
-            alert("Não foi possível ativar os avisos neste dispositivo. Tente novamente mais tarde.");
+            alert(mensagemDeErro(error));
         } finally {
-            if (botao && Notification.permission !== "denied") botao.disabled = false;
+            if (botao) botao.disabled = false;
         }
     }
 
     async function iniciar() {
         criarBotao();
-        if (Notification.permission === "granted") {
+        if ("Notification" in window && Notification.permission === "granted") {
             registrarToken().catch(error => {
                 console.warn("Não foi possível atualizar o token de push.", error);
             });
