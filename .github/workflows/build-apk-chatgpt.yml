@@ -12,8 +12,9 @@ permissions:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 60
     env:
+      NODE_ENV: production
       EXPO_PUBLIC_APP_ENV: homologation
       EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF: nvhjcoxnzigwwbdbhkhq
       EXPO_PUBLIC_SUPABASE_URL: https://nvhjcoxnzigwwbdbhkhq.supabase.co
@@ -148,6 +149,18 @@ jobs:
         env:
           CI: '1'
         run: npx expo prebuild --platform android --clean
+
+      - name: Configure Gradle memory
+        working-directory: portal-app/android
+        run: |
+          sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -Dfile.encoding=UTF-8/' gradle.properties
+          grep -q '^org.gradle.workers.max=' gradle.properties \
+            && sed -i 's/^org.gradle.workers.max=.*/org.gradle.workers.max=2/' gradle.properties \
+            || echo 'org.gradle.workers.max=2' >> gradle.properties
+          grep -q '^org.gradle.parallel=' gradle.properties \
+            && sed -i 's/^org.gradle.parallel=.*/org.gradle.parallel=false/' gradle.properties \
+            || echo 'org.gradle.parallel=false' >> gradle.properties
+          echo 'Gradle configurado com heap de 4 GiB e no máximo 2 workers.'
 
       - name: Build release APK
         working-directory: portal-app/android
