@@ -1,4 +1,4 @@
-// CAMILA MARTINS ENGENHARIA — NOTIFICAÇÕES V8
+// CAMILA MARTINS ENGENHARIA — NOTIFICAÇÕES V9
 // E-mail (Resend) + Push gratuito (Firebase Cloud Messaging).
 // Cliente recebe notificações somente para reunião agendada e nova solicitação.
 // Reuniões incluem convite .ics e link de adição ao Google Calendar, sem Google Cloud API.
@@ -887,8 +887,8 @@ Deno.serve(async (request) => {
 
   const agendaDadosEfetivos: AgendaDados | undefined = ehAgendaAdministrativa
     ? {
-      data: String(agendaDadosEfetivos?.data || agendaRegistroEfetivo?.data || ""),
-      horario: String(agendaDadosEfetivos?.horario || agendaRegistroEfetivo?.horario || ""),
+      data: String(body.agenda_dados?.data || agendaRegistroEfetivo?.data || ""),
+      horario: String(body.agenda_dados?.horario || agendaRegistroEfetivo?.horario || ""),
       descricao: String(body.agenda_dados?.descricao ?? agendaRegistroEfetivo?.descricao ?? ""),
       duracao_minutos: Number(body.agenda_dados?.duracao_minutos || 60),
     }
@@ -930,8 +930,8 @@ Deno.serve(async (request) => {
     ? montarCalendarioEmail({
       titulo: tituloProtegido || "Reunião - Camila Martins Engenharia",
       descricao: protegerDadosConfidenciais(agendaDadosEfetivos?.descricao || ""),
-      data: String(body.agenda_dados.data),
-      horario: String(body.agenda_dados.horario),
+      data: String(agendaDadosEfetivos?.data || ""),
+      horario: String(agendaDadosEfetivos?.horario || ""),
       duracaoMinutos: Number(agendaDadosEfetivos?.duracao_minutos || 60),
       destinoPortal: destinoEmail,
     })
@@ -994,8 +994,8 @@ Deno.serve(async (request) => {
       titulo: tituloProtegido || "Reunião - Camila Martins Engenharia",
       descricao: protegerDadosConfidenciais(agendaDadosEfetivos?.descricao || ""),
       clienteNome: cliente.nome || "",
-      data: String(body.agenda_dados.data),
-      horario: String(body.agenda_dados.horario || ""),
+      data: String(agendaDadosEfetivos?.data || ""),
+      horario: String(agendaDadosEfetivos?.horario || ""),
       destinoPortal: `${siteUrl}/agenda.html`,
     })
     : {
