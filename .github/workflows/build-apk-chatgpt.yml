@@ -39,11 +39,11 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Restore stable homologation signing key
-        uses: actions/cache@v4
+        id: homologation-key-cache
+        uses: actions/cache/restore@v4
         with:
           path: ~/.android/debug.keystore
           key: camila-martins-homologation-signing-v1
-          save-always: true
 
       - name: Ensure stable homologation signing key
         run: |
@@ -58,6 +58,13 @@ jobs:
               -keyalg RSA -keysize 2048 -validity 10000
           fi
 
+      - name: Save stable homologation signing key
+        if: steps.homologation-key-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: camila-martins-homologation-signing-v1
+
       - name: Synchronize deterministic lockfile
         working-directory: portal-app
         run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
@@ -68,7 +75,7 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add portal-app/package-lock.json
-            git commit -m "chore: sync Firebase lockfile [skip ci]"
+            git commit -m "chore: sync Expo/Firebase lockfile [skip ci]"
             git push origin HEAD:chatgpt-apk-build
           fi
 
@@ -169,10 +176,15 @@ jobs:
           BUNDLE_PATH=$(unzip -Z1 "$APK" | grep 'index.android.bundle$' | head -n 1)
           test -n "$BUNDLE_PATH"
           unzip -p "$APK" "$BUNDLE_PATH" > /tmp/index.android.bundle
+          strings /tmp/index.android.bundle | grep -F "$EXPO_PUBLIC_SUPABASE_URL"
           strings /tmp/index.android.bundle | grep -F "$EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF"
           strings /tmp/index.android.bundle | grep -F "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
           strings /tmp/index.android.bundle | grep -F "cm-engenharia-62f61"
-          echo "APROVADO: APK final contém Supabase e Firebase corretos."
+          if strings /tmp/index.android.bundle | grep -F "configuration-required.supabase.co"; then
+            echo "ERRO: fallback de configuração foi incluído no APK final."
+            exit 1
+          fi
+          echo "APROVADO: APK final contém Supabase/Firebase corretos e não contém fallback de conexão."
 
       - name: Collect APK
         run: |
