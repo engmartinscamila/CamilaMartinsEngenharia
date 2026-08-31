@@ -39,11 +39,21 @@
         const habilitado =
             document.getElementById(configuracao.checkbox)?.checked !== false;
 
+        const agendaDados = pagina === "agenda.html" && ehCriacao
+            ? {
+                data: document.getElementById("eventoData")?.value || "",
+                horario: document.getElementById("eventoHorario")?.value || "",
+                descricao: document.getElementById("eventoDescricao")?.value || "",
+                duracao_minutos: 60
+            }
+            : undefined;
+
         return original({
             ...dados,
             tipo: tipoOriginal,
             notificar_push: ehCriacao && habilitado,
-            portal_path: configuracao.caminho
+            portal_path: configuracao.caminho,
+            agenda_dados: agendaDados
         });
     };
 

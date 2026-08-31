@@ -1,6 +1,7 @@
-// CAMILA MARTINS ENGENHARIA — NOTIFICAÇÕES V5
+// CAMILA MARTINS ENGENHARIA — NOTIFICAÇÕES V6
 // E-mail (Resend) + Push gratuito (Firebase Cloud Messaging).
 // Cliente recebe notificações somente para reunião agendada e nova solicitação.
+// Reuniões incluem convite .ics e link de adição ao Google Calendar, sem Google Cloud API.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { protegerDadosConfidenciais } from "./privacy.js";
 
@@ -58,6 +59,140 @@ function mascararEmail(valor: unknown) {
   return `${local.slice(0, 2)}***@${dominio ?? ""}`;
 }
 
+type AgendaDados = {
+  data?: string;
+  horario?: string;
+  descricao?: string;
+  duracao_minutos?: number;
+};
+
+type CalendarioEmail = {
+  googleUrl: string;
+  icsBase64: string;
+  filename: string;
+  dataExibicao: string;
+  horarioExibicao: string;
+};
+
+function textoParaBase64Padrao(texto: string) {
+  const bytes = new TextEncoder().encode(texto);
+  let binario = "";
+  for (const byte of bytes) binario += String.fromCharCode(byte);
+  return btoa(binario);
+}
+
+function escaparIcs(valor: unknown) {
+  return String(valor ?? "")
+    .replaceAll("\\", "\\\\")
+    .replaceAll("\r\n", "\\n")
+    .replaceAll("\n", "\\n")
+    .replaceAll(",", "\\,")
+    .replaceAll(";", "\\;");
+}
+
+function formatarDataHoraIcsUtc(data: string, horario: string, minutosAdicionar = 0) {
+  const hora = horario.slice(0, 5);
+  const base = new Date(`${data}T${hora}:00-03:00`);
+  if (Number.isNaN(base.getTime())) return "";
+  base.setUTCMinutes(base.getUTCMinutes() + minutosAdicionar);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return [
+    base.getUTCFullYear(),
+    pad(base.getUTCMonth() + 1),
+    pad(base.getUTCDate()),
+    "T",
+    pad(base.getUTCHours()),
+    pad(base.getUTCMinutes()),
+    pad(base.getUTCSeconds()),
+    "Z",
+  ].join("");
+}
+
+function formatarDataHoraGoogleLocal(data: string, horario: string, minutosAdicionar = 0) {
+  const [ano, mes, dia] = data.split("-").map(Number);
+  const [hora, minuto] = horario.slice(0, 5).split(":").map(Number);
+  if (![ano, mes, dia, hora, minuto].every(Number.isFinite)) return "";
+  const base = new Date(Date.UTC(ano, mes - 1, dia, hora, minuto));
+  base.setUTCMinutes(base.getUTCMinutes() + minutosAdicionar);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return [
+    base.getUTCFullYear(),
+    pad(base.getUTCMonth() + 1),
+    pad(base.getUTCDate()),
+    "T",
+    pad(base.getUTCHours()),
+    pad(base.getUTCMinutes()),
+    "00",
+  ].join("");
+}
+
+function formatarDataPtBr(data: string) {
+  const [ano, mes, dia] = data.split("-");
+  if (!ano || !mes || !dia) return data;
+  return `${dia}/${mes}/${ano}`;
+}
+
+function montarCalendarioEmail(params: {
+  titulo: string;
+  descricao: string;
+  data: string;
+  horario: string;
+  duracaoMinutos?: number;
+  destinoPortal: string;
+}) : CalendarioEmail | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(params.data)) return null;
+  if (!/^\d{2}:\d{2}/.test(params.horario)) return null;
+
+  const duracao = Math.min(Math.max(Number(params.duracaoMinutos || 60), 15), 480);
+  const inicioUtc = formatarDataHoraIcsUtc(params.data, params.horario, 0);
+  const fimUtc = formatarDataHoraIcsUtc(params.data, params.horario, duracao);
+  const inicioGoogle = formatarDataHoraGoogleLocal(params.data, params.horario, 0);
+  const fimGoogle = formatarDataHoraGoogleLocal(params.data, params.horario, duracao);
+
+  if (!inicioUtc || !fimUtc || !inicioGoogle || !fimGoogle) return null;
+
+  const uid = `${crypto.randomUUID()}@camilamartinsengenharia.com.br`;
+  const agora = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  const descricaoCompleta = [params.descricao, "", params.destinoPortal]
+    .filter(Boolean)
+    .join("\n");
+
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Camila Martins Engenharia//Portal do Cliente//PT-BR",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `UID:${uid}`,
+    `DTSTAMP:${agora}`,
+    `DTSTART:${inicioUtc}`,
+    `DTEND:${fimUtc}`,
+    `SUMMARY:${escaparIcs(params.titulo)}`,
+    `DESCRIPTION:${escaparIcs(descricaoCompleta)}`,
+    `URL:${params.destinoPortal}`,
+    "STATUS:CONFIRMED",
+    "END:VEVENT",
+    "END:VCALENDAR",
+    "",
+  ].join("\r\n");
+
+  const google = new URL("https://calendar.google.com/calendar/render");
+  google.searchParams.set("action", "TEMPLATE");
+  google.searchParams.set("text", params.titulo);
+  google.searchParams.set("dates", `${inicioGoogle}/${fimGoogle}`);
+  google.searchParams.set("details", descricaoCompleta);
+  google.searchParams.set("ctz", "America/Sao_Paulo");
+
+  return {
+    googleUrl: google.toString(),
+    icsBase64: textoParaBase64Padrao(ics),
+    filename: "reuniao-camila-martins.ics",
+    dataExibicao: formatarDataPtBr(params.data),
+    horarioExibicao: params.horario.slice(0, 5),
+  };
+}
+
 async function enviarEmail(params: {
   destinatario: string | null | undefined;
   assunto: string;
@@ -65,6 +200,7 @@ async function enviarEmail(params: {
   titulo: string;
   mensagem: string;
   destinoPortal: string;
+  calendario?: CalendarioEmail | null;
 }) {
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
   const fromEmail = Deno.env.get("NOTIFICATION_FROM_EMAIL");
@@ -88,6 +224,12 @@ async function enviarEmail(params: {
         from: fromEmail,
         to: [params.destinatario],
         subject: params.assunto,
+        attachments: params.calendario
+          ? [{
+              filename: params.calendario.filename,
+              content: params.calendario.icsBase64,
+            }]
+          : undefined,
         html: `
           <div style="background:#f5f6f8;padding:28px 14px">
             <div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;background:#ffffff;border:1px solid #e2e6eb;color:#11283f">
@@ -116,6 +258,22 @@ async function enviarEmail(params: {
                 <p style="font-size:15px;line-height:1.65;margin:0 0 24px">
                   <strong>${escaparHtml(params.titulo)}</strong>
                 </p>
+
+                ${params.calendario ? `
+                  <div style="margin:0 0 24px;padding:18px;border:1px solid #e4e7eb;background:#fafbfc">
+                    <p style="margin:0 0 7px;font-size:14px;color:#64748b">Reunião</p>
+                    <p style="margin:0 0 15px;font-size:16px;color:#11283f">
+                      <strong>${escaparHtml(params.calendario.dataExibicao)} às ${escaparHtml(params.calendario.horarioExibicao)}</strong>
+                    </p>
+                    <a href="${escaparHtml(params.calendario.googleUrl)}"
+                       style="display:inline-block;padding:12px 17px;background:#ffffff;color:#0b2b4c;border:1px solid #0b2b4c;text-decoration:none;font-size:14px;margin:0 8px 8px 0">
+                      Adicionar ao Google Calendar
+                    </a>
+                    <p style="margin:6px 0 0;font-size:12px;line-height:1.5;color:#64748b">
+                      O arquivo de calendário (.ics) também segue anexado para Outlook, Apple Calendar e outros aplicativos.
+                    </p>
+                  </div>
+                ` : ""}
 
                 <p style="margin:0 0 26px">
                   <a href="${escaparHtml(params.destinoPortal)}"
@@ -417,6 +575,7 @@ Deno.serve(async (request) => {
     mensagem?: string;
     notificar_push?: boolean;
     portal_path?: string;
+    agenda_dados?: AgendaDados;
   };
 
   try {
@@ -497,6 +656,22 @@ Deno.serve(async (request) => {
     ? `${siteUrl}/${caminhoCliente}`
     : `${siteUrl}/solicitacoes.html`;
 
+  const calendario = (
+    callerIsAdmin &&
+    body.tipo === "agenda_criada" &&
+    body.agenda_dados?.data &&
+    body.agenda_dados?.horario
+  )
+    ? montarCalendarioEmail({
+      titulo: tituloProtegido || "Reunião - Camila Martins Engenharia",
+      descricao: protegerDadosConfidenciais(body.agenda_dados.descricao || ""),
+      data: String(body.agenda_dados.data),
+      horario: String(body.agenda_dados.horario),
+      duracaoMinutos: Number(body.agenda_dados.duracao_minutos || 60),
+      destinoPortal: destinoEmail,
+    })
+    : null;
+
   const email = await enviarEmail({
     destinatario: destinatarioEmail,
     assunto,
@@ -504,6 +679,7 @@ Deno.serve(async (request) => {
     titulo: tituloProtegido,
     mensagem: mensagemProtegida,
     destinoPortal: destinoEmail,
+    calendario,
   });
 
   const pushSolicitado = callerIsAdmin && body.notificar_push === true;
