@@ -6,6 +6,25 @@
 
     let tokenAtual = "";
     let inicializando = false;
+    let clienteDiagnosticoId = "";
+
+    async function registrarDiagnostico(etapa, error) {
+        if (!clienteDiagnosticoId || !window.supabaseClient?.rpc) return;
+        const codigo = String(error?.cmeCode || error?.code || error?.name || "").slice(0, 120);
+        const mensagem = String(error?.message || error || "").slice(0, 300);
+        try {
+            await window.supabaseClient.rpc("registrar_push_diagnostico", {
+                p_cliente_id: clienteDiagnosticoId,
+                p_etapa: String(etapa || "desconhecida").slice(0, 80),
+                p_codigo: codigo || null,
+                p_mensagem: mensagem || null,
+                p_permissao: ("Notification" in window) ? Notification.permission : "indisponivel",
+                p_navegador: navigator.userAgent || ""
+            });
+        } catch (diagnosticoError) {
+            console.warn("Falha ao registrar diagnóstico de push.", diagnosticoError);
+        }
+    }
 
     function criarErro(codigo, mensagem) {
         const erro = new Error(mensagem);
@@ -130,6 +149,7 @@
             );
         }
         if (!contexto?.cliente?.id) throw criarErro("sem-cliente", "Cliente não encontrado.");
+        clienteDiagnosticoId = contexto.cliente.id;
         return { session, cliente: contexto.cliente };
     }
 
@@ -138,12 +158,17 @@
         if (!("Notification" in window) || Notification.permission !== "granted") return;
 
         inicializando = true;
+        let etapa = "inicio-token";
         try {
-            await carregarFirebase();
+            etapa = "contexto-cliente";
             const { cliente } = await contextoCliente();
 
+            etapa = "firebase-sdk";
+            await carregarFirebase();
+
+            etapa = "service-worker";
             const sw = await navigator.serviceWorker.register(
-                "/firebase-messaging-sw.js?v=20260831-2",
+                "/firebase-messaging-sw.js?v=20260831-3",
                 {
                     scope: "/",
                     updateViaCache: "none"
@@ -152,6 +177,7 @@
             await sw.update().catch(() => {});
             await navigator.serviceWorker.ready;
 
+            etapa = "token-fcm";
             const messaging = window.firebase.messaging();
             const token = await messaging.getToken({
                 vapidKey: config.vapidKey,
@@ -159,19 +185,25 @@
             });
 
             if (!token) {
-                throw criarErro(
+                const erroSemToken = criarErro(
                     "sem-token",
                     "O navegador autorizou notificações, mas não gerou o token do dispositivo."
                 );
+                erroSemToken.cmeStage = etapa;
+                throw erroSemToken;
             }
 
+            etapa = "gravar-token";
             const { error } = await window.supabaseClient.rpc("registrar_push_token", {
                 p_cliente_id: cliente.id,
                 p_token: token,
                 p_plataforma: navigator.platform || "web",
                 p_user_agent: navigator.userAgent || ""
             });
-            if (error) throw error;
+            if (error) {
+                error.cmeStage = etapa;
+                throw error;
+            }
 
             tokenAtual = token;
             localStorage.setItem("cme_push_token", token);
@@ -189,7 +221,12 @@
             });
 
             atualizarBotao();
+            await registrarDiagnostico("ativacao-concluida", { message: "Token FCM registrado com sucesso." });
             return token;
+        } catch (error) {
+            if (!error.cmeStage) error.cmeStage = etapa;
+            await registrarDiagnostico(error.cmeStage || etapa, error);
+            throw error;
         } finally {
             inicializando = false;
         }
@@ -225,22 +262,36 @@
         const botao = document.getElementById("cmePushToggle");
         if (botao) botao.disabled = true;
 
+        let etapa = "contexto-cliente";
         try {
+            await contextoCliente();
+
+            etapa = "firebase-sdk";
             await carregarFirebase();
 
+            etapa = "permissao";
             const permissao = await Notification.requestPermission();
             atualizarBotao(botao);
 
             if (permissao !== "granted") {
+                const erroPermissao = criarErro(
+                    "permissao-" + permissao,
+                    "Permissão de notificações: " + permissao
+                );
+                erroPermissao.cmeStage = etapa;
+                await registrarDiagnostico(etapa, erroPermissao);
                 if (permissao === "denied") {
                     alert("As notificações foram bloqueadas. Permita notificações para este site nas configurações do navegador e tente novamente.");
                 }
                 return;
             }
 
+            etapa = "registrar-token";
             await registrarToken();
             alert("Avisos ativados com sucesso neste dispositivo.");
         } catch (error) {
+            if (!error.cmeStage) error.cmeStage = etapa;
+            await registrarDiagnostico(error.cmeStage || etapa, error);
             console.error("Não foi possível ativar as notificações do portal.", error);
             alert(mensagemDeErro(error));
         } finally {
