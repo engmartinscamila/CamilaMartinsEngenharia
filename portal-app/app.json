@@ -2,7 +2,7 @@
   "expo": {
     "name": "Camila Martins Engenharia",
     "slug": "engmartins",
-    "version": "0.10.3",
+    "version": "0.10.4",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "camilamartinsengenharia",
@@ -18,7 +18,7 @@
     },
     "android": {
       "package": "br.com.camilamartinsengenharia.app",
-      "versionCode": 2,
+      "versionCode": 3,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
