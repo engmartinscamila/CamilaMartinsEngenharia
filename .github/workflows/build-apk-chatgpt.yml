@@ -6,6 +6,9 @@ on:
       - chatgpt-apk-build
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -40,6 +43,7 @@ jobs:
         with:
           path: ~/.android/debug.keystore
           key: camila-martins-homologation-signing-v1
+          save-always: true
 
       - name: Ensure stable homologation signing key
         run: |
@@ -52,6 +56,20 @@ jobs:
               -keypass android \
               -dname "CN=Camila Martins Engenharia Homologacao,O=Camila Martins Engenharia,C=BR" \
               -keyalg RSA -keysize 2048 -validity 10000
+          fi
+
+      - name: Synchronize deterministic lockfile
+        working-directory: portal-app
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Persist synchronized lockfile on temporary branch
+        run: |
+          if ! git diff --quiet -- portal-app/package-lock.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add portal-app/package-lock.json
+            git commit -m "chore: sync Firebase lockfile [skip ci]"
+            git push origin HEAD:chatgpt-apk-build
           fi
 
       - name: Install deterministic dependencies
@@ -77,12 +95,18 @@ jobs:
           const fs = require('node:fs');
           const assert = require('node:assert/strict');
           const app = JSON.parse(fs.readFileSync('app.json', 'utf8')).expo;
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
           const google = JSON.parse(fs.readFileSync('google-services.json', 'utf8'));
           const firebaseSource = fs.readFileSync('src/lib/firebase.ts', 'utf8');
           assert.equal(app.android.package, 'br.com.camilamartinsengenharia.app');
           assert.equal(app.ios.bundleIdentifier, 'br.com.camilamartinsengenharia.app');
           assert.equal(app.android.googleServicesFile, './google-services.json');
           assert.equal(app.version, '0.10.4');
+          assert.equal(pkg.version, app.version);
+          assert.equal(lock.packages[''].version, app.version);
+          assert.equal(pkg.dependencies.firebase, '12.18.0');
+          assert.equal(lock.packages['node_modules/firebase'].version, '12.18.0');
           assert.equal(app.android.versionCode, 3);
           assert.equal(google.project_info.project_id, 'cm-engenharia-62f61');
           assert.equal(google.project_info.project_number, '75516356862');
@@ -90,7 +114,7 @@ jobs:
           assert.ok(firebaseSource.includes("projectId: 'cm-engenharia-62f61'"));
           assert.ok(firebaseSource.includes("messagingSenderId: '75516356862'"));
           assert.ok(!fs.existsSync('firebase.ts'), 'firebase.ts duplicado na raiz do portal-app.');
-          console.log('APROVADO: Firebase, Google Services e identificadores móveis consistentes.');
+          console.log('APROVADO: versões, lockfile, Firebase, Google Services e identificadores móveis consistentes.');
           NODE
 
       - name: Lint
