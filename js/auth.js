@@ -89,6 +89,7 @@ function prepararLogin() {
     const botaoPrimeiroAcesso = document.getElementById("firstAccess");
     const grupoConfirmarSenha = document.getElementById("confirmarSenhaGroup");
     const campoConfirmarSenha = document.getElementById("confirmarSenha");
+    const orientacaoSenha = document.getElementById("passwordSecurityAdvice");
     let modoPrimeiroAcesso = false;
 
     if (!formulario || !campoEmail || !campoSenha) return;
@@ -115,6 +116,10 @@ function prepararLogin() {
 
         if (grupoConfirmarSenha) {
             grupoConfirmarSenha.hidden = !modoPrimeiroAcesso;
+        }
+
+        if (orientacaoSenha) {
+            orientacaoSenha.hidden = !modoPrimeiroAcesso;
         }
 
         if (campoConfirmarSenha) {

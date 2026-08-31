@@ -31,6 +31,9 @@ jobs:
       - name: Auditoria estática
         run: node scripts/site-audit.mjs
 
+      - name: Preparar versão pública protegida
+        run: bash scripts/prepare-site-public.sh
+
       - name: Instalar Chromium de teste
         run: |
           npm install --no-save playwright@1.55.0
@@ -38,7 +41,7 @@ jobs:
 
       - name: Servir site local
         run: |
-          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/cme-http.log 2>&1 &
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory site-public > /tmp/cme-http.log 2>&1 &
           echo $! > /tmp/cme-http.pid
           sleep 2
           curl --fail http://127.0.0.1:4173/admin.html >/dev/null
@@ -64,29 +67,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare classic website
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -rf site-public
-          mkdir -p site-public
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
 
-          find . -maxdepth 1 -type f -name '*.html' -exec cp {} site-public/ \;
-          cp -R assets site-public/assets
-          cp -R css site-public/css
-          cp -R js site-public/js
-          touch site-public/.nojekyll
-          printf '%s\n' "${GITHUB_SHA}" > site-public/build-version.txt
-
-          for file in CNAME robots.txt sitemap.xml camila-martins.vcf firebase-messaging-sw.js; do
-            if [[ -f "$file" ]]; then
-              cp "$file" site-public/
-            fi
-          done
-
-          test -f site-public/firebase-messaging-sw.js
-          test -f site-public/js/firebase-push-config.js
-          test -f site-public/js/push-cliente.js
+      - name: Prepare protected classic website
+        run: bash scripts/prepare-site-public.sh
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

@@ -367,6 +367,27 @@
             color: var(--dourado-claro);
         }
 
+        .password-guidance {
+            margin: -4px 0 20px;
+            padding: 13px 14px;
+            border: 1px solid rgba(198, 168, 106, 0.22);
+            border-radius: 12px;
+            background: rgba(198, 168, 106, 0.055);
+            color: var(--texto-suave);
+            font-size: 0.76rem;
+            line-height: 1.55;
+        }
+
+        .password-guidance i {
+            margin-right: 6px;
+            color: var(--dourado-claro);
+        }
+
+        .password-guidance strong {
+            color: var(--texto-claro);
+            font-weight: 500;
+        }
+
         .form-message {
             min-height: 20px;
             margin-top: 16px;
@@ -495,6 +516,17 @@
                     </div>
                 </div>
 
+                <p
+                    class="password-guidance"
+                    id="passwordSecurityAdvice"
+                    hidden
+                >
+                    <i class="bi bi-shield-check" aria-hidden="true"></i>
+                    <strong>Dica de segurança:</strong>
+                    crie uma senha exclusiva para este portal. Para proteger suas contas,
+                    evite usar a mesma senha do seu e-mail ou de outros serviços.
+                </p>
+
                 <button
                     type="submit"
                     class="login-button"
@@ -546,6 +578,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase.js?v=20260725-14"></script>
-  <script src="js/auth.js?v=20260829-9"></script>
+  <script src="js/auth.js?v=20260831-10"></script>
 </body>
 </html>

@@ -414,22 +414,21 @@
       transform: translateX(4px);
     }
 
-    .back-site {
-      margin-top: 27px;
-    }
-
-    .back-site a {
+    .card-closing-message {
+      max-width: 370px;
+      margin: 28px auto 0;
       color: #d7dee5;
       font-size: 12px;
-      letter-spacing: 1.3px;
-      text-decoration: none;
-      text-transform: uppercase;
-
-      transition: color 0.25s ease;
+      line-height: 1.7;
+      letter-spacing: 0.08em;
     }
 
-    .back-site a:hover {
+    .card-closing-message::before {
+      content: "✦";
+      display: block;
+      margin-bottom: 8px;
       color: #f0c56f;
+      font-size: 12px;
     }
 
     .virtual-footer {
@@ -688,15 +687,15 @@
       color: var(--navy);
     }
 
-    .back-site a {
+    .card-closing-message {
       color: var(--muted);
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 300;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.08em;
     }
 
-    .back-site a:hover {
-      color: var(--gold-soft);
+    .card-closing-message::before {
+      color: var(--gold);
     }
 
     .virtual-footer {
@@ -834,12 +833,9 @@
 
       </div>
 
-      <div class="back-site">
-        <a href="index.html">
-          <i class="bi bi-arrow-left"></i>
-          Voltar ao site
-        </a>
-      </div>
+      <p class="card-closing-message">
+        Engenharia que transforma ideias em soluções pensadas para durar.
+      </p>
 
       <p class="virtual-footer">
         © 2026 <span class="footer-brand-name">Camila Martins</span>

@@ -1206,6 +1206,26 @@ for (const file of clientPages) {
   await page.close();
 }
 
+// Cartão virtual: mantém Site oficial e remove o link redundante do rodapé.
+{
+  const page = await loadPage(context, "contato.html");
+  assert(
+    await page.locator('.contact-buttons a[href="index.html"]').count() === 1,
+    "contato.html: botão Site oficial ausente"
+  );
+  assert(
+    await page.locator(".back-site a").count() === 0,
+    "contato.html: cartão virtual ainda exibe Voltar ao site"
+  );
+  const closing = (await page.locator(".card-closing-message").textContent().catch(()=>"")) || "";
+  assert(
+    /transforma ideias|pensadas para durar/i.test(closing),
+    `contato.html: frase final ausente ou inesperada: ${closing}`
+  );
+  await responsive(page, "contato.html");
+  await page.close();
+}
+
 // Login real com Supabase mockado: primeiro acesso e recuperação.
 {
   const page = await loadPage(context, "login.html");
@@ -1218,6 +1238,17 @@ for (const file of clientPages) {
     if (await group.count()) {
       const hidden = await group.getAttribute("hidden");
       assert(hidden === null, "login.html: Primeiro acesso não exibiu confirmação de senha");
+    }
+
+    const advice = page.locator("#passwordSecurityAdvice");
+    assert(await advice.count() === 1, "login.html: orientação de segurança de senha ausente");
+    if (await advice.count()) {
+      assert(await advice.isVisible(), "login.html: orientação de segurança não apareceu no Primeiro acesso");
+      const adviceText = (await advice.textContent()) || "";
+      assert(
+        /senha exclusiva/i.test(adviceText) && /e-mail/i.test(adviceText),
+        `login.html: orientação de segurança inesperada: ${adviceText}`
+      );
     }
   } else {
     failures.push("login.html: botão Primeiro acesso ausente");
