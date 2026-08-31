@@ -1,7 +1,7 @@
-// CAMILA MARTINS ENGENHARIA — NOTIFICAÇÕES V9
+// CAMILA MARTINS ENGENHARIA — NOTIFICAÇÕES V10
 // E-mail (Resend) + Push gratuito (Firebase Cloud Messaging).
 // Cliente recebe notificações somente para reunião agendada e nova solicitação.
-// Reuniões incluem convite .ics e link de adição ao Google Calendar, sem Google Cloud API.
+// Reuniões incluem convite .ics e adição universal à agenda, sem Google Cloud API.
 // Agenda administrativa: toda reunião também envia convite de calendário para a agenda da proprietária.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { protegerDadosConfidenciais } from "./privacy.js";
@@ -72,7 +72,9 @@ type AgendaDados = {
 };
 
 type CalendarioEmail = {
+  universalUrl: string;
   googleUrl: string;
+  outlookUrl: string;
   icsBase64: string;
   filename: string;
   dataExibicao: string;
@@ -144,6 +146,7 @@ function montarCalendarioEmail(params: {
   horario: string;
   duracaoMinutos?: number;
   destinoPortal: string;
+  universalUrl?: string;
 }) : CalendarioEmail | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(params.data)) return null;
   if (!/^\d{2}:\d{2}/.test(params.horario)) return null;
@@ -189,13 +192,57 @@ function montarCalendarioEmail(params: {
   google.searchParams.set("details", descricaoCompleta);
   google.searchParams.set("ctz", "America/Sao_Paulo");
 
+  const inicioOutlook = new Date(`${params.data}T${params.horario.slice(0, 5)}:00-03:00`);
+  const fimOutlook = new Date(inicioOutlook.getTime() + duracao * 60000);
+  const outlook = new URL("https://outlook.live.com/calendar/0/deeplink/compose");
+  outlook.searchParams.set("path", "/calendar/action/compose");
+  outlook.searchParams.set("rru", "addevent");
+  outlook.searchParams.set("subject", params.titulo);
+  outlook.searchParams.set("startdt", inicioOutlook.toISOString());
+  outlook.searchParams.set("enddt", fimOutlook.toISOString());
+  outlook.searchParams.set("body", descricaoCompleta);
+
   return {
+    universalUrl: params.universalUrl || google.toString(),
     googleUrl: google.toString(),
+    outlookUrl: outlook.toString(),
     icsBase64: textoParaBase64Padrao(ics),
     filename: "reuniao-camila-martins.ics",
     dataExibicao: formatarDataPtBr(params.data),
     horarioExibicao: params.horario.slice(0, 5),
   };
+}
+
+async function hmacHex(secret: string, message: string) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const assinatura = new Uint8Array(
+    await crypto.subtle.sign(
+      "HMAC",
+      key,
+      new TextEncoder().encode(message),
+    ),
+  );
+  return Array.from(assinatura)
+    .map(byte => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function criarLinkAgendaIcsSeguro(
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  agendaId: string,
+) {
+  const assinatura = await hmacHex(serviceRoleKey, `agenda:${agendaId}`);
+  const url = new URL(`${supabaseUrl}/functions/v1/agenda-ics`);
+  url.searchParams.set("id", agendaId);
+  url.searchParams.set("sig", assinatura);
+  return url.toString();
 }
 
 async function enviarEmail(params: {
@@ -270,12 +317,16 @@ async function enviarEmail(params: {
                     <p style="margin:0 0 15px;font-size:16px;color:#11283f">
                       <strong>${escaparHtml(params.calendario.dataExibicao)} às ${escaparHtml(params.calendario.horarioExibicao)}</strong>
                     </p>
-                    <a href="${escaparHtml(params.calendario.googleUrl)}"
-                       style="display:inline-block;padding:12px 17px;background:#ffffff;color:#0b2b4c;border:1px solid #0b2b4c;text-decoration:none;font-size:14px;margin:0 8px 8px 0">
-                      Adicionar ao Google Calendar
+                    <a href="${escaparHtml(params.calendario.universalUrl)}"
+                       style="display:inline-block;padding:12px 17px;background:#0b2b4c;color:#ffffff;border:1px solid #0b2b4c;text-decoration:none;font-size:14px;margin:0 8px 10px 0">
+                      Adicionar à agenda
                     </a>
+                    <div style="margin:2px 0 8px;font-size:12px;line-height:1.7">
+                      <a href="${escaparHtml(params.calendario.googleUrl)}" style="color:#0b2b4c;text-decoration:underline;margin-right:12px">Google Calendar</a>
+                      <a href="${escaparHtml(params.calendario.outlookUrl)}" style="color:#0b2b4c;text-decoration:underline">Outlook</a>
+                    </div>
                     <p style="margin:6px 0 0;font-size:12px;line-height:1.5;color:#64748b">
-                      O arquivo de calendário (.ics) também segue anexado para Outlook, Apple Calendar e outros aplicativos.
+                      Compatível com Apple Calendar/iCloud, Outlook, Yahoo, Gmail/Google Calendar e outros. O arquivo .ics também segue anexado.
                     </p>
                   </div>
                 ` : ""}
@@ -633,6 +684,7 @@ async function enviarConviteAgendaProprietaria(params: {
   data: string;
   horario?: string;
   destinoPortal: string;
+  universalCalendarUrl?: string;
 }) {
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
   const fromEmail = Deno.env.get("NOTIFICATION_FROM_EMAIL");
@@ -685,14 +737,18 @@ async function enviarConviteAgendaProprietaria(params: {
             <p>${escaparHtml(formatarDataPtBr(params.data))}${params.horario ? ` às ${escaparHtml(params.horario.slice(0,5))}` : ""}</p>
             ${params.clienteNome ? `<p>Cliente: ${escaparHtml(params.clienteNome)}</p>` : ""}
             <p style="margin:18px 0">
-              <a href="${escaparHtml(montarCalendarioEmail({
-                titulo: params.titulo,
-                descricao: params.descricao,
-                data: params.data,
-                horario: params.horario || "09:00",
-                duracaoMinutos: 60,
-                destinoPortal: params.destinoPortal,
-              })?.googleUrl || params.destinoPortal)}"
+              <a href="${escaparHtml(
+                params.universalCalendarUrl ||
+                montarCalendarioEmail({
+                  titulo: params.titulo,
+                  descricao: params.descricao,
+                  data: params.data,
+                  horario: params.horario || "09:00",
+                  duracaoMinutos: 60,
+                  destinoPortal: params.destinoPortal,
+                })?.googleUrl ||
+                params.destinoPortal
+              )}"
                  style="display:inline-block;padding:12px 18px;background:#0b2b4c;color:#fff;text-decoration:none">
                 Adicionar à minha agenda
               </a>
@@ -894,6 +950,18 @@ Deno.serve(async (request) => {
     }
     : body.agenda_dados;
 
+  const linkIcsSeguro = (
+    callerIsAdmin &&
+    agendaIdEfetivo &&
+    agendaRegistroEfetivo?.tipo === "reuniao"
+  )
+    ? await criarLinkAgendaIcsSeguro(
+      supabaseUrl,
+      serviceRoleKey,
+      String(agendaIdEfetivo),
+    )
+    : "";
+
   const caminhosCliente = new Set([
     "portal.html",
     "solicitacoes-cliente.html",
@@ -934,6 +1002,7 @@ Deno.serve(async (request) => {
       horario: String(agendaDadosEfetivos?.horario || ""),
       duracaoMinutos: Number(agendaDadosEfetivos?.duracao_minutos || 60),
       destinoPortal: destinoEmail,
+      universalUrl: linkIcsSeguro || undefined,
     })
     : null;
 
@@ -997,6 +1066,7 @@ Deno.serve(async (request) => {
       data: String(agendaDadosEfetivos?.data || ""),
       horario: String(agendaDadosEfetivos?.horario || ""),
       destinoPortal: `${siteUrl}/agenda.html`,
+      universalCalendarUrl: linkIcsSeguro || undefined,
     })
     : {
       enviado: false,
