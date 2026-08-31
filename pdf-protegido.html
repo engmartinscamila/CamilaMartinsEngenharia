@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Parisienne&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="css/pdf-protection.css?v=20260831-1">
+    <link rel="stylesheet" href="css/pdf-protection.css?v=20260831-2">
 </head>
 <body class="pdf-protection-page">
     <header class="pdf-protection-header">
@@ -21,10 +21,19 @@
             <span>Engenharia Civil</span>
         </a>
         <div class="pdf-protection-actions">
-            <a class="pdf-protection-back" href="javascript:history.back()">
+            <button class="pdf-protection-back" id="pdfProtectionBack" type="button">
                 <i class="bi bi-arrow-left"></i>
                 Voltar
-            </a>
+            </button>
+            <button
+                class="pdf-protection-theme-toggle"
+                id="portalThemeToggle"
+                type="button"
+                aria-label="Alternar tema"
+            >
+                <i class="bi bi-sun"></i>
+                <span>Tema claro</span>
+            </button>
             <a
                 class="pdf-protection-button"
                 id="protectedPdfDownload"
@@ -82,5 +91,6 @@
     <script src="js/supabase.js?v=20260725-14"></script>
     <script src="js/pdf-protection-viewer.js?v=20260730-2"></script>
     <script src="js/pdf-protection-ui-fix.js?v=20260831-1"></script>
+    <script src="js/pdf-protection-navigation-theme.js?v=20260831-1"></script>
 </body>
 </html>
