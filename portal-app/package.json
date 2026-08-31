@@ -15,10 +15,10 @@
     "security:patch": "node scripts/apply-security-patches.mjs",
     "security:test": "node scripts/test-security-patches.mjs",
     "security:audit": "node scripts/security-audit.mjs",
-    "check:homologation": "node --env-file=.env.local scripts/verify-homologation-env.mjs",
-    "check:production": "node --env-file=.env.production.local scripts/verify-production-env.mjs",
+    "check:homologation": "node --env-file-if-exists=.env.local scripts/verify-homologation-env.mjs",
+    "check:production": "node --env-file-if-exists=.env.production.local scripts/verify-production-env.mjs",
     "check:production:cloudflare": "node scripts/verify-production-env.mjs",
-    "test:rls-ab": "node --env-file=.env.ab.local scripts/rls-ab-test.mjs",
+    "test:rls-ab": "node --env-file-if-exists=.env.ab.local scripts/rls-ab-test.mjs",
     "export:web": "expo export --platform web",
     "verify:web-export": "node scripts/verify-web-export.mjs",
     "build:web:cloudflare": "npm run check:production:cloudflare && expo export --platform web && npm run verify:web-export"
