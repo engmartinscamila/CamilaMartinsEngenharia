@@ -5,6 +5,7 @@ import { AppState, Platform } from 'react-native';
 
 import { env } from '@/lib/env';
 import { supabase } from '@/lib/supabase';
+import { signOutFirebaseBridge } from '@/services/firebase-bridge';
 import {
   resolveIdentity,
   sendAccessLink,
@@ -148,6 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signIn: signInWithPassword,
       signOut: async () => {
         await supabase.auth.signOut();
+        await signOutFirebaseBridge();
         setSession(null);
         setRole('unassigned');
         setClient(null);
