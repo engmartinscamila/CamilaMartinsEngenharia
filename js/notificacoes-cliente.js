@@ -34,7 +34,15 @@
             };
         }
 
-        const tipoOriginal = String(dados.tipo || configuracao.tipoCriacao);
+        let tipoOriginal = String(dados.tipo || configuracao.tipoCriacao);
+        const acaoAgenda = pagina === "agenda.html"
+            ? (window.CME_AGENDA_ACAO_ATUAL || (tipoOriginal === configuracao.tipoCriacao ? "criar" : "atualizar"))
+            : null;
+
+        if (pagina === "agenda.html" && acaoAgenda === "atualizar") {
+            tipoOriginal = "agenda_atualizada";
+        }
+
         const ehCriacao = tipoOriginal === configuracao.tipoCriacao;
         const habilitado =
             document.getElementById(configuracao.checkbox)?.checked !== false;
@@ -53,7 +61,9 @@
             tipo: tipoOriginal,
             notificar_push: ehCriacao && habilitado,
             portal_path: configuracao.caminho,
-            agenda_dados: agendaDados
+            agenda_dados: agendaDados,
+            agenda_id: pagina === "agenda.html" ? (window.CME_AGENDA_ID_ATUAL || null) : null,
+            agenda_action: pagina === "agenda.html" ? (acaoAgenda || "criar") : undefined
         });
     };
 

@@ -1,7 +1,8 @@
-// CAMILA MARTINS ENGENHARIA — NOTIFICAÇÕES V6
+// CAMILA MARTINS ENGENHARIA — NOTIFICAÇÕES V7
 // E-mail (Resend) + Push gratuito (Firebase Cloud Messaging).
 // Cliente recebe notificações somente para reunião agendada e nova solicitação.
 // Reuniões incluem convite .ics e link de adição ao Google Calendar, sem Google Cloud API.
+// Agenda administrativa: toda reunião também envia convite de calendário para a agenda da proprietária.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { protegerDadosConfidenciais } from "./privacy.js";
 
@@ -13,6 +14,10 @@ const corsHeaders = {
 const ADMIN_UID_LEGADO =
   Deno.env.get("ADMIN_UID") ??
   "5c9d7a0e-0495-4e96-8561-1d7f220be154";
+
+const CALENDAR_OWNER_EMAIL =
+  Deno.env.get("CALENDAR_OWNER_EMAIL") ??
+  "eng.martins.camila@gmail.com";
 
 let googleTokenCache: { token: string; expiraEm: number } | null = null;
 
@@ -536,6 +541,187 @@ async function enviarPush(
   };
 }
 
+
+function extrairEmailRemetente(valor: string) {
+  const match = valor.match(/<([^>]+)>/);
+  return (match?.[1] || valor).trim();
+}
+
+function dataIcsSemHifen(data: string) {
+  return data.replaceAll("-", "");
+}
+
+function proximoDiaIcs(data: string) {
+  const [ano, mes, dia] = data.split("-").map(Number);
+  const dt = new Date(Date.UTC(ano, mes - 1, dia));
+  dt.setUTCDate(dt.getUTCDate() + 1);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${dt.getUTCFullYear()}${pad(dt.getUTCMonth() + 1)}${pad(dt.getUTCDate())}`;
+}
+
+function montarConviteProprietaria(params: {
+  agendaId: string;
+  action: "criar" | "atualizar" | "cancelar";
+  titulo: string;
+  descricao: string;
+  clienteNome: string;
+  data: string;
+  horario?: string;
+  destinoPortal: string;
+  organizerEmail: string;
+}) {
+  const uid = `${params.agendaId}@camilamartinsengenharia.com.br`;
+  const agora = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  const sequence = Math.floor(Date.now() / 1000);
+  const metodo = params.action === "cancelar" ? "CANCEL" : "REQUEST";
+  const status = params.action === "cancelar" ? "CANCELLED" : "CONFIRMED";
+
+  const linhasData: string[] = [];
+  if (params.horario && /^\d{2}:\d{2}/.test(params.horario)) {
+    const inicio = formatarDataHoraIcsUtc(params.data, params.horario, 0);
+    const fim = formatarDataHoraIcsUtc(params.data, params.horario, 60);
+    linhasData.push(`DTSTART:${inicio}`, `DTEND:${fim}`);
+  } else {
+    linhasData.push(
+      `DTSTART;VALUE=DATE:${dataIcsSemHifen(params.data)}`,
+      `DTEND;VALUE=DATE:${proximoDiaIcs(params.data)}`,
+    );
+  }
+
+  const descricao = [
+    params.descricao,
+    params.clienteNome ? `Cliente: ${params.clienteNome}` : "",
+    params.destinoPortal,
+  ].filter(Boolean).join("\n");
+
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Camila Martins Engenharia//Agenda Administrativa//PT-BR",
+    "CALSCALE:GREGORIAN",
+    `METHOD:${metodo}`,
+    "BEGIN:VEVENT",
+    `UID:${uid}`,
+    `DTSTAMP:${agora}`,
+    `SEQUENCE:${sequence}`,
+    ...linhasData,
+    `SUMMARY:${escaparIcs(params.titulo)}`,
+    `DESCRIPTION:${escaparIcs(descricao)}`,
+    `ORGANIZER;CN=Camila Martins Engenharia:mailto:${params.organizerEmail}`,
+    `ATTENDEE;CN=Camila Martins;RSVP=TRUE:mailto:${CALENDAR_OWNER_EMAIL}`,
+    `STATUS:${status}`,
+    "TRANSP:OPAQUE",
+    `URL:${params.destinoPortal}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+    "",
+  ].join("\r\n");
+
+  return {
+    metodo,
+    content: textoParaBase64Padrao(ics),
+    filename: "reuniao-camila-martins.ics",
+  };
+}
+
+async function enviarConviteAgendaProprietaria(params: {
+  agendaId: string;
+  action: "criar" | "atualizar" | "cancelar";
+  titulo: string;
+  descricao: string;
+  clienteNome: string;
+  data: string;
+  horario?: string;
+  destinoPortal: string;
+}) {
+  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  const fromEmail = Deno.env.get("NOTIFICATION_FROM_EMAIL");
+
+  if (!resendApiKey || !fromEmail) {
+    return {
+      enviado: false,
+      status: "nao_configurado",
+      motivo: "Canal de e-mail ainda não configurado.",
+      id: null,
+    };
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(params.data)) {
+    return {
+      enviado: false,
+      status: "dados_incompletos",
+      motivo: "Reunião sem data válida.",
+      id: null,
+    };
+  }
+
+  const convite = montarConviteProprietaria({
+    ...params,
+    organizerEmail: extrairEmailRemetente(fromEmail),
+  });
+
+  const acaoTexto =
+    params.action === "cancelar"
+      ? "Reunião cancelada"
+      : params.action === "atualizar"
+        ? "Reunião atualizada"
+        : "Nova reunião";
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: [CALENDAR_OWNER_EMAIL],
+        subject: `${acaoTexto} - ${params.titulo}`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#11283f">
+            <h2 style="font-family:Georgia,serif;font-weight:400">${escaparHtml(acaoTexto)}</h2>
+            <p><strong>${escaparHtml(params.titulo)}</strong></p>
+            <p>${escaparHtml(formatarDataPtBr(params.data))}${params.horario ? ` às ${escaparHtml(params.horario.slice(0,5))}` : ""}</p>
+            ${params.clienteNome ? `<p>Cliente: ${escaparHtml(params.clienteNome)}</p>` : ""}
+            <p><a href="${escaparHtml(params.destinoPortal)}">Abrir Agenda do portal</a></p>
+          </div>
+        `,
+        attachments: [{
+          filename: convite.filename,
+          content: convite.content,
+          content_type: `text/calendar; charset=utf-8; method=${convite.metodo}`,
+        }],
+      }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      console.error("Falha ao enviar convite da agenda administrativa:", response.status);
+      return {
+        enviado: false,
+        status: "falhou",
+        motivo: "O provedor recusou o convite de calendário.",
+        id: null,
+      };
+    }
+
+    return {
+      enviado: true,
+      status: "enviado",
+      motivo: "",
+      id: data.id ?? null,
+    };
+  } catch {
+    return {
+      enviado: false,
+      status: "falhou",
+      motivo: "Falha ao enviar o convite de calendário.",
+      id: null,
+    };
+  }
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -576,6 +762,8 @@ Deno.serve(async (request) => {
     notificar_push?: boolean;
     portal_path?: string;
     agenda_dados?: AgendaDados;
+    agenda_id?: string | null;
+    agenda_action?: "criar" | "atualizar" | "cancelar";
   };
 
   try {
@@ -603,10 +791,14 @@ Deno.serve(async (request) => {
     Boolean(adminRecord) || authData.user.id === ADMIN_UID_LEGADO;
 
   const tipoPermitidoAoCliente = TIPOS_CLIENTE_PERMITIDOS.has(body.tipo);
+  const ehAgendaAdministrativa =
+    callerIsAdmin &&
+    ["agenda_criada", "agenda_atualizada", "agenda_cancelada"].includes(body.tipo);
 
-  // Somente ações administrativas de Agenda e Solicitações podem gerar
-  // e-mail/push para clientes. Outros eventos administrativos são ignorados.
-  if (callerIsAdmin && !tipoPermitidoAoCliente) {
+  // Para clientes, continuam existindo somente as notificações aprovadas.
+  // Atualização/cancelamento de reunião pode seguir apenas para sincronizar
+  // o calendário administrativo, sem enviar e-mail/push adicional ao cliente.
+  if (callerIsAdmin && !tipoPermitidoAoCliente && !ehAgendaAdministrativa) {
     return resposta({
       enviado: false,
       ignorado: true,
@@ -672,17 +864,29 @@ Deno.serve(async (request) => {
     })
     : null;
 
-  const email = await enviarEmail({
-    destinatario: destinatarioEmail,
-    assunto,
-    saudacao: callerIsAdmin ? (cliente.nome || "cliente") : "Camila",
-    titulo: tituloProtegido,
-    mensagem: mensagemProtegida,
-    destinoPortal: destinoEmail,
-    calendario,
-  });
+  const email = (
+    !callerIsAdmin || tipoPermitidoAoCliente
+  )
+    ? await enviarEmail({
+      destinatario: destinatarioEmail,
+      assunto,
+      saudacao: callerIsAdmin ? (cliente.nome || "cliente") : "Camila",
+      titulo: tituloProtegido,
+      mensagem: mensagemProtegida,
+      destinoPortal: destinoEmail,
+      calendario,
+    })
+    : {
+      enviado: false,
+      status: "nao_solicitado",
+      motivo: "E-mail ao cliente não solicitado para esta atualização.",
+      id: null,
+    };
 
-  const pushSolicitado = callerIsAdmin && body.notificar_push === true;
+  const pushSolicitado =
+    callerIsAdmin &&
+    tipoPermitidoAoCliente &&
+    body.notificar_push === true;
   const push = pushSolicitado
     ? await enviarPush(admin, cliente.id, {
       titulo: tituloProtegido || "Nova atualização",
@@ -698,8 +902,40 @@ Deno.serve(async (request) => {
       quantidade: 0,
     };
 
-  const registros = [
-    {
+  const acaoAgenda =
+    body.agenda_action ||
+    (body.tipo === "agenda_cancelada"
+      ? "cancelar"
+      : body.tipo === "agenda_atualizada"
+        ? "atualizar"
+        : "criar");
+
+  const conviteProprietaria = (
+    ehAgendaAdministrativa &&
+    body.agenda_id &&
+    body.agenda_dados?.data
+  )
+    ? await enviarConviteAgendaProprietaria({
+      agendaId: String(body.agenda_id),
+      action: acaoAgenda,
+      titulo: tituloProtegido || "Reunião - Camila Martins Engenharia",
+      descricao: protegerDadosConfidenciais(body.agenda_dados.descricao || ""),
+      clienteNome: cliente.nome || "",
+      data: String(body.agenda_dados.data),
+      horario: String(body.agenda_dados.horario || ""),
+      destinoPortal: `${siteUrl}/agenda.html`,
+    })
+    : {
+      enviado: false,
+      status: "nao_solicitado",
+      motivo: "Convite administrativo não solicitado ou sem dados da reunião.",
+      id: null,
+    };
+
+  const registros: Array<Record<string, unknown>> = [];
+
+  if (!callerIsAdmin || tipoPermitidoAoCliente) {
+    registros.push({
       cliente_id: cliente.id,
       projeto_id: body.projeto_id ?? null,
       tipo: body.tipo,
@@ -708,8 +944,21 @@ Deno.serve(async (request) => {
       status: email.status,
       provedor_id: email.id,
       detalhe: email.motivo || null,
-    },
-  ];
+    });
+  }
+
+  if (ehAgendaAdministrativa && body.agenda_id) {
+    registros.push({
+      cliente_id: cliente.id,
+      projeto_id: body.projeto_id ?? null,
+      tipo: `${body.tipo}_agenda_admin`,
+      canal: "email",
+      destino_mascarado: mascararEmail(CALENDAR_OWNER_EMAIL),
+      status: conviteProprietaria.status,
+      provedor_id: conviteProprietaria.id,
+      detalhe: conviteProprietaria.motivo || null,
+    });
+  }
 
   if (pushSolicitado) {
     registros.push({
@@ -724,12 +973,14 @@ Deno.serve(async (request) => {
     });
   }
 
-  const { error: auditError } = await admin
-    .from("notificacoes_envios")
-    .insert(registros);
+  if (registros.length) {
+    const { error: auditError } = await admin
+      .from("notificacoes_envios")
+      .insert(registros);
 
-  if (auditError) {
-    console.warn("Não foi possível registrar a auditoria da notificação.");
+    if (auditError) {
+      console.warn("Não foi possível registrar a auditoria da notificação.");
+    }
   }
 
   const canaisSolicitados = pushSolicitado ? [email, push] : [email];
@@ -744,6 +995,10 @@ Deno.serve(async (request) => {
     parcial: algumCanalEnviado && !todosEnviados,
     motivo: motivos.join(" "),
     id: email.id ?? push.id,
-    canais: { email, push },
+    canais: {
+      email,
+      push,
+      agenda_proprietaria: conviteProprietaria,
+    },
   });
 });
