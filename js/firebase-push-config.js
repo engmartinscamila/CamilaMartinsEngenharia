@@ -8,10 +8,10 @@
         enabled: false,
         apiKey: "",
         authDomain: "",
-        projectId: "",
+        projectId: "camilamartinsengenharia-88a9d",
         storageBucket: "",
         messagingSenderId: "",
         appId: "",
-        vapidKey: ""
+        vapidKey: "BIYTZ0zLyZ8CFw7O5vXTWrExBIFTyJx0nmthHWc0RV_Mw3clWpRid9FrYn1QWur8D_TWjOwV8Yrxh04mFQKuKfM"
     });
 }(typeof self !== "undefined" ? self : window));
