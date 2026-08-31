@@ -2,6 +2,16 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import process from 'node:process';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+
+try {
+  require.resolve('image-size');
+} catch {
+  process.stdout.write('APROVADO: image-size não está instalado; testes específicos não são necessários.\n');
+  process.exit(0);
+}
 
 function run(name, code) {
   const result = spawnSync(process.execPath, ['-e', code], {
