@@ -11,17 +11,17 @@
     if (!configuracao) return;
 
     const original = window.dbNotificarAtualizacao;
-    if (typeof original !== "function" || original.__cmeCelular) return;
+    if (typeof original !== "function" || original.__cmePush) return;
 
     const wrapper = async function (dados = {}) {
         const habilitado = document.getElementById(configuracao.checkbox)?.checked !== false;
         return original({
             ...dados,
-            notificar_celular: habilitado,
+            notificar_push: habilitado,
             portal_path: configuracao.caminho
         });
     };
 
-    wrapper.__cmeCelular = true;
+    wrapper.__cmePush = true;
     window.dbNotificarAtualizacao = wrapper;
 }());
