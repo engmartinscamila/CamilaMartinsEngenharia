@@ -9,7 +9,22 @@ import { createAdminContractProject, createAdminProjectForContract, listAdminCli
 import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 import type { AdminClientSummary, AdminContractSummary, AdminProjectSummary } from '@/types/domain';
 
-type ProjectStatus = 'ativo' | 'pausado' | 'concluido' | 'arquivado';
+type ProjectStatus = 'orcamento' | 'em_andamento' | 'pausado' | 'concluido' | 'arquivado';
+
+function projectStatusLabel(status: string) {
+  if (status === 'orcamento') return 'Orçamento';
+  if (status === 'em_andamento' || status === 'ativo') return 'Em andamento';
+  if (status === 'pausado') return 'Pausado';
+  if (status === 'concluido') return 'Concluído';
+  if (status === 'arquivado') return 'Arquivado';
+  return status;
+}
+
+function editableProjectStatus(status: string): ProjectStatus {
+  if (status === 'ativo') return 'em_andamento';
+  if (['orcamento', 'em_andamento', 'pausado', 'concluido', 'arquivado'].includes(status)) return status as ProjectStatus;
+  return 'em_andamento';
+}
 
 export default function AdminProjectsScreen() {
   const { colors } = useAppTheme();
@@ -30,7 +45,7 @@ export default function AdminProjectsScreen() {
   const [existingState, setExistingState] = useState('');
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<AdminProjectSummary | null>(null);
-  const [editStatus, setEditStatus] = useState<ProjectStatus>('ativo');
+  const [editStatus, setEditStatus] = useState<ProjectStatus>('em_andamento');
   const [editProgress, setEditProgress] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -138,15 +153,15 @@ export default function AdminProjectsScreen() {
       {!loading && filteredProjects.length === 0 ? <StateView description="Nenhum projeto corresponde à pesquisa." icon="briefcase-outline" title="Sem projetos" /> : null}
       {filteredProjects.map((project) => (
         <Card key={project.id}>
-          <View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.contract}>CONTRATO {project.contractNumber}</Text><Text style={styles.title}>{project.name}</Text><Text style={styles.meta}>{project.clientName} • {project.serviceType ?? 'Serviço não informado'}</Text></View><StatusPill label={project.status} tone={project.status === 'ativo' ? 'success' : 'neutral'} /></View>
+          <View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.contract}>CONTRATO {project.contractNumber}</Text><Text style={styles.title}>{project.name}</Text><Text style={styles.meta}>{project.clientName} • {project.serviceType ?? 'Serviço não informado'}</Text></View><StatusPill label={projectStatusLabel(project.status)} tone={['ativo', 'em_andamento'].includes(project.status) ? 'success' : project.status === 'orcamento' ? 'warning' : 'neutral'} /></View>
           <Text style={styles.meta}>{[project.city, project.state].filter(Boolean).join(' • ') || 'Local não informado'} • Progresso: {project.progress === null ? 'não informado' : `${project.progress}%`}</Text>
-          <Button onPress={() => { setEditing(project); setEditStatus(project.status as ProjectStatus); setEditProgress(project.progress?.toString() ?? ''); }} title="Editar andamento" variant="secondary" />
+          <Button onPress={() => { setEditing(project); setEditStatus(editableProjectStatus(project.status)); setEditProgress(project.progress?.toString() ?? ''); }} title="Editar andamento" variant="secondary" />
         </Card>
       ))}
       {editing ? (
         <Card>
           <Text style={styles.sectionTitle}>Editar {editing.name}</Text>
-          <SelectionChips<ProjectStatus> items={[{ value: 'ativo', label: 'Ativo' }, { value: 'pausado', label: 'Pausado' }, { value: 'concluido', label: 'Concluído' }, { value: 'arquivado', label: 'Arquivado' }]} label="Status" onChange={setEditStatus} value={editStatus} />
+          <SelectionChips<ProjectStatus> items={[{ value: 'orcamento', label: 'Orçamento' }, { value: 'em_andamento', label: 'Em andamento' }, { value: 'pausado', label: 'Pausado' }, { value: 'concluido', label: 'Concluído' }, { value: 'arquivado', label: 'Arquivado' }]} label="Status" onChange={setEditStatus} value={editStatus} />
           <Field keyboardType="decimal-pad" label="Progresso (%)" maxLength={5} onChangeText={setEditProgress} placeholder="0 a 100" value={editProgress} />
           <View style={styles.actions}><View style={styles.grow}><Button loading={saving} onPress={() => void saveEdit()} title="Salvar" /></View><View style={styles.grow}><Button onPress={() => setEditing(null)} title="Cancelar" variant="ghost" /></View></View>
         </Card>
