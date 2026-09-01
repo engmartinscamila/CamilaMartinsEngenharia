@@ -13,12 +13,20 @@ UI CORE — INTERFACE ADMINISTRATIVA COMPARTILHADA
     const CHAVE_NOTIFICACOES = "cme_admin_notificacoes";
 
     function carregarAjustesVisuais() {
-        if (document.getElementById("cmeAdminPolish")) return;
-        const link = document.createElement("link");
-        link.id = "cmeAdminPolish";
-        link.rel = "stylesheet";
-        link.href = "css/admin-polish.css?v=20260901-1";
-        document.head.appendChild(link);
+        if (!document.getElementById("cmeAdminPolish")) {
+            const link = document.createElement("link");
+            link.id = "cmeAdminPolish";
+            link.rel = "stylesheet";
+            link.href = "css/admin-polish.css?v=20260901-1";
+            document.head.appendChild(link);
+        }
+        if (!document.getElementById("cmeMobileLayoutFix")) {
+            const mobile = document.createElement("link");
+            mobile.id = "cmeMobileLayoutFix";
+            mobile.rel = "stylesheet";
+            mobile.href = "css/mobile-layout-fix.css?v=20260901-1";
+            document.head.appendChild(mobile);
+        }
     }
 
     function fixarNomeAdministradora() {
