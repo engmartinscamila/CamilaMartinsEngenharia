@@ -1,3 +1,4 @@
+import { downloadBase64File } from '@/lib/download-generated-file';
 import { supabase } from '@/lib/supabase';
 import { dispatchPendingPushNotifications } from '@/services/push-service';
 import type { ServiceResult } from '@/types/domain';
@@ -49,6 +50,7 @@ export interface ContractDocumentSummary {
   title: string;
   status: string;
   optional: boolean;
+  archived: boolean;
   createdAt: string;
   generatedAt: string | null;
 }
@@ -111,9 +113,9 @@ export async function listProjectApprovals(projectId: string): Promise<ServiceRe
 }
 
 export async function listProjectContractDocuments(projectId: string): Promise<ServiceResult<ContractDocumentSummary[]>> {
-  const result = await supabase.from('documentos').select('id, projeto_id, nome, document_kind, workflow_status, optional_document, created_at, generated_at').eq('projeto_id', projectId).not('document_kind', 'is', null).order('created_at', { ascending: false }).limit(100);
+  const result = await supabase.from('documentos').select('id, projeto_id, nome, arquivo, document_kind, workflow_status, optional_document, created_at, generated_at').eq('projeto_id', projectId).not('document_kind', 'is', null).order('created_at', { ascending: false }).limit(100);
   if (result.error) return { data: [], error: 'Não foi possível carregar os documentos contratuais.' };
-  return { data: (result.data ?? []).map((row) => ({ id: row.id, projectId: row.projeto_id, kind: row.document_kind as ContractDocumentKind, title: row.nome, status: row.workflow_status, optional: row.optional_document === true, createdAt: row.created_at, generatedAt: row.generated_at })), error: null };
+  return { data: (result.data ?? []).map((row) => ({ id: row.id, projectId: row.projeto_id, kind: row.document_kind as ContractDocumentKind, title: row.nome, status: row.workflow_status, optional: row.optional_document === true, archived: Boolean(row.arquivo), createdAt: row.created_at, generatedAt: row.generated_at })), error: null };
 }
 
 export async function prepareContractDocument(input: { projectId: string; kind: Exclude<ContractDocumentKind, 'notificacao_formal'>; approvalId?: string | null; extraData?: Record<string, unknown> }) {
@@ -121,14 +123,23 @@ export async function prepareContractDocument(input: { projectId: string; kind: 
   return result.error || !result.data ? { documentId: null, error: result.error?.message ?? 'Não foi possível preparar o documento.' } : { documentId: result.data as string, error: null };
 }
 
-export async function generateContractDocument(documentId: string) {
-  const result = await supabase.functions.invoke('generate-contract-document', { body: { documentId, action: 'generate' } });
-  return result.error || !result.data?.generated ? 'Não foi possível gerar o Word editável.' : null;
+export async function generateContractDocument(documentId: string, archive = false) {
+  const generated = await supabase.functions.invoke('generate-contract-document', { body: { documentId, action: 'generate' } });
+  if (generated.error || !generated.data?.generated) return generated.data?.error ?? generated.error?.message ?? 'Não foi possível gerar o Word editável.';
+
+  const delivered = await supabase.functions.invoke('deliver-generated-document', { body: { documentId, archive } });
+  if (delivered.error || !delivered.data?.delivered || !delivered.data?.contentBase64) return delivered.data?.error ?? delivered.error?.message ?? 'O Word foi gerado, mas não foi possível preparar o download.';
+  try {
+    await downloadBase64File(String(delivered.data.contentBase64), String(delivered.data.fileName ?? 'documento.docx'));
+  } catch (error) {
+    return error instanceof Error ? error.message : 'O Word foi gerado, mas não foi possível abrir o download.';
+  }
+  return null;
 }
 
 export async function sendContractDocument(documentId: string) {
   const result = await supabase.functions.invoke('generate-contract-document', { body: { documentId, action: 'send' } });
-  if (result.error || !result.data?.sent) return 'Não foi possível disponibilizar o documento ao cliente.';
+  if (result.error || !result.data?.sent) return result.data?.error ?? result.error?.message ?? 'Não foi possível disponibilizar o documento ao cliente.';
   void dispatchPendingPushNotifications();
   return null;
 }
