@@ -65,7 +65,7 @@ export default function AdminContractDocumentsScreen() {
     ]);
     setScope(scopeResult.data); setApprovals(approvalResult.data); setDocuments(documentResult.data);
     if (scopeResult.error || approvalResult.error || documentResult.error) setError(scopeResult.error ?? approvalResult.error ?? documentResult.error);
-  }, [selectedProject?.contractId, selectedProject?.id]);
+  }, [selectedProject]);
 
   useEffect(() => { const task = setTimeout(() => void loadBase(), 0); return () => clearTimeout(task); }, [loadBase]);
   useEffect(() => { const task = setTimeout(() => void loadProjectData(), 0); return () => clearTimeout(task); }, [loadProjectData]);
