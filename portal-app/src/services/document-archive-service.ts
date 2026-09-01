@@ -44,6 +44,20 @@ export interface PurgedDocument {
   purgedAt: string;
 }
 
+export interface DocumentGenerationHistoryItem {
+  id: string;
+  documentId: string | null;
+  kind: string | null;
+  name: string;
+  number: string | null;
+  version: string | null;
+  status: string | null;
+  partyName: string | null;
+  storageMode: 'download_only' | 'archived';
+  fileSizeBytes: number | null;
+  generatedAt: string;
+}
+
 export async function previewDocumentArchive(olderThanDays: number, filters: DocumentArchiveFilters = {}): Promise<ServiceResult<DocumentArchivePreview | null>> {
   const result = await supabase.functions.invoke('archive-generated-documents', { body: { action: 'preview', olderThanDays, filters } });
   if (result.error || !result.data) return { data: null, error: result.error?.message ?? 'Não foi possível calcular os documentos elegíveis.' };
@@ -83,6 +97,27 @@ export async function listPurgedDocuments(): Promise<ServiceResult<PurgedDocumen
   const result = await supabase.from('documentos').select('id,nome,document_kind,categoria,purged_at').not('purged_at', 'is', null).order('purged_at', { ascending: false }).limit(100);
   if (result.error) return { data: [], error: 'Não foi possível carregar os documentos limpos.' };
   return { data: (result.data ?? []).map((row) => ({ id: row.id, name: row.nome, kind: row.document_kind ?? row.categoria, purgedAt: row.purged_at })), error: null };
+}
+
+export async function listDocumentGenerationHistory(limit = 200): Promise<ServiceResult<DocumentGenerationHistoryItem[]>> {
+  const result = await supabase.from('document_generation_history')
+    .select('id,document_id,document_kind,document_name,document_number,version,workflow_status,party_name,storage_mode,file_size_bytes,generated_at')
+    .order('generated_at', { ascending: false })
+    .limit(Math.max(1, Math.min(limit, 500)));
+  if (result.error) return { data: [], error: 'Não foi possível carregar o extrato de documentos gerados.' };
+  return { data: (result.data ?? []).map((row) => ({
+    id: row.id,
+    documentId: row.document_id,
+    kind: row.document_kind,
+    name: row.document_name,
+    number: row.document_number,
+    version: row.version,
+    status: row.workflow_status,
+    partyName: row.party_name,
+    storageMode: row.storage_mode as 'download_only' | 'archived',
+    fileSizeBytes: row.file_size_bytes === null ? null : Number(row.file_size_bytes),
+    generatedAt: row.generated_at,
+  })), error: null };
 }
 
 export async function getDocumentArchiveReminder(days = 180): Promise<ServiceResult<number>> {
