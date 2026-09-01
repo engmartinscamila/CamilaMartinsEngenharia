@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 
+import { DailyQuote } from '@/components/daily-quote';
 import { ProjectPicker } from '@/components/project-picker';
 import { Button, Card, Notice, PageHeader, Screen, StateView, StatusPill } from '@/components/ui';
 import { formatDate, formatTime } from '@/lib/format';
@@ -25,10 +26,7 @@ export default function HomeScreen() {
   const styles = useThemeStyles(styleDefinitions);
 
   const loadHighlights = useCallback(async () => {
-    if (!selectedProject) {
-      setHighlights(null);
-      return;
-    }
+    if (!selectedProject) { setHighlights(null); return; }
     setHighlightsLoading(true);
     const result = await getProjectHighlights(selectedProject.id, selectedProject.clientId);
     setHighlights(result.data);
@@ -36,75 +34,36 @@ export default function HomeScreen() {
     setHighlightsLoading(false);
   }, [selectedProject]);
 
-  useEffect(() => {
-    const task = setTimeout(() => void loadHighlights(), 0);
-    return () => clearTimeout(task);
-  }, [loadHighlights]);
+  useEffect(() => { const task = setTimeout(() => void loadHighlights(), 0); return () => clearTimeout(task); }, [loadHighlights]);
 
   return (
     <Screen>
       <PageHeader eyebrow="Central digital" title={`Olá, ${firstName}.`} description="Veja o que está acontecendo com seu projeto." />
+      <DailyQuote />
       <ProjectPicker />
       {error ? <Notice tone="danger">{error}</Notice> : null}
       {highlightsError ? <Notice tone="warning">{highlightsError}</Notice> : null}
       {!loading && projects.length === 0 ? (
-        <Card>
-          <StateView
-            actionLabel="Tentar novamente"
-            description="Quando um projeto for vinculado à sua conta, ele aparecerá aqui."
-            icon="business-outline"
-            onAction={() => void refresh()}
-            title="Nenhum projeto disponível"
-          />
-        </Card>
+        <Card><StateView actionLabel="Tentar novamente" description="Quando um projeto for vinculado à sua conta, ele aparecerá aqui." icon="business-outline" onAction={() => void refresh()} title="Nenhum projeto disponível" /></Card>
       ) : null}
-      {selectedProject ? (
-        <>
-          <Card style={styles.hero}>
-            <View style={styles.heroTop}>
-              <View style={styles.heroCopy}>
-                <Text style={styles.contract}>CONTRATO {selectedProject.contractNumber}</Text>
-                <Text style={styles.projectName}>{selectedProject.name}</Text>
-                <Text style={styles.service}>{selectedProject.serviceType ?? 'Serviço de engenharia'}</Text>
-              </View>
-              <StatusPill label={selectedProject.status} tone={selectedProject.status === 'ativo' ? 'success' : 'neutral'} />
-            </View>
-            <View style={styles.progressHeader}>
-              <Text style={styles.progressLabel}>Progresso informado</Text>
-              <Text style={styles.progressValue}>{selectedProject.progress === null ? 'Indisponível' : `${selectedProject.progress}%`}</Text>
-            </View>
-            {selectedProject.progress !== null ? (
-              <View style={styles.progressTrack}>
-                <View style={[styles.progressFill, { width: `${selectedProject.progress}%` }]} />
-              </View>
-            ) : null}
-          </Card>
-          <View style={styles.grid}>
-            <Card style={styles.smallCard}>
-              <Text style={styles.smallLabel}>Próximo passo</Text>
-              <Text style={styles.smallValue}>{highlights?.nextStage?.title ?? 'Cronograma em preparação'}</Text>
-              {highlights?.nextStage?.endDate ? <Text style={styles.smallMeta}>Previsão: {formatDate(highlights.nextStage.endDate)}</Text> : null}
-            </Card>
-            <Card style={styles.smallCard}>
-              <Text style={styles.smallLabel}>Próximo compromisso</Text>
-              <Text style={styles.smallValue}>{highlights?.nextEvent?.title ?? 'Nenhum evento futuro'}</Text>
-              {highlights?.nextEvent ? <Text style={styles.smallMeta}>{formatDate(highlights.nextEvent.date)}{formatTime(highlights.nextEvent.startTime) ? ` • ${formatTime(highlights.nextEvent.startTime)}` : ''}</Text> : null}
-            </Card>
+      {selectedProject ? <>
+        <Card style={styles.hero}>
+          <View style={styles.heroTop}>
+            <View style={styles.heroCopy}><Text style={styles.contract}>CONTRATO {selectedProject.contractNumber}</Text><Text style={styles.projectName}>{selectedProject.name}</Text><Text style={styles.service}>{selectedProject.serviceType ?? 'Serviço de engenharia'}</Text></View>
+            <StatusPill label={selectedProject.status} tone={selectedProject.status === 'ativo' ? 'success' : 'neutral'} />
           </View>
-          {highlightsLoading ? <ActivityIndicator color={colors.gold600} /> : null}
-          {highlights ? (
-            <View style={styles.metrics}>
-              <View style={styles.metric}><Text style={styles.metricValue}>{highlights.pendingApprovals ?? '—'}</Text><Text style={styles.metricLabel}>Aprovações pendentes</Text></View>
-              <View style={styles.metric}><Text style={styles.metricValue}>{highlights.openRequests ?? '—'}</Text><Text style={styles.metricLabel}>Solicitações abertas</Text></View>
-              <View style={styles.metric}><Text style={styles.metricValue}>{highlights.recentDocuments ?? '—'}</Text><Text style={styles.metricLabel}>Documentos publicados</Text></View>
-            </View>
-          ) : null}
-          <Button icon="alert-circle-outline" onPress={() => router.push('/(client)/pending')} title="Ver minhas pendências" variant="secondary" />
-          {selectedProject.contractId === null ? (
-            <Notice tone="warning">Este projeto usa um cadastro anterior sem vínculo formal de contrato. Solicite a revisão administrativa antes de incluir novos dados.</Notice>
-          ) : null}
-        </>
-      ) : null}
+          <View style={styles.progressHeader}><Text style={styles.progressLabel}>Progresso informado</Text><Text style={styles.progressValue}>{selectedProject.progress === null ? 'Indisponível' : `${selectedProject.progress}%`}</Text></View>
+          {selectedProject.progress !== null ? <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${selectedProject.progress}%` }]} /></View> : null}
+        </Card>
+        <View style={styles.grid}>
+          <Card style={styles.smallCard}><Text style={styles.smallLabel}>Próximo passo</Text><Text style={styles.smallValue}>{highlights?.nextStage?.title ?? 'Cronograma em preparação'}</Text>{highlights?.nextStage?.endDate ? <Text style={styles.smallMeta}>Previsão: {formatDate(highlights.nextStage.endDate)}</Text> : null}</Card>
+          <Card style={styles.smallCard}><Text style={styles.smallLabel}>Próximo compromisso</Text><Text style={styles.smallValue}>{highlights?.nextEvent?.title ?? 'Nenhum evento futuro'}</Text>{highlights?.nextEvent ? <Text style={styles.smallMeta}>{formatDate(highlights.nextEvent.date)}{formatTime(highlights.nextEvent.startTime) ? ` • ${formatTime(highlights.nextEvent.startTime)}` : ''}</Text> : null}</Card>
+        </View>
+        {highlightsLoading ? <ActivityIndicator color={colors.gold600} /> : null}
+        {highlights ? <View style={styles.metrics}><View style={styles.metric}><Text style={styles.metricValue}>{highlights.pendingApprovals ?? '—'}</Text><Text style={styles.metricLabel}>Aprovações pendentes</Text></View><View style={styles.metric}><Text style={styles.metricValue}>{highlights.openRequests ?? '—'}</Text><Text style={styles.metricLabel}>Solicitações abertas</Text></View><View style={styles.metric}><Text style={styles.metricValue}>{highlights.recentDocuments ?? '—'}</Text><Text style={styles.metricLabel}>Documentos publicados</Text></View></View> : null}
+        <Button icon="alert-circle-outline" onPress={() => router.push('/(client)/pending')} title="Ver minhas pendências" variant="secondary" />
+        {selectedProject.contractId === null ? <Notice tone="warning">Este projeto usa um cadastro anterior sem vínculo formal de contrato. Solicite a revisão administrativa antes de incluir novos dados.</Notice> : null}
+      </> : null}
     </Screen>
   );
 }
