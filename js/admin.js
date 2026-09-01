@@ -17,7 +17,7 @@ function carregarFraseDoDiaAdmin() {
     if (window.__CME_FRASE_DO_DIA__ || document.getElementById("cmeFraseDoDiaScript")) return;
     const script = document.createElement("script");
     script.id = "cmeFraseDoDiaScript";
-    script.src = "js/frase-do-dia.js?v=20260901-1";
+    script.src = "js/frase-do-dia.js?v=20260901-3";
     script.defer = true;
     document.head.appendChild(script);
 }
@@ -197,8 +197,6 @@ async function carregarBibliotecaAdmin() {
         buscarSeguro(window.dbBuscarFotos)
     ]);
 
-    // Biblioteca representa todo o acervo disponível ao cliente/admin.
-    // Evita MutationObserver e atualizações concorrentes no mesmo elemento.
     atualizarNumeroAdmin(
         "totalBiblioteca",
         biblioteca.length + documentos.length + fotos.length
@@ -266,5 +264,4 @@ function escaparAdmin(valor) {
         .replaceAll("'", "&#039;");
 }
 
-// Nunca permita que o loader sobreviva a uma falha externa.
 window.setTimeout(ocultarLoadingAdmin, 5000);
