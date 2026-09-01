@@ -143,7 +143,7 @@ export interface AdminClientSummary {
   status: string;
   authId: string | null;
   createdAt: string;
-  partnership: boolean;
+  partnership?: boolean;
 }
 
 export interface AdminProjectSummary extends ProjectContext {
@@ -256,11 +256,11 @@ export interface FinancialEntrySummary {
   amount: number;
   date: string | null;
   notes: string | null;
-  category: string;
-  status: string;
-  dueDate: string | null;
-  paymentDate: string | null;
-  paymentMethod: string | null;
+  category?: string;
+  status?: string;
+  dueDate?: string | null;
+  paymentDate?: string | null;
+  paymentMethod?: string | null;
 }
 
 export interface FinancialArchiveSummary {
