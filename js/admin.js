@@ -7,6 +7,7 @@ ADMIN.JS — DASHBOARD ESTÁVEL
 
 document.addEventListener("DOMContentLoaded", () => {
     configurarEventosAdmin();
+    garantirAtalhosDocumentaisAdmin();
     carregarFraseDoDiaAdmin();
     iniciarDashboard();
 });
@@ -20,6 +21,29 @@ function carregarFraseDoDiaAdmin() {
     script.src = "js/frase-do-dia.js?v=20260901-3";
     script.defer = true;
     document.head.appendChild(script);
+}
+
+function garantirAtalhosDocumentaisAdmin() {
+    const cards = Array.from(document.querySelectorAll(".card-lateral"));
+    const card = cards.find(item => item.querySelector("h2")?.textContent?.trim() === "Ações Rápidas");
+    if (!card || card.dataset.cmeDocumentosRapidos === "true") return;
+    card.dataset.cmeDocumentosRapidos = "true";
+
+    const atalhos = [
+        ["abrirComercial", "fa-file-signature", "Orçamentos e contratos", "comercial.html"],
+        ["abrirContratuais", "fa-file-contract", "Documentos contratuais", "documentos-contratuais.html"],
+        ["abrirArquivoDocumental", "fa-box-archive", "Arquivo / extrato documental", "arquivo-documental.html"]
+    ];
+
+    atalhos.forEach(([id, icone, titulo, destino]) => {
+        if (document.getElementById(id)) return;
+        const botao = document.createElement("button");
+        botao.id = id;
+        botao.type = "button";
+        botao.innerHTML = `<i class="fa-solid ${icone}"></i>${titulo}`;
+        botao.addEventListener("click", () => { window.location.href = destino; });
+        card.appendChild(botao);
+    });
 }
 
 async function iniciarDashboard() {
@@ -37,9 +61,7 @@ async function iniciarDashboard() {
         ]);
 
         const atividades = document.getElementById("atividadeRecentes");
-        if (atividades) {
-            atividades.innerHTML = '<div class="atividade">Sistema iniciado.</div>';
-        }
+        if (atividades) atividades.innerHTML = '<div class="atividade">Sistema iniciado.</div>';
     } catch (erro) {
         console.error("Erro ao carregar dashboard:", erro);
     } finally {
@@ -70,20 +92,20 @@ function configurarEventosAdmin() {
         abrirFinanceiro: "financeiro.html",
         abrirAgenda: "agenda.html",
         abrirConfiguracoes: "configuracoes.html",
+        abrirComercial: "comercial.html",
+        abrirContratuais: "documentos-contratuais.html",
+        abrirArquivoDocumental: "arquivo-documental.html",
         novoProjeto: "projetos.html",
         verTodosProjetos: "projetos.html",
         verTodosDocumentos: "documentos.html"
     };
 
     Object.entries(navegacao).forEach(([id, destino]) => {
-        document.getElementById(id)?.addEventListener("click", () => {
-            window.location.href = destino;
-        });
+        document.getElementById(id)?.addEventListener("click", () => { window.location.href = destino; });
     });
 
     const pesquisar = document.getElementById("btnPesquisarCliente");
     const campo = document.getElementById("pesquisaCliente");
-
     pesquisar?.addEventListener("click", pesquisarClientesAdmin);
     campo?.addEventListener("keydown", event => {
         if (event.key === "Enter") {
@@ -111,7 +133,6 @@ async function carregarTotaisAdmin() {
         buscarSeguro(window.dbBuscarDocumentos),
         buscarSeguro(window.dbBuscarFotos)
     ]);
-
     atualizarNumeroAdmin("totalClientes", clientes.length);
     atualizarNumeroAdmin("totalProjetos", projetos.length);
     atualizarNumeroAdmin("totalDocumentos", documentos.length);
@@ -126,12 +147,10 @@ async function carregarClientesAdmin() {
 function renderizarClientesAdmin(clientes) {
     const lista = document.getElementById("listaClientes");
     if (!lista) return;
-
     if (!clientes.length) {
         lista.innerHTML = '<div class="estado-vazio">Nenhum cliente cadastrado.</div>';
         return;
     }
-
     lista.innerHTML = clientes.map(cliente => `
         <div class="item-dashboard">
             <strong>${escaparAdmin(cliente.nome || "Cliente")}</strong>
@@ -141,19 +160,11 @@ function renderizarClientesAdmin(clientes) {
 }
 
 async function pesquisarClientesAdmin() {
-    const termo = (document.getElementById("pesquisaCliente")?.value || "")
-        .trim()
-        .toLowerCase();
-
+    const termo = (document.getElementById("pesquisaCliente")?.value || "").trim().toLowerCase();
     const clientes = await buscarSeguro(window.dbBuscarClientes);
-
     const filtrados = termo
-        ? clientes.filter(cliente =>
-            String(cliente.nome || "").toLowerCase().includes(termo) ||
-            String(cliente.email || "").toLowerCase().includes(termo)
-        )
+        ? clientes.filter(cliente => String(cliente.nome || "").toLowerCase().includes(termo) || String(cliente.email || "").toLowerCase().includes(termo))
         : clientes;
-
     renderizarClientesAdmin(filtrados);
 }
 
@@ -161,15 +172,9 @@ async function carregarProjetosAdmin() {
     const projetos = await buscarSeguro(window.dbBuscarProjetos);
     const lista = document.getElementById("listaProjetos");
     if (!lista) return;
-
     const recentes = projetos.slice(0, 6);
-
     lista.innerHTML = recentes.length
-        ? recentes.map(projeto => `
-            <div class="item-dashboard">
-                <strong>${escaparAdmin(projeto.nome || "Projeto")}</strong>
-            </div>
-        `).join("")
+        ? recentes.map(projeto => `<div class="item-dashboard"><strong>${escaparAdmin(projeto.nome || "Projeto")}</strong></div>`).join("")
         : '<div class="estado-vazio">Nenhum projeto cadastrado.</div>';
 }
 
@@ -177,16 +182,9 @@ async function carregarDocumentosAdmin() {
     const documentos = await buscarSeguro(window.dbBuscarDocumentos);
     const lista = document.getElementById("listaDocumentos");
     if (!lista) return;
-
     const recentes = documentos.slice(0, 6);
-
     lista.innerHTML = recentes.length
-        ? recentes.map(documento => `
-            <div class="item-dashboard">
-                <strong>${escaparAdmin(documento.nome || documento.titulo || "Documento")}</strong>
-                <span>${escaparAdmin(documento.tipo || "")}</span>
-            </div>
-        `).join("")
+        ? recentes.map(documento => `<div class="item-dashboard"><strong>${escaparAdmin(documento.nome || documento.titulo || "Documento")}</strong><span>${escaparAdmin(documento.tipo || "")}</span></div>`).join("")
         : '<div class="estado-vazio">Nenhum documento cadastrado.</div>';
 }
 
@@ -196,11 +194,7 @@ async function carregarBibliotecaAdmin() {
         buscarSeguro(window.dbBuscarDocumentos),
         buscarSeguro(window.dbBuscarFotos)
     ]);
-
-    atualizarNumeroAdmin(
-        "totalBiblioteca",
-        biblioteca.length + documentos.length + fotos.length
-    );
+    atualizarNumeroAdmin("totalBiblioteca", biblioteca.length + documentos.length + fotos.length);
 }
 
 async function carregarArmazenamentoAdmin() {
@@ -210,23 +204,18 @@ async function carregarArmazenamentoAdmin() {
     const detalhes = document.getElementById("storageDetalhes");
     const trilho = barra?.parentElement;
     const limite = Number(window.CM_CONFIG?.limiteArmazenamentoBytes) || (1024 ** 3);
-
     if (limiteTexto) limiteTexto.textContent = formatarBytesAdmin(limite);
 
     try {
         const { data, error } = await window.supabaseClient.rpc("uso_armazenamento_portal");
         if (error) throw error;
-
         const bytes = Math.max(0, Number(data?.bytes_utilizados) || 0);
         const arquivos = Math.max(0, Number(data?.quantidade_arquivos) || 0);
         const percentual = limite > 0 ? Math.min(100, (bytes / limite) * 100) : 0;
-
         if (barra) barra.style.width = `${percentual}%`;
         trilho?.setAttribute("aria-valuenow", String(Math.round(percentual)));
         if (usado) usado.textContent = formatarBytesAdmin(bytes);
-        if (detalhes) {
-            detalhes.textContent = `${arquivos} ${arquivos === 1 ? "arquivo" : "arquivos"} • ${percentual.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% utilizado`;
-        }
+        if (detalhes) detalhes.textContent = `${arquivos} ${arquivos === 1 ? "arquivo" : "arquivos"} • ${percentual.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% utilizado`;
     } catch (erro) {
         console.warn("Não foi possível calcular o armazenamento:", erro);
         if (barra) barra.style.width = "0%";
@@ -244,13 +233,8 @@ function atualizarNumeroAdmin(id, valor) {
 function formatarBytesAdmin(bytes) {
     const valor = Number(bytes) || 0;
     if (valor <= 0) return "0 B";
-
     const unidades = ["B", "KB", "MB", "GB", "TB"];
-    const indice = Math.min(
-        Math.floor(Math.log(valor) / Math.log(1024)),
-        unidades.length - 1
-    );
-
+    const indice = Math.min(Math.floor(Math.log(valor) / Math.log(1024)), unidades.length - 1);
     const numero = valor / (1024 ** indice);
     return `${numero.toLocaleString("pt-BR", { maximumFractionDigits: indice === 0 ? 0 : 2 })} ${unidades[indice]}`;
 }
