@@ -10,6 +10,8 @@ import {
   createCommercialRecord,
   generateCommercialDocument,
   listCommercialRecords,
+  lookupCommercialCep,
+  lookupCommercialCnpj,
   type CommercialRecord,
   type CommercialServiceSelection,
 } from '@/services/commercial-service';
@@ -20,6 +22,8 @@ const emptyForm = {
   prospectName: '', cpfCnpj: '', email: '', phone: '', cep: '', address: '', city: '', state: '', propertyAddress: '', propertyType: '',
   areaTerrenoM2: '', areaConstruidaM2: '', constructionStandard: '', experienceLevel: '', customService: '', totalValue: '', notes: '',
 };
+
+const digitsOnly = (value: string) => value.replace(/\D/g, '');
 
 export default function AdminCommercialDocumentsScreen() {
   const styles = useThemeStyles(styleDefinitions);
@@ -45,6 +49,44 @@ export default function AdminCommercialDocumentsScreen() {
   const update = (key: keyof typeof emptyForm, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
   const toggleService = (code: string) => setSelectedCodes((current) => current.includes(code) ? current.filter((item) => item !== code) : [...current, code]);
+
+  const lookupCnpj = async () => {
+    const cnpj = digitsOnly(form.cpfCnpj);
+    if (cnpj.length !== 14) { setError('Para a consulta automática, informe um CNPJ com 14 dígitos. CPF continua disponível para preenchimento manual.'); return; }
+    setLoadingKey('lookup-cnpj'); setError(null); setSuccess(null);
+    const result = await lookupCommercialCnpj(cnpj);
+    if (result.error || !result.data) setError(result.error ?? 'CNPJ não encontrado.');
+    else {
+      const data = result.data;
+      setForm((current) => ({
+        ...current,
+        prospectName: data.legalName || current.prospectName,
+        cpfCnpj: data.cnpj || current.cpfCnpj,
+        email: data.email || current.email,
+        phone: data.phone || current.phone,
+        cep: data.cep || current.cep,
+        address: data.address || current.address,
+        city: data.city || current.city,
+        state: data.state || current.state,
+      }));
+      setSuccess('Dados do CNPJ preenchidos automaticamente. Revise número/complemento e demais dados antes de criar o orçamento.');
+    }
+    setLoadingKey(null);
+  };
+
+  const lookupCep = async () => {
+    const cep = digitsOnly(form.cep);
+    if (cep.length !== 8) { setError('Informe um CEP com 8 dígitos.'); return; }
+    setLoadingKey('lookup-cep'); setError(null); setSuccess(null);
+    const result = await lookupCommercialCep(cep);
+    if (result.error || !result.data) setError(result.error ?? 'CEP não encontrado.');
+    else {
+      const data = result.data;
+      setForm((current) => ({ ...current, cep: data.cep, address: data.address || current.address, city: data.city, state: data.state }));
+      setSuccess('Endereço localizado pelo CEP. Complete número e complemento antes de criar o orçamento.');
+    }
+    setLoadingKey(null);
+  };
 
   const create = async () => {
     if (!form.prospectName.trim()) { setError('Informe o nome do prospect.'); return; }
@@ -83,15 +125,21 @@ export default function AdminCommercialDocumentsScreen() {
 
       <Card>
         <Text style={styles.sectionTitle}>Novo prospect / orçamento</Text>
-        <Text style={styles.help}>A numeração ORC-AAAA-MM-0001 é criada automaticamente e de forma sequencial.</Text>
+        <Text style={styles.help}>A numeração ORC-AAAA-MM-0001 é criada automaticamente e de forma sequencial. A consulta de CEP/CNPJ existe somente nesta tela; os demais documentos continuam usando os dados oficiais do cadastro do cliente.</Text>
         <Field label="Nome / razão social *" value={form.prospectName} onChangeText={(value) => update('prospectName', value)} />
         <View style={styles.twoColumns}>
-          <Field label="CPF / CNPJ" value={form.cpfCnpj} onChangeText={(value) => update('cpfCnpj', value)} />
+          <View style={styles.lookupField}>
+            <Field label="CPF / CNPJ" value={form.cpfCnpj} onChangeText={(value) => update('cpfCnpj', value)} />
+            <Button loading={loadingKey === 'lookup-cnpj'} onPress={() => void lookupCnpj()} title="Buscar CNPJ" variant="secondary" />
+          </View>
           <Field label="Telefone / WhatsApp" value={form.phone} onChangeText={(value) => update('phone', value)} />
         </View>
         <Field autoCapitalize="none" keyboardType="email-address" label="E-mail" value={form.email} onChangeText={(value) => update('email', value)} />
         <View style={styles.twoColumns}>
-          <Field label="CEP" value={form.cep} onChangeText={(value) => update('cep', value)} />
+          <View style={styles.lookupField}>
+            <Field label="CEP" value={form.cep} onChangeText={(value) => update('cep', value)} />
+            <Button loading={loadingKey === 'lookup-cep'} onPress={() => void lookupCep()} title="Buscar CEP" variant="secondary" />
+          </View>
           <Field label="Cidade" value={form.city} onChangeText={(value) => update('city', value)} />
           <Field label="UF" value={form.state} onChangeText={(value) => update('state', value)} />
         </View>
@@ -145,6 +193,7 @@ const styleDefinitions = (colors: ThemeColors) => ({
   subTitle: { color: colors.ink, fontSize: 14, fontWeight: '700', fontFamily: typography.family, marginTop: spacing.xs },
   help: { color: colors.slate, fontSize: 12, lineHeight: 18, fontFamily: typography.family },
   twoColumns: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  lookupField: { flex: 1, minWidth: 220, gap: spacing.xs },
   serviceList: { gap: spacing.xs },
   serviceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, padding: spacing.sm },
   serviceSelected: { borderColor: colors.gold500, backgroundColor: colors.warningSoft },
