@@ -1,4 +1,4 @@
-name: Build temporary Android APK
+name: Build production Android APK
 
 on:
   push:
@@ -38,14 +38,16 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Restore stable homologation signing key
+      # Keep the exact same cache key used to sign 0.10.5. Changing it would
+      # prevent Android from installing 0.10.6 as an update over 0.10.5.
+      - name: Restore stable app signing key
         id: homologation-key-cache
         uses: actions/cache/restore@v4
         with:
           path: ~/.android/debug.keystore
           key: camila-martins-homologation-signing-v1
 
-      - name: Ensure stable homologation signing key
+      - name: Ensure stable app signing key
         run: |
           mkdir -p "$HOME/.android"
           if [ ! -f "$HOME/.android/debug.keystore" ]; then
@@ -58,7 +60,7 @@ jobs:
               -keyalg RSA -keysize 2048 -validity 10000
           fi
 
-      - name: Save stable homologation signing key
+      - name: Save stable app signing key
         if: steps.homologation-key-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
@@ -75,7 +77,7 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add portal-app/package-lock.json
-            git commit -m "chore: sync Expo/Firebase lockfile [skip ci]"
+            git commit -m "chore: sync audited APK lockfile [skip ci]"
             git push origin HEAD:chatgpt-apk-build
           fi
 
@@ -87,15 +89,26 @@ jobs:
         working-directory: portal-app
         run: npm run check:production
 
-      - name: Verify Supabase public connectivity
+      - name: Verify production backend connectivity
         working-directory: portal-app
         run: |
+          set -euo pipefail
           curl --fail --silent --show-error \
             -H "apikey: $EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" \
             "$EXPO_PUBLIC_SUPABASE_URL/auth/v1/settings" > /dev/null
-          echo "APROVADO: URL e chave pública de produção responderam corretamente."
+          for fn in admin-invite-client issue-protected-asset send-push-notifications; do
+            code=$(curl --silent --output /dev/null --write-out '%{http_code}' \
+              -X OPTIONS \
+              -H "apikey: $EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" \
+              "$EXPO_PUBLIC_SUPABASE_URL/functions/v1/$fn")
+            case "$code" in
+              2*|3*) echo "APROVADO: Edge Function $fn disponível ($code)." ;;
+              *) echo "ERRO: Edge Function $fn indisponível ($code)."; exit 1 ;;
+            esac
+          done
+          echo "APROVADO: backend público e funções essenciais de produção responderam corretamente."
 
-      - name: Verify Firebase and mobile identifiers
+      - name: Verify Firebase, identity contract and mobile identifiers
         working-directory: portal-app
         run: |
           node <<'NODE'
@@ -106,22 +119,27 @@ jobs:
           const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
           const google = JSON.parse(fs.readFileSync('google-services.json', 'utf8'));
           const firebaseSource = fs.readFileSync('src/lib/firebase.ts', 'utf8');
+          const authSource = fs.readFileSync('src/services/auth-service.ts', 'utf8');
+          const pushSource = fs.readFileSync('supabase/functions/send-push-notifications/index.ts', 'utf8');
           assert.equal(app.android.package, 'br.com.camilamartinsengenharia.app');
           assert.equal(app.ios.bundleIdentifier, 'br.com.camilamartinsengenharia.app');
           assert.equal(app.android.googleServicesFile, './google-services.json');
-          assert.equal(app.version, '0.10.5');
+          assert.equal(app.version, '0.10.6');
           assert.equal(pkg.version, app.version);
           assert.equal(lock.packages[''].version, app.version);
           assert.equal(pkg.dependencies.firebase, '12.18.0');
           assert.equal(lock.packages['node_modules/firebase'].version, '12.18.0');
-          assert.equal(app.android.versionCode, 4);
+          assert.equal(app.android.versionCode, 5);
           assert.equal(google.project_info.project_id, 'cm-engenharia-62f61');
           assert.equal(google.project_info.project_number, '75516356862');
           assert.ok(google.client.some((entry) => entry.client_info?.android_client_info?.package_name === app.android.package));
           assert.ok(firebaseSource.includes("projectId: 'cm-engenharia-62f61'"));
           assert.ok(firebaseSource.includes("messagingSenderId: '75516356862'"));
+          assert.ok(authSource.includes("rpc('is_portal_admin')"), 'Identidade administrativa deve usar is_portal_admin().');
+          assert.ok(!authSource.includes("from('usuarios')"), 'Auth não pode comparar UUID do Auth com usuarios.id BIGINT.');
+          assert.ok(!pushSource.includes("from('usuarios')"), 'Push não pode misturar usuarios.id BIGINT com UUID de app_push_tokens.');
           assert.ok(!fs.existsSync('firebase.ts'), 'firebase.ts duplicado na raiz do portal-app.');
-          console.log('APROVADO: versão 0.10.5, lockfile, Firebase, Google Services e identificadores móveis consistentes.');
+          console.log('APROVADO: versão 0.10.6, identidade, push, lockfile, Firebase e identificadores móveis consistentes.');
           NODE
 
       - name: Lint
@@ -184,8 +202,8 @@ jobs:
           BADGING=$($AAPT dump badging "$APK" | head -n 1)
           echo "$BADGING"
           echo "$BADGING" | grep -F "name='br.com.camilamartinsengenharia.app'" >/dev/null || { echo "ERRO: package name incorreto."; exit 1; }
-          echo "$BADGING" | grep -F "versionCode='4'" >/dev/null || { echo "ERRO: versionCode incorreto."; exit 1; }
-          echo "$BADGING" | grep -F "versionName='0.10.5'" >/dev/null || { echo "ERRO: versionName incorreto."; exit 1; }
+          echo "$BADGING" | grep -F "versionCode='5'" >/dev/null || { echo "ERRO: versionCode incorreto."; exit 1; }
+          echo "$BADGING" | grep -F "versionName='0.10.6'" >/dev/null || { echo "ERRO: versionName incorreto."; exit 1; }
 
           echo "Verificando assinatura criptográfica do APK..."
           APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
@@ -200,19 +218,19 @@ jobs:
 
           BUNDLE_BYTES=$(wc -c < /tmp/index.android.bundle)
           echo "Bundle final encontrado: $BUNDLE_PATH ($BUNDLE_BYTES bytes)."
-          echo "APROVADO: APK final 0.10.5 possui pacote/versão corretos, assinatura válida e bundle de execução não vazio."
+          echo "APROVADO: APK final 0.10.6 possui pacote/versão corretos, assinatura válida e bundle de execução não vazio."
 
       - name: Collect APK
         run: |
           mkdir -p artifact
-          cp portal-app/android/app/build/outputs/apk/release/app-release.apk artifact/Camila-Martins-Engenharia-0.10.5.apk
+          cp portal-app/android/app/build/outputs/apk/release/app-release.apk artifact/Camila-Martins-Engenharia-0.10.6.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Camila-Martins-Engenharia-APK-0.10.5
-          path: artifact/Camila-Martins-Engenharia-0.10.5.apk
+          name: Camila-Martins-Engenharia-APK-0.10.6
+          path: artifact/Camila-Martins-Engenharia-0.10.6.apk
           if-no-files-found: error
           retention-days: 3
 
-# Temporary production-connected APK build workflow; does not modify the main branch or public site.
+# Production APK build on the isolated app branch; main and public site are not modified.
