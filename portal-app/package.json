@@ -1,6 +1,6 @@
 {
   "name": "camila-martins-engenharia-app",
-  "version": "0.10.7",
+  "version": "0.10.8",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
