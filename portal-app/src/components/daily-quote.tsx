@@ -24,14 +24,23 @@ function brazilDateKey(date = new Date()) {
 }
 
 function dayIndex(key: string, total: number) {
-  const [year, month, day] = key.split('-').map(Number);
+  const raw = key.split('-');
+  const year = Number(raw[0] ?? 1970);
+  const month = Number(raw[1] ?? 1);
+  const day = Number(raw[2] ?? 1);
   const daysSinceEpoch = Math.floor(Date.UTC(year, month - 1, day) / DAY_MS);
   return ((daysSinceEpoch % total) + total) % total;
 }
 
 function normalize(item: Partial<Quote> | null | undefined): Quote | null {
-  if (!String(item?.texto ?? '').trim()) return null;
-  return { texto: String(item?.texto).trim(), autor: String(item?.autor || FALLBACK.autor).trim(), categoria: String(item?.categoria || 'Reflexão').trim(), fonte: item?.fonte ? String(item.fonte).trim() : undefined };
+  const text = String(item?.texto ?? '').trim();
+  if (!text) return null;
+  return {
+    texto: text,
+    autor: String(item?.autor || FALLBACK.autor).trim(),
+    categoria: String(item?.categoria || 'Reflexão').trim(),
+    fonte: item?.fonte ? String(item.fonte).trim() : undefined,
+  };
 }
 
 function collection(payload: QuotePayload): Quote[] {
@@ -40,7 +49,10 @@ function collection(payload: QuotePayload): Quote[] {
   const starts = Array.isArray(payload.inicios) ? payload.inicios : [];
   const categories = Array.isArray(payload.categorias) ? payload.categorias : [];
   const legacy: Quote[] = [];
-  starts.forEach((start, i) => endings.forEach((ending, j) => legacy.push({ texto: `${start}; ${ending}.`, autor: payload.autor || FALLBACK.autor, categoria: categories.length ? categories[(i + j) % categories.length] : 'Reflexão' })));
+  starts.forEach((start, i) => endings.forEach((ending, j) => {
+    const category = categories.length ? (categories[(i + j) % categories.length] ?? 'Reflexão') : 'Reflexão';
+    legacy.push({ texto: `${start}; ${ending}.`, autor: payload.autor || FALLBACK.autor, categoria: category });
+  }));
   return legacy;
 }
 
