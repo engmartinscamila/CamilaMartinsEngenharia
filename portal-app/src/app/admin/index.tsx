@@ -10,17 +10,13 @@ import { env } from '@/lib/env';
 import { getDisplayName, getFirstName } from '@/lib/user-name';
 import { useAuth } from '@/providers/auth-provider';
 import { useThemeStyles } from '@/providers/theme-provider';
+import { getDocumentArchiveReminder } from '@/services/document-archive-service';
 import { listAdminDocumentAttention } from '@/services/document-workflow-service';
 import { getAdminDashboard } from '@/services/portal-service';
 import { spacing, ThemeColors, typography } from '@/theme/tokens';
 import type { DashboardCounts } from '@/types/domain';
 
-const initialCounts: DashboardCounts = {
-  activeClients: null,
-  activeProjects: null,
-  openRequests: null,
-  pendingApprovals: null,
-};
+const initialCounts: DashboardCounts = { activeClients: null, activeProjects: null, openRequests: null, pendingApprovals: null };
 
 export default function AdminDashboard() {
   const { width } = useWindowDimensions();
@@ -30,6 +26,7 @@ export default function AdminDashboard() {
   const [counts, setCounts] = useState(initialCounts);
   const [attentionCount, setAttentionCount] = useState(0);
   const [overdueCount, setOverdueCount] = useState(0);
+  const [archiveReminderCount, setArchiveReminderCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const styles = useThemeStyles(styleDefinitions);
@@ -37,24 +34,18 @@ export default function AdminDashboard() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [dashboardResult, attentionResult] = await Promise.all([getAdminDashboard(), listAdminDocumentAttention()]);
+    const [dashboardResult, attentionResult, archiveResult] = await Promise.all([getAdminDashboard(), listAdminDocumentAttention(), getDocumentArchiveReminder(180)]);
     setCounts(dashboardResult.data);
     const actionable = attentionResult.data.filter((item) => item.attentionLevel !== 'normal' && item.formalNoticeStatus !== 'enviado');
     setAttentionCount(actionable.length);
     setOverdueCount(actionable.filter((item) => item.attentionLevel === 'overdue').length);
-    setError(dashboardResult.error ?? attentionResult.error);
+    setArchiveReminderCount(archiveResult.data);
+    setError(dashboardResult.error ?? attentionResult.error ?? archiveResult.error);
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    const task = setTimeout(() => void load(), 0);
-    return () => clearTimeout(task);
-  }, [load]);
-
-  const exit = async () => {
-    await signOut();
-    router.replace('/login');
-  };
+  useEffect(() => { const task = setTimeout(() => void load(), 0); return () => clearTimeout(task); }, [load]);
+  const exit = async () => { await signOut(); router.replace('/login'); };
 
   const metrics = [
     { label: 'Clientes ativos', value: counts.activeClients, route: '/admin/clients' as const },
@@ -68,7 +59,7 @@ export default function AdminDashboard() {
     { key: 'clients', onPress: () => router.push('/admin/clients'), icon: 'people-outline' as const, title: 'Clientes e acessos', description: 'Convidar, arquivar, reativar, revogar ou excluir com confirmação.' },
     { key: 'projects', onPress: () => router.push('/admin/projects'), icon: 'briefcase-outline' as const, title: 'Contratos e projetos', description: 'Cadastro inseparável pelo número do contrato e acompanhamento.' },
     { key: 'contract-documents', onPress: () => router.push('/admin/contract-documents'), icon: 'document-text-outline' as const, title: 'Documentos contratuais', description: 'Escopo opcional, prazos de aceite, termos e notificações formais.' },
-    { key: 'document-archive', onPress: () => router.push('/admin/document-archive'), icon: 'archive-outline' as const, title: 'Arquivo documental', description: 'Exportar e limpar arquivos antigos sem perder numeração, histórico e auditoria.' },
+    { key: 'document-archive', onPress: () => router.push('/admin/document-archive'), icon: 'archive-outline' as const, title: 'Arquivo documental', description: 'Exportar, proteger, restaurar e limpar arquivos antigos com rastreabilidade.' },
     { key: 'documents', onPress: () => router.push({ pathname: '/admin/content', params: { tipo: 'document' } }), icon: 'documents-outline' as const, title: 'Documentos', description: 'ART/RRT, contratos, orçamentos e arquivos técnicos classificados por proteção.' },
     { key: 'photos', onPress: () => router.push({ pathname: '/admin/content', params: { tipo: 'photo' } }), icon: 'images-outline' as const, title: 'Fotos e evolução da obra', description: 'Registros fotográficos protegidos e vinculados aos projetos.' },
     { key: 'library', onPress: () => router.push({ pathname: '/admin/content', params: { tipo: 'library' } }), icon: 'library-outline' as const, title: 'Biblioteca', description: 'Guias, catálogos e materiais exclusivos organizados por projeto.' },
@@ -85,72 +76,20 @@ export default function AdminDashboard() {
     <Screen>
       <View style={[styles.topbar, isMobile && styles.topbarMobile]}>
         <BrandMark compact />
-        {isMobile ? (
-          <View style={styles.mobileControls}>
-            <ThemeSelector compact />
-            <View style={styles.mobileActionRow}>
-              <AdminNotificationBell />
-              <SyncControl compact />
-              <Button icon="log-out-outline" onPress={() => void exit()} title="Sair" variant="ghost" />
-            </View>
-          </View>
-        ) : (
-          <View style={styles.topbarActions}><ThemeSelector compact /><AdminNotificationBell /><SyncControl compact /><Button icon="log-out-outline" onPress={() => void exit()} title="Sair" variant="ghost" /></View>
-        )}
+        {isMobile ? <View style={styles.mobileControls}><ThemeSelector compact /><View style={styles.mobileActionRow}><AdminNotificationBell /><SyncControl compact /><Button icon="log-out-outline" onPress={() => void exit()} title="Sair" variant="ghost" /></View></View> : <View style={styles.topbarActions}><ThemeSelector compact /><AdminNotificationBell /><SyncControl compact /><Button icon="log-out-outline" onPress={() => void exit()} title="Sair" variant="ghost" /></View>}
       </View>
       <PageHeader eyebrow="Administração" title={`Olá, ${adminFirstName}.`} description="Visão geral dos clientes, projetos e atividades do aplicativo." />
       {env.isHomologation ? <Notice tone="info">Ambiente de homologação: os indicadores incluem as contas e os registros usados no teste de isolamento A/B.</Notice> : null}
-      {attentionCount > 0 ? (
-        <Card>
-          <Notice tone={overdueCount > 0 ? 'danger' : 'warning'}>
-            {overdueCount > 0
-              ? `${overdueCount} aprovação(ões) já ultrapassaram o prazo contratual de manifestação. Há ${attentionCount} pendência(s) que exigem sua atenção.`
-              : `${attentionCount} aprovação(ões) estão a até 3 dias do fim do prazo contratual de manifestação.`}
-          </Notice>
-          <Button onPress={() => router.push('/admin/contract-documents')} title="Ver pendências contratuais" variant="secondary" />
-        </Card>
-      ) : null}
+      {attentionCount > 0 ? <Card><Notice tone={overdueCount > 0 ? 'danger' : 'warning'}>{overdueCount > 0 ? `${overdueCount} aprovação(ões) já ultrapassaram o prazo contratual de manifestação. Há ${attentionCount} pendência(s) que exigem sua atenção.` : `${attentionCount} aprovação(ões) estão a até 3 dias do fim do prazo contratual de manifestação.`}</Notice><Button onPress={() => router.push('/admin/contract-documents')} title="Ver pendências contratuais" variant="secondary" /></Card> : null}
+      {archiveReminderCount > 0 ? <Card><Notice tone="info">Há {archiveReminderCount} documento(s) com mais de 180 dias aptos para manutenção de Storage. Nenhum será apagado automaticamente.</Notice><Button onPress={() => router.push('/admin/document-archive')} title="Revisar arquivo documental" variant="secondary" /></Card> : null}
       {error ? <Notice tone="warning">{error} Valores indisponíveis não são exibidos como zero.</Notice> : null}
-      <View style={[styles.metrics, isMobile && styles.metricsMobile]}>
-        {metrics.map((metric) => (
-          <Pressable
-            accessibilityHint={`Abrir ${metric.label.toLowerCase()}`}
-            accessibilityRole="button"
-            key={metric.label}
-            onPress={() => router.push(metric.route)}
-            style={({ pressed }) => [styles.metricPressable, isMobile && styles.metricPressableMobile, pressed && styles.metricPressed]}
-          >
-            <Card style={isMobile ? { ...styles.metric, ...styles.metricMobile } : styles.metric}>
-              <Text style={styles.metricLabel}>{metric.label}</Text>
-              <Text style={styles.metricValue}>{metric.value === null ? 'Indisponível' : metric.value}</Text>
-              <Text style={styles.metricLink}>Abrir área</Text>
-            </Card>
-          </Pressable>
-        ))}
-      </View>
-      <View style={styles.moduleList}>
-        {modules.map((module) => <AdminMenuRow compact={isMobile} description={module.description} icon={module.icon} key={module.key} onPress={module.onPress} title={module.title} />)}
-      </View>
+      <View style={[styles.metrics, isMobile && styles.metricsMobile]}>{metrics.map((metric) => <Pressable accessibilityHint={`Abrir ${metric.label.toLowerCase()}`} accessibilityRole="button" key={metric.label} onPress={() => router.push(metric.route)} style={({ pressed }) => [styles.metricPressable, isMobile && styles.metricPressableMobile, pressed && styles.metricPressed]}><Card style={isMobile ? { ...styles.metric, ...styles.metricMobile } : styles.metric}><Text style={styles.metricLabel}>{metric.label}</Text><Text style={styles.metricValue}>{metric.value === null ? 'Indisponível' : metric.value}</Text><Text style={styles.metricLink}>Abrir área</Text></Card></Pressable>)}</View>
+      <View style={styles.moduleList}>{modules.map((module) => <AdminMenuRow compact={isMobile} description={module.description} icon={module.icon} key={module.key} onPress={module.onPress} title={module.title} />)}</View>
       <Button loading={loading} onPress={() => void load()} title="Atualizar indicadores" variant="secondary" />
     </Screen>
   );
 }
 
 const styleDefinitions = (colors: ThemeColors) => ({
-  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  topbarMobile: { flexDirection: 'column', alignItems: 'stretch', gap: spacing.xs },
-  topbarActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end', gap: spacing.xs },
-  mobileControls: { width: '100%', minWidth: 0, alignItems: 'stretch', gap: spacing.xs },
-  mobileActionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.xs },
-  metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
-  metricsMobile: { gap: spacing.sm },
-  metric: { flexGrow: 1, flexBasis: 180, minHeight: 112, justifyContent: 'space-between' },
-  metricMobile: { flexBasis: 136, minHeight: 92, padding: spacing.sm },
-  metricPressable: { flexGrow: 1, flexBasis: 180 },
-  metricPressableMobile: { flexBasis: 136 },
-  metricPressed: { opacity: 0.72 },
-  metricLabel: { color: colors.slate, fontSize: 12, fontWeight: '600', fontFamily: typography.family },
-  metricValue: { color: colors.ink, fontSize: 26, fontWeight: '700', fontFamily: typography.family },
-  metricLink: { color: colors.gold600, fontSize: 11, fontWeight: '700', fontFamily: typography.family },
-  moduleList: { gap: spacing.sm },
+  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm }, topbarMobile: { flexDirection: 'column', alignItems: 'stretch', gap: spacing.xs }, topbarActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end', gap: spacing.xs }, mobileControls: { width: '100%', minWidth: 0, alignItems: 'stretch', gap: spacing.xs }, mobileActionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.xs }, metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md }, metricsMobile: { gap: spacing.sm }, metric: { flexGrow: 1, flexBasis: 180, minHeight: 112, justifyContent: 'space-between' }, metricMobile: { flexBasis: 136, minHeight: 92, padding: spacing.sm }, metricPressable: { flexGrow: 1, flexBasis: 180 }, metricPressableMobile: { flexBasis: 136 }, metricPressed: { opacity: 0.72 }, metricLabel: { color: colors.slate, fontSize: 12, fontWeight: '600', fontFamily: typography.family }, metricValue: { color: colors.ink, fontSize: 26, fontWeight: '700', fontFamily: typography.family }, metricLink: { color: colors.gold600, fontSize: 11, fontWeight: '700', fontFamily: typography.family }, moduleList: { gap: spacing.sm },
 });
