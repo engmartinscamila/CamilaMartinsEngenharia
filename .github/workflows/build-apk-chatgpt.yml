@@ -14,10 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      EXPO_PUBLIC_APP_ENV: homologation
-      EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF: nvhjcoxnzigwwbdbhkhq
-      EXPO_PUBLIC_SUPABASE_URL: https://nvhjcoxnzigwwbdbhkhq.supabase.co
-      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_DZu6VbG6f2peLeqpINAC6Q_tPmaH8yt
+      EXPO_PUBLIC_APP_ENV: production
+      EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF: hghtwlopqztfcosfxafd
+      EXPO_PUBLIC_SUPABASE_URL: https://hghtwlopqztfcosfxafd.supabase.co
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_-unXLR2NSSACLs01Sr60GA_uCFnJ74f
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -83,9 +83,9 @@ jobs:
         working-directory: portal-app
         run: npm ci --no-audit --no-fund
 
-      - name: Verify environment
+      - name: Verify production environment
         working-directory: portal-app
-        run: npm run check:homologation
+        run: npm run check:production
 
       - name: Verify Supabase public connectivity
         working-directory: portal-app
@@ -93,7 +93,7 @@ jobs:
           curl --fail --silent --show-error \
             -H "apikey: $EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" \
             "$EXPO_PUBLIC_SUPABASE_URL/auth/v1/settings" > /dev/null
-          echo "APROVADO: URL e chave pública do Supabase responderam corretamente."
+          echo "APROVADO: URL e chave pública de produção responderam corretamente."
 
       - name: Verify Firebase and mobile identifiers
         working-directory: portal-app
@@ -109,19 +109,19 @@ jobs:
           assert.equal(app.android.package, 'br.com.camilamartinsengenharia.app');
           assert.equal(app.ios.bundleIdentifier, 'br.com.camilamartinsengenharia.app');
           assert.equal(app.android.googleServicesFile, './google-services.json');
-          assert.equal(app.version, '0.10.4');
+          assert.equal(app.version, '0.10.5');
           assert.equal(pkg.version, app.version);
           assert.equal(lock.packages[''].version, app.version);
           assert.equal(pkg.dependencies.firebase, '12.18.0');
           assert.equal(lock.packages['node_modules/firebase'].version, '12.18.0');
-          assert.equal(app.android.versionCode, 3);
+          assert.equal(app.android.versionCode, 4);
           assert.equal(google.project_info.project_id, 'cm-engenharia-62f61');
           assert.equal(google.project_info.project_number, '75516356862');
           assert.ok(google.client.some((entry) => entry.client_info?.android_client_info?.package_name === app.android.package));
           assert.ok(firebaseSource.includes("projectId: 'cm-engenharia-62f61'"));
           assert.ok(firebaseSource.includes("messagingSenderId: '75516356862'"));
           assert.ok(!fs.existsSync('firebase.ts'), 'firebase.ts duplicado na raiz do portal-app.');
-          console.log('APROVADO: versões, lockfile, Firebase, Google Services e identificadores móveis consistentes.');
+          console.log('APROVADO: versão 0.10.5, lockfile, Firebase, Google Services e identificadores móveis consistentes.');
           NODE
 
       - name: Lint
@@ -184,8 +184,8 @@ jobs:
           BADGING=$($AAPT dump badging "$APK" | head -n 1)
           echo "$BADGING"
           echo "$BADGING" | grep -F "name='br.com.camilamartinsengenharia.app'" >/dev/null || { echo "ERRO: package name incorreto."; exit 1; }
-          echo "$BADGING" | grep -F "versionCode='3'" >/dev/null || { echo "ERRO: versionCode incorreto."; exit 1; }
-          echo "$BADGING" | grep -F "versionName='0.10.4'" >/dev/null || { echo "ERRO: versionName incorreto."; exit 1; }
+          echo "$BADGING" | grep -F "versionCode='4'" >/dev/null || { echo "ERRO: versionCode incorreto."; exit 1; }
+          echo "$BADGING" | grep -F "versionName='0.10.5'" >/dev/null || { echo "ERRO: versionName incorreto."; exit 1; }
 
           echo "Verificando assinatura criptográfica do APK..."
           APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
@@ -200,25 +200,19 @@ jobs:
 
           BUNDLE_BYTES=$(wc -c < /tmp/index.android.bundle)
           echo "Bundle final encontrado: $BUNDLE_PATH ($BUNDLE_BYTES bytes)."
-
-          # Expo/React Native release usa Hermes; o bundle final pode ser bytecode e
-          # não deve ser validado por procura de strings UTF-8. As configurações de
-          # Supabase/Firebase já foram validadas antes da compilação e são injetadas
-          # no mesmo build. Aqui validamos o artefato realmente instalável: metadados,
-          # assinatura e presença do bundle executável não vazio.
-          echo "APROVADO: APK final 0.10.4 possui pacote/versão corretos, assinatura válida e bundle de execução não vazio."
+          echo "APROVADO: APK final 0.10.5 possui pacote/versão corretos, assinatura válida e bundle de execução não vazio."
 
       - name: Collect APK
         run: |
           mkdir -p artifact
-          cp portal-app/android/app/build/outputs/apk/release/app-release.apk artifact/Camila-Martins-Engenharia-0.10.4.apk
+          cp portal-app/android/app/build/outputs/apk/release/app-release.apk artifact/Camila-Martins-Engenharia-0.10.5.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Camila-Martins-Engenharia-APK-0.10.4
-          path: artifact/Camila-Martins-Engenharia-0.10.4.apk
+          name: Camila-Martins-Engenharia-APK-0.10.5
+          path: artifact/Camila-Martins-Engenharia-0.10.5.apk
           if-no-files-found: error
           retention-days: 3
 
-# Temporary homologation build workflow; does not modify the main branch or public site.
+# Temporary production-connected APK build workflow; does not modify the main branch or public site.
