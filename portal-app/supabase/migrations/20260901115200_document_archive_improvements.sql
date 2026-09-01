@@ -1,6 +1,7 @@
 alter table public.documentos
   add column if not exists retain_online boolean not null default false,
   add column if not exists archived_storage_size bigint,
+  add column if not exists archived_original_path text,
   add column if not exists restored_at timestamptz;
 
 create index if not exists idx_documentos_archive_filters
