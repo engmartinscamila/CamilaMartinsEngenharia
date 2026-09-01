@@ -183,21 +183,113 @@
         window.setTimeout(() => preencherEdicao(item), 30);
     }
 
+    function dadosExtrato() {
+        return filtrados().map(item => ({
+            "Descrição": item.descricao || "",
+            "Tipo": item.tipo || "",
+            "Valor (R$)": valor(item),
+            "Data": item.data || "",
+            "Vencimento": item.data_vencimento || "",
+            "Data do pagamento": item.data_pagamento || "",
+            "Situação": situacaoEfetiva(item),
+            "Categoria": item.categoria || "",
+            "Projeto": nomeProjeto(item.projeto_id),
+            "Forma de pagamento": item.forma_pagamento || "",
+            "Observações": item.observacoes || ""
+        }));
+    }
+
     function exportarCsv() {
-        const cabecalho = ["Descrição", "Tipo", "Valor", "Data", "Vencimento", "Situação", "Categoria", "Projeto", "Forma de pagamento"];
+        const cabecalho = ["Descrição", "Tipo", "Valor", "Data", "Vencimento", "Pagamento", "Situação", "Categoria", "Projeto", "Forma de pagamento", "Observações"];
         const linhas = filtrados().map(item => [
             item.descricao, item.tipo, valor(item).toFixed(2).replace(".", ","), item.data,
-            item.data_vencimento, situacaoEfetiva(item), item.categoria,
-            nomeProjeto(item.projeto_id), item.forma_pagamento
+            item.data_vencimento, item.data_pagamento, situacaoEfetiva(item), item.categoria,
+            nomeProjeto(item.projeto_id), item.forma_pagamento, item.observacoes
         ]);
         const csv = [cabecalho, ...linhas]
             .map(linha => linha.map(campo => `"${String(campo ?? "").replaceAll('"', '""')}"`).join(";"))
             .join("\r\n");
         const link = document.createElement("a");
         link.href = URL.createObjectURL(new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" }));
-        link.download = `financeiro-${hojeIso()}.csv`;
+        link.download = `extrato-financeiro-${hojeIso()}.csv`;
         link.click();
         URL.revokeObjectURL(link.href);
+    }
+
+    function carregarXlsx() {
+        if (window.XLSX) return Promise.resolve(window.XLSX);
+        if (window.__cmeXlsxPromise) return window.__cmeXlsxPromise;
+        window.__cmeXlsxPromise = new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";
+            script.async = true;
+            script.onload = () => window.XLSX ? resolve(window.XLSX) : reject(new Error("Biblioteca Excel indisponível."));
+            script.onerror = () => reject(new Error("Não foi possível carregar o gerador de Excel."));
+            document.head.appendChild(script);
+        });
+        return window.__cmeXlsxPromise;
+    }
+
+    async function exportarExcel() {
+        const botao = document.getElementById("exportarFinanceiroCsv");
+        const textoOriginal = botao?.innerHTML;
+        try {
+            if (!lancamentos.length) await atualizarDados();
+            if (botao) {
+                botao.disabled = true;
+                botao.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando Excel...';
+            }
+
+            const XLSX = await carregarXlsx();
+            const itens = dadosExtrato();
+            const ativos = filtrados().filter(item => situacaoEfetiva(item) !== "cancelado");
+            const resumo = [
+                { "Indicador": "Data de exportação", "Valor": hojeIso() },
+                { "Indicador": "Quantidade de lançamentos", "Valor": itens.length },
+                { "Indicador": "Total de entradas", "Valor": total(ativos, "entrada") },
+                { "Indicador": "Total de saídas", "Valor": total(ativos, "saida") },
+                { "Indicador": "Saldo", "Valor": total(ativos, "entrada") - total(ativos, "saida") },
+                { "Indicador": "Observação", "Valor": "Extrato gerado antes de eventual limpeza/reset dos dados contábeis." }
+            ];
+
+            const workbook = XLSX.utils.book_new();
+            const sheetExtrato = XLSX.utils.json_to_sheet(itens.length ? itens : [{ "Informação": "Nenhum lançamento encontrado para os filtros atuais." }]);
+            const sheetResumo = XLSX.utils.json_to_sheet(resumo);
+            sheetExtrato["!cols"] = [
+                { wch: 34 }, { wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 12 },
+                { wch: 18 }, { wch: 14 }, { wch: 18 }, { wch: 28 }, { wch: 20 }, { wch: 40 }
+            ];
+            sheetResumo["!cols"] = [{ wch: 28 }, { wch: 48 }];
+            XLSX.utils.book_append_sheet(workbook, sheetExtrato, "Extrato");
+            XLSX.utils.book_append_sheet(workbook, sheetResumo, "Resumo");
+            XLSX.writeFile(workbook, `extrato-financeiro-${hojeIso()}.xlsx`, { compression: true });
+        } catch (erro) {
+            console.error("Falha ao gerar Excel financeiro.", erro);
+            alert("Não foi possível gerar o Excel agora. Tente novamente. O CSV continua disponível como alternativa.");
+        } finally {
+            if (botao) {
+                botao.disabled = false;
+                botao.innerHTML = textoOriginal || '<i class="fa-solid fa-file-excel"></i> Baixar Excel';
+            }
+        }
+    }
+
+    function configurarExportacoes() {
+        const botao = document.getElementById("exportarFinanceiroCsv");
+        if (!botao) return;
+        botao.innerHTML = '<i class="fa-solid fa-file-excel"></i> Baixar Excel';
+        botao.title = "Baixar o extrato financeiro em Excel (.xlsx)";
+        botao.addEventListener("click", exportarExcel);
+
+        if (!document.getElementById("exportarFinanceiroCsvAlternativo")) {
+            const csv = document.createElement("button");
+            csv.id = "exportarFinanceiroCsvAlternativo";
+            csv.type = "button";
+            csv.innerHTML = '<i class="fa-solid fa-file-csv"></i> CSV';
+            csv.title = "Baixar também em CSV";
+            csv.addEventListener("click", exportarCsv);
+            botao.insertAdjacentElement("afterend", csv);
+        }
     }
 
     async function atualizarDados() {
@@ -221,7 +313,7 @@
                 .forEach(id => { const campo = document.getElementById(id); if (campo) campo.value = ""; });
             renderizar();
         });
-        document.getElementById("exportarFinanceiroCsv")?.addEventListener("click", exportarCsv);
+        configurarExportacoes();
         document.addEventListener("click", detectarEdicao, true);
         document.getElementById("novoLancamento")?.addEventListener("click", () => {
             const form = document.getElementById("formFinanceiro");
