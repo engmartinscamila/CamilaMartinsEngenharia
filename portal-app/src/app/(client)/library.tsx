@@ -1,90 +1,24 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
-
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { ProjectPicker } from '@/components/project-picker';
-import { Button, Card, Notice, PageHeader, Screen, StateView, StatusPill } from '@/components/ui';
+import { Button, Card, Notice, PageHeader, Screen, StateView } from '@/components/ui';
 import { formatBytes, formatDate } from '@/lib/format';
 import { openExternalUrl } from '@/lib/external-link';
 import { useProject } from '@/providers/project-provider';
 import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
 import { createStorageSignedUrl, listLibraryItems } from '@/services/portal-service';
-import { spacing, ThemeColors, typography } from '@/theme/tokens';
+import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 import type { LibraryItemSummary } from '@/types/domain';
 
-export default function LibraryScreen() {
-  const { selectedProject } = useProject();
-  const [items, setItems] = useState<LibraryItemSummary[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [openingId, setOpeningId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const { colors } = useAppTheme();
-  const styles = useThemeStyles(styleDefinitions);
-
-  const load = useCallback(async () => {
-    if (!selectedProject) {
-      setItems([]);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    const result = await listLibraryItems(selectedProject.id, selectedProject.clientId);
-    setItems(result.data);
-    setError(result.error);
-    setLoading(false);
-  }, [selectedProject]);
-
-  useEffect(() => {
-    const task = setTimeout(() => void load(), 0);
-    return () => clearTimeout(task);
-  }, [load]);
-
-  const openItem = async (item: LibraryItemSummary) => {
-    if (!item.storagePath) {
-      setError('Este material ainda não possui um arquivo publicado.');
-      return;
-    }
-    setOpeningId(item.id);
-    const response = await createStorageSignedUrl(item.storageBucket, item.storagePath);
-    setOpeningId(null);
-    if (!response.url) setError(response.error);
-    else setError(await openExternalUrl(response.url));
-  };
-
-  return (
-    <Screen>
-      <PageHeader eyebrow="Conteúdo exclusivo" title="Biblioteca" description="Guias, referências e materiais liberados para este projeto." />
-      <ProjectPicker />
-      {error ? <Notice tone="danger">{error}</Notice> : null}
-      {loading ? <ActivityIndicator color={colors.gold600} /> : null}
-      {!loading && selectedProject && items.length === 0 ? (
-        <StateView actionLabel="Atualizar" description="Os materiais liberados pela equipe aparecerão aqui." icon="library-outline" onAction={() => void load()} title="Biblioteca vazia" />
-      ) : null}
-      {items.map((item) => (
-        <Card key={item.id}>
-          <View style={styles.header}>
-            <View style={styles.icon}><Ionicons color={colors.gold600} name="library-outline" size={22} /></View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.meta}>{item.category ?? 'Material'} • {item.fileType ?? 'Arquivo'} • {formatDate(item.createdAt)}</Text>
-            </View>
-            <StatusPill label={item.projectId ? 'Projeto' : 'Geral'} />
-          </View>
-          {item.description ? <Text style={styles.description}>{item.description}</Text> : null}
-          {formatBytes(item.sizeBytes) ? <Text style={styles.size}>{formatBytes(item.sizeBytes)}</Text> : null}
-          <Button icon="lock-open-outline" loading={openingId === item.id} onPress={() => void openItem(item)} title="Abrir com link seguro" variant="secondary" />
-        </Card>
-      ))}
-      {items.length > 0 ? <Button loading={loading} onPress={() => void load()} title="Atualizar biblioteca" variant="ghost" /> : null}
-    </Screen>
-  );
+export default function LibraryScreen(){
+ const {selectedProject}=useProject(); const [items,setItems]=useState<LibraryItemSummary[]>([]); const [folder,setFolder]=useState<string|null>(null); const [loading,setLoading]=useState(false); const [openingId,setOpeningId]=useState<string|null>(null); const [error,setError]=useState<string|null>(null); const {colors}=useAppTheme(); const styles=useThemeStyles(styleDefinitions);
+ const load=useCallback(async()=>{if(!selectedProject){setItems([]);setFolder(null);return;}setLoading(true);setError(null);const result=await listLibraryItems(selectedProject.id,selectedProject.clientId);setItems(result.data);setError(result.error);setLoading(false);},[selectedProject]);
+ useEffect(()=>{const task=setTimeout(()=>void load(),0);return()=>clearTimeout(task);},[load]);
+ const folders=useMemo(()=>Object.entries(items.reduce<Record<string,LibraryItemSummary[]>>((acc,item)=>{const key=item.category?.trim()||'Outros materiais';(acc[key]??=[]).push(item);return acc;},{})).sort(([a],[b])=>a.localeCompare(b,'pt-BR')),[items]);
+ const visible=folder?folders.find(([name])=>name===folder)?.[1]??[]:[];
+ const openItem=async(item:LibraryItemSummary)=>{if(!item.storagePath){setError('Este material ainda não possui um arquivo publicado.');return;}setOpeningId(item.id);const response=await createStorageSignedUrl(item.storageBucket,item.storagePath);setOpeningId(null);setError(!response.url?response.error:await openExternalUrl(response.url));};
+ return <Screen><PageHeader eyebrow="Conteúdo do projeto" title="Biblioteca" description="Guias e materiais organizados em pastas para facilitar a consulta."/><ProjectPicker/>{error?<Notice tone="danger">{error}</Notice>:null}{loading?<ActivityIndicator color={colors.gold600}/>:null}{!loading&&selectedProject&&items.length===0?<StateView actionLabel="Atualizar" description="Os materiais liberados pela equipe aparecerão aqui." icon="library-outline" onAction={()=>void load()} title="Biblioteca vazia"/>:null}
+ {!folder?<View style={styles.grid}>{folders.map(([name,entries])=><Pressable accessibilityRole="button" key={name} onPress={()=>setFolder(name)} style={({pressed})=>[styles.folder,pressed&&styles.pressed]}><Ionicons color={colors.gold600} name="folder-outline" size={30}/><Text style={styles.folderTitle}>{name}</Text><Text style={styles.count}>{entries.length} {entries.length===1?'material':'materiais'}</Text></Pressable>)}</View>:<><Button icon="arrow-back-outline" onPress={()=>setFolder(null)} title="Voltar às pastas" variant="ghost"/><Text style={styles.section}>{folder}</Text>{visible.map(item=><Card key={item.id}><Text style={styles.title}>{item.title}</Text><Text style={styles.meta}>{item.fileType??'Arquivo'} • {formatDate(item.createdAt)}</Text>{item.description?<Text style={styles.description}>{item.description}</Text>:null}{formatBytes(item.sizeBytes)?<Text style={styles.meta}>{formatBytes(item.sizeBytes)}</Text>:null}<Button icon="lock-open-outline" loading={openingId===item.id} onPress={()=>void openItem(item)} title="Abrir material" variant="secondary"/></Card>)}</>}{items.length>0?<Button loading={loading} onPress={()=>void load()} title="Atualizar biblioteca" variant="ghost"/>:null}</Screen>;
 }
-
-const styleDefinitions = (colors: ThemeColors) => ({
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  icon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.warningSoft },
-  title: { color: colors.ink, fontSize: typography.size.bodyLarge, fontWeight: '700', fontFamily: typography.family },
-  meta: { color: colors.muted, fontSize: 11, marginTop: 4, fontFamily: typography.family },
-  description: { color: colors.slate, fontSize: 13, lineHeight: 19, fontFamily: typography.family },
-  size: { color: colors.muted, fontSize: 11, fontFamily: typography.family },
-});
+const styleDefinitions=(colors:ThemeColors)=>({grid:{flexDirection:'row',flexWrap:'wrap',gap:spacing.sm},folder:{flexGrow:1,flexBasis:145,minHeight:120,padding:spacing.md,borderRadius:radius.lg,borderWidth:1,borderColor:colors.line,backgroundColor:colors.surface,gap:6},pressed:{opacity:.75},folderTitle:{color:colors.ink,fontSize:14,fontWeight:'700',fontFamily:typography.family},count:{color:colors.muted,fontSize:11,fontFamily:typography.family},section:{color:colors.ink,fontSize:typography.size.bodyLarge,fontWeight:'700',fontFamily:typography.family},title:{color:colors.ink,fontSize:typography.size.bodyLarge,fontWeight:'700',fontFamily:typography.family},meta:{color:colors.muted,fontSize:11,marginTop:4,fontFamily:typography.family},description:{color:colors.slate,fontSize:13,lineHeight:19,fontFamily:typography.family}});
