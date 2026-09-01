@@ -102,7 +102,7 @@ export default function AdminFinancialScreen() {
     setError(null); setSuccess(null); const parsed = parseBrazilianCurrency(amount);
     if (!selectedProjectId || description.trim().length < 2 || parsed === null || parsed <= 0 || !isValidIsoDate(date) || (dueDate && !isValidIsoDate(dueDate)) || (paymentDate && !isValidIsoDate(paymentDate))) { setError('Selecione o projeto e informe descrição, valor e datas válidas.'); return; }
     setSaving(true);
-    const payload = { projeto_id: selectedProjectId, descricao: description.trim(), tipo: type, valor: parsed, data, observacoes: notes.trim() || null, categoria: category.trim() || 'outros', status, data_vencimento: dueDate || null, data_pagamento: status === 'pago' ? (paymentDate || localDate()) : (paymentDate || null), forma_pagamento: paymentMethod.trim() || null };
+    const payload = { projeto_id: selectedProjectId, descricao: description.trim(), tipo: type, valor: parsed, data: date, observacoes: notes.trim() || null, categoria: category.trim() || 'outros', status, data_vencimento: dueDate || null, data_pagamento: status === 'pago' ? (paymentDate || localDate()) : (paymentDate || null), forma_pagamento: paymentMethod.trim() || null };
     const result = editingId ? await supabase.from('financeiro').update(payload).eq('id', editingId).select('id').maybeSingle() : await supabase.from('financeiro').insert(payload).select('id').maybeSingle();
     setSaving(false);
     if (result.error || !result.data) setError('Não foi possível salvar o lançamento financeiro.'); else { setSuccess(editingId ? 'Lançamento atualizado.' : 'Lançamento registrado.'); clearForm(); await load(); }
