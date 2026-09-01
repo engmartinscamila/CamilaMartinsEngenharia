@@ -1,61 +1,51 @@
-export type AppRole = 'admin' | 'client' | 'collaborator' | 'unassigned';
-
-export type ContractStatus = 'active' | 'paused' | 'completed' | 'cancelled' | 'archived';
-export type ProjectStatus = 'ativo' | 'pausado' | 'concluido' | 'arquivado' | string;
-
-export interface ClientProfile {
-  id: string;
-  authId: string | null;
-  name: string;
-  email: string | null;
-  status: string;
-}
-
 export interface ContractSummary {
   id: string;
   contractNumber: string;
   clientId: string;
   serviceType: string | null;
-  status: ContractStatus | string;
+  status: string;
   contractValue: number | null;
   currency: string;
 }
 
-export interface ProjectSummary {
+export interface ProjectContext {
   id: string;
   clientId: string;
   contractId: string | null;
   contractNumber: string;
   name: string;
   serviceType: string | null;
-  status: ProjectStatus;
+  status: string;
   progress: number | null;
   city: string | null;
   state: string | null;
+  contract: ContractSummary | null;
 }
 
-export interface ProjectContext extends ProjectSummary {
-  contract: ContractSummary | null;
+export interface ClientProfile {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  status: string;
+  authId: string | null;
 }
 
 export interface DocumentSummary {
   id: string;
-  projectId: string | null;
   title: string;
-  category: string;
+  category: string | null;
   version: string | null;
   createdAt: string;
   storageBucket: string;
-  storagePath: string;
+  storagePath: string | null;
   allowDownload: boolean;
   protectionMode: 'administrative' | 'authored_pdf';
 }
 
 export interface PhotoSummary {
   id: string;
-  projectId: string | null;
   title: string;
-  description: string | null;
   category: string | null;
   createdAt: string;
   storageBucket: string;
@@ -63,82 +53,63 @@ export interface PhotoSummary {
   protectionMode: 'administrative' | 'authored_photo';
 }
 
-export interface LibraryItemSummary {
+export interface LibrarySummary {
   id: string;
-  projectId: string | null;
   title: string;
-  description: string | null;
   category: string | null;
-  fileType: string | null;
-  sizeBytes: number | null;
   createdAt: string;
   storageBucket: string;
   storagePath: string | null;
 }
 
+export interface ScheduleStageSummary {
+  id: string;
+  title: string;
+  description: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  status: string | null;
+  progress: number | null;
+  order: number | null;
+}
+
 export interface AgendaSummary {
   id: string;
-  projectId: string | null;
   title: string;
   description: string | null;
   date: string;
   startTime: string | null;
   endTime: string | null;
-  eventType: string | null;
-  invitationStatus: string;
+  type: string | null;
   meetingUrl: string | null;
+  inviteStatus: string | null;
   cancelled: boolean;
-}
-
-export interface ScheduleStageSummary {
-  id: string;
-  projectId: string | null;
-  title: string;
-  description: string | null;
-  startDate: string | null;
-  endDate: string | null;
-  status: string;
-  progress: number | null;
-  weight: number | null;
-  order: number;
 }
 
 export interface ApprovalSummary {
   id: string;
-  projectId: string | null;
-  type: string;
   title: string;
   description: string | null;
   status: string;
-  comment: string | null;
   createdAt: string;
-  respondedAt: string | null;
+  updatedAt: string | null;
 }
 
 export interface RequestSummary {
   id: string;
-  projectId: string | null;
-  category: string;
   title: string;
-  message: string | null;
+  description: string | null;
   status: string;
-  origin: 'cliente' | 'administrador' | 'admin' | string;
   createdAt: string;
-  updatedAt: string;
-}
-
-export interface RequestReplySummary {
-  id: string;
-  requestId: string;
-  author: string;
-  message: string;
-  createdAt: string;
+  updatedAt: string | null;
+  createdByAdmin: boolean | null;
+  adminResponse: string | null;
 }
 
 export interface NotificationSummary {
   id: string;
   title: string;
-  message: string | null;
+  message: string;
   type: string | null;
   read: boolean;
   createdAt: string;
@@ -172,6 +143,7 @@ export interface AdminClientSummary {
   status: string;
   authId: string | null;
   createdAt: string;
+  partnership: boolean;
 }
 
 export interface AdminProjectSummary extends ProjectContext {
@@ -284,6 +256,11 @@ export interface FinancialEntrySummary {
   amount: number;
   date: string | null;
   notes: string | null;
+  category: string;
+  status: string;
+  dueDate: string | null;
+  paymentDate: string | null;
+  paymentMethod: string | null;
 }
 
 export interface FinancialArchiveSummary {
