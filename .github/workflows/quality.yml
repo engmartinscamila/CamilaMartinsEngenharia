@@ -1,6 +1,9 @@
 name: Auditoria completa do portal
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
@@ -33,6 +36,14 @@ jobs:
       - name: Auditoria estática
         run: node scripts/site-audit.mjs
 
+      - name: Validar JavaScript novo
+        run: |
+          node --check js/commercial-documents-web.js
+          node --check js/contract-documents-web.js
+          node --check js/document-archive-web.js
+          node --check js/ui-core.js
+          node --check js/auth.js
+
       - name: Instalar Chromium de teste
         run: |
           npm install --no-save playwright@1.55.0
@@ -44,6 +55,9 @@ jobs:
           echo $! > /tmp/cme-http.pid
           sleep 2
           curl --fail http://127.0.0.1:4173/admin.html >/dev/null
+          curl --fail http://127.0.0.1:4173/orcamentos-contratos.html >/dev/null
+          curl --fail http://127.0.0.1:4173/documentos-contratuais.html >/dev/null
+          curl --fail http://127.0.0.1:4173/arquivo-documental.html >/dev/null
 
       - name: Testes de interface
         run: node scripts/browser-smoke.mjs
@@ -53,12 +67,10 @@ jobs:
         run: |
           set -euo pipefail
           BASE="https://cme-public-media.eng-martins-camila.workers.dev"
-
           echo "== /health =="
           curl --fail --show-error --silent --retry 3 "$BASE/health" -o /tmp/cme-health.json
           cat /tmp/cme-health.json
           node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('/tmp/cme-health.json','utf8'));if(!(d.ok===true&&d.service==='cme-public-media'&&d.storage==='cloudflare-r2'&&d.catalog==='github')){console.error(d);process.exit(1)}"
-
           echo
           echo "== /api/manifest =="
           CODE=$(curl --show-error --silent --retry 1 -w "%{http_code}" "$BASE/api/manifest" -o /tmp/cme-manifest.json)

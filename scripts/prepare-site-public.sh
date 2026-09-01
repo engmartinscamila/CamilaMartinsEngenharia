@@ -17,6 +17,12 @@ for file in CNAME robots.txt sitemap.xml camila-martins.vcf firebase-messaging-s
   fi
 done
 
+# Garante que todas as páginas administrativas recebam imediatamente o menu e a proteção
+# das novas áreas, sem depender do cache de versões antigas de ui-core/auth.
+while IFS= read -r -d '' html; do
+  sed -E -i 's#js/ui-core\.js\?v=[0-9-]+#js/ui-core.js?v=20260901-2#g; s#js/auth\.js\?v=[0-9-]+#js/auth.js?v=20260901-2#g' "$html"
+done < <(find site-public -maxdepth 1 -type f -name '*.html' -print0)
+
 test -f site-public/firebase-messaging-sw.js
 test -f site-public/js/firebase-push-config.js
 test -f site-public/js/push-cliente.js
