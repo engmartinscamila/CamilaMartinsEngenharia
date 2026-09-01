@@ -11,7 +11,7 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
   headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' },
 });
 
-const digitsOnly = (value: unknown) => typeof value === 'string' ? value.replace(/\D/g, '') : '';
+const digitsOnly = (value: unknown) => (typeof value === 'string' || typeof value === 'number') ? String(value).replace(/\D/g, '') : '';
 
 function isValidCnpj(value: string) {
   if (!/^\d{14}$/.test(value) || /^(\d)\1{13}$/.test(value)) return false;
