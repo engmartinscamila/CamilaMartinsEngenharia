@@ -70,18 +70,23 @@ const payload = JSON.parse(await readFile(OUT, "utf8"));
 let frases = Array.isArray(payload.frases) ? payload.frases : [];
 if (frases.length !== 1000) throw new Error(`Acervo-base inválido: ${frases.length}`);
 
+// Remove somente frases idênticas às curadas. Não remove autores inteiros:
+// isso preserva a diversidade e evita reduzir o acervo abaixo de 1000 itens.
 const textosCurados = new Set(CURADORIA.map(x => normalizar(x.texto)));
-const autoresCurados = new Set(CURADORIA.map(x => normalizar(x.autor)));
-frases = frases.filter(x => !textosCurados.has(normalizar(x.texto)) && !autoresCurados.has(normalizar(x.autor)));
+frases = frases.filter(x => !textosCurados.has(normalizar(x.texto)));
 
 const autorais = frases.filter(x => normalizar(x.autor) === normalizar("Camila Martins"));
 const externas = frases.filter(x => normalizar(x.autor) !== normalizar("Camila Martins"));
+if (autorais.length < 200) throw new Error(`Frases autorais insuficientes: ${autorais.length}/200`);
+
 const externasNecessarias = 800 - CURADORIA.length;
+if (externas.length < externasNecessarias) throw new Error(`Citações externas insuficientes: ${externas.length}/${externasNecessarias}`);
+
 const finais = [...autorais.slice(0, 200), ...CURADORIA, ...externas.slice(0, externasNecessarias)];
 if (finais.length !== 1000) throw new Error(`Acervo após curadoria inválido: ${finais.length}`);
 
 const unicos = new Set(finais.map(x => normalizar(x.texto)));
-if (unicos.size !== 1000) throw new Error("Há frases duplicadas após curadoria.");
+if (unicos.size !== 1000) throw new Error(`Há frases duplicadas após curadoria: ${1000 - unicos.size}`);
 
 const ordenadas = semAutoresConsecutivos(finais);
 const autoresObrigatorios = CURADORIA.map(x => x.autor);
