@@ -11,11 +11,13 @@ import { env } from '@/lib/env';
 import { getDisplayName, getFirstName } from '@/lib/user-name';
 import { useAuth } from '@/providers/auth-provider';
 import { useThemeStyles } from '@/providers/theme-provider';
+import { listAdminProjects } from '@/services/admin-service';
 import { getAdminDashboard } from '@/services/portal-service';
 import { spacing, ThemeColors, typography } from '@/theme/tokens';
 import type { DashboardCounts } from '@/types/domain';
 
 const initialCounts: DashboardCounts = { activeClients: null, activeProjects: null, openRequests: null, pendingApprovals: null };
+const activeProjectStatuses = new Set(['ativo', 'em_andamento']);
 
 export default function AdminDashboard() {
   const { width } = useWindowDimensions();
@@ -28,7 +30,18 @@ export default function AdminDashboard() {
   const styles = useThemeStyles(styleDefinitions);
   const adminFirstName = getFirstName(getDisplayName(user, null, 'Camila'));
 
-  const load = useCallback(async () => { setLoading(true); const result = await getAdminDashboard(); setCounts(result.data); setError(result.error); setLoading(false); }, []);
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [dashboardResult, projectResult] = await Promise.all([getAdminDashboard(), listAdminProjects()]);
+    setCounts({
+      ...dashboardResult.data,
+      activeProjects: projectResult.error
+        ? dashboardResult.data.activeProjects
+        : projectResult.data.filter((project) => activeProjectStatuses.has(project.status)).length,
+    });
+    setError(dashboardResult.error ?? projectResult.error);
+    setLoading(false);
+  }, []);
   useEffect(() => { const task = setTimeout(() => void load(), 0); return () => clearTimeout(task); }, [load]);
   const exit = async () => { await signOut(); router.replace('/login'); };
 
