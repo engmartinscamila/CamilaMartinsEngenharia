@@ -23,6 +23,15 @@
         }
     }
 
+    function carregarAjusteMobile() {
+        if (document.getElementById("cmeMobileLayoutFix")) return;
+        const link = document.createElement("link");
+        link.id = "cmeMobileLayoutFix";
+        link.rel = "stylesheet";
+        link.href = "css/mobile-layout-fix.css?v=20260901-1";
+        document.head.appendChild(link);
+    }
+
     function criarBotao() {
         const acoes = document.querySelector(".topbar-actions");
         if (!acoes || document.getElementById("portalThemeToggle")) return;
@@ -59,6 +68,7 @@
     }
 
     aplicar(temaSalvo());
+    carregarAjusteMobile();
     carregarFraseDoDia();
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", criarBotao, { once: true });
