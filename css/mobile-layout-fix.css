@@ -1,0 +1,78 @@
+/* Ajuste exclusivamente responsivo: uniformiza largura e alinhamento no celular. */
+@media (max-width: 700px) {
+  /* Portal administrativo */
+  body:has(.layout .conteudo) .conteudo {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  body:has(.layout .conteudo) .conteudo > .topbar,
+  body:has(.layout .conteudo) .conteudo > section,
+  body:has(.layout .conteudo) .conteudo > .cards-dashboard,
+  body:has(.layout .conteudo) .conteudo > .painel-principal {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  body:has(.layout .conteudo) .topbar,
+  body:has(.layout .conteudo) .cards-dashboard,
+  body:has(.layout .conteudo) .painel-principal,
+  body:has(.layout .conteudo) .painel-esquerda,
+  body:has(.layout .conteudo) .painel-direita,
+  body:has(.layout .conteudo) .card,
+  body:has(.layout .conteudo) .card-grande,
+  body:has(.layout .conteudo) .card-lateral {
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Portal do cliente */
+  body:has(.portal-container) .portal-container {
+    width: auto !important;
+    max-width: none !important;
+    margin-left: 16px !important;
+    margin-right: 16px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  body:has(.portal-container) .welcome-section,
+  body:has(.portal-container) .portal-grid,
+  body:has(.portal-container) .bottom-grid,
+  body:has(.portal-container) .section-heading,
+  body:has(.portal-container) .portal-footer,
+  body:has(.portal-container) .cme-frase-do-dia {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  body:has(.portal-container) .welcome-card,
+  body:has(.portal-container) .status-card,
+  body:has(.portal-container) .portal-card,
+  body:has(.portal-container) .engineer-message,
+  body:has(.portal-container) .support-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+}
+
+@media (max-width: 420px) {
+  body:has(.layout .conteudo) .conteudo {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  body:has(.portal-container) .portal-container {
+    margin-left: 14px !important;
+    margin-right: 14px !important;
+  }
+}
