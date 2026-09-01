@@ -29,7 +29,7 @@ jobs:
           node-version: "22"
 
       - name: Gerar acervo de frases do dia
-        run: node scripts/build-frases-do-dia-fast.mjs
+        run: node scripts/build-frases-do-dia-fixed.mjs
 
       - name: Auditoria estática
         run: node scripts/site-audit.mjs
@@ -76,7 +76,7 @@ jobs:
           node-version: "22"
 
       - name: Gerar acervo de frases do dia
-        run: node scripts/build-frases-do-dia-fast.mjs
+        run: node scripts/build-frases-do-dia-fixed.mjs
 
       - name: Prepare protected classic website
         run: bash scripts/prepare-site-public.sh
