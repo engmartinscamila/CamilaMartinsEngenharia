@@ -75,7 +75,7 @@ export const CONTRACT_SCOPE_PRESETS = [
 
 export const CONTRACT_DOCUMENT_OPTIONS: Array<{ kind: Exclude<ContractDocumentKind, 'notificacao_formal' | 'termo_aceite'>; title: string; description: string }> = [
   { kind: 'anexo_i', title: 'Anexo I', description: 'Escopo, proposta comercial, valores e cronograma somente dos serviços contratados.' },
-  { kind: 'estudo_preliminar', title: 'Estudo Preliminar', description: 'Disponível apenas quando o serviço (a) estiver contratado.' },
+  { kind: 'estudo_preliminar', title: 'Estudo Preliminar', description: 'Documento auxiliar opcional. Se não estiver contratado no item (a), sua geração não altera o escopo do Anexo I.' },
   { kind: 'levantamento_tecnico', title: 'Ficha de Levantamento / Vistoria', description: 'Documento opcional para registrar medidas e condições verificadas no local.' },
   { kind: 'servico_adicional', title: 'Serviço Adicional', description: 'Orçamento e aprovação prévia para trabalho fora do escopo original.' },
   { kind: 'autorizacao_imagem', title: 'Autorização de Uso de Imagem', description: 'Permissões e restrições para divulgação do projeto.' },
