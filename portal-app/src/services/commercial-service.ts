@@ -52,6 +52,23 @@ export interface NewCommercialRecordInput {
   notes?: string;
 }
 
+export interface CommercialAddressLookup {
+  cep: string;
+  address: string;
+  city: string;
+  state: string;
+  neighborhood?: string;
+}
+
+export interface CommercialCnpjLookup extends CommercialAddressLookup {
+  cnpj: string;
+  legalName: string;
+  tradeName?: string;
+  phone?: string;
+  email?: string;
+  registrationStatus?: string;
+}
+
 export async function listCommercialRecords(): Promise<ServiceResult<CommercialRecord[]>> {
   const result = await supabase
     .from('commercial_records')
@@ -83,6 +100,22 @@ export async function listCommercialRecords(): Promise<ServiceResult<CommercialR
     })),
     error: null,
   };
+}
+
+export async function lookupCommercialCep(cep: string): Promise<ServiceResult<CommercialAddressLookup | null>> {
+  const result = await supabase.functions.invoke('lookup-commercial-data', { body: { kind: 'cep', value: cep } });
+  if (result.error || !result.data?.data) {
+    return { data: null, error: result.data?.error ?? result.error?.message ?? 'Não foi possível consultar o CEP.' };
+  }
+  return { data: result.data.data as CommercialAddressLookup, error: null };
+}
+
+export async function lookupCommercialCnpj(cnpj: string): Promise<ServiceResult<CommercialCnpjLookup | null>> {
+  const result = await supabase.functions.invoke('lookup-commercial-data', { body: { kind: 'cnpj', value: cnpj } });
+  if (result.error || !result.data?.data) {
+    return { data: null, error: result.data?.error ?? result.error?.message ?? 'Não foi possível consultar o CNPJ.' };
+  }
+  return { data: result.data.data as CommercialCnpjLookup, error: null };
 }
 
 export async function createCommercialRecord(input: NewCommercialRecordInput) {
