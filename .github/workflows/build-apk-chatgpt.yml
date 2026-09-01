@@ -153,6 +153,9 @@ jobs:
         working-directory: portal-app/android
         run: |
           sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -Dfile.encoding=UTF-8/' gradle.properties
+          # Expo may generate gradle.properties without a trailing newline. Ensure the
+          # custom properties below cannot be concatenated onto the previous value.
+          printf '\n' >> gradle.properties
           grep -q '^org.gradle.workers.max=' gradle.properties \
             && sed -i 's/^org.gradle.workers.max=.*/org.gradle.workers.max=2/' gradle.properties \
             || echo 'org.gradle.workers.max=2' >> gradle.properties
