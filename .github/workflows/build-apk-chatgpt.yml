@@ -38,7 +38,6 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # Preserve the same signing certificate used by prior installable builds.
       - name: Restore stable app signing key
         id: homologation-key-cache
         uses: actions/cache/restore@v4
@@ -123,12 +122,12 @@ jobs:
           assert.equal(app.android.package, 'br.com.camilamartinsengenharia.app');
           assert.equal(app.ios.bundleIdentifier, 'br.com.camilamartinsengenharia.app');
           assert.equal(app.android.googleServicesFile, './google-services.json');
-          assert.equal(app.version, '0.10.7');
+          assert.equal(app.version, '0.10.8');
           assert.equal(pkg.version, app.version);
           assert.equal(lock.packages[''].version, app.version);
           assert.equal(pkg.dependencies.firebase, '12.18.0');
           assert.equal(lock.packages['node_modules/firebase'].version, '12.18.0');
-          assert.equal(app.android.versionCode, 6);
+          assert.equal(app.android.versionCode, 7);
           assert.equal(google.project_info.project_id, 'cm-engenharia-62f61');
           assert.equal(google.project_info.project_number, '75516356862');
           assert.ok(google.client.some((entry) => entry.client_info?.android_client_info?.package_name === app.android.package));
@@ -138,7 +137,7 @@ jobs:
           assert.ok(!authSource.includes("from('usuarios')"), 'Auth não pode comparar UUID do Auth com usuarios.id BIGINT.');
           assert.ok(!pushSource.includes("from('usuarios')"), 'Push não pode misturar usuarios.id BIGINT com UUID de app_push_tokens.');
           assert.ok(!fs.existsSync('firebase.ts'), 'firebase.ts duplicado na raiz do portal-app.');
-          console.log('APROVADO: versão 0.10.7, identidade, push, lockfile, Firebase e identificadores móveis consistentes.');
+          console.log('APROVADO: versão 0.10.8, identidade, push, lockfile, Firebase e identificadores móveis consistentes.');
           NODE
 
       - name: Lint
@@ -194,41 +193,34 @@ jobs:
           set -euo pipefail
           APK="android/app/build/outputs/apk/release/app-release.apk"
           test -s "$APK" || { echo "ERRO: APK release ausente ou vazio."; exit 1; }
-
-          echo "Verificando pacote e versão do APK..."
           AAPT=$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)
           test -n "$AAPT" || { echo "ERRO: aapt não encontrado."; exit 1; }
           BADGING=$($AAPT dump badging "$APK" | head -n 1)
           echo "$BADGING"
           echo "$BADGING" | grep -F "name='br.com.camilamartinsengenharia.app'" >/dev/null || { echo "ERRO: package name incorreto."; exit 1; }
-          echo "$BADGING" | grep -F "versionCode='6'" >/dev/null || { echo "ERRO: versionCode incorreto."; exit 1; }
-          echo "$BADGING" | grep -F "versionName='0.10.7'" >/dev/null || { echo "ERRO: versionName incorreto."; exit 1; }
-
-          echo "Verificando assinatura criptográfica do APK..."
+          echo "$BADGING" | grep -F "versionCode='7'" >/dev/null || { echo "ERRO: versionCode incorreto."; exit 1; }
+          echo "$BADGING" | grep -F "versionName='0.10.8'" >/dev/null || { echo "ERRO: versionName incorreto."; exit 1; }
           APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
           test -n "$APKSIGNER" || { echo "ERRO: apksigner não encontrado."; exit 1; }
           "$APKSIGNER" verify --verbose --print-certs "$APK"
-
-          echo "Verificando bundle de execução incluído no APK..."
           BUNDLE_PATH=$(unzip -Z1 "$APK" | grep 'index.android.bundle$' | head -n 1 || true)
           test -n "$BUNDLE_PATH" || { echo "ERRO: index.android.bundle não encontrado dentro do APK."; exit 1; }
           unzip -p "$APK" "$BUNDLE_PATH" > /tmp/index.android.bundle
           test -s /tmp/index.android.bundle || { echo "ERRO: bundle Android incluído no APK está vazio."; exit 1; }
-
           BUNDLE_BYTES=$(wc -c < /tmp/index.android.bundle)
           echo "Bundle final encontrado: $BUNDLE_PATH ($BUNDLE_BYTES bytes)."
-          echo "APROVADO: APK final 0.10.7 possui pacote/versão corretos, assinatura válida e bundle de execução não vazio."
+          echo "APROVADO: APK final 0.10.8 possui pacote/versão corretos, assinatura válida e bundle de execução não vazio."
 
       - name: Collect APK
         run: |
           mkdir -p artifact
-          cp portal-app/android/app/build/outputs/apk/release/app-release.apk artifact/Camila-Martins-Engenharia-0.10.7.apk
+          cp portal-app/android/app/build/outputs/apk/release/app-release.apk artifact/Camila-Martins-Engenharia-0.10.8.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Camila-Martins-Engenharia-APK-0.10.7
-          path: artifact/Camila-Martins-Engenharia-0.10.7.apk
+          name: Camila-Martins-Engenharia-APK-0.10.8
+          path: artifact/Camila-Martins-Engenharia-0.10.8.apk
           if-no-files-found: error
           retention-days: 3
 
