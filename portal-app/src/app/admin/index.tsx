@@ -10,6 +10,7 @@ import { env } from '@/lib/env';
 import { getDisplayName, getFirstName } from '@/lib/user-name';
 import { useAuth } from '@/providers/auth-provider';
 import { useThemeStyles } from '@/providers/theme-provider';
+import { listAdminDocumentAttention } from '@/services/document-workflow-service';
 import { getAdminDashboard } from '@/services/portal-service';
 import { spacing, ThemeColors, typography } from '@/theme/tokens';
 import type { DashboardCounts } from '@/types/domain';
@@ -27,6 +28,8 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { signOut, user } = useAuth();
   const [counts, setCounts] = useState(initialCounts);
+  const [attentionCount, setAttentionCount] = useState(0);
+  const [overdueCount, setOverdueCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const styles = useThemeStyles(styleDefinitions);
@@ -34,9 +37,12 @@ export default function AdminDashboard() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const result = await getAdminDashboard();
-    setCounts(result.data);
-    setError(result.error);
+    const [dashboardResult, attentionResult] = await Promise.all([getAdminDashboard(), listAdminDocumentAttention()]);
+    setCounts(dashboardResult.data);
+    const actionable = attentionResult.data.filter((item) => item.attentionLevel !== 'normal' && item.formalNoticeStatus !== 'enviado');
+    setAttentionCount(actionable.length);
+    setOverdueCount(actionable.filter((item) => item.attentionLevel === 'overdue').length);
+    setError(dashboardResult.error ?? attentionResult.error);
     setLoading(false);
   }, []);
 
@@ -58,8 +64,10 @@ export default function AdminDashboard() {
   ] as const;
 
   const modules = [
+    { key: 'commercial-documents', onPress: () => router.push('/admin/commercial-documents'), icon: 'calculator-outline' as const, title: 'Orçamentos e contratos', description: 'Gerar proposta e contrato para prospects, sem cadastro prévio de cliente.' },
     { key: 'clients', onPress: () => router.push('/admin/clients'), icon: 'people-outline' as const, title: 'Clientes e acessos', description: 'Convidar, arquivar, reativar, revogar ou excluir com confirmação.' },
     { key: 'projects', onPress: () => router.push('/admin/projects'), icon: 'briefcase-outline' as const, title: 'Contratos e projetos', description: 'Cadastro inseparável pelo número do contrato e acompanhamento.' },
+    { key: 'contract-documents', onPress: () => router.push('/admin/contract-documents'), icon: 'document-text-outline' as const, title: 'Documentos contratuais', description: 'Escopo opcional, prazos de aceite, termos e notificações formais.' },
     { key: 'documents', onPress: () => router.push({ pathname: '/admin/content', params: { tipo: 'document' } }), icon: 'documents-outline' as const, title: 'Documentos', description: 'ART/RRT, contratos, orçamentos e arquivos técnicos classificados por proteção.' },
     { key: 'photos', onPress: () => router.push({ pathname: '/admin/content', params: { tipo: 'photo' } }), icon: 'images-outline' as const, title: 'Fotos e evolução da obra', description: 'Registros fotográficos protegidos e vinculados aos projetos.' },
     { key: 'library', onPress: () => router.push({ pathname: '/admin/content', params: { tipo: 'library' } }), icon: 'library-outline' as const, title: 'Biblioteca', description: 'Guias, catálogos e materiais exclusivos organizados por projeto.' },
@@ -91,6 +99,16 @@ export default function AdminDashboard() {
       </View>
       <PageHeader eyebrow="Administração" title={`Olá, ${adminFirstName}.`} description="Visão geral dos clientes, projetos e atividades do aplicativo." />
       {env.isHomologation ? <Notice tone="info">Ambiente de homologação: os indicadores incluem as contas e os registros usados no teste de isolamento A/B.</Notice> : null}
+      {attentionCount > 0 ? (
+        <Card>
+          <Notice tone={overdueCount > 0 ? 'danger' : 'warning'}>
+            {overdueCount > 0
+              ? `${overdueCount} aprovação(ões) já ultrapassaram o prazo contratual de manifestação. Há ${attentionCount} pendência(s) que exigem sua atenção.`
+              : `${attentionCount} aprovação(ões) estão a até 3 dias do fim do prazo contratual de manifestação.`}
+          </Notice>
+          <Button onPress={() => router.push('/admin/contract-documents')} title="Ver pendências contratuais" variant="secondary" />
+        </Card>
+      ) : null}
       {error ? <Notice tone="warning">{error} Valores indisponíveis não são exibidos como zero.</Notice> : null}
       <View style={[styles.metrics, isMobile && styles.metricsMobile]}>
         {metrics.map((metric) => (

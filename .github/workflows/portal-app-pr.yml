@@ -1,0 +1,46 @@
+name: Validação portal-app
+
+on:
+  pull_request:
+    paths:
+      - 'portal-app/**'
+      - '.github/workflows/portal-app-pr.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: portal-app-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: portal-app
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: portal-app/.node-version
+          cache: npm
+          cache-dependency-path: portal-app/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: TypeScript
+        run: npm run typecheck
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Testes de patches de segurança
+        run: npm run security:test

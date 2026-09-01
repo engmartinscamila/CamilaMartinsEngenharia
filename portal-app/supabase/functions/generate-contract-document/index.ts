@@ -1,0 +1,276 @@
+import { createClient } from 'supabase';
+import { AlignmentType, Document, HeadingLevel, Packer, Paragraph, TextRun } from 'docx';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } });
+}
+
+function environment() {
+  const url = Deno.env.get('SUPABASE_URL');
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!url || !anonKey || !serviceKey) throw new Error('Configuração segura do Supabase ausente.');
+  return { url, anonKey, serviceKey };
+}
+
+async function requireAdmin(req: Request) {
+  const authorization = req.headers.get('Authorization');
+  if (!authorization?.startsWith('Bearer ')) throw new Error('Sessão administrativa ausente.');
+  const { url, anonKey, serviceKey } = environment();
+  const caller = createClient(url, anonKey, {
+    global: { headers: { Authorization: authorization } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data: userData, error: userError } = await caller.auth.getUser();
+  if (userError || !userData.user) throw new Error('Sessão administrativa inválida.');
+  const { data: isAdmin, error: adminError } = await caller.rpc('is_portal_admin');
+  if (adminError || isAdmin !== true) throw new Error('Acesso administrativo necessário.');
+  return {
+    caller,
+    service: createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } }),
+    user: userData.user,
+  };
+}
+
+type Data = Record<string, unknown>;
+
+function textValue(data: Data, key: string, fallback = '_______________________________________________') {
+  const raw = data[key];
+  return typeof raw === 'string' && raw.trim() ? raw.trim() : fallback;
+}
+
+function datePt(raw: unknown) {
+  if (typeof raw !== 'string' || !raw) return '_____/_____/________';
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? raw : new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
+}
+
+const paragraph = (text: string, bold = false) => new Paragraph({
+  spacing: { after: 120 },
+  children: [new TextRun({ text, bold, font: 'Century Gothic', size: 20 })],
+});
+
+const heading = (text: string) => new Paragraph({
+  heading: HeadingLevel.HEADING_2,
+  spacing: { before: 220, after: 100 },
+  children: [new TextRun({ text, bold: true, font: 'Century Gothic', size: 22 })],
+});
+
+function title(text: string, subtitle?: string) {
+  return [
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 80 }, children: [new TextRun({ text, bold: true, font: 'Century Gothic', size: 28 })] }),
+    ...(subtitle ? [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 240 }, children: [new TextRun({ text: subtitle, font: 'Century Gothic', size: 18 })] })] : []),
+  ];
+}
+
+function identity(data: Data) {
+  return [
+    heading('1. IDENTIFICAÇÃO'),
+    paragraph(`Contrato nº / Data de assinatura: ${textValue(data, 'contract_number')} / ${datePt(data.contract_signed_at)}`),
+    paragraph('CONTRATADO(A): Camila Martins Engenharia Civil'),
+    paragraph(`CONTRATANTE: ${textValue(data, 'client_name')}`),
+    paragraph(`Projeto: ${textValue(data, 'project_name')}`),
+    paragraph(`Endereço do imóvel/obra: ${textValue(data, 'property_address')}`),
+  ];
+}
+
+function signatures() {
+  return [paragraph('Local e data: _______________________________, _____/_____/________'), paragraph('_______________________________________________'), paragraph('CONTRATADO(A)'), paragraph('_______________________________________________'), paragraph('CONTRATANTE')];
+}
+
+function formalNotice(data: Data) {
+  const consequences = Array.isArray(data.consequences) ? data.consequences.filter((item): item is string => typeof item === 'string') : [];
+  const days = typeof data.regularization_days === 'number' ? data.regularization_days : 3;
+  const today = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+  return new Document({ sections: [{ properties: {}, children: [
+    ...title('NOTIFICAÇÃO FORMAL', 'Atraso / Pendência contratual'), ...identity(data),
+    paragraph(`Data desta notificação: ${today}`), heading('2. MOTIVO DA NOTIFICAÇÃO'),
+    paragraph('☒ Ausência de manifestação sobre etapa entregue, dentro do prazo contratual.'),
+    heading('3. DESCRIÇÃO DO FATO'), paragraph(`Etapa/decisão aguardando manifestação: ${textValue(data, 'approval_title')}.`),
+    paragraph(`Material entregue em ${datePt(data.delivered_at)}. O prazo contratual de 10 (dez) dias corridos encerrou-se em ${datePt(data.approval_due_at)} sem manifestação registrada no portal.`),
+    data.approval_description ? paragraph(`Descrição da entrega: ${String(data.approval_description)}`) : paragraph('Descrição da entrega: conforme material disponibilizado pelos canais oficiais.'),
+    heading('4. PRAZO PARA REGULARIZAÇÃO'), paragraph(`Fica concedido o prazo de ${days} (${days}) dias corridos, a contar do recebimento desta notificação, para a regularização da pendência acima descrita.`),
+    heading('5. CONSEQUÊNCIAS EM CASO DE NÃO REGULARIZAÇÃO'),
+    ...(consequences.length ? consequences.map((item) => paragraph(`☒ ${item}`)) : [paragraph('☐ Suspensão da contagem dos prazos de execução previstos no Anexo I, sem caracterização de mora do(a) CONTRATADO(A).')]),
+    heading('6. ENVIO'), paragraph('Esta notificação é enviada pelos canais oficiais previstos no contrato, considerando-se válida e eficaz a partir do envio, conforme as disposições contratuais aplicáveis.'),
+    ...signatures(),
+  ] }] });
+}
+
+function acceptance(data: Data) {
+  return new Document({ sections: [{ properties: {}, children: [
+    ...title('TERMO DE ACEITE DE ETAPA', 'Documento previsto no item 6.5 do Contrato'), ...identity(data),
+    heading('2. ETAPA ENTREGUE'),
+    paragraph(`Etapa: ${textValue(data, 'approval_title')}`),
+    paragraph('☐ Estudo Preliminar (a)   ☐ Anteprojeto (b)   ☐ Projeto Legal (c)   ☐ Projeto Executivo (d)'),
+    paragraph('☐ Projeto(s) Complementar(es) (e, f, g...)   ☐ Legalização / Aprovação junto à Prefeitura (k)   ☐ Outra: __________________'),
+    heading('3. DADOS DA ENTREGA'), paragraph(`Data do envio/entrega: ${datePt(data.delivered_at)}`),
+    paragraph('Meio de envio (e-mail, WhatsApp, plataforma, etc.): _______________________________________________'),
+    paragraph(`Descrição sucinta do material entregue: ${textValue(data, 'approval_description')}`),
+    paragraph('Parcela vinculada a esta etapa (conforme Anexo I): _______________________________________________'),
+    paragraph('Rodada de revisão utilizada nesta entrega: _____ª de _____ incluídas (item 6.1 / Anexo I)'),
+    paragraph('Próxima etapa prevista no cronograma (Anexo I, item 7.1): _______________________________________________'),
+    heading('4. MANIFESTAÇÃO DO(A) CONTRATANTE'),
+    paragraph('Nos termos do item 6.3 do contrato, o(a) CONTRATANTE tem o prazo de 10 (dez) dias corridos, contados do recebimento deste material, para apontar por escrito eventuais inconsistências. O decurso desse prazo sem manifestação gera presunção de aceite tácito para fins de contagem de prazos e cobrança, independentemente da devolução deste formulário.'),
+    paragraph('☐ Aceito a etapa entregue, sem ressalvas.'), paragraph('☐ Aceito a etapa entregue, com as seguintes ressalvas:'), paragraph('_______________________________________________________________________________'),
+    heading('5. ASSINATURAS'), ...signatures(),
+  ] }] });
+}
+
+function additionalService(data: Data) {
+  return new Document({ sections: [{ properties: {}, children: [
+    ...title('TERMO DE APROVAÇÃO DE ORÇAMENTO — SERVIÇO ADICIONAL', 'Aprovação prévia e por escrito antes do início do serviço'), ...identity(data),
+    heading('2. ORIGEM DA SOLICITAÇÃO'),
+    paragraph('☐ Revisão além das rodadas incluídas na etapa (item 6.1/6.2).'), paragraph('☐ Alteração de escopo, premissas ou programa após aprovação de etapa (item 7.2).'),
+    paragraph('☐ Migração para nível de experiência superior — upgrade Bronze/Prata/Ouro (item 1.9).'), paragraph('☐ Vistoria técnica ou levantamento de medidas não incluído no escopo original (item 4.2).'),
+    paragraph('☐ Atualização de projeto as built por alteração executada no imóvel (item 9.1).'), paragraph('☐ Formato de arquivo editável não previsto no Anexo I (item 1.3).'), paragraph('☐ Outro: _______________________________________________'),
+    heading('3. DESCRIÇÃO DO SERVIÇO ADICIONAL'), paragraph(textValue(data, 'additional_service_description')),
+    heading('4. ESTIMATIVA E CRITÉRIO DE COBRANÇA'), paragraph('Critério: ☐ Hora técnica (R$ 180,00/h)   ☐ 20% sobre a etapa afetada'),
+    paragraph('Estimativa de horas ou % aplicável: _______________________________________________'), paragraph('Valor total do orçamento: R$ _______________________________________________'),
+    paragraph('Impacto no prazo do cronograma: __________________ dias úteis adicionais'),
+    heading('5. FORMA E PRAZO DE PAGAMENTO'), paragraph('O valor deste orçamento, uma vez aprovado, segue o mesmo prazo de cobrança de 30 (trinta) dias corridos contados da entrega/notificação, salvo condição diversa indicada abaixo.'),
+    paragraph('Condição diversa (se houver): _______________________________________________'),
+    heading('6. APROVAÇÃO'), paragraph('Este orçamento somente produz efeitos e autoriza o início do serviço adicional após aprovação expressa e por escrito do(a) CONTRATANTE.'), paragraph('☐ Aprovo o orçamento acima e autorizo o início do serviço adicional descrito.'), ...signatures(),
+  ] }] });
+}
+
+function imageAuthorization(data: Data) {
+  return new Document({ sections: [{ properties: {}, children: [
+    ...title('AUTORIZAÇÃO DE USO DE IMAGEM E DIVULGAÇÃO DO PROJETO', 'Documento complementar ao Contrato — Cláusula 13ª'), ...identity(data),
+    heading('2. OBJETO DA AUTORIZAÇÃO'), paragraph('O(A) CONTRATANTE autoriza, de forma gratuita e não exclusiva, o(a) CONTRATADO(A) a utilizar fotografias, imagens de renderização 3D, vídeos, tour virtual 360°, plantas e demais materiais produzidos em razão da prestação dos serviços, para divulgação profissional e comercial.'),
+    paragraph('Inclui portfólio profissional, redes sociais, materiais de apresentação, concursos, premiações e publicações técnicas ou de imprensa especializada.'),
+    heading('3. ABRANGÊNCIA E RESTRIÇÕES'), paragraph('☐ Autorização irrestrita — imagens internas e externas, sem necessidade de aprovação prévia a cada uso.'),
+    paragraph('☐ Restrita a imagens externas/fachada, sem ambientes internos.'), paragraph('☐ Condicionada à não identificação do endereço exato do imóvel.'),
+    paragraph('☐ Aguardar prazo mínimo de _____ meses após a conclusão da obra.'), paragraph('☐ Outras restrições: _______________________________________________'),
+    heading('4. PRAZO E CARÁTER DA AUTORIZAÇÃO'), paragraph('A autorização vigora por prazo indeterminado e pode ser revogada por escrito, com efeitos exclusivamente prospectivos. É concedida gratuitamente e não gera remuneração adicional ao(à) CONTRATANTE. Os créditos de autoria permanecem atribuídos ao(à) CONTRATADO(A).'),
+    heading('5. PROTEÇÃO DE DADOS PESSOAIS (LGPD)'), paragraph('A divulgação deverá observar a legislação aplicável e as restrições registradas neste termo, especialmente quando houver pessoas identificáveis ou dados pessoais nas imagens.'), ...signatures(),
+  ] }] });
+}
+
+function closing(data: Data) {
+  return new Document({ sections: [{ properties: {}, children: [
+    ...title('TERMO DE QUITAÇÃO E ENCERRAMENTO DE CONTRATO', 'Formalização do encerramento da relação contratual'), ...identity(data),
+    heading('2. MOTIVO DO ENCERRAMENTO'), paragraph('☐ Conclusão integral do escopo contratado no Anexo I, com entrega de todas as etapas previstas.'),
+    paragraph('☐ Rescisão antecipada por iniciativa do(a) CONTRATANTE.'), paragraph('☐ Rescisão antecipada por iniciativa do(a) CONTRATADO(A).'), paragraph('☐ Rescisão por mútuo acordo entre as partes.'), paragraph('☐ Outro motivo: _______________________________________________'),
+    heading('3. ENTREGA DE MATERIAIS'), paragraph('O(A) CONTRATADO(A) declara ter entregue ao(à) CONTRATANTE os arquivos, documentos técnicos e materiais correspondentes ao escopo efetivamente executado até a data deste termo, nos formatos previstos no contrato e no Anexo I.'), paragraph('Relação sucinta dos materiais entregues / pendências: _______________________________________________'),
+    heading('4. SITUAÇÃO FINANCEIRA'), paragraph('☐ Quitação integral — todas as parcelas e eventuais serviços adicionais foram pagos.'), paragraph('☐ Existe saldo pendente.'), paragraph('Valor do saldo pendente: _______________________________________________'), paragraph('Prazo e forma de pagamento: _______________________________________________'),
+    heading('5. QUITAÇÃO RECÍPROCA'), paragraph('As partes declaram nada mais terem a reclamar relativamente às obrigações contratuais, exceto quanto a saldo pendente indicado e às garantias legais que permanecem em vigor independentemente do encerramento.'),
+    paragraph('A quitação não representa renúncia a direitos irrenunciáveis nem exclui responsabilidade técnica e civil prevista em lei e no contrato.'),
+    heading('6. DISPOSIÇÕES FINAIS'), paragraph('Permanecem vigentes as disposições contratuais de natureza continuada, inclusive direitos autorais, confidencialidade e demais obrigações aplicáveis após o encerramento.'), heading('7. ASSINATURAS'), ...signatures(),
+  ] }] });
+}
+
+function survey(data: Data) {
+  return new Document({ sections: [{ properties: {}, children: [
+    ...title('FICHA DE LEVANTAMENTO TÉCNICO / VISTORIA', 'Registro das medidas e condições constatadas no local na data da vistoria'), ...identity(data),
+    paragraph('Data e horário da vistoria: _______________________________________________'), paragraph('Esta vistoria está incluída no escopo original (Anexo I)? ☐ Sim   ☐ Não — se não, vinculada ao orçamento nº: __________________'),
+    heading('2. DADOS GERAIS DO IMÓVEL'), paragraph(`Tipo de imóvel: ${textValue(data, 'project_type')}`), paragraph(`Área do terreno (m²): ${String(data.area_terreno_m2 ?? '__________')}   Área construída (m²): ${String(data.area_construida_m2 ?? '__________')}`), paragraph('Número de pavimentos: __________   Idade aproximada da construção: __________'),
+    heading('3. MEDIDAS COLETADAS POR AMBIENTE'), paragraph('Ambiente | Comprimento (m) | Largura (m) | Pé-direito (m) | Observações'),
+    ...Array.from({ length: 8 }, () => paragraph('________________ | ______ | ______ | ______ | ________________________________________')),
+    heading('4. PONTOS E INSTALAÇÕES EXISTENTES'), paragraph('☐ Pontos elétricos — localização registrada.'), paragraph('☐ Pontos hidráulicos — localização registrada.'), paragraph('☐ Elementos estruturais aparentes.'), paragraph('☐ Esquadrias existentes — dimensões registradas.'), paragraph('☐ Outros: _______________________________________________'),
+    heading('5. CONDIÇÕES GERAIS OBSERVADAS'), paragraph('☐ Fissuras ou trincas aparentes.'), paragraph('☐ Sinais de umidade ou infiltração.'), paragraph('☐ Desníveis de piso fora do previsto em projeto.'), paragraph('☐ Divergência entre realidade física e documentos/medidas fornecidos pelo(a) CONTRATANTE.'), paragraph('Descrição detalhada das divergências: _______________________________________________'),
+    heading('6. REGISTRO FOTOGRÁFICO'), paragraph('Fotografias e demais registros vinculados a esta vistoria poderão ser anexados no Portal do Cliente / pasta do projeto.'), heading('7. OBSERVAÇÕES E ASSINATURAS'), paragraph('Observações adicionais: _______________________________________________'), ...signatures(),
+  ] }] });
+}
+
+function preliminary(data: Data) {
+  return new Document({ sections: [{ properties: {}, children: [
+    ...title('ESTUDO PRELIMINAR', 'Etapa contratada conforme Anexo I'), ...identity(data),
+    heading('2. CONDICIONANTES E PREMISSAS'), paragraph('Registrar aqui as condicionantes urbanísticas, legais, físicas e informações fornecidas pelo(a) CONTRATANTE que orientaram o estudo.'), paragraph('_______________________________________________________________________________'),
+    heading('3. PROGRAMA DE NECESSIDADES'), paragraph('Ambiente / setor | Quantidade | Área ou observação'), ...Array.from({ length: 8 }, () => paragraph('____________________________ | ______ | ________________________________________')),
+    heading('4. PARTIDO ARQUITETÔNICO PROPOSTO'), paragraph('Descrição do conceito e das diretrizes projetuais adotadas para responder ao programa de necessidades e às condicionantes legais e do entorno:'), paragraph('_______________________________________________________________________________'),
+    heading('5. ORGANIZAÇÃO ESPACIAL / SETORIZAÇÃO'), paragraph('Social: _______________________________________________'), paragraph('Íntimo: _______________________________________________'), paragraph('Serviço: _______________________________________________'), paragraph('Externo/lazer: _______________________________________________'),
+    heading('6. QUADRO DE ÁREAS ESTIMADO'), paragraph('Pavimento | Área privativa (m²) | Área comum/externa (m²) | Subtotal (m²)'), paragraph('Térreo: __________ | __________ | __________'), paragraph('Pavimento superior: __________ | __________ | __________'), paragraph('TOTAL GERAL: __________ m²'),
+    paragraph('A área total apresentada é estimativa preliminar, sujeita a ajustes nas etapas seguintes, sem que isso configure vício do serviço.'),
+    heading('7. REPRESENTAÇÃO GRÁFICA DO ESTUDO'), paragraph('Inserir pranchas do Estudo Preliminar: implantação, plantas esquemáticas, cortes, volumetria inicial e eventuais imagens 3D ilustrativas.'), paragraph('Imagens, renders e simulações visuais têm caráter ilustrativo e não constituem garantia de resultado exato quanto a cores, texturas, iluminação e acabamentos.'),
+    heading('8. ESTIMATIVA PRELIMINAR DE INVESTIMENTO'), paragraph('Quando solicitada, consta em documento apartado (Orçamento/Proposta Comercial), de caráter informativo e não vinculante para a execução da obra.'),
+    heading('9. PRÓXIMOS PASSOS E PRAZOS'), paragraph('Após a validação deste Estudo Preliminar seguem-se somente as etapas efetivamente contratadas no Anexo I.'), paragraph('Manifestação do(a) CONTRATANTE: até 10 dias corridos da entrega. Ausência de manifestação: presunção de aceite tácito para fins de prazos e cobrança, conforme contrato.'),
+    heading('10. OBSERVAÇÕES E RESSALVAS'), paragraph('Este Estudo Preliminar não substitui o Projeto Legal nem autoriza o início da obra.'), paragraph('Alterações de programa, metragem ou partido já validados, quando solicitadas após aprovação formal, poderão ser tratadas como serviço adicional conforme contrato.'),
+    heading('11. ACEITE DESTA ETAPA'), paragraph('O aceite formal deverá ser registrado no Termo de Aceite de Etapa correspondente.'), ...signatures(),
+  ] }] });
+}
+
+function annex(data: Data) {
+  const scope = Array.isArray(data.scope_items) ? data.scope_items as Array<Record<string, unknown>> : [];
+  const included = scope.filter((item) => item.included === true);
+  return new Document({ sections: [{ properties: {}, children: [
+    ...title('ANEXO I', 'ESCOPO DE SERVIÇOS, PROPOSTA COMERCIAL E CRONOGRAMA'), ...identity(data),
+    heading('2. DESCRIÇÃO DO IMÓVEL / OBRA'), paragraph(`Tipo de imóvel: ${textValue(data, 'project_type')}`), paragraph(`Área do terreno (m²): ${String(data.area_terreno_m2 ?? '__________')}`), paragraph(`Área construída prevista (m²): ${String(data.area_construida_m2 ?? '__________')}`), paragraph('Número de pavimentos: __________   Padrão construtivo: ☐ simples ☐ médio ☐ alto'),
+    heading('3. SERVIÇOS CONTRATADOS'), paragraph('Somente os serviços assinalados integram o escopo. Serviços não assinalados não integram o escopo e, se solicitados posteriormente, serão tratados como serviço adicional.'),
+    ...(included.length ? included.map((item) => paragraph(`☒ (${String(item.code ?? '')}) ${String(item.name ?? '')}${item.notes ? ` — ${String(item.notes)}` : ''}`)) : [paragraph('Nenhum serviço marcado no cadastro do Anexo I. Revisar antes da emissão definitiva.')]),
+    heading('4. FORMATO DE ENTREGA DOS ARQUIVOS'), paragraph('☒ Entrega padrão em PDF'), paragraph('☐ Entrega adicional em formato editável (DWG / IFC / RVT) — quando contratada ou aprovada como serviço adicional.'),
+    heading('5. REVISÕES INCLUÍDAS'), paragraph('Número de rodadas de revisão incluídas por etapa: _____ (_____) rodadas.'),
+    heading('6. VALOR TOTAL E FORMA DE PAGAMENTO'), paragraph(`Valor total dos honorários: R$ ${String(data.contract_value ?? '__________________')}`), paragraph('Parcela | Item(ns) vinculados | Valor (R$) | Vencimento'), paragraph('1 (entrada) | __________________ | __________ | Na assinatura'), ...Array.from({ length: 3 }, (_, i) => paragraph(`${i + 2} | __________________ | __________ | __________________`)),
+    heading('7. CRONOGRAMA POR ETAPA'), paragraph('Preencher apenas as etapas correspondentes aos itens efetivamente contratados.'), ...included.map((item, i) => paragraph(`${i + 1}. (${String(item.code ?? '')}) ${String(item.name ?? '')} | Prazo: __________________ | Termo de Aceite: ${item.acceptance_required === false ? 'Não aplicável' : '☐ Aplicável'}`)), paragraph('Prazo total, caso não detalhado etapa a etapa: __________________ dias úteis.'),
+    heading('8. ITENS EXPRESSAMENTE EXCLUÍDOS DESTE ESCOPO'), paragraph('_______________________________________________________________________________'), heading('9. ASSINATURAS'), ...signatures(),
+  ] }] });
+}
+
+function buildDocument(kind: string, data: Data) {
+  switch (kind) {
+    case 'notificacao_formal': return formalNotice(data);
+    case 'termo_aceite': return acceptance(data);
+    case 'servico_adicional': return additionalService(data);
+    case 'autorizacao_imagem': return imageAuthorization(data);
+    case 'quitacao_encerramento': return closing(data);
+    case 'levantamento_tecnico': return survey(data);
+    case 'estudo_preliminar': return preliminary(data);
+    case 'anexo_i': return annex(data);
+    default: throw new Error('Tipo de documento ainda não suportado por este gerador.');
+  }
+}
+
+const fileNames: Record<string, string> = {
+  notificacao_formal: 'notificacao-formal', termo_aceite: 'termo-aceite', servico_adicional: 'servico-adicional',
+  autorizacao_imagem: 'autorizacao-uso-imagem', quitacao_encerramento: 'quitacao-encerramento', levantamento_tecnico: 'levantamento-tecnico',
+  estudo_preliminar: 'estudo-preliminar', anexo_i: 'anexo-i',
+};
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST') return json({ error: 'Método não permitido.' }, 405);
+  try {
+    const { caller, service, user } = await requireAdmin(req);
+    const body = await req.json();
+    const documentId = typeof body.documentId === 'string' ? body.documentId : '';
+    const action = body.action === 'send' ? 'send' : 'generate';
+    if (!/^[0-9a-f-]{36}$/i.test(documentId)) return json({ error: 'Documento inválido.' }, 400);
+    const { error: rateError } = await caller.rpc('consume_admin_rate_limit', { p_action: `contract-document-${action}` });
+    if (rateError) return json({ error: 'Muitas tentativas. Aguarde antes de repetir a operação.' }, 429);
+
+    const { data: row, error: rowError } = await service.from('documentos')
+      .select('id, cliente_id, projeto_id, contract_id, nome, arquivo, storage_bucket, document_kind, workflow_status, generated_data, versao')
+      .eq('id', documentId).maybeSingle();
+    if (rowError) throw rowError;
+    if (!row) return json({ error: 'Documento não encontrado.' }, 404);
+    if (!fileNames[row.document_kind]) return json({ error: 'Tipo de documento ainda não suportado por este gerador.' }, 400);
+
+    if (action === 'send') {
+      if (!row.arquivo || row.workflow_status === 'rascunho') return json({ error: 'Gere o Word antes de enviá-lo ao cliente.' }, 400);
+      await service.from('documentos').update({ workflow_status: 'enviado' }).eq('id', row.id);
+      await service.from('notificacoes').insert({ cliente_id: row.cliente_id, projeto_id: row.projeto_id, titulo: `${row.nome} disponível`, mensagem: 'Um novo documento vinculado ao seu contrato foi disponibilizado em Documentos.', tipo: 'documento_contratual', destinatario: 'cliente', referencia_tipo: 'documento', referencia_id: row.id, link_path: '/(client)/documents', lida: false });
+      await service.from('audit_log').insert({ user_id: user.id, action: 'send_contract_document', entity_type: 'documentos', entity_id: row.id, details: { document_kind: row.document_kind, project_id: row.projeto_id, contract_id: row.contract_id } });
+      return json({ sent: true });
+    }
+
+    const document = buildDocument(row.document_kind, (row.generated_data ?? {}) as Data);
+    const buffer = await Packer.toBuffer(document);
+    const version = String(row.versao ?? '1.0').replace(/[^0-9.]/g, '') || '1.0';
+    const path = `${row.projeto_id}/contratual/${row.id}/${fileNames[row.document_kind]}-v${version}.docx`;
+    const { error: uploadError } = await service.storage.from('documentos').upload(path, buffer, { contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', upsert: true });
+    if (uploadError) throw uploadError;
+    const { error: updateError } = await service.from('documentos').update({ arquivo: path, storage_bucket: 'documentos', workflow_status: 'gerado', generated_at: new Date().toISOString() }).eq('id', row.id);
+    if (updateError) throw updateError;
+    await service.from('audit_log').insert({ user_id: user.id, action: 'generate_contract_document_docx', entity_type: 'documentos', entity_id: row.id, details: { document_kind: row.document_kind, path } });
+    return json({ generated: true, documentId: row.id, path });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Não foi possível gerar o documento.';
+    return json({ error: message }, message.includes('Acesso') ? 403 : message.includes('Sessão') ? 401 : 500);
+  }
+});
