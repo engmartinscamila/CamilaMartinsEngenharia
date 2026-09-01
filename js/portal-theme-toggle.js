@@ -40,7 +40,16 @@
         aplicar(temaSalvo());
     }
 
+    function carregarFonteAssinatura() {
+        if (document.getElementById("cmeBrittanyFont")) return;
+        const style = document.createElement("style");
+        style.id = "cmeBrittanyFont";
+        style.textContent = '@font-face{font-family:"Brittany";src:url("assets/fonts/BrittanySignatureScript.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap}:root{--font-signature:"Brittany","Parisienne","Segoe Script",cursive}';
+        document.head.appendChild(style);
+    }
+
     function carregarFraseDoDia() {
+        carregarFonteAssinatura();
         if (window.__CME_FRASE_DO_DIA__ || document.getElementById("cmeFraseDoDiaScript")) return;
         const script = document.createElement("script");
         script.id = "cmeFraseDoDiaScript";
