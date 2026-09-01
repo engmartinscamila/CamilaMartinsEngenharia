@@ -40,7 +40,17 @@
         aplicar(temaSalvo());
     }
 
+    function carregarFraseDoDia() {
+        if (window.__CME_FRASE_DO_DIA__ || document.getElementById("cmeFraseDoDiaScript")) return;
+        const script = document.createElement("script");
+        script.id = "cmeFraseDoDiaScript";
+        script.src = "js/frase-do-dia.js?v=20260901-1";
+        script.defer = true;
+        document.head.appendChild(script);
+    }
+
     aplicar(temaSalvo());
+    carregarFraseDoDia();
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", criarBotao, { once: true });
     } else {
