@@ -2,246 +2,63 @@ import { createHash } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 
 const FONTE_SHA = "49a7da15a265eb319b3c3d0514ff35be107e5342";
-const FONTE_URL = `https://raw.githubusercontent.com/luiz-lp/frase-do-dia/${FONTE_SHA}/data/quotes.json`;
+const FONTE_PT = `https://raw.githubusercontent.com/luiz-lp/frase-do-dia/${FONTE_SHA}/data/quotes.json`;
+const GUTENDEX = "https://gutendex.com/books/";
 const SAIDA = "assets/frases-do-dia.json";
 const TOTAL_EXTERNAS = 800;
 const TOTAL_CAMILA = 200;
 
 const INICIOS_CAMILA = [
-  "Grandes resultados nascem da constância",
-  "A clareza transforma esforço em direção",
-  "O progresso começa com uma decisão consciente",
-  "A disciplina sustenta aquilo que a motivação inicia",
-  "Conhecimento ganha valor quando se transforma em ação",
-  "A excelência cresce nos detalhes bem cuidados",
-  "Boas decisões nascem de perguntas bem formuladas",
-  "A paciência também é uma forma de inteligência",
-  "Coragem é seguir adiante com consciência",
-  "Todo projeto sólido começa por uma boa base",
-  "A criatividade floresce quando há espaço para observar",
-  "Planejamento reduz ruído e amplia possibilidades",
-  "Quem aprende continuamente amplia o próprio horizonte",
-  "Consistência é o elo entre intenção e resultado",
-  "A simplicidade é sinal de compreensão profunda",
-  "Um passo bem dado vale mais que dez impulsivos",
-  "Resultados duradouros respeitam processos",
-  "A atenção dedicada ao presente melhora o futuro",
-  "Aprender a priorizar é aprender a avançar",
-  "O tempo revela o valor daquilo que foi bem construído",
-  "Curiosidade abre caminhos que a pressa não percebe",
-  "Persistência transforma dificuldade em experiência",
-  "Responsabilidade dá forma concreta aos objetivos",
-  "A qualidade de uma escolha começa na qualidade da análise",
-  "Organização cria espaço para pensar melhor",
-  "Uma mente aberta encontra soluções onde outros veem limites",
-  "Melhorar um pouco todos os dias produz grandes mudanças",
-  "Autonomia cresce junto com o conhecimento",
-  "Foco é a arte de proteger o que importa",
-  "Boas ideias precisam de método para ganhar forma",
-  "A evolução acontece quando conforto deixa de ser prioridade",
-  "Sabedoria também está em reconhecer o que ainda falta aprender",
-  "Cada desafio contém informação útil para o próximo passo",
-  "Confiabilidade é construída por pequenas entregas repetidas",
-  "Visão de longo prazo melhora as decisões de hoje",
-  "Uma meta clara transforma esforço disperso em movimento",
-  "A maturidade aparece na forma como lidamos com imprevistos",
-  "Pensar antes de agir economiza tempo depois",
-  "A boa execução começa com entendimento",
-  "Quem observa com atenção enxerga oportunidades antes dos outros"
+  "Grandes resultados nascem da constância","A clareza transforma esforço em direção","O progresso começa com uma decisão consciente","A disciplina sustenta aquilo que a motivação inicia","Conhecimento ganha valor quando se transforma em ação","A excelência cresce nos detalhes bem cuidados","Boas decisões nascem de perguntas bem formuladas","A paciência também é uma forma de inteligência","Coragem é seguir adiante com consciência","Todo projeto sólido começa por uma boa base","A criatividade floresce quando há espaço para observar","Planejamento reduz ruído e amplia possibilidades","Quem aprende continuamente amplia o próprio horizonte","Consistência é o elo entre intenção e resultado","A simplicidade é sinal de compreensão profunda","Um passo bem dado vale mais que dez impulsivos","Resultados duradouros respeitam processos","A atenção dedicada ao presente melhora o futuro","Aprender a priorizar é aprender a avançar","O tempo revela o valor daquilo que foi bem construído","Curiosidade abre caminhos que a pressa não percebe","Persistência transforma dificuldade em experiência","Responsabilidade dá forma concreta aos objetivos","A qualidade de uma escolha começa na qualidade da análise","Organização cria espaço para pensar melhor","Uma mente aberta encontra soluções onde outros veem limites","Melhorar um pouco todos os dias produz grandes mudanças","Autonomia cresce junto com o conhecimento","Foco é a arte de proteger o que importa","Boas ideias precisam de método para ganhar forma","A evolução acontece quando conforto deixa de ser prioridade","Sabedoria também está em reconhecer o que ainda falta aprender","Cada desafio contém informação útil para o próximo passo","Confiabilidade é construída por pequenas entregas repetidas","Visão de longo prazo melhora as decisões de hoje","Uma meta clara transforma esforço disperso em movimento","A maturidade aparece na forma como lidamos com imprevistos","Pensar antes de agir economiza tempo depois","A boa execução começa com entendimento","Quem observa com atenção enxerga oportunidades antes dos outros"
+];
+const FINAIS_CAMILA = ["quando cada passo tem propósito.","porque pequenas escolhas coerentes constroem trajetórias duradouras.","quando conhecimento, método e presença caminham juntos.","porque consistência transforma intenção em resultado.","quando a qualidade do caminho importa tanto quanto a chegada."];
+
+const AUTORES_CLASSICOS = [
+  "Machado de Assis","Eça de Queirós","Camilo Castelo Branco","José de Alencar","Alexandre Herculano","Almeida Garrett","Luís de Camões","Júlio Dinis","Lima Barreto","Aluísio Azevedo","Raul Pompeia","Euclides da Cunha","Bernardo Guimarães","Joaquim Manuel de Macedo","Fernando Pessoa","Olavo Bilac","Antero de Quental","Camilo Pessanha","Cesário Verde","Guerra Junqueiro"
 ];
 
-const FINAIS_CAMILA = [
-  "quando cada passo tem propósito.",
-  "porque pequenas escolhas coerentes constroem trajetórias duradouras.",
-  "quando conhecimento, método e presença caminham juntos.",
-  "porque consistência transforma intenção em resultado.",
-  "quando a qualidade do caminho importa tanto quanto a chegada."
-];
+const AUTORES_BLOQUEADOS = ["jesus","cristo","buda","buddha","dalai lama","sao francisco","são francisco","papa ","pope ","mahatma gandhi","gandhi","theodore roosevelt","franklin roosevelt","eleanor roosevelt","abraham lincoln","winston churchill","nelson mandela","martin luther king","mao ","mao tse","lenin","stalin","karl marx","friedrich engels","che guevara","fidel castro","vladimir putin","donald trump","joe biden","barack obama","margaret thatcher","ronald reagan","john f kennedy","john kennedy","noam chomsky","jean-paul sartre","pablo neruda","frida kahlo","pablo picasso","bertolt brecht","george bernard shaw","h.g. wells","h. g. wells","john lennon","bob marley","charles chaplin","ayn rand","malcolm x","desmond tutu"];
+const TERMOS_BLOQUEADOS = ["deus","senhor ","jesus","cristo","biblia","igreja","oracao","pecado","sagrado","religiao","fe ","paraiso","inferno","salvacao","espirito santo","politica","eleicao","partido","presidente","governo","governante","comunismo","comunista","socialismo","socialista","capitalismo","capitalista","esquerda","direita politica","revolucao","ditadura","parlamento","congresso","senado","guerra civil"];
+const PALAVRAS_REFLEXIVAS = ["vida","tempo","verdade","razao","pensamento","pensar","mente","inteligencia","sabedoria","conhecimento","aprender","estudo","experiencia","trabalho","esforco","vontade","coragem","carater","habito","qualidade","valor","beleza","arte","imaginacao","criacao","criatividade","esperanca","felicidade","alegria","desejo","destino","futuro","progresso","perseveranca","paciencia","liberdade","consciencia","erro","acerto","escolha","decisao","objetivo","sonho","talento","curiosidade","amizade","bondade","generosidade","respeito","humildade","simplicidade","dificuldade","possivel","impossivel"];
 
-const AUTORES_PRIORITARIOS = new Set([
-  "Albert Einstein","Aristóteles","Platão","Sócrates","William Shakespeare","Clarice Lispector",
-  "Leonardo da Vinci","Isaac Newton","Marie Curie","Thomas A. Edison","Thomas Edison","Nikola Tesla",
-  "Confúcio","Sêneca","Seneca","Marco Aurélio","Marcus Aurelius","Epicteto","Epictetus",
-  "Arthur Conan Doyle","Mark Twain","Oscar Wilde","Jane Austen","Charles Dickens","Victor Hugo",
-  "Miguel de Cervantes","Fernando Pessoa","Machado de Assis","Carlos Drummond de Andrade",
-  "Cecília Meireles","Cecilia Meireles","Emily Dickinson","Ralph Waldo Emerson","Henry David Thoreau",
-  "Louisa May Alcott","Charlotte Brontë","Charlotte Bronte","George Eliot","Robert Louis Stevenson",
-  "Jules Verne","Lewis Carroll","Edgar Allan Poe","Hans Christian Andersen","Esopo","Aesop",
-  "Amelia Earhart","Florence Nightingale","Helen Keller","Isaac Asimov","Carl Sagan","Stephen Hawking",
-  "Richard Feynman","Galileu Galilei","Galileo Galilei","Johannes Kepler","Blaise Pascal",
-  "René Descartes","Rene Descartes","Immanuel Kant","David Hume","John Locke","Francis Bacon",
-  "Michel de Montaigne","Voltaire","Alexandre Dumas","Fyodor Dostoevsky","Fiódor Dostoiévski",
-  "Anton Chekhov","Jorge Luis Borges","Italo Calvino","Umberto Eco","Antoine de Saint-Exupéry",
-  "Virginia Woolf","Agatha Christie","George Orwell","T. S. Eliot","Rainer Maria Rilke",
-  "Johann Wolfgang von Goethe","Friedrich Schiller","Homer","Homero","Virgílio","Virgil",
-  "Dante Alighieri","Anne Frank","Eleanor Roosevelt","Maya Angelou","Simone de Beauvoir",
-  "Abraham Maslow","Carl Jung","Viktor Frankl","Alfred Adler","Daniel Kahneman","Peter Drucker",
-  "David Allen","Richard Restak","Samuel Beckett","Anatole France","André Gide","Andre Gide",
-  "Alfred North Whitehead","Alfred Whitehead","Anaïs Nin","Anais Nin","Rudyard Kipling",
-  "Katherine Mansfield","Joseph Conrad","Daniel Defoe","Herman Melville","Mary Shelley"
-].map(normalizar));
+function normalizar(v){return String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();}
+function hash(v){return createHash("sha256").update(v,"utf8").digest("hex");}
+function bloqueado(texto){const t=normalizar(texto); return TERMOS_BLOQUEADOS.some(x=>t.includes(normalizar(x)));}
+function autorBloqueado(autor){const a=normalizar(autor); return AUTORES_BLOQUEADOS.some(x=>a.includes(normalizar(x)));}
+function categoria(texto){const t=normalizar(texto);if(/criativ|imagina|ideia|invent|arte|cria/.test(t))return"Criatividade";if(/conhec|aprend|sabed|intelig|mente|pens|estud|curios|razao/.test(t))return"Conhecimento";if(/corag|medo|ousad|risco/.test(t))return"Coragem";if(/persist|constan|discipl|habito|esfor|trabalh|tent|persever/.test(t))return"Persistência";if(/tempo|pacien|espera/.test(t))return"Paciência";if(/verdad|clarez|duvid|pergunta|compreend/.test(t))return"Clareza";if(/excel|qualidade|melhor|valor/.test(t))return"Excelência";if(/planej|objetiv|meta|direc|prior|escolh|decis/.test(t))return"Planejamento";if(/mud|cres|evolu|progres|futuro/.test(t))return"Crescimento";return"Reflexão";}
 
-const AUTORES_BLOQUEADOS = [
-  "jesus","cristo","buda","buddha","dalai lama","sao francisco","são francisco","papa ","pope ",
-  "mahatma gandhi","gandhi","theodore roosevelt","franklin roosevelt","eleanor roosevelt","abraham lincoln",
-  "winston churchill","nelson mandela","martin luther king","mao ","mao tse","lenin","stalin","karl marx",
-  "friedrich engels","che guevara","fidel castro","vladimir putin","donald trump","joe biden","barack obama",
-  "margaret thatcher","ronald reagan","john f kennedy","john kennedy","noam chomsky","jean-paul sartre",
-  "pablo neruda","frida kahlo","pablo picasso","bertolt brecht","george bernard shaw","h.g. wells","h. g. wells",
-  "john lennon","bob marley","charles chaplin","ayn rand","malcolm x","desmond tutu"
-];
+function frasesCamila(){const out=[];for(const inicio of INICIOS_CAMILA)for(const final of FINAIS_CAMILA)out.push({texto:`${inicio}, ${final}`,autor:"Camila Martins",categoria:categoria(`${inicio} ${final}`),fonte:"Autoral",origem:"autoral"});if(out.length!==200)throw new Error(`Frases Camila: ${out.length}`);return out;}
 
-const TERMOS_BLOQUEADOS = [
-  "deus","senhor ","jesus","cristo","bíblia","biblia","igreja","oração","oracao","pecado","sagrado",
-  "religião","religiao","fé ","fe ","paraíso","paraiso","inferno","salvação","salvacao","espírito santo",
-  "política","politica","eleição","eleicao","partido","presidente","governo","governante","comunismo",
-  "comunista","socialismo","socialista","capitalismo","capitalista","esquerda","direita política","revolução",
-  "revolucao","ditadura","parlamento","congresso","senado","guerra civil","nação contra","nacao contra"
-];
+function limpaTextoGutenberg(raw){let t=String(raw||"").replace(/\r/g,"");const ini=t.search(/\*\*\* START OF (THE|THIS) PROJECT GUTENBERG EBOOK/i);if(ini>=0)t=t.slice(ini).replace(/^.*?\n/,"");const fim=t.search(/\*\*\* END OF (THE|THIS) PROJECT GUTENBERG EBOOK/i);if(fim>=0)t=t.slice(0,fim);return t.replace(/-\n(?=[a-záéíóúâêôãõç])/gi,"").replace(/\n{2,}/g,"\n").replace(/\n/g," ").replace(/\s+/g," ").trim();}
+function pontuacaoReflexiva(frase){const t=normalizar(frase);let pontos=0;for(const p of PALAVRAS_REFLEXIVAS)if(t.includes(p))pontos++;if(/\b(quem|cada|todo|toda|nunca|sempre|melhor|maior|verdade|tempo|vida|homem|pessoa)\b/.test(t))pontos++;if(/[;:]/.test(frase))pontos++;return pontos;}
+function trechoValido(frase){const f=String(frase||"").replace(/\s+/g," ").trim();if(f.length<45||f.length>190)return false;if(bloqueado(f))return false;if(/^[-—–“”"'«»]/.test(f))return false;if(/\b(capitulo|chapter|project gutenberg|ebook|copyright|www\.|http|figura|illustration)\b/i.test(f))return false;if(/\d{2,}/.test(f))return false;const palavras=f.split(/\s+/);if(palavras.length<8||palavras.length>34)return false;if((f.match(/[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]+/g)||[]).length>7)return false;return pontuacaoReflexiva(f)>=1;}
+function extrairTrechos(texto){const limpo=limpaTextoGutenberg(texto);const candidatos=limpo.split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])/u).map(x=>x.trim()).filter(trechoValido);const unicos=new Map();for(const f of candidatos){const k=normalizar(f);if(!unicos.has(k))unicos.set(k,f);}return [...unicos.values()].sort((a,b)=>pontuacaoReflexiva(b)-pontuacaoReflexiva(a)||hash(a).localeCompare(hash(b)));}
 
-function normalizar(valor) {
-  return String(valor ?? "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
-}
+async function fetchJson(url){const r=await fetch(url,{headers:{"user-agent":"CamilaMartinsEngenharia-build/1.0"}});if(!r.ok)throw new Error(`HTTP ${r.status}: ${url}`);return r.json();}
+async function fetchText(url){const r=await fetch(url,{headers:{"user-agent":"CamilaMartinsEngenharia-build/1.0"}});if(!r.ok)throw new Error(`HTTP ${r.status}: ${url}`);return r.text();}
 
-function hash(valor) {
-  return createHash("sha256").update(valor, "utf8").digest("hex");
-}
+async function citasBasePt(){const base=await fetchJson(FONTE_PT);const out=[];const vistos=new Set();for(const item of base){const texto=String(item?.quote||"").replace(/\s+/g," ").trim();const autor=String(item?.author||"").trim();if(!texto||!autor||texto.length<25||texto.length>220||autorBloqueado(autor)||bloqueado(texto))continue;const k=normalizar(texto);if(vistos.has(k))continue;vistos.add(k);out.push({texto,autor,categoria:categoria(texto),fonte:item.source&&item.source!=="local"?String(item.source):`Base PT-BR fixada: luiz-lp/frase-do-dia@${FONTE_SHA}`,origem:"citação"});}return out.sort((a,b)=>a.autor.localeCompare(b.autor,"pt-BR")||hash(a.texto).localeCompare(hash(b.texto)));}
 
-function categoria(texto) {
-  const t = normalizar(texto);
-  if (/criativ|imagina|ideia|invent|arte/.test(t)) return "Criatividade";
-  if (/conhec|aprend|sabed|intelig|mente|pens|estud|curios/.test(t)) return "Conhecimento";
-  if (/corag|medo|ousad|risco/.test(t)) return "Coragem";
-  if (/persist|constan|discipl|habito|hábito|esfor|trabalh|tent/.test(t)) return "Persistência";
-  if (/tempo|pacien|espera/.test(t)) return "Paciência";
-  if (/verdad|clarez|duvid|pergunta|compreend/.test(t)) return "Clareza";
-  if (/excel|qualidade|melhor|valor/.test(t)) return "Excelência";
-  if (/planej|objetiv|meta|direç|direc|prior/.test(t)) return "Planejamento";
-  if (/mud|cres|evolu|progres|futuro/.test(t)) return "Crescimento";
-  return "Reflexão";
-}
+async function livrosDoAutor(nome){const url=`${GUTENDEX}?languages=pt&copyright=false&search=${encodeURIComponent(nome)}`;const data=await fetchJson(url);return (data.results||[]).filter(b=>Array.isArray(b.languages)&&b.languages.includes("pt")&&Array.isArray(b.authors)&&b.authors.length).sort((a,b)=>a.id-b.id);}
+function urlTextoLivro(livro){const formatos=livro.formats||{};return formatos["text/plain; charset=utf-8"]||formatos["text/plain; charset=us-ascii"]||formatos["text/plain"]||null;}
+function nomeAutorLivro(livro,nomeBusca){const nomes=(livro.authors||[]).map(a=>a.name).filter(Boolean);return nomes[0]||nomeBusca;}
 
-function fraseValida(item) {
-  const autor = String(item?.author || "").trim();
-  const texto = String(item?.quote || "").trim();
-  if (!autor || !texto || texto.length < 25 || texto.length > 220) return false;
-  const a = normalizar(autor);
-  const t = normalizar(texto);
-  if (AUTORES_BLOQUEADOS.some(x => a.includes(normalizar(x)))) return false;
-  if (TERMOS_BLOQUEADOS.some(x => t.includes(normalizar(x)))) return false;
-  if (/\b(presidente|primeiro-ministro|ministro|senador|deputado|rei|rainha|imperador|papa)\b/.test(a)) return false;
-  return true;
-}
+async function citasGutenberg(necessarias,textosExistentes){const candidatos=[];const vistos=new Set(textosExistentes.map(normalizar));for(const nome of AUTORES_CLASSICOS){let livros=[];try{livros=await livrosDoAutor(nome);}catch(e){console.warn(`Gutendex falhou para ${nome}: ${e.message}`);continue;}let porAutor=0;for(const livro of livros.slice(0,12)){if(porAutor>=65)break;const url=urlTextoLivro(livro);if(!url)continue;let raw;try{raw=await fetchText(url);}catch(e){console.warn(`Texto indisponível #${livro.id}: ${e.message}`);continue;}const trechos=extrairTrechos(raw);let porLivro=0;for(const texto of trechos){const k=normalizar(texto);if(vistos.has(k))continue;vistos.add(k);candidatos.push({texto,autor:nomeAutorLivro(livro,nome),categoria:categoria(texto),fonte:`Project Gutenberg — ${livro.title} (eBook #${livro.id})`,origem:"citação"});porLivro++;porAutor++;if(porLivro>=16||porAutor>=65)break;}if(candidatos.length>=necessarias+120)break;}console.log(`${nome}: ${porAutor} trechos selecionáveis`);if(candidatos.length>=necessarias+120)break;}candidatos.sort((a,b)=>hash(`${a.autor}|${a.fonte}|${a.texto}`).localeCompare(hash(`${b.autor}|${b.fonte}|${b.texto}`)));return candidatos.slice(0,necessarias);}
 
-function frasesCamila() {
-  const saida = [];
-  for (const inicio of INICIOS_CAMILA) {
-    for (const final of FINAIS_CAMILA) {
-      saida.push({
-        texto: `${inicio}, ${final}`,
-        autor: "Camila Martins",
-        categoria: categoria(`${inicio} ${final}`),
-        fonte: "Autoral"
-      });
-    }
-  }
-  if (saida.length !== TOTAL_CAMILA) throw new Error(`Esperadas ${TOTAL_CAMILA} frases autorais, obtidas ${saida.length}`);
-  return saida;
-}
+function equilibrarExternas(base,gutenberg){const todos=[...base,...gutenberg];const grupos=new Map();for(const x of todos){const a=normalizar(x.autor);if(!grupos.has(a))grupos.set(a,[]);grupos.get(a).push(x);}for(const itens of grupos.values())itens.sort((a,b)=>hash(`${a.fonte}|${a.texto}`).localeCompare(hash(`${b.fonte}|${b.texto}`)));const autores=[...grupos.keys()].sort((a,b)=>a.localeCompare(b,"pt-BR"));const out=[];const vistos=new Set();for(const limite of [4,8,12,20,32,50,70]){for(const a of autores){const itens=grupos.get(a)||[];const atual=out.filter(x=>normalizar(x.autor)===a).length;for(let i=atual;i<Math.min(limite,itens.length)&&out.length<TOTAL_EXTERNAS;i++){const x=itens[i],k=normalizar(x.texto);if(vistos.has(k))continue;vistos.add(k);out.push(x);}if(out.length>=TOTAL_EXTERNAS)break;}if(out.length>=TOTAL_EXTERNAS)break;}return out;}
+function intercalar(camila,externas){const out=[];for(let i=0;i<TOTAL_CAMILA;i++){out.push(camila[i]);out.push(...externas.slice(i*4,i*4+4));}return out;}
 
-function selecionarExternas(base) {
-  const unicas = new Map();
-  for (const item of base) {
-    if (!fraseValida(item)) continue;
-    const texto = String(item.quote).replace(/\s+/g, " ").trim();
-    const autor = String(item.author).replace(/\s+/g, " ").trim();
-    const chave = normalizar(texto);
-    if (!unicas.has(chave)) unicas.set(chave, { ...item, texto, autor });
-  }
-
-  const grupos = new Map();
-  for (const item of unicas.values()) {
-    const chaveAutor = normalizar(item.autor);
-    if (!grupos.has(chaveAutor)) grupos.set(chaveAutor, []);
-    grupos.get(chaveAutor).push(item);
-  }
-  for (const itens of grupos.values()) itens.sort((a,b) => hash(`${a.autor}|${a.texto}`).localeCompare(hash(`${b.autor}|${b.texto}`)));
-
-  const autores = [...grupos.keys()].sort((a,b) => {
-    const pa = AUTORES_PRIORITARIOS.has(a) ? 0 : 1;
-    const pb = AUTORES_PRIORITARIOS.has(b) ? 0 : 1;
-    return pa - pb || a.localeCompare(b,"pt-BR");
-  });
-
-  const escolhidas = [];
-  const vistos = new Set();
-  for (const limite of [6,10,15,24,40,80]) {
-    for (const autor of autores) {
-      const itens = grupos.get(autor) || [];
-      const jaAutor = escolhidas.filter(x => normalizar(x.autor) === autor).length;
-      for (let i = jaAutor; i < Math.min(limite, itens.length) && escolhidas.length < TOTAL_EXTERNAS; i++) {
-        const item = itens[i];
-        const k = `${normalizar(item.autor)}|${normalizar(item.texto)}`;
-        if (vistos.has(k)) continue;
-        vistos.add(k);
-        escolhidas.push(item);
-      }
-      if (escolhidas.length >= TOTAL_EXTERNAS) break;
-    }
-    if (escolhidas.length >= TOTAL_EXTERNAS) break;
-  }
-
-  if (escolhidas.length < TOTAL_EXTERNAS) {
-    throw new Error(`A filtragem conservadora encontrou apenas ${escolhidas.length} citações; são necessárias ${TOTAL_EXTERNAS}.`);
-  }
-
-  return escolhidas.slice(0, TOTAL_EXTERNAS).map(item => ({
-    texto: item.texto,
-    autor: item.autor,
-    categoria: categoria(item.texto),
-    fonte: item.source && item.source !== "local"
-      ? String(item.source)
-      : `Base PT-BR fixada: luiz-lp/frase-do-dia@${FONTE_SHA}`,
-    origem: "citação"
-  }));
-}
-
-function intercalar(camila, externas) {
-  const saida = [];
-  for (let i = 0; i < TOTAL_CAMILA; i++) {
-    saida.push(camila[i]);
-    const base = i * 4;
-    saida.push(...externas.slice(base, base + 4));
-  }
-  return saida;
-}
-
-const resposta = await fetch(FONTE_URL, { headers: { "user-agent": "CamilaMartinsEngenharia-build" } });
-if (!resposta.ok) throw new Error(`Falha ao carregar base externa: HTTP ${resposta.status}`);
-const base = await resposta.json();
-if (!Array.isArray(base)) throw new Error("Formato inesperado da base externa.");
-
-const camila = frasesCamila();
-const externas = selecionarExternas(base);
-const frases = intercalar(camila, externas);
-if (frases.length !== 1000) throw new Error(`Acervo final inválido: ${frases.length} frases.`);
-if (new Set(frases.map(x => normalizar(x.texto))).size !== 1000) throw new Error("Há frases duplicadas no acervo final.");
-
-const autoresExternos = new Set(externas.map(x => x.autor)).size;
-const payload = {
-  versao: 3,
-  timezone: "America/Sao_Paulo",
-  total: 1000,
-  composicao: { autoraisCamilaMartins: 200, citacoesAutores: 800, autoresExternos },
-  politicaEditorial: "Sem conteúdo político-partidário ou religioso; filtro conservador de autores e termos; citações externas em português provenientes de base pública fixada por commit.",
-  fonteBaseExterna: { repositorio: "luiz-lp/frase-do-dia", commit: FONTE_SHA, arquivo: "data/quotes.json" },
-  frases
-};
-
-await writeFile(SAIDA, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
-console.log(`Acervo gerado: ${frases.length} frases (${camila.length} Camila Martins + ${externas.length} externas; ${autoresExternos} autores externos).`);
+const camila=frasesCamila();
+const basePt=await citasBasePt();
+console.log(`Base PT-BR após filtros: ${basePt.length}`);
+const gutenberg=await citasGutenberg(Math.max(0,TOTAL_EXTERNAS-basePt.length)+160,basePt.map(x=>x.texto));
+console.log(`Project Gutenberg selecionáveis: ${gutenberg.length}`);
+const externas=equilibrarExternas(basePt,gutenberg);
+if(externas.length<TOTAL_EXTERNAS)throw new Error(`Após todos os filtros há ${externas.length} citações; são necessárias ${TOTAL_EXTERNAS}.`);
+const frases=intercalar(camila,externas);
+if(frases.length!==1000)throw new Error(`Acervo final inválido: ${frases.length}.`);
+if(new Set(frases.map(x=>normalizar(x.texto))).size!==1000)throw new Error("Há frases duplicadas no acervo final.");
+const autoresExternos=new Set(externas.map(x=>normalizar(x.autor))).size;
+const payload={versao:4,timezone:"America/Sao_Paulo",total:1000,composicao:{autoraisCamilaMartins:200,citacoesAutores:800,autoresExternos},politicaEditorial:"Sem conteúdo político-partidário ou religioso. Citações externas filtradas por autor e conteúdo; a maior parte dos complementos é extraída de edições em português de domínio público do Project Gutenberg.",fontes:[{repositorio:"luiz-lp/frase-do-dia",commit:FONTE_SHA,arquivo:"data/quotes.json"},{colecao:"Project Gutenberg",via:"Gutendex",idioma:"pt",copyright:false}],frases};
+await writeFile(SAIDA,`${JSON.stringify(payload,null,2)}\n`,"utf8");
+console.log(`Acervo gerado: ${frases.length} = ${camila.length} Camila Martins + ${externas.length} citações; ${autoresExternos} autores externos.`);
