@@ -12,6 +12,26 @@ UI CORE — INTERFACE ADMINISTRATIVA COMPARTILHADA
     const CHAVE_COR = "cme_admin_cor_principal";
     const CHAVE_NOTIFICACOES = "cme_admin_notificacoes";
 
+    function carregarAjustesVisuais() {
+        if (document.getElementById("cmeAdminPolish")) return;
+        const link = document.createElement("link");
+        link.id = "cmeAdminPolish";
+        link.rel = "stylesheet";
+        link.href = "css/admin-polish.css?v=20260901-1";
+        document.head.appendChild(link);
+    }
+
+    function fixarNomeAdministradora() {
+        const alvo = document.querySelector("#adminName, #nomeAdministrador");
+        if (!alvo) return;
+        alvo.textContent = "Camila";
+        if (alvo.dataset.cmeNomeObserver === "true") return;
+        alvo.dataset.cmeNomeObserver = "true";
+        new MutationObserver(() => {
+            if (alvo.textContent.trim() !== "Camila") alvo.textContent = "Camila";
+        }).observe(alvo, { childList: true, characterData: true, subtree: true });
+    }
+
     function elementosLoading() {
         return [
             document.getElementById("loading"),
@@ -146,10 +166,14 @@ UI CORE — INTERFACE ADMINISTRATIVA COMPARTILHADA
     }
 
     function iniciar() {
+        carregarAjustesVisuais();
         normalizarMenuAdministrativo();
         aplicarPreferencias();
         protegerNotificacoes();
+        fixarNomeAdministradora();
 
+        window.setTimeout(fixarNomeAdministradora, 150);
+        window.setTimeout(fixarNomeAdministradora, 700);
         window.setTimeout(ocultarCarregamento, 2500);
         window.setTimeout(sincronizarPreferenciasDoBanco, 0);
     }
@@ -166,6 +190,7 @@ UI CORE — INTERFACE ADMINISTRATIVA COMPARTILHADA
     }
 
     window.addEventListener("load", () => {
+        fixarNomeAdministradora();
         window.setTimeout(ocultarCarregamento, 400);
     }, { once: true });
 }());
