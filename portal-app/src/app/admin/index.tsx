@@ -64,6 +64,7 @@ export default function AdminDashboard() {
   ] as const;
 
   const modules = [
+    { key: 'commercial-documents', onPress: () => router.push('/admin/commercial-documents'), icon: 'calculator-outline' as const, title: 'Orçamentos e contratos', description: 'Gerar proposta e contrato para prospects, sem cadastro prévio de cliente.' },
     { key: 'clients', onPress: () => router.push('/admin/clients'), icon: 'people-outline' as const, title: 'Clientes e acessos', description: 'Convidar, arquivar, reativar, revogar ou excluir com confirmação.' },
     { key: 'projects', onPress: () => router.push('/admin/projects'), icon: 'briefcase-outline' as const, title: 'Contratos e projetos', description: 'Cadastro inseparável pelo número do contrato e acompanhamento.' },
     { key: 'contract-documents', onPress: () => router.push('/admin/contract-documents'), icon: 'document-text-outline' as const, title: 'Documentos contratuais', description: 'Escopo opcional, prazos de aceite, termos e notificações formais.' },
