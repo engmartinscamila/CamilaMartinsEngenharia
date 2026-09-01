@@ -7,6 +7,7 @@ import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
 import { formatDate } from '@/lib/format';
 import { openExternalUrl } from '@/lib/external-link';
+import { supabase } from '@/lib/supabase';
 import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
 import { createAdminContentSignedUrl, deleteAdminContent, listAdminContent, listAdminProjects, uploadAdminContent } from '@/services/admin-service';
 import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
@@ -123,7 +124,7 @@ export default function AdminContentScreen() {
       setSuccess(selectedClassification
         ? selectedClassification.protectionMode === 'administrative'
           ? 'Arquivo publicado. Somente o cliente vinculado ao projeto poderá visualizá-lo e baixá-lo.'
-          : 'Arquivo autoral publicado. O original permanece privado; o cliente recebe apenas a cópia identificada.'
+          : 'Arquivo autoral publicado. O original permanece privado; cada abertura gera uma cópia PDF identificada e rastreável.'
         : 'Arquivo enviado e vinculado ao projeto.');
       setTitle(''); setCategory(''); setVersion('1.0'); setAsset(null); setDocumentClassification(null);
       await load();
@@ -131,6 +132,18 @@ export default function AdminContentScreen() {
   };
 
   const open = async (item: AdminContentSummary) => {
+    if (item.kind === 'document' && item.protectionMode === 'authored_pdf') {
+      const issued = await supabase.functions.invoke('issue-protected-asset', {
+        body: { assetId: item.id, kind: 'document', action: 'view' },
+      });
+      if (issued.error || !issued.data?.url) {
+        setError('Não foi possível gerar a cópia PDF identificada deste material autoral.');
+        return;
+      }
+      setSuccess(issued.data?.trackingCode ? `Cópia rastreável gerada: ${issued.data.trackingCode}` : 'Cópia rastreável gerada com sucesso.');
+      setError(await openExternalUrl(issued.data.url));
+      return;
+    }
     const result = await createAdminContentSignedUrl(item);
     if (!result.url) setError(result.error);
     else setError(await openExternalUrl(result.url));
@@ -169,7 +182,7 @@ export default function AdminContentScreen() {
               <Notice tone={protectionMode === 'administrative' ? 'success' : 'warning'}>
                 {protectionMode === 'administrative'
                   ? 'Resultado: o cliente vinculado a este projeto poderá visualizar e baixar o arquivo. Ele não ficará público.'
-                  : 'Resultado: o original não será liberado ao cliente. O acesso será registrado e somente uma cópia identificada poderá ser visualizada.'}
+                  : 'Resultado: o original não será liberado. Cada acesso gera um PDF identificado com cliente, contrato, código de rastreio e registro da emissão.'}
               </Notice>
             ) : (
               <Notice tone="warning">Escolha uma classificação. O sistema não deduz a permissão pelo nome do arquivo.</Notice>
@@ -184,14 +197,14 @@ export default function AdminContentScreen() {
         {kind === 'document' ? <Field label="Versão do documento" onChangeText={setVersion} placeholder="Ex.: 1.0 ou Revisão B" value={version} /> : null}
         <Button icon="attach-outline" onPress={() => void pick()} title={asset ? `Selecionado: ${asset.name}` : 'Escolher arquivo'} variant="secondary" />
         <Button disabled={!asset || (kind === 'document' && !documentClassification)} loading={saving} onPress={() => void upload()} title="Enviar e publicar" />
-        <Notice tone="info">A classificação escolhida pelo administrador fica gravada nos metadados. ART/RRT, contratos, orçamentos e documentos administrativos são baixáveis apenas pelo cliente vinculado ao projeto. PDFs técnicos e fotos autorais mantêm o original privado, entregam cópia identificada e registram o acesso. Capturas de tela não podem ser impedidas completamente.</Notice>
+        <Notice tone="info">ART/RRT, contratos, orçamentos e documentos administrativos continuam baixáveis apenas pelo cliente vinculado. PDFs técnicos e materiais autorais mantêm o original privado; cada visualização emite uma cópia identificada e rastreável. Capturas de tela não podem ser impedidas completamente.</Notice>
       </Card>
       {loading ? <ActivityIndicator color={colors.gold600} /> : null}
       {!loading && visibleItems.length === 0 ? <StateView description={`Nenhum conteúdo da categoria ${kindLabels[kind].toLowerCase()} foi publicado.`} icon="folder-open-outline" title={`${sectionTitles[kind]} sem conteúdo`} /> : null}
       {visibleItems.map((item) => (
         <Card key={`${item.kind}-${item.id}`}>
-          <View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.title}>{item.title}</Text><Text style={styles.meta}>{item.clientName} • {item.projectName}</Text><Text style={styles.meta}>{item.category}{item.version ? ` • Versão ${item.version}` : ''} • {formatDate(item.createdAt)}</Text><Text style={styles.protection}>{item.protectionMode === 'authored_pdf' ? 'Original bloqueado • cópia identificada' : item.protectionMode === 'authored_photo' ? 'Foto autoral protegida • cópia identificada' : item.kind === 'document' && item.allowDownload ? 'Cliente do projeto pode baixar' : 'Acesso privado do projeto'}</Text></View><StatusPill label={kindLabels[item.kind]} /></View>
-          <View style={styles.actions}><View style={styles.grow}><Button onPress={() => void open(item)} title="Abrir com link seguro" variant="secondary" /></View><View style={styles.grow}><Button onPress={() => setDeleteTarget(item)} title="Excluir" variant="danger" /></View></View>
+          <View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.title}>{item.title}</Text><Text style={styles.meta}>{item.clientName} • {item.projectName}</Text><Text style={styles.meta}>{item.category}{item.version ? ` • Versão ${item.version}` : ''} • {formatDate(item.createdAt)}</Text><Text style={styles.protection}>{item.protectionMode === 'authored_pdf' ? 'Original bloqueado • PDF rastreável por acesso' : item.protectionMode === 'authored_photo' ? 'Foto autoral protegida • cópia identificada' : item.kind === 'document' && item.allowDownload ? 'Cliente do projeto pode baixar' : 'Acesso privado do projeto'}</Text></View><StatusPill label={kindLabels[item.kind]} /></View>
+          <View style={styles.actions}><View style={styles.grow}><Button onPress={() => void open(item)} title={item.protectionMode === 'authored_pdf' ? 'Gerar e abrir cópia rastreável' : 'Abrir com link seguro'} variant="secondary" /></View><View style={styles.grow}><Button onPress={() => setDeleteTarget(item)} title="Excluir" variant="danger" /></View></View>
         </Card>
       ))}
       {deleteTarget ? <Card><Notice tone="danger">Confirme a exclusão de “{deleteTarget.title}”. O arquivo será removido do Storage e da lista.</Notice><View style={styles.actions}><View style={styles.grow}><Button loading={saving} onPress={() => void remove()} title="Confirmar exclusão" variant="danger" /></View><View style={styles.grow}><Button onPress={() => setDeleteTarget(null)} title="Cancelar" variant="ghost" /></View></View></Card> : null}
