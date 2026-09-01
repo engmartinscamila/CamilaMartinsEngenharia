@@ -1,0 +1,84 @@
+/* Ajustes finos compartilhados do painel administrativo */
+
+.acoes-configuracao {
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+}
+
+.acoes-configuracao button,
+#exportarFinanceiroCsv,
+#exportarFinanceiroCsvAlternativo,
+#resetarFinanceiroSeguro,
+#limparFiltrosFinanceiros {
+    min-height:44px;
+    padding:11px 18px;
+    border:1px solid var(--dourado);
+    border-radius:0;
+    background:var(--dourado);
+    color:#010914;
+    font-family:var(--font-main,"Century Gothic","Avenir Next","Helvetica Neue",Arial,sans-serif);
+    font-size:.78rem;
+    font-weight:600;
+    letter-spacing:.01em;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+    cursor:pointer;
+    transition:background .2s ease,border-color .2s ease,color .2s ease,transform .2s ease;
+}
+
+.acoes-configuracao button:hover,
+#exportarFinanceiroCsv:hover,
+#exportarFinanceiroCsvAlternativo:hover,
+#resetarFinanceiroSeguro:hover,
+#limparFiltrosFinanceiros:hover {
+    background:var(--dourado-hover);
+    border-color:var(--dourado-hover);
+    color:#010914;
+    transform:translateY(-1px);
+}
+
+#resetarFinanceiroSeguro {
+    margin-left:0 !important;
+}
+
+#resetarFinanceiroSeguro::before {
+    content:"";
+}
+
+html[data-admin-theme="claro"] .acoes-configuracao button,
+html[data-admin-theme="claro"] #exportarFinanceiroCsv,
+html[data-admin-theme="claro"] #exportarFinanceiroCsvAlternativo,
+html[data-admin-theme="claro"] #resetarFinanceiroSeguro,
+html[data-admin-theme="claro"] #limparFiltrosFinanceiros {
+    background:#0e2a47;
+    border-color:#0e2a47;
+    color:#fff;
+}
+
+html[data-admin-theme="claro"] .acoes-configuracao button:hover,
+html[data-admin-theme="claro"] #exportarFinanceiroCsv:hover,
+html[data-admin-theme="claro"] #exportarFinanceiroCsvAlternativo:hover,
+html[data-admin-theme="claro"] #resetarFinanceiroSeguro:hover,
+html[data-admin-theme="claro"] #limparFiltrosFinanceiros:hover {
+    background:#143b63;
+    border-color:#143b63;
+    color:#fff;
+}
+
+@media (max-width:720px) {
+    .acoes-configuracao,
+    .financeiro-inteligente-cabecalho {
+        align-items:stretch;
+    }
+
+    .acoes-configuracao button,
+    #exportarFinanceiroCsv,
+    #exportarFinanceiroCsvAlternativo,
+    #resetarFinanceiroSeguro,
+    #limparFiltrosFinanceiros {
+        width:100%;
+    }
+}
