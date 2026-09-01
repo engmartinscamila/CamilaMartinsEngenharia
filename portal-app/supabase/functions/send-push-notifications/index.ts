@@ -21,9 +21,7 @@ Deno.serve(async (request) => {
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   const authorization = request.headers.get('Authorization');
-  if (!url || !anonKey || !serviceKey || !authorization) {
-    return json({ error: 'Configuração indisponível.' }, 401);
-  }
+  if (!url || !anonKey || !serviceKey || !authorization) return json({ error: 'Configuração indisponível.' }, 401);
 
   const caller = createClient(url, anonKey, {
     global: { headers: { Authorization: authorization } },
@@ -45,28 +43,21 @@ Deno.serve(async (request) => {
   const clientIds = [...new Set(notifications
     .filter((item) => item.destinatario === 'cliente' && item.cliente_id)
     .map((item) => item.cliente_id as string))];
-  const [clientsResult, usersResult, pdfAdminsResult] = await Promise.all([
+  const [clientsResult, pdfAdminsResult] = await Promise.all([
     clientIds.length
       ? service.from('clientes').select('id, auth_id').in('id', clientIds)
       : Promise.resolve({ data: [], error: null }),
-    service.from('usuarios').select('id').eq('tipo', 'administrador'),
     service.from('pdf_admins').select('user_id'),
   ]);
-  if (clientsResult.error || usersResult.error || pdfAdminsResult.error) {
-    return json({ error: 'Destinatários indisponíveis.' }, 500);
-  }
+  if (clientsResult.error || pdfAdminsResult.error) return json({ error: 'Destinatários indisponíveis.' }, 500);
 
   const clientUsers = new Map((clientsResult.data ?? [])
     .filter((item) => item.auth_id)
     .map((item) => [item.id, item.auth_id as string]));
-  const adminUsers = [...new Set([
-    ...(usersResult.data ?? []).map((item) => item.id),
-    ...(pdfAdminsResult.data ?? []).map((item) => item.user_id),
-  ])];
-  const targetUsers = [...new Set([
-    ...clientUsers.values(),
-    ...adminUsers,
-  ])];
+  // pdf_admins usa o UUID real do Auth. A tabela legada usuarios usa BIGINT e
+  // não pode ser misturada com app_push_tokens.user_id (UUID).
+  const adminUsers = [...new Set((pdfAdminsResult.data ?? []).map((item) => item.user_id).filter(Boolean))];
+  const targetUsers = [...new Set([...clientUsers.values(), ...adminUsers])];
   if (!targetUsers.length) return json({ sent: 0 });
 
   const { data: tokens, error: tokenError } = await service
@@ -127,11 +118,7 @@ Deno.serve(async (request) => {
 
   const attemptedIds = [...new Set(limited.map((item) => item.notificationId))];
   await service.from('notificacoes').update({ push_attempted_at: new Date().toISOString() }).in('id', attemptedIds);
-  if (sentIds.size) {
-    await service.from('notificacoes').update({ push_sent_at: new Date().toISOString() }).in('id', [...sentIds]);
-  }
-  if (inactiveTokenIds.size) {
-    await service.from('app_push_tokens').update({ active: false, updated_at: new Date().toISOString() }).in('id', [...inactiveTokenIds]);
-  }
+  if (sentIds.size) await service.from('notificacoes').update({ push_sent_at: new Date().toISOString() }).in('id', [...sentIds]);
+  if (inactiveTokenIds.size) await service.from('app_push_tokens').update({ active: false, updated_at: new Date().toISOString() }).in('id', [...inactiveTokenIds]);
   return json({ sent: sentIds.size });
 });
