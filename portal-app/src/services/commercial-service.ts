@@ -1,3 +1,4 @@
+import { downloadBase64File } from '@/lib/download-generated-file';
 import { supabase } from '@/lib/supabase';
 import type { ServiceResult } from '@/types/domain';
 
@@ -104,17 +105,13 @@ export async function listCommercialRecords(): Promise<ServiceResult<CommercialR
 
 export async function lookupCommercialCep(cep: string): Promise<ServiceResult<CommercialAddressLookup | null>> {
   const result = await supabase.functions.invoke('lookup-commercial-data', { body: { kind: 'cep', value: cep } });
-  if (result.error || !result.data?.data) {
-    return { data: null, error: result.data?.error ?? result.error?.message ?? 'Não foi possível consultar o CEP.' };
-  }
+  if (result.error || !result.data?.data) return { data: null, error: result.data?.error ?? result.error?.message ?? 'Não foi possível consultar o CEP.' };
   return { data: result.data.data as CommercialAddressLookup, error: null };
 }
 
 export async function lookupCommercialCnpj(cnpj: string): Promise<ServiceResult<CommercialCnpjLookup | null>> {
   const result = await supabase.functions.invoke('lookup-commercial-data', { body: { kind: 'cnpj', value: cnpj } });
-  if (result.error || !result.data?.data) {
-    return { data: null, error: result.data?.error ?? result.error?.message ?? 'Não foi possível consultar o CNPJ.' };
-  }
+  if (result.error || !result.data?.data) return { data: null, error: result.data?.error ?? result.error?.message ?? 'Não foi possível consultar o CNPJ.' };
   return { data: result.data.data as CommercialCnpjLookup, error: null };
 }
 
@@ -146,9 +143,18 @@ export async function createCommercialRecord(input: NewCommercialRecordInput) {
     : { recordId: result.data as string, error: null };
 }
 
-export async function generateCommercialDocument(recordId: string, kind: 'orcamento' | 'contrato') {
-  const result = await supabase.functions.invoke('generate-commercial-document', { body: { recordId, kind } });
-  if (result.error || !result.data?.generated) return result.error?.message ?? `Não foi possível gerar o ${kind}.`;
+export async function generateCommercialDocument(recordId: string, kind: 'orcamento' | 'contrato', archive = false) {
+  const generated = await supabase.functions.invoke('generate-commercial-document', { body: { recordId, kind } });
+  if (generated.error || !generated.data?.generated || !generated.data?.documentId) return generated.data?.error ?? generated.error?.message ?? `Não foi possível gerar o ${kind}.`;
+
+  const delivered = await supabase.functions.invoke('deliver-generated-document', { body: { documentId: generated.data.documentId, archive } });
+  if (delivered.error || !delivered.data?.delivered || !delivered.data?.contentBase64) return delivered.data?.error ?? delivered.error?.message ?? 'O Word foi gerado, mas não foi possível preparar o download.';
+
+  try {
+    await downloadBase64File(String(delivered.data.contentBase64), String(delivered.data.fileName ?? `${kind}.docx`));
+  } catch (error) {
+    return error instanceof Error ? error.message : 'O Word foi gerado, mas não foi possível abrir o download.';
+  }
   return null;
 }
 
