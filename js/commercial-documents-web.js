@@ -103,8 +103,14 @@
     if (!select) return;
 
     const current = String(select.value || '').trim().toLowerCase();
+    const levelOrder = { bronze: 10, prata: 20, ouro: 30 };
+    const orderedLevels = [...levelCatalog].sort((a, b) =>
+      (levelOrder[a.code] ?? 100) - (levelOrder[b.code] ?? 100) ||
+      String(a.label || a.code).localeCompare(String(b.label || b.code), 'pt-BR')
+    );
+
     const options = ['<option value="">Selecione</option>'].concat(
-      levelCatalog.map(level =>
+      orderedLevels.map(level =>
         `<option value="${esc(level.code)}">${esc(level.label)} — ${esc(level.subtitle || 'Personalizado')}</option>`
       )
     );
