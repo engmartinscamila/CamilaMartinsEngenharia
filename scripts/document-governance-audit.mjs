@@ -7,6 +7,9 @@ const errors = [];
 const requireText = (rel, needle, message) => {
   if (!read(rel).includes(needle)) errors.push(`${rel}: ${message}`);
 };
+const forbidText = (rel, needle, message) => {
+  if (read(rel).includes(needle)) errors.push(`${rel}: ${message}`);
+};
 
 const generators = [
   ['supabase/functions/generate-commercial-document/index.ts', 'portal-app/supabase/functions/generate-commercial-document/index.ts'],
@@ -17,6 +20,9 @@ for (const [canonical, mirror] of generators) {
   if (read(canonical) !== read(mirror)) errors.push(`${mirror}: gerador divergente de ${canonical}`);
   requireText(canonical, "rpc('assert_document_governance_ready')", 'não bloqueia geração com governança incoerente');
   requireText(canonical, 'emitted_at', 'não registra a data de emissão no snapshot');
+  requireText(canonical, 'document_date', 'não registra a data civil da geração no snapshot');
+  requireText(canonical, 'contract_signed_at', 'não alinha a data de assinatura à geração');
+  forbidText(canonical, 'Local e data: _______________________________, _____/_____/________', 'ainda deixa a data de assinatura totalmente manual');
   requireText(canonical, 'generatedDatePt', 'não imprime a data de geração no Word');
 }
 

@@ -106,6 +106,11 @@ const datePt=(raw:unknown,fallback='Não informado')=>{
  return Number.isNaN(date.getTime())?raw:new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric'}).format(date);
 };
 const generatedDatePt=(value:Date)=>new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric'}).format(value);
+const generatedDateIso=(value:Date)=>{
+ const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(value);
+ const part=(type:string)=>parts.find(item=>item.type===type)?.value??'';
+ return `${part('year')}-${part('month')}-${part('day')}`;
+};
 const contractMasterLabel=(d:Data)=>{
  const version=Number(d.contract_master_version);
  return Number.isInteger(version)&&version>0?`Contrato Mestre v${version}`:'Contrato Mestre não identificado';
@@ -181,15 +186,15 @@ const brandFooter=(profile:ProfessionalIdentity,documentCode:string)=>new Footer
 const identity=(d:Data,profile:ProfessionalIdentity,generatedAt:Date)=>[
  h('1. IDENTIFICAÇÃO'),
  p(`Data de emissão: ${generatedDatePt(generatedAt)} • Base documental: ${contractMasterLabel(d)}`),
- p(`Contrato: ${value(d,'contract_number')} • Data de assinatura: ${datePt(d.contract_signed_at,'Não informada')}`),
+ p(`Contrato: ${value(d,'contract_number')} • Data de assinatura: ${generatedDatePt(generatedAt)}`),
  p(`CONTRATADO(A): ${professionalLabel(profile)}`),
  p(`CONTRATANTE: ${value(d,'client_name')}`),
  p(`Projeto: ${value(d,'project_name')} • Tipo: ${value(d,'project_type')}`),
  p(`Imóvel / obra: ${value(d,'property_address')}`),
  ...(d.source_quote_number?[small(`Orçamento de origem: ${String(d.source_quote_number)}`)]:[])
 ];
-const sig=(profile:ProfessionalIdentity)=>[
- p('Local e data: _______________________________, _____/_____/________'),
+const sig=(profile:ProfessionalIdentity,generatedAt:Date)=>[
+ p(`Local: _______________________________ • Data: ${generatedDatePt(generatedAt)}`),
  p('_______________________________________________'),
  p(professionalLabel(profile)),
  p('_______________________________________________'),
@@ -255,7 +260,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      bullet('A retomada do fluxo ocorrerá após o recebimento das informações ou aprovações necessárias.'),
      h('6. CANAIS E REGISTRO'),
      p('Esta notificação integra o histórico documental do projeto e é encaminhada pelos canais oficiais previstos no contrato.'),
-     ...sig(profile)
+     ...sig(profile,generatedAt)
    ],profile,code);
  }
 
@@ -284,7 +289,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      h('5. CONTINUIDADE DO PROJETO'),
      p('Após a validação, o fluxo segue para a próxima etapa efetivamente prevista no Anexo I e no cronograma aplicável.'),
      h('6. ASSINATURAS'),
-     ...sig(profile)
+     ...sig(profile,generatedAt)
    ],profile,code);
  }
 
@@ -312,7 +317,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      p(smartRule(d,'additional_service_rule','O serviço adicional somente será iniciado após aprovação por escrito. Valores, horas ou percentuais devem respeitar o Contrato e o orçamento específico aprovado para esta alteração.')),
      h('6. APROVAÇÃO'),
      p('☐ Aprovo a alteração acima e autorizo o início do serviço adicional nos limites deste termo.'),
-     ...sig(profile)
+     ...sig(profile,generatedAt)
    ],profile,code);
  }
 
@@ -341,7 +346,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      p(smartRule(d,'image_authorization_conditions','A autorização é gratuita e não exclusiva, limitada aos materiais e canais assinalados. A divulgação deverá respeitar as restrições indicadas, a legislação aplicável e os direitos autorais técnicos.')),
      p('A revogação futura poderá ser solicitada por escrito com efeitos prospectivos, sem exigir a retirada de materiais já publicados de boa-fé quando isso não for técnica ou razoavelmente possível, ressalvados direitos legais.'),
      h('6. ASSINATURAS'),
-     ...sig(profile)
+     ...sig(profile,generatedAt)
    ],profile,code);
  }
 
@@ -374,7 +379,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      h('7. DECLARAÇÃO FINAL'),
      p(smartRule(d,'closing_release_rule','A quitação, quando assinalada, refere-se às obrigações identificadas neste instrumento e não representa renúncia a direitos irrenunciáveis ou exclusão de responsabilidades legais.')),
      h('8. ASSINATURAS'),
-     ...sig(profile)
+     ...sig(profile,generatedAt)
    ],profile,code);
  }
 
@@ -405,7 +410,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      h('8. LIMITES DA VISTORIA'),
      p(smartRule(d,'survey_limit','O registro limita-se às condições acessíveis e observáveis no momento da visita e não substitui ensaios, investigações destrutivas ou serviços especializados não contratados.')),
      h('9. ASSINATURAS / CIÊNCIA'),
-     ...sig(profile)
+     ...sig(profile,generatedAt)
    ],profile,code);
  }
 
@@ -444,7 +449,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      p(smartRule(d,'study_prelim_limit','O Estudo Preliminar não substitui Projeto Legal, Projeto Executivo ou projetos complementares. Após sua validação, seguem somente as etapas efetivamente contratadas no Anexo I. Alterações posteriores de premissas já aprovadas podem caracterizar alteração de escopo.')),
      compactH('11. ACEITE DA ETAPA'),
      p('Quando esta etapa integrar o escopo contratado, seu aceite deve ser formalizado no Termo de Aceite correspondente.'),
-     ...sig(profile)
+     ...sig(profile,generatedAt)
    ],profile,code);
  }
 
@@ -503,7 +508,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      p(smartRule(d,'anexo_revision_rule','Na ausência de indicação diversa em item específico, aplicam-se até 2 (duas) rodadas de revisão por etapa para ajustes dentro do escopo original. Pedidos que alterem programa, metragem, layout, partido, premissas aprovadas ou serviços não listados poderão exigir orçamento e aditivo.')),
      p('Os aceites de etapa previstos acima serão registrados por Termo de Aceite ou pelo mecanismo contratual aplicável.'),
      h('11. ASSINATURAS'),
-     ...sig(profile)
+     ...sig(profile,generatedAt)
    ],profile,code);
  }
 
@@ -565,13 +570,14 @@ Deno.serve(async(req)=>{
 
   const generatedAt=new Date();
   const generatedAtIso=generatedAt.toISOString();
+  const documentDate=generatedDateIso(generatedAt);
   const sourceData=(row.generated_data&&typeof row.generated_data==='object'?row.generated_data:{}) as Data;
   const masterVersion=Number(sourceData.contract_master_version);
   const smartTexts=sourceData.smart_texts;
   if(!Number.isInteger(masterVersion)||masterVersion<=0||!smartTexts||typeof smartTexts!=='object'||Array.isArray(smartTexts)||!Object.keys(smartTexts as Record<string,unknown>).length){
    return json({error:'Este rascunho é anterior à governança documental atual. Prepare o documento novamente para alinhar contrato mestre, serviços e textos inteligentes.'},409);
   }
-  const generatedData={...sourceData,emitted_at:generatedAtIso};
+  const generatedData={...sourceData,emitted_at:generatedAtIso,document_date:documentDate,contract_signed_at:documentDate};
   const buffer=await Packer.toBuffer(build(row.document_kind,generatedData,professionalProfile,generatedAt));
   const version=String(row.versao??'1.0').replace(/[^0-9.]/g,'')||'1.0';
   const path=`${row.projeto_id}/contratual/${row.id}/${names[row.document_kind]}-v${version}.docx`;
@@ -584,9 +590,9 @@ Deno.serve(async(req)=>{
   if(updated.error)throw updated.error;
   await service.from('audit_log').insert({
    user_id:user.id,action:'generate_contract_document_docx',entity_type:'documentos',entity_id:row.id,
-   details:{document_kind:row.document_kind,path,emitted_at:generatedAtIso,contract_master_version:generatedData.contract_master_version}
+   details:{document_kind:row.document_kind,path,emitted_at:generatedAtIso,document_date:documentDate,contract_master_version:generatedData.contract_master_version}
   });
-  return json({generated:true,documentId:row.id,path,emittedAt:generatedAtIso});
+  return json({generated:true,documentId:row.id,path,emittedAt:generatedAtIso,documentDate});
  }catch(error){
   const message=error instanceof Error?error.message:'Não foi possível gerar o documento.';
   const status=message.includes('Acesso')?403:message.includes('Sessão')?401:message.includes('Governanca')||message.includes('Governança')?409:500;

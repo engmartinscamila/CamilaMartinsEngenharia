@@ -92,6 +92,14 @@ const small=(text:string)=>new Paragraph({
  spacing:{after:90,line:260},
  children:[new TextRun({text,font:'Century Gothic',size:16,color:MUTED})]
 });
+const quoteSignatureBlock=(placeAndDate:string,proponent:string)=>new Paragraph({
+ spacing:{after:0,line:200},
+ children:[
+  new TextRun({text:placeAndDate,font:'Century Gothic',size:18,color:TEXT}),
+  new TextRun({text:'______________________________    ______________________________',break:1,font:'Century Gothic',size:16,color:TEXT}),
+  new TextRun({text:`${proponent}                            Aceite do(a) cliente`,break:1,font:'Century Gothic',size:16,color:TEXT})
+ ]
+});
 const bullet=(text:string)=>new Paragraph({
  bullet:{level:0},
  spacing:{after:70,line:280},
@@ -170,6 +178,15 @@ const text=(value:unknown,fallback='Não informado')=>typeof value==='string'&&v
 const money=(value:number|null)=>value===null?'A definir':new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(value);
 const datePt=(raw:string|null)=>raw?new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(`${raw}T12:00:00-03:00`)):'A definir';
 const generatedDatePt=(value:Date)=>new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric'}).format(value);
+const generatedDateIso=(value:Date)=>{
+ const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(value);
+ const part=(type:string)=>parts.find(item=>item.type===type)?.value??'';
+ return `${part('year')}-${part('month')}-${part('day')}`;
+};
+const generatedDateLongPt=(value:Date)=>new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'numeric',month:'long',year:'numeric'}).format(value);
+const signaturePlaceAndDate=(city:string|null,generatedAt:Date)=>city?.trim()
+ ? `${city.trim()}, ${generatedDateLongPt(generatedAt)}.`
+ : `Local: _______________________________ • Data: ${generatedDatePt(generatedAt)}`;
 const selectedServices=(record:CommercialRecord)=>Array.isArray(record.services)?record.services.filter((item):item is ServiceItem=>Boolean(item&&typeof item==='object'&&(item as ServiceItem).included!==false)):[];
 const arrStrings=(value:unknown)=>Array.isArray(value)?value.map(x=>String(x??'').trim()).filter(Boolean):[];
 const unique=(items:string[])=>[...new Set(items.filter(Boolean))];
@@ -304,11 +321,7 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
   h('9. VALIDADE E ACEITE'),
   p(`Esta proposta permanece válida até ${datePt(record.valid_until)}. Após essa data, valores, disponibilidade e condições poderão ser revistos antes da formalização.`),
   p('O aceite desta proposta não substitui o Contrato e o Anexo I definitivos quando esses instrumentos forem aplicáveis à contratação.'),
-  p('Local e data: _______________________________, _____/_____/________'),
-  p('_______________________________________________'),
-  p(`${professionalLabel(profile)} — proponente`),
-  p('_______________________________________________'),
-  p('Aceite do(a) cliente')
+  quoteSignatureBlock(signaturePlaceAndDate(record.city,generatedAt),`${profileValue(profile,'full_name')||'Camila Martins'} — proponente`)
  ],profile,`ORC ${record.quote_number}`);
 }
 
@@ -321,7 +334,8 @@ function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,c
    : levelName(record.experience_level);
  return makeDoc([
    ...title(`CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE ENGENHARIA — ${text(record.contract_number,'CONTRATO SEM NUMERAÇÃO — NÃO EMITIR')}`,'Instrumento particular • identidade profissional protegida'),
-   small(`Data de emissão: ${generatedDatePt(generatedAt)} • Base documental: Contrato Mestre v${record.contract_master_version??'não informada'}`),
+   small(`Data de emissão: ${generatedDatePt(generatedAt)} • Data de assinatura: ${generatedDatePt(generatedAt)}`),
+   small(`Base documental: Contrato Mestre v${record.contract_master_version??'não informada'}`),
    p('Pelo presente instrumento particular de Contrato de Prestação de Serviços de Engenharia, de um lado:'),
    p(`CONTRATADO(A): ${professionalQualification(profile)}, doravante denominada simplesmente CONTRATADO(A);`),
    p(`CONTRATANTE: ${record.prospect_name}, CPF/CNPJ ${text(record.cpf_cnpj)}, com endereço em ${text(record.address)}, e-mail ${text(record.email)} e telefone/WhatsApp ${text(record.phone)}, doravante denominado(a) simplesmente CONTRATANTE.`),
@@ -332,7 +346,7 @@ function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,c
    p(`Nível de experiência: ${levelDisplay}.`),
    p('O detalhamento definitivo dos serviços, entregáveis, revisões, formatos e cronograma consta do Anexo I, que deve refletir o mesmo escopo estruturado utilizado na proposta comercial.'),
    p('E por estarem assim justas e contratadas, as partes assinam o presente instrumento em 2 (duas) vias de igual teor e forma, na presença das testemunhas abaixo.'),
-   p(`${text(record.city,'[Cidade]')}, _____ de __________________ de ______.`),
+   p(signaturePlaceAndDate(record.city,generatedAt)),
    p('_____________________________________________'),
    p(professionalLabel(profile)),
    p('_____________________________________________'),
@@ -363,12 +377,13 @@ Deno.serve(async(req)=>{
   const contractMaster=kind==='contrato'?await loadContractMaster(service,record):null;
   const generatedAt=new Date();
   const generatedAtIso=generatedAt.toISOString();
-  const generatedData={commercial_record_id:record.id,quote_number:record.quote_number,contract_number:record.contract_number,prospect_name:record.prospect_name,contract_master_id:record.contract_master_id,contract_master_version:record.contract_master_version,smart_texts:record.smart_texts,services:record.services,experience_level:record.experience_level,emitted_at:generatedAtIso};
+  const documentDate=generatedDateIso(generatedAt);
+  const generatedData={commercial_record_id:record.id,quote_number:record.quote_number,contract_number:record.contract_number,prospect_name:record.prospect_name,contract_master_id:record.contract_master_id,contract_master_version:record.contract_master_version,smart_texts:record.smart_texts,services:record.services,experience_level:record.experience_level,emitted_at:generatedAtIso,document_date:documentDate,...(kind==='contrato'?{contract_signed_at:documentDate}:{})};
   const word=kind==='orcamento'?quoteDocument(record,professionalProfile,generatedAt):contractDocument(record,professionalProfile,contractMaster!.body,generatedAt);const buffer=await Packer.toBuffer(word);const number=kind==='orcamento'?record.quote_number:record.contract_number??'contrato';const path=`comercial/${record.id}/${kind}-${number}-v1.0.docx`;
   const uploaded=await service.storage.from('documentos').upload(path,buffer,{contentType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',upsert:true});if(uploaded.error)throw uploaded.error;
   const updatedDocument=await service.from('documentos').update({arquivo:path,workflow_status:'gerado',generated_at:generatedAtIso,generated_data:generatedData}).eq('id',documentId);if(updatedDocument.error)throw updatedDocument.error;
   const nextStatus=record.status==='convertido'?'convertido':kind==='contrato'?'contrato_gerado':record.contract_document_id?'contrato_gerado':'orcamento_gerado';const updatedRecord=await service.from('commercial_records').update({status:nextStatus,updated_at:generatedAtIso}).eq('id',record.id);if(updatedRecord.error)throw updatedRecord.error;
-  await service.from('audit_log').insert({user_id:user.id,action:`generate_commercial_${kind}_docx`,entity_type:'commercial_records',entity_id:record.id,details:{document_id:documentId,path,quote_number:record.quote_number,contract_number:record.contract_number,contract_master_version:record.contract_master_version,emitted_at:generatedAtIso}});
-  return json({generated:true,documentId,path,quoteNumber:record.quote_number,contractNumber:record.contract_number,emittedAt:generatedAtIso});
+  await service.from('audit_log').insert({user_id:user.id,action:`generate_commercial_${kind}_docx`,entity_type:'commercial_records',entity_id:record.id,details:{document_id:documentId,path,quote_number:record.quote_number,contract_number:record.contract_number,contract_master_version:record.contract_master_version,emitted_at:generatedAtIso,document_date:documentDate}});
+  return json({generated:true,documentId,path,quoteNumber:record.quote_number,contractNumber:record.contract_number,emittedAt:generatedAtIso,documentDate});
  }catch(error){const message=error instanceof Error?error.message:'Não foi possível gerar o documento comercial.';const status=message.includes('Acesso')?403:message.includes('Sessão')?401:message.includes('Governanca')||message.includes('Governança')?409:500;return json({error:message},status);}
 });
