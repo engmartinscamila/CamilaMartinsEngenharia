@@ -54,7 +54,6 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
 
             if (config) {
                 preencher("empresaNome", config.nome_empresa);
-                preencher("empresaCnpj", config.cnpj);
                 preencher("empresaEmail", config.email);
                 preencher("empresaTelefone", config.telefone);
                 preencher("empresaEndereco", config.endereco);
@@ -83,7 +82,6 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
     function obterDados() {
         return {
             nome_empresa: valor("empresaNome"),
-            cnpj: valor("empresaCnpj"),
             email: valor("empresaEmail"),
             telefone: valor("empresaTelefone"),
             endereco: valor("empresaEndereco"),
@@ -127,7 +125,7 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
 
             const confirmado = await dbBuscarConfiguracoes();
             const campos = [
-                "nome_empresa","cnpj","email","telefone","endereco","cidade",
+                "nome_empresa","email","telefone","endereco","cidade",
                 "estado","descricao","tema","cor_principal","notificacoes"
             ];
 
@@ -176,12 +174,20 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
             preencher("professionalPhone", data?.phone_professional || "");
 
             const cpf = document.getElementById("professionalCpf");
+            const cnpj = document.getElementById("professionalCnpj");
             const rg = document.getElementById("professionalRg");
 
             if (cpf) {
                 cpf.value = "";
                 cpf.placeholder = data?.cpf_set
                     ? "Já cadastrado " + (data?.cpf_masked || "") + " — digite somente para substituir"
+                    : "Não cadastrado";
+            }
+
+            if (cnpj) {
+                cnpj.value = "";
+                cnpj.placeholder = data?.cnpj_set
+                    ? "Já cadastrado " + (data?.cnpj_masked || "") + " — digite somente para substituir"
                     : "Não cadastrado";
             }
 
@@ -229,6 +235,7 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
             crea_rj: valor("professionalCreaRj"),
             crea_sp: valor("professionalCreaSp"),
             cpf: valor("professionalCpf"),
+            cnpj: valor("professionalCnpj"),
             rg: valor("professionalRg"),
             rg_issuer: valor("professionalRgIssuer"),
             professional_address: valor("professionalAddress"),
@@ -267,18 +274,23 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
             if (error) throw error;
 
             const cpf = document.getElementById("professionalCpf");
+            const cnpj = document.getElementById("professionalCnpj");
             const rg = document.getElementById("professionalRg");
             if (cpf) cpf.value = "";
+            if (cnpj) cnpj.value = "";
             if (rg) rg.value = "";
 
             if (status) {
                 status.textContent =
-                    "Dados profissionais salvos no Supabase Vault. CPF e RG não ficam expostos na tabela comum nem no backup.";
+                    "Dados profissionais salvos no Supabase Vault. CPF, RG e CNPJ profissional não ficam expostos na tabela comum nem no backup.";
                 status.dataset.type = "sucesso";
             }
 
             if (cpf && data?.cpf_set) {
                 cpf.placeholder = "Já cadastrado " + (data?.cpf_masked || "") + " — digite somente para substituir";
+            }
+            if (cnpj && data?.cnpj_set) {
+                cnpj.placeholder = "Já cadastrado " + (data?.cnpj_masked || "") + " — digite somente para substituir";
             }
             if (rg && data?.rg_set) {
                 rg.placeholder = "Já cadastrado " + (data?.rg_masked || "") + " — digite somente para substituir";
