@@ -16,6 +16,7 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
     async function iniciar() {
         configurarEventos();
         await carregarConfiguracoes();
+        await carregarIdentidadeProfissional();
     }
 
     function configurarEventos() {
@@ -39,6 +40,9 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
 
         document.getElementById("sistemaNotificacoes")
             ?.addEventListener("change", aplicarPrevia);
+
+        document.getElementById("saveProfessionalIdentity")
+            ?.addEventListener("click", salvarIdentidadeProfissional);
     }
 
     async function carregarConfiguracoes() {
@@ -51,7 +55,6 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
             if (config) {
                 preencher("empresaNome", config.nome_empresa);
                 preencher("empresaCnpj", config.cnpj);
-                preencher("empresaCrea", config.crea);
                 preencher("empresaEmail", config.email);
                 preencher("empresaTelefone", config.telefone);
                 preencher("empresaEndereco", config.endereco);
@@ -81,7 +84,6 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
         return {
             nome_empresa: valor("empresaNome"),
             cnpj: valor("empresaCnpj"),
-            crea: valor("empresaCrea"),
             email: valor("empresaEmail"),
             telefone: valor("empresaTelefone"),
             endereco: valor("empresaEndereco"),
@@ -125,7 +127,7 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
 
             const confirmado = await dbBuscarConfiguracoes();
             const campos = [
-                "nome_empresa","cnpj","crea","email","telefone","endereco","cidade",
+                "nome_empresa","cnpj","email","telefone","endereco","cidade",
                 "estado","descricao","tema","cor_principal","notificacoes"
             ];
 
@@ -145,6 +147,141 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
                 (erro?.message ? " " + erro.message : ""),
                 "erro"
             );
+        } finally {
+            alternarBotao(botao, false, texto);
+        }
+    }
+
+
+    async function carregarIdentidadeProfissional() {
+        const status = document.getElementById("professionalIdentityStatus");
+
+        try {
+            const { data, error } = await window.supabaseClient
+                .rpc("admin_professional_identity_status");
+
+            if (error) throw error;
+
+            preencher("professionalFullName", data?.full_name || "");
+            preencher("professionalTitle", data?.professional_title || "Engenheira Civil");
+            preencher("professionalNationality", data?.nationality || "");
+            preencher("professionalMaritalStatus", data?.marital_status || "");
+            preencher("professionalCreaRj", data?.crea_rj || "");
+            preencher("professionalCreaSp", data?.crea_sp || "");
+            preencher("professionalRgIssuer", data?.rg_issuer || "");
+            preencher("professionalAddress", data?.professional_address || "");
+            preencher("professionalCity", data?.professional_city || "");
+            preencher("professionalState", data?.professional_state || "");
+            preencher("professionalEmail", data?.email_professional || "");
+            preencher("professionalPhone", data?.phone_professional || "");
+
+            const cpf = document.getElementById("professionalCpf");
+            const rg = document.getElementById("professionalRg");
+
+            if (cpf) {
+                cpf.value = "";
+                cpf.placeholder = data?.cpf_set
+                    ? "Já cadastrado " + (data?.cpf_masked || "") + " — digite somente para substituir"
+                    : "Não cadastrado";
+            }
+
+            if (rg) {
+                rg.value = "";
+                rg.placeholder = data?.rg_set
+                    ? "Já cadastrado " + (data?.rg_masked || "") + " — digite somente para substituir"
+                    : "Não cadastrado";
+            }
+
+            if (status) {
+                status.textContent = data?.configured
+                    ? "Identificação profissional protegida e disponível para os geradores de documentos."
+                    : "Complete os dados profissionais antes de gerar contratos definitivos.";
+                status.dataset.type = data?.configured ? "sucesso" : "aviso";
+            }
+        } catch (erro) {
+            console.error("Erro ao carregar identificação profissional:", erro);
+            if (status) {
+                status.textContent = "Não foi possível consultar a área sigilosa.";
+                status.dataset.type = "erro";
+            }
+        }
+    }
+
+    async function salvarIdentidadeProfissional() {
+        const botao = document.getElementById("saveProfessionalIdentity");
+        const texto = botao?.textContent || "Salvar dados sigilosos";
+        const status = document.getElementById("professionalIdentityStatus");
+
+        const patch = {
+            full_name: valor("professionalFullName"),
+            professional_title: valor("professionalTitle"),
+            nationality: valor("professionalNationality"),
+            marital_status: valor("professionalMaritalStatus"),
+            crea_rj: valor("professionalCreaRj"),
+            crea_sp: valor("professionalCreaSp"),
+            cpf: valor("professionalCpf"),
+            rg: valor("professionalRg"),
+            rg_issuer: valor("professionalRgIssuer"),
+            professional_address: valor("professionalAddress"),
+            professional_city: valor("professionalCity"),
+            professional_state: valor("professionalState").toUpperCase(),
+            email_professional: valor("professionalEmail"),
+            phone_professional: valor("professionalPhone")
+        };
+
+        if (!patch.full_name) {
+            if (status) {
+                status.textContent = "Informe o nome civil completo.";
+                status.dataset.type = "erro";
+            }
+            return;
+        }
+
+        if (!patch.crea_rj && !patch.crea_sp) {
+            if (status) {
+                status.textContent = "Informe ao menos uma inscrição no CREA.";
+                status.dataset.type = "erro";
+            }
+            return;
+        }
+
+        try {
+            alternarBotao(botao, true, "Protegendo dados...");
+            if (status) {
+                status.textContent = "Salvando no cofre criptografado...";
+                status.dataset.type = "carregando";
+            }
+
+            const { data, error } = await window.supabaseClient
+                .rpc("admin_save_professional_identity", { p_patch: patch });
+
+            if (error) throw error;
+
+            const cpf = document.getElementById("professionalCpf");
+            const rg = document.getElementById("professionalRg");
+            if (cpf) cpf.value = "";
+            if (rg) rg.value = "";
+
+            if (status) {
+                status.textContent =
+                    "Dados profissionais salvos no Supabase Vault. CPF e RG não ficam expostos na tabela comum nem no backup.";
+                status.dataset.type = "sucesso";
+            }
+
+            if (cpf && data?.cpf_set) {
+                cpf.placeholder = "Já cadastrado " + (data?.cpf_masked || "") + " — digite somente para substituir";
+            }
+            if (rg && data?.rg_set) {
+                rg.placeholder = "Já cadastrado " + (data?.rg_masked || "") + " — digite somente para substituir";
+            }
+        } catch (erro) {
+            console.error("Erro ao salvar identificação profissional:", erro);
+            if (status) {
+                status.textContent =
+                    "Não foi possível salvar os dados sigilosos." +
+                    (erro?.message ? " " + erro.message : "");
+                status.dataset.type = "erro";
+            }
         } finally {
             alternarBotao(botao, false, texto);
         }
