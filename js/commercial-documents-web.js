@@ -98,6 +98,24 @@
     select.addEventListener('change', renderLevelInfo);
   }
 
+  function renderLevelOptions() {
+    const select = $('experienceLevel');
+    if (!select) return;
+
+    const current = String(select.value || '').trim().toLowerCase();
+    const options = ['<option value="">Selecione</option>'].concat(
+      levelCatalog.map(level =>
+        `<option value="${esc(level.code)}">${esc(level.label)} — ${esc(level.subtitle || 'Personalizado')}</option>`
+      )
+    );
+
+    select.innerHTML = options.join('');
+
+    if (current && levelCatalog.some(level => level.code === current)) {
+      select.value = current;
+    }
+  }
+
   function renderLevelInfo() {
     const info = $('experienceLevelInfo');
     const selected = String($('experienceLevel')?.value || '').trim().toLowerCase();
@@ -623,6 +641,7 @@
 
     if (!levelsRes.error && Array.isArray(levelsRes.data)) {
       levelCatalog = levelsRes.data;
+      renderLevelOptions();
     }
 
     ensureLevelInfo();
@@ -659,6 +678,7 @@
   function bind() {
     renderServices();
     ensureLevelInfo();
+    renderLevelOptions();
     renderLevelInfo();
     ensureContractSource();
 
