@@ -21,6 +21,7 @@ Configurações | Camila Martins Engenharia
 
 <link rel="stylesheet" href="css/admin.css?v=20260725-14">
 <link rel="stylesheet" href="css/admin-theme.css?v=20260830-5">
+<link rel="stylesheet" href="css/governanca-documental.css?v=20260902-1">
 
 
 <link rel="stylesheet"
@@ -572,6 +573,244 @@ Salvar dados sigilosos
 <p id="professionalIdentityStatus" role="status" aria-live="polite" style="margin:12px 0 0"></p>
 </section>
 
+<section class="card-grande" id="documentGovernanceSection">
+<div class="card-header">
+<h2>Governança documental e textos inteligentes</h2>
+</div>
+
+<p class="governance-intro">
+O Contrato Mestre, os níveis de prestação, o catálogo de serviços e os textos padrão são versionados.
+Uma alteração no contrato cria uma fila de revisão apenas para os conteúdos relacionados às cláusulas afetadas.
+Enquanto houver revisão pendente, novos ORCs e contratos ficam bloqueados para evitar divergências.
+</p>
+
+<div class="governance-summary">
+<div class="governance-kpi">
+<strong id="governanceContractVersion">—</strong>
+<span>Contrato Mestre ativo</span>
+</div>
+<div class="governance-kpi">
+<strong id="governancePendingCount">—</strong>
+<span>Revisões pendentes</span>
+</div>
+<div class="governance-kpi">
+<strong id="governanceServiceCount">—</strong>
+<span>Serviços inteligentes</span>
+</div>
+<div class="governance-kpi">
+<strong id="governanceLevelCount">—</strong>
+<span>Níveis ativos</span>
+</div>
+</div>
+
+<p id="governanceStatus" role="status" aria-live="polite"></p>
+
+<details class="governance-panel">
+<summary>Contrato Mestre versionado</summary>
+<div class="governance-panel-body">
+<p class="governance-note">
+Publique uma nova versão somente quando houver alteração real no contrato. Informe as cláusulas alteradas separadas por vírgula
+(ex.: 1.2, 2.1, 6.3). Se deixar em branco, o sistema considera todos os textos e regras potencialmente afetados.
+</p>
+
+<div class="governance-grid">
+<div class="campo">
+<label>Nome da nova versão</label>
+<input id="governanceContractLabel" placeholder="Ex.: Contrato Mestre v2">
+</div>
+<div class="campo">
+<label>Cláusulas alteradas</label>
+<input id="governanceChangedClauses" placeholder="Ex.: 1.2, 2.1, 6.3">
+</div>
+<div class="campo campo-full">
+<label>Notas da atualização</label>
+<input id="governanceContractNotes" placeholder="Resumo do que mudou">
+</div>
+<div class="campo campo-full">
+<label>Texto do Contrato Mestre</label>
+<textarea id="governanceContractBody" spellcheck="false"></textarea>
+</div>
+</div>
+
+<div class="governance-actions">
+<button type="button" id="publishContractMaster">
+<i class="fa-solid fa-code-branch"></i>
+Publicar nova versão
+</button>
+</div>
+</div>
+</details>
+
+<details class="governance-panel" open>
+<summary>Revisões de coerência pendentes</summary>
+<div class="governance-panel-body">
+<p class="governance-note">
+Editar um item cria uma nova versão dele e resolve a pendência correspondente. Se o texto continuar correto mesmo após a alteração contratual,
+use “Confirmar sem alteração”.
+</p>
+<div id="governancePendingReviews" class="governance-review-list"></div>
+</div>
+</details>
+
+<details class="governance-panel">
+<summary>Níveis de prestação de serviço</summary>
+<div class="governance-panel-body">
+<div class="governance-grid">
+<div class="campo campo-full">
+<label>Nível existente</label>
+<select id="governanceLevelSelect"></select>
+</div>
+<div class="campo">
+<label>Código</label>
+<input id="governanceLevelCode" placeholder="Ex.: platinum">
+</div>
+<div class="campo">
+<label>Nome</label>
+<input id="governanceLevelLabel" placeholder="Ex.: PLATINUM">
+</div>
+<div class="campo">
+<label>Subtítulo</label>
+<input id="governanceLevelSubtitle" placeholder="Ex.: Exclusivo">
+</div>
+<div class="campo">
+<label>Cláusulas relacionadas</label>
+<input id="governanceLevelClauses" placeholder="Ex.: 1.5, 1.7">
+</div>
+<div class="campo campo-full">
+<label>Descrição</label>
+<textarea id="governanceLevelDescription"></textarea>
+</div>
+<div class="campo campo-full">
+<label>Recursos incluídos — um por linha</label>
+<textarea id="governanceLevelFeatures"></textarea>
+</div>
+<div class="campo campo-full">
+<label>Exclusões — uma por linha</label>
+<textarea id="governanceLevelExclusions"></textarea>
+</div>
+</div>
+
+<div class="governance-actions">
+<button type="button" id="newGovernanceLevel" class="secondary">
+<i class="fa-solid fa-plus"></i>
+Novo nível
+</button>
+<button type="button" id="saveGovernanceLevel">
+<i class="fa-solid fa-floppy-disk"></i>
+Salvar nível
+</button>
+</div>
+<p class="governance-note">Novos níveis passam a aparecer automaticamente na criação de ORC e contrato, sem alteração de código.</p>
+</div>
+</details>
+
+<details class="governance-panel">
+<summary>Catálogo Inteligente de Serviços</summary>
+<div class="governance-panel-body">
+<div class="governance-grid">
+<div class="campo campo-full">
+<label>Serviço</label>
+<select id="governanceServiceSelect"></select>
+</div>
+<div class="campo">
+<label>Código</label>
+<input id="governanceServiceCode">
+</div>
+<div class="campo">
+<label>Nome</label>
+<input id="governanceServiceName">
+</div>
+<div class="campo">
+<label>Categoria</label>
+<input id="governanceServiceCategory">
+</div>
+<div class="campo">
+<label>Revisões padrão</label>
+<input id="governanceServiceRevisions" type="number" min="0">
+</div>
+<div class="campo">
+<label>Compatível com níveis?</label>
+<select id="governanceServiceLevelApplicable">
+<option value="false">Não</option>
+<option value="true">Sim</option>
+</select>
+</div>
+<div class="campo">
+<label>Exige aceite de etapa?</label>
+<select id="governanceServiceAcceptance">
+<option value="true">Sim</option>
+<option value="false">Não</option>
+</select>
+</div>
+<div class="campo campo-full">
+<label>Descrição padrão</label>
+<textarea id="governanceServiceDescription"></textarea>
+</div>
+<div class="campo campo-full">
+<label>Entregáveis — um por linha</label>
+<textarea id="governanceServiceDeliverables"></textarea>
+</div>
+<div class="campo campo-full">
+<label>Exclusões — uma por linha</label>
+<textarea id="governanceServiceExclusions"></textarea>
+</div>
+<div class="campo campo-full">
+<label>Informações necessárias do cliente — uma por linha</label>
+<textarea id="governanceServiceInputs"></textarea>
+</div>
+<div class="campo">
+<label>Formatos de entrega — separados por vírgula</label>
+<input id="governanceServiceFormats" placeholder="PDF, DWG">
+</div>
+<div class="campo">
+<label>Cláusulas relacionadas</label>
+<input id="governanceServiceClauses" placeholder="1.1, 2.1, 6.1">
+</div>
+<div class="campo campo-full">
+<label>Referência de planejamento</label>
+<input id="governanceServicePlanning">
+</div>
+</div>
+<div class="governance-actions">
+<button type="button" id="saveGovernanceService">
+<i class="fa-solid fa-floppy-disk"></i>
+Salvar nova versão do serviço
+</button>
+</div>
+</div>
+</details>
+
+<details class="governance-panel">
+<summary>Textos inteligentes padrão</summary>
+<div class="governance-panel-body">
+<div class="governance-grid">
+<div class="campo campo-full">
+<label>Texto padrão</label>
+<select id="governanceTextSelect"></select>
+</div>
+<div class="campo">
+<label>Título</label>
+<input id="governanceTextTitle">
+</div>
+<div class="campo">
+<label>Cláusulas relacionadas</label>
+<input id="governanceTextClauses">
+</div>
+<div class="campo campo-full">
+<label>Texto</label>
+<textarea id="governanceTextBody"></textarea>
+</div>
+</div>
+<div class="governance-actions">
+<button type="button" id="saveGovernanceText">
+<i class="fa-solid fa-floppy-disk"></i>
+Salvar nova versão do texto
+</button>
+</div>
+</div>
+</details>
+</section>
+
 <section class="card-grande">
 
 
@@ -883,7 +1122,7 @@ Carregando...
 <script src="js/auth.js?v=20260829-9"></script>
 
 
-<script src="js/configuracoes.js?v=20260901-3"></script>
+<script src="js/configuracoes.js?v=20260902-1"></script>
 
 </body>
 
