@@ -566,7 +566,13 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
 
         select.innerHTML =
             '<option value="">Selecione ou crie um novo nível</option>' +
-            governanceState.levels.map(item =>
+            [...governanceState.levels]
+                .sort((a, b) => {
+                    const ordem = { bronze: 10, prata: 20, ouro: 30 };
+                    return (ordem[a.code] ?? 100) - (ordem[b.code] ?? 100) ||
+                        String(a.label || a.code).localeCompare(String(b.label || b.code), "pt-BR");
+                })
+                .map(item =>
                 '<option value="' + escaparGovernanca(item.code) + '">' +
                 escaparGovernanca(item.label) + ' — ' +
                 escaparGovernanca(item.subtitle || "Personalizado") +
