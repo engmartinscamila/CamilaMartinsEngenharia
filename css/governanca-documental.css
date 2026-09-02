@@ -1,0 +1,100 @@
+
+/* Governança documental — Configurações */
+.governance-intro{
+  margin:0 0 18px;
+  color:var(--texto-secundario,#9ca8b8);
+  line-height:1.65;
+}
+.governance-summary{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:12px;
+  margin:14px 0 18px;
+}
+.governance-kpi{
+  border:1px solid rgba(184,154,99,.22);
+  background:rgba(184,154,99,.06);
+  padding:14px;
+  border-radius:10px;
+}
+.governance-kpi strong{
+  display:block;
+  color:var(--dourado,#b89a63);
+  font-size:1.05rem;
+  margin-bottom:4px;
+}
+.governance-kpi span{
+  color:var(--texto-secundario,#9ca8b8);
+  font-size:.82rem;
+}
+.governance-panel{
+  border:1px solid rgba(184,154,99,.18);
+  border-radius:12px;
+  padding:0;
+  margin:14px 0;
+  overflow:hidden;
+  background:rgba(255,255,255,.018);
+}
+.governance-panel > summary{
+  cursor:pointer;
+  list-style:none;
+  padding:15px 17px;
+  color:var(--dourado,#b89a63);
+  font-weight:700;
+  border-bottom:1px solid transparent;
+}
+.governance-panel[open] > summary{
+  border-bottom-color:rgba(184,154,99,.16);
+}
+.governance-panel > summary::-webkit-details-marker{display:none}
+.governance-panel-body{padding:16px}
+.governance-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+.governance-grid .campo-full{grid-column:1/-1}
+.governance-panel textarea{
+  width:100%;
+  min-height:110px;
+  resize:vertical;
+}
+#governanceContractBody{min-height:420px;font-family:Consolas,"Courier New",monospace;font-size:.82rem;line-height:1.5}
+.governance-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+.governance-actions button.secondary{
+  background:transparent;
+  border:1px solid rgba(184,154,99,.36);
+  color:var(--dourado,#b89a63);
+}
+.governance-review-list{
+  display:grid;
+  gap:10px;
+  margin-top:12px;
+}
+.governance-review{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  border:1px solid rgba(184,154,99,.18);
+  padding:12px;
+  border-radius:9px;
+}
+.governance-review strong{color:var(--dourado,#b89a63)}
+.governance-review small{display:block;color:var(--texto-secundario,#9ca8b8);margin-top:4px}
+.governance-review button{flex:0 0 auto}
+.governance-note{
+  color:var(--texto-secundario,#9ca8b8);
+  font-size:.8rem;
+  line-height:1.55;
+  margin:8px 0 0;
+}
+@media (max-width:760px){
+  .governance-grid{grid-template-columns:1fr}
+  .governance-review{flex-direction:column}
+}
