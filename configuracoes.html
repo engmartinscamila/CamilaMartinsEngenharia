@@ -250,11 +250,7 @@ Gerenciamento das informações do sistema
 <div class="card-header">
 
 
-<h2>
-
-Dados da Empresa
-
-</h2>
+<h2>Marca e contato público</h2>
 
 
 
@@ -280,11 +276,7 @@ id="formConfiguracoes">
 <div class="campo">
 
 
-<label>
-
-Nome da Empresa
-
-</label>
+<label>Nome público da marca</label>
 
 
 
@@ -305,11 +297,7 @@ id="empresaNome">
 <div class="campo">
 
 
-<label>
-
-CNPJ
-
-</label>
+<label>CNPJ da marca (se houver — não usado nos contratos)</label>
 
 
 
@@ -454,21 +442,8 @@ id="empresaEstado">
 
 
 <div class="campo">
-
-
-<label>
-
-CREA
-
-</label>
-
-
-
-<input
-id="empresaCrea">
-
-
-
+<label>CREA nos dados públicos</label>
+<input id="empresaCrea" value="" disabled placeholder="Gerenciado somente na área profissional sigilosa">
 </div>
 
 
@@ -502,6 +477,96 @@ rows="5">
 
 
 </div>
+<section class="card-grande" id="professionalIdentitySection">
+<div class="card-header">
+<h2>Identificação profissional sigilosa</h2>
+</div>
+<p style="margin:0 0 18px;color:var(--texto-secundario,#9ca8b8);line-height:1.6">
+Estes dados são usados somente quando um documento precisa identificar você legalmente como profissional liberal.
+CPF e RG ficam criptografados no Supabase Vault, não entram no backup comum e não são carregados novamente no navegador após o salvamento.
+</p>
+
+<div class="form-grid">
+<div class="campo">
+<label>Nome civil completo *</label>
+<input id="professionalFullName" autocomplete="off">
+</div>
+
+<div class="campo">
+<label>Título profissional</label>
+<input id="professionalTitle" value="Engenheira Civil" autocomplete="off">
+</div>
+
+<div class="campo">
+<label>Nacionalidade</label>
+<input id="professionalNationality" placeholder="Ex.: brasileira" autocomplete="off">
+</div>
+
+<div class="campo">
+<label>Estado civil (somente se desejar usar no contrato)</label>
+<input id="professionalMaritalStatus" autocomplete="off">
+</div>
+
+<div class="campo">
+<label>CREA-RJ *</label>
+<input id="professionalCreaRj" inputmode="numeric" autocomplete="off">
+</div>
+
+<div class="campo">
+<label>CREA-SP</label>
+<input id="professionalCreaSp" inputmode="numeric" autocomplete="off">
+</div>
+
+<div class="campo">
+<label>CPF *</label>
+<input id="professionalCpf" inputmode="numeric" autocomplete="off" data-lpignore="true" placeholder="Não cadastrado">
+</div>
+
+<div class="campo">
+<label>RG *</label>
+<input id="professionalRg" autocomplete="off" data-lpignore="true" placeholder="Não cadastrado">
+</div>
+
+<div class="campo">
+<label>Órgão emissor do RG</label>
+<input id="professionalRgIssuer" placeholder="Ex.: DETRAN-RJ" autocomplete="off">
+</div>
+
+<div class="campo campo-full">
+<label>Endereço profissional *</label>
+<input id="professionalAddress" autocomplete="off">
+</div>
+
+<div class="campo">
+<label>Cidade profissional</label>
+<input id="professionalCity" autocomplete="off">
+</div>
+
+<div class="campo">
+<label>UF profissional</label>
+<input id="professionalState" maxlength="2" autocomplete="off">
+</div>
+
+<div class="campo">
+<label>E-mail profissional *</label>
+<input id="professionalEmail" type="email" autocomplete="off">
+</div>
+
+<div class="campo">
+<label>Telefone / WhatsApp profissional *</label>
+<input id="professionalPhone" autocomplete="off">
+</div>
+</div>
+
+<div class="acoes-configuracao" style="margin-top:18px">
+<button type="button" id="saveProfessionalIdentity">
+<i class="fa-solid fa-shield-halved"></i>
+Salvar dados sigilosos
+</button>
+</div>
+<p id="professionalIdentityStatus" role="status" aria-live="polite" style="margin:12px 0 0"></p>
+</section>
+
 <section class="card-grande">
 
 
@@ -813,7 +878,7 @@ Carregando...
 <script src="js/auth.js?v=20260829-9"></script>
 
 
-<script src="js/configuracoes.js?v=20260829-11"></script>
+<script src="js/configuracoes.js?v=20260901-1"></script>
 
 </body>
 
