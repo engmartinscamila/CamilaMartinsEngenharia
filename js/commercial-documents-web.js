@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const servicesCatalog = [
+  let servicesCatalog = [
     ['a', 'Estudo Preliminar'],
     ['b', 'Anteprojeto'],
     ['c', 'Projeto Legal'],
@@ -19,6 +19,8 @@
     ['o', 'Laudo técnico / avaliação / vistoria'],
     ['p', 'Outro']
   ];
+  let serviceCatalogMeta = [];
+  let levelCatalog = [];
 
   const $ = id => document.getElementById(id);
   const client = () => window.supabaseClient;
@@ -63,9 +65,57 @@
   function renderServices() {
     const box = $('commercialServices');
     if (!box) return;
-    box.innerHTML = servicesCatalog.map(([code, name]) =>
-      `<label class="doc-service"><input type="checkbox" data-service="${code}"><span><strong>(${code}) ${esc(name)}</strong></span></label>`
-    ).join('');
+
+    box.innerHTML = servicesCatalog.map(([code, name]) => {
+      const meta = serviceCatalogMeta.find(item => item.code === code) || {};
+      const detail = meta.description
+        ? `<small class="doc-service-description">${esc(meta.description)}</small>`
+        : '';
+      const level = meta.level_applicable
+        ? '<small class="doc-service-level">Compatível com BRONZE / PRATA / OURO</small>'
+        : '<small class="doc-service-level muted">Serviço independente de nível</small>';
+
+      return `
+        <label class="doc-service doc-service-smart">
+          <input type="checkbox" data-service="${code}">
+          <span>
+            <strong>(${code}) ${esc(name)}</strong>
+            ${detail}
+            ${level}
+          </span>
+        </label>
+      `;
+    }).join('');
+  }
+
+  function ensureLevelInfo() {
+    const select = $('experienceLevel');
+    if (!select || $('experienceLevelInfo')) return;
+    const info = document.createElement('div');
+    info.id = 'experienceLevelInfo';
+    info.className = 'doc-status doc-level-info';
+    select.closest('.doc-field')?.appendChild(info);
+    select.addEventListener('change', renderLevelInfo);
+  }
+
+  function renderLevelInfo() {
+    const info = $('experienceLevelInfo');
+    const selected = String($('experienceLevel')?.value || '').trim().toLowerCase();
+
+    if (!info) return;
+    if (!selected) {
+      info.textContent = 'Selecione um nível apenas para serviços de projeto elegíveis. Projetos complementares, aprovações, visitas e execução permanecem independentes.';
+      return;
+    }
+
+    const level = levelCatalog.find(item => item.code === selected);
+    if (!level) {
+      info.textContent = 'O nível selecionado será aplicado somente aos serviços elegíveis e não incluirá serviços técnicos que não tenham sido marcados.';
+      return;
+    }
+
+    const features = Array.isArray(level.features) ? level.features.join(' • ') : '';
+    info.textContent = `${level.label} — ${level.subtitle}: ${level.description}${features ? ' Principais recursos: ' + features + '.' : ''}`;
   }
 
   function form() {
@@ -538,7 +588,7 @@
   }
 
   async function load() {
-    const [recordsRes, projectsRes] = await Promise.all([
+    const [recordsRes, projectsRes, servicesRes, levelsRes] = await Promise.all([
       client().from('commercial_records')
         .select('id,quote_number,contract_number,record_kind,source_mode,status,prospect_name,cpf_cnpj,email,phone,cep,address,city,state,property_address,property_type,area_terreno_m2,area_construida_m2,construction_standard,experience_level,services,custom_service,total_value,payment_terms,valid_until,notes,quote_document_id,contract_document_id,source_project_id,created_at')
         .order('created_at', { ascending: false })
@@ -547,7 +597,15 @@
         .select('id,nome,tipo,status,cliente_id,numero_orcamento,numero_contrato,contract_id,area_construida_m2,area_terreno_m2,cep_obra,endereco_obra,numero_obra,complemento_obra,bairro_obra,cidade_obra,estado_obra,created_at')
         .not('numero_orcamento', 'is', null)
         .order('created_at', { ascending: false })
-        .limit(200)
+        .limit(200),
+      client().from('service_catalog')
+        .select('code,name,category,level_applicable,description,deliverables,exclusions,client_inputs,default_revisions,delivery_formats,planning_reference,version')
+        .eq('active', true)
+        .order('code'),
+      client().from('service_level_catalog')
+        .select('code,label,subtitle,description,features,exclusions,version')
+        .eq('active', true)
+        .order('code')
     ]);
 
     if (recordsRes.error) {
@@ -556,6 +614,20 @@
     }
 
     rows = recordsRes.data || [];
+
+    if (!servicesRes.error && Array.isArray(servicesRes.data) && servicesRes.data.length) {
+      serviceCatalogMeta = servicesRes.data;
+      servicesCatalog = serviceCatalogMeta.map(item => [item.code, item.name]);
+      renderServices();
+    }
+
+    if (!levelsRes.error && Array.isArray(levelsRes.data)) {
+      levelCatalog = levelsRes.data;
+    }
+
+    ensureLevelInfo();
+    renderLevelInfo();
+
     const legacySources = projectsRes.error ? [] : await loadLegacyQuoteSources(projectsRes.data || []);
 
     const centralSources = rows
@@ -586,6 +658,8 @@
 
   function bind() {
     renderServices();
+    ensureLevelInfo();
+    renderLevelInfo();
     ensureContractSource();
 
     $('lookupCnpj')?.addEventListener('click', () => lookup('cnpj'));
