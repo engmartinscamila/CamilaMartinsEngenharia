@@ -297,12 +297,12 @@ id="empresaNome">
 <div class="campo">
 
 
-<label>CNPJ da marca (se houver — não usado nos contratos)</label>
+<label>CNPJ público</label>
 
 
 
 <input
-id="empresaCnpj">
+id="empresaCnpj" disabled placeholder="Gerenciado somente na área profissional sigilosa">
 
 
 
@@ -483,7 +483,7 @@ rows="5">
 </div>
 <p style="margin:0 0 18px;color:var(--texto-secundario,#9ca8b8);line-height:1.6">
 Estes dados são usados somente quando um documento precisa identificar você legalmente como profissional liberal.
-CPF e RG ficam criptografados no Supabase Vault, não entram no backup comum e não são carregados novamente no navegador após o salvamento.
+CPF, RG e eventual CNPJ profissional ficam criptografados no Supabase Vault, não entram no backup comum e não são carregados novamente no navegador após o salvamento. O CNPJ não substitui automaticamente sua identificação como pessoa física; ele só será usado nos contratos se essa modalidade for ativada futuramente.
 </p>
 
 <div class="form-grid">
@@ -520,6 +520,11 @@ CPF e RG ficam criptografados no Supabase Vault, não entram no backup comum e n
 <div class="campo">
 <label>CPF *</label>
 <input id="professionalCpf" inputmode="numeric" autocomplete="off" data-lpignore="true" placeholder="Não cadastrado">
+</div>
+
+<div class="campo">
+<label>CNPJ profissional (opcional — uso futuro)</label>
+<input id="professionalCnpj" inputmode="numeric" autocomplete="off" data-lpignore="true" placeholder="Não cadastrado">
 </div>
 
 <div class="campo">
@@ -878,7 +883,7 @@ Carregando...
 <script src="js/auth.js?v=20260829-9"></script>
 
 
-<script src="js/configuracoes.js?v=20260901-2"></script>
+<script src="js/configuracoes.js?v=20260901-3"></script>
 
 </body>
 
