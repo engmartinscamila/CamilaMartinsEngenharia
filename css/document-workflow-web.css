@@ -27,3 +27,11 @@ html.doc-modal-open,body.doc-modal-open{overflow:hidden;overscroll-behavior:none
 .doc-contract-source .doc-status{
   margin:0;
 }
+
+
+/* Catálogo inteligente de serviços e níveis */
+.doc-service-smart span{display:grid;gap:5px;min-width:0}
+.doc-service-description{display:block;color:var(--text-secondary,#aeb8c6);font-size:.76rem;line-height:1.45;font-weight:400}
+.doc-service-level{display:inline-flex;width:max-content;max-width:100%;padding:3px 7px;border:1px solid rgba(184,154,99,.28);border-radius:999px;color:#b89a63;font-size:.68rem;line-height:1.2}
+.doc-service-level.muted{color:var(--text-secondary,#aeb8c6);border-color:var(--border-color,rgba(184,154,99,.18))}
+.doc-level-info{margin-top:7px;font-size:.76rem;line-height:1.45;background:rgba(184,154,99,.07);border:1px solid rgba(184,154,99,.18)}
