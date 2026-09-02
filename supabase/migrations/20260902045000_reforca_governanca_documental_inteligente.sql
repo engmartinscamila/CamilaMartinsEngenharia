@@ -8,6 +8,13 @@ alter table public.document_rule_reviews
   add constraint document_rule_reviews_source_type_check
   check (source_type in ('service','level','text','contract'));
 
+create index if not exists commercial_records_contract_master_id_idx
+  on public.commercial_records(contract_master_id);
+
+-- Função de trigger: não deve permanecer disponível como RPC pública.
+revoke all on function public.freeze_commercial_document_governance() from public,anon,authenticated;
+grant execute on function public.freeze_commercial_document_governance() to service_role;
+
 create or replace function public.document_contract_clause_map(p_body text)
 returns jsonb
 language sql
