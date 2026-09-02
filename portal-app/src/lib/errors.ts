@@ -1,4 +1,15 @@
 const connectionPatterns = ['network request failed', 'failed to fetch', 'networkerror', 'timeout'];
+const safeOperationalPatterns = [
+  /^acesso administrativo necessário\.?$/i,
+  /^projeto\/contrato não encontrado\.?$/i,
+  /^tipo de documento não suportado\.?$/i,
+  /^selecione uma aprovação para gerar o termo de aceite\.?$/i,
+  /^aprovação não encontrada(?: para este projeto)?\.?$/i,
+  /^este rascunho é anterior à governança documental atual\./i,
+  /^complete a identificação profissional sigilosa em configurações antes de gerar este documento\./i,
+  /^o documento já foi enviado\/aceito e não pode ser sobrescrito\./i,
+  /^muitas (?:tentativas|operações)\./i,
+];
 
 export function toUserMessage(error: unknown, fallback = 'Não foi possível concluir esta ação. Tente novamente.') {
   const raw = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
@@ -18,6 +29,9 @@ export function toUserMessage(error: unknown, fallback = 'Não foi possível con
   }
   if (normalized.includes('expired') || normalized.includes('otp')) {
     return 'Este link expirou ou já foi utilizado. Solicite um novo link.';
+  }
+  if (safeOperationalPatterns.some((pattern) => pattern.test(raw.trim()))) {
+    return raw.trim();
   }
   return fallback;
 }

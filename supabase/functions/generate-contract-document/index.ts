@@ -67,6 +67,12 @@ const h=(text:string)=>new Paragraph({
  border:{bottom:{color:GOLD,style:BorderStyle.SINGLE,size:8,space:5}},
  children:[new TextRun({text,bold:true,font:'Century Gothic',size:23,color:NAVY})]
 });
+const compactH=(text:string)=>new Paragraph({
+ heading:HeadingLevel.HEADING_2,
+ spacing:{before:180,after:90},
+ border:{bottom:{color:GOLD,style:BorderStyle.SINGLE,size:8,space:5}},
+ children:[new TextRun({text,bold:true,font:'Century Gothic',size:23,color:NAVY})]
+});
 const sub=(text:string)=>new Paragraph({
  spacing:{before:170,after:80},
  children:[new TextRun({text,bold:true,font:'Century Gothic',size:20,color:GOLD})]
@@ -94,12 +100,16 @@ const t=(text:string,subtitle?:string)=>[
  })]:[])
 ];
 const value=(d:Data,key:string,fallback='Não informado')=>typeof d[key]==='string'&&String(d[key]).trim()?String(d[key]).trim():fallback;
-const datePt=(raw:unknown)=>{
- if(typeof raw!=='string'||!raw)return 'Não informado';
+const datePt=(raw:unknown,fallback='Não informado')=>{
+ if(typeof raw!=='string'||!raw)return fallback;
  const date=new Date(raw);
  return Number.isNaN(date.getTime())?raw:new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric'}).format(date);
 };
 const generatedDatePt=(value:Date)=>new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric'}).format(value);
+const contractMasterLabel=(d:Data)=>{
+ const version=Number(d.contract_master_version);
+ return Number.isInteger(version)&&version>0?`Contrato Mestre v${version}`:'Contrato Mestre não identificado';
+};
 const money=(raw:unknown)=>{
  const n=Number(raw);
  return Number.isFinite(n)?new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n):'A definir';
@@ -170,8 +180,8 @@ const brandFooter=(profile:ProfessionalIdentity,documentCode:string)=>new Footer
 ]});
 const identity=(d:Data,profile:ProfessionalIdentity,generatedAt:Date)=>[
  h('1. IDENTIFICAÇÃO'),
- p(`Data de emissão: ${generatedDatePt(generatedAt)} • Base documental: Contrato Mestre v${String(d.contract_master_version??'não informada')}`),
- p(`Contrato: ${value(d,'contract_number')} • Data de assinatura: ${datePt(d.contract_signed_at)}`),
+ p(`Data de emissão: ${generatedDatePt(generatedAt)} • Base documental: ${contractMasterLabel(d)}`),
+ p(`Contrato: ${value(d,'contract_number')} • Data de assinatura: ${datePt(d.contract_signed_at,'Não informada')}`),
  p(`CONTRATADO(A): ${professionalLabel(profile)}`),
  p(`CONTRATANTE: ${value(d,'client_name')}`),
  p(`Projeto: ${value(d,'project_name')} • Tipo: ${value(d,'project_type')}`),
@@ -201,11 +211,11 @@ const doc=(children:Paragraph[],profile:ProfessionalIdentity,documentCode:string
    children
  }]
 });
-const levelSection=(d:Data,heading='NÍVEL DE PRESTAÇÃO DE SERVIÇO')=>{
+const levelSection=(d:Data,heading='NÍVEL DE PRESTAÇÃO DE SERVIÇO',headingBuilder=h)=>{
  const level=levelData(d);
  const eligible=levelEligibleServices(d);
  const out:Paragraph[]=[
-   h(heading),
+   headingBuilder(heading),
    p(`Nível vinculado ao contrato: ${levelName(d)}`,true,GOLD)
  ];
  if(level){
@@ -408,31 +418,31 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      ...t('ESTUDO PRELIMINAR',outside?'Documento auxiliar • não altera automaticamente o escopo contratado':'Etapa prevista no escopo contratual'),
      ...identity(d,profile,generatedAt),
      ...(outside?[p('ATENÇÃO: este Estudo Preliminar foi preparado como documento auxiliar. Sua emissão não inclui automaticamente o serviço no Anexo I nem altera o valor do contrato.',true,GOLD)]:[]),
-     h('2. OBJETIVO DA ETAPA'),
+     compactH('2. OBJETIVO DA ETAPA'),
      p(study?serviceDescription(study):'Consolidar necessidades, condicionantes e diretrizes iniciais para orientar o desenvolvimento do projeto.'),
      ...(d.project_description?[p(`Descrição cadastrada do projeto: ${String(d.project_description)}`)]:[]),
-     h('3. INSUMOS NECESSÁRIOS'),
+     compactH('3. INSUMOS NECESSÁRIOS'),
      ...(inputs.length?inputs.map(item=>p(`☐ ${item}`)):[p('☐ Briefing e informações do cliente   ☐ Medidas/documentos disponíveis do imóvel')]),
-     h('4. PROGRAMA DE NECESSIDADES'),
+     compactH('4. PROGRAMA DE NECESSIDADES'),
      p('Ambiente / setor | Quantidade | Prioridade | Observações'),
-     ...Array.from({length:8},()=>p('____________________________ | ______ | ______ | __________________________')),
-     h('5. CONDICIONANTES E PREMISSAS'),
+     ...Array.from({length:4},()=>p('____________________________ | ______ | ______ | __________________________')),
+     compactH('5. CONDICIONANTES E PREMISSAS'),
      p('Restrições legais/condominiais conhecidas: ________________________________________'),
      p('Premissas funcionais e de uso: ____________________________________________________'),
      p('Premissas de orçamento e padrão construtivo: ______________________________________'),
-     h('6. DIRETRIZES DE PARTIDO E ORGANIZAÇÃO ESPACIAL'),
+     compactH('6. DIRETRIZES DE PARTIDO E ORGANIZAÇÃO ESPACIAL'),
      p('Registrar implantação, setorização, fluxos, orientação solar/ventilação, relações entre ambientes e diretrizes estéticas validadas para esta etapa.'),
      p('_______________________________________________________________________________'),
-     h('7. QUADRO PRELIMINAR DE ÁREAS'),
+     compactH('7. QUADRO PRELIMINAR DE ÁREAS'),
      p(`Área do terreno cadastrada: ${String(d.area_terreno_m2??'não informada')} m².`),
      p(`Área construída prevista cadastrada: ${String(d.area_construida_m2??'não informada')} m².`),
      p('Distribuição por pavimento / setor: _______________________________________________'),
-     h('8. ENTREGÁVEIS PADRÃO DESTA ETAPA'),
+     compactH('8. ENTREGÁVEIS PADRÃO DESTA ETAPA'),
      ...(deliverables.length?deliverables.map(bullet):[bullet('Síntese de necessidades e premissas'),bullet('Representações compatíveis com o nível preliminar')]),
-     ...levelSection(d,'9. NÍVEL DE PRESTAÇÃO DE SERVIÇO'),
-     h('10. LIMITES E PRÓXIMOS PASSOS'),
+     ...levelSection(d,'9. NÍVEL DE PRESTAÇÃO DE SERVIÇO',compactH),
+     compactH('10. LIMITES E PRÓXIMOS PASSOS'),
      p(smartRule(d,'study_prelim_limit','O Estudo Preliminar não substitui Projeto Legal, Projeto Executivo ou projetos complementares. Após sua validação, seguem somente as etapas efetivamente contratadas no Anexo I. Alterações posteriores de premissas já aprovadas podem caracterizar alteração de escopo.')),
-     h('11. ACEITE DA ETAPA'),
+     compactH('11. ACEITE DA ETAPA'),
      p('Quando esta etapa integrar o escopo contratado, seu aceite deve ser formalizado no Termo de Aceite correspondente.'),
      ...sig(profile)
    ],profile,code);
@@ -556,6 +566,11 @@ Deno.serve(async(req)=>{
   const generatedAt=new Date();
   const generatedAtIso=generatedAt.toISOString();
   const sourceData=(row.generated_data&&typeof row.generated_data==='object'?row.generated_data:{}) as Data;
+  const masterVersion=Number(sourceData.contract_master_version);
+  const smartTexts=sourceData.smart_texts;
+  if(!Number.isInteger(masterVersion)||masterVersion<=0||!smartTexts||typeof smartTexts!=='object'||Array.isArray(smartTexts)||!Object.keys(smartTexts as Record<string,unknown>).length){
+   return json({error:'Este rascunho é anterior à governança documental atual. Prepare o documento novamente para alinhar contrato mestre, serviços e textos inteligentes.'},409);
+  }
   const generatedData={...sourceData,emitted_at:generatedAtIso};
   const buffer=await Packer.toBuffer(build(row.document_kind,generatedData,professionalProfile,generatedAt));
   const version=String(row.versao??'1.0').replace(/[^0-9.]/g,'')||'1.0';

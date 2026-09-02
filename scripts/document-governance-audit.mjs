@@ -55,6 +55,22 @@ for (const marker of [
   "'proposal_timeline_rule',array['2.1','2.2','2.3','3.6']"
 ]) requireText(migration, marker, `marcador obrigatório ausente: ${marker}`);
 
+const contractFlowFix = 'supabase/migrations/20260902123000_corrige_fluxo_documentos_contratuais.sql';
+for (const marker of [
+  'v_approval public.aprovacoes%rowtype;',
+  'legacy_missing_snapshot',
+  'current_document_text_snapshot_all()',
+  "d.workflow_status in ('rascunho','gerado')"
+]) requireText(contractFlowFix, marker, `correção contratual ausente: ${marker}`);
+if (read(contractFlowFix) !== read(`portal-app/${contractFlowFix}`)) {
+  errors.push(`portal-app/${contractFlowFix}: migração divergente da versão canônica`);
+}
+
+requireText('js/contract-documents-web.js', 'safeError(error', 'pode expor erro interno do banco na interface');
+if (read('js/contract-documents-web.js').includes('prepareOptionalStudy')) {
+  errors.push('js/contract-documents-web.js: mantém fluxo legado que ignora a governança central');
+}
+
 const delivery = read('portal-app/supabase/functions/deliver-generated-document/index.ts');
 for (const marker of [
   'const archive = body.archive === true',

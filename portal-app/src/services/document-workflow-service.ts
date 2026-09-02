@@ -1,4 +1,5 @@
 import { downloadBase64File } from '@/lib/download-generated-file';
+import { toUserMessage } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 import { dispatchPendingPushNotifications } from '@/services/push-service';
 import type { ServiceResult } from '@/types/domain';
@@ -73,7 +74,7 @@ export const CONTRACT_SCOPE_PRESETS = [
   ['o', 'Laudo técnico / avaliação / vistoria'], ['p', 'Outro'],
 ] as const;
 
-export const CONTRACT_DOCUMENT_OPTIONS: Array<{ kind: Exclude<ContractDocumentKind, 'notificacao_formal' | 'termo_aceite'>; title: string; description: string }> = [
+export const CONTRACT_DOCUMENT_OPTIONS: { kind: Exclude<ContractDocumentKind, 'notificacao_formal' | 'termo_aceite'>; title: string; description: string }[] = [
   { kind: 'anexo_i', title: 'Anexo I', description: 'Escopo, proposta comercial, valores e cronograma somente dos serviços contratados.' },
   { kind: 'estudo_preliminar', title: 'Estudo Preliminar', description: 'Documento auxiliar opcional. Se não estiver contratado no item (a), sua geração não altera o escopo do Anexo I.' },
   { kind: 'levantamento_tecnico', title: 'Ficha de Levantamento / Vistoria', description: 'Documento opcional para registrar medidas e condições verificadas no local.' },
@@ -120,15 +121,15 @@ export async function listProjectContractDocuments(projectId: string): Promise<S
 
 export async function prepareContractDocument(input: { projectId: string; kind: Exclude<ContractDocumentKind, 'notificacao_formal'>; approvalId?: string | null; extraData?: Record<string, unknown> }) {
   const result = await supabase.rpc('admin_prepare_contract_document', { p_project_id: input.projectId, p_document_kind: input.kind, p_approval_id: input.approvalId ?? null, p_extra_data: input.extraData ?? {} });
-  return result.error || !result.data ? { documentId: null, error: result.error?.message ?? 'Não foi possível preparar o documento.' } : { documentId: result.data as string, error: null };
+  return result.error || !result.data ? { documentId: null, error: toUserMessage(result.error, 'Não foi possível preparar o documento. Tente novamente.') } : { documentId: result.data as string, error: null };
 }
 
 export async function generateContractDocument(documentId: string, archive = false) {
   const generated = await supabase.functions.invoke('generate-contract-document', { body: { documentId, action: 'generate' } });
-  if (generated.error || !generated.data?.generated) return generated.data?.error ?? generated.error?.message ?? 'Não foi possível gerar o Word editável.';
+  if (generated.error || !generated.data?.generated) return toUserMessage(generated.data?.error ?? generated.error, 'Não foi possível gerar o Word editável. Tente novamente.');
 
   const delivered = await supabase.functions.invoke('deliver-generated-document', { body: { documentId, archive } });
-  if (delivered.error || !delivered.data?.delivered || !delivered.data?.contentBase64) return delivered.data?.error ?? delivered.error?.message ?? 'O Word foi gerado, mas não foi possível preparar o download.';
+  if (delivered.error || !delivered.data?.delivered || !delivered.data?.contentBase64) return toUserMessage(delivered.data?.error ?? delivered.error, 'O Word foi gerado, mas não foi possível preparar o download.');
   try {
     await downloadBase64File(String(delivered.data.contentBase64), String(delivered.data.fileName ?? 'documento.docx'));
   } catch (error) {
@@ -139,14 +140,14 @@ export async function generateContractDocument(documentId: string, archive = fal
 
 export async function sendContractDocument(documentId: string) {
   const result = await supabase.functions.invoke('generate-contract-document', { body: { documentId, action: 'send' } });
-  if (result.error || !result.data?.sent) return result.data?.error ?? result.error?.message ?? 'Não foi possível disponibilizar o documento ao cliente.';
+  if (result.error || !result.data?.sent) return toUserMessage(result.data?.error ?? result.error, 'Não foi possível disponibilizar o documento ao cliente.');
   void dispatchPendingPushNotifications();
   return null;
 }
 
 export async function prepareFormalNotice(approvalId: string) {
   const result = await supabase.rpc('admin_prepare_formal_notice', { p_approval_id: approvalId });
-  return result.error || !result.data ? { documentId: null, error: 'Não foi possível preparar a Notificação Formal.' } : { documentId: result.data as string, error: null };
+  return result.error || !result.data ? { documentId: null, error: toUserMessage(result.error, 'Não foi possível preparar a Notificação Formal.') } : { documentId: result.data as string, error: null };
 }
 
 export const generateFormalNotice = generateContractDocument;
