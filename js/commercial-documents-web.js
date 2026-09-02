@@ -455,28 +455,17 @@
       return;
     }
 
-    const { data: record, error } = await client()
-      .from('commercial_records')
-      .select('quote_document_id,contract_document_id')
-      .eq('id', recordId)
-      .single();
-
-    if (error) {
-      msg(error.message, 'error');
-      return;
-    }
-
-    const documentId = kind === 'contrato' ? record.contract_document_id : record.quote_document_id;
+    const documentId = generated.data.documentId;
     if (!documentId) {
       msg('Documento gerado sem vínculo de entrega.', 'error');
       return;
     }
 
     const delivered = await client().functions.invoke('deliver-generated-document', {
-      body: { documentId, archive }
+      body: { documentId, archive, expectedDocumentKind: kind }
     });
 
-    if (delivered.error || !delivered.data?.delivered) {
+    if (delivered.error || !delivered.data?.delivered || delivered.data?.documentKind !== kind) {
       msg(delivered.data?.error || delivered.error?.message || 'Não foi possível preparar o download.', 'error');
       return;
     }

@@ -73,6 +73,10 @@ if (read(contractFlowFix) !== read(`portal-app/${contractFlowFix}`)) {
 }
 
 requireText('js/contract-documents-web.js', 'safeError(error', 'pode expor erro interno do banco na interface');
+requireText('js/contract-documents-web.js', 'docs.filter(d=>d.document_kind===activeDocumentKind)', 'não filtra a lista pelo tipo de documento aberto');
+requireText('js/contract-documents-web.js', 'expectedDocumentKind:expected', 'não informa ao servidor o tipo contratual esperado');
+requireText('js/commercial-documents-web.js', 'const documentId = generated.data.documentId', 'ignora o ID exato retornado pela geração comercial');
+requireText('js/commercial-documents-web.js', 'expectedDocumentKind: kind', 'não informa ao servidor o tipo comercial esperado');
 if (read('js/contract-documents-web.js').includes('prepareOptionalStudy')) {
   errors.push('js/contract-documents-web.js: mantém fluxo legado que ignora a governança central');
 }
@@ -87,6 +91,11 @@ for (const marker of [
 ]) {
   if (!delivery.includes(marker)) errors.push(`deliver-generated-document: regra de não salvamento ausente: ${marker}`);
 }
+for (const marker of ['expectedDocumentKind', 'actualDocumentKind', 'commercial_document_kind', 'documentKind: actualDocumentKind']) {
+  if (!delivery.includes(marker)) errors.push(`deliver-generated-document: validação de tipo ausente: ${marker}`);
+}
+requireText('supabase/functions/generate-contract-document/index.ts', 'row.document_kind!==expectedDocumentKind', 'gerador contratual aceita ID de outro tipo');
+requireText('supabase/functions/generate-commercial-document/index.ts', 'commercial_document_kind:kind', 'gerador comercial não registra o tipo no snapshot');
 
 if (errors.length) {
   console.error('ERROS NA GOVERNANÇA DOCUMENTAL:');

@@ -31,9 +31,10 @@ Deno.serve(async (req) => {
 
   try {
     const { caller, service, user } = await requireAdmin(req);
-    const body = await req.json() as { documentId?: string; archive?: boolean };
+    const body = await req.json() as { documentId?: string; archive?: boolean; expectedDocumentKind?: string };
     const documentId = typeof body.documentId === 'string' ? body.documentId : '';
     const archive = body.archive === true;
+    const expectedDocumentKind = typeof body.expectedDocumentKind === 'string' ? body.expectedDocumentKind : '';
     if (!/^[0-9a-f-]{36}$/i.test(documentId)) return json({ error: 'Documento inválido.' }, 400);
 
     const { error: rateError } = await caller.rpc('consume_admin_rate_limit', { p_action: archive ? 'document-delivery-archive' : 'document-delivery-download' });
@@ -45,6 +46,16 @@ Deno.serve(async (req) => {
     if (rowResult.error) throw rowResult.error;
     if (!rowResult.data) return json({ error: 'Documento não encontrado.' }, 404);
     const row = rowResult.data;
+    const generatedData = row.generated_data && typeof row.generated_data === 'object' ? row.generated_data as Record<string, unknown> : {};
+    const actualDocumentKind = typeof row.document_kind === 'string' && row.document_kind
+      ? row.document_kind
+      : typeof generatedData.commercial_document_kind === 'string'
+        ? generatedData.commercial_document_kind
+        : '';
+    if (!expectedDocumentKind) return json({ error: 'Informe o tipo de documento esperado para o download.' }, 400);
+    if (!actualDocumentKind || actualDocumentKind !== expectedDocumentKind) {
+      return json({ error: 'O arquivo preparado não corresponde ao tipo solicitado. Atualize a tela e gere novamente.' }, 409);
+    }
     if (!row.arquivo) return json({ error: 'O Word ainda não foi gerado para entrega.' }, 409);
 
     const bucket = row.storage_bucket || 'documentos';
@@ -53,7 +64,6 @@ Deno.serve(async (req) => {
     const bytes = new Uint8Array(await downloaded.data.arrayBuffer());
     if (bytes.byteLength > 20 * 1024 * 1024) return json({ error: 'O Word gerado ultrapassa o limite de 20 MB para entrega direta.' }, 413);
 
-    const generatedData = row.generated_data && typeof row.generated_data === 'object' ? row.generated_data as Record<string, unknown> : {};
     let partyName = typeof generatedData.prospect_name === 'string' ? generatedData.prospect_name : typeof generatedData.client_name === 'string' ? generatedData.client_name : null;
     if (!partyName && row.cliente_id) {
       const client = await service.from('clientes').select('nome').eq('id', row.cliente_id).maybeSingle();
@@ -125,7 +135,7 @@ Deno.serve(async (req) => {
       details: { history_id: historyId, file_size_bytes: bytes.byteLength, archive_path: archivePath },
     });
 
-    return json({ delivered: true, documentId: row.id, historyId, fileName, contentBase64: encodeBase64(bytes), archived: archive, archivePath, fileSizeBytes: bytes.byteLength });
+    return json({ delivered: true, documentId: row.id, documentKind: actualDocumentKind, historyId, fileName, contentBase64: encodeBase64(bytes), archived: archive, archivePath, fileSizeBytes: bytes.byteLength });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Não foi possível entregar o Word gerado.';
     return json({ error: message }, message.includes('Acesso') ? 403 : message.includes('Sessão') ? 401 : 500);

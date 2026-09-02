@@ -525,6 +525,7 @@ Deno.serve(async(req)=>{
   const body=await req.json();
   const documentId=typeof body.documentId==='string'?body.documentId:'';
   const action=body.action==='send'?'send':'generate';
+  const expectedDocumentKind=typeof body.expectedDocumentKind==='string'?body.expectedDocumentKind:'';
   if(!/^[0-9a-f-]{36}$/i.test(documentId))return json({error:'Documento inválido.'},400);
   const {error:rateError}=await caller.rpc('consume_admin_rate_limit',{p_action:`contract-document-${action}`});
   if(rateError)return json({error:'Muitas tentativas. Aguarde antes de repetir a operação.'},429);
@@ -535,10 +536,12 @@ Deno.serve(async(req)=>{
   if(error)throw error;
   if(!row)return json({error:'Documento não encontrado.'},404);
   if(!names[row.document_kind])return json({error:'Tipo de documento não suportado.'},400);
+  if(!expectedDocumentKind||!names[expectedDocumentKind])return json({error:'Informe o tipo de documento que deve ser gerado.'},400);
+  if(row.document_kind!==expectedDocumentKind)return json({error:'O documento selecionado não corresponde ao tipo solicitado. Atualize a tela e tente novamente.'},409);
 
   if(action==='send'){
    if(!row.arquivo||row.workflow_status==='rascunho')return json({error:'Gere o Word antes de enviá-lo ao cliente.'},400);
-   if(row.workflow_status==='enviado')return json({sent:true,alreadySent:true});
+   if(row.workflow_status==='enviado')return json({sent:true,alreadySent:true,documentKind:row.document_kind});
    const updated=await service.from('documentos').update({workflow_status:'enviado'})
     .eq('id',row.id).eq('workflow_status','gerado').select('id').maybeSingle();
    if(updated.error)throw updated.error;
@@ -556,7 +559,7 @@ Deno.serve(async(req)=>{
     if(notification.error)throw notification.error;
    }
    await service.from('audit_log').insert({user_id:user.id,action:'send_contract_document',entity_type:'documentos',entity_id:row.id,details:{document_kind:row.document_kind}});
-   return json({sent:true});
+   return json({sent:true,documentKind:row.document_kind});
   }
 
   if(row.workflow_status==='enviado'||row.workflow_status==='assinado'||row.workflow_status==='aceito'){
@@ -592,7 +595,7 @@ Deno.serve(async(req)=>{
    user_id:user.id,action:'generate_contract_document_docx',entity_type:'documentos',entity_id:row.id,
    details:{document_kind:row.document_kind,path,emitted_at:generatedAtIso,document_date:documentDate,contract_master_version:generatedData.contract_master_version}
   });
-  return json({generated:true,documentId:row.id,path,emittedAt:generatedAtIso,documentDate});
+  return json({generated:true,documentId:row.id,documentKind:row.document_kind,path,emittedAt:generatedAtIso,documentDate});
  }catch(error){
   const message=error instanceof Error?error.message:'Não foi possível gerar o documento.';
   const status=message.includes('Acesso')?403:message.includes('Sessão')?401:message.includes('Governanca')||message.includes('Governança')?409:500;

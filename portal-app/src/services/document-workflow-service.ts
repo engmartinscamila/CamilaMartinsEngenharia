@@ -124,12 +124,12 @@ export async function prepareContractDocument(input: { projectId: string; kind: 
   return result.error || !result.data ? { documentId: null, error: toUserMessage(result.error, 'Não foi possível preparar o documento. Tente novamente.') } : { documentId: result.data as string, error: null };
 }
 
-export async function generateContractDocument(documentId: string, archive = false) {
-  const generated = await supabase.functions.invoke('generate-contract-document', { body: { documentId, action: 'generate' } });
-  if (generated.error || !generated.data?.generated) return toUserMessage(generated.data?.error ?? generated.error, 'Não foi possível gerar o Word editável. Tente novamente.');
+export async function generateContractDocument(documentId: string, expectedDocumentKind: ContractDocumentKind, archive = false) {
+  const generated = await supabase.functions.invoke('generate-contract-document', { body: { documentId, action: 'generate', expectedDocumentKind } });
+  if (generated.error || !generated.data?.generated || generated.data?.documentKind !== expectedDocumentKind) return toUserMessage(generated.data?.error ?? generated.error, 'Não foi possível gerar o Word correspondente ao tipo solicitado.');
 
-  const delivered = await supabase.functions.invoke('deliver-generated-document', { body: { documentId, archive } });
-  if (delivered.error || !delivered.data?.delivered || !delivered.data?.contentBase64) return toUserMessage(delivered.data?.error ?? delivered.error, 'O Word foi gerado, mas não foi possível preparar o download.');
+  const delivered = await supabase.functions.invoke('deliver-generated-document', { body: { documentId, archive, expectedDocumentKind } });
+  if (delivered.error || !delivered.data?.delivered || !delivered.data?.contentBase64 || delivered.data?.documentKind !== expectedDocumentKind) return toUserMessage(delivered.data?.error ?? delivered.error, 'O Word retornado não corresponde ao tipo solicitado.');
   try {
     await downloadBase64File(String(delivered.data.contentBase64), String(delivered.data.fileName ?? 'documento.docx'));
   } catch (error) {
@@ -138,9 +138,9 @@ export async function generateContractDocument(documentId: string, archive = fal
   return null;
 }
 
-export async function sendContractDocument(documentId: string) {
-  const result = await supabase.functions.invoke('generate-contract-document', { body: { documentId, action: 'send' } });
-  if (result.error || !result.data?.sent) return toUserMessage(result.data?.error ?? result.error, 'Não foi possível disponibilizar o documento ao cliente.');
+export async function sendContractDocument(documentId: string, expectedDocumentKind: ContractDocumentKind) {
+  const result = await supabase.functions.invoke('generate-contract-document', { body: { documentId, action: 'send', expectedDocumentKind } });
+  if (result.error || !result.data?.sent || result.data?.documentKind !== expectedDocumentKind) return toUserMessage(result.data?.error ?? result.error, 'Não foi possível disponibilizar o documento correto ao cliente.');
   void dispatchPendingPushNotifications();
   return null;
 }
@@ -150,5 +150,5 @@ export async function prepareFormalNotice(approvalId: string) {
   return result.error || !result.data ? { documentId: null, error: toUserMessage(result.error, 'Não foi possível preparar a Notificação Formal.') } : { documentId: result.data as string, error: null };
 }
 
-export const generateFormalNotice = generateContractDocument;
-export const sendFormalNotice = sendContractDocument;
+export const generateFormalNotice = (documentId: string, archive = false) => generateContractDocument(documentId, 'notificacao_formal', archive);
+export const sendFormalNotice = (documentId: string) => sendContractDocument(documentId, 'notificacao_formal');

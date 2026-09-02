@@ -70,7 +70,7 @@ export default function AdminContractDocumentsScreen() {
 
   const generate = async (item: ContractDocumentSummary, archive: boolean) => {
     setSavingKey(`${archive ? 'archive' : 'download'}-${item.id}`); setError(null); setSuccess(null);
-    const actionError = await generateContractDocument(item.id, archive);
+    const actionError = await generateContractDocument(item.id, item.kind, archive);
     if (actionError) setError(actionError);
     else setSuccess(archive ? 'Word gerado, baixado e arquivado. A geração foi registrada no extrato.' : 'Word gerado para download e removido do Storage. O histórico leve foi preservado.');
     setSavingKey(null); await loadProjectData();
@@ -79,7 +79,7 @@ export default function AdminContractDocumentsScreen() {
   const send = async (item: ContractDocumentSummary) => {
     if (!item.archived) { setError('Para disponibilizar ao cliente, primeiro use “Baixar + arquivar”.'); return; }
     setSavingKey(`send-${item.id}`); setError(null); setSuccess(null);
-    const actionError = await sendContractDocument(item.id);
+    const actionError = await sendContractDocument(item.id, item.kind);
     if (actionError) setError(actionError); else setSuccess('Documento arquivado e disponibilizado ao cliente.');
     setSavingKey(null); await loadProjectData(); await loadBase();
   };

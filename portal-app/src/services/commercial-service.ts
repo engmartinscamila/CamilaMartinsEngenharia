@@ -147,8 +147,8 @@ export async function generateCommercialDocument(recordId: string, kind: 'orcame
   const generated = await supabase.functions.invoke('generate-commercial-document', { body: { recordId, kind } });
   if (generated.error || !generated.data?.generated || !generated.data?.documentId) return generated.data?.error ?? generated.error?.message ?? `Não foi possível gerar o ${kind}.`;
 
-  const delivered = await supabase.functions.invoke('deliver-generated-document', { body: { documentId: generated.data.documentId, archive } });
-  if (delivered.error || !delivered.data?.delivered || !delivered.data?.contentBase64) return delivered.data?.error ?? delivered.error?.message ?? 'O Word foi gerado, mas não foi possível preparar o download.';
+  const delivered = await supabase.functions.invoke('deliver-generated-document', { body: { documentId: generated.data.documentId, archive, expectedDocumentKind: kind } });
+  if (delivered.error || !delivered.data?.delivered || !delivered.data?.contentBase64 || delivered.data?.documentKind !== kind) return delivered.data?.error ?? delivered.error?.message ?? 'O Word retornado não corresponde ao tipo solicitado.';
 
   try {
     await downloadBase64File(String(delivered.data.contentBase64), String(delivered.data.fileName ?? `${kind}.docx`));
