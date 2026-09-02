@@ -193,10 +193,19 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
             }
 
             if (status) {
-                status.textContent = data?.configured
-                    ? "Identificação profissional protegida e disponível para os geradores de documentos."
-                    : "Complete os dados profissionais antes de gerar contratos definitivos.";
-                status.dataset.type = data?.configured ? "sucesso" : "aviso";
+                if (data?.contract_ready) {
+                    status.textContent = "Identificação profissional completa, protegida e pronta para propostas, contratos e documentos auxiliares.";
+                    status.dataset.type = "sucesso";
+                } else if (data?.document_ready) {
+                    const faltantes = Array.isArray(data?.missing_contract_fields)
+                        ? data.missing_contract_fields.join(", ")
+                        : "dados jurídicos do contrato";
+                    status.textContent = "Dados profissionais básicos prontos. Para gerar o contrato definitivo, complete: " + faltantes + ".";
+                    status.dataset.type = "aviso";
+                } else {
+                    status.textContent = "Complete o nome civil e ao menos uma inscrição no CREA antes de gerar documentos.";
+                    status.dataset.type = "aviso";
+                }
             }
         } catch (erro) {
             console.error("Erro ao carregar identificação profissional:", erro);
