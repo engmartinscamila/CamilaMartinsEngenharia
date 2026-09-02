@@ -34,13 +34,16 @@ jobs:
           node-version: "22"
 
       - name: Auditoria estática
-        run: node scripts/site-audit.mjs
+        run: |
+          node scripts/site-audit.mjs
+          node scripts/document-governance-audit.mjs
 
       - name: Validar JavaScript novo
         run: |
           node --check js/commercial-documents-web.js
           node --check js/contract-documents-web.js
           node --check js/document-archive-web.js
+          node --check js/configuracoes.js
           node --check js/ui-core.js
           node --check js/auth.js
 

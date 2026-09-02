@@ -580,8 +580,8 @@ Salvar dados sigilosos
 
 <p class="governance-intro">
 O Contrato Mestre, os níveis de prestação, o catálogo de serviços e os textos padrão são versionados.
-Uma alteração no contrato cria uma fila de revisão apenas para os conteúdos relacionados às cláusulas afetadas.
-Enquanto houver revisão pendente, novos ORCs e contratos ficam bloqueados para evitar divergências.
+Alterações no contrato, nos serviços ou nos níveis abrem as revisões de coerência necessárias.
+Enquanto houver divergência ou revisão pendente, a criação e a geração de documentos ficam bloqueadas para evitar erros.
 </p>
 
 <div class="governance-summary">
@@ -609,8 +609,8 @@ Enquanto houver revisão pendente, novos ORCs e contratos ficam bloqueados para 
 <summary>Contrato Mestre versionado</summary>
 <div class="governance-panel-body">
 <p class="governance-note">
-Publique uma nova versão somente quando houver alteração real no contrato. Informe as cláusulas alteradas separadas por vírgula
-(ex.: 1.2, 2.1, 6.3). Se deixar em branco, o sistema considera todos os textos e regras potencialmente afetados.
+Publique uma nova versão somente quando houver alteração real no contrato. O sistema compara as versões e identifica automaticamente
+as cláusulas alteradas. Use o campo manual apenas para complementar referências que não possam ser detectadas no texto.
 </p>
 
 <div class="governance-grid">
@@ -619,7 +619,7 @@ Publique uma nova versão somente quando houver alteração real no contrato. In
 <input id="governanceContractLabel" placeholder="Ex.: Contrato Mestre v2">
 </div>
 <div class="campo">
-<label>Cláusulas alteradas</label>
+<label>Cláusulas alteradas — complemento opcional</label>
 <input id="governanceChangedClauses" placeholder="Ex.: 1.2, 2.1, 6.3">
 </div>
 <div class="campo campo-full">
@@ -700,7 +700,7 @@ Novo nível
 Salvar nível
 </button>
 </div>
-<p class="governance-note">Novos níveis passam a aparecer automaticamente na criação de ORC e contrato, sem alteração de código.</p>
+<p class="governance-note">Novos níveis aparecem automaticamente na criação de ORC e contrato. Ao salvar, revise também a cobertura do Contrato Mestre, os serviços elegíveis e os textos inteligentes indicados na fila.</p>
 </div>
 </details>
 
@@ -1122,7 +1122,7 @@ Carregando...
 <script src="js/auth.js?v=20260829-9"></script>
 
 
-<script src="js/configuracoes.js?v=20260902-3"></script>
+<script src="js/configuracoes.js?v=20260902-4"></script>
 
 </body>
 

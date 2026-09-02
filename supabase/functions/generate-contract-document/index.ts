@@ -99,6 +99,7 @@ const datePt=(raw:unknown)=>{
  const date=new Date(raw);
  return Number.isNaN(date.getTime())?raw:new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric'}).format(date);
 };
+const generatedDatePt=(value:Date)=>new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric'}).format(value);
 const money=(raw:unknown)=>{
  const n=Number(raw);
  return Number.isFinite(n)?new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n):'A definir';
@@ -128,10 +129,8 @@ const levelData=(d:Data)=>d.service_level&&typeof d.service_level==='object'?d.s
 const levelName=(d:Data)=>{
  const level=levelData(d);
  if(level)return `${String(level.label??'')} — ${String(level.subtitle??'')}`.replace(/\s+—\s+$/,'');
- const code=String(d.experience_level??'').toLowerCase();
- if(code==='bronze')return 'BRONZE — Essencial';
- if(code==='prata')return 'PRATA — Visual';
- if(code==='ouro')return 'OURO — Imersivo';
+ const code=String(d.experience_level??'').trim();
+ if(code)return code.toUpperCase();
  return 'Não aplicável / não selecionado';
 };
 const levelEligibleServices=(d:Data)=>includedScope(d).filter(item=>item.levelApplicable===true).map(serviceName);
@@ -169,8 +168,9 @@ const brandFooter=(profile:ProfessionalIdentity,documentCode:string)=>new Footer
    children:[new TextRun({text:`${professionalLabel(profile)}  •  ${documentCode}`,font:'Century Gothic',size:13,color:MUTED})]
  })
 ]});
-const identity=(d:Data,profile:ProfessionalIdentity)=>[
+const identity=(d:Data,profile:ProfessionalIdentity,generatedAt:Date)=>[
  h('1. IDENTIFICAÇÃO'),
+ p(`Data de emissão: ${generatedDatePt(generatedAt)} • Base documental: Contrato Mestre v${String(d.contract_master_version??'não informada')}`),
  p(`Contrato: ${value(d,'contract_number')} • Data de assinatura: ${datePt(d.contract_signed_at)}`),
  p(`CONTRATADO(A): ${professionalLabel(profile)}`),
  p(`CONTRATANTE: ${value(d,'client_name')}`),
@@ -218,10 +218,10 @@ const levelSection=(d:Data,heading='NÍVEL DE PRESTAÇÃO DE SERVIÇO')=>{
  }else{
    out.push(small('O nível de experiência não amplia serviços que não sejam elegíveis ou que não tenham sido contratados expressamente.'));
  }
- out.push(small('BRONZE, PRATA e OURO não acrescentam automaticamente projetos complementares, execução, gerenciamento, visitas, levantamentos, taxas ou aprovações não previstos no Anexo I.'));
+ out.push(small(smartRule(d,'level_scope_rule','O nível selecionado aplica-se somente aos serviços elegíveis e não acrescenta automaticamente itens que não tenham sido contratados expressamente.')));
  return out;
 };
-function build(kind:string,d:Data,profile:ProfessionalIdentity){
+function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date){
  const code=`${value(d,'contract_number','SEM-CONTRATO')} • ${kind.replaceAll('_',' ').toUpperCase()}`;
 
  if(kind==='notificacao_formal'){
@@ -229,7 +229,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity){
    const reason=value(d,'notification_reason','Ausência de manifestação sobre etapa entregue dentro do prazo contratual.');
    return doc([
      ...t('NOTIFICAÇÃO FORMAL','Pendência contratual • comunicação objetiva e rastreável'),
-     ...identity(d,profile),
+     ...identity(d,profile,generatedAt),
      h('2. MOTIVO DA NOTIFICAÇÃO'),
      p(reason,true),
      h('3. REGISTRO DO FATO'),
@@ -255,7 +255,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity){
    const revisions=matched?.revisions;
    return doc([
      ...t('TERMO DE ACEITE DE ETAPA','Validação de entrega prevista no fluxo contratual'),
-     ...identity(d,profile),
+     ...identity(d,profile,generatedAt),
      h('2. ETAPA ENTREGUE'),
      p(`Etapa: ${value(d,'approval_title')}`,true,GOLD),
      ...(matched?[p(serviceDescription(matched)),small(`Serviço relacionado: (${String(matched.code??'')}) ${serviceName(matched)}`)]:[]),
@@ -282,14 +282,14 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity){
    const base=contractedScopeLines(d);
    return doc([
      ...t('TERMO DE APROVAÇÃO DE SERVIÇO ADICIONAL','Alteração de escopo • aprovação prévia antes do início'),
-     ...identity(d,profile),
+     ...identity(d,profile,generatedAt),
      h('2. ESCOPO ORIGINAL DE REFERÊNCIA'),
      p('O escopo vigente permanece sendo o previsto no Contrato e no Anexo I. Este termo não substitui nem reescreve os itens originalmente contratados.'),
      ...(base.length?base.map(bullet):[p('Nenhum item de escopo foi localizado no snapshot contratual; revisar antes da emissão.')]),
      h('3. ORIGEM DA NOVA SOLICITAÇÃO'),
      p('☐ Revisão além das rodadas incluídas.'),
      p('☐ Alteração de escopo, premissas, programa, metragem ou layout já aprovado.'),
-     p('☐ Migração para nível superior BRONZE / PRATA / OURO.'),
+     p('☐ Migração para nível de prestação superior ao contratado.'),
      p('☐ Vistoria ou levantamento não incluído no escopo original.'),
      p('☐ Arquivo editável ou formato não previsto.'),
      p('☐ Outro: _______________________________________________'),
@@ -309,7 +309,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity){
  if(kind==='autorizacao_imagem'){
    return doc([
      ...t('AUTORIZAÇÃO DE USO DE IMAGEM E DIVULGAÇÃO','Permissões específicas para portfólio e comunicação profissional'),
-     ...identity(d,profile),
+     ...identity(d,profile,generatedAt),
      h('2. MATERIAIS QUE PODERÃO SER UTILIZADOS'),
      p('Marque somente os materiais autorizados:'),
      p('☐ Fotografias externas / fachada.'),
@@ -339,7 +339,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity){
    const base=contractedScopeLines(d);
    return doc([
      ...t('TERMO DE QUITAÇÃO E ENCERRAMENTO','Consolidação documental do término da relação contratual'),
-     ...identity(d,profile),
+     ...identity(d,profile,generatedAt),
      h('2. MOTIVO DO ENCERRAMENTO'),
      p('☐ Conclusão integral do escopo contratado.'),
      p('☐ Rescisão antecipada por iniciativa do(a) CONTRATANTE.'),
@@ -372,7 +372,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity){
    const inputs=unique(includedScope(d).flatMap(item=>arrStrings(item.clientInputs)));
    return doc([
      ...t('FICHA DE LEVANTAMENTO TÉCNICO / VISTORIA','Registro padronizado das condições verificadas no local'),
-     ...identity(d,profile),
+     ...identity(d,profile,generatedAt),
      p('Data e horário da vistoria: _______________________________________________'),
      p('Responsável pelo acompanhamento no local: __________________________________'),
      h('2. DADOS DO IMÓVEL'),
@@ -406,7 +406,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity){
    const outside=d.outside_contracted_scope===true;
    return doc([
      ...t('ESTUDO PRELIMINAR',outside?'Documento auxiliar • não altera automaticamente o escopo contratado':'Etapa prevista no escopo contratual'),
-     ...identity(d,profile),
+     ...identity(d,profile,generatedAt),
      ...(outside?[p('ATENÇÃO: este Estudo Preliminar foi preparado como documento auxiliar. Sua emissão não inclui automaticamente o serviço no Anexo I nem altera o valor do contrato.',true,GOLD)]:[]),
      h('2. OBJETIVO DA ETAPA'),
      p(study?serviceDescription(study):'Consolidar necessidades, condicionantes e diretrizes iniciais para orientar o desenvolvimento do projeto.'),
@@ -465,7 +465,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity){
 
    return doc([
      ...t('ANEXO I','ESCOPO DE SERVIÇOS • PROPOSTA COMERCIAL • CRONOGRAMA'),
-     ...identity(d,profile),
+     ...identity(d,profile,generatedAt),
      h('2. FUNÇÃO DESTE ANEXO'),
      p(smartRule(d,'anexo_scope_governance','Este Anexo I integra o Contrato e constitui a referência específica para o escopo, entregáveis, revisões, formatos, valores e planejamento da contratação. Somente os itens expressamente indicados como incluídos integram o objeto.')),
      h('3. DADOS DO IMÓVEL / OBRA'),
@@ -478,6 +478,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity){
      h('6. ITENS NÃO CONTRATADOS'),
      ...(excluded.length?excluded.map(item=>bullet(`(${String(item.code??'')}) ${serviceName(item)}`)):[p('Não há outros itens cadastrados no catálogo para este contrato.')]),
      h('7. EXCLUSÕES E LIMITES CONSOLIDADOS'),
+     p(smartRule(d,'scope_limits_rule','Somente os itens expressamente incluídos neste Anexo I integram o escopo. Itens não previstos serão tratados como serviço adicional mediante aprovação prévia.')),
      ...exclusions.map(bullet),
      bullet('Qualquer item não previsto neste Anexo I será tratado como serviço adicional quando solicitado posteriormente.'),
      bullet('Taxas, emolumentos, despesas de órgãos públicos/cartórios/concessionárias e registros profissionais permanecem de responsabilidade do cliente salvo previsão expressa em contrário.'),
@@ -486,7 +487,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity){
      ...paymentLines(d),
      ...(d.commercial_notes?[p(`Observações comerciais registradas: ${String(d.commercial_notes)}`)]:[]),
      h('9. PRAZO E CRONOGRAMA'),
-     p('Prazo geral: 45 (quarenta e cinco) dias úteis, contado nas condições previstas no Contrato, salvo ajuste expresso aplicável a este Anexo I. Os serviços acima seguem as referências de planejamento registradas em cada item e dependem do recebimento das informações necessárias.'),
+     p(smartRule(d,'anexo_timeline_rule','O prazo e as referências de planejamento obedecem ao Contrato Mestre e às condições específicas deste Anexo I, considerando o recebimento dos insumos necessários.')),
      p('Prazos de análise de órgãos públicos, concessionárias, cartórios e terceiros são externos ao prazo técnico de elaboração.'),
      h('10. REVISÕES, ACEITES E ALTERAÇÕES'),
      p(smartRule(d,'anexo_revision_rule','Na ausência de indicação diversa em item específico, aplicam-se até 2 (duas) rodadas de revisão por etapa para ajustes dentro do escopo original. Pedidos que alterem programa, metragem, layout, partido, premissas aprovadas ou serviços não listados poderão exigir orçamento e aditivo.')),
@@ -501,4 +502,79 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity){
 
 const names:Record<string,string>={notificacao_formal:'notificacao-formal',anexo_i:'anexo-i',termo_aceite:'termo-aceite',estudo_preliminar:'estudo-preliminar',levantamento_tecnico:'levantamento-tecnico',servico_adicional:'servico-adicional',autorizacao_imagem:'autorizacao-uso-imagem',quitacao_encerramento:'quitacao-encerramento'};
 
-Deno.serve(async(req)=>{if(req.method==='OPTIONS')return new Response('ok',{headers:corsHeaders});if(req.method!=='POST')return json({error:'Método não permitido.'},405);try{const {caller,service,user}=await requireAdmin(req);const body=await req.json();const documentId=typeof body.documentId==='string'?body.documentId:'';const action=body.action==='send'?'send':'generate';if(!/^[0-9a-f-]{36}$/i.test(documentId))return json({error:'Documento inválido.'},400);const {error:rateError}=await caller.rpc('consume_admin_rate_limit',{p_action:`contract-document-${action}`});if(rateError)return json({error:'Muitas tentativas. Aguarde antes de repetir a operação.'},429);const {data:row,error}=await service.from('documentos').select('id,cliente_id,projeto_id,contract_id,nome,arquivo,document_kind,workflow_status,generated_data,versao').eq('id',documentId).maybeSingle();if(error)throw error;if(!row)return json({error:'Documento não encontrado.'},404);if(!names[row.document_kind])return json({error:'Tipo de documento não suportado.'},400);if(action==='send'){if(!row.arquivo||row.workflow_status==='rascunho')return json({error:'Gere o Word antes de enviá-lo ao cliente.'},400);if(row.workflow_status==='enviado')return json({sent:true,alreadySent:true});const updated=await service.from('documentos').update({workflow_status:'enviado'}).eq('id',row.id).eq('workflow_status','gerado').select('id').maybeSingle();if(updated.error)throw updated.error;if(!updated.data)return json({error:'O documento não está pronto para envio ou já foi enviado.'},409);const existing=await service.from('notificacoes').select('id').eq('referencia_tipo','documento').eq('referencia_id',row.id).eq('tipo','documento_contratual').limit(1);if(existing.error)throw existing.error;if(!existing.data?.length){const notification=await service.from('notificacoes').insert({cliente_id:row.cliente_id,projeto_id:row.projeto_id,titulo:`${row.nome} disponível`,mensagem:'Um novo documento vinculado ao seu contrato foi disponibilizado em Documentos.',tipo:'documento_contratual',destinatario:'cliente',referencia_tipo:'documento',referencia_id:row.id,link_path:'/(client)/documents',lida:false});if(notification.error)throw notification.error;}await service.from('audit_log').insert({user_id:user.id,action:'send_contract_document',entity_type:'documentos',entity_id:row.id,details:{document_kind:row.document_kind}});return json({sent:true});}if(row.workflow_status==='enviado'||row.workflow_status==='assinado'||row.workflow_status==='aceito')return json({error:'O documento já foi enviado/aceito e não pode ser sobrescrito. Crie uma nova versão.'},409);const professionalProfile=await loadProfessionalIdentity(service);const missingProfile=missingProfessionalFields(professionalProfile);if(missingProfile.length)return json({error:`Complete a identificação profissional sigilosa em Configurações antes de gerar este documento. Campos pendentes: ${missingProfile.join(', ')}.`},422);const buffer=await Packer.toBuffer(build(row.document_kind,(row.generated_data??{}) as Data,professionalProfile));const version=String(row.versao??'1.0').replace(/[^0-9.]/g,'')||'1.0';const path=`${row.projeto_id}/contratual/${row.id}/${names[row.document_kind]}-v${version}.docx`;const upload=await service.storage.from('documentos').upload(path,buffer,{contentType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',upsert:true});if(upload.error)throw upload.error;const updated=await service.from('documentos').update({arquivo:path,storage_bucket:'documentos',workflow_status:'gerado',generated_at:new Date().toISOString()}).eq('id',row.id);if(updated.error)throw updated.error;await service.from('audit_log').insert({user_id:user.id,action:'generate_contract_document_docx',entity_type:'documentos',entity_id:row.id,details:{document_kind:row.document_kind,path}});return json({generated:true,documentId:row.id,path});}catch(error){const message=error instanceof Error?error.message:'Não foi possível gerar o documento.';return json({error:message},message.includes('Acesso')?403:message.includes('Sessão')?401:500);}});
+Deno.serve(async(req)=>{
+ if(req.method==='OPTIONS')return new Response('ok',{headers:corsHeaders});
+ if(req.method!=='POST')return json({error:'Método não permitido.'},405);
+ try{
+  const {caller,service,user}=await requireAdmin(req);
+  const body=await req.json();
+  const documentId=typeof body.documentId==='string'?body.documentId:'';
+  const action=body.action==='send'?'send':'generate';
+  if(!/^[0-9a-f-]{36}$/i.test(documentId))return json({error:'Documento inválido.'},400);
+  const {error:rateError}=await caller.rpc('consume_admin_rate_limit',{p_action:`contract-document-${action}`});
+  if(rateError)return json({error:'Muitas tentativas. Aguarde antes de repetir a operação.'},429);
+
+  const {data:row,error}=await service.from('documentos')
+   .select('id,cliente_id,projeto_id,contract_id,nome,arquivo,document_kind,workflow_status,generated_data,versao')
+   .eq('id',documentId).maybeSingle();
+  if(error)throw error;
+  if(!row)return json({error:'Documento não encontrado.'},404);
+  if(!names[row.document_kind])return json({error:'Tipo de documento não suportado.'},400);
+
+  if(action==='send'){
+   if(!row.arquivo||row.workflow_status==='rascunho')return json({error:'Gere o Word antes de enviá-lo ao cliente.'},400);
+   if(row.workflow_status==='enviado')return json({sent:true,alreadySent:true});
+   const updated=await service.from('documentos').update({workflow_status:'enviado'})
+    .eq('id',row.id).eq('workflow_status','gerado').select('id').maybeSingle();
+   if(updated.error)throw updated.error;
+   if(!updated.data)return json({error:'O documento não está pronto para envio ou já foi enviado.'},409);
+   const existing=await service.from('notificacoes').select('id')
+    .eq('referencia_tipo','documento').eq('referencia_id',row.id).eq('tipo','documento_contratual').limit(1);
+   if(existing.error)throw existing.error;
+   if(!existing.data?.length){
+    const notification=await service.from('notificacoes').insert({
+     cliente_id:row.cliente_id,projeto_id:row.projeto_id,titulo:`${row.nome} disponível`,
+     mensagem:'Um novo documento vinculado ao seu contrato foi disponibilizado em Documentos.',
+     tipo:'documento_contratual',destinatario:'cliente',referencia_tipo:'documento',
+     referencia_id:row.id,link_path:'/(client)/documents',lida:false
+    });
+    if(notification.error)throw notification.error;
+   }
+   await service.from('audit_log').insert({user_id:user.id,action:'send_contract_document',entity_type:'documentos',entity_id:row.id,details:{document_kind:row.document_kind}});
+   return json({sent:true});
+  }
+
+  if(row.workflow_status==='enviado'||row.workflow_status==='assinado'||row.workflow_status==='aceito'){
+   return json({error:'O documento já foi enviado/aceito e não pode ser sobrescrito. Crie uma nova versão.'},409);
+  }
+  const governance=await service.rpc('assert_document_governance_ready');
+  if(governance.error)throw governance.error;
+  const professionalProfile=await loadProfessionalIdentity(service);
+  const missingProfile=missingProfessionalFields(professionalProfile);
+  if(missingProfile.length)return json({error:`Complete a identificação profissional sigilosa em Configurações antes de gerar este documento. Campos pendentes: ${missingProfile.join(', ')}.`},422);
+
+  const generatedAt=new Date();
+  const generatedAtIso=generatedAt.toISOString();
+  const sourceData=(row.generated_data&&typeof row.generated_data==='object'?row.generated_data:{}) as Data;
+  const generatedData={...sourceData,emitted_at:generatedAtIso};
+  const buffer=await Packer.toBuffer(build(row.document_kind,generatedData,professionalProfile,generatedAt));
+  const version=String(row.versao??'1.0').replace(/[^0-9.]/g,'')||'1.0';
+  const path=`${row.projeto_id}/contratual/${row.id}/${names[row.document_kind]}-v${version}.docx`;
+  const upload=await service.storage.from('documentos').upload(path,buffer,{contentType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',upsert:true});
+  if(upload.error)throw upload.error;
+  const updated=await service.from('documentos').update({
+   arquivo:path,storage_bucket:'documentos',workflow_status:'gerado',
+   generated_at:generatedAtIso,generated_data:generatedData
+  }).eq('id',row.id);
+  if(updated.error)throw updated.error;
+  await service.from('audit_log').insert({
+   user_id:user.id,action:'generate_contract_document_docx',entity_type:'documentos',entity_id:row.id,
+   details:{document_kind:row.document_kind,path,emitted_at:generatedAtIso,contract_master_version:generatedData.contract_master_version}
+  });
+  return json({generated:true,documentId:row.id,path,emittedAt:generatedAtIso});
+ }catch(error){
+  const message=error instanceof Error?error.message:'Não foi possível gerar o documento.';
+  const status=message.includes('Acesso')?403:message.includes('Sessão')?401:message.includes('Governanca')||message.includes('Governança')?409:500;
+  return json({error:message},status);
+ }
+});

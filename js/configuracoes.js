@@ -16,7 +16,8 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
         pending: [],
         services: [],
         levels: [],
-        texts: []
+        texts: [],
+        preflight: null
     };
 
     document.addEventListener("DOMContentLoaded", iniciar, { once: true });
@@ -364,7 +365,8 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
                 pending: Array.isArray(data.pending_reviews) ? data.pending_reviews : [],
                 services: Array.isArray(data.services) ? data.services : [],
                 levels: Array.isArray(data.levels) ? data.levels : [],
-                texts: Array.isArray(data.texts) ? data.texts : []
+                texts: Array.isArray(data.texts) ? data.texts : [],
+                preflight: data.preflight || null
             };
 
             preencherTexto(
@@ -393,10 +395,14 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
             renderizarSelectTextos();
 
             if (status) {
-                if (governanceState.pending.length) {
+                if (governanceState.preflight?.ready === false) {
+                    const preflight = governanceState.preflight;
                     status.textContent =
-                        "Há " + governanceState.pending.length +
-                        " regra(s) pendente(s) de revisão. Novos ORCs e contratos ficam bloqueados até a confirmação.";
+                        "Geração bloqueada com segurança: " +
+                        (preflight.pending_total || 0) + " revisão(ões) pendente(s), " +
+                        ((preflight.outdated_services || 0) + (preflight.outdated_levels || 0) + (preflight.outdated_texts || 0)) +
+                        " item(ns) fora da versão do Contrato Mestre e " +
+                        (preflight.items_without_clause_refs || 0) + " item(ns) sem cláusulas vinculadas.";
                     status.dataset.type = "aviso";
                 } else {
                     status.textContent =
@@ -456,7 +462,8 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
         const tipo = {
             service: "Serviço",
             level: "Nível",
-            text: "Texto padrão"
+            text: "Texto padrão",
+            contract: "Contrato Mestre"
         };
 
         box.innerHTML = governanceState.pending.map(item => {
@@ -490,10 +497,12 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
 
         const reviewId = botao.dataset.governanceReview;
         if (!reviewId) return;
+        const review = governanceState.pending.find(item => item.id === reviewId);
+        const pergunta = review?.source_type === "contract"
+            ? "Confirma que o Contrato Mestre já cobre corretamente este serviço ou nível, sem necessidade de publicar uma nova versão?"
+            : "Confirma que este texto/regra continua coerente com a versão atual do Contrato Mestre, sem necessidade de alteração?";
 
-        if (!confirm(
-            "Confirma que este texto/regra continua coerente com a nova versão do contrato, sem necessidade de alteração?"
-        )) return;
+        if (!confirm(pergunta)) return;
 
         const textoOriginal = botao.textContent;
 
@@ -528,8 +537,8 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
         }
 
         const aviso = clauses.length
-            ? "Serão marcados para revisão apenas os serviços, níveis e textos ligados às cláusulas: " + clauses.join(", ") + "."
-            : "Como nenhuma cláusula foi indicada, todos os serviços, níveis e textos inteligentes serão marcados para revisão.";
+            ? "O sistema detectará automaticamente as cláusulas alteradas e também considerará este complemento manual: " + clauses.join(", ") + "."
+            : "O sistema comparará as versões e detectará automaticamente as cláusulas alteradas. Mudanças sem numeração identificável gerarão uma revisão geral.";
 
         if (!confirm(
             "Publicar uma nova versão do Contrato Mestre?\n\n" +
@@ -567,11 +576,7 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
         select.innerHTML =
             '<option value="">Selecione ou crie um novo nível</option>' +
             [...governanceState.levels]
-                .sort((a, b) => {
-                    const ordem = { bronze: 10, prata: 20, ouro: 30 };
-                    return (ordem[a.code] ?? 100) - (ordem[b.code] ?? 100) ||
-                        String(a.label || a.code).localeCompare(String(b.label || b.code), "pt-BR");
-                })
+                .sort((a, b) => String(a.label || a.code).localeCompare(String(b.label || b.code), "pt-BR"))
                 .map(item =>
                 '<option value="' + escaparGovernanca(item.code) + '">' +
                 escaparGovernanca(item.label) + ' — ' +
@@ -635,8 +640,8 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
             contract_clause_refs: listaVirgulas("governanceLevelClauses")
         };
 
-        if (!payload.code || !payload.label || !payload.description) {
-            alert("Preencha código, nome e descrição do nível.");
+        if (!payload.code || !payload.label || !payload.description || !payload.contract_clause_refs.length) {
+            alert("Preencha código, nome, descrição e ao menos uma cláusula relacionada ao nível.");
             return;
         }
 
@@ -647,6 +652,7 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
             if (error) throw error;
 
             await carregarGovernancaDocumental();
+            alert("Nível versionado. Confirme as revisões do Contrato Mestre, dos serviços elegíveis e dos textos inteligentes antes de gerar documentos.");
         } catch (erro) {
             console.error("Erro ao salvar nível:", erro);
             alert("Não foi possível salvar o nível. " + (erro?.message || ""));
@@ -715,8 +721,8 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
             contract_clause_refs: listaVirgulas("governanceServiceClauses")
         };
 
-        if (!payload.code || !payload.name || !payload.description) {
-            alert("O serviço precisa de código, nome e descrição.");
+        if (!payload.code || !payload.name || !payload.description || !payload.contract_clause_refs.length) {
+            alert("O serviço precisa de código, nome, descrição e ao menos uma cláusula relacionada.");
             return;
         }
 
@@ -727,6 +733,7 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
             if (error) throw error;
 
             await carregarGovernancaDocumental();
+            alert("Serviço versionado. Confirme a cobertura do Contrato Mestre e revise os textos inteligentes relacionados antes de gerar documentos.");
         } catch (erro) {
             console.error("Erro ao salvar serviço:", erro);
             alert("Não foi possível salvar o serviço. " + (erro?.message || ""));
@@ -781,8 +788,8 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
             contract_clause_refs: listaVirgulas("governanceTextClauses")
         };
 
-        if (!payload.body) {
-            alert("O texto padrão não pode ficar vazio.");
+        if (!payload.body || !payload.contract_clause_refs.length) {
+            alert("O texto padrão precisa de conteúdo e de ao menos uma cláusula relacionada.");
             return;
         }
 

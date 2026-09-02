@@ -1,1 +1,1 @@
-{"imports":{"supabase":"npm:@supabase/supabase-js@2","docx":"npm:docx@9.5.1"}}
+{"imports":{"supabase":"npm:@supabase/supabase-js@2.112.3","docx":"npm:docx@9.5.1"}}

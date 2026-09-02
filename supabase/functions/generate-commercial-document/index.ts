@@ -169,14 +169,12 @@ const makeDoc=(children:Paragraph[],profile:ProfessionalIdentity,documentCode:st
 const text=(value:unknown,fallback='Não informado')=>typeof value==='string'&&value.trim()?value.trim():fallback;
 const money=(value:number|null)=>value===null?'A definir':new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(value);
 const datePt=(raw:string|null)=>raw?new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(`${raw}T12:00:00-03:00`)):'A definir';
+const generatedDatePt=(value:Date)=>new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric'}).format(value);
 const selectedServices=(record:CommercialRecord)=>Array.isArray(record.services)?record.services.filter((item):item is ServiceItem=>Boolean(item&&typeof item==='object'&&(item as ServiceItem).included!==false)):[];
 const arrStrings=(value:unknown)=>Array.isArray(value)?value.map(x=>String(x??'').trim()).filter(Boolean):[];
 const unique=(items:string[])=>[...new Set(items.filter(Boolean))];
 const levelName=(value:string|null)=> {
  const code=String(value||'').trim().toLowerCase();
- if(code==='bronze')return 'BRONZE — Essencial';
- if(code==='prata')return 'PRATA — Visual';
- if(code==='ouro')return 'OURO — Imersivo';
  if(code)return code.toUpperCase();
  return 'Não aplicável / não selecionado';
 };
@@ -187,6 +185,9 @@ const levelFromServices=(items:ServiceItem[])=>{
  }
  return null;
 };
+const levelDisplay=(record:CommercialRecord,level:Record<string,unknown>|null)=>level
+ ? [String(level.label??'').trim(),String(level.subtitle??'').trim()].filter(Boolean).join(' — ')
+ : levelName(record.experience_level);
 const serviceDescription=(item:ServiceItem)=>String(item.description??'Serviço técnico conforme escopo descrito no orçamento e no Anexo I.');
 const serviceRevisions=(item:ServiceItem)=>{
  const value=item.revisions;
@@ -218,14 +219,14 @@ const paymentLines=(record:CommercialRecord)=>{
  if(!terms.length)return [p('Condição de pagamento: conforme condição comercial registrada no orçamento/contrato.')];
  return terms.map((term,index)=>p(`${index+1}. ${String(term.label??term.description??'Parcela')} — ${String(term.value??term.amount??'valor conforme registro')} — ${String(term.due??term.dueDate??'vencimento conforme registro')}`));
 };
-function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity){
+function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,generatedAt:Date){
  const selected=selectedServices(record);
  const level=levelFromServices(selected);
  const levelFeatures=arrStrings(level?.features);
  const levelExclusions=arrStrings(level?.exclusions);
  const eligibleServices=selected.filter(item=>item.levelApplicable===true).map(item=>String(item.name??'Serviço'));
  const consolidatedExclusions=unique(selected.flatMap(item=>arrStrings(item.exclusions)));
- const today=new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo'}).format(new Date());
+ const today=generatedDatePt(generatedAt);
 
  const serviceBlocks:Paragraph[]=[];
  selected.forEach((item,index)=>{
@@ -265,25 +266,25 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity){
   p(`Área do terreno: ${record.area_terreno_m2??'não informada'} m² • Área construída prevista: ${record.area_construida_m2??'não informada'} m²`),
 
   h('2. NÍVEL DE PRESTAÇÃO DE SERVIÇO'),
-  p(`Nível selecionado: ${levelName(record.experience_level)}`,true,GOLD),
+  p(`Nível selecionado: ${levelDisplay(record,level)}`,true,GOLD),
   ...(level?[p(String(level.description??''))]:[p('O nível de experiência não foi selecionado. Quando aplicável, ele deverá ser definido antes da formalização definitiva.')]),
   ...(eligibleServices.length?[small(`O nível selecionado aplica-se somente aos serviços de projeto elegíveis nesta proposta: ${eligibleServices.join(', ')}.`)]:[small('Nenhum serviço selecionado nesta proposta recebe ampliação automática por nível de experiência.')]),
   ...levelFeatures.map(value=>bullet(value)),
   ...levelExclusions.map(value=>bullet(`Não incluído neste nível: ${value}`)),
-  small('Regra de consistência: BRONZE, PRATA e OURO não acrescentam projetos complementares, execução, gerenciamento, visitas, levantamentos, taxas ou aprovações que não tenham sido contratados expressamente.'),
+  small(smartRule(record,'level_scope_rule','O nível selecionado aplica-se somente aos serviços elegíveis e não acrescenta automaticamente itens que não tenham sido contratados expressamente.')),
 
   h('3. ESCOPO INTELIGENTE DE SERVIÇOS'),
   ...(selected.length?serviceBlocks:[p('Nenhum serviço foi selecionado. Revise o orçamento antes da emissão definitiva.')]),
 
   h('4. LIMITES E EXCLUSÕES CONSOLIDADAS'),
-  p('Somente os itens expressamente incluídos nesta proposta e posteriormente confirmados no Anexo I integram o escopo. Solicitações posteriores ou itens não previstos serão tratados como serviço adicional, mediante aprovação prévia.'),
+  p(smartRule(record,'scope_limits_rule','Somente os itens expressamente incluídos nesta proposta e posteriormente confirmados no Anexo I integram o escopo. Solicitações posteriores ou itens não previstos serão tratados como serviço adicional, mediante aprovação prévia.')),
   ...consolidatedExclusions.map(value=>bullet(value)),
   bullet('Taxas, emolumentos e despesas de órgãos públicos, cartórios, concessionárias ou entidades de classe não integram os honorários, salvo previsão expressa em contrário.'),
   bullet('ART/RRT e demais despesas vinculadas a registros profissionais somente integram o valor quando expressamente discriminadas.'),
 
   h('5. PROCESSO DE DESENVOLVIMENTO E REVISÕES'),
   p(smartRule(record,'proposal_revision_rule','Na ausência de indicação específica no Anexo I, aplicam-se até 2 (duas) rodadas de revisão por etapa para ajustes dentro do escopo original. Alterações de programa, metragem, layout, partido ou premissas já aprovadas podem caracterizar alteração de escopo.')),
-  p('O cliente deverá fornecer documentos, respostas de briefing, medidas, aprovações e demais definições necessárias. A falta desses insumos pode suspender ou repercutir no cronograma, nos termos do Contrato.'),
+  p(smartRule(record,'proposal_client_inputs_rule','O cliente deverá fornecer documentos, respostas de briefing, medidas, aprovações e demais definições necessárias. A falta desses insumos pode suspender ou repercutir no cronograma, nos termos do Contrato.')),
 
   h('6. PRAZO E CRONOGRAMA'),
   p(smartRule(record,'proposal_timeline_rule','O prazo geral de referência é de 45 (quarenta e cinco) dias úteis, contado conforme as condições previstas no Contrato, podendo ser ajustado no Anexo I em função do escopo efetivamente contratado. Prazos de análise de órgãos públicos e terceiros não se confundem com o prazo técnico de elaboração.')),
@@ -312,7 +313,7 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity){
 }
 
 
-function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,contractMasterBody:string){
+function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,contractMasterBody:string,generatedAt:Date){
  const body=contractMasterBody.split('\n').filter(Boolean).map(line=>line.startsWith('CLÁUSULA')?h(line):p(line));
  const level=levelFromServices(selectedServices(record));
  const levelDisplay=level
@@ -320,6 +321,7 @@ function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,c
    : levelName(record.experience_level);
  return makeDoc([
    ...title(`CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE ENGENHARIA — ${text(record.contract_number,'CONTRATO SEM NUMERAÇÃO — NÃO EMITIR')}`,'Instrumento particular • identidade profissional protegida'),
+   small(`Data de emissão: ${generatedDatePt(generatedAt)} • Base documental: Contrato Mestre v${record.contract_master_version??'não informada'}`),
    p('Pelo presente instrumento particular de Contrato de Prestação de Serviços de Engenharia, de um lado:'),
    p(`CONTRATADO(A): ${professionalQualification(profile)}, doravante denominada simplesmente CONTRATADO(A);`),
    p(`CONTRATANTE: ${record.prospect_name}, CPF/CNPJ ${text(record.cpf_cnpj)}, com endereço em ${text(record.address)}, e-mail ${text(record.email)} e telefone/WhatsApp ${text(record.phone)}, doravante denominado(a) simplesmente CONTRATANTE.`),
@@ -348,6 +350,7 @@ Deno.serve(async(req)=>{
   const {caller,service,user}=await requireAdmin(req);const body=await req.json();const recordId=typeof body.recordId==='string'?body.recordId:'';const kind=body.kind==='contrato'?'contrato':'orcamento';
   if(!/^[0-9a-f-]{36}$/i.test(recordId))return json({error:'Registro comercial inválido.'},400);
   const {error:rateError}=await caller.rpc('consume_admin_rate_limit',{p_action:`commercial-document-${kind}`});if(rateError)return json({error:'Muitas tentativas. Aguarde antes de repetir.'},429);
+  const governance=await service.rpc('assert_document_governance_ready');if(governance.error)throw governance.error;
   const firstRead=await service.from('commercial_records').select('*').eq('id',recordId).maybeSingle();if(firstRead.error)throw firstRead.error;if(!firstRead.data)return json({error:'Registro comercial não encontrado.'},404);
   if(firstRead.data.status==='convertido'&&kind==='contrato')return json({error:'O registro já foi convertido. O contrato histórico não pode ser substituído.'},409);
   if(kind==='contrato'){const assigned=await caller.rpc('admin_assign_commercial_contract_number',{p_record_id:recordId});if(assigned.error)throw assigned.error;}
@@ -358,11 +361,14 @@ Deno.serve(async(req)=>{
   const missingProfile=missingProfessionalFields(professionalProfile,kind);
   if(missingProfile.length)return json({error:`Complete a identificação profissional sigilosa em Configurações antes de gerar este documento. Campos pendentes: ${missingProfile.join(', ')}.`},422);
   const contractMaster=kind==='contrato'?await loadContractMaster(service,record):null;
-  const word=kind==='orcamento'?quoteDocument(record,professionalProfile):contractDocument(record,professionalProfile,contractMaster!.body);const buffer=await Packer.toBuffer(word);const number=kind==='orcamento'?record.quote_number:record.contract_number??'contrato';const path=`comercial/${record.id}/${kind}-${number}-v1.0.docx`;
+  const generatedAt=new Date();
+  const generatedAtIso=generatedAt.toISOString();
+  const generatedData={commercial_record_id:record.id,quote_number:record.quote_number,contract_number:record.contract_number,prospect_name:record.prospect_name,contract_master_id:record.contract_master_id,contract_master_version:record.contract_master_version,smart_texts:record.smart_texts,services:record.services,experience_level:record.experience_level,emitted_at:generatedAtIso};
+  const word=kind==='orcamento'?quoteDocument(record,professionalProfile,generatedAt):contractDocument(record,professionalProfile,contractMaster!.body,generatedAt);const buffer=await Packer.toBuffer(word);const number=kind==='orcamento'?record.quote_number:record.contract_number??'contrato';const path=`comercial/${record.id}/${kind}-${number}-v1.0.docx`;
   const uploaded=await service.storage.from('documentos').upload(path,buffer,{contentType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',upsert:true});if(uploaded.error)throw uploaded.error;
-  const updatedDocument=await service.from('documentos').update({arquivo:path,workflow_status:'gerado',generated_at:new Date().toISOString()}).eq('id',documentId);if(updatedDocument.error)throw updatedDocument.error;
-  const nextStatus=record.status==='convertido'?'convertido':kind==='contrato'?'contrato_gerado':record.contract_document_id?'contrato_gerado':'orcamento_gerado';const updatedRecord=await service.from('commercial_records').update({status:nextStatus,updated_at:new Date().toISOString()}).eq('id',record.id);if(updatedRecord.error)throw updatedRecord.error;
-  await service.from('audit_log').insert({user_id:user.id,action:`generate_commercial_${kind}_docx`,entity_type:'commercial_records',entity_id:record.id,details:{document_id:documentId,path,quote_number:record.quote_number,contract_number:record.contract_number,contract_master_version:record.contract_master_version}});
-  return json({generated:true,documentId,path,quoteNumber:record.quote_number,contractNumber:record.contract_number});
- }catch(error){const message=error instanceof Error?error.message:'Não foi possível gerar o documento comercial.';return json({error:message},message.includes('Acesso')?403:message.includes('Sessão')?401:500);}
+  const updatedDocument=await service.from('documentos').update({arquivo:path,workflow_status:'gerado',generated_at:generatedAtIso,generated_data:generatedData}).eq('id',documentId);if(updatedDocument.error)throw updatedDocument.error;
+  const nextStatus=record.status==='convertido'?'convertido':kind==='contrato'?'contrato_gerado':record.contract_document_id?'contrato_gerado':'orcamento_gerado';const updatedRecord=await service.from('commercial_records').update({status:nextStatus,updated_at:generatedAtIso}).eq('id',record.id);if(updatedRecord.error)throw updatedRecord.error;
+  await service.from('audit_log').insert({user_id:user.id,action:`generate_commercial_${kind}_docx`,entity_type:'commercial_records',entity_id:record.id,details:{document_id:documentId,path,quote_number:record.quote_number,contract_number:record.contract_number,contract_master_version:record.contract_master_version,emitted_at:generatedAtIso}});
+  return json({generated:true,documentId,path,quoteNumber:record.quote_number,contractNumber:record.contract_number,emittedAt:generatedAtIso});
+ }catch(error){const message=error instanceof Error?error.message:'Não foi possível gerar o documento comercial.';const status=message.includes('Acesso')?403:message.includes('Sessão')?401:message.includes('Governanca')||message.includes('Governança')?409:500;return json({error:message},status);}
 });

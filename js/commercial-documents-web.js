@@ -65,6 +65,10 @@
   function renderServices() {
     const box = $('commercialServices');
     if (!box) return;
+    const levelNames = levelCatalog
+      .map(item => String(item.label || item.code || '').trim())
+      .filter(Boolean)
+      .join(' / ');
 
     box.innerHTML = servicesCatalog.map(([code, name]) => {
       const meta = serviceCatalogMeta.find(item => item.code === code) || {};
@@ -72,7 +76,7 @@
         ? `<small class="doc-service-description">${esc(meta.description)}</small>`
         : '';
       const level = meta.level_applicable
-        ? '<small class="doc-service-level">Compatível com BRONZE / PRATA / OURO</small>'
+        ? `<small class="doc-service-level">Compatível com ${esc(levelNames || 'os níveis cadastrados')}</small>`
         : '<small class="doc-service-level muted">Serviço independente de nível</small>';
 
       return `
@@ -383,14 +387,30 @@
     const payload = form();
     const isContract = mode() === 'contrato';
 
-    if (!isContract && !payload.prospect_name) {
+    if (!payload.prospect_name) {
       msg('Informe o nome / razão social.', 'error');
       return;
     }
 
-    if (!isContract && !payload.services.some(item => item.included) && !payload.custom_service) {
+    const selectedServices = payload.services.filter(item => item.included);
+    if (!selectedServices.length && !payload.custom_service) {
       msg('Selecione ao menos um serviço ou descreva outro serviço.', 'error');
       return;
+    }
+
+    if (serviceCatalogMeta.length) {
+      const selectedCodes = new Set(selectedServices.map(item => item.code));
+      const hasLevelEligibleService = serviceCatalogMeta.some(item =>
+        selectedCodes.has(item.code) && item.level_applicable === true
+      );
+      if (hasLevelEligibleService && !payload.experience_level) {
+        msg('Selecione o nível de prestação para os serviços compatíveis escolhidos.', 'error');
+        return;
+      }
+      if (!hasLevelEligibleService && payload.experience_level) {
+        msg('O nível de prestação só pode ser usado quando houver um serviço compatível selecionado.', 'error');
+        return;
+      }
     }
 
     const selectedKey = $('contractQuoteSelect')?.value || '';
@@ -648,6 +668,7 @@
     if (!levelsRes.error && Array.isArray(levelsRes.data)) {
       levelCatalog = levelsRes.data;
       renderLevelOptions();
+      renderServices();
     }
 
     ensureLevelInfo();
