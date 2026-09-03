@@ -225,16 +225,21 @@
     box.className = 'doc-contract-source doc-hidden';
     box.innerHTML = `
       <div class="doc-field">
-        <label for="contractQuoteSelect">Vincular a orçamento existente</label>
-        <select id="contractQuoteSelect">
-          <option value="">Selecione o número do orçamento (opcional)</option>
+        <label for="contractQuoteSelect">Vincular a um ou mais orçamentos existentes</label>
+        <select id="contractQuoteSelect" multiple size="6" aria-describedby="contractQuoteHelp">
         </select>
+        <small id="contractQuoteHelp" class="doc-help">Selecione os ORCs que pertencem ao mesmo cliente ou prospect. No celular, marque os itens desejados; no computador, use Ctrl ou Command para selecionar vários.</small>
       </div>
       <div id="contractQuoteSummary" class="doc-status doc-hidden" aria-live="polite"></div>
     `;
 
     panel.insertBefore(box, grid);
-    $('contractQuoteSelect')?.addEventListener('change', event => applyQuoteToContract(event.target.value));
+    $('contractQuoteSelect')?.addEventListener('change', event => {
+      const keys = Array.from(event.target.selectedOptions)
+        .map(option => option.value)
+        .filter(Boolean);
+      applyQuotesToContract(keys);
+    });
   }
 
   function renderMode() {
@@ -255,7 +260,7 @@
       const description = card.querySelector('p');
       if (description) {
         description.textContent = isContract
-          ? 'Selecione o número de um orçamento existente para preencher os dados automaticamente, ou deixe sem seleção para criar o contrato manualmente.'
+          ? 'Selecione um ou mais orçamentos do mesmo cliente para preencher os dados automaticamente, ou deixe sem seleção para criar o contrato manualmente.'
           : 'O orçamento pode ser criado mesmo sem cliente cadastrado.';
       }
     }
@@ -264,15 +269,21 @@
     renderList();
   }
 
+  function selectedQuoteKeys() {
+    const select = $('contractQuoteSelect');
+    if (!select) return [];
+    return Array.from(select.selectedOptions).map(option => option.value).filter(Boolean);
+  }
+
   function renderQuoteChoices() {
     const select = $('contractQuoteSelect');
     if (!select) return;
 
-    const current = select.value;
+    const current = new Set(selectedQuoteKeys());
     const commercial = quoteSources.filter(item => item.sourceType === 'commercial');
     const projects = quoteSources.filter(item => item.sourceType === 'project');
 
-    let html = '<option value="">Selecione o número do orçamento (opcional)</option>';
+    let html = '';
 
     if (commercial.length) {
       html += '<optgroup label="Orçamentos da central">';
@@ -283,7 +294,7 @@
     }
 
     if (projects.length) {
-      html += '<optgroup label="Orçamentos já cadastrados">';
+      html += '<optgroup label="Orçamentos antigos já cadastrados">';
       html += projects.map(item =>
         `<option value="${esc(item.key)}">${esc(item.quote_number)} — ${esc(item.prospect_name || item.project_name || 'Sem nome')}${item.project_name ? ' • ' + esc(item.project_name) : ''}</option>`
       ).join('');
@@ -291,10 +302,9 @@
     }
 
     select.innerHTML = html;
-
-    if (current && quoteSources.some(item => item.key === current)) {
-      select.value = current;
-    }
+    Array.from(select.options).forEach(option => {
+      option.selected = current.has(option.value);
+    });
   }
 
   function clearForm(clearSource = true) {
@@ -309,7 +319,9 @@
     if ($('experienceLevel')) $('experienceLevel').value = '';
     document.querySelectorAll('[data-service]').forEach(input => { input.checked = false; });
 
-    if (clearSource && $('contractQuoteSelect')) $('contractQuoteSelect').value = '';
+    if (clearSource && $('contractQuoteSelect')) {
+      Array.from($('contractQuoteSelect').options).forEach(option => { option.selected = false; });
+    }
 
     const summary = $('contractQuoteSummary');
     if (summary) {
@@ -340,47 +352,112 @@
     });
   }
 
-  function applyQuoteToContract(key) {
-    const summary = $('contractQuoteSummary');
+  function quoteIdentity(item) {
+    const documentNumber = digits(item?.cpf_cnpj);
+    if (documentNumber) return `documento:${documentNumber}`;
+    return `nome:${String(item?.prospect_name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim()}`;
+  }
 
-    if (!key) {
+  function sameQuoteOwner(items) {
+    const identities = new Set(items.map(quoteIdentity).filter(value => !value.endsWith(':')));
+    return identities.size <= 1;
+  }
+
+  function firstFilled(items, field) {
+    return items.map(item => item?.[field]).find(value => value !== null && value !== undefined && String(value).trim() !== '') ?? '';
+  }
+
+  function combinedServices(items) {
+    const included = new Set();
+    items.forEach(item => (Array.isArray(item.services) ? item.services : []).forEach(service => {
+      if (service?.included === true) included.add(String(service.code || ''));
+    }));
+    return servicesCatalog.map(([code, name], index) => ({
+      code,
+      name,
+      included: included.has(code),
+      acceptanceRequired: true,
+      displayOrder: index + 1
+    }));
+  }
+
+  function parseMoney(value) {
+    if (value === null || value === undefined || value === '') return null;
+    if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+    const cleaned = String(value).replace(/\s/g, '').replace(/\.(?=\d{3}(?:\D|$))/g, '').replace(',', '.');
+    const numeric = Number(cleaned);
+    return Number.isFinite(numeric) ? numeric : null;
+  }
+
+  function applyQuotesToContract(keys) {
+    const summary = $('contractQuoteSummary');
+    const selected = (Array.isArray(keys) ? keys : [keys])
+      .map(key => quoteSources.find(item => item.key === key))
+      .filter(Boolean);
+
+    if (!selected.length) {
       clearForm(false);
       msg('Sem orçamento selecionado: o contrato poderá ser preenchido manualmente.');
       return;
     }
 
-    const quote = quoteSources.find(item => item.key === key);
-    if (!quote) {
-      msg('Orçamento selecionado não foi encontrado.', 'error');
+    if (!sameQuoteOwner(selected)) {
+      clearForm(false);
+      if (summary) {
+        summary.textContent = 'Os orçamentos selecionados pertencem a clientes ou prospects diferentes. Selecione somente ORCs da mesma pessoa ou empresa.';
+        summary.className = 'doc-status error';
+      }
+      msg('Não é possível unir orçamentos de clientes diferentes no mesmo contrato.', 'error');
       return;
     }
 
-    setField('prospectName', quote.prospect_name);
-    setField('cpfCnpj', quote.cpf_cnpj);
-    setField('email', quote.email);
-    setField('phone', quote.phone);
-    setField('cep', quote.cep);
-    setField('address', quote.address);
-    setField('city', quote.city);
-    setField('state', quote.state);
-    setField('propertyAddress', quote.property_address);
-    setField('propertyType', quote.property_type);
-    setField('constructionStandard', quote.construction_standard);
-    setField('areaTerreno', quote.area_terreno_m2);
-    setField('areaConstruida', quote.area_construida_m2);
-    setField('customService', quote.custom_service);
-    setField('totalValue', moneyValue(quote.total_value));
-    setField('notes', quote.notes);
+    const legacy = selected.filter(item => item.sourceType === 'project');
+    if (legacy.length > 1 || (legacy.length === 1 && selected.length > 1)) {
+      clearForm(false);
+      if (summary) {
+        summary.textContent = 'Orçamentos antigos vinculados a projetos aceitam um único vínculo. Para reunir vários ORCs, selecione apenas orçamentos criados nesta Central.';
+        summary.className = 'doc-status error';
+      }
+      msg('Vários vínculos são permitidos somente para ORCs criados nesta Central.', 'error');
+      return;
+    }
 
-    if ($('experienceLevel')) $('experienceLevel').value = quote.experience_level || '';
-    applyServices(quote.services);
+    setField('prospectName', firstFilled(selected, 'prospect_name'));
+    setField('cpfCnpj', firstFilled(selected, 'cpf_cnpj'));
+    setField('email', firstFilled(selected, 'email'));
+    setField('phone', firstFilled(selected, 'phone'));
+    setField('cep', firstFilled(selected, 'cep'));
+    setField('address', firstFilled(selected, 'address'));
+    setField('city', firstFilled(selected, 'city'));
+    setField('state', firstFilled(selected, 'state'));
+    setField('propertyAddress', firstFilled(selected, 'property_address'));
+    setField('propertyType', firstFilled(selected, 'property_type'));
+    setField('constructionStandard', firstFilled(selected, 'construction_standard'));
+    setField('areaTerreno', firstFilled(selected, 'area_terreno_m2'));
+    setField('areaConstruida', firstFilled(selected, 'area_construida_m2'));
 
+    const customServices = [...new Set(selected.map(item => String(item.custom_service || '').trim()).filter(Boolean))];
+    setField('customService', customServices.join('; '));
+
+    const values = selected.map(item => parseMoney(item.total_value)).filter(value => value !== null);
+    setField('totalValue', values.length ? moneyValue(values.reduce((sum, value) => sum + value, 0)) : '');
+
+    const notes = selected
+      .map(item => item.notes ? `${item.quote_number}: ${String(item.notes).trim()}` : '')
+      .filter(Boolean);
+    setField('notes', notes.join('\n'));
+
+    const levels = [...new Set(selected.map(item => String(item.experience_level || '').trim()).filter(Boolean))];
+    if ($('experienceLevel')) $('experienceLevel').value = levels.length === 1 ? levels[0] : '';
+    applyServices(combinedServices(selected));
+
+    const numbers = selected.map(item => item.quote_number).filter(Boolean);
     if (summary) {
-      summary.textContent = `${quote.quote_number} selecionado. Os dados disponíveis foram carregados automaticamente e continuam editáveis.`;
+      summary.textContent = `${numbers.join(', ')} selecionado${numbers.length === 1 ? '' : 's'}. Serviços e valores foram combinados; todos os campos continuam editáveis e devem ser revisados antes da criação do contrato.`;
       summary.className = 'doc-status success';
     }
 
-    msg(`Orçamento ${quote.quote_number} vinculado ao contrato.`, 'success');
+    msg(`${numbers.length} orçamento${numbers.length === 1 ? '' : 's'} vinculado${numbers.length === 1 ? '' : 's'} ao contrato.`, 'success');
   }
 
   async function create() {
@@ -413,10 +490,25 @@
       }
     }
 
-    const selectedKey = $('contractQuoteSelect')?.value || '';
-    const source = quoteSources.find(item => item.key === selectedKey) || null;
-    const quoteIds = source?.sourceType === 'commercial' ? [source.sourceId] : [];
-    const sourceProjectId = source?.sourceType === 'project' ? source.sourceId : null;
+    const sources = selectedQuoteKeys()
+      .map(key => quoteSources.find(item => item.key === key))
+      .filter(Boolean);
+
+    if (!sameQuoteOwner(sources)) {
+      msg('Selecione somente orçamentos do mesmo cliente ou prospect.', 'error');
+      return;
+    }
+
+    const legacySources = sources.filter(item => item.sourceType === 'project');
+    if (legacySources.length > 1 || (legacySources.length === 1 && sources.length > 1)) {
+      msg('Vários vínculos são permitidos somente para ORCs criados nesta Central.', 'error');
+      return;
+    }
+
+    const quoteIds = sources
+      .filter(item => item.sourceType === 'commercial')
+      .map(item => item.sourceId);
+    const sourceProjectId = legacySources[0]?.sourceId || null;
 
     msg(isContract ? 'Criando contrato...' : 'Criando orçamento...');
 
@@ -436,7 +528,9 @@
     clearForm();
     msg(
       isContract
-        ? (source ? `Contrato criado e vinculado ao orçamento ${source.quote_number}.` : 'Contrato criado sem vínculo de orçamento.')
+        ? (sources.length
+            ? `Contrato criado e vinculado a ${sources.length} orçamento${sources.length === 1 ? '' : 's'}: ${sources.map(item => item.quote_number).join(', ')}.`
+            : 'Contrato criado sem vínculo de orçamento.')
         : 'Orçamento criado com numeração ORC independente.',
       'success'
     );

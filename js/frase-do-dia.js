@@ -4,7 +4,7 @@
     if (window.__CME_FRASE_DO_DIA__) return;
     window.__CME_FRASE_DO_DIA__ = true;
 
-    const ARQUIVO = "assets/frases-do-dia.json?v=20260901-3";
+    const ARQUIVO = "assets/frases-do-dia.json";
     const TIMEZONE = "America/Sao_Paulo";
     const MS_DIA = 86400000;
     const FALLBACK = {
@@ -48,13 +48,22 @@
         return ((diasDesdeEpoch % total)+total)%total;
     }
 
+    function limparTexto(valor) {
+        return String(valor ?? "")
+            .replace(/[_*`<>]/g,"")
+            .replace(/\s+/g," ")
+            .trim();
+    }
+
     function normalizarFrase(item) {
-        if (!item || !String(item.texto || "").trim()) return null;
+        const texto=limparTexto(item?.texto);
+        const grafiaAntiga=/\b(?:n['’]um|n['’]uma|d['’]um|d['’]uma|d['’]elle|d['’]ella|scenas?|polycarpo|yaya|pharmacia|acceitar|ahi)\b/i;
+        if (!texto || grafiaAntiga.test(texto)) return null;
         return {
-            texto:String(item.texto).trim(),
-            autor:String(item.autor || FALLBACK.autor).trim(),
-            categoria:String(item.categoria || "Reflexão").trim(),
-            fonte:item.fonte ? String(item.fonte).trim() : ""
+            texto,
+            autor:limparTexto(item?.autor || FALLBACK.autor),
+            categoria:limparTexto(item?.categoria || "Reflexão"),
+            fonte:item?.fonte ? limparTexto(item.fonte) : ""
         };
     }
 
@@ -70,7 +79,7 @@
 
     async function carregarFrase() {
         try {
-            const resposta = await fetch(ARQUIVO,{cache:"force-cache"});
+            const resposta = await fetch(ARQUIVO,{cache:"no-store"});
             if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
             const acervo = montarAcervo(await resposta.json());
             if (!acervo.length) throw new Error("Acervo vazio");
