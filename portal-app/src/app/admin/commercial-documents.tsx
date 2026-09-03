@@ -106,7 +106,8 @@ export default function AdminCommercialDocumentsScreen() {
     if(!pending)return;
     const result=await previewCommercialDocument(pending.record,pending.kind,bump);
     if(result.error||!result.data){setError(result.error??'Não foi possível recalcular a versão.');return;}
-    setPending(current=>current?{...current,bump,preview:result.data}:current);
+    const preview=result.data;
+    setPending(current=>current?{...current,bump,preview}:current);
   };
 
   const confirmGenerate=async()=>{
