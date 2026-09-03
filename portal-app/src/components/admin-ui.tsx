@@ -16,7 +16,10 @@ export function AdminPageHeader({ title, description }: { title: string; descrip
     <View style={styles.pageTop}>
       <View style={styles.headerActions}>
         <Button icon="arrow-back-outline" onPress={() => router.back()} title="Voltar" variant="ghost" />
-        <AdminNotificationBell />
+        <View style={styles.headerRightActions}>
+          <Button icon="pulse-outline" onPress={() => router.push('/admin/system-health')} title="Integridade" variant="ghost" />
+          <AdminNotificationBell />
+        </View>
       </View>
       <PageHeader eyebrow="Administração" title={title} description={description} />
     </View>
@@ -98,6 +101,7 @@ export function AdminMenuRow({ icon, title, description, onPress, compact = fals
 const styleDefinitions = (colors: ThemeColors) => ({
   pageTop: { gap: spacing.xs, alignItems: 'flex-start' },
   headerActions: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  headerRightActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end', gap: spacing.xs },
   notificationButton: { minHeight: 42, flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderColor: colors.line, borderRadius: radius.pill, paddingHorizontal: spacing.sm, backgroundColor: colors.surface },
   notificationBadge: { minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: colors.danger, paddingHorizontal: 4 },
   notificationBadgeText: { color: colors.surface, fontFamily: typography.family, fontSize: 10, fontWeight: '700' },
