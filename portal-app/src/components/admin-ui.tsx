@@ -17,6 +17,7 @@ export function AdminPageHeader({ title, description }: { title: string; descrip
       <View style={styles.headerActions}>
         <Button icon="arrow-back-outline" onPress={() => router.back()} title="Voltar" variant="ghost" />
         <View style={styles.headerRightActions}>
+          <Button icon="document-text-outline" onPress={() => router.push('/admin/document-preparation')} title="Preparar docs" variant="ghost" />
           <Button icon="pulse-outline" onPress={() => router.push('/admin/system-health')} title="Integridade" variant="ghost" />
           <AdminNotificationBell />
         </View>
