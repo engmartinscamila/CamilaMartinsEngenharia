@@ -56,6 +56,18 @@ export interface ContractDocumentSummary {
   generatedAt: string | null;
 }
 
+export interface ContractDocumentPreview {
+  nextVersion: string;
+  revisionOf: string | null;
+  contractNumber: string | null;
+  clientName: string | null;
+  projectName: string | null;
+  propertyAddress: string | null;
+  clientAddress: string | null;
+  contractValue: number | null;
+  scopeItems: { code: string; name: string }[];
+}
+
 export interface ProjectApprovalItem {
   id: string;
   title: string;
@@ -123,13 +135,30 @@ export async function listProjectContractDocuments(projectId: string): Promise<S
   return { data: (result.data ?? []).map((row) => ({ id: row.id, projectId: row.projeto_id, kind: row.document_kind as ContractDocumentKind, title: row.nome, status: row.workflow_status, optional: row.optional_document === true, archived: Boolean(row.arquivo), createdAt: row.created_at, generatedAt: row.generated_at })), error: null };
 }
 
+export async function previewContractDocument(input: { projectId: string; kind: Exclude<ContractDocumentKind, 'notificacao_formal'>; approvalId?: string | null; extraData?: Record<string, unknown> }): Promise<ServiceResult<ContractDocumentPreview | null>> {
+  const result = await supabase.rpc('admin_preview_contract_document', { p_project_id: input.projectId, p_document_kind: input.kind, p_approval_id: input.approvalId ?? null, p_extra_data: input.extraData ?? {} });
+  if (result.error || !result.data) return { data: null, error: toUserMessage(result.error, 'Não foi possível montar a prévia do documento.') };
+  const row = result.data as any;
+  return { data: {
+    nextVersion: String(row.next_version ?? '1.0'),
+    revisionOf: row.revision_of ?? null,
+    contractNumber: row.contract_number ?? null,
+    clientName: row.client_name ?? null,
+    projectName: row.project_name ?? null,
+    propertyAddress: row.property_address ?? null,
+    clientAddress: row.client_address ?? null,
+    contractValue: Number.isFinite(Number(row.contract_value)) ? Number(row.contract_value) : null,
+    scopeItems: Array.isArray(row.scope_items) ? row.scope_items.map((item: any) => ({ code: String(item.code ?? ''), name: String(item.name ?? '') })) : [],
+  }, error: null };
+}
+
 export async function prepareContractDocument(input: { projectId: string; kind: Exclude<ContractDocumentKind, 'notificacao_formal'>; approvalId?: string | null; extraData?: Record<string, unknown> }) {
   const result = await supabase.rpc('admin_prepare_contract_document', { p_project_id: input.projectId, p_document_kind: input.kind, p_approval_id: input.approvalId ?? null, p_extra_data: input.extraData ?? {} });
   return result.error || !result.data ? { documentId: null, error: toUserMessage(result.error, 'Não foi possível preparar o documento. Tente novamente.') } : { documentId: result.data as string, error: null };
 }
 
 export async function generateContractDocument(documentId: string, expectedDocumentKind: ContractDocumentKind, archive = false) {
-  const generated = await supabase.functions.invoke('generate-contract-document', { body: { documentId, action: 'generate', expectedDocumentKind } });
+  const generated = await supabase.functions.invoke('generate-contract-document-final', { body: { documentId, action: 'generate', expectedDocumentKind } });
   if (generated.error || !generated.data?.generated || generated.data?.documentKind !== expectedDocumentKind) return toUserMessage(generated.data?.error ?? generated.error, 'Não foi possível gerar o Word correspondente ao tipo solicitado.');
   const delivered = await supabase.functions.invoke('deliver-generated-document', { body: { documentId, archive, expectedDocumentKind } });
   if (delivered.error || !delivered.data?.delivered || !delivered.data?.contentBase64 || delivered.data?.documentKind !== expectedDocumentKind) return toUserMessage(delivered.data?.error ?? delivered.error, 'O Word retornado não corresponde ao tipo solicitado.');
@@ -142,7 +171,7 @@ export async function generateContractDocument(documentId: string, expectedDocum
 }
 
 export async function sendContractDocument(documentId: string, expectedDocumentKind: ContractDocumentKind) {
-  const result = await supabase.functions.invoke('generate-contract-document', { body: { documentId, action: 'send', expectedDocumentKind } });
+  const result = await supabase.functions.invoke('generate-contract-document-final', { body: { documentId, action: 'send', expectedDocumentKind } });
   if (result.error || !result.data?.sent || result.data?.documentKind !== expectedDocumentKind) return toUserMessage(result.data?.error ?? result.error, 'Não foi possível disponibilizar o documento correto ao cliente.');
   const release = await supabase.rpc('admin_release_document_for_client', {
     p_document_id: documentId,
