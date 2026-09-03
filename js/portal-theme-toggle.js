@@ -62,7 +62,7 @@
         if (window.__CME_FRASE_DO_DIA__ || document.getElementById("cmeFraseDoDiaScript")) return;
         const script = document.createElement("script");
         script.id = "cmeFraseDoDiaScript";
-        script.src = "js/frase-do-dia.js?v=20260901-3";
+        script.src = "js/frase-do-dia.js?v=20260903-4";
         script.defer = true;
         document.head.appendChild(script);
     }
