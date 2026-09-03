@@ -4,12 +4,14 @@ set -euo pipefail
 rm -rf site-public
 mkdir -p site-public
 
+BUILD_VERSION="${GITHUB_SHA:-local-$(date +%Y%m%d%H%M%S)}"
+
 find . -maxdepth 1 -type f -name '*.html' -exec cp {} site-public/ \;
 cp -R assets site-public/assets
 cp -R css site-public/css
 cp -R js site-public/js
 touch site-public/.nojekyll
-printf '%s\n' "${GITHUB_SHA:-local-build}" > site-public/build-version.txt
+printf '%s\n' "$BUILD_VERSION" > site-public/build-version.txt
 
 for file in CNAME robots.txt sitemap.xml manifest.webmanifest camila-martins.vcf firebase-messaging-sw.js; do
   if [[ -f "$file" ]]; then
@@ -17,16 +19,14 @@ for file in CNAME robots.txt sitemap.xml manifest.webmanifest camila-martins.vcf
   fi
 done
 
-# Garante que todas as páginas administrativas recebam imediatamente o menu e a proteção
-# das novas áreas, sem depender do cache de versões antigas de ui-core/auth.
-while IFS= read -r -d '' html; do
-  sed -E -i 's#js/ui-core\.js\?v=[0-9-]+#js/ui-core.js?v=20260901-2#g; s#js/auth\.js\?v=[0-9-]+#js/auth.js?v=20260901-2#g' "$html"
-done < <(find site-public -maxdepth 1 -type f -name '*.html' -print0)
-
 # Endurecimento é feito apenas no artefato publicado: mantém o código-fonte legível,
 # mas garante que o portal clássico use a mesma camada protegida do aplicativo.
 node scripts/harden-client-area.mjs
 node scripts/harden-public-html.mjs
+
+# Todas as referências locais JS/CSS recebem o identificador exato do build.
+# Assim uma nova publicação não depende de cache-busting manual em cada HTML.
+node scripts/apply-build-version.mjs "$BUILD_VERSION"
 
 test -f site-public/firebase-messaging-sw.js
 test -f site-public/manifest.webmanifest
@@ -57,4 +57,4 @@ if [[ -f site-public/firebase-messaging-sw.js ]]; then
   node --check site-public/firebase-messaging-sw.js >/dev/null
 fi
 
-echo "JavaScript publicado minificado e com identificadores locais abreviados."
+echo "JavaScript publicado minificado, versionado pelo build e com identificadores locais abreviados."
