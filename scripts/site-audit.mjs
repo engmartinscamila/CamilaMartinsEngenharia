@@ -86,6 +86,29 @@ for (const file of restrictedAdmin) {
   }
 }
 
+const frasesPath = path.join(ROOT, "assets/frases-do-dia.json");
+if (!fs.existsSync(frasesPath)) {
+  fail("Acervo da Frase do dia ausente.");
+} else {
+  try {
+    const acervo = JSON.parse(fs.readFileSync(frasesPath, "utf8"));
+    const frases = Array.isArray(acervo.frases) ? acervo.frases : [];
+    const suspeita = /[_*`<>]|\b(?:n['’]um|n['’]uma|d['’]um|d['’]uma|d['’]elle|d['’]ella|scenas?|polycarpo|yaya|pharmacia|acceitar|ahi)\b/i;
+    if (frases.length !== 1000) fail(`Frase do dia: esperado acervo explícito de 1000 frases; encontrado ${frases.length}.`);
+    const textos = new Set();
+    frases.forEach((item, index) => {
+      const texto = String(item?.texto || "").trim();
+      if (!texto) fail(`Frase do dia: texto vazio na posição ${index + 1}.`);
+      if (suspeita.test(texto)) fail(`Frase do dia: grafia antiga ou marcação indevida na posição ${index + 1}: ${texto}`);
+      if (!texto.endsWith(".")) fail(`Frase do dia: pontuação final ausente na posição ${index + 1}.`);
+      textos.add(texto.toLocaleLowerCase("pt-BR"));
+    });
+    if (textos.size !== frases.length) fail("Frase do dia: existem frases duplicadas no acervo.");
+  } catch (error) {
+    fail(`Frase do dia: JSON inválido — ${error.message}`);
+  }
+}
+
 const adminHtml = fs.readFileSync(path.join(ROOT, "admin.html"), "utf8");
 for (const obsolete of ["admin-ui-resilience.js", "admin-dashboard-fix.js", "dashboard-biblioteca-fix.js"]) {
   if (adminHtml.includes(obsolete)) fail(`admin.html ainda carrega script concorrente: ${obsolete}`);
