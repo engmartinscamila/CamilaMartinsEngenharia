@@ -1,6 +1,12 @@
 name: Validação portal-app
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'portal-app/**'
+      - '.github/workflows/portal-app-pr.yml'
   pull_request:
     paths:
       - 'portal-app/**'
