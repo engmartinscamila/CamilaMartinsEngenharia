@@ -1,0 +1,25 @@
+{
+  "name": "Camila Martins Engenharia",
+  "short_name": "Camila Martins",
+  "description": "Portal do Cliente Camila Martins Engenharia",
+  "start_url": "/portal.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#071726",
+  "theme_color": "#071726",
+  "icons": [
+    {
+      "src": "/assets/logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
