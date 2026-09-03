@@ -37,6 +37,9 @@ jobs:
       - name: Preparar versão pública protegida
         run: bash scripts/prepare-site-public.sh
 
+      - name: Auditar pacote final de publicação
+        run: node scripts/site-public-audit.mjs
+
       - name: Instalar Chromium de teste
         run: |
           npm install --no-save playwright@1.55.0
@@ -80,6 +83,9 @@ jobs:
 
       - name: Prepare protected classic website
         run: bash scripts/prepare-site-public.sh
+
+      - name: Revalidar pacote final
+        run: node scripts/site-public-audit.mjs
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
