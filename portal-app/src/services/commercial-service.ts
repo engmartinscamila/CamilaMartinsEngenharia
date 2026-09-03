@@ -19,6 +19,9 @@ export interface CommercialRecord {
   cpfCnpj: string | null;
   email: string | null;
   phone: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
   propertyAddress: string | null;
   propertyType: string | null;
   experienceLevel: string | null;
@@ -30,6 +33,19 @@ export interface CommercialRecord {
   linkedContractId: string | null;
   linkedProjectId: string | null;
   createdAt: string;
+}
+
+export interface CommercialDocumentPreview {
+  kind: 'orcamento' | 'contrato';
+  number: string;
+  prospectName: string;
+  partyAddress: string | null;
+  propertyAddress: string | null;
+  totalValue: number | null;
+  services: string[];
+  currentVersion: string | null;
+  nextVersion: string;
+  frozen: boolean;
 }
 
 export interface NewCommercialRecordInput {
@@ -73,7 +89,7 @@ export interface CommercialCnpjLookup extends CommercialAddressLookup {
 export async function listCommercialRecords(): Promise<ServiceResult<CommercialRecord[]>> {
   const result = await supabase
     .from('commercial_records')
-    .select('id, quote_number, contract_number, status, prospect_name, cpf_cnpj, email, phone, property_address, property_type, experience_level, total_value, services, quote_document_id, contract_document_id, linked_client_id, linked_contract_id, linked_project_id, created_at')
+    .select('id, quote_number, contract_number, status, prospect_name, cpf_cnpj, email, phone, address, city, state, property_address, property_type, experience_level, total_value, services, quote_document_id, contract_document_id, linked_client_id, linked_contract_id, linked_project_id, created_at')
     .order('created_at', { ascending: false })
     .limit(100);
   if (result.error) return { data: [], error: 'Não foi possível carregar os orçamentos e contratos.' };
@@ -87,6 +103,9 @@ export async function listCommercialRecords(): Promise<ServiceResult<CommercialR
       cpfCnpj: row.cpf_cnpj,
       email: row.email,
       phone: row.phone,
+      address: row.address,
+      city: row.city,
+      state: row.state,
       propertyAddress: row.property_address,
       propertyType: row.property_type,
       experienceLevel: row.experience_level,
@@ -143,8 +162,43 @@ export async function createCommercialRecord(input: NewCommercialRecordInput) {
     : { recordId: result.data as string, error: null };
 }
 
-export async function generateCommercialDocument(recordId: string, kind: 'orcamento' | 'contrato', archive = false) {
-  const generated = await supabase.functions.invoke('generate-commercial-document', { body: { recordId, kind } });
+function bumpVersion(current: string | null, bump: 'minor' | 'major') {
+  if (!current) return '1.0';
+  const match = current.match(/(\d+)\.(\d+)/);
+  const major = Number(match?.[1] ?? 1);
+  const minor = Number(match?.[2] ?? 0);
+  return bump === 'major' ? `${major + 1}.0` : `${major}.${minor + 1}`;
+}
+
+export async function previewCommercialDocument(record: CommercialRecord, kind: 'orcamento' | 'contrato', bump: 'minor' | 'major' = 'minor'): Promise<ServiceResult<CommercialDocumentPreview | null>> {
+  const documentId = kind === 'orcamento' ? record.quoteDocumentId : record.contractDocumentId;
+  let currentVersion: string | null = null;
+  let frozen = false;
+  if (documentId) {
+    const [doc, snapshot] = await Promise.all([
+      supabase.from('documentos').select('versao').eq('id', documentId).maybeSingle(),
+      supabase.from('document_emission_snapshots').select('id').eq('document_id', documentId).maybeSingle(),
+    ]);
+    if (doc.error || snapshot.error) return { data: null, error: 'Não foi possível conferir a versão atual do documento.' };
+    currentVersion = doc.data?.versao ? String(doc.data.versao) : '1.0';
+    frozen = Boolean(snapshot.data);
+  }
+  return { data: {
+    kind,
+    number: kind === 'contrato' ? record.contractNumber ?? 'Será gerado automaticamente' : record.quoteNumber,
+    prospectName: record.prospectName,
+    partyAddress: record.address,
+    propertyAddress: record.propertyAddress,
+    totalValue: record.totalValue,
+    services: record.services.filter((item) => item.included !== false).map((item) => `(${item.code}) ${item.name}`),
+    currentVersion,
+    nextVersion: frozen ? bumpVersion(currentVersion, bump) : currentVersion ?? '1.0',
+    frozen,
+  }, error: null };
+}
+
+export async function generateCommercialDocument(recordId: string, kind: 'orcamento' | 'contrato', archive = false, version?: { bump: 'minor' | 'major'; reason: string }) {
+  const generated = await supabase.functions.invoke('generate-commercial-document-final', { body: { recordId, kind, versionBump: version?.bump ?? 'minor', versionReason: version?.reason ?? '' } });
   if (generated.error || !generated.data?.generated || !generated.data?.documentId) return generated.data?.error ?? generated.error?.message ?? `Não foi possível gerar o ${kind}.`;
 
   const delivered = await supabase.functions.invoke('deliver-generated-document', { body: { documentId: generated.data.documentId, archive, expectedDocumentKind: kind } });
