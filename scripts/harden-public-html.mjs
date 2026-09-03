@@ -35,6 +35,15 @@ for (const name of fs.readdirSync(root).filter(name => name.endsWith('.html'))) 
     html = injectBefore(html, '</head>', '    <meta name="robots" content="noindex,nofollow,noarchive">');
   }
 
+  // Camada responsiva única para site público, portal administrativo e portal do cliente.
+  // O versionamento definitivo é aplicado depois pelo apply-build-version.mjs.
+  if (!html.includes('css/mobile-experience.css')) {
+    html = injectBefore(html, '</head>', '    <link rel="stylesheet" href="css/mobile-experience.css?v=mobile">');
+  }
+  if (!html.includes('js/mobile-experience.js')) {
+    html = injectBefore(html, '</body>', '    <script src="js/mobile-experience.js?v=mobile"></script>');
+  }
+
   if (clientPwaPattern.test(name)) {
     if (!/rel=["']manifest["']/i.test(html)) {
       html = injectBefore(html, '</head>', '    <link rel="manifest" href="/manifest.webmanifest">');
@@ -50,4 +59,4 @@ for (const name of fs.readdirSync(root).filter(name => name.endsWith('.html'))) 
   fs.writeFileSync(file, html);
 }
 
-console.log(`HTML publicado endurecido; ${disallowed.size} rotas restritas catalogadas.`);
+console.log(`HTML publicado endurecido; ${disallowed.size} rotas restritas catalogadas e camada mobile aplicada.`);
