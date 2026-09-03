@@ -11,7 +11,7 @@ cp -R js site-public/js
 touch site-public/.nojekyll
 printf '%s\n' "${GITHUB_SHA:-local-build}" > site-public/build-version.txt
 
-for file in CNAME robots.txt sitemap.xml camila-martins.vcf firebase-messaging-sw.js; do
+for file in CNAME robots.txt sitemap.xml manifest.webmanifest camila-martins.vcf firebase-messaging-sw.js; do
   if [[ -f "$file" ]]; then
     cp "$file" site-public/
   fi
@@ -23,9 +23,16 @@ while IFS= read -r -d '' html; do
   sed -E -i 's#js/ui-core\.js\?v=[0-9-]+#js/ui-core.js?v=20260901-2#g; s#js/auth\.js\?v=[0-9-]+#js/auth.js?v=20260901-2#g' "$html"
 done < <(find site-public -maxdepth 1 -type f -name '*.html' -print0)
 
+# Endurecimento é feito apenas no artefato publicado: mantém o código-fonte legível,
+# mas garante que o portal clássico use a mesma camada protegida do aplicativo.
+node scripts/harden-client-area.mjs
+node scripts/harden-public-html.mjs
+
 test -f site-public/firebase-messaging-sw.js
+test -f site-public/manifest.webmanifest
 test -f site-public/js/firebase-push-config.js
 test -f site-public/js/push-cliente.js
+test -f site-public/js/pwa-client.js
 
 echo "Minificando JavaScript publicado..."
 while IFS= read -r -d '' file; do
