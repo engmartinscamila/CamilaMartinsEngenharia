@@ -471,11 +471,49 @@ for (const [file,container] of [
   await page.close();
 }
 
-// Dashboard: Biblioteca deve somar biblioteca + documentos + fotos.
+// Dashboard: Biblioteca deve contar pastas com conteúdo, sem duplicar arquivos.
 {
   const page = await loadPage(context,"admin.html");
   const total = (await page.locator("#totalBiblioteca").textContent() || "").trim();
-  assert(total === "5", `admin.html: contador Biblioteca deveria ser 5 e exibiu "${total}"`);
+  assert(total === "5", `admin.html: contador Biblioteca deveria representar 5 pastas e exibiu "${total}"`);
+  await page.close();
+}
+
+// Contratos: a interface deve permitir selecionar vários ORCs.
+{
+  const page = await loadPage(context, "orcamentos-contratos.html");
+  await page.locator('[data-doc-tab="contrato"]').click();
+  await page.waitForTimeout(120);
+
+  const select = page.locator("#contractQuoteSelect");
+  assert(await select.count() === 1, "orcamentos-contratos.html: seletor de ORCs ausente");
+  if (await select.count()) {
+    assert(
+      await select.getAttribute("multiple") !== null,
+      "orcamentos-contratos.html: seletor ainda aceita somente um ORC"
+    );
+    const label = (await page.locator('label[for="contractQuoteSelect"]').textContent() || "").trim();
+    assert(/um ou mais orçamentos/i.test(label), `orcamentos-contratos.html: rótulo do vínculo múltiplo inesperado: ${label}`);
+  }
+
+  await responsive(page, "orcamentos-contratos.html com múltiplos ORCs");
+  await page.close();
+}
+
+// Frase do dia: somente português atual e conteúdo editorial revisado.
+{
+  const page = await loadPage(context, "admin.html");
+  await page.waitForTimeout(250);
+  const frase = (await page.locator("#cmeFraseTexto").textContent().catch(() => "")) || "";
+  const autor = (await page.locator("#cmeFraseAutor").textContent().catch(() => "")) || "";
+
+  assert(Boolean(frase.trim()), "admin.html: Frase do dia não foi carregada");
+  assert(!/[_*`<>]/.test(frase), `admin.html: Frase do dia contém marcação indevida: ${frase}`);
+  assert(
+    !/\b(?:n['’]um|n['’]uma|d['’]um|d['’]uma|d['’]elle|d['’]ella|scenas?|polycarpo|yaya|pharmacia|acceitar|ahi)\b/i.test(frase),
+    `admin.html: Frase do dia contém grafia antiga: ${frase}`
+  );
+  assert(/Editorial Camila Martins Engenharia/i.test(autor), `admin.html: autoria editorial inesperada: ${autor}`);
   await page.close();
 }
 
