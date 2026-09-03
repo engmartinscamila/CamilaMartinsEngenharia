@@ -33,6 +33,9 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Gerar e revisar acervo de frases
+        run: node scripts/build-frases-do-dia-v7.mjs
+
       - name: Auditoria estática
         run: |
           node scripts/site-audit.mjs
