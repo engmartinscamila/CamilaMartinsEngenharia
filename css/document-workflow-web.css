@@ -24,6 +24,25 @@ html.doc-modal-open,body.doc-modal-open{overflow:hidden;overscroll-behavior:none
   min-height:48px;
   font-weight:600;
 }
+.doc-contract-source select[multiple]{
+  min-height:150px;
+  padding:7px;
+}
+.doc-contract-source select[multiple] option{
+  padding:8px 9px;
+  border-radius:6px;
+  white-space:normal;
+}
+.doc-contract-source select[multiple] option:checked{
+  background:#b89a63 linear-gradient(0deg,#b89a63 0%,#b89a63 100%);
+  color:#07111f;
+}
+.doc-contract-source .doc-help{
+  display:block;
+  color:var(--text-secondary,#aeb8c6);
+  font-size:.74rem;
+  line-height:1.45;
+}
 .doc-contract-source .doc-status{
   margin:0;
 }
