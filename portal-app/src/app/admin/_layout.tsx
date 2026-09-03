@@ -37,6 +37,7 @@ export default function AdminLayout() {
       <Stack.Screen name="notifications" />
       <Stack.Screen name="financial" />
       <Stack.Screen name="security" />
+      <Stack.Screen name="system-health" />
     </Stack>
   );
 }
