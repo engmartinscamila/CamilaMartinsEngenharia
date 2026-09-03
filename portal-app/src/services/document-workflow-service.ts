@@ -83,6 +83,10 @@ export const CONTRACT_DOCUMENT_OPTIONS: { kind: Exclude<ContractDocumentKind, 'n
   { kind: 'quitacao_encerramento', title: 'Quitação e Encerramento', description: 'Formalização do encerramento e situação financeira do contrato.' },
 ];
 
+const ACCEPTANCE_REQUIRED_KINDS = new Set<ContractDocumentKind>([
+  'anexo_i', 'termo_aceite', 'servico_adicional', 'autorizacao_imagem', 'quitacao_encerramento',
+]);
+
 export async function listContractScope(contractId: string): Promise<ServiceResult<ContractScopeItem[]>> {
   const result = await supabase.from('contract_scope_items').select('id, contract_id, service_code, service_name, included, acceptance_required, display_order, notes').eq('contract_id', contractId).order('display_order');
   if (result.error) return { data: [], error: 'Não foi possível carregar o escopo contratual.' };
@@ -127,7 +131,6 @@ export async function prepareContractDocument(input: { projectId: string; kind: 
 export async function generateContractDocument(documentId: string, expectedDocumentKind: ContractDocumentKind, archive = false) {
   const generated = await supabase.functions.invoke('generate-contract-document', { body: { documentId, action: 'generate', expectedDocumentKind } });
   if (generated.error || !generated.data?.generated || generated.data?.documentKind !== expectedDocumentKind) return toUserMessage(generated.data?.error ?? generated.error, 'Não foi possível gerar o Word correspondente ao tipo solicitado.');
-
   const delivered = await supabase.functions.invoke('deliver-generated-document', { body: { documentId, archive, expectedDocumentKind } });
   if (delivered.error || !delivered.data?.delivered || !delivered.data?.contentBase64 || delivered.data?.documentKind !== expectedDocumentKind) return toUserMessage(delivered.data?.error ?? delivered.error, 'O Word retornado não corresponde ao tipo solicitado.');
   try {
@@ -141,6 +144,13 @@ export async function generateContractDocument(documentId: string, expectedDocum
 export async function sendContractDocument(documentId: string, expectedDocumentKind: ContractDocumentKind) {
   const result = await supabase.functions.invoke('generate-contract-document', { body: { documentId, action: 'send', expectedDocumentKind } });
   if (result.error || !result.data?.sent || result.data?.documentKind !== expectedDocumentKind) return toUserMessage(result.data?.error ?? result.error, 'Não foi possível disponibilizar o documento correto ao cliente.');
+  const release = await supabase.rpc('admin_release_document_for_client', {
+    p_document_id: documentId,
+    p_acceptance_required: ACCEPTANCE_REQUIRED_KINDS.has(expectedDocumentKind),
+    p_valid_from: null,
+    p_valid_until: null,
+  });
+  if (release.error) return toUserMessage(release.error, 'O documento foi enviado, mas não foi possível registrar sua governança para o cliente.');
   void dispatchPendingPushNotifications();
   return null;
 }
