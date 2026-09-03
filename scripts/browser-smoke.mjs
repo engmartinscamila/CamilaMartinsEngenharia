@@ -122,7 +122,7 @@ const supabaseMock = `
     BIBLIOTECA:"biblioteca"
   });
   const forceClient = new URLSearchParams(location.search).get("role") === "client";
-  const isAdmin = !forceClient && /(?:admin|clientes|projetos|documentos|biblioteca|fotos|financeiro|agenda|cronograma|solicitacoes|configuracoes|protecao-pdf-admin)\\.html$/i.test(location.pathname);
+  const isAdmin = !forceClient && /(?:admin|clientes|projetos|orcamentos-contratos|documentos|biblioteca|fotos|financeiro|agenda|cronograma|solicitacoes|configuracoes|protecao-pdf-admin)\\.html$/i.test(location.pathname);
   const user = { id: isAdmin ? "admin-test" : "client-test", email: isAdmin ? "admin@teste.local" : "cliente@teste.local", user_metadata:{nome:isAdmin?"Camila Teste":"Cliente Teste"} };
   const session = { user, access_token:"mock-token" };
 
