@@ -27,6 +27,11 @@ export default function AdminLayout() {
       <Stack.Screen name="projects" />
       <Stack.Screen name="content" />
       <Stack.Screen name="commercial-documents" />
+      <Stack.Screen name="crm" />
+      <Stack.Screen name="tasks" />
+      <Stack.Screen name="work-diary" />
+      <Stack.Screen name="procurement" />
+      <Stack.Screen name="portal-control" />
       <Stack.Screen name="contract-documents" />
       <Stack.Screen name="document-preparation" />
       <Stack.Screen name="document-governance" />

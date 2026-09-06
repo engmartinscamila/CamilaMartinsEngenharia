@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Share, Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
@@ -7,6 +7,7 @@ import { formatDate } from '@/lib/format';
 import { useThemeStyles } from '@/providers/theme-provider';
 import {
   convertCommercialRecord,
+  createProspectAccessLink,
   createCommercialRecord,
   generateCommercialDocument,
   listCommercialRecords,
@@ -37,6 +38,7 @@ export default function AdminCommercialDocumentsScreen() {
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [prospectLink, setProspectLink] = useState<string | null>(null);
 
   const services = useMemo<CommercialServiceSelection[]>(() => CONTRACT_SCOPE_PRESETS.map(([code, name], index) => ({
     code, name, included: selectedCodes.includes(code), acceptanceRequired: true, displayOrder: index + 1,
@@ -128,11 +130,24 @@ export default function AdminCommercialDocumentsScreen() {
     setLoadingKey(null);
   };
 
+  const createAccess = async (record: CommercialRecord) => {
+    setLoadingKey(`access-${record.id}`); setError(null); setSuccess(null); setProspectLink(null);
+    const result = await createProspectAccessLink(record.id);
+    setLoadingKey(null);
+    if (result.error || !result.url) setError(result.error ?? 'Não foi possível criar o link.');
+    else {
+      setProspectLink(result.url);
+      setSuccess('Link temporário criado por 72 horas, limitado e sem exigir cadastro do prospect.');
+      await Share.share({ message: `Documentos Camila Martins Engenharia Civil: ${result.url}` });
+    }
+  };
+
   return (
     <Screen>
       <AdminPageHeader title="Orçamentos e contratos" description="Crie documentos comerciais antes do cadastro do cliente. Endereço cadastral e endereço da obra permanecem independentes." />
       <Notice tone="info">Antes de gerar um Word, o app mostra a prévia da versão, endereço da obra, endereço cadastral, valor e serviços. Uma versão já emitida exige motivo para nova revisão.</Notice>
       {error ? <Notice tone="danger">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}
+      {prospectLink ? <Card><Text style={styles.sectionTitle}>Acesso temporário do prospect</Text><Text selectable style={styles.previewStrong}>{prospectLink}</Text><Text style={styles.help}>O link expira automaticamente e pode ser revogado pelo banco sem alterar o documento original.</Text></Card> : null}
 
       <Card>
         <Text style={styles.sectionTitle}>Novo prospect / orçamento</Text>
@@ -167,6 +182,7 @@ export default function AdminCommercialDocumentsScreen() {
             <Text style={styles.subTitle}>Contrato</Text>
             <View style={styles.actions}><Button disabled={record.status === 'convertido'} loading={loadingKey === `preview-contrato-${record.id}`} onPress={() => void requestGenerate(record, 'contrato', false)} title={record.contractNumber ? 'Prévia + Word do contrato' : 'Prévia + gerar contrato'} variant="secondary" /><Button disabled={record.status === 'convertido'} onPress={() => void requestGenerate(record, 'contrato', true)} title="Prévia + arquivar contrato" variant="ghost" /></View>
             <Button disabled={!record.contractDocumentId || record.status === 'convertido'} loading={loadingKey === `convert-${record.id}`} onPress={() => void convert(record)} title={record.status === 'convertido' ? 'Cliente/projeto vinculados' : 'Converter em cliente + projeto'} />
+            <Button disabled={!record.quoteDocumentId && !record.contractDocumentId} loading={loadingKey === `access-${record.id}`} onPress={() => void createAccess(record)} title="Compartilhar link temporário" variant="secondary" />
           </View>
         ))}
       </Card>

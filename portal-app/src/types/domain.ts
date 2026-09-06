@@ -284,6 +284,11 @@ export interface FinancialEntrySummary {
   amount: number;
   date: string | null;
   notes: string | null;
+  category: string;
+  status: string;
+  dueDate: string | null;
+  paidAt: string | null;
+  accountId: string | null;
 }
 
 export interface FinancialArchiveSummary {
@@ -308,6 +313,149 @@ export interface AuditEntrySummary {
   entityId: string | null;
   details: Record<string, unknown> | null;
   createdAt: string;
+}
+
+export type TaskStatus = 'todo' | 'doing' | 'blocked' | 'done' | 'cancelled';
+export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent';
+
+export interface ProjectTaskSummary {
+  id: string;
+  projectId: string;
+  parentTaskId: string | null;
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+  startDate: string | null;
+  dueDate: string | null;
+  completedAt: string | null;
+  estimatedHours: number | null;
+  weight: number;
+  clientVisible: boolean;
+  position: number;
+  dependencyIds: string[];
+}
+
+export interface TaskTemplateSummary {
+  id: string;
+  name: string;
+  description: string | null;
+  itemCount: number;
+}
+
+export interface WorkDiarySummary {
+  id: string;
+  projectId: string;
+  entryDate: string;
+  weather: string | null;
+  teamCount: number | null;
+  activities: string;
+  occurrences: string | null;
+  materials: string | null;
+  nextSteps: string | null;
+  voiceTranscript: string | null;
+  clientVisible: boolean;
+  createdAt: string;
+}
+
+export interface SupplierSummary {
+  id: string;
+  name: string;
+  cpfCnpj: string | null;
+  email: string | null;
+  phone: string | null;
+  category: string | null;
+  active: boolean;
+}
+
+export interface SupplierBidSummary {
+  id: string;
+  quoteId: string;
+  supplierId: string;
+  supplierName: string;
+  totalAmount: number;
+  leadTimeDays: number | null;
+  paymentTerms: string | null;
+  notes: string | null;
+}
+
+export interface PurchaseQuoteSummary {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string | null;
+  status: string;
+  dueDate: string | null;
+  selectedSupplierId: string | null;
+  clientVisible: boolean;
+  itemCount: number;
+  bids: SupplierBidSummary[];
+}
+
+export interface ProjectFinancialSummary {
+  projectId: string;
+  projectName: string;
+  contractNumber: string;
+  contractValue: number | null;
+  received: number;
+  receivable: number;
+  paidCosts: number;
+  payable: number;
+  hours: number;
+  laborCost: number;
+}
+
+export interface FinancialAccountSummary {
+  id: string;
+  name: string;
+  accountType: 'bank' | 'cash' | 'credit';
+  openingBalance: number;
+  active: boolean;
+}
+
+export interface TimesheetSummary {
+  id: string;
+  projectId: string;
+  workDate: string;
+  hours: number;
+  hourlyCost: number;
+  description: string;
+  billable: boolean;
+}
+
+export interface FiscalDocumentSummary {
+  id: string;
+  projectId: string;
+  status: string;
+  provider: string | null;
+  externalId: string | null;
+  description: string;
+  amount: number;
+  issuedAt: string | null;
+  errorMessage: string | null;
+}
+
+export interface ProjectPortalSettings {
+  projectId: string;
+  showDocuments: boolean;
+  showPhotos: boolean;
+  showLibrary: boolean;
+  showAgenda: boolean;
+  showSchedule: boolean;
+  showApprovals: boolean;
+  showRequests: boolean;
+  showTasks: boolean;
+  showWorkDiary: boolean;
+}
+
+export interface AutomationRunSummary {
+  id: string;
+  jobName: string;
+  status: 'running' | 'success' | 'error';
+  metrics: Record<string, number>;
+  errorMessage: string | null;
+  startedAt: string;
+  finishedAt: string | null;
 }
 
 export interface ServiceResult<T> {

@@ -1,5 +1,6 @@
 import { downloadBase64File } from '@/lib/download-generated-file';
 import { supabase } from '@/lib/supabase';
+import * as Linking from 'expo-linking';
 import type { ServiceResult } from '@/types/domain';
 
 export interface CommercialServiceSelection {
@@ -32,6 +33,11 @@ export interface CommercialRecord {
   linkedClientId: string | null;
   linkedContractId: string | null;
   linkedProjectId: string | null;
+  crmStage: string;
+  crmPriority: string;
+  crmSource: string | null;
+  nextActionAt: string | null;
+  lostReason: string | null;
   createdAt: string;
 }
 
@@ -89,7 +95,7 @@ export interface CommercialCnpjLookup extends CommercialAddressLookup {
 export async function listCommercialRecords(): Promise<ServiceResult<CommercialRecord[]>> {
   const result = await supabase
     .from('commercial_records')
-    .select('id, quote_number, contract_number, status, prospect_name, cpf_cnpj, email, phone, address, city, state, property_address, property_type, experience_level, total_value, services, quote_document_id, contract_document_id, linked_client_id, linked_contract_id, linked_project_id, created_at')
+    .select('id, quote_number, contract_number, status, prospect_name, cpf_cnpj, email, phone, address, city, state, property_address, property_type, experience_level, total_value, services, quote_document_id, contract_document_id, linked_client_id, linked_contract_id, linked_project_id, crm_stage, crm_priority, crm_source, next_action_at, lost_reason, created_at')
     .order('created_at', { ascending: false })
     .limit(100);
   if (result.error) return { data: [], error: 'Não foi possível carregar os orçamentos e contratos.' };
@@ -116,6 +122,11 @@ export async function listCommercialRecords(): Promise<ServiceResult<CommercialR
       linkedClientId: row.linked_client_id,
       linkedContractId: row.linked_contract_id,
       linkedProjectId: row.linked_project_id,
+      crmStage: row.crm_stage ?? 'novo',
+      crmPriority: row.crm_priority ?? 'normal',
+      crmSource: row.crm_source,
+      nextActionAt: row.next_action_at,
+      lostReason: row.lost_reason,
       createdAt: row.created_at,
     })),
     error: null,
@@ -216,4 +227,16 @@ export async function convertCommercialRecord(recordId: string) {
   const result = await supabase.rpc('admin_convert_commercial_record', { p_record_id: recordId });
   if (result.error || !result.data) return { data: null, error: result.error?.message ?? 'Não foi possível converter o prospect em cliente/projeto.' };
   return { data: result.data as { client_id: string; contract_id: string; project_id: string }, error: null };
+}
+
+export async function createProspectAccessLink(recordId: string, expiresHours = 72) {
+  const result = await supabase.rpc('admin_create_prospect_access_link', {
+    p_commercial_record_id: recordId,
+    p_expires_hours: expiresHours,
+  });
+  if (result.error || !result.data) return { url: null, error: result.error?.message ?? 'Não foi possível criar o acesso temporário.' };
+  return {
+    url: Linking.createURL('/prospect-access', { queryParams: { token: String(result.data) } }),
+    error: null,
+  };
 }

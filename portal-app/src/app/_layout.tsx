@@ -50,6 +50,7 @@ function SynchronizedApplication({ backgroundColor, statusBarStyle }: { backgrou
         <Stack.Screen name="legal-acceptance" />
         <Stack.Screen name="privacy-policy" />
         <Stack.Screen name="terms-of-use" />
+        <Stack.Screen name="prospect-access" />
         <Stack.Screen name="(client)" />
         <Stack.Screen name="admin" />
         <Stack.Screen name="+not-found" />

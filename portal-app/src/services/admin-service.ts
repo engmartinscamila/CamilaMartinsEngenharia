@@ -598,6 +598,11 @@ export async function listAdminFinancialEntries(): Promise<ServiceResult<Financi
         amount: Number(row.valor ?? 0),
         date: row.data ?? null,
         notes: row.observacoes ?? null,
+        category: row.categoria ?? 'outros',
+        status: row.status ?? 'pendente',
+        dueDate: row.data_vencimento ?? null,
+        paidAt: row.data_pagamento ?? null,
+        accountId: row.account_id ?? null,
       } satisfies FinancialEntrySummary;
     }),
     error: null,
@@ -630,7 +635,7 @@ export async function listFinancialArchive(): Promise<ServiceResult<FinancialArc
   };
 }
 
-export async function createAdminFinancialEntry(input: { projectId: string; description: string; type: 'entrada' | 'saida'; amount: number; date: string; notes?: string }) {
+export async function createAdminFinancialEntry(input: { projectId: string; description: string; type: 'entrada' | 'saida'; amount: number; date: string; notes?: string; category?: string; status?: string; dueDate?: string; accountId?: string | null }) {
   if (!Number.isFinite(input.amount) || input.amount <= 0) return 'Informe um valor maior que zero.';
   const result = await supabase.from('financeiro').insert({
     projeto_id: input.projectId,
@@ -639,6 +644,11 @@ export async function createAdminFinancialEntry(input: { projectId: string; desc
     valor: input.amount,
     data: input.date || null,
     observacoes: input.notes?.trim() || null,
+    categoria: input.category?.trim() || 'outros',
+    status: input.status ?? 'pendente',
+    data_vencimento: input.dueDate || input.date || null,
+    data_pagamento: input.status === 'pago' || input.status === 'recebido' ? input.date || null : null,
+    account_id: input.accountId ?? null,
   });
   return result.error ? 'Não foi possível registrar o lançamento.' : null;
 }

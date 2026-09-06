@@ -5,7 +5,9 @@ import { AdminPageHeader } from '@/components/admin-ui';
 import { Button, Card, Notice, Screen, StatusPill } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
+import { listAutomationRuns, runOperationalReminders } from '@/services/operations-service';
 import { spacing, ThemeColors, typography } from '@/theme/tokens';
+import type { AutomationRunSummary } from '@/types/domain';
 
 type HealthPayload = {
   ok?: boolean;
@@ -34,12 +36,15 @@ export default function AdminSystemHealthScreen(){
   const [build,setBuild]=useState<string>('Não verificado');
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState<string|null>(null);
+  const [runs,setRuns]=useState<AutomationRunSummary[]>([]);
+  const [automationLoading,setAutomationLoading]=useState(false);
 
   const load=useCallback(async()=>{
     setLoading(true); setError(null);
-    const [healthResult,buildResult]=await Promise.all([
+    const [healthResult,buildResult,runsResult]=await Promise.all([
       supabase.functions.invoke('system-health',{body:{}}),
       fetch('https://camilamartinsengenharia.com.br/build-version.txt',{cache:'no-store'}).then(async response=>response.ok?(await response.text()).trim():`HTTP ${response.status}`).catch(()=>null),
+      listAutomationRuns(),
     ]);
     if(healthResult.error||!healthResult.data?.ok){
       setError(String(healthResult.data?.error??healthResult.error?.message??'Não foi possível consultar a integridade do backend.'));
@@ -47,8 +52,17 @@ export default function AdminSystemHealthScreen(){
       setHealth(healthResult.data as HealthPayload);
     }
     setBuild(buildResult||'Site indisponível para verificação');
+    setRuns(runsResult.data);
+    if(runsResult.error)setError(current=>current??runsResult.error);
     setLoading(false);
   },[]);
+
+  const runAutomation=async()=>{
+    setAutomationLoading(true);setError(null);
+    const actionError=await runOperationalReminders();
+    if(actionError)setError(actionError);else await load();
+    setAutomationLoading(false);
+  };
 
   useEffect(()=>{const task=setTimeout(()=>void load(),0);return()=>clearTimeout(task);},[load]);
   const db=health?.database;
@@ -63,6 +77,7 @@ export default function AdminSystemHealthScreen(){
     <Card><View style={styles.row}><Text style={styles.title}>Integridade documental SHA-256</Text><StatusPill label={hashOk?'100% SHA-256':'Revisar'} tone={hashOk?'success':'warning'}/></View><Text style={styles.meta}>Snapshots SHA-256: {db?.sha256_snapshots??'—'} de {db?.snapshots_total??'—'}</Text><Text style={styles.meta}>Referências históricas anteriores à trilha imutável: {db?.legacy_snapshots??'—'}</Text><Text style={styles.meta}>Aceites pendentes: {db?.pending_acceptances??'—'}</Text></Card>
     <Card><View style={styles.row}><Text style={styles.title}>Storage</Text><StatusPill label={health?.storage?.ok?'Operacional':'Falha'} tone={health?.storage?.ok?'success':'danger'}/></View><Text style={styles.meta}>Buckets verificados pelo backend: {health?.storage?.buckets??'—'}</Text></Card>
     <Card><View style={styles.row}><Text style={styles.title}>Edge Functions</Text><StatusPill label={health?.edge?.ok?'Runtime operacional':'Falha'} tone={health?.edge?.ok?'success':'danger'}/></View><Text style={styles.meta}>Diagnóstico executado por: {health?.edge?.function??'—'} • {formatDateTime(health?.checkedAt)}</Text></Card>
+    <Card><View style={styles.row}><Text style={styles.title}>Automações diárias</Text><StatusPill label={runs[0]?.status==='success'?'Operacional':runs[0]?.status==='error'?'Falha':'Aguardando primeira execução'} tone={runs[0]?.status==='success'?'success':runs[0]?.status==='error'?'danger':'warning'}/></View><Text style={styles.meta}>Lembretes de tarefas e financeiro: diariamente às 08:00 (America/Sao_Paulo).</Text><Text style={styles.meta}>Última execução: {formatDateTime(runs[0]?.finishedAt??runs[0]?.startedAt)}</Text>{runs[0]?.errorMessage?<Notice tone="danger">{runs[0].errorMessage}</Notice>:null}<Button loading={automationLoading} onPress={()=>void runAutomation()} title="Executar automação agora" variant="secondary" /></Card>
     <Button loading={loading} onPress={()=>void load()} title="Executar nova verificação" variant="secondary" />
   </Screen>;
 }

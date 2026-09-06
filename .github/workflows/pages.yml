@@ -84,6 +84,30 @@ jobs:
       - name: Prepare protected classic website
         run: bash scripts/prepare-site-public.sh
 
+      - name: Instalar portal integrado
+        working-directory: portal-app
+        run: npm ci
+
+      - name: Validar e exportar portal integrado
+        working-directory: portal-app
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: https://hghtwlopqztfcosfxafd.supabase.co
+          EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_-unXLR2NSSACLs01Sr60GA_uCFnJ74f
+          EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF: hghtwlopqztfcosfxafd
+          EXPO_PUBLIC_APP_ENV: production
+        run: npm run check:production:cloudflare && npm run typecheck && npm run lint && npm run export:web && npm run verify:web-export
+
+      - name: Integrar portal ao domínio
+        run: |
+          mkdir -p site-public/portal
+          cp -R portal-app/dist/. site-public/portal/
+          find portal-app/dist -type f -name '*.html' ! -name 'index.html' -print0 | while IFS= read -r -d '' source; do
+            route="${source#portal-app/dist/}"
+            route="${route%.html}"
+            mkdir -p "site-public/portal/${route}"
+            cp "$source" "site-public/portal/${route}/index.html"
+          done
+
       - name: Revalidar pacote final
         run: node scripts/site-public-audit.mjs
 

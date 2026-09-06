@@ -93,6 +93,8 @@ export default function ClientLayout() {
             <Tabs.Screen name="agenda" options={{ href: null }} />
             <Tabs.Screen name="schedule" options={{ href: null }} />
             <Tabs.Screen name="approvals" options={{ href: null }} />
+            <Tabs.Screen name="tasks" options={{ href: null }} />
+            <Tabs.Screen name="work-diary" options={{ href: null }} />
             <Tabs.Screen name="pending" options={{ href: null }} />
             <Tabs.Screen name="deliveries" options={{ href: null }} />
             <Tabs.Screen name="privacy" options={{ href: null }} />
