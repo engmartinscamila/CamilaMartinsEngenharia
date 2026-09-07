@@ -35,6 +35,20 @@ for (const name of fs.readdirSync(root).filter(name => name.endsWith('.html'))) 
     html = injectBefore(html, '</head>', '    <meta name="robots" content="noindex,nofollow,noarchive">');
   }
 
+  // Políticas que funcionam mesmo quando o host não permite configurar headers HTTP.
+  // frame-ancestors permanece no arquivo _headers para hosts compatíveis; essa diretiva
+  // não é válida em CSP via <meta>.
+  if (!/name=["']referrer["']/i.test(html)) {
+    html = injectBefore(html, '</head>', '    <meta name="referrer" content="strict-origin-when-cross-origin">');
+  }
+  if (!/http-equiv=["']Content-Security-Policy["']/i.test(html)) {
+    html = injectBefore(
+      html,
+      '</head>',
+      '    <meta http-equiv="Content-Security-Policy" content="base-uri \'self\'; upgrade-insecure-requests">'
+    );
+  }
+
   // Camada responsiva única para site público, portal administrativo e portal do cliente.
   // O versionamento definitivo é aplicado depois pelo apply-build-version.mjs.
   if (!html.includes('css/mobile-experience.css')) {
@@ -59,4 +73,4 @@ for (const name of fs.readdirSync(root).filter(name => name.endsWith('.html'))) 
   fs.writeFileSync(file, html);
 }
 
-console.log(`HTML publicado endurecido; ${disallowed.size} rotas restritas catalogadas e camada mobile aplicada.`);
+console.log(`HTML publicado endurecido; ${disallowed.size} rotas restritas catalogadas, políticas de navegador e camada mobile aplicadas.`);
