@@ -41,8 +41,22 @@ async function obterSessao() {
     return data.session || null;
 }
 
-function destinoDaSessao(session) {
-    return session?.user?.id === window.ADMIN_UID ? "admin.html" : "portal.html";
+async function usuarioEhAdmin() {
+    try {
+        const { data, error } = await window.supabaseClient.rpc("is_portal_admin");
+        if (error) {
+            console.error("Erro ao verificar autorização administrativa:", error);
+            return false;
+        }
+        return data === true;
+    } catch (error) {
+        console.error("Falha ao verificar autorização administrativa:", error);
+        return false;
+    }
+}
+
+async function destinoDaSessao() {
+    return (await usuarioEhAdmin()) ? "admin.html" : "portal.html";
 }
 
 async function iniciarAuth() {
@@ -58,9 +72,12 @@ async function iniciarAuth() {
         return;
     }
 
-    if (PAGINAS_ADMINISTRATIVAS.has(pagina) && session.user.id !== window.ADMIN_UID) {
-        location.replace("portal.html");
-        return;
+    if (PAGINAS_ADMINISTRATIVAS.has(pagina)) {
+        const autorizado = await usuarioEhAdmin();
+        if (!autorizado) {
+            location.replace("portal.html");
+            return;
+        }
     }
 
     carregarNomeUsuario(session);
@@ -231,7 +248,7 @@ function prepararLogin() {
             return;
         }
 
-        location.replace(destinoDaSessao(data.session));
+        location.replace(await destinoDaSessao());
     });
 }
 
