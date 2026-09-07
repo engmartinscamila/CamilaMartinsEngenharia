@@ -1,0 +1,68 @@
+name: Segurança do repositório
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bloquear arquivos de ambiente reais
+        shell: bash
+        run: |
+          set -euo pipefail
+          bad_env="$(git ls-files | grep -E '(^|/)\.env($|\.)' | grep -Ev '(^|/)\.env\.example$' || true)"
+          if [ -n "$bad_env" ]; then
+            echo "Arquivos .env reais não podem ser versionados:"
+            echo "$bad_env"
+            exit 1
+          fi
+
+      - name: Bloquear padrões de segredos de alto risco
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git grep -nEI 'sb_secret_[A-Za-z0-9_-]{20,}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|AKIA[0-9A-Z]{16}' -- . ':!*.md'; then
+            echo "Possível segredo de alto risco encontrado no repositório."
+            exit 1
+          fi
+
+      - name: Impedir service role no frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          files="$(git ls-files '*.html' 'js/*.js' 'portal-app/src/**' || true)"
+          if [ -n "$files" ] && echo "$files" | xargs -r grep -nEI 'SUPABASE_SERVICE_ROLE_KEY|sb_secret_|service_role'; then
+            echo "Credencial/identificador de service role encontrado em código entregue ao navegador."
+            exit 1
+          fi
+
+      - name: Exigir migrations críticas de isolamento
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f supabase/migrations/20260907225919_close_cross_tenant_visibility_policies.sql
+          test -f supabase/migrations/20260907230437_explicitly_deny_password_rate_limit_api.sql
+
+      - name: Validar autenticação administrativa no servidor
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'rpc("is_portal_admin")' js/auth.js
+          if grep -q 'session\.user\.id !== window\.ADMIN_UID' js/auth.js; then
+            echo "A autorização administrativa voltou a depender do frontend."
+            exit 1
+          fi
