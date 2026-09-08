@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Network from 'expo-network';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/providers/auth-provider';
@@ -31,7 +32,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     const timestamp = new Date().toISOString();
     setLastSyncedAt(timestamp);
     setRevision((current) => current + 1);
-    await AsyncStorage.setItem(LAST_SYNC_KEY, timestamp);
+    await AsyncStorage.setItem(LAST_SYNC_KEY, timestamp).catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -92,6 +93,18 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       return false;
     }
   }, [markSynchronized, refreshIdentity, session]);
+
+  useEffect(() => {
+    if (!session) return;
+    const subscription = AppState.addEventListener('change', state => {
+      if (state === 'active') void syncNow();
+    });
+    // Reconnect and refresh even when a table is not published to Realtime.
+    const timer = setInterval(() => {
+      if (AppState.currentState === 'active') void syncNow();
+    }, 60_000);
+    return () => { subscription.remove(); clearInterval(timer); };
+  }, [session, syncNow]);
 
   const value = useMemo<SyncContextValue>(
     () => ({ lastSyncedAt, realtimeConnected, revision, status, syncNow }),

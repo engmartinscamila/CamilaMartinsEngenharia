@@ -14,6 +14,7 @@ export default function LoginScreen() {
   const { configured, loading: authLoading, session, signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,9 +58,17 @@ export default function LoginScreen() {
         label="Senha"
         onChangeText={setPassword}
         placeholder="Sua senha"
-        secureTextEntry
+        secureTextEntry={!showPassword}
         value={password}
       />
+      <Pressable
+        accessibilityLabel={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+        accessibilityRole="button"
+        onPress={() => setShowPassword((current) => !current)}
+        style={styles.passwordToggle}
+      >
+        <Text style={styles.passwordToggleText}>{showPassword ? 'Ocultar senha' : 'Mostrar senha'}</Text>
+      </Pressable>
       {error ? <Notice tone="danger">{error}</Notice> : null}
       <Button disabled={!configured} loading={loading} onPress={submit} title="Entrar" />
       <View style={styles.links}>
@@ -76,6 +85,8 @@ export default function LoginScreen() {
 }
 
 const styleDefinitions = (colors: ThemeColors) => ({
+  passwordToggle: { alignSelf: 'flex-end', marginTop: -spacing.sm, paddingVertical: 4, paddingHorizontal: 2 },
+  passwordToggleText: { color: colors.gold600, fontWeight: '700', fontSize: 12, fontFamily: typography.family },
   links: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: spacing.sm },
   link: { color: colors.gold600, fontWeight: '700', fontSize: 13, fontFamily: typography.family },
   caption: { color: colors.muted, fontSize: typography.size.caption, lineHeight: 18, textAlign: 'center', fontFamily: typography.family },

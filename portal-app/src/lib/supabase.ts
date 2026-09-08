@@ -2,6 +2,7 @@ import 'react-native-url-polyfill/auto';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, processLock } from '@supabase/supabase-js';
+import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
@@ -9,6 +10,7 @@ import { env } from './env';
 
 const fallbackUrl = 'https://configuration-required.supabase.co';
 const fallbackKey = 'configuration-required-public-key';
+const appVersion = Constants.expoConfig?.version ?? 'unknown';
 
 const secureSessionStorage = {
   getItem: async (key: string) => {
@@ -48,7 +50,7 @@ export const supabase = createClient(
       flowType: 'pkce',
     },
     global: {
-      headers: { 'X-Client-Info': 'camila-martins-engenharia-app/0.10.1' },
+      headers: { 'X-Client-Info': `camila-martins-engenharia-app/${appVersion}` },
     },
   },
 );

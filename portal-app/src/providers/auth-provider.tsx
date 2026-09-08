@@ -1,6 +1,6 @@
 import type { Session, User } from '@supabase/supabase-js';
 import * as Linking from 'expo-linking';
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 
 import { env } from '@/lib/env';
@@ -52,8 +52,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<AppRole>('unassigned');
   const [client, setClient] = useState<ClientProfile | null>(null);
   const [loading, setLoading] = useState(env.isSupabaseConfigured);
+  const identityGeneration = useRef(0);
 
   const setIdentity = useCallback(async (nextSession: Session | null) => {
+    const generation = ++identityGeneration.current;
     if (!nextSession?.user) {
       setSession(null);
       setRole('unassigned');
@@ -61,10 +63,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    setSession(nextSession);
-    const identity = await resolveIdentity(nextSession.user);
-    setRole(identity.role);
-    setClient(identity.client);
+    try {
+      const identity = await resolveIdentity(nextSession.user);
+      if (generation !== identityGeneration.current) return;
+      setSession(nextSession);
+      setRole(identity.role);
+      setClient(identity.client);
+    } catch {
+      if (generation !== identityGeneration.current) return;
+      setSession(nextSession);
+      setRole('unassigned');
+      setClient(null);
+    }
   }, []);
 
   useEffect(() => {
@@ -76,9 +86,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
     }
 
+    const initialGeneration = identityGeneration.current;
     supabase.auth.getSession()
       .then(async ({ data }) => {
-        if (active) await setIdentity(data.session);
+        if (active && identityGeneration.current === initialGeneration) await setIdentity(data.session);
       })
       .catch(() => {
         if (!active) return;
@@ -90,10 +101,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (active) setLoading(false);
       });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      if (active) setLoading(true);
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      const eventGeneration = ++identityGeneration.current;
+      if (active && event !== 'TOKEN_REFRESHED') setLoading(true);
       setTimeout(() => {
-        if (!active) return;
+        if (!active || eventGeneration !== identityGeneration.current) return;
         setIdentity(nextSession)
           .catch(() => {
             setRole('unassigned');
@@ -107,12 +119,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       active = false;
+      // Invalidate pending identity requests, not a DOM ref snapshot.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      identityGeneration.current++;
       listener.subscription.unsubscribe();
     };
   }, [setIdentity]);
 
   useEffect(() => {
     if (Platform.OS === 'web' || !env.isSupabaseConfigured) return;
+
+    if (AppState.currentState === 'active') supabase.auth.startAutoRefresh();
 
     const appStateSubscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') supabase.auth.startAutoRefresh();
@@ -147,13 +164,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       configured: env.isSupabaseConfigured,
       signIn: signInWithPassword,
       signOut: async () => {
-        await supabase.auth.signOut();
+        identityGeneration.current++;
         setSession(null);
         setRole('unassigned');
         setClient(null);
+        await supabase.auth.signOut({ scope: 'local' });
       },
-      requestAccessLink: (email) =>
-        sendAccessLink(email, Linking.createURL('/reset-password')),
+      requestAccessLink: sendAccessLink,
       changePassword: updatePassword,
       refreshIdentity,
     }),

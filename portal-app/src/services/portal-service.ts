@@ -1,4 +1,5 @@
 import { isMissingRelationError } from '@/lib/errors';
+import { env } from '@/lib/env';
 import { supabase } from '@/lib/supabase';
 import { dispatchPendingPushNotifications } from '@/services/push-service';
 import type {
@@ -183,6 +184,14 @@ export async function createPhotoSignedUrl(photo: PhotoSummary) {
 }
 
 export async function createStorageSignedUrl(storageBucket: string, storagePath: string) {
+  if (storageBucket === 'biblioteca' && /\.pdf$/i.test(storagePath)) {
+    try {
+      const { data, error } = await supabase.functions.invoke('proteger-pdf', { body: { bucket: storageBucket, path: storagePath } });
+      const url = new URL(data?.viewUrl ?? '');
+      if (error || url.origin !== new URL(env.supabaseUrl).origin || !url.pathname.startsWith('/storage/v1/object/sign/') || !url.searchParams.has('token')) throw new Error('Invalid protected URL');
+      return { url: url.href, error: null };
+    } catch { return { url: null, error: 'Não foi possível emitir a cópia segura deste material.' }; }
+  }
   const { data, error } = await supabase.storage.from(storageBucket).createSignedUrl(storagePath, 300, { download: false });
   return { url: data?.signedUrl ?? null, error: error ? 'Não foi possível abrir este arquivo.' : null };
 }
@@ -257,7 +266,7 @@ export async function listLibraryItems(projectId: string, clientId: string): Pro
         fileType: row.tipo,
         sizeBytes: row.tamanho === null ? null : Number(row.tamanho),
         createdAt: row.created_at,
-        storageBucket: row.storage_bucket ?? 'materiais-protegidos',
+        storageBucket: row.storage_bucket ?? 'biblioteca',
         storagePath: row.arquivo,
       })),
       error: null,
@@ -283,7 +292,7 @@ export async function listLibraryItems(projectId: string, clientId: string): Pro
       fileType: row.tipo,
       sizeBytes: row.tamanho === null ? null : Number(row.tamanho),
       createdAt: row.created_at,
-      storageBucket: 'materiais-protegidos',
+      storageBucket: 'biblioteca',
       storagePath: row.arquivo,
     })),
     error: null,
@@ -547,7 +556,7 @@ export async function markNotificationRead(notificationId: string) {
 export async function getAdminDashboard(): Promise<ServiceResult<DashboardCounts>> {
   const [clients, projects, requests, approvals] = await Promise.all([
     supabase.from('clientes').select('id', { count: 'exact', head: true }).eq('status', 'ativo'),
-    supabase.from('projetos').select('id', { count: 'exact', head: true }).eq('status', 'ativo'),
+    supabase.from('projetos').select('id', { count: 'exact', head: true }).in('status', ['ativo', 'em_andamento', 'Em andamento', 'Planejamento', 'planejamento']),
     supabase.from('solicitacoes').select('id', { count: 'exact', head: true }).not('status', 'in', '(concluida,cancelada)'),
     supabase.from('aprovacoes').select('id', { count: 'exact', head: true }).eq('status', 'aguardando'),
   ]);

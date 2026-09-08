@@ -307,7 +307,7 @@ export async function listAdminContent(): Promise<ServiceResult<AdminContentSumm
   };
   append('document', documents.data as any[] | null, 'documentos');
   append('photo', photos.data as any[] | null, 'fotos');
-  append('library', library.data as any[] | null, 'materiais-protegidos');
+  append('library', library.data as any[] | null, 'biblioteca');
   rows.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   return { data: rows, error: failed.length ? 'Alguns tipos de arquivo estão indisponíveis.' : null };
 }

@@ -8,9 +8,8 @@ export async function resolveIdentity(user: User): Promise<{
   role: AppRole;
   client: ClientProfile | null;
 }> {
-  const [adminResult, userResult, clientResult] = await Promise.all([
-    supabase.from('pdf_admins').select('user_id').eq('user_id', user.id).maybeSingle(),
-    supabase.from('usuarios').select('tipo').eq('id', user.id).maybeSingle(),
+  const [adminResult, clientResult] = await Promise.all([
+    supabase.rpc('is_portal_admin'),
     supabase
       .from('clientes')
       .select('id, auth_id, nome, email, status')
@@ -18,12 +17,14 @@ export async function resolveIdentity(user: User): Promise<{
       .maybeSingle(),
   ]);
 
-  if (adminResult.data || userResult.data?.tipo === 'administrador') {
+  if (adminResult.error) throw adminResult.error;
+  if (adminResult.data === true) {
     return { role: 'admin', client: null };
   }
 
   const rawClient = clientResult.data;
-  if (rawClient?.status === 'ativo') {
+  if (clientResult.error) throw clientResult.error;
+  if (rawClient && (rawClient.status === 'ativo' || rawClient.status === null)) {
     return {
       role: 'client',
       client: {
@@ -31,10 +32,12 @@ export async function resolveIdentity(user: User): Promise<{
         authId: rawClient.auth_id,
         name: rawClient.nome,
         email: rawClient.email,
-        status: rawClient.status,
+        status: rawClient.status ?? 'ativo',
       },
     };
   }
+
+  if (rawClient) return { role: 'unassigned', client: null };
 
   const { data: membership } = await supabase
     .from('project_members')
@@ -50,21 +53,29 @@ export async function resolveIdentity(user: User): Promise<{
 }
 
 export async function signInWithPassword(email: string, password: string) {
+  try {
   const { error } = await supabase.auth.signInWithPassword({
     email: email.trim().toLowerCase(),
     password,
   });
   return error ? toUserMessage(error) : null;
+  } catch (error) { return toUserMessage(error); }
 }
 
-export async function sendAccessLink(email: string, redirectTo: string) {
-  const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-    redirectTo,
-  });
-  return error ? toUserMessage(error) : null;
+export async function sendAccessLink(email: string) {
+  try {
+    // Uses the same invitation, email delivery and rate limit as the website.
+    // The link opens the verified website; the new password works in both.
+    const { error } = await supabase.functions.invoke('client-password-link', {
+      body: { email: email.trim().toLowerCase() },
+    });
+    return error ? toUserMessage(error) : null;
+  } catch (error) { return toUserMessage(error); }
 }
 
 export async function updatePassword(password: string) {
+  try {
   const { error } = await supabase.auth.updateUser({ password });
   return error ? toUserMessage(error) : null;
+  } catch (error) { return toUserMessage(error); }
 }

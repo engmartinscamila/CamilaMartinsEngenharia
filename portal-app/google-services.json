@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "75516356862",
+    "project_id": "cm-engenharia-62f61",
+    "storage_bucket": "cm-engenharia-62f61.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:75516356862:android:82c960fd0b5b8cc50d5daf",
+        "android_client_info": {
+          "package_name": "br.com.camilamartinsengenharia.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDiL3Tm1HqzS4OY_DrcNXPjxEPKTXMtDes"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

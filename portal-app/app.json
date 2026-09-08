@@ -2,7 +2,7 @@
   "expo": {
     "name": "Camila Martins Engenharia",
     "slug": "engmartins",
-    "version": "0.10.2",
+    "version": "0.10.9",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "camilamartinsengenharia",
@@ -23,7 +23,9 @@
         "backgroundColor": "#010914"
       },
       "predictiveBackGestureEnabled": false,
-      "permissions": []
+      "permissions": [],
+      "versionCode": 9,
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",

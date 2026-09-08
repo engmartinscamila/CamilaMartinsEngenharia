@@ -45,6 +45,9 @@ jobs:
       - name: TypeScript
         run: npm run typecheck
 
+      - name: Regressões de integração
+        run: npm run test:integration
+
       - name: ESLint
         run: npm run lint
 

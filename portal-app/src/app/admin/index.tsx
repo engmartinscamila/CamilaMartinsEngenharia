@@ -1,5 +1,6 @@
+import { useLiveRefresh } from '@/hooks/use-live-refresh';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Pressable, Text, useWindowDimensions, View } from 'react-native';
 
 import { BrandMark, Button, Card, Notice, PageHeader, Screen } from '@/components/ui';
@@ -44,7 +45,7 @@ export default function AdminDashboard() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { const task = setTimeout(() => void load(), 0); return () => clearTimeout(task); }, [load]);
+  useLiveRefresh(load);
   const exit = async () => { await signOut(); router.replace('/login'); };
 
   const metrics = [

@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLiveRefresh } from '@/hooks/use-live-refresh';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
@@ -67,10 +68,7 @@ export default function AdminRequestsScreen() {
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    const task = setTimeout(() => void load(), 0);
-    return () => clearTimeout(task);
-  }, [load]);
+  useLiveRefresh(load);
 
   const create = async () => {
     const project = projects.find((item) => item.id === selectedProjectId);

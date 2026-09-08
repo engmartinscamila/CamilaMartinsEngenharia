@@ -1,0 +1,90 @@
+name: Android integrado - build e teste
+on:
+  push:
+    branches: [build/integrated-app]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: android-integrated-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: portal-app
+    env:
+      EXPO_PUBLIC_APP_ENV: production
+      EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF: hghtwlopqztfcosfxafd
+      EXPO_PUBLIC_SUPABASE_URL: https://hghtwlopqztfcosfxafd.supabase.co
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_-unXLR2NSSACLs01Sr60GA_uCFnJ74f
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: portal-app/package-lock.json
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Instalar e verificar código
+        run: |
+          npm ci --no-audit --no-fund
+          npm run check:production:cloudflare
+          npm run typecheck
+          npm run lint
+          npm run test:integration
+          npm run security:test
+          npm run security:audit
+          npm run doctor
+      - name: Gerar projeto Android
+        env:
+          CI: '1'
+        run: npx expo prebuild --platform android --clean
+      - name: Compilar APK release
+        env:
+          CI: '1'
+          NODE_ENV: production
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('android/gradle.properties')
+          s=p.read_text()
+          s=re.sub(r'^org.gradle.jvmargs=.*$', 'org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -Dfile.encoding=UTF-8',s,flags=re.M)
+          s=re.sub(r'^org.gradle.parallel=.*$', 'org.gradle.parallel=false',s,flags=re.M)
+          p.write_text(s+'\norg.gradle.workers.max=2\n')
+          PY
+          cd android
+          ./gradlew assembleRelease --no-daemon --stacktrace
+      - name: Coletar APK para assinatura final
+        run: |
+          mkdir -p ../android-artifact
+          cp android/app/build/outputs/apk/release/app-release.apk ../android-artifact/Camila-Martins-Engenharia-0.10.9-pre-sign.apk
+          APKSIGNER_JAR=$(find "$ANDROID_HOME/build-tools" -path '*/lib/apksigner.jar' | sort -V | tail -n 1)
+          cp "$APKSIGNER_JAR" ../android-artifact/apksigner.jar
+          printf '%s\n' "$GITHUB_SHA" > ../android-artifact/source-commit.txt
+      - name: Habilitar emulador
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Testar inicialização instalada
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: bash portal-app/scripts/android-smoke.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-0.10.9-tested-build
+          path: android-artifact/
+          retention-days: 14
+          if-no-files-found: error

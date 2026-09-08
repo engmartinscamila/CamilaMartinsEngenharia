@@ -1,6 +1,7 @@
+import { useLiveRefresh } from '@/hooks/use-live-refresh';
 import * as DocumentPicker from 'expo-document-picker';
 import { useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
@@ -66,7 +67,7 @@ export default function AdminContentScreen() {
   const [category, setCategory] = useState('');
   const [version, setVersion] = useState('1.0');
   const [protectionMode, setProtectionMode] = useState<'administrative' | 'authored_pdf' | 'authored_photo'>('administrative');
-  const [asset, setAsset] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
+  const [assets, setAssets] = useState<DocumentPicker.DocumentPickerAsset[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -86,20 +87,20 @@ export default function AdminContentScreen() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { const task = setTimeout(() => void load(), 0); return () => clearTimeout(task); }, [load]);
+  useLiveRefresh(load);
 
   const pick = async () => {
-    const result = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true, multiple: false, type: kind === 'photo' ? 'image/*' : ['application/pdf', 'image/*'] });
+    const result = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true, multiple: true, type: kind === 'photo' ? 'image/*' : ['application/pdf', 'image/*'] });
     const selected = result.canceled ? null : result.assets[0] ?? null;
     if (selected) {
-      setAsset(selected);
+      setAssets(result.assets ?? []);
       if (!title.trim()) setTitle(selected.name.replace(/\.[^.]+$/, ''));
     }
   };
 
   const upload = async () => {
     const project = projects.find((item) => item.id === selectedProjectId);
-    if (!project || !asset || title.trim().length < 2) {
+    if (!project || assets.length === 0 || (assets.length === 1 && title.trim().length < 2)) {
       setError('Selecione projeto e arquivo, e informe um título.');
       return;
     }
@@ -116,16 +117,25 @@ export default function AdminContentScreen() {
       ? `${selectedClassification.category}${complementaryCategory ? ` — ${complementaryCategory}` : ''}`
       : complementaryCategory;
     setSaving(true); setError(null); setSuccess(null);
-    const result = await uploadAdminContent({ kind, clientId: project.clientId, projectId: project.id, title, category: resolvedCategory, version, protectionMode: resolvedProtectionMode, asset });
+    const failed: DocumentPicker.DocumentPickerAsset[] = [];
+    let result: string | null = null;
+    for (const asset of assets) {
+      const itemError = await uploadAdminContent({ kind, clientId: project.clientId, projectId: project.id, title: assets.length === 1 ? title : asset.name.replace(/\.[^.]+$/, ''), category: resolvedCategory, version, protectionMode: resolvedProtectionMode, asset });
+      if (itemError) { failed.push(asset); result = itemError; }
+    }
     setSaving(false);
-    if (result) setError(result);
+    if (result) {
+      setAssets(failed);
+      setError(`${assets.length - failed.length} de ${assets.length} arquivos publicados. ${result} Tente novamente os arquivos restantes.`);
+      await load();
+    }
     else {
       setSuccess(selectedClassification
         ? selectedClassification.protectionMode === 'administrative'
           ? 'Arquivo publicado. Somente o cliente vinculado ao projeto poderá visualizá-lo e baixá-lo.'
           : 'Arquivo autoral publicado. O original permanece privado; o cliente recebe apenas a cópia identificada.'
         : 'Arquivo enviado e vinculado ao projeto.');
-      setTitle(''); setCategory(''); setVersion('1.0'); setAsset(null); setDocumentClassification(null);
+      setTitle(''); setCategory(''); setVersion('1.0'); setAssets([]); setDocumentClassification(null);
       await load();
     }
   };
@@ -152,7 +162,7 @@ export default function AdminContentScreen() {
       {success ? <Notice tone="success">{success}</Notice> : null}
       <Card>
         <Text style={styles.sectionTitle}>Publicar novo conteúdo</Text>
-        <SelectionChips<AdminContentKind> items={[{ value: 'document', label: 'Documento' }, { value: 'photo', label: 'Foto' }, { value: 'library', label: 'Biblioteca' }]} label="Tipo" onChange={(value) => { setKind(value); setAsset(null); setDocumentClassification(null); setProtectionMode(value === 'photo' ? 'authored_photo' : 'administrative'); }} value={kind} />
+        <SelectionChips<AdminContentKind> items={[{ value: 'document', label: 'Documento' }, { value: 'photo', label: 'Foto' }, { value: 'library', label: 'Biblioteca' }]} label="Tipo" onChange={(value) => { setKind(value); setAssets([]); setDocumentClassification(null); setProtectionMode(value === 'photo' ? 'authored_photo' : 'administrative'); }} value={kind} />
         {kind === 'document' ? (
           <>
             <SelectionChips<DocumentClassification>
@@ -182,8 +192,8 @@ export default function AdminContentScreen() {
         <Field label="Título" onChangeText={setTitle} value={title} />
         <Field label={kind === 'document' ? 'Descrição complementar (opcional)' : 'Categoria'} onChangeText={setCategory} placeholder={kind === 'photo' ? 'Ex.: Fundação' : kind === 'document' ? 'Ex.: ART de execução ou Revisão estrutural' : 'Ex.: Manual'} value={category} />
         {kind === 'document' ? <Field label="Versão do documento" onChangeText={setVersion} placeholder="Ex.: 1.0 ou Revisão B" value={version} /> : null}
-        <Button icon="attach-outline" onPress={() => void pick()} title={asset ? `Selecionado: ${asset.name}` : 'Escolher arquivo'} variant="secondary" />
-        <Button disabled={!asset || (kind === 'document' && !documentClassification)} loading={saving} onPress={() => void upload()} title="Enviar e publicar" />
+        <Button disabled={saving} icon="attach-outline" onPress={() => void pick()} title={assets.length ? `${assets.length} arquivo(s) selecionado(s)` : 'Escolher arquivos'} variant="secondary" />
+        <Button disabled={assets.length === 0 || (kind === 'document' && !documentClassification)} loading={saving} onPress={() => void upload()} title="Enviar e publicar" />
         <Notice tone="info">A classificação escolhida pelo administrador fica gravada nos metadados. ART/RRT, contratos, orçamentos e documentos administrativos são baixáveis apenas pelo cliente vinculado ao projeto. PDFs técnicos e fotos autorais mantêm o original privado, entregam cópia identificada e registram o acesso. Capturas de tela não podem ser impedidas completamente.</Notice>
       </Card>
       {loading ? <ActivityIndicator color={colors.gold600} /> : null}

@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useLiveRefresh } from '@/hooks/use-live-refresh';
+import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 
 import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
@@ -45,10 +46,7 @@ export default function AdminClientsScreen() {
     setLoading(false);
   }, [search]);
 
-  useEffect(() => {
-    const task = setTimeout(() => void load(), 250);
-    return () => clearTimeout(task);
-  }, [load]);
+  useLiveRefresh(load, 250);
 
   const invite = async () => {
     if (name.trim().length < 3 || !email.includes('@')) {

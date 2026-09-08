@@ -1,5 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import { Linking, Platform } from 'react-native';
+import { Platform } from 'react-native';
+import * as Sharing from 'expo-sharing';
 
 const safeName = (value: string) => value.replace(/[\\/:*?"<>|]/g, '-').replace(/\s+/g, ' ').trim().slice(0, 160) || 'documento.docx';
 
@@ -24,8 +25,7 @@ export async function downloadBase64File(contentBase64: string, fileName: string
   if (!FileSystem.cacheDirectory) throw new Error('Armazenamento temporário indisponível neste dispositivo.');
   const uri = `${FileSystem.cacheDirectory}${Date.now()}-${name}`;
   await FileSystem.writeAsStringAsync(uri, contentBase64, { encoding: FileSystem.EncodingType.Base64 });
-  const openUri = Platform.OS === 'android' ? await FileSystem.getContentUriAsync(uri) : uri;
-  const supported = await Linking.canOpenURL(openUri);
+  const supported = await Sharing.isAvailableAsync();
   if (!supported) throw new Error('O Word foi gerado, mas o dispositivo não encontrou um aplicativo para abri-lo.');
-  await Linking.openURL(openUri);
+  await Sharing.shareAsync(uri, { mimeType, dialogTitle: 'Salvar ou abrir documento' });
 }
