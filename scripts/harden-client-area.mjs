@@ -8,6 +8,15 @@ let source = fs.readFileSync(target, 'utf8');
 const protectedUrlFunction = `    async function urlArquivo(item, bucket) {
         if (!item?.arquivo) return "";
 
+        // Protected library originals cannot be signed by the browser. The
+        // viewer asks the server to authorize metadata and issue a marked copy.
+        if (bucket === window.BUCKETS?.BIBLIOTECA && /\\.pdf$/i.test(item.arquivo)) {
+            const viewer = new URL("pdf-protegido.html", document.baseURI);
+            viewer.searchParams.set("bucket", bucket);
+            viewer.searchParams.set("path", item.arquivo);
+            return viewer.href;
+        }
+
         const bucketDocumentos = window.BUCKETS?.DOCUMENTOS;
         const bucketFotos = window.BUCKETS?.FOTOS;
         const kind = bucket === bucketDocumentos
