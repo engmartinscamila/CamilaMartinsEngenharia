@@ -1,6 +1,7 @@
 tmp/
 galeria-originais/
 dist/
+site-public/
 node_modules/
 portal-app/node_modules/
 portal-app/dist/

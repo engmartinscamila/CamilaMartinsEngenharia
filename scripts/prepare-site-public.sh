@@ -8,6 +8,9 @@ BUILD_VERSION="${GITHUB_SHA:-local-$(date +%Y%m%d%H%M%S)}"
 
 find . -maxdepth 1 -type f -name '*.html' -exec cp {} site-public/ \;
 cp -R assets site-public/assets
+# Originals and permanent copies must never be in the static publication.
+# Portfolio/experiences are issued from the existing private Supabase bucket.
+rm -rf site-public/assets/pdfs-protegidos
 cp -R css site-public/css
 cp -R js site-public/js
 touch site-public/.nojekyll

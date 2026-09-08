@@ -102,7 +102,8 @@ async function resolveSource(
   admin: ReturnType<typeof createClient>,
   body: Record<string, unknown>,
   user: UserInfo | null,
-  userIsAdmin: boolean
+  userIsAdmin: boolean,
+  caller: ReturnType<typeof createClient>
 ): Promise<ResolvedSource | null> {
   if (validSlug(body.siteSlug)) {
     const { data, error } = await admin
@@ -135,9 +136,9 @@ async function resolveSource(
   if (!user) throw new Error("AUTH_REQUIRED");
 
   const columns = bucket === "documentos"
-    ? "id,cliente_id,nome,titulo,arquivo,autoral,storage_bucket,permitir_download"
-    : "id,cliente_id,nome,titulo,arquivo,autoral,storage_bucket";
-  const { data: record, error: recordError } = await admin
+    ? "id,cliente_id,nome,arquivo,autoral,storage_bucket,permitir_download"
+    : "id,cliente_id,nome,arquivo,autoral,storage_bucket";
+  const { data: record, error: recordError } = await caller
     .from(bucket)
     .select(columns)
     .eq("arquivo", path)
@@ -246,7 +247,11 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    const source = await resolveSource(admin, body, user, userIsAdmin);
+    const caller = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
+    const source = await resolveSource(admin, body, user, userIsAdmin, caller);
     if (!source) return json(req, 404, { error: "DOCUMENT_NOT_FOUND" });
 
     if (!source.shouldProtect) {

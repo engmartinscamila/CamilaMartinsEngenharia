@@ -6,6 +6,7 @@ const errors = [];
 const must = condition => (message) => { if (!condition) errors.push(message); };
 
 must(fs.existsSync(root))('site-public não foi gerado.');
+must(!fs.existsSync(path.join(root, 'assets/pdfs-protegidos')))('PDF permanente indevidamente exposto no pacote público.');
 must(fs.existsSync(path.join(root, 'manifest.webmanifest')))('Manifesto PWA ausente no pacote publicado.');
 must(fs.existsSync(path.join(root, 'firebase-messaging-sw.js')))('Service worker ausente no pacote publicado.');
 must(fs.existsSync(path.join(root, 'js/pwa-client.js')))('Registro PWA ausente no pacote publicado.');

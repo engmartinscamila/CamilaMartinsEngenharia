@@ -36,13 +36,10 @@ const protectedUrlFunction = `    async function urlArquivo(item, bucket) {
             return urlSegura(data.url);
         }
 
-        const urlSalva = urlSegura(item?.url);
-        if (urlSalva) return urlSalva;
-
         const { data, error } = await clienteSupabase
             .storage
             .from(bucket)
-            .createSignedUrl(item.arquivo, 21600);
+            .createSignedUrl(item.arquivo, 300);
 
         if (error) {
             console.error(

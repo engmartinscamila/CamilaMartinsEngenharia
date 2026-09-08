@@ -45,7 +45,7 @@ for (const name of fs.readdirSync(root).filter(name => name.endsWith('.html'))) 
     html = injectBefore(
       html,
       '</head>',
-      '    <meta http-equiv="Content-Security-Policy" content="base-uri \'self\'; upgrade-insecure-requests">'
+      '    <meta http-equiv="Content-Security-Policy" content="base-uri \'self\'; object-src \'none\'; form-action \'self\'; upgrade-insecure-requests">'
     );
   }
 

@@ -13,6 +13,7 @@ const PAGINAS_ADMINISTRATIVAS = new Set([
     "orcamentos-contratos.html",
     "documentos-contratuais.html",
     "arquivo-documental.html",
+    "integridade-sistema.html",
     "documentos.html",
     "biblioteca.html",
     "fotos.html",

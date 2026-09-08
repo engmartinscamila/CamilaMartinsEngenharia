@@ -185,8 +185,15 @@ const supabaseMock = `
         return {data:{subscription:{unsubscribe(){}}}};
       }
     },
+    functions: { invoke: async (name, options) => {
+      if (name === "client-password-link") {
+        window.__PASSWORD_LINK_CALL__ = options.body;
+        return {data:{ok:true,message:"Se este e-mail estiver autorizado, enviaremos um link seguro para criar ou redefinir a senha."},error:null};
+      }
+      return {data:{url:"https://example.invalid/protected-copy",protectedCopy:true},error:null};
+    } },
     from: table => chain(table),
-    rpc: async name => ({data:name==="uso_armazenamento_portal"?{bytes_utilizados:1048576,quantidade_arquivos:3}:[],error:null}),
+    rpc: async name => ({data:name === "is_portal_admin" ? isAdmin : name==="uso_armazenamento_portal"?{bytes_utilizados:1048576,quantidade_arquivos:3}:[],error:null}),
     storage:{
       from: ()=>({
         upload:async()=>({data:{path:"mock/path"},error:null}),
@@ -1264,125 +1271,22 @@ for (const file of clientPages) {
   await page.close();
 }
 
-// Login real com Supabase mockado: primeiro acesso e recuperação.
-{
+// Primeiro acesso e recuperação usam o endpoint de convites, sem cadastro público.
+for (const [button,email] of [["#firstAccess","cliente.qa@example.com"],["#forgotPassword","qa-recovery@example.com"]]) {
   const page = await loadPage(context, "login.html");
-  const first = page.locator("#firstAccess");
-  if (await first.count()) {
-    await first.click();
-    await page.waitForTimeout(50);
-    const group = page.locator("#confirmarSenhaGroup");
-    assert(await group.count() === 1, "login.html: grupo de confirmação de senha ausente");
-    if (await group.count()) {
-      const hidden = await group.getAttribute("hidden");
-      assert(hidden === null, "login.html: Primeiro acesso não exibiu confirmação de senha");
-    }
-
-    const advice = page.locator("#passwordSecurityAdvice");
-    assert(await advice.count() === 1, "login.html: orientação de segurança de senha ausente");
-    if (await advice.count()) {
-      assert(await advice.isVisible(), "login.html: orientação de segurança não apareceu no Primeiro acesso");
-      const adviceText = (await advice.textContent()) || "";
-      assert(
-        /senha exclusiva/i.test(adviceText) && /e-mail/i.test(adviceText),
-        `login.html: orientação de segurança inesperada: ${adviceText}`
-      );
-    }
-  } else {
-    failures.push("login.html: botão Primeiro acesso ausente");
+  await page.locator("#email").fill(email);
+  await page.locator(button).click();
+  if (button === "#firstAccess") {
+    assert(await page.locator("#confirmarSenhaGroup").isHidden(), "Primeiro acesso deve solicitar somente e-mail cadastrado");
+    assert(await page.locator("#senha").isHidden(), "Primeiro acesso não coleta senha antes do link seguro");
+    await page.locator("#loginForm").evaluate(el => el.requestSubmit());
   }
-  await page.close();
-}
-
-// Primeiro acesso: e-mail previamente cadastrado -> signUp -> confirmação por e-mail.
-{
-  const page = await loadPage(context, "login.html");
-
-  await page.locator("#firstAccess").click();
-  await page.locator("#email").fill("cliente.qa@example.com");
-  await page.locator("#senha").fill("SenhaNova123!");
-  await page.locator("#confirmarSenha").fill("SenhaNova123!");
-  await page.locator("#loginForm").evaluate(el => el.requestSubmit());
-
-  await page.waitForTimeout(120);
-
-  const signup = await page.evaluate(() => window.__SIGNUP_CALL__ || null);
-
-  assert(Boolean(signup), "login.html: Primeiro acesso não chamou signUp");
-  assert(
-    signup?.email === "cliente.qa@example.com",
-    "login.html: Primeiro acesso enviou e-mail incorreto"
-  );
-  assert(
-    signup?.password === "SenhaNova123!",
-    "login.html: Primeiro acesso enviou senha incorreta"
-  );
-  assert(
-    /\/login\.html$/i.test(
-      new URL(signup?.options?.emailRedirectTo || "https://invalid/").pathname
-    ),
-    `login.html: emailRedirectTo do Primeiro acesso está incorreto: ${signup?.options?.emailRedirectTo || "ausente"}`
-  );
-
-  const mensagem = (await page.locator("#formMessage").textContent().catch(()=>"")) || "";
-  assert(
-    /acesso criado|confirmação/i.test(mensagem),
-    `login.html: mensagem após Primeiro acesso inesperada: ${mensagem}`
-  );
-
-  await page.close();
-}
-
-// Primeiro acesso deve barrar senhas divergentes antes de chamar o Supabase.
-{
-  const page = await loadPage(context, "login.html");
-
-  await page.locator("#firstAccess").click();
-  await page.locator("#email").fill("cliente.qa@example.com");
-  await page.locator("#senha").fill("SenhaNova123!");
-  await page.locator("#confirmarSenha").fill("OutraSenha123!");
-  await page.locator("#loginForm").evaluate(el => el.requestSubmit());
-
-  await page.waitForTimeout(80);
-
-  const signup = await page.evaluate(() => window.__SIGNUP_CALL__ || null);
-  const mensagem = (await page.locator("#formMessage").textContent().catch(()=>"")) || "";
-
-  assert(!signup, "login.html: Primeiro acesso chamou signUp mesmo com senhas diferentes");
-  assert(
-    /não são iguais/i.test(mensagem),
-    `login.html: validação de senhas divergentes não apareceu: ${mensagem}`
-  );
-
-  await page.close();
-}
-
-// Recuperação de senha: login -> /recover -> redefinir senha.
-{
-  const page = await loadPage(context, "login.html");
-
-  await page.locator("#email").fill("qa-recovery@example.com");
-  await page.locator("#forgotPassword").click();
-  await page.waitForTimeout(120);
-
-  const recovery = await page.evaluate(() => window.__RECOVERY_CALL__ || null);
-
-  assert(Boolean(recovery), "login.html: Esqueci minha senha não chamou resetPasswordForEmail");
-  assert(
-    recovery?.email === "qa-recovery@example.com",
-    "login.html: recuperação usou e-mail diferente do digitado"
-  );
-  assert(
-    /\/redefinir-senha\.html$/i.test(new URL(recovery?.options?.redirectTo || "https://invalid/").pathname),
-    `login.html: redirectTo da recuperação está incorreto: ${recovery?.options?.redirectTo || "ausente"}`
-  );
-
-  const mensagem = (await page.locator("#formMessage").textContent().catch(()=>"")) || "";
-  assert(
-    /link de recuperação/i.test(mensagem),
-    `login.html: mensagem de recuperação inesperada: ${mensagem}`
-  );
-
+  await page.waitForFunction(() => Boolean(window.__PASSWORD_LINK_CALL__));
+  const requested = await page.evaluate(() => window.__PASSWORD_LINK_CALL__);
+  assert(requested.email === email, "Link de senha deve usar o e-mail informado");
+  assert(!await page.evaluate(() => window.__SIGNUP_CALL__), "Cadastro público não pode ser chamado");
+  const message = await page.locator("#formMessage").textContent();
+  assert(/se este e-mail estiver autorizado/i.test(message), "Resposta deve evitar revelar existência da conta");
   await page.close();
 }
 

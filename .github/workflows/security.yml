@@ -20,33 +20,28 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Examinar segredos no histórico sem revelar valores
+        run: node scripts/security/secret-scan.mjs
+
+      - name: Instalar ambiente isolado de testes SQL
+        run: npm ci --prefix scripts/security
+
+      - name: Testar isolamento real das policies em PostgreSQL
+        run: node scripts/security/rls-regression.mjs
+
       - name: Bloquear arquivos de ambiente reais
         shell: bash
         run: |
           set -euo pipefail
-          bad_env="$(git ls-files | grep -E '(^|/)\.env($|\.)' | grep -Ev '(^|/)\.env\.example$' || true)"
+          bad_env="$(git ls-files | grep -E '(^|/)\.env($|\.)' | grep -Ev '(^|/)\.env(\.[A-Za-z0-9_-]+)?\.example$' || true)"
           if [ -n "$bad_env" ]; then
             echo "Arquivos .env reais não podem ser versionados:"
             echo "$bad_env"
-            exit 1
-          fi
-
-      - name: Bloquear padrões de segredos de alto risco
-        shell: bash
-        run: |
-          set -euo pipefail
-          if git grep -nEI 'sb_secret_[A-Za-z0-9_-]{20,}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|AKIA[0-9A-Z]{16}' -- . ':!*.md'; then
-            echo "Possível segredo de alto risco encontrado no repositório."
-            exit 1
-          fi
-
-      - name: Impedir service role no frontend
-        shell: bash
-        run: |
-          set -euo pipefail
-          files="$(git ls-files '*.html' 'js/*.js' 'portal-app/src/**' || true)"
-          if [ -n "$files" ] && echo "$files" | xargs -r grep -nEI 'SUPABASE_SERVICE_ROLE_KEY|sb_secret_|service_role'; then
-            echo "Credencial/identificador de service role encontrado em código entregue ao navegador."
             exit 1
           fi
 
