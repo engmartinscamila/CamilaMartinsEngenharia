@@ -83,8 +83,9 @@ jobs:
           disable-animations: true
           script: bash portal-app/scripts/android-smoke.sh
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: android-0.10.9-tested-build
+          name: android-0.10.9-build-and-diagnostics
           path: android-artifact/
           retention-days: 14
           if-no-files-found: error

@@ -25,6 +25,9 @@ módulos adicionados posteriormente no site.
 - Identificadores Android e Firebase de notificações preservados. Não há um
   segundo login nem cópia da senha para Firebase.
 
+- Expo atualizado para 57.0.21 e React Native para 0.86.3. A nova árvore remove
+  image-size e os avisos de segurança associados; a auditoria não aceita exceções.
+
 ## Validação e limites
 
 Testes de integração usam identidades e serviços sintéticos, sem enviar mensagens

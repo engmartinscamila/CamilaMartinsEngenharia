@@ -2,6 +2,15 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
 
+// Expo 57.0.21 removed image-size. Check the lockfile instead of resolving a
+// package from an unrelated parent workspace or the machine's global modules.
+const lockfile = JSON.parse(readFileSync(new URL('../package-lock.json', import.meta.url), 'utf8'));
+if (!lockfile.packages) throw new Error('Lockfile inválido: dependências ausentes.');
+if (!Object.keys(lockfile.packages).some((path) => /(^|\/)node_modules\/image-size$/.test(path))) {
+  process.stdout.write('APROVADO: image-size e seus parsers vulneráveis não fazem parte das dependências do app.\n');
+  process.exit(0);
+}
+
 const checkOnly = process.argv.includes('--check');
 const packageRoot = resolve('node_modules/image-size/dist/types');
 

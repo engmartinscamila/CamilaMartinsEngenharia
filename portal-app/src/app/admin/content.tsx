@@ -126,8 +126,8 @@ export default function AdminContentScreen() {
     setSaving(false);
     if (result) {
       setAssets(failed);
-      setError(`${assets.length - failed.length} de ${assets.length} arquivos publicados. ${result} Tente novamente os arquivos restantes.`);
       await load();
+      setError(`${assets.length - failed.length} de ${assets.length} arquivos publicados. ${result} Tente novamente os arquivos restantes.`);
     }
     else {
       setSuccess(selectedClassification
