@@ -157,6 +157,7 @@ CAMILA MARTINS ENGENHARIA
                     return `
                         <article class="item-card">
                             <h2>${escapar(titulo)}</h2>
+                            ${item.autoral === true && url ? '<span class="cme-authorship-badge"><i class="bi bi-shield-check"></i> Cópia autoral rastreável</span>' : ''}
                             <p>${escapar(item.descricao || "Arquivo disponibilizado para consulta.")}</p>
                             <div class="item-meta">
                                 <span><i class="bi bi-tag"></i> ${escapar(item.categoria || item.tipo || "Geral")}</span>
@@ -280,6 +281,7 @@ CAMILA MARTINS ENGENHARIA
                                         <div class="cm-file-icon"><i class="bi bi-file-earmark-text"></i></div>
                                         <div class="cm-file-copy">
                                             <h5>${escapar(titulo)}</h5>
+                                            ${item.autoral === true && url ? '<span class="cme-authorship-badge"><i class="bi bi-shield-check"></i> Cópia autoral rastreável</span>' : ''}
                                             <p>${escapar(item.descricao || "Arquivo disponibilizado para consulta.")}</p>
                                             ${url
                                                 ? `<div class="cm-file-actions">
