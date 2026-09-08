@@ -8,10 +8,10 @@ público e chave publicável não substituem nem enfraquecem RLS por si só.
 - `baseline-20260907.json`: exportação sem registros de clientes das tabelas,
   colunas, policies (incluindo PERMISSIVE/RESTRICTIVE), privilégios e funções
   públicas, anterior a estas correções. Não é um backup completo do banco.
-- Migrations `20260907234344`, `20260907234552` e `20260907234901`: mesmas versões
+- Migrations `20260907234344`, `20260907234552`, `20260907234901` e `20260908050914`: mesmas versões
   registradas em produção; preservam dados e a conta administrativa existente.
 - `verify-live.sql`: verificações de produção em transação somente leitura.
-- `node scripts/security/rls-regression.mjs`: 112 verificações em PostgreSQL
+- `node scripts/security/rls-regression.mjs`: 115 verificações em PostgreSQL
   embarcado com dados sintéticos, usando as policies exportadas e estas migrations.
   Testa anônimo, clientes A/B, cliente suspenso, admin, rascunhos, módulos ocultos,
   originais protegidos, falsificação de solicitações e limite de recuperação.
@@ -64,6 +64,11 @@ A emissão pública do portfólio foi validada: protected=true,
 downloadAllowed=false, expiresInSeconds=60. Um arquivo visível no navegador
 continua passível de cópia/captura. Versões já baixadas, caches e histórico Git
 anterior não podem ser tornados privados por essa alteração.
+
+A proteção de originais cobre também o campo legado `autoral` em documentos e
+biblioteca. PDFs da biblioteca abrem pelo visualizador, que solicita autorização
+ao servidor sem primeiro tentar assinar o original. O selo de autoria usa os
+metadados do documento e continua visível com as novas URLs temporárias.
 
 O login usa auth.signInWithPassword, validado pelo Supabase. js/script.js contém
 interações do site institucional, sem senha embutida identificada.

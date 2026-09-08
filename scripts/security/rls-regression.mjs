@@ -119,6 +119,17 @@ eq((await db.query('select is_portal_admin() value')).rows[0].value,true,'admini
 eq(await count('select count(*) n from documentos'),5,'admin still sees every document');
 eq(await count('select count(*) n from storage.objects'),7,'admin original access preserved');
 await as('postgres');
+await sql(`update clientes set status='ativo' where id='${ca}';
+update documentos set autoral=true where arquivo='a/manual.pdf';
+insert into biblioteca(id,cliente_id,projeto_id,arquivo,storage_bucket,autoral)
+values (6000001,'${ca}','${pa}','a/library.pdf','biblioteca',true);
+insert into storage.objects(bucket_id,name) values ('biblioteca','a/library.pdf');`);
+await as('authenticated',a);
+eq(await count(`select count(*) n from biblioteca where arquivo='a/library.pdf'`),1,'authored library metadata remains available for server issuance');
+eq(await count(`select count(*) n from storage.objects where name in ('a/manual.pdf','a/library.pdf')`),0,'legacy authored document and library originals denied');
+await as('authenticated',admin);
+eq(await count(`select count(*) n from storage.objects where name in ('a/manual.pdf','a/library.pdf')`),2,'admin retains legacy authored originals');
+await as('postgres');
 await as('service_role');
 const hash = 'a'.repeat(64);
 const consume = async () => (await db.query(`select service_consume_password_link_rate_limit('${hash}') value`)).rows[0].value;
