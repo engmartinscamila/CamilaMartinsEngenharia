@@ -1,6 +1,10 @@
 # Auditoria de dependências — Revisão 10.1
 
-## Resultado
+> Registro histórico da revisão 10.1. Em 08/09/2026, a versão 0.10.9 atualizou
+> Expo para 57.0.21 e removeu image-size da árvore. O npm audit passou a indicar
+> zero vulnerabilidades conhecidas, sem exceções. Veja REVISAO_0_10_9.md.
+
+## Resultado histórico
 
 A mensagem inicial do npm mostrava 22 ocorrências: 8 moderadas e 14 altas. Esse total não representava 22 falhas independentes. O npm propagava três avisos raiz por toda a cadeia Expo, Metro e React Native e contabilizava cada pacote afetado novamente.
 

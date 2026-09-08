@@ -1,16 +1,27 @@
-# Camila Martins Engenharia — Revisão 10.1
+# Camila Martins Engenharia — 0.10.9
 
 Aplicativo Expo/React Native completo para Android, iOS e web, conectado ao Supabase já utilizado pelo Portal do Cliente. A mesma base de código reúne Área do Cliente e Área Administrativa.
 
 ## Identidade e plataformas
 
-- versão: `0.10.1`;
+- versão: `0.10.9`, Android versionCode `9`;
 - Android, iOS e web com Expo Router e TypeScript;
 - azul-marinho `#010914`, dourado `#B89A63`, Century Gothic e Brittany Signature Script;
 - autenticação e dados exclusivamente pelo Supabase existente;
 - idioma português do Brasil e datas exibidas no fuso de São Paulo.
 
-## Revisão 10.1
+## Revisão 0.10.9
+
+Integração de autenticação, recuperação de senha, atualização de dados e arquivos
+protegidos com o site existente. O workflow Android compila e testa a abertura do
+aplicativo em emulador; a assinatura final é mantida fora do repositório.
+
+Detalhes e limites: [revisão 0.10.9](docs/REVISAO_0_10_9.md).
+Expo 57.0.21 e React Native 0.86.3 passaram nas verificações de compatibilidade.
+A árvore de dependências não contém mais image-size; a auditoria atual não aceita
+exceções de vulnerabilidades conhecidas.
+
+## Revisão 10.1 (histórico)
 
 - corrige o ciclo infinito de redirecionamento do cliente;
 - mantém o navegador estável durante a sincronização;
@@ -47,14 +58,15 @@ Somente a chave Publishable pode ficar no app.
 npm run typecheck
 npm run lint
 npm run doctor
+npm run test:integration
 npm run security:test
 npm run security:audit
 npm run export:web
 ```
 
-As validações específicas do serviço de dados e das políticas de acesso permanecem documentadas em `docs/`. Não execute novamente migrações já aplicadas; aplique apenas a atualização legal nova indicada no guia da Revisão 10.1.
+As validações específicas do serviço de dados e das políticas de acesso permanecem documentadas em `docs/`. Não execute novamente migrações já aplicadas. A revisão 0.10.9 não exige novas migrations de banco.
 
-A análise dos avisos do npm e as medidas aplicadas estão em `docs/AUDITORIA_DEPENDENCIAS_REV10_1.md`.
+O histórico dos avisos antigos do npm está em `docs/AUDITORIA_DEPENDENCIAS_REV10_1.md`; o resultado atual está na revisão 0.10.9.
 
 ## Identificadores
 

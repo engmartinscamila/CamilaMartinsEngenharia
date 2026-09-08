@@ -75,10 +75,16 @@ interações do site institucional, sem senha embutida identificada.
 O CORS amplo observado pertence ao conteúdo estático do GitHub; não concede
 privilégios no banco. Endpoints administrativos continuam exigindo JWT e papel.
 
-A resposta HTTP do domínio não contém os headers de segurança enumerados pelo
-usuário. _headers é compatível com Cloudflare Pages, mas não é aplicado pelo
-GitHub Pages, hospedagem atual. CSP via meta foi ampliada para bloquear objetos,
-formulários externos e troca de base URI. HSTS, X-Frame-Options e nosniff precisam
-ser definidos no host/proxy HTTP; não podem ser substituídos por tags meta.
-Não foi conectado nem configurado um proxy novo. Esse ponto permanece pendente
-na infraestrutura e não deve ser descrito como resolvido.
+Os headers foram configurados pelo usuário no proxy Cloudflare e verificados em
+08/09/2026 por uma requisição HTTPS ao domínio, com resposta HTTP 200:
+
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: SAMEORIGIN`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Strict-Transport-Security: max-age=86400`
+- `Content-Security-Policy: frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; upgrade-insecure-requests`
+
+O arquivo `_headers` acompanha esses valores para hosts compatíveis; GitHub Pages
+não o interpreta. No domínio atual a aplicação ocorre no proxy Cloudflare. Essa
+CSP fornece uma proteção inicial e não restringe as origens de scripts. A presença
+desses cabeçalhos não substitui autenticação, RLS ou proteção de arquivos privados.
