@@ -1,3 +1,4 @@
+import { useNotificationProject } from '@/hooks/use-notification-project';
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
 import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
@@ -80,6 +81,8 @@ export default function AdminFinancialScreen() {
   const { colors } = useAppTheme();
   const styles = useThemeStyles(styleDefinitions);
 
+  useNotificationProject(projects, setSelectedProjectId);
+
   const load = useCallback(async () => {
     setLoading(true);
     const [contractResult, projectResult, entryResult, archiveResult, summaryResult, accountResult, timeResult, fiscalResult] = await Promise.all([
@@ -161,7 +164,7 @@ export default function AdminFinancialScreen() {
     setImportingOfx(true); setError(null); setSuccess(null);
     const result = await importOfxTransactions(accountId, asset);
     setImportingOfx(false);
-    if (result.error) setError(result.error);
+    if (result.error) { await load(); setError(result.error); }
     else { setSuccess(`OFX importado: ${result.imported} nova(s) transação(ões) e ${result.reconciled} conciliação(ões) automática(s).`); await load(); }
   };
 
@@ -178,7 +181,7 @@ export default function AdminFinancialScreen() {
 
   return (
     <Screen>
-      <AdminPageHeader title="Gestão financeira" description="DRE gerencial, fluxo de caixa, contas, margens por projeto, horas e preparação fiscal." />
+      <AdminPageHeader title="Financeiro" description="DRE gerencial, fluxo de caixa, contas, margens por projeto, horas e preparação fiscal." />
       <Notice tone="info">Clientes não possuem permissão de banco nem rota para esta área. O histórico arquivado permanece somente administrativo mesmo após a exclusão do cliente.</Notice>
       {error ? <Notice tone="danger">{error}</Notice> : null}
       {success ? <Notice tone="success">{success}</Notice> : null}
@@ -223,7 +226,7 @@ export default function AdminFinancialScreen() {
           <Field label="Nome da conta" onChangeText={setAccountName} value={accountName} />
           <Field keyboardType="decimal-pad" label="Saldo inicial (R$)" onChangeText={setOpeningBalance} value={openingBalance} />
           <Button onPress={() => void saveAccount()} title="Cadastrar conta" variant="secondary" />
-          <Button loading={importingOfx} onPress={() => void importOfx()} title="Importar OFX e conciliar" variant="secondary" />
+          <Text style={styles.meta}>A conciliação usa a mesma conta, valor exato e data próxima. Possibilidades ambíguas ficam sem vínculo automático.</Text><Button loading={importingOfx} onPress={() => void importOfx()} title="Importar extrato OFX" variant="secondary" />
           {accounts.map((account) => <View key={account.id} style={styles.row}><Text style={styles.title}>{account.name}</Text><StatusPill label={formatCurrency(account.openingBalance)} /></View>)}
         </Card>
         <Card style={styles.column}>

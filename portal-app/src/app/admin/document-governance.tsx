@@ -53,7 +53,7 @@ export default function AdminDocumentGovernanceScreen() {
 
   return (
     <Screen>
-      <AdminPageHeader title="Governança documental" description="Mapa por projeto, aceites do cliente, validade, substituições e pendências documentais." />
+      <AdminPageHeader title="Versões e pendências dos documentos" description="Mapa por projeto, aceites do cliente, validade, substituições e pendências documentais." />
       {error ? <Notice tone="danger">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}
       <Card><Text style={styles.sectionTitle}>Projeto</Text><View style={styles.projectList}>{projects.map((project) => <Pressable key={project.id} onPress={() => setProjectId(project.id)} style={[styles.projectChip, projectId === project.id && styles.selected]}><Text style={[styles.projectText, projectId === project.id && styles.selectedText]}>{project.contractNumber} • {project.name}</Text></Pressable>)}</View></Card>
       {loading ? <ActivityIndicator color={colors.gold600} /> : null}

@@ -32,6 +32,7 @@ const clientMock = {
   storage:{from:()=>({createSignedUrl:async()=>{signed++;return {data:{signedUrl:'https://project.supabase.co/storage/v1/object/sign/biblioteca/file?token=ok'},error:null};}})},
 };
 const dependencies = {
+  '@/lib/format': load('src/lib/format.ts', {}),
   '@/lib/supabase': {supabase:clientMock},
   '@/lib/errors': {toUserMessage:()=> 'Não foi possível conectar.',isMissingRelationError:()=>false},
   '@/lib/env':{env:{supabaseUrl:'https://project.supabase.co'}},

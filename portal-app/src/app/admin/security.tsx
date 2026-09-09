@@ -46,7 +46,7 @@ export default function AdminSecurityScreen() {
 
   return (
     <Screen>
-      <AdminPageHeader description="Métricas reais, inconsistências detalhadas, permissões e trilha administrativa." title="Segurança e Storage" />
+      <AdminPageHeader description="Métricas reais, inconsistências detalhadas, permissões e trilha administrativa." title="Armazenamento e auditoria" />
       {storageError ? <Notice tone="warning">{storageError}</Notice> : null}
       {auditError ? <Notice tone="warning">{auditError}</Notice> : null}
       {loading ? <ActivityIndicator color={colors.gold600} /> : null}

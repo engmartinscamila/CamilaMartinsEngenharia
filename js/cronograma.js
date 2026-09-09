@@ -155,7 +155,9 @@ CRONOGRAMA.JS - CRUD ADMINISTRATIVO
         preencherProjetos(etapa.projeto_id);
         preencher("inicioEtapa", etapa.data_inicio);
         preencher("fimEtapa", etapa.data_fim);
-        preencher("statusEtapa", etapa.status);
+        const statusSelect = document.getElementById("statusEtapa");
+        const statusOption = Array.from(statusSelect?.options || []).find(option => normalizarStatus(option.value || option.text) === normalizarStatus(etapa.status));
+        preencher("statusEtapa", statusOption?.value || "Pendente");
         preencher("pesoEtapa", etapa.peso_percentual);
         preencher("percentualEtapa", etapa.percentual_conclusao);
         preencher("ordemEtapa", etapa.ordem);
@@ -272,7 +274,7 @@ CRONOGRAMA.JS - CRUD ADMINISTRATIVO
     }
 
     function pesquisar() {
-        const termo = valor("pesquisaCronograma").toLocaleLowerCase("pt-BR");
+        const termo = valor("pesquisaCronograma").toLocaleLowerCase("pt-BR").replace(/[_-]+/g, " ").trim();
         if (!termo) return renderizar();
 
         renderizar(etapas.filter(etapa =>
@@ -352,7 +354,7 @@ CRONOGRAMA.JS - CRUD ADMINISTRATIVO
         return String(status || "")
             .normalize("NFD")
             .replace(/[\u0300-\u036f]/g, "")
-            .toLocaleLowerCase("pt-BR");
+            .toLocaleLowerCase("pt-BR").replace(/[_-]+/g, " ").trim();
     }
 
     function classeStatus(status) {

@@ -1,6 +1,7 @@
+import { useNotificationProject } from '@/hooks/use-notification-project';
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
 import * as DocumentPicker from 'expo-document-picker';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
@@ -56,17 +57,24 @@ const documentClassifications: {
 ];
 
 export default function AdminContentScreen() {
+  const { tipo } = useLocalSearchParams<{ tipo?: string }>();
+  return <AdminContentForm key={tipo ?? 'document'} />;
+}
+
+function AdminContentForm() {
+  const router = useRouter();
   const params = useLocalSearchParams<{ tipo?: string | string[] }>();
   const requestedKind = Array.isArray(params.tipo) ? params.tipo[0] : params.tipo;
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
   const [items, setItems] = useState<AdminContentSummary[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [kind, setKind] = useState<AdminContentKind>(isAdminContentKind(requestedKind) ? requestedKind : 'document');
+  const kind: AdminContentKind = isAdminContentKind(requestedKind) ? requestedKind : 'document';
+  const setKind = (value: AdminContentKind) => router.setParams({ tipo: value });
   const [documentClassification, setDocumentClassification] = useState<DocumentClassification | null>(null);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
   const [version, setVersion] = useState('1.0');
-  const [protectionMode, setProtectionMode] = useState<'administrative' | 'authored_pdf' | 'authored_photo'>('administrative');
+  const [protectionMode, setProtectionMode] = useState<'administrative' | 'authored_pdf' | 'authored_photo'>(kind === 'photo' ? 'authored_photo' : 'administrative');
   const [assets, setAssets] = useState<DocumentPicker.DocumentPickerAsset[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -76,6 +84,8 @@ export default function AdminContentScreen() {
   const { colors } = useAppTheme();
   const styles = useThemeStyles(styleDefinitions);
   const visibleItems = items.filter((item) => item.kind === kind);
+
+  useNotificationProject(projects, setSelectedProjectId);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -162,7 +172,7 @@ export default function AdminContentScreen() {
       {success ? <Notice tone="success">{success}</Notice> : null}
       <Card>
         <Text style={styles.sectionTitle}>Publicar novo conteúdo</Text>
-        <SelectionChips<AdminContentKind> items={[{ value: 'document', label: 'Documento' }, { value: 'photo', label: 'Foto' }, { value: 'library', label: 'Biblioteca' }]} label="Tipo" onChange={(value) => { setKind(value); setAssets([]); setDocumentClassification(null); setProtectionMode(value === 'photo' ? 'authored_photo' : 'administrative'); }} value={kind} />
+        <SelectionChips<AdminContentKind> items={[{ value: 'document', label: 'Documento' }, { value: 'photo', label: 'Foto' }, { value: 'library', label: 'Biblioteca' }]} label="Tipo" onChange={(value) => { setKind(value); setTitle(''); setCategory(''); setAssets([]); setDocumentClassification(null); setProtectionMode(value === 'photo' ? 'authored_photo' : 'administrative'); }} value={kind} />
         {kind === 'document' ? (
           <>
             <SelectionChips<DocumentClassification>

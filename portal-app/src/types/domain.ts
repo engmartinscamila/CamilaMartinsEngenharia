@@ -143,6 +143,7 @@ export interface NotificationSummary {
   read: boolean;
   createdAt: string;
   linkPath: string | null;
+  projectId?: string | null;
 }
 
 export interface DashboardCounts {

@@ -69,7 +69,7 @@ export default function AdminSystemHealthScreen(){
   const hashOk=Number(db?.snapshots_total??0)===Number(db?.sha256_snapshots??-1);
 
   return <Screen>
-    <AdminPageHeader title="Integridade do sistema" description="Diagnóstico rápido do site publicado, banco, Storage, Edge Functions e trilha documental." />
+    <AdminPageHeader title="Verificar funcionamento" description="Diagnóstico rápido do site publicado, banco, Storage, Edge Functions e trilha documental." />
     {error?<Notice tone="danger">{error}</Notice>:null}
     {loading?<ActivityIndicator color={colors.gold600}/>:null}
     <Card><View style={styles.row}><Text style={styles.title}>Site publicado</Text><StatusPill label={build.startsWith('Site indisponível')?'Falha':'Online'} tone={build.startsWith('Site indisponível')?'danger':'success'}/></View><Text style={styles.meta}>Build publicado: {build}</Text><Text style={styles.meta}>O identificador muda automaticamente a cada deploy e também controla o cache dos assets.</Text></Card>

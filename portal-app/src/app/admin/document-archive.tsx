@@ -121,7 +121,7 @@ export default function DocumentArchiveScreen() {
 
   return (
     <Screen>
-      <AdminPageHeader title="Arquivo e extrato documental" description="Veja tudo o que já foi gerado e gerencie apenas os arquivos que você decidiu arquivar no sistema." />
+      <AdminPageHeader title="Arquivos antigos e restauração" description="Veja tudo o que já foi gerado e gerencie apenas os arquivos que você decidiu arquivar no sistema." />
       <Notice tone="info">Gerar um Word não ocupa Storage por padrão. O extrato abaixo é leve e permanece mesmo quando o arquivo é apenas baixado e não arquivado.</Notice>
       {error ? <Notice tone="danger">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}
 

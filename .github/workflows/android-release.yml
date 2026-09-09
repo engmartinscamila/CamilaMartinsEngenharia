@@ -65,7 +65,7 @@ jobs:
       - name: Coletar APK para assinatura final
         run: |
           mkdir -p ../android-artifact
-          cp android/app/build/outputs/apk/release/app-release.apk ../android-artifact/Camila-Martins-Engenharia-0.10.9-pre-sign.apk
+          cp android/app/build/outputs/apk/release/app-release.apk ../android-artifact/Camila-Martins-Engenharia-0.10.10-pre-sign.apk
           APKSIGNER_JAR=$(find "$ANDROID_HOME/build-tools" -path '*/lib/apksigner.jar' | sort -V | tail -n 1)
           cp "$APKSIGNER_JAR" ../android-artifact/apksigner.jar
           printf '%s\n' "$GITHUB_SHA" > ../android-artifact/source-commit.txt
@@ -85,7 +85,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: android-0.10.9-build-and-diagnostics
+          name: android-0.10.10-build-and-diagnostics
           path: android-artifact/
           retention-days: 14
           if-no-files-found: error

@@ -1,4 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useNotificationProject } from '@/hooks/use-notification-project';
+import { useLiveRefresh } from '@/hooks/use-live-refresh';
+import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
@@ -28,14 +30,16 @@ export default function AdminScheduleScreen() {
   const { colors } = useAppTheme();
   const styles = useThemeStyles(styleDefinitions);
 
+  useNotificationProject(projects, setProjectId);
+
   const loadProjects = useCallback(async () => {
     const result = await listAdminProjects(); setProjects(result.data); setProjectId((current) => current ?? result.data[0]?.id ?? null); if (result.error) setError(result.error);
   }, []);
   const loadStages = useCallback(async () => {
     if (!projectId) { setStages([]); return; } setLoading(true); const result = await listAdminSchedule(projectId); setStages(result.data); setError(result.error); setLoading(false);
   }, [projectId]);
-  useEffect(() => { const task = setTimeout(() => void loadProjects(), 0); return () => clearTimeout(task); }, [loadProjects]);
-  useEffect(() => { const task = setTimeout(() => void loadStages(), 0); return () => clearTimeout(task); }, [loadStages]);
+  useLiveRefresh(loadProjects);
+  useLiveRefresh(loadStages);
 
   const create = async () => {
     const project = projects.find((item) => item.id === projectId); const numericOrder = Number(order);

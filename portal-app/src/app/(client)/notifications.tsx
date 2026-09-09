@@ -1,4 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { notificationRoute } from '@/lib/notification-route';
+import { useLiveRefresh } from '@/hooks/use-live-refresh';
+import React, { useCallback, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Platform, Text, View } from 'react-native';
 
@@ -36,10 +38,7 @@ export default function NotificationsScreen() {
     setLoading(false);
   }, [client?.id, selectedProject?.clientId, selectedProject?.id]);
 
-  useEffect(() => {
-    const task = setTimeout(() => void load(), 0);
-    return () => clearTimeout(task);
-  }, [load]);
+  useLiveRefresh(load);
 
   const markRead = async (item: NotificationSummary) => {
     const nextError = await markNotificationRead(item.id);
@@ -56,7 +55,8 @@ export default function NotificationsScreen() {
       }
       setItems((current) => current.map((row) => row.id === item.id ? { ...row, read: true } : row));
     }
-    if (item.linkPath?.startsWith('/(client)/')) router.push(item.linkPath as never);
+    const destination = notificationRoute(item.linkPath, 'client', item.projectId);
+    if (destination && !destination.pathname.endsWith('/notifications')) router.push(destination as never);
   };
 
   const activatePush = async () => {
@@ -91,8 +91,8 @@ export default function NotificationsScreen() {
           </View>
           {item.message ? <Text style={styles.message}>{item.message}</Text> : null}
           <Text style={styles.date}>{new Date(item.createdAt).toLocaleString('pt-BR')}</Text>
-          {item.linkPath?.startsWith('/(client)/') ? <Button onPress={() => void openNotification(item)} title={item.read ? 'Abrir atividade' : 'Visualizar agora'} variant="secondary" /> : null}
-          {!item.read && !item.linkPath?.startsWith('/(client)/') ? <Button onPress={() => void markRead(item)} title="Marcar como lida" variant="secondary" /> : null}
+          {notificationRoute(item.linkPath, 'client', item.projectId) && !notificationRoute(item.linkPath, 'client', item.projectId)?.pathname.endsWith('/notifications') ? <Button onPress={() => void openNotification(item)} title="Abrir atividade" variant="secondary" /> : null}
+          {!item.read && (!notificationRoute(item.linkPath, 'client', item.projectId) || notificationRoute(item.linkPath, 'client', item.projectId)?.pathname.endsWith('/notifications')) ? <Button onPress={() => void markRead(item)} title="Marcar como lida" variant="secondary" /> : null}
         </Card>
       ))}
       {items.length > 0 ? <Button loading={loading} onPress={() => void load()} title="Atualizar notificações" variant="ghost" /> : null}

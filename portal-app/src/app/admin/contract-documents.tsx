@@ -105,7 +105,7 @@ export default function AdminContractDocumentsScreen() {
 
   return (
     <Screen>
-      <AdminPageHeader title="Documentos contratuais" description="Gere somente os documentos aplicáveis. Por padrão, o Word é baixado e não permanece armazenado; você decide quando arquivar." />
+      <AdminPageHeader title="Documentos gerados e aceites" description="Gere somente os documentos aplicáveis. Por padrão, o Word é baixado e não permanece armazenado; você decide quando arquivar." />
       <Notice tone="info">O extrato de gerações permanece mesmo quando o arquivo Word não é arquivado. Para enviar um documento ao cliente pelo portal, primeiro arquive a versão que será disponibilizada.</Notice>
       {error ? <Notice tone="danger">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}{loading ? <ActivityIndicator color={colors.gold600} /> : null}
 

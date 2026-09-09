@@ -1,16 +1,20 @@
-# Camila Martins Engenharia — 0.10.9
+# Camila Martins Engenharia — 0.10.10
 
 Aplicativo Expo/React Native completo para Android, iOS e web, conectado ao Supabase já utilizado pelo Portal do Cliente. A mesma base de código reúne Área do Cliente e Área Administrativa.
 
 ## Identidade e plataformas
 
-- versão: `0.10.9`, Android versionCode `9`;
+- versão: `0.10.10`, Android versionCode `10`;
 - Android, iOS e web com Expo Router e TypeScript;
 - azul-marinho `#010914`, dourado `#B89A63`, Century Gothic e Brittany Signature Script;
 - autenticação e dados exclusivamente pelo Supabase existente;
 - idioma português do Brasil e datas exibidas no fuso de São Paulo.
 
-## Revisão 0.10.9
+## Revisão funcional 0.10.10
+
+Navegação e botões revisados; correções em cronograma, notificações, CRM, gravação e conciliação OFX. Veja [correções e limites](docs/REVISAO_0_10_10.md).
+
+## Revisão 0.10.9 (histórico)
 
 Integração de autenticação, recuperação de senha, atualização de dados e arquivos
 protegidos com o site existente. O workflow Android compila e testa a abertura do

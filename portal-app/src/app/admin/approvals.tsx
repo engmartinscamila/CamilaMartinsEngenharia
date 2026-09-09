@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useLiveRefresh } from '@/hooks/use-live-refresh';
+import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
@@ -15,7 +16,7 @@ export default function AdminApprovalsScreen() {
   const [loading, setLoading] = useState(false); const [saving, setSaving] = useState(false); const [error, setError] = useState<string | null>(null); const [success, setSuccess] = useState<string | null>(null);
   const { colors } = useAppTheme(); const styles = useThemeStyles(styleDefinitions);
   const load = useCallback(async () => { setLoading(true); const [p, a] = await Promise.all([listAdminProjects(), listAdminApprovals()]); setProjects(p.data); setItems(a.data); setProjectId((current) => current ?? p.data[0]?.id ?? null); setError(p.error ?? a.error); setLoading(false); }, []);
-  useEffect(() => { const task = setTimeout(() => void load(), 0); return () => clearTimeout(task); }, [load]);
+  useLiveRefresh(load);
   const create = async () => { const project = projects.find((item) => item.id === projectId); if (!project || type.trim().length < 2 || title.trim().length < 3) { setError('Selecione o projeto e preencha tipo e título.'); return; } setSaving(true); setError(null); setSuccess(null); const result = await createAdminApproval({ project, type, title, description }); setSaving(false); if (result) setError(result); else { setSuccess('Aprovação enviada ao cliente.'); setTitle(''); setDescription(''); await load(); } };
   return (
     <Screen>

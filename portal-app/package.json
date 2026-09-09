@@ -1,6 +1,6 @@
 {
   "name": "camila-martins-engenharia-app",
-  "version": "0.10.9",
+  "version": "0.10.10",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
@@ -22,7 +22,7 @@
     "export:web": "expo export --platform web",
     "verify:web-export": "node scripts/verify-web-export.mjs",
     "build:web:cloudflare": "npm run check:production:cloudflare && expo export --platform web && npm run verify:web-export",
-    "test:integration": "node scripts/test-integration.mjs && node scripts/test-protected-issuance.mjs"
+    "test:integration": "node scripts/test-integration.mjs && node scripts/test-protected-issuance.mjs && node scripts/test-functional.mjs"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",

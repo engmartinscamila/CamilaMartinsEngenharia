@@ -1,3 +1,4 @@
+import { adminSections } from '@/lib/admin-sections';
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -55,29 +56,7 @@ export default function AdminDashboard() {
     { label: 'Aprovações pendentes', value: counts.pendingApprovals, route: '/admin/approvals' as const },
   ] as const;
 
-  const modules = [
-    { key: 'crm', onPress: () => router.push('/admin/crm'), icon: 'funnel-outline' as const, title: 'CRM e pipeline comercial', description: 'Leads, próximos contatos, propostas, negociações, ganhos e perdas em um fluxo visual.' },
-    { key: 'commercial-documents', onPress: () => router.push('/admin/commercial-documents'), icon: 'calculator-outline' as const, title: 'Orçamentos e contratos', description: 'Gerar proposta e contrato para prospects, sem cadastro prévio de cliente.' },
-    { key: 'clients', onPress: () => router.push('/admin/clients'), icon: 'people-outline' as const, title: 'Clientes e acessos', description: 'Convidar, arquivar, reativar, revogar ou excluir com confirmação.' },
-    { key: 'projects', onPress: () => router.push('/admin/projects'), icon: 'briefcase-outline' as const, title: 'Contratos e projetos', description: 'Cadastro inseparável pelo número do contrato e acompanhamento.' },
-    { key: 'contract-documents', onPress: () => router.push('/admin/contract-documents'), icon: 'document-text-outline' as const, title: 'Documentos contratuais', description: 'Escopo opcional, prazos de aceite, termos e notificações formais.' },
-    { key: 'document-governance', onPress: () => router.push('/admin/document-governance'), icon: 'shield-checkmark-outline' as const, title: 'Governança documental', description: 'Mapa por projeto, versões vigentes, aceites do cliente, validade e pendências.' },
-    { key: 'document-archive', onPress: () => router.push('/admin/document-archive'), icon: 'archive-outline' as const, title: 'Arquivo documental', description: 'Exportar, proteger, restaurar e limpar arquivos antigos com rastreabilidade.' },
-    { key: 'documents', onPress: () => router.push({ pathname: '/admin/content', params: { tipo: 'document' } }), icon: 'documents-outline' as const, title: 'Documentos', description: 'ART/RRT, contratos, orçamentos e arquivos técnicos classificados por proteção.' },
-    { key: 'photos', onPress: () => router.push({ pathname: '/admin/content', params: { tipo: 'photo' } }), icon: 'images-outline' as const, title: 'Fotos e evolução da obra', description: 'Registros fotográficos protegidos e vinculados aos projetos.' },
-    { key: 'tasks', onPress: () => router.push('/admin/tasks'), icon: 'checkbox-outline' as const, title: 'Tarefas, dependências e modelos', description: 'Quadro operacional, subtarefas, prazos, progresso automático e modelos reutilizáveis.' },
-    { key: 'work-diary', onPress: () => router.push('/admin/work-diary'), icon: 'book-outline' as const, title: 'Diário de obra', description: 'Registros estruturados, ditado revisável, visibilidade do cliente e relatório PDF.' },
-    { key: 'procurement', onPress: () => router.push('/admin/procurement'), icon: 'cart-outline' as const, title: 'Fornecedores e cotações', description: 'Compare propostas por valor, prazo e condição e registre a escolha.' },
-    { key: 'library', onPress: () => router.push({ pathname: '/admin/content', params: { tipo: 'library' } }), icon: 'library-outline' as const, title: 'Biblioteca', description: 'Guias, catálogos e materiais exclusivos organizados por projeto.' },
-    { key: 'financial', onPress: () => router.push('/admin/financial'), icon: 'receipt-outline' as const, title: 'Extrato financeiro (somente admin)', description: 'Valores contratados, entradas, saídas e histórico preservado.' },
-    { key: 'portal-control', onPress: () => router.push('/admin/portal-control'), icon: 'eye-outline' as const, title: 'Portal do cliente e prévia', description: 'Defina módulos visíveis por projeto e confira a experiência antes da liberação.' },
-    { key: 'agenda', onPress: () => router.push('/admin/agenda'), icon: 'calendar-outline' as const, title: 'Agenda', description: 'Compromissos vinculados aos projetos.' },
-    { key: 'schedule', onPress: () => router.push('/admin/schedule'), icon: 'git-branch-outline' as const, title: 'Cronogramas', description: 'Etapas, ordem, status e progresso.' },
-    { key: 'approvals', onPress: () => router.push('/admin/approvals'), icon: 'checkmark-done-outline' as const, title: 'Aprovações', description: 'Criar decisões para resposta dos clientes.' },
-    { key: 'requests', onPress: () => router.push('/admin/requests'), icon: 'chatbubbles-outline' as const, title: 'Solicitações', description: 'Atender, responder e atualizar o andamento.' },
-    { key: 'notifications', onPress: () => router.push('/admin/notifications'), icon: 'notifications-outline' as const, title: 'Notificações internas', description: 'Avisos direcionados por cliente, contrato e projeto.' },
-    { key: 'security', onPress: () => router.push('/admin/security'), icon: 'shield-checkmark-outline' as const, title: 'Segurança e Storage', description: 'Uso real, pendências e trilha de auditoria.' },
-  ];
+  const modules = adminSections.map((section) => ({ ...section, onPress: () => router.push(section.href) }));
 
   return (
     <Screen>

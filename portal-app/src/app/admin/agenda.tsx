@@ -1,4 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useNotificationProject } from '@/hooks/use-notification-project';
+import { useLiveRefresh } from '@/hooks/use-live-refresh';
+import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
@@ -18,11 +20,14 @@ export default function AdminAgendaScreen() {
   const [time, setTime] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
+  const [cancelId, setCancelId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const { colors } = useAppTheme();
   const styles = useThemeStyles(styleDefinitions);
+
+  useNotificationProject(projects, setProjectId);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -32,7 +37,7 @@ export default function AdminAgendaScreen() {
     setError(projectResult.error ?? agendaResult.error); setLoading(false);
   }, []);
 
-  useEffect(() => { const task = setTimeout(() => void load(), 0); return () => clearTimeout(task); }, [load]);
+  useLiveRefresh(load);
 
   const create = async () => {
     setError(null); setSuccess(null);
@@ -48,7 +53,7 @@ export default function AdminAgendaScreen() {
 
   const cancel = async (id: string) => {
     setSaving(true); setError(null); setSuccess(null); const result = await cancelAdminAgenda(id); setSaving(false);
-    if (result) setError(result); else { setSuccess('Compromisso cancelado.'); await load(); }
+    if (result) setError(result); else { setCancelId(null); setSuccess('Compromisso cancelado.'); await load(); }
   };
 
   return (
@@ -69,7 +74,7 @@ export default function AdminAgendaScreen() {
         <Card key={item.id}>
           <View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.title}>{item.title}</Text><Text style={styles.meta}>{formatDate(item.date)}{formatTime(item.startTime) ? ` • ${formatTime(item.startTime)}` : ''}</Text></View><StatusPill label={item.cancelled ? 'Cancelado' : humanizeStatus(item.invitationStatus)} tone={item.cancelled ? 'danger' : item.invitationStatus === 'accepted' ? 'success' : 'warning'} /></View>
           {item.description ? <Text style={styles.description}>{item.description}</Text> : null}
-          {!item.cancelled ? <Button loading={saving} onPress={() => void cancel(item.id)} title="Cancelar compromisso" variant="danger" /> : null}
+          {!item.cancelled ? cancelId === item.id ? <><Notice tone="warning">Cancelar este compromisso para todos os participantes?</Notice><Button loading={saving} onPress={() => void cancel(item.id)} title="Confirmar cancelamento" variant="danger" /><Button disabled={saving} onPress={() => setCancelId(null)} title="Manter compromisso" variant="ghost" /></> : <Button disabled={saving} onPress={() => setCancelId(item.id)} title="Cancelar compromisso" variant="danger" /> : null}
         </Card>
       ))}
     </Screen>

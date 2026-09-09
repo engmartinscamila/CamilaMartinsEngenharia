@@ -1,4 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { notificationRoute } from '@/lib/notification-route';
+import { useLiveRefresh } from '@/hooks/use-live-refresh';
+import React, { useCallback, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, Platform, Pressable, Text, View } from 'react-native';
 
@@ -45,7 +47,7 @@ export default function AdminNotificationsScreen() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { const task = setTimeout(() => void load(), 0); return () => clearTimeout(task); }, [load]);
+  useLiveRefresh(load);
 
   const create = async () => {
     const project = projects.find((item) => item.id === selectedProjectId);
@@ -67,7 +69,8 @@ export default function AdminNotificationsScreen() {
       }
       setActivity((current) => current.map((row) => row.id === item.id ? { ...row, read: true } : row));
     }
-    if (item.linkPath?.startsWith('/admin/')) router.push(item.linkPath as never);
+    const destination = notificationRoute(item.linkPath, 'admin', item.projectId);
+    if (destination && !destination.pathname.endsWith('/notifications')) router.push(destination as never);
   };
 
   const activatePush = async () => {
@@ -95,7 +98,7 @@ export default function AdminNotificationsScreen() {
             <StatusPill label={item.read ? 'Visualizada' : 'Nova'} tone={item.read ? 'success' : 'danger'} />
           </View>
           {item.message ? <Text style={styles.body}>{item.message}</Text> : null}
-          <Button onPress={() => void openActivity(item)} title={item.read ? 'Abrir atividade' : 'Visualizar agora'} variant="secondary" />
+          {notificationRoute(item.linkPath, 'admin', item.projectId) && !notificationRoute(item.linkPath, 'admin', item.projectId)?.pathname.endsWith('/notifications') ? <Button onPress={() => void openActivity(item)} title="Abrir atividade" variant="secondary" /> : !item.read ? <Button onPress={() => void openActivity(item)} title="Marcar como lida" variant="secondary" /> : null}
         </Card>
       ))}
       {Platform.OS !== 'web' ? (
@@ -113,7 +116,7 @@ export default function AdminNotificationsScreen() {
         <Field label="Título" onChangeText={setTitle} value={title} />
         <Field label="Mensagem" multiline onChangeText={setMessage} style={styles.message} value={message} />
         <Button loading={saving} onPress={() => void create()} title="Criar notificação interna" />
-        <Notice tone="info">O aviso aparece imediatamente na central interna. No celular, o push depende da ativação do aparelho e do vínculo Expo/EAS.</Notice>
+        <Notice tone="info">O aviso aparece imediatamente na central interna. No celular, os avisos também dependem da permissão de notificações e de uma conexão ativa.</Notice>
       </Card>
       {loading ? <ActivityIndicator color={colors.gold600} /> : null}
       <Text style={styles.sectionTitle}>Avisos enviados aos clientes</Text>

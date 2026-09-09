@@ -41,6 +41,7 @@ jobs:
           node scripts/security/secret-scan.mjs
           npm ci --prefix scripts/security
           node scripts/security/rls-regression.mjs
+          node scripts/security/ofx-regression.mjs
 
       - name: Preparar versão pública protegida
         run: bash scripts/prepare-site-public.sh

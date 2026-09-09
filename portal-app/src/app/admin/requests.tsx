@@ -185,7 +185,7 @@ export default function AdminRequestsScreen() {
           />
           <Field label="Resposta (opcional)" multiline onChangeText={setReply} placeholder="Escreva uma mensagem para o cliente" style={styles.reply} value={reply} />
           <View style={styles.actions}>
-            <View style={styles.grow}><Button loading={saving} onPress={() => void save()} title="Salvar e enviar" /></View>
+            <View style={styles.grow}><Button loading={saving} onPress={() => void save()} title={reply.trim() ? "Enviar resposta e salvar andamento" : "Salvar andamento"} /></View>
             <View style={styles.grow}><Button onPress={() => setEditing(null)} title="Cancelar" variant="ghost" /></View>
           </View>
         </Card>
@@ -200,7 +200,7 @@ export default function AdminRequestsScreen() {
       {openItems.map((item) => renderRequest(item, false))}
 
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Solicitações concluídas</Text>
+        <Text style={styles.sectionTitle}>Solicitações encerradas</Text>
         <StatusPill label={`${closedItems.length} no histórico`} tone="success" />
       </View>
       {closedItems.length === 0 ? <StateView description="As solicitações encerradas aparecerão aqui, sem botão de atendimento." icon="archive-outline" title="Histórico vazio" /> : null}

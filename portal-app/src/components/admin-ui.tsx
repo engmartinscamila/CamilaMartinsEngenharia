@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
+import { adminSections } from '@/lib/admin-sections';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -12,16 +13,19 @@ import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 export function AdminPageHeader({ title, description }: { title: string; description: string }) {
   const styles = useThemeStyles(styleDefinitions);
   const router = useRouter();
+  const pathname = usePathname();
+  const { tipo } = useLocalSearchParams<{ tipo?: string }>();
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <View style={styles.pageTop}>
       <View style={styles.headerActions}>
-        <Button icon="arrow-back-outline" onPress={() => router.back()} title="Voltar" variant="ghost" />
+        <Button icon="home-outline" onPress={() => router.replace('/admin')} title="Painel administrativo" variant="ghost" />
         <View style={styles.headerRightActions}>
-          <Button icon="document-text-outline" onPress={() => router.push('/admin/document-preparation')} title="Preparar docs" variant="ghost" />
-          <Button icon="pulse-outline" onPress={() => router.push('/admin/system-health')} title="Integridade" variant="ghost" />
-          <AdminNotificationBell />
+          <Button icon="menu-outline" onPress={() => setMenuOpen((open) => !open)} title={menuOpen ? 'Fechar menu' : 'Outras áreas'} variant="ghost" />
+          {pathname !== '/admin/notifications' ? <AdminNotificationBell /> : null}
         </View>
       </View>
+      {menuOpen ? <View style={styles.navigationMenu}>{adminSections.filter((section) => typeof section.href === 'string' ? section.href !== pathname : section.href.pathname !== pathname || section.href.params.tipo !== (tipo ?? 'document')).map((section) => <AdminMenuRow key={section.key} compact icon={section.icon} title={section.title} description={section.description} onPress={() => { setMenuOpen(false); router.push(section.href); }} />)}</View> : null}
       <PageHeader eyebrow="Administração" title={title} description={description} />
     </View>
   );
@@ -101,7 +105,8 @@ export function AdminMenuRow({ icon, title, description, onPress, compact = fals
 
 const styleDefinitions = (colors: ThemeColors) => ({
   pageTop: { gap: spacing.xs, alignItems: 'flex-start' },
-  headerActions: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  navigationMenu: { width: '100%', gap: spacing.xs },
+  headerActions: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   headerRightActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end', gap: spacing.xs },
   notificationButton: { minHeight: 42, flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderColor: colors.line, borderRadius: radius.pill, paddingHorizontal: spacing.sm, backgroundColor: colors.surface },
   notificationBadge: { minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: colors.danger, paddingHorizontal: 4 },

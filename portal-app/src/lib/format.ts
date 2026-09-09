@@ -1,3 +1,7 @@
+export function normalizeStatus(value: string | null | undefined) {
+  return String(value ?? '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[\s-]+/g, '_');
+}
+
 export function formatDate(value: string | null | undefined, fallback = 'Não informada') {
   if (!value) return fallback;
   const normalized = value.length === 10 ? `${value}T12:00:00` : value;
@@ -81,5 +85,5 @@ export function humanizeStatus(value: string) {
     cancelado: 'Cancelado',
     cancelada: 'Cancelada',
   };
-  return labels[value] ?? value.replaceAll('_', ' ');
+  return labels[value] ?? labels[normalizeStatus(value)] ?? value.replaceAll('_', ' ');
 }

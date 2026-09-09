@@ -1,3 +1,5 @@
+import { useNotificationProject } from '@/hooks/use-notification-project';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -83,6 +85,7 @@ const textFields:Partial<Record<PrepareKind,{key:string;label:string;placeholder
 function money(value:number|null){return value===null?'Não informado':value.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
 
 export default function AdminDocumentPreparationScreen(){
+  const router=useRouter();
   const styles=useThemeStyles(styleDefinitions);
   const [projects,setProjects]=useState<AdminProjectSummary[]>([]);
   const [projectId,setProjectId]=useState<string|null>(null);
@@ -97,6 +100,8 @@ export default function AdminDocumentPreparationScreen(){
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState<string|null>(null);
   const [success,setSuccess]=useState<string|null>(null);
+
+  useNotificationProject(projects, setProjectId);
 
   const selectedProject=useMemo(()=>projects.find(item=>item.id===projectId)??null,[projects,projectId]);
   const groups=optionGroups[kind]??[];
@@ -135,7 +140,7 @@ export default function AdminDocumentPreparationScreen(){
     if(kind==='autorizacao_imagem'){
       if(!Array.isArray(choices.materials)||choices.materials.length===0)return'Selecione ao menos um material autorizado.';
       if(!Array.isArray(choices.channels)||choices.channels.length===0)return'Selecione ao menos um canal autorizado.';
-      if(texts.wait_months?.trim()&&Number(texts.wait_months)<=0)return'Informe um prazo em meses maior que zero.';
+      if(texts.wait_months?.trim()&&(!Number.isInteger(Number(texts.wait_months))||Number(texts.wait_months)<=0))return'Informe um prazo em meses maior que zero.';
     }
     if(kind==='servico_adicional'){
       if(!Array.isArray(choices.reasons)||choices.reasons.length===0)return'Selecione a origem do serviço adicional.';
@@ -152,7 +157,7 @@ export default function AdminDocumentPreparationScreen(){
   };
 
   const review=async()=>{
-    if(!selectedProject)return;
+    if(!selectedProject){setError('Selecione um projeto para preparar o documento.');return;}
     const validation=validateOptions();if(validation){setError(validation);return;}
     setLoading(true);setError(null);setSuccess(null);
     const result=await previewContractDocument({projectId:selectedProject.id,kind,approvalId:kind==='termo_aceite'?approvalId:null,extraData:extraData()});
@@ -168,13 +173,13 @@ export default function AdminDocumentPreparationScreen(){
     const result=await prepareContractDocument({projectId:selectedProject.id,kind,approvalId:kind==='termo_aceite'?approvalId:null,extraData:extraData()});
     setLoading(false);
     if(result.error){setError(result.error);return;}
-    setSuccess(`Documento preparado como versão v${preview.nextVersion}. Abra “Documentos contratuais” para baixar, arquivar ou enviar ao cliente.`);
+    setSuccess(`Documento preparado como versão v${preview.nextVersion}. Abra “Documentos gerados e aceites” para baixar, arquivar ou enviar ao cliente.`);
     setPreview(null);
   };
 
   return <Screen>
-    <AdminPageHeader title="Preparação documental" description="Pré-visualize dados, defina opções e controle a versão antes de gerar o Word no mobile." />
-    {error?<Notice tone="danger">{error}</Notice>:null}{success?<Notice tone="success">{success}</Notice>:null}
+    <AdminPageHeader title="Preparar documento do projeto" description="Confira os dados e escolha as opções antes de gerar o documento." />
+    {error?<Notice tone="danger">{error}</Notice>:null}{success?<><Notice tone="success">{success}</Notice><Button onPress={()=>router.push('/admin/contract-documents')} title="Ver documentos gerados" variant="secondary" /></>:null}
     <Card><Text style={styles.sectionTitle}>Projeto</Text><View style={styles.chips}>{projects.map(project=><Pressable key={project.id} onPress={()=>setProjectId(project.id)} style={[styles.chip,project.id===projectId&&styles.selected]}><Text style={[styles.chipText,project.id===projectId&&styles.selectedText]}>{project.contractNumber} • {project.name}</Text></Pressable>)}</View></Card>
     <Card><Text style={styles.sectionTitle}>Tipo de documento</Text><View style={styles.chips}>{documentOptions.map(option=><Pressable key={option.kind} onPress={()=>setKind(option.kind)} style={[styles.chip,option.kind===kind&&styles.selected]}><Text style={[styles.chipText,option.kind===kind&&styles.selectedText]}>{option.title}</Text></Pressable>)}</View></Card>
     {kind==='termo_aceite'?<Card><Text style={styles.sectionTitle}>Etapa / aprovação</Text>{approvals.length===0?<StateView title="Nenhuma etapa disponível" description="Crie ou entregue uma aprovação de etapa antes de preparar o Termo de Aceite." icon="checkmark-done-outline"/>:<View style={styles.chips}>{approvals.map(item=><Pressable key={item.id} onPress={()=>{setApprovalId(item.id);setPreview(null);}} style={[styles.chip,item.id===approvalId&&styles.selected]}><Text style={[styles.chipText,item.id===approvalId&&styles.selectedText]}>{item.title} • {item.status}</Text></Pressable>)}</View>}</Card>:null}

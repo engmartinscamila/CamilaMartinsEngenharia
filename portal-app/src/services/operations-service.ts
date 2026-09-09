@@ -1,3 +1,4 @@
+import { isValidIsoDate } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import type { DocumentPickerAsset } from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -30,13 +31,16 @@ export async function updateCrmRecord(input: {
   nextActionAt?: string | null;
   lostReason?: string | null;
 }) {
+  if (!['novo', 'qualificacao', 'proposta', 'negociacao', 'ganho', 'perdido'].includes(input.stage)) return 'Selecione uma etapa comercial válida.';
+  if (input.nextActionAt && !Number.isFinite(Date.parse(input.nextActionAt))) return 'Informe uma data válida para a próxima ação.';
+  if (input.stage === 'perdido' && !input.lostReason?.trim()) return 'Informe o motivo da perda.';
   const result = await supabase.from('commercial_records').update({
     crm_stage: input.stage,
     crm_priority: input.priority ?? 'normal',
     next_action_at: input.nextActionAt || null,
     lost_reason: input.stage === 'perdido' ? input.lostReason?.trim() || null : null,
-  }).eq('id', input.id);
-  return result.error ? 'Não foi possível atualizar a etapa comercial.' : null;
+  }).eq('id', input.id).select('id').maybeSingle();
+  return result.error || !result.data ? 'Não foi possível atualizar a etapa comercial. Atualize a lista e confira seu acesso.' : null;
 }
 
 export async function listProjectTasks(projectId: string): Promise<ServiceResult<ProjectTaskSummary[]>> {
@@ -123,8 +127,8 @@ export async function updateProjectTask(input: {
   }
   if (typeof input.clientVisible === 'boolean') payload.client_visible = input.clientVisible;
   if (typeof input.position === 'number') payload.position = input.position;
-  const result = await supabase.from('project_tasks').update(payload).eq('id', input.id);
-  return result.error ? 'Não foi possível atualizar a tarefa.' : null;
+  const result = await supabase.from('project_tasks').update(payload).eq('id', input.id).select('id').maybeSingle();
+  return result.error || !result.data ? 'Não foi possível atualizar a tarefa. Atualize a lista e confira seu acesso.' : null;
 }
 
 export async function listTaskTemplates(): Promise<ServiceResult<TaskTemplateSummary[]>> {
@@ -318,8 +322,8 @@ export async function addSupplierBid(input: {
 export async function selectSupplierBid(quoteId: string, supplierId: string) {
   const result = await supabase.from('purchase_quotes').update({
     selected_supplier_id: supplierId, status: 'approved',
-  }).eq('id', quoteId);
-  return result.error ? 'Não foi possível aprovar a proposta.' : null;
+  }).eq('id', quoteId).select('id').maybeSingle();
+  return result.error || !result.data ? 'Não foi possível aprovar a proposta. Atualize a lista e confira seu acesso.' : null;
 }
 
 export async function listProjectFinancialSummaries(): Promise<ServiceResult<ProjectFinancialSummary[]>> {
@@ -382,39 +386,22 @@ export async function importOfxTransactions(accountId: string, asset: DocumentPi
         amount: rawAmount,
         transaction_type: type === 'XFER' ? 'transfer' : rawAmount >= 0 ? 'credit' : 'debit',
       };
-    }).filter((row) => Number.isFinite(row.amount) && /^\d{4}-\d{2}-\d{2}$/.test(row.transaction_date));
+    }).filter((row) => Number.isFinite(row.amount) && isValidIsoDate(row.transaction_date));
     if (!transactions.length) return { imported: 0, reconciled: 0, error: 'Nenhuma transação válida foi encontrada no OFX.' };
+    const uniqueTransactions = [...new Map(transactions.map((row) => [row.external_id, row])).values()];
+    if (uniqueTransactions.length > 2000) return { imported: 0, reconciled: 0, error: 'Importe até 2000 transações por arquivo.' };
     const before = await supabase.from('bank_transactions').select('external_id').eq('account_id', accountId).in('external_id', transactions.map((row) => row.external_id));
     if (before.error) return { imported: 0, reconciled: 0, error: 'Não foi possível conferir as transações existentes.' };
     const known = new Set((before.data ?? []).map((row) => row.external_id));
-    const insert = await supabase.from('bank_transactions').upsert(transactions, { onConflict: 'account_id,external_id', ignoreDuplicates: true });
+    const insert = await supabase.from('bank_transactions').upsert(uniqueTransactions, { onConflict: 'account_id,external_id', ignoreDuplicates: true });
     if (insert.error) return { imported: 0, reconciled: 0, error: 'Não foi possível importar o arquivo OFX.' };
 
-    const [bank, financial] = await Promise.all([
-      supabase.from('bank_transactions').select('id,transaction_date,amount,transaction_type').eq('account_id', accountId).is('matched_financial_id', null).neq('transaction_type', 'transfer'),
-      supabase.from('financeiro').select('id,valor,tipo,data,data_vencimento').is('bank_transaction_id', null),
-    ]);
-    let reconciled = 0;
-    if (!bank.error && !financial.error) {
-      const used = new Set<string>();
-      for (const transaction of bank.data ?? []) {
-        const match = (financial.data ?? []).find((entry) => {
-          if (used.has(entry.id)) return false;
-          const sameDirection = transaction.transaction_type === 'credit' ? entry.tipo === 'entrada' : entry.tipo === 'saida';
-          const amountMatches = Math.abs(Math.abs(Number(transaction.amount)) - Number(entry.valor)) < 0.01;
-          const entryDate = new Date(entry.data ?? entry.data_vencimento ?? '1900-01-01').getTime();
-          const bankDate = new Date(transaction.transaction_date).getTime();
-          return sameDirection && amountMatches && Math.abs(entryDate - bankDate) <= 3 * 86_400_000;
-        });
-        if (!match) continue;
-        const [bankUpdate, financeUpdate] = await Promise.all([
-          supabase.from('bank_transactions').update({ matched_financial_id: match.id }).eq('id', transaction.id),
-          supabase.from('financeiro').update({ bank_transaction_id: transaction.id }).eq('id', match.id),
-        ]);
-        if (!bankUpdate.error && !financeUpdate.error) { used.add(match.id); reconciled += 1; }
-      }
-    }
-    return { imported: transactions.filter((row) => !known.has(row.external_id)).length, reconciled, error: null };
+    const imported = uniqueTransactions.filter((row) => !known.has(row.external_id)).length;
+    const result = await supabase.rpc('reconcile_imported_ofx', {
+      p_account_id: accountId, p_external_ids: uniqueTransactions.map((row) => row.external_id),
+    });
+    if (result.error || typeof result.data !== 'number') return { imported, reconciled: 0, error: `${imported} nova(s) transação(ões) importada(s). A conciliação não foi concluída; tente importar novamente sem duplicar registros.` };
+    return { imported, reconciled: result.data, error: null };
   } catch {
     return { imported: 0, reconciled: 0, error: 'O arquivo OFX não pôde ser lido.' };
   }

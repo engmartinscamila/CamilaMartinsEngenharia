@@ -1,3 +1,4 @@
+import { normalizeStatus } from '@/lib/format';
 import { isMissingRelationError } from '@/lib/errors';
 import { env } from '@/lib/env';
 import { supabase } from '@/lib/supabase';
@@ -357,7 +358,7 @@ export async function listSchedule(projectId: string): Promise<ServiceResult<Sch
       description: row.descricao,
       startDate: row.data_inicio,
       endDate: row.data_fim,
-      status: row.status ?? 'pendente',
+      status: normalizeStatus(row.status) || 'pendente',
       progress: numberOrNull(row.percentual_conclusao),
       weight: numberOrNull(row.peso_percentual),
       order: Number(row.ordem ?? 0),
@@ -513,7 +514,7 @@ export async function replyToOwnRequest(requestId: string, message: string) {
 export async function listNotifications(clientId: string, projectId?: string): Promise<ServiceResult<NotificationSummary[]>> {
   let query = supabase
     .from('notificacoes')
-    .select('id, titulo, mensagem, tipo, lida, created_at, link_path')
+    .select('id, titulo, mensagem, tipo, lida, created_at, projeto_id, link_path')
     .eq('cliente_id', clientId)
     .eq('destinatario', 'cliente');
   if (projectId) query = query.or(`projeto_id.eq.${projectId},projeto_id.is.null`);
@@ -531,6 +532,7 @@ export async function listNotifications(clientId: string, projectId?: string): P
       read: row.lida,
       createdAt: row.created_at,
       linkPath: row.link_path,
+      projectId: row.projeto_id,
     })),
     error: null,
   };

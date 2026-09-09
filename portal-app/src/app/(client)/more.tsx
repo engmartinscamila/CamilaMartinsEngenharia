@@ -22,9 +22,8 @@ const available = [
   { href: '/(client)/tasks' as const, settingKey: 'showTasks' as const, icon: 'checkbox-outline' as const, title: 'Tarefas do projeto', description: 'Atividades e próximos prazos compartilhados' },
   { href: '/(client)/work-diary' as const, settingKey: 'showWorkDiary' as const, icon: 'book-outline' as const, title: 'Diário de obra', description: 'Registros técnicos liberados pela equipe' },
   { href: '/(client)/approvals' as const, settingKey: 'showApprovals' as const, icon: 'checkmark-done-outline' as const, title: 'Aprovações', description: 'Decisões e histórico de respostas' },
-  { href: '/(client)/requests' as const, settingKey: 'showRequests' as const, icon: 'help-buoy-outline' as const, title: 'Suporte', description: 'Envie e acompanhe solicitações' },
   { href: '/(client)/notifications' as const, icon: 'notifications-outline' as const, title: 'Notificações', description: 'Atualizações lidas e não lidas' },
-  { href: '/(client)/contact' as const, icon: 'chatbubbles-outline' as const, title: 'Falar com a equipe', description: 'Solicitação, WhatsApp e e-mail institucionais' },
+  { href: '/(client)/contact' as const, icon: 'chatbubbles-outline' as const, title: 'Contato da equipe', description: 'Solicitação, WhatsApp e e-mail institucionais' },
   { href: '/(client)/privacy' as const, icon: 'shield-checkmark-outline' as const, title: 'Privacidade', description: 'LGPD, arquivos e segurança da sessão' },
   { href: '/(client)/profile' as const, icon: 'person-circle-outline' as const, title: 'Perfil e segurança', description: 'Dados da conta e sair' },
 ];

@@ -1,3 +1,4 @@
+import { useNotificationProject } from '@/hooks/use-notification-project';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -42,6 +43,8 @@ export default function AdminTasksScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  useNotificationProject(projects, setProjectId);
 
   const loadProjects = useCallback(async () => {
     const [projectResult, templateResult] = await Promise.all([listAdminProjects(), listTaskTemplates()]);
@@ -108,7 +111,7 @@ export default function AdminTasksScreen() {
 
   return (
     <Screen>
-      <AdminPageHeader title="Tarefas e cronograma operacional" description="Subtarefas, dependências, modelos, prazos e progresso automático por projeto." />
+      <AdminPageHeader title="Tarefas do projeto" description="Subtarefas, dependências, modelos, prazos e progresso automático por projeto." />
       {error ? <Notice tone="danger">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}
       <Card>
         <Text style={styles.sectionTitle}>Projeto</Text>

@@ -1,3 +1,4 @@
+import { normalizeStatus } from '@/lib/format';
 import { decode } from 'base64-arraybuffer';
 import type { DocumentPickerAsset } from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -396,8 +397,8 @@ export async function createAdminAgenda(input: { project: AdminProjectSummary; t
 }
 
 export async function cancelAdminAgenda(id: string) {
-  const result = await supabase.from('agenda').update({ cancelado: true, status_convite: 'cancelled' }).eq('id', id);
-  if (result.error) return 'Não foi possível cancelar o compromisso.';
+  const result = await supabase.from('agenda').update({ cancelado: true, status_convite: 'cancelled' }).eq('id', id).select('id').maybeSingle();
+  if (result.error || !result.data) return 'O compromisso não foi cancelado. Atualize a lista e tente novamente.';
   void dispatchPendingPushNotifications();
   return null;
 }
@@ -407,7 +408,7 @@ export async function listAdminSchedule(projectId?: string): Promise<ServiceResu
   if (projectId) query = query.eq('projeto_id', projectId);
   const result = await query.limit(300);
   if (result.error) return { data: [], error: 'Não foi possível carregar o cronograma.' };
-  return { data: (result.data ?? []).map((row) => ({ id: row.id, projectId: row.projeto_id, title: row.nome, description: row.descricao, startDate: row.data_inicio, endDate: row.data_fim, status: row.status ?? 'pendente', progress: numberOrNull(row.percentual_conclusao), weight: numberOrNull(row.peso_percentual), order: Number(row.ordem ?? 0) })), error: null };
+  return { data: (result.data ?? []).map((row) => ({ id: row.id, projectId: row.projeto_id, title: row.nome, description: row.descricao, startDate: row.data_inicio, endDate: row.data_fim, status: normalizeStatus(row.status) || 'pendente', progress: numberOrNull(row.percentual_conclusao), weight: numberOrNull(row.peso_percentual), order: Number(row.ordem ?? 0) })), error: null };
 }
 
 export async function createAdminScheduleStage(input: { project: AdminProjectSummary; title: string; startDate?: string; endDate?: string; order: number }) {
@@ -418,8 +419,10 @@ export async function createAdminScheduleStage(input: { project: AdminProjectSum
 }
 
 export async function updateAdminScheduleStage(id: string, status: string, progress: number) {
-  const result = await supabase.from('cronograma').update({ status, percentual_conclusao: progress }).eq('id', id);
-  if (result.error) return 'Não foi possível atualizar a etapa.';
+  const normalized = normalizeStatus(status);
+  if (!['pendente', 'em_andamento', 'concluido', 'pausado', 'cancelado'].includes(normalized) || !Number.isFinite(progress) || progress < 0 || progress > 100) return 'Revise o andamento e o progresso da etapa.';
+  const result = await supabase.from('cronograma').update({ status: normalized, percentual_conclusao: normalized === 'concluido' ? 100 : progress }).eq('id', id).select('id').maybeSingle();
+  if (result.error || !result.data) return 'A etapa não foi atualizada. Atualize a lista e tente novamente.';
   void dispatchPendingPushNotifications();
   return null;
 }
@@ -478,7 +481,7 @@ export async function updateAdminRequest(id: string, status: string, reply?: str
 export async function listAdminNotifications(): Promise<ServiceResult<AdminNotificationSummary[]>> {
   const result = await supabase
     .from('notificacoes')
-    .select('id, titulo, mensagem, tipo, lida, created_at, link_path, clientes(nome), projetos(nome)')
+    .select('id, titulo, mensagem, tipo, lida, created_at, projeto_id, link_path, clientes(nome), projetos(nome)')
     .eq('destinatario', 'cliente')
     .order('created_at', { ascending: false })
     .limit(200);
@@ -492,6 +495,7 @@ export async function listAdminNotifications(): Promise<ServiceResult<AdminNotif
       read: row.lida,
       createdAt: row.created_at,
       linkPath: row.link_path,
+      projectId: row.projeto_id,
       clientName: (Array.isArray(row.clientes) ? row.clientes[0] : row.clientes)?.nome ?? 'Cliente',
       projectName: (Array.isArray(row.projetos) ? row.projetos[0] : row.projetos)?.nome ?? 'Projeto',
     })),
@@ -502,7 +506,7 @@ export async function listAdminNotifications(): Promise<ServiceResult<AdminNotif
 export async function listAdminActivityNotifications(): Promise<ServiceResult<AdminNotificationSummary[]>> {
   const result = await supabase
     .from('notificacoes')
-    .select('id, titulo, mensagem, tipo, lida, created_at, link_path, clientes(nome), projetos(nome)')
+    .select('id, titulo, mensagem, tipo, lida, created_at, projeto_id, link_path, clientes(nome), projetos(nome)')
     .eq('destinatario', 'admin')
     .order('created_at', { ascending: false })
     .limit(100);
@@ -516,6 +520,7 @@ export async function listAdminActivityNotifications(): Promise<ServiceResult<Ad
       read: row.lida,
       createdAt: row.created_at,
       linkPath: row.link_path,
+      projectId: row.projeto_id,
       clientName: (Array.isArray(row.clientes) ? row.clientes[0] : row.clientes)?.nome ?? 'Cliente',
       projectName: (Array.isArray(row.projetos) ? row.projetos[0] : row.projetos)?.nome ?? 'Projeto',
     })),
@@ -599,7 +604,7 @@ export async function listAdminFinancialEntries(): Promise<ServiceResult<Financi
         date: row.data ?? null,
         notes: row.observacoes ?? null,
         category: row.categoria ?? 'outros',
-        status: row.status ?? 'pendente',
+        status: normalizeStatus(row.status) || 'pendente',
         dueDate: row.data_vencimento ?? null,
         paidAt: row.data_pagamento ?? null,
         accountId: row.account_id ?? null,
