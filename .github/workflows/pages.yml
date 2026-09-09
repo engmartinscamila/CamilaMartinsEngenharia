@@ -104,7 +104,7 @@ jobs:
           EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_-unXLR2NSSACLs01Sr60GA_uCFnJ74f
           EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF: hghtwlopqztfcosfxafd
           EXPO_PUBLIC_APP_ENV: production
-        run: npm run check:production:cloudflare && npm run typecheck && npm run lint && npm run export:web && npm run verify:web-export
+        run: npm run check:production:cloudflare && npm run typecheck && npm run lint && npm run security:audit && npm run export:web && npm run verify:web-export
 
       - name: Integrar portal ao domínio
         run: |

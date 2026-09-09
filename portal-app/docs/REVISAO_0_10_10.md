@@ -4,6 +4,9 @@ Correções no site, portal web e aplicativo Android integrado.
 
 ## Problemas corrigidos
 
+- Galeria pública: corrigido o clique/toque para ampliar a imagem. A captura do ponteiro agora começa somente no arraste, preservando o clique do botão.
+- Dependências: js-yaml atualizado de 4.3.1 para 4.3.2 após o gate identificar GHSA-2883-xcg3-v3hh. Auditoria repetida sem exceções.
+
 - Cronograma: estados legados como “Concluído” e “Em andamento” agora são entendidos pelo app; o site reconhece os estados com sublinhado escritos pelo app. A edição no site preserva o estado e oferece Pausado/Cancelado.
 - Notificações: links das páginas antigas e do portal são convertidos em destinos conhecidos do app, com o projeto informado. Avisos sem destino útil oferecem “Marcar como lida”. Não há mais botão que apenas reabre a própria lista.
 - Push: navegação aguarda autenticação, verifica o destino e não repete a abertura quando a sessão é renovada.

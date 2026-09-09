@@ -1247,6 +1247,15 @@ for (const file of clientPages) {
     projetos > 0 || /Tiny House|Vitalle|Casa Urben|Essenza/i.test(texto || ""),
     "galeria-projetos.html: nenhum projeto público foi renderizado"
   );
+  const activeSlide = page.locator('.gallery-carousel-slide[data-offset="0"]').first();
+  await activeSlide.click();
+  assert(await page.locator('#galleryLightbox').isVisible(), 'galeria-projetos.html: clique na imagem não abriu o visualizador');
+  await page.locator('#galleryLightboxClose').click();
+  assert(await page.locator('#galleryLightbox').isHidden(), 'galeria-projetos.html: fechar imagem não fechou o visualizador');
+  await activeSlide.press('Enter');
+  assert(await page.locator('#galleryLightbox').isVisible(), 'galeria-projetos.html: teclado não abriu o visualizador');
+  await page.keyboard.press('Escape');
+  assert(await page.locator('#galleryLightbox').isHidden(), 'galeria-projetos.html: Escape não fechou o visualizador');
   await responsive(page, "galeria-projetos.html");
   await page.close();
 }

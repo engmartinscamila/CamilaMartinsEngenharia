@@ -468,7 +468,6 @@
       viewport,
       indiceProjeto: Number(viewport.dataset.projeto)
     };
-    viewport.setPointerCapture(evento.pointerId);
   });
 
   projetosContainer.addEventListener('pointermove', (evento) => {
@@ -476,6 +475,8 @@
       const deslocamentoX = evento.clientX - arraste.inicioX;
       const deslocamentoY = evento.clientY - arraste.inicioY;
       if (Math.abs(deslocamentoX) > 8 && Math.abs(deslocamentoX) > Math.abs(deslocamentoY)) {
+        // Capture only a real drag; capturing on pointerdown retargets clicks away from the image button.
+        if (!arraste.viewport.hasPointerCapture(evento.pointerId)) arraste.viewport.setPointerCapture(evento.pointerId);
         arraste.viewport.classList.add('is-dragging');
         const trilho = arraste.viewport.querySelector('.gallery-carousel-track');
         trilho.style.transform = `translateX(${deslocamentoX * 0.12}px)`;
