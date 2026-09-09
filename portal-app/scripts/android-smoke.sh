@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-APK=android-artifact/Camila-Martins-Engenharia-0.10.9-pre-sign.apk
+APP_VERSION=$(node -p "require('./portal-app/app.json').expo.version")
+APK="android-artifact/Camila-Martins-Engenharia-${APP_VERSION}-pre-sign.apk"
 PACKAGE=br.com.camilamartinsengenharia.app
 adb install -r "$APK"
 adb logcat -c
@@ -21,3 +22,4 @@ fi
 grep -q 'Entrar' android-artifact/startup-ui.xml
 grep -qi 'senha' android-artifact/startup-ui.xml
 echo 'PASS: APK instalado, processo ativo e formulário de login renderizado no Android.'
+
