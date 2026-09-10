@@ -6,6 +6,7 @@
     configurarHeaderScroll();
     configurarAnimacaoReveal();
     configurarAcoesFlutuantes();
+    configurarAvaliacoesGoogle();
   });
 
   function configurarMenuMobile() {
@@ -105,5 +106,40 @@
     window.addEventListener('resize', () => {
       if (window.innerWidth > 760) definirEstado(false);
     }, { passive: true });
+  }
+
+  function configurarAvaliacoesGoogle() {
+    const cards = document.querySelectorAll('#avaliacoes .review-card');
+    if (cards.length < 4) return;
+
+    const avaliacoes = [
+      {
+        autor: 'Higor Luiz',
+        texto: 'Excelente profissional! Muito atenciosa, competente e comprometida com a qualidade do trabalho. Demonstra muito conhecimento técnico, esclarece todas as dúvidas com paciência e entrega um serviço confiável. Recomendo para quem procura uma engenheira civil séria e dedicada.'
+      },
+      {
+        autor: 'Gabriel Lima',
+        texto: 'Serviço de excelência. Todo o processo do serviço, desde o começo na criação do projeto até a entrega foi realizado com extremo profissionalismo e atenção aos detalhes. Recomendo de olhos fechados.'
+      },
+      {
+        autor: 'Li Alencar',
+        texto: 'Camila montou um projeto que amamos. Obrigada pela dedicação e competência em realizar nosso maior sonho.'
+      },
+      {
+        autor: 'Liliane Oliveira',
+        texto: 'Excelente profissional!!! Eu recomendo.'
+      }
+    ];
+
+    cards.forEach((card, indice) => {
+      const avaliacao = avaliacoes[indice];
+      if (!avaliacao) return;
+      const texto = card.querySelector('blockquote');
+      const autor = card.querySelector('.review-person strong');
+      const origem = card.querySelector('.review-person small');
+      if (texto) texto.textContent = avaliacao.texto;
+      if (autor) autor.textContent = avaliacao.autor;
+      if (origem) origem.textContent = 'Avaliação no Google';
+    });
   }
 }());
