@@ -375,12 +375,13 @@ export async function createAdminContentSignedUrl(item: AdminContentSummary) {
 }
 
 export async function deleteAdminContent(item: AdminContentSummary) {
+  const metadata = await supabase.from(contentTable(item.kind)).delete().eq('id', item.id).select('id').maybeSingle();
+  if (metadata.error || !metadata.data) return 'A exclusão foi interrompida porque o registro não pôde ser removido com segurança.';
   if (item.storagePath) {
     const storage = await supabase.storage.from(item.storageBucket).remove([item.storagePath]);
-    if (storage.error) return 'A exclusão foi interrompida porque o arquivo não pôde ser removido do Storage.';
+    if (storage.error) return 'O registro foi excluído, mas o arquivo físico ficou pendente para a limpeza de órfãos do Storage.';
   }
-  const metadata = await supabase.from(contentTable(item.kind)).delete().eq('id', item.id);
-  return metadata.error ? 'O arquivo saiu do Storage, mas o registro precisa ser revisado.' : null;
+  return null;
 }
 
 export async function listAdminAgenda(): Promise<ServiceResult<AgendaSummary[]>> {
