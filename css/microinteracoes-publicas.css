@@ -54,3 +54,244 @@
 
     #cursorGoldTrail { display:none!important; }
 }
+
+/* ============================================================
+   Experiência premium progressiva
+   Somente camada visual da página pública. Nenhuma regra abaixo
+   altera autenticação, proteção de arquivos ou área restrita.
+   ============================================================ */
+
+/* 2 — Serviços exploráveis sem substituir o conteúdo original. */
+#servicos .card {
+    min-height:286px;
+    padding-bottom:76px;
+}
+
+#servicos .card .service-insight {
+    position:absolute;
+    left:34px;
+    right:34px;
+    bottom:24px;
+    padding-top:10px;
+    border-top:1px solid rgba(184,154,99,.18);
+    color:var(--gold-soft);
+    font-size:.72rem;
+    line-height:1.5;
+    letter-spacing:.025em;
+    opacity:0;
+    translate:0 7px;
+    transition:opacity .28s ease,translate .32s cubic-bezier(.2,.8,.2,1),border-color .28s ease;
+    pointer-events:none;
+}
+
+body.premium-ui-ready #servicos .card {
+    cursor:pointer;
+}
+
+#servicos .card:hover .service-insight,
+#servicos .card:focus-visible .service-insight,
+#servicos .card.is-service-active .service-insight {
+    opacity:.92;
+    translate:0 0;
+    border-color:rgba(184,154,99,.36);
+}
+
+#servicos .card.is-service-active {
+    border-color:rgba(184,154,99,.6);
+    background:linear-gradient(145deg,rgba(216,218,221,.072),rgba(216,218,221,.025));
+}
+
+#servicos .card:focus-visible {
+    outline:1px solid var(--gold);
+    outline-offset:4px;
+}
+
+/* 3 — Linha técnica progressiva do método 01 → 02 → 03. */
+#processo .steps {
+    position:relative;
+    --process-progress:0;
+}
+
+#processo .steps::before,
+#processo .steps::after {
+    content:"";
+    position:absolute;
+    left:54px;
+    top:55px;
+    bottom:55px;
+    width:1px;
+    pointer-events:none;
+    z-index:0;
+}
+
+#processo .steps::before {
+    background:rgba(184,154,99,.16);
+}
+
+#processo .steps::after {
+    background:linear-gradient(180deg,var(--gold-soft),var(--gold));
+    box-shadow:0 0 14px rgba(208,180,122,.26);
+    transform:scaleY(var(--process-progress));
+    transform-origin:50% 0;
+    transition:transform .12s linear;
+}
+
+#processo .steps article {
+    position:relative;
+    z-index:1;
+}
+
+#processo .steps article.is-step-active > span {
+    border-color:rgba(208,180,122,.74);
+    background:rgba(184,154,99,.09);
+    box-shadow:0 0 0 5px rgba(184,154,99,.035),0 0 24px rgba(184,154,99,.12);
+}
+
+/* 4 — Blueprint quase imperceptível, revelado de forma contextual. */
+#servicos,
+#processo {
+    --blueprint-x:50%;
+    --blueprint-y:50%;
+    isolation:isolate;
+}
+
+#servicos::before,
+#processo::before {
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+    background-image:
+        linear-gradient(rgba(208,180,122,.055) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(208,180,122,.055) 1px,transparent 1px),
+        linear-gradient(rgba(208,180,122,.025) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(208,180,122,.025) 1px,transparent 1px);
+    background-size:42px 42px,42px 42px,10px 10px,10px 10px;
+    opacity:.36;
+    -webkit-mask-image:radial-gradient(circle 265px at var(--blueprint-x) var(--blueprint-y),#000 0,rgba(0,0,0,.86) 45%,transparent 78%);
+    mask-image:radial-gradient(circle 265px at var(--blueprint-x) var(--blueprint-y),#000 0,rgba(0,0,0,.86) 45%,transparent 78%);
+}
+
+#servicos > .container,
+#processo > .container {
+    position:relative;
+    z-index:1;
+}
+
+/* 5 — Halo dourado suave ao redor do cursor; o rastro continua separado. */
+#cursorGoldHalo {
+    --halo-x:-120px;
+    --halo-y:-120px;
+    --halo-scale:1;
+    position:fixed;
+    left:0;
+    top:0;
+    width:94px;
+    height:94px;
+    border-radius:50%;
+    pointer-events:none;
+    z-index:2147482999;
+    opacity:0;
+    background:radial-gradient(circle,rgba(208,180,122,.15) 0,rgba(184,154,99,.065) 34%,rgba(184,154,99,.018) 55%,transparent 74%);
+    mix-blend-mode:screen;
+    transform:translate3d(var(--halo-x),var(--halo-y),0) translate(-50%,-50%) scale(var(--halo-scale));
+    transition:opacity .18s ease,transform .18s cubic-bezier(.2,.8,.2,1);
+    will-change:transform,opacity;
+}
+
+#cursorGoldHalo.is-visible { opacity:.72; }
+#cursorGoldHalo.is-interactive { --halo-scale:1.28; }
+
+/* 6 — Entrada em camadas sem disputar com os transforms já existentes. */
+body.premium-ui-ready .reveal .premium-stagger-item {
+    opacity:0;
+    translate:0 14px;
+    transition-property:opacity,translate;
+    transition-duration:.52s,.56s;
+    transition-timing-function:ease,cubic-bezier(.2,.8,.2,1);
+    transition-delay:var(--premium-delay,0ms);
+}
+
+body.premium-ui-ready .reveal.visible .premium-stagger-item {
+    opacity:1;
+    translate:0 0;
+}
+
+/* Foto profissional mais contida somente no desktop. */
+@media (min-width:1051px) {
+    #sobre .about-grid {
+        grid-template-columns:360px minmax(0,1fr);
+        gap:68px;
+    }
+
+    #sobre .portrait-wrap {
+        width:340px;
+        max-width:100%;
+        min-height:auto;
+        justify-self:center;
+        padding:14px;
+    }
+
+    #sobre .portrait-wrap img {
+        width:100%;
+        height:445px;
+        object-fit:cover;
+    }
+
+    #sobre .portrait-wrap::before {
+        inset:34px -18px -18px 34px;
+    }
+}
+
+@media (hover:none), (pointer:coarse) {
+    #cursorGoldHalo { display:none!important; }
+    #servicos::before,
+    #processo::before {
+        --blueprint-x:50%;
+        --blueprint-y:50%;
+        opacity:.2;
+    }
+}
+
+@media (max-width:760px) {
+    #servicos .card {
+        min-height:276px;
+        padding-bottom:72px;
+    }
+
+    #servicos .card .service-insight {
+        left:34px;
+        right:34px;
+        bottom:21px;
+        font-size:.7rem;
+    }
+
+    #processo .steps::before,
+    #processo .steps::after {
+        left:53px;
+        top:53px;
+        bottom:53px;
+    }
+}
+
+@media (prefers-reduced-motion:reduce) {
+    #cursorGoldHalo { display:none!important; }
+
+    #processo .steps::after {
+        transition:none!important;
+    }
+
+    #servicos .card .service-insight {
+        opacity:.88!important;
+        translate:0 0!important;
+        transition:none!important;
+    }
+
+    body.premium-ui-ready .reveal .premium-stagger-item,
+    body.premium-ui-ready .reveal.visible .premium-stagger-item {
+        opacity:1!important;
+        translate:0 0!important;
+        transition:none!important;
+    }
+}
