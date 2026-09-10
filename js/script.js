@@ -122,12 +122,12 @@
         texto: 'Serviço de excelência. Todo o processo do serviço, desde o começo na criação do projeto até a entrega foi realizado com extremo profissionalismo e atenção aos detalhes. Recomendo de olhos fechados.'
       },
       {
-        autor: 'Li Alencar',
-        texto: 'Camila montou um projeto que amamos. Obrigada pela dedicação e competência em realizar nosso maior sonho.'
+        autor: 'expedito Batista',
+        texto: 'A Camila é muito competente e uma profissional ímpar, muito obrigado por nos ajudar no nosso maior sonho.'
       },
       {
-        autor: 'Liliane Oliveira',
-        texto: 'Excelente profissional!!! Eu recomendo.'
+        autor: 'Li Alencar',
+        texto: 'Camila montou um projeto que amamos. Obrigada pela dedicação e competência em realizar nosso maior sonho.'
       }
     ];
 
