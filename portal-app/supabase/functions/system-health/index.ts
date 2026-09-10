@@ -24,8 +24,25 @@ Deno.serve(async(req)=>{
     const {data:db,error:dbError}=await caller.rpc('admin_system_health');
     if(dbError)throw dbError;
     const service=createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});
-    const {data:buckets,error:bucketError}=await service.storage.listBuckets();
-    return json({ok:true,checkedAt:new Date().toISOString(),database:db,storage:{ok:!bucketError,buckets:(buckets??[]).length},edge:{ok:true,function:'system-health'}});
+    const [{data:buckets,error:bucketError},deletionProbe]=await Promise.all([
+      service.storage.listBuckets(),
+      fetch(`${url}/functions/v1/admin-delete-client`,{
+        method:'POST',
+        headers:{Authorization:auth,apikey:anon,'Content-Type':'application/json'},
+        body:JSON.stringify({action:'health'}),
+      }).then(async response=>{
+        let data:Record<string,unknown>={};
+        try{data=await response.json()}catch{data={};}
+        return {ok:response.ok&&data.ok===true&&data.function==='admin-delete-client',status:response.status};
+      }).catch(()=>({ok:false,status:0})),
+    ]);
+    return json({
+      ok:true,
+      checkedAt:new Date().toISOString(),
+      database:db,
+      storage:{ok:!bucketError,buckets:(buckets??[]).length},
+      edge:{ok:deletionProbe.ok,function:'system-health',adminDeleteClient:deletionProbe.ok,adminDeleteClientStatus:deletionProbe.status},
+    });
   }catch(error){
     return json({ok:false,error:error instanceof Error?error.message:'Falha na verificação.'},403);
   }
