@@ -398,21 +398,8 @@ export async function respondToApproval(approvalId: string, status: 'aprovado' |
     p_status: status,
     p_comentario: comment.trim() || null,
   });
-  if (!rpc.error) {
-    if (rpc.data !== true) return 'Esta aprovação já foi respondida ou não está disponível.';
-    void dispatchPendingPushNotifications();
-    return null;
-  }
-  if (!isCompatibilityError(rpc.error)) return 'Não foi possível registrar sua resposta.';
-
-  const fallback = await supabase
-    .from('aprovacoes')
-    .update({ status, comentario: comment.trim() || null, respondido_at: new Date().toISOString() })
-    .eq('id', approvalId)
-    .eq('status', 'aguardando')
-    .select('id')
-    .maybeSingle();
-  if (fallback.error || !fallback.data) return 'Não foi possível registrar sua resposta.';
+  if (rpc.error) return 'Não foi possível registrar sua resposta com segurança. Atualize a tela e tente novamente.';
+  if (rpc.data !== true) return 'Esta aprovação já foi respondida ou não está disponível.';
   void dispatchPendingPushNotifications();
   return null;
 }
