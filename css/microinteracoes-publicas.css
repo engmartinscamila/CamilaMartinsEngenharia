@@ -1,0 +1,56 @@
+/* Padronização das microinterações públicas.
+   Carregado depois de styles.css para corrigir movimentos laterais sem alterar a base do site. */
+
+#servicos .card > i,
+#processo .steps article > span,
+.portfolio-call .call-card-icon,
+.featured-project-overlay em i,
+.contact-card a i {
+    transform-origin:center;
+    transition:transform .32s cubic-bezier(.2,.8,.2,1),
+               border-color .32s ease,
+               background-color .32s ease,
+               box-shadow .32s ease,
+               color .32s ease;
+}
+
+@media (hover:hover) and (pointer:fine) {
+    /* Mesmo padrão em todos: sobe 3 px e amplia 5%, sem rotação nem deslocamento lateral. */
+    #servicos .cards > .card:hover > i,
+    #processo .process-grid .steps > article:hover > span,
+    .portfolio-call .showcase-calls .call-card:hover .call-card-icon,
+    .featured-project-card:hover .featured-project-overlay em i,
+    .featured-project-card:focus-visible .featured-project-overlay em i,
+    .contact-card a:hover i {
+        transform:translateY(-3px) scale(1.05);
+    }
+}
+
+/* Rastro luminoso dourado do cursor. O canvas não captura cliques. */
+#cursorGoldTrail {
+    position:fixed;
+    inset:0;
+    width:100vw;
+    height:100vh;
+    pointer-events:none;
+    z-index:2147483000;
+    opacity:.72;
+    mix-blend-mode:screen;
+}
+
+@media (hover:none), (pointer:coarse) {
+    #cursorGoldTrail { display:none!important; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+    #servicos .card > i,
+    #processo .steps article > span,
+    .portfolio-call .call-card-icon,
+    .featured-project-overlay em i,
+    .contact-card a i {
+        transition:none!important;
+        transform:none!important;
+    }
+
+    #cursorGoldTrail { display:none!important; }
+}
