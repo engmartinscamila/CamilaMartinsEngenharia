@@ -68,18 +68,68 @@ CAMILA MARTINS ENGENHARIA
     }
 
     async function urlArquivo(item, bucket) {
-        const urlSalva = urlSegura(item?.url);
+        if (!item) return "";
+
+        const bucketReal = item.storage_bucket || bucket;
+        const caminho = String(item.arquivo || "");
+        const ehDocumento = bucket === window.BUCKETS.DOCUMENTOS;
+        const ehFoto = bucket === window.BUCKETS.FOTOS;
+        const ehBiblioteca = bucket === window.BUCKETS.BIBLIOTECA;
+
+        if (ehDocumento) {
+            if (!item.id) return "";
+            const { data, error } = await clienteSupabase.functions.invoke(
+                "issue-protected-asset",
+                { body: { assetId: item.id, kind: "document", action: "view" } }
+            );
+            if (error || !data?.url) {
+                console.error("Não foi possível emitir o documento protegido:", error || data);
+                return "";
+            }
+            return urlSegura(data.url);
+        }
+
+        if (ehFoto) {
+            if (!item.id) return "";
+            const { data, error } = await clienteSupabase.functions.invoke(
+                "issue-protected-asset",
+                { body: { assetId: item.id, kind: "photo", action: "view" } }
+            );
+            if (error || !data?.url) {
+                console.error("Não foi possível emitir a imagem protegida:", error || data);
+                return "";
+            }
+            return urlSegura(data.url);
+        }
+
+        if (ehBiblioteca && caminho && /\.pdf$/i.test(caminho)) {
+            if (!["biblioteca", "documentos"].includes(bucketReal)) {
+                console.error("PDF de biblioteca está em um bucket incompatível com a emissão protegida.");
+                return "";
+            }
+            const { data, error } = await clienteSupabase.functions.invoke(
+                "proteger-pdf",
+                { body: { bucket: bucketReal, path: caminho } }
+            );
+            if (error || !data?.viewUrl) {
+                console.error("Não foi possível emitir o PDF protegido da biblioteca:", error || data);
+                return "";
+            }
+            return urlSegura(data.viewUrl);
+        }
+
+        const urlSalva = urlSegura(item.url);
         if (urlSalva) return urlSalva;
-        if (!item?.arquivo) return "";
+        if (!caminho) return "";
 
         const { data, error } = await clienteSupabase
             .storage
-            .from(bucket)
-            .createSignedUrl(item.arquivo, 21600);
+            .from(bucketReal)
+            .createSignedUrl(caminho, 300, { download: false });
 
         if (error) {
             console.error(
-                `Não foi possível abrir ${bucket}/${item.arquivo}:`,
+                `Não foi possível abrir ${bucketReal}/${caminho}:`,
                 error
             );
             return "";
@@ -389,6 +439,18 @@ CAMILA MARTINS ENGENHARIA
         `;
     }
 
+    function clientePodeResponderSolicitacao(item) {
+        const origem = String(item?.origem || "").trim().toLowerCase();
+        const status = String(item?.status || "").trim().toLowerCase();
+        return ["admin", "administrador"].includes(origem) && status === "aguardando_cliente";
+    }
+
+    function rotuloAutorResposta(autor) {
+        return ["administradora", "administrador", "admin"].includes(String(autor || "").toLowerCase())
+            ? "Camila Martins Engenharia"
+            : "Você";
+    }
+
     async function renderizarSolicitacoes(itens) {
         let respostas = [];
         if (itens.length) {
@@ -410,13 +472,15 @@ CAMILA MARTINS ENGENHARIA
                                 <span><i class="bi bi-calendar3"></i> ${escapar(formatarData(item.created_at))}</span>
                             </div>
                             ${respostas.filter(resposta => String(resposta.solicitacao_id) === String(item.id)).map(resposta => `
-                                <div class="item-card"><strong>${resposta.autor === "administradora" ? "Camila Martins Engenharia" : "Você"}</strong><p>${escapar(resposta.mensagem)}</p></div>
+                                <div class="item-card"><strong>${rotuloAutorResposta(resposta.autor)}</strong><p>${escapar(resposta.mensagem)}</p></div>
                             `).join("")}
-                            <form class="client-reply-form" data-id="${escapar(item.id)}">
-                                <div class="form-group"><label>Responder</label><textarea name="mensagem" rows="3" required></textarea></div>
-                                <button class="submit-button" type="submit">Enviar resposta</button>
-                                <p class="form-message"></p>
-                            </form>
+                            ${clientePodeResponderSolicitacao(item) ? `
+                                <form class="client-reply-form" data-id="${escapar(item.id)}">
+                                    <div class="form-group"><label>Responder</label><textarea name="mensagem" rows="3" maxlength="4000" required></textarea></div>
+                                    <button class="submit-button" type="submit">Enviar resposta</button>
+                                    <p class="form-message"></p>
+                                </form>
+                            ` : ""}
                         </article>
                     `).join("")}
                 </div>
@@ -459,17 +523,25 @@ CAMILA MARTINS ENGENHARIA
         evento.preventDefault();
         const form = evento.currentTarget;
         const mensagem = form.elements.mensagem.value.trim();
+        const botao = form.querySelector("button[type='submit']");
+        const retorno = form.querySelector(".form-message");
         if (!mensagem) return;
-        const { error } = await clienteSupabase.from(window.TABELAS.SOLICITACAO_RESPOSTAS).insert([{
-            solicitacao_id: form.dataset.id,
-            cliente_id: clienteAtual.id,
-            autor: "cliente",
-            mensagem
-        }]);
-        if (error) {
-            form.querySelector(".form-message").textContent = "Não foi possível enviar.";
+
+        botao.disabled = true;
+        retorno.textContent = "Enviando...";
+
+        const { data, error } = await clienteSupabase.rpc("reply_to_own_request", {
+            p_solicitacao_id: form.dataset.id,
+            p_mensagem: mensagem
+        });
+
+        if (error || !data) {
+            console.error("Erro ao responder solicitação:", error);
+            retorno.textContent = "Não foi possível enviar. Esta solicitação pode não estar aguardando sua resposta.";
+            botao.disabled = false;
             return;
         }
+
         await window.notificarAtualizacao({
             tipo: "solicitacao_respondida",
             cliente_id: clienteAtual.id,
