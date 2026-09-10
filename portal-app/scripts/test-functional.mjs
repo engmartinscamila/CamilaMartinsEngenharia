@@ -25,4 +25,20 @@ const record='<STMTTRN><TRNAMT>100.00<DTPOSTED>20260909<FITID>fixture-1<TRNTYPE>
 const asset={file:{text:async()=>record+record}};
 eq(await operations.importOfxTransactions('account-a',asset),{imported:1,reconciled:0,error:null},'duplicate OFX rows counted once');eq(inserted.length,1,'duplicate rows submitted once');eq(invoked.name,'reconcile_imported_ofx','reconciliation is atomic RPC');
 rpcResult={error:{message:'offline'},data:null};const partial=await operations.importOfxTransactions('account-a',asset);eq(partial.imported,1,'import success retained when reconciliation fails');eq(typeof partial.error,'string','partial result explained');
+
+const deletionSource=fs.readFileSync('supabase/functions/admin-delete-client/index.ts','utf8');
+const purgeCall=deletionSource.indexOf("caller.rpc('admin_purge_client_database'");
+const storageCleanup=deletionSource.indexOf('const storageCleanup = await deleteStorageObjects(service, objects)');
+eq(deletionSource.includes('requireAdmin(request)'),true,'client deletion requires validated admin session');
+eq(purgeCall>=0&&storageCleanup>purgeCall,true,'client deletion commits database purge before physical storage cleanup');
+eq(deletionSource.includes("from('supplier_bids')")&&deletionSource.includes('attachment_bucket,attachment_path'),true,'client deletion inventories supplier bid attachments');
+eq(deletionSource.includes("path.startsWith('issued/')")&&deletionSource.includes("path.startsWith('emitidos/')"),true,'client deletion inventories only recognized temporary protected-copy prefixes');
+eq(deletionSource.includes('financialHistoryPreserved: true')&&deletionSource.includes('legalAndSecurityHistoryPreserved: true'),true,'client deletion reports required histories as preserved');
+const retentionMigration=fs.readFileSync('supabase/migrations/20260910205221_preserve_client_legal_and_security_history_on_deletion.sql','utf8');
+eq(retentionMigration.includes('client_retention_event_archive'),true,'client deletion archives legal/security retention events');
+eq(retentionMigration.includes("'legal_acceptance'")&&retentionMigration.includes("'protected_asset_issue'")&&retentionMigration.includes("'protected_pdf_issue'"),true,'client deletion preserves all required security evidence classes');
+const deletionClient=fs.readFileSync('src/services/client-deletion-service.ts','utf8');
+eq(deletionClient.includes("functions.invoke('admin-delete-client'"),true,'client UI uses only the protected permanent-deletion endpoint');
+eq(deletionClient.includes('retainedSecurityEvents'),true,'client deletion preview exposes preserved security-event count');
+
 process.stdout.write(`PASS: ${checks} functional regression checks; no production writes.\n`);
