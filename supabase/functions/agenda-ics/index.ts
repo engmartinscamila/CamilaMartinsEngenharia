@@ -125,7 +125,7 @@ Deno.serve(async (request) => {
 
   const { data: evento, error } = await admin
     .from("agenda")
-    .select("id,titulo,tipo,data,horario,descricao")
+    .select("id,titulo,tipo,data,horario,descricao,cancelado")
     .eq("id", agendaId)
     .maybeSingle();
 
@@ -136,6 +136,19 @@ Deno.serve(async (request) => {
     !evento.data
   ) {
     return resposta("Reunião não encontrada.", 404);
+  }
+
+  if (evento.cancelado === true) {
+    return resposta("Este convite foi cancelado.", 410);
+  }
+
+  const limiteEvento = new Date(`${String(evento.data)}T23:59:59-03:00`);
+  if (Number.isNaN(limiteEvento.getTime())) {
+    return resposta("Data ou horário inválido.", 422);
+  }
+  limiteEvento.setTime(limiteEvento.getTime() + 48 * 60 * 60 * 1000);
+  if (Date.now() > limiteEvento.getTime()) {
+    return resposta("Este link de agenda expirou.", 410);
   }
 
   const agora = new Date()
