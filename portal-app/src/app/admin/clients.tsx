@@ -6,9 +6,10 @@ import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
-import { inviteAdminClient, listAdminClients, previewPermanentClientDeletion, requestPermanentClientDeletion, resendAdminClientInvite, sendAdminClientRecovery, updateAdminClientProfile, updateAdminClientStatus } from '@/services/admin-service';
+import { inviteAdminClient, listAdminClients, resendAdminClientInvite, sendAdminClientRecovery, updateAdminClientProfile, updateAdminClientStatus } from '@/services/admin-service';
+import { previewPermanentClientDeletion, requestPermanentClientDeletion, type ClientDeletionPreview } from '@/services/client-deletion-service';
 import { spacing, ThemeColors, typography } from '@/theme/tokens';
-import type { AdminClientSummary, ClientDeletionPreview } from '@/types/domain';
+import type { AdminClientSummary } from '@/types/domain';
 
 type ClientStatus = 'ativo' | 'arquivado' | 'acesso_revogado';
 
@@ -83,9 +84,9 @@ export default function AdminClientsScreen() {
     setError(null);
     const result = await requestPermanentClientDeletion(deleteTarget.id, deleteConfirmation.trim());
     setSaving(false);
-    if (result) setError(result);
+    if (result.error) setError(result.error);
     else {
-      setSuccess('Cliente, vínculos e arquivos removidos pela função segura.');
+      setSuccess(result.data?.warning ?? 'Cliente, vínculos e arquivos removidos pela função segura.');
       setDeleteTarget(null);
       setDeletePreview(null);
       setDeleteConfirmation('');
@@ -164,9 +165,9 @@ export default function AdminClientsScreen() {
         <Card>
           <Notice tone="danger">A exclusão definitiva remove acesso, projetos e arquivos operacionais. Antes disso, contratos, valores e lançamentos são copiados para um histórico administrativo imutável.</Notice>
           <Text style={styles.sectionTitle}>Confirmar exclusão de {deleteTarget.name}</Text>
-          {deletePreview ? <View style={styles.preview}><Text style={styles.detail}>{deletePreview.contracts} contrato(s) • {deletePreview.projects} projeto(s) • {deletePreview.storageObjects} arquivo(s) no Storage</Text><Text style={styles.detail}>{deletePreview.documents} documento(s) • {deletePreview.photos} foto(s) • {deletePreview.libraryItems} item(ns) de biblioteca</Text><Text style={styles.detail}>{deletePreview.financialEntries + deletePreview.ledgerEntries} lançamento(s) a preservar • {formatCurrency(deletePreview.contractedValue)} contratado</Text></View> : <ActivityIndicator color={colors.gold600} />}
+          {deletePreview ? <View style={styles.preview}><Text style={styles.detail}>{deletePreview.contracts} contrato(s) • {deletePreview.projects} projeto(s) • {deletePreview.storageObjects} arquivo(s) no Storage</Text><Text style={styles.detail}>{deletePreview.documents} documento(s) • {deletePreview.photos} foto(s) • {deletePreview.libraryItems} item(ns) de biblioteca</Text><Text style={styles.detail}>{deletePreview.financialEntries + deletePreview.ledgerEntries} lançamento(s) financeiros a preservar • {formatCurrency(deletePreview.contractedValue)} contratado</Text><Text style={styles.detail}>Retenção: {deletePreview.emissionSnapshots} snapshot(s) • {deletePreview.documentAcceptances} aceite(s) • {deletePreview.fiscalDocuments} documento(s) fiscal(is)</Text>{!deletePreview.canDelete?<Notice tone="warning">Este cadastro possui registros de retenção documental ou fiscal. A exclusão definitiva foi bloqueada; use Arquivar ou Revogar acesso para preservar a trilha obrigatória.</Notice>:null}</View> : <ActivityIndicator color={colors.gold600} />}
           <Field label="Digite o nome completo do cliente" onChangeText={setDeleteConfirmation} value={deleteConfirmation} />
-          <View style={styles.actions}><View style={styles.action}><Button disabled={!deletePreview} loading={saving} onPress={() => void permanentlyDelete()} title="Preservar extrato e excluir" variant="danger" /></View><View style={styles.action}><Button onPress={() => { setDeleteTarget(null); setDeletePreview(null); }} title="Cancelar" variant="ghost" /></View></View>
+          <View style={styles.actions}><View style={styles.action}><Button disabled={!deletePreview?.canDelete} loading={saving} onPress={() => void permanentlyDelete()} title="Preservar históricos e excluir" variant="danger" /></View><View style={styles.action}><Button onPress={() => { setDeleteTarget(null); setDeletePreview(null); }} title="Cancelar" variant="ghost" /></View></View>
         </Card>
       ) : null}
     </Screen>
