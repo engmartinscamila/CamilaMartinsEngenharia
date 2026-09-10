@@ -23,7 +23,7 @@ type HealthPayload = {
     latest_snapshot_at?: string | null;
   };
   storage?: { ok?: boolean; buckets?: number };
-  edge?: { ok?: boolean; function?: string };
+  edge?: { ok?: boolean; function?: string; adminDeleteClient?: boolean; adminDeleteClientStatus?: number };
   error?: string;
 };
 
@@ -76,7 +76,7 @@ export default function AdminSystemHealthScreen(){
     <Card><View style={styles.row}><Text style={styles.title}>Supabase / banco</Text><StatusPill label={db?.database==='ok'?'Operacional':'Indisponível'} tone={db?.database==='ok'?'success':'danger'}/></View><Text style={styles.meta}>Documentos: {db?.documents_total??'—'} • snapshots: {db?.snapshots_total??'—'}</Text><Text style={styles.meta}>Último documento: {formatDateTime(db?.latest_document_generated_at)}</Text><Text style={styles.meta}>Último snapshot: {formatDateTime(db?.latest_snapshot_at)}</Text></Card>
     <Card><View style={styles.row}><Text style={styles.title}>Integridade documental SHA-256</Text><StatusPill label={hashOk?'100% SHA-256':'Revisar'} tone={hashOk?'success':'warning'}/></View><Text style={styles.meta}>Snapshots SHA-256: {db?.sha256_snapshots??'—'} de {db?.snapshots_total??'—'}</Text><Text style={styles.meta}>Referências históricas anteriores à trilha imutável: {db?.legacy_snapshots??'—'}</Text><Text style={styles.meta}>Aceites pendentes: {db?.pending_acceptances??'—'}</Text></Card>
     <Card><View style={styles.row}><Text style={styles.title}>Storage</Text><StatusPill label={health?.storage?.ok?'Operacional':'Falha'} tone={health?.storage?.ok?'success':'danger'}/></View><Text style={styles.meta}>Buckets verificados pelo backend: {health?.storage?.buckets??'—'}</Text></Card>
-    <Card><View style={styles.row}><Text style={styles.title}>Edge Functions</Text><StatusPill label={health?.edge?.ok?'Runtime operacional':'Falha'} tone={health?.edge?.ok?'success':'danger'}/></View><Text style={styles.meta}>Diagnóstico executado por: {health?.edge?.function??'—'} • {formatDateTime(health?.checkedAt)}</Text></Card>
+    <Card><View style={styles.row}><Text style={styles.title}>Edge Functions</Text><StatusPill label={health?.edge?.ok?'Serviços críticos operacionais':'Revisar serviço crítico'} tone={health?.edge?.ok?'success':'danger'}/></View><Text style={styles.meta}>Diagnóstico executado por: {health?.edge?.function??'—'} • {formatDateTime(health?.checkedAt)}</Text><Text style={styles.meta}>Exclusão segura de cliente: {health?.edge?.adminDeleteClient?'operacional':'indisponível'}{health?.edge?.adminDeleteClientStatus?` • HTTP ${health.edge.adminDeleteClientStatus}`:''}</Text></Card>
     <Card><View style={styles.row}><Text style={styles.title}>Automações diárias</Text><StatusPill label={runs[0]?.status==='success'?'Operacional':runs[0]?.status==='error'?'Falha':'Aguardando primeira execução'} tone={runs[0]?.status==='success'?'success':runs[0]?.status==='error'?'danger':'warning'}/></View><Text style={styles.meta}>Lembretes de tarefas e financeiro: diariamente às 08:00 (America/Sao_Paulo).</Text><Text style={styles.meta}>Última execução: {formatDateTime(runs[0]?.finishedAt??runs[0]?.startedAt)}</Text>{runs[0]?.errorMessage?<Notice tone="danger">{runs[0].errorMessage}</Notice>:null}<Button loading={automationLoading} onPress={()=>void runAutomation()} title="Executar automação agora" variant="secondary" /></Card>
     <Button loading={loading} onPress={()=>void load()} title="Executar nova verificação" variant="secondary" />
   </Screen>;
