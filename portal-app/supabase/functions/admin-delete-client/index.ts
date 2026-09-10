@@ -2,12 +2,13 @@ import { corsHeaders, cleanText, json } from '../_shared/http.ts';
 import { requireAdmin } from '../_shared/admin.ts';
 
 type StoredObject = { bucket: string; path: string };
+type StorageCleanup = { deleted: number; failed: Array<{ bucket: string; count: number }> };
 
 function uniqueObjects(objects: StoredObject[]) {
   return [...new Map(objects.map((item) => [`${item.bucket}/${item.path}`, item])).values()];
 }
 
-async function deleteStorageObjects(service: any, objects: StoredObject[]) {
+async function deleteStorageObjects(service: any, objects: StoredObject[]): Promise<StorageCleanup> {
   const byBucket = new Map<string, string[]>();
   for (const item of uniqueObjects(objects)) {
     const paths = byBucket.get(item.bucket) ?? [];
@@ -15,15 +16,16 @@ async function deleteStorageObjects(service: any, objects: StoredObject[]) {
     byBucket.set(item.bucket, paths);
   }
   let deleted = 0;
+  const failed: StorageCleanup['failed'] = [];
   for (const [bucket, paths] of byBucket) {
     for (let index = 0; index < paths.length; index += 100) {
       const batch = paths.slice(index, index + 100);
       const { error } = await service.storage.from(bucket).remove(batch);
-      if (error) throw new Error(`Falha ao excluir arquivos do bucket ${bucket}. O banco foi preservado.`);
-      deleted += batch.length;
+      if (error) failed.push({ bucket, count: batch.length });
+      else deleted += batch.length;
     }
   }
-  return deleted;
+  return { deleted, failed };
 }
 
 Deno.serve(async (request) => {
@@ -36,6 +38,7 @@ Deno.serve(async (request) => {
     const clientId = cleanText(body.clientId, 36);
     const action = body.action === 'delete' ? 'delete' : 'preview';
     if (!/^[0-9a-f-]{36}$/i.test(clientId)) return json({ error: 'Cliente inválido.' }, 400);
+
     const { error: rateError } = await caller.rpc('consume_admin_rate_limit', { p_action: `admin-delete-client-${action}` });
     if (rateError) throw new Error('Muitas tentativas de exclusão. Aguarde antes de tentar novamente.');
 
@@ -63,47 +66,67 @@ Deno.serve(async (request) => {
         .map((row: { storage_bucket?: string; arquivo: string }) => ({ bucket: row.storage_bucket ?? fallbackBucket, path: row.arquivo }));
     };
 
-    const [documents, photos, library, protectedIssues, protectedAssetIssues] = await Promise.all([
+    const [documents, photos, library] = await Promise.all([
       collect('documentos', 'documentos'),
       collect('fotos', 'fotos'),
-      collect('biblioteca', 'materiais-protegidos'),
-      service.from('protected_pdf_issues').select('issued_storage_path').eq('client_id', clientId),
-      service.from('protected_asset_issues').select('issued_storage_path').eq('client_id', clientId),
+      collect('biblioteca', 'biblioteca'),
     ]);
-    if (protectedIssues.error) throw protectedIssues.error;
-    if (protectedAssetIssues.error) throw protectedAssetIssues.error;
-    const issuedObjects = (protectedIssues.data ?? [])
-      .filter((row: { issued_storage_path?: string }) => Boolean(row.issued_storage_path))
-      .map((row: { issued_storage_path: string }) => ({ bucket: 'materiais-protegidos', path: row.issued_storage_path }));
-    const issuedAssetObjects = (protectedAssetIssues.data ?? [])
-      .filter((row: { issued_storage_path?: string }) => Boolean(row.issued_storage_path))
-      .map((row: { issued_storage_path: string }) => ({ bucket: 'materiais-protegidos', path: row.issued_storage_path }));
-    const objects = uniqueObjects([...documents, ...photos, ...library, ...issuedObjects, ...issuedAssetObjects]);
+    const objects = uniqueObjects([...documents, ...photos, ...library]);
 
     const { data: databasePreview, error: previewError } = await caller.rpc('admin_client_deletion_preview', { p_cliente_id: clientId });
-    if (previewError) throw new Error('A prévia segura depende da migração da Fase 7.');
+    if (previewError || !databasePreview) throw new Error('A prévia segura da exclusão não pôde ser calculada.');
     const preview = { ...databasePreview, storageObjects: objects.length };
     if (action === 'preview') return json({ preview });
+
+    if (preview.canDelete !== true) {
+      return json({
+        error: 'A exclusão definitiva foi bloqueada porque existem registros documentais ou fiscais que devem ser preservados. Use Arquivar ou Revogar acesso.',
+        preview,
+      }, 409);
+    }
 
     const confirmation = cleanText(body.confirmation, 180);
     if (confirmation !== client.nome.trim()) return json({ error: 'A confirmação não corresponde ao nome completo do cliente.' }, 400);
 
-    const deletedObjects = await deleteStorageObjects(service, objects);
-
     const { data: authId, error: purgeError } = await caller.rpc('admin_purge_client_database', { p_cliente_id: clientId });
-    if (purgeError) throw new Error(`Os arquivos foram removidos, mas a exclusão do banco falhou: ${purgeError.message}`);
+    if (purgeError) throw new Error(`A exclusão foi interrompida e revertida pelo banco: ${purgeError.message}`);
+
+    const storageCleanup = await deleteStorageObjects(service, objects);
+    let authDeleted = true;
     if (authId) {
       const { error: authError } = await service.auth.admin.deleteUser(authId);
-      if (authError) throw new Error('Os dados foram excluídos, mas o acesso no Auth precisa ser removido manualmente.');
+      authDeleted = !authError;
     }
+
+    const warningParts: string[] = [];
+    if (storageCleanup.failed.length) warningParts.push('alguns arquivos privados ficaram pendentes para a limpeza de órfãos');
+    if (!authDeleted) warningParts.push('o usuário do Auth ficou pendente para remoção, mas perdeu o vínculo com o portal');
+    const warning = warningParts.length ? `Exclusão de dados concluída; ${warningParts.join(' e ')}.` : null;
 
     await service.from('audit_log').insert({
       user_id: user.id,
-      action: 'purge_client_complete',
+      action: warning ? 'purge_client_partial_cleanup' : 'purge_client_complete',
       entity_type: 'clientes',
-      details: { deleted_objects: deletedObjects, deleted_projects: projectIds.length, financial_history_preserved: true },
+      entity_id: clientId,
+      details: {
+        deleted_objects: storageCleanup.deleted,
+        failed_storage_batches: storageCleanup.failed,
+        deleted_projects: projectIds.length,
+        financial_history_preserved: true,
+        auth_deleted: authDeleted,
+        warning,
+      },
     });
-    return json({ deleted: true, deletedObjects, deletedProjects: projectIds.length, financialHistoryPreserved: true });
+
+    return json({
+      deleted: true,
+      deletedObjects: storageCleanup.deleted,
+      deletedProjects: projectIds.length,
+      financialHistoryPreserved: true,
+      storageCleanupComplete: storageCleanup.failed.length === 0,
+      authDeleted,
+      warning,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Falha na exclusão segura.';
     const status = message.includes('Acesso') ? 403 : message.includes('Sessão') ? 401 : 500;
