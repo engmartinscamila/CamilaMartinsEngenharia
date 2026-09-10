@@ -69,7 +69,7 @@ Deno.serve(async (request) => {
     const [documents, photos, library] = await Promise.all([
       collect('documentos', 'documentos'),
       collect('fotos', 'fotos'),
-      collect('biblioteca', 'biblioteca'),
+      collect('biblioteca', 'materiais-protegidos'),
     ]);
     const objects = uniqueObjects([...documents, ...photos, ...library]);
 
