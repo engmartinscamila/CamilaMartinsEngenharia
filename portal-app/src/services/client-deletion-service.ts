@@ -16,9 +16,15 @@ export interface ClientDeletionPreview {
   contractedValue: number;
   alreadyArchived: number;
   storageObjects: number;
+  supplierAttachments: number;
+  temporaryIssuedCopies: number;
   emissionSnapshots: number;
   documentAcceptances: number;
   fiscalDocuments: number;
+  legalAcceptances: number;
+  protectedAssetIssues: number;
+  protectedPdfIssues: number;
+  retainedSecurityEvents: number;
   retentionBlockers: number;
   canDelete: boolean;
 }
@@ -45,9 +51,15 @@ export async function previewPermanentClientDeletion(clientId: string): Promise<
       contractedValue: Number(raw.contractedValue ?? 0),
       alreadyArchived: Number(raw.alreadyArchived ?? 0),
       storageObjects: Number(raw.storageObjects ?? 0),
+      supplierAttachments: Number(raw.supplierAttachments ?? 0),
+      temporaryIssuedCopies: Number(raw.temporaryIssuedCopies ?? 0),
       emissionSnapshots: Number(raw.emissionSnapshots ?? 0),
       documentAcceptances: Number(raw.documentAcceptances ?? 0),
       fiscalDocuments: Number(raw.fiscalDocuments ?? 0),
+      legalAcceptances: Number(raw.legalAcceptances ?? 0),
+      protectedAssetIssues: Number(raw.protectedAssetIssues ?? 0),
+      protectedPdfIssues: Number(raw.protectedPdfIssues ?? 0),
+      retainedSecurityEvents: Number(raw.retainedSecurityEvents ?? 0),
       retentionBlockers: Number(raw.retentionBlockers ?? 0),
       canDelete: raw.canDelete === true,
     },
