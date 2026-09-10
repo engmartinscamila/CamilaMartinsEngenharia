@@ -112,6 +112,10 @@ Deno.serve(async (request) => {
   try {
     const { caller, service, user } = await requireAdmin(request);
     const body = await request.json();
+    if (body.action === 'health') {
+      return json({ ok: true, function: 'admin-delete-client', checkedAt: new Date().toISOString() });
+    }
+
     const clientId = cleanText(body.clientId, 36);
     const action = body.action === 'delete' ? 'delete' : 'preview';
     if (!/^[0-9a-f-]{36}$/i.test(clientId)) return json({ error: 'Cliente inválido.' }, 400);
