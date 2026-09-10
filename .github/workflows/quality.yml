@@ -49,6 +49,7 @@ jobs:
           node --check js/configuracoes.js
           node --check js/ui-core.js
           node --check js/auth.js
+          node --check js/cliente-area.js
 
       - name: Instalar Chromium de teste
         run: |
