@@ -42,7 +42,7 @@ function garantirAtalhoDocumentalAdmin() {
   botao.id = 'abrirContratosGerais';
   botao.type = 'button';
   botao.title = 'Abrir orçamento, contrato e documentos complementares';
-  botao.innerHTML = '<i class="fa-solid fa-file-signature"></i><span>Contratos gerais</span>';
+  botao.innerHTML = '<i class="fa-solid fa-file-signature"></i><span>Orçamentos e contratos</span>';
   botao.addEventListener('click', () => { window.location.href = 'orcamentos-contratos.html'; });
   card.appendChild(botao);
 }

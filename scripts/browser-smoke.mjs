@@ -1043,6 +1043,21 @@ async function selecionarPrimeiraOpcaoValida(page, id) {
   await page.close();
 }
 
+// Uma única entrada por ferramenta; normalização repetida não duplica os atalhos.
+{
+  const page = await loadPage(context, "admin.html");
+  await page.evaluate(() => { window.CMENormalizarMenuAdmin(); window.CMENormalizarMenuAdmin(); });
+  const menuLinks = await page.locator('.menu-lateral a.menu-item').evaluateAll(links => links.map(link => link.getAttribute('href')));
+  assert(!menuLinks.some(href => /^\/?portal\/admin\/?$/.test(href || '')), 'Administração: o painel intermediário redundante reapareceu');
+  assert(new Set(menuLinks).size === menuLinks.length, 'Administração: há destinos repetidos no menu');
+  for (const route of ['crm', 'contract-documents', 'document-preparation', 'document-governance', 'document-archive', 'tasks', 'work-diary', 'procurement', 'financial', 'portal-control', 'approvals', 'notifications', 'security']) {
+    assert(menuLinks.filter(href => href === `portal/admin/${route}`).length === 1, `Administração: ${route} deve ter um acesso direto no menu`);
+    assert(await page.locator(`#abrirFerramenta-${route}`).count() === 1, `Administração: ${route} deve aparecer uma vez nas ações principais`);
+  }
+  await responsive(page, 'admin.html com ferramentas diretas');
+  await page.close();
+}
+
 const adminNav = [
   ["abrirClientes","clientes.html"],["abrirProjetos","projetos.html"],["abrirDocumentos","documentos.html"],
   ["abrirBiblioteca","biblioteca.html"],["abrirFotos","fotos.html"],["abrirFinanceiro","financeiro.html"],

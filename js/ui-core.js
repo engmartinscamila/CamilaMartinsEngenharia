@@ -12,7 +12,59 @@ function elementosLoading(){return[document.getElementById("loading"),document.g
 function aplicarPreferencias(preferencias={}){const tema=preferencias.tema||localStorage.getItem(CHAVE_TEMA)||"escuro",cor=preferencias.cor_principal||localStorage.getItem(CHAVE_COR)||"#b89a63",notificacoes=preferencias.notificacoes;document.documentElement.dataset.adminTheme=tema==="claro"?"claro":"escuro";if(corValida(cor)){document.documentElement.style.setProperty("--dourado",cor);localStorage.setItem(CHAVE_COR,cor)}localStorage.setItem(CHAVE_TEMA,tema==="claro"?"claro":"escuro");if(typeof notificacoes==="boolean")localStorage.setItem(CHAVE_NOTIFICACOES,notificacoes?"ativo":"inativo")}
 function criarLinkMenu(href,icon,titulo){const link=document.createElement("a");link.href=href;link.className="menu-item";link.innerHTML=`<i class="fa-solid ${icon}"></i><span>${titulo}</span>`;return link}
 function garantirLink(menu,href,icon,titulo,referenciaHref,posicao="afterend"){let link=Array.from(menu.querySelectorAll("a.menu-item")).find(item=>(item.getAttribute("href")||"").split("?")[0]===href);if(!link){link=criarLinkMenu(href,icon,titulo);const referencia=Array.from(menu.querySelectorAll("a.menu-item")).find(item=>(item.getAttribute("href")||"").split("?")[0]===referenciaHref);if(referencia)referencia.insertAdjacentElement(posicao,link);else menu.appendChild(link)}link.innerHTML=`<i class="fa-solid ${icon}"></i><span>${titulo}</span>`;return link}
-function normalizarMenuAdministrativo(){const menu=document.querySelector(".menu-lateral");if(!menu)return;garantirLink(menu,"protecao-pdf-admin.html","fa-file-shield","Conteúdo do site","biblioteca.html");for(const href of["documentos-contratuais.html","arquivo-documental.html"]){menu.querySelectorAll(`a.menu-item[href="${href}"]`).forEach(link=>link.remove())}garantirLink(menu,"orcamentos-contratos.html","fa-file-signature","Gerar orçamentos e documentos","projetos.html");garantirLink(menu,"portal/admin","fa-layer-group","Mais ferramentas de gestão","orcamentos-contratos.html");garantirLink(menu,"integridade-sistema.html","fa-heart-pulse","Verificar funcionamento","configuracoes.html");const pagina=(location.pathname.split("/").filter(Boolean).pop()||"admin.html").toLowerCase();menu.querySelectorAll("a.menu-item").forEach(link=>{const destino=(link.getAttribute("href")||"").split("?")[0].toLowerCase(),ativo=destino===pagina;link.classList.toggle("ativo",ativo);if(ativo)link.setAttribute("aria-current","page");else link.removeAttribute("aria-current")})}
+// Funções exclusivas do aplicativo, acessíveis diretamente no painel principal do site.
+const ferramentasAdministrativas = [
+  ["crm", "fa-filter", "Oportunidades comerciais"],
+  ["contract-documents", "fa-file-contract", "Documentos gerados e aceites"],
+  ["document-preparation", "fa-file-pen", "Preparar documento do projeto"],
+  ["document-governance", "fa-list-check", "Versões e pendências dos documentos"],
+  ["document-archive", "fa-box-archive", "Arquivos antigos e restauração"],
+  ["tasks", "fa-check-square", "Tarefas do projeto"],
+  ["work-diary", "fa-book", "Diário de obra"],
+  ["procurement", "fa-cart-shopping", "Fornecedores e cotações"],
+  ["financial", "fa-building-columns", "Contas bancárias e conciliação OFX"],
+  ["portal-control", "fa-eye", "Módulos do portal do cliente"],
+  ["approvals", "fa-check-double", "Aprovações"],
+  ["notifications", "fa-bell", "Notificações internas"],
+  ["security", "fa-shield-halved", "Armazenamento e auditoria"],
+];
+function normalizarMenuAdministrativo() {
+  const menu = document.querySelector(".menu-lateral");
+  if (!menu) return;
+  menu.querySelectorAll('a.menu-item').forEach(link => {
+    const destino = (link.getAttribute('href') || '').split('?')[0].replace(/^\//, '').replace(/\/$/, '');
+    if (["portal/admin", "portal/admin.html", "documentos-contratuais.html", "arquivo-documental.html"].includes(destino)) link.remove();
+  });
+  garantirLink(menu, "protecao-pdf-admin.html", "fa-file-shield", "Conteúdo do site", "biblioteca.html");
+  garantirLink(menu, "orcamentos-contratos.html", "fa-file-signature", "Orçamentos e contratos", "projetos.html");
+  let anterior = "solicitacoes.html";
+  for (const [rota, icone, titulo] of ferramentasAdministrativas) {
+    const destino = `portal/admin/${rota}`;
+    garantirLink(menu, destino, icone, titulo, anterior);
+    anterior = destino;
+  }
+  garantirLink(menu, "integridade-sistema.html", "fa-heart-pulse", "Verificar funcionamento", "configuracoes.html");
+  const pagina = (location.pathname.split("/").filter(Boolean).pop() || "admin.html").toLowerCase();
+  menu.querySelectorAll("a.menu-item").forEach(link => {
+    const ativo = (link.getAttribute("href") || "").split("?")[0].toLowerCase() === pagina;
+    link.classList.toggle("ativo", ativo);
+    if (ativo) link.setAttribute("aria-current", "page"); else link.removeAttribute("aria-current");
+  });
+  // Os mesmos destinos também ficam visíveis nas ações da tela inicial.
+  if (pagina === "admin.html") {
+    const card = Array.from(document.querySelectorAll('.card-lateral')).find(item => item.querySelector('h2')?.textContent?.trim() === 'Ações Rápidas');
+    if (card) for (const [rota, icone, titulo] of ferramentasAdministrativas) {
+      const id = `abrirFerramenta-${rota}`;
+      if (document.getElementById(id)) continue;
+      const botao = document.createElement('button');
+      botao.id = id;
+      botao.type = 'button';
+      botao.innerHTML = `<i class="fa-solid ${icone}"></i><span>${titulo}</span>`;
+      botao.addEventListener('click', () => { location.href = `portal/admin/${rota}`; });
+      card.appendChild(botao);
+    }
+  }
+}
 async function sincronizarPreferenciasDoBanco(){if(typeof window.dbBuscarConfiguracoes!=="function")return;try{const config=await window.dbBuscarConfiguracoes();if(!config)return;aplicarPreferencias({tema:config.tema,cor_principal:config.cor_principal,notificacoes:config.notificacoes!==false})}catch(erro){console.warn("Preferências administrativas não puderam ser sincronizadas.",erro)}}
 function protegerNotificacoes(){const original=window.dbNotificarAtualizacao;if(typeof original!=="function"||original.__cmeConfiguravel)return;const wrapper=async function(dados){const estadoLocal=localStorage.getItem(CHAVE_NOTIFICACOES);if(estadoLocal==="inativo")return{enviado:false,motivo:"Notificações desativadas nas Configurações."};try{if(typeof window.dbBuscarConfiguracoes==="function"){const config=await window.dbBuscarConfiguracoes();if(config?.notificacoes===false){localStorage.setItem(CHAVE_NOTIFICACOES,"inativo");return{enviado:false,motivo:"Notificações desativadas nas Configurações."}}}}catch(erro){console.warn("Não foi possível consultar a preferência de notificações.",erro)}return original(dados)};wrapper.__cmeConfiguravel=true;wrapper.__cmeOriginal=original;window.dbNotificarAtualizacao=wrapper}
 function iniciar(){carregarAjustesVisuais();normalizarMenuAdministrativo();aplicarPreferencias();protegerNotificacoes();fixarNomeAdministradora();window.setTimeout(fixarNomeAdministradora,150);window.setTimeout(fixarNomeAdministradora,700);window.setTimeout(ocultarCarregamento,2500);window.setTimeout(sincronizarPreferenciasDoBanco,0)}
