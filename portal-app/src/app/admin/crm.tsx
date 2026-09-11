@@ -16,6 +16,19 @@ const stages = [
   { value: 'ganho', label: 'Ganhos' }, { value: 'perdido', label: 'Perdidos' },
 ] as const;
 
+function compactContact(record: CommercialRecord) {
+  return [record.phone, record.email].filter(Boolean).join(' • ') || 'Não informado';
+}
+
+function compactLocation(record: CommercialRecord) {
+  return record.propertyAddress || [record.city, record.state].filter(Boolean).join(' / ') || record.address || 'Não informado';
+}
+
+function compactServices(record: CommercialRecord) {
+  const included = record.services.filter((item) => item.included !== false).map((item) => item.name);
+  return included.length ? included.join(', ') : 'Não informado';
+}
+
 export default function AdminCrmScreen() {
   const styles = useThemeStyles(styleDefinitions);
   const [records, setRecords] = useState<CommercialRecord[]>([]);
@@ -67,13 +80,13 @@ export default function AdminCrmScreen() {
         <Card style={styles.metric}><Text style={styles.metricLabel}>CONVERTIDOS</Text><Text style={styles.metricValue}>{records.filter((record) => record.crmStage === 'ganho').length}</Text></Card>
       </View>
       {error ? <Notice tone="danger">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}
-      {selected ? <Card><Text style={styles.title}>{selected.prospectName}</Text>
+      {selected ? <Card><View style={styles.editorContent}><Text style={styles.title}>{selected.prospectName}</Text>
         <SelectionChips label="Etapa da negociação" items={[...stages]} value={selected.crmStage} onChange={(crmStage) => { if (!saving) setSelected({ ...selected, crmStage }); }} />
         {selected.crmStage === 'perdido'
           ? <Field label="Motivo da perda *" multiline onChangeText={setLostReason} value={lostReason} />
           : <Field label="Próxima ação (AAAA-MM-DD)" maxLength={10} onChangeText={setNextAction} value={nextAction} />}
         <View style={styles.actions}><Button loading={saving} onPress={() => void savePlanning()} title="Salvar planejamento" /><Button disabled={saving} onPress={() => setSelected(null)} title="Cancelar" variant="ghost" /></View>
-      </Card> : null}
+      </View></Card> : null}
 
       {records.length === 0 && !loading ? <StateView icon="funnel-outline" title="Nenhuma oportunidade" description="Crie o primeiro orçamento para iniciar o fluxo comercial." /> :
         <View style={styles.board}>{stages.map((stage) => {
@@ -82,10 +95,13 @@ export default function AdminCrmScreen() {
             <View style={styles.columnHeader}><Text style={styles.columnTitle}>{stage.label}</Text><StatusPill label={String(items.length)} /></View>
             {items.length === 0 ? <Text style={styles.empty}>Nenhum registro</Text> : items.map((record) =>
               <Card key={record.id} style={styles.lead}>
-                <View>
+                <View style={styles.leadContent}>
                   <Text style={styles.title}>{record.prospectName}</Text>
                   <Text style={styles.meta}>{record.quoteNumber} • {formatCurrency(record.totalValue)}</Text>
-                  <Text style={styles.meta}>Próxima ação: {record.nextActionAt ? formatDate(record.nextActionAt) : 'não definida'}</Text>
+                  <View style={styles.detailBlock}><Text style={styles.detailLabel}>Contato</Text><Text style={styles.detailValue}>{compactContact(record)}</Text></View>
+                  <View style={styles.detailBlock}><Text style={styles.detailLabel}>Local</Text><Text style={styles.detailValue}>{compactLocation(record)}</Text></View>
+                  <View style={styles.detailBlock}><Text style={styles.detailLabel}>Serviços</Text><Text style={styles.detailValue}>{compactServices(record)}</Text></View>
+                  <View style={styles.detailBlock}><Text style={styles.detailLabel}>Próxima ação</Text><Text style={styles.detailValue}>{record.nextActionAt ? formatDate(record.nextActionAt) : 'Não definida'}</Text></View>
                 </View>
                 <Button disabled={saving} onPress={() => edit(record)} title="Editar oportunidade" variant="secondary" />
               </Card>)}
@@ -102,11 +118,17 @@ const styleDefinitions = (colors: ThemeColors) => ({
   metricLabel: { color: colors.gold600, fontSize: 11, fontWeight: '700', letterSpacing: 1, fontFamily: typography.family },
   metricValue: { color: colors.ink, fontSize: 22, fontWeight: '700', marginTop: spacing.xs, fontFamily: typography.family },
   board: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: spacing.sm },
-  column: { flexGrow: 1, flexBasis: 270, minWidth: 250, gap: spacing.xs, padding: spacing.sm, borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg, backgroundColor: colors.surfaceRaised },
-  columnHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  columnTitle: { color: colors.ink, fontSize: 14, fontWeight: '700', fontFamily: typography.family },
-  lead: { gap: spacing.xs, padding: spacing.sm }, title: { color: colors.ink, fontSize: 14, fontWeight: '700', fontFamily: typography.family },
-  meta: { color: colors.muted, fontSize: 11, lineHeight: 17, fontFamily: typography.family },
+  column: { flexGrow: 1, flexBasis: 300, minWidth: 260, minHeight: 120, alignSelf: 'flex-start', gap: spacing.sm, padding: spacing.sm, borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg, backgroundColor: colors.surfaceRaised },
+  columnHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.xs },
+  columnTitle: { color: colors.ink, fontSize: 14, fontWeight: '700', fontFamily: typography.family, flexShrink: 1 },
+  lead: { gap: spacing.sm, padding: spacing.sm, minWidth: 0 },
+  leadContent: { gap: spacing.xs, minWidth: 0 },
+  editorContent: { gap: spacing.sm, minWidth: 0 },
+  title: { color: colors.ink, fontSize: 14, lineHeight: 20, fontWeight: '700', fontFamily: typography.family, flexShrink: 1 },
+  meta: { color: colors.muted, fontSize: 11, lineHeight: 17, fontFamily: typography.family, flexShrink: 1 },
+  detailBlock: { gap: 2, minWidth: 0, paddingTop: 2 },
+  detailLabel: { color: colors.gold600, fontSize: 10, lineHeight: 14, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: typography.family },
+  detailValue: { color: colors.slate, fontSize: 12, lineHeight: 18, fontFamily: typography.family, flexShrink: 1 },
   empty: { color: colors.muted, fontSize: 12, paddingVertical: spacing.md, textAlign: 'center', fontFamily: typography.family },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }, stageActions: { gap: 2 },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
 });
