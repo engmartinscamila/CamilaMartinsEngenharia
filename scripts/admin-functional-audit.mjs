@@ -26,21 +26,29 @@ const hrefs = canonicalRoutes.map((item) => item.href);
 if (new Set(hrefs).size !== hrefs.length) fail('ui-core.js: há destinos duplicados no menu canônico.');
 for (const item of canonicalRoutes) {
   if (item.href.startsWith('portal/admin/')) {
-    const slug = item.href.slice('portal/admin/'.length);
+    if (!item.href.endsWith('.html')) fail(`Menu "${item.title}": rota publicada precisa apontar para arquivo .html real (${item.href}).`);
+    const slug = item.href.slice('portal/admin/'.length).replace(/\.html$/i, '');
     const source = slug === '' ? 'portal-app/src/app/admin/index.tsx' : `portal-app/src/app/admin/${slug}.tsx`;
     if (!exists(source)) fail(`Menu "${item.title}": rota ${item.href} não possui tela fonte ${source}.`);
   } else if (!exists(item.href)) {
     fail(`Menu "${item.title}": arquivo clássico ausente ${item.href}.`);
   }
 }
+if (!uiCore.includes('location.href=`portal/admin/${rota}.html`')) fail('Ações rápidas do Admin clássico não apontam para os arquivos .html publicados.');
 
 const sections = read('portal-app/src/lib/admin-sections.ts');
 const navigation = read('portal-app/src/lib/admin-navigation.ts');
 const sectionKeys = [...sections.matchAll(/\{\s*key:\s*'([^']+)'/g)].map((match) => match[1]);
-const navigationKeys = new Set([...navigation.matchAll(/^\s*(?:'([^']+)'|([a-z][a-z-]*)):\s*'([^']+)'/gm)].map((match) => match[1] || match[2]));
+const navigationEntries = [...navigation.matchAll(/^\s*(?:'([^']+)'|([a-z][a-z-]*)):\s*'([^']+)'/gm)];
+const navigationKeys = new Set(navigationEntries.map((match) => match[1] || match[2]));
 for (const key of sectionKeys) if (!navigationKeys.has(key)) fail(`Admin React: seção ${key} não possui destino web explícito.`);
+for (const match of navigationEntries) {
+  const key = match[1] || match[2];
+  const destination = match[3];
+  if (destination.startsWith('/portal/admin/') && !destination.endsWith('.html')) fail(`Admin React: destino publicado de ${key} não aponta para .html (${destination}).`);
+}
 if (!sections.includes("key: 'construction-schedule'")) fail('Admin React: Cronograma de obra completo não está no menu.');
-if (!navigation.includes("'construction-schedule': '/portal/admin/construction-schedule'")) fail('Admin React: rota web do Cronograma de obra completo está incorreta.');
+if (!navigation.includes("'construction-schedule': '/portal/admin/construction-schedule.html'")) fail('Admin React: rota web do Cronograma de obra completo está incorreta.');
 
 const adminUi = read('portal-app/src/components/admin-ui.tsx');
 if (adminUi.includes('adminSections.filter(')) fail('Admin React: menu ainda remove a seção atual e muda a ordem dos botões.');
