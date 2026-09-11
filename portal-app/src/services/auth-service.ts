@@ -54,12 +54,14 @@ export async function resolveIdentity(user: User): Promise<{
 
 export async function signInWithPassword(email: string, password: string) {
   try {
-  const { error } = await supabase.auth.signInWithPassword({
-    email: email.trim().toLowerCase(),
-    password,
-  });
-  return error ? toUserMessage(error) : null;
-  } catch (error) { return toUserMessage(error); }
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+    return error ? toUserMessage(error) : null;
+  } catch (error) {
+    return toUserMessage(error);
+  }
 }
 
 export async function sendAccessLink(email: string) {
@@ -70,12 +72,28 @@ export async function sendAccessLink(email: string) {
       body: { email: email.trim().toLowerCase() },
     });
     return error ? toUserMessage(error) : null;
-  } catch (error) { return toUserMessage(error); }
+  } catch (error) {
+    return toUserMessage(error);
+  }
+}
+
+function newPasswordPolicyError(password: string) {
+  if (password.length < 12) return 'A senha deve ter pelo menos 12 caracteres.';
+  if (!/[a-z]/.test(password)) return 'Inclua pelo menos uma letra minúscula.';
+  if (!/[A-Z]/.test(password)) return 'Inclua pelo menos uma letra maiúscula.';
+  if (!/[0-9]/.test(password)) return 'Inclua pelo menos um número.';
+  if (!/[^A-Za-z0-9]/.test(password)) return 'Inclua pelo menos um símbolo.';
+  return null;
 }
 
 export async function updatePassword(password: string) {
+  const policyError = newPasswordPolicyError(password);
+  if (policyError) return policyError;
+
   try {
-  const { error } = await supabase.auth.updateUser({ password });
-  return error ? toUserMessage(error) : null;
-  } catch (error) { return toUserMessage(error); }
+    const { error } = await supabase.auth.updateUser({ password });
+    return error ? toUserMessage(error) : null;
+  } catch (error) {
+    return toUserMessage(error);
+  }
 }
