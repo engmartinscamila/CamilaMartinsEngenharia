@@ -14,6 +14,11 @@ const requiredFiles = [
   'terms-of-use.html',
   'privacy-policy.html',
   'admin/index.html',
+  'admin/crm.html',
+  'admin/requests.html',
+  'admin/notifications.html',
+  'admin/security.html',
+  'admin/system-health.html',
   'home.html',
   'documents.html',
   'requests.html',
@@ -67,4 +72,21 @@ const indexHtml = readFileSync(join(outputRoot, 'index.html'), 'utf8');
 assert.match(indexHtml, /<html[^>]+lang="pt-BR"/i, 'Idioma pt-BR ausente no HTML exportado.');
 assert.match(indexHtml, /<title>Portal do Cliente \| Camila Martins Engenharia<\/title>/i, 'Título institucional ausente no HTML exportado.');
 
-process.stdout.write('APROVADO: export web completo, identificado e sem credenciais administrativas.\n');
+// Regressão do Admin integrado: no domínio publicado o Expo vive sob /portal.
+// Rotas administrativas modernas nunca podem escapar para /admin/... na raiz,
+// pois isso aciona o fallback do site clássico e devolve a usuária ao dashboard.
+const navigationSource = readFileSync(resolve('src/lib/admin-navigation.ts'), 'utf8');
+for (const [key, destination] of [
+  ['crm', '/portal/admin/crm'],
+  ['notifications', '/portal/admin/notifications'],
+  ['security', '/portal/admin/security'],
+]) {
+  assert.ok(navigationSource.includes(`${key}: '${destination}'`) || navigationSource.includes(`'${key}': '${destination}'`), `Destino web ausente/incorreto para ${key}: ${destination}`);
+}
+assert.ok(navigationSource.includes("'system-health': '/integridade-sistema.html'"), 'Destino web incorreto para Verificar funcionamento.');
+assert.ok(navigationSource.includes("requests: '/solicitacoes.html'"), 'Destino web incorreto para Solicitações.');
+
+const adminUiSource = readFileSync(resolve('src/components/admin-ui.tsx'), 'utf8');
+assert.ok(adminUiSource.includes("openWebsiteAdminSection('notifications')"), 'O sino de notificações não usa o roteamento seguro do site integrado.');
+
+process.stdout.write('APROVADO: export web completo, rotas administrativas válidas e sem credenciais administrativas.\n');
