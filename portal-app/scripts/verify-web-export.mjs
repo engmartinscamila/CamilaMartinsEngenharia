@@ -57,10 +57,10 @@ for (const key of modernKeys) {
   assert.ok(existsSync(sourceFile), `Área moderna ${key} não existe no export: admin/${key}.html`);
   assert.ok(layoutSource.includes(`<Stack.Screen name="${key}" />`), `Área moderna ${key} não está registrada no Stack administrativo.`);
 }
-assert.ok(navigationSource.includes('websiteAdminBridgeUrl'), 'Helper de rota-ponte estável ausente.');
-assert.ok(navigationSource.includes('if (!classicRoute) return false;'), 'Navegação moderna não cai no router interno.');
-assert.ok(dashboardSource.includes('isModernWebsiteAdminSection(requestedSection)'), 'Entrada da rota-ponte não valida a área solicitada.');
-assert.ok(dashboardSource.includes('router.replace(`/admin/${requestedSection}`'), 'Entrada da rota-ponte não abre a área internamente.');
+assert.ok(navigationSource.includes('websiteAdminSectionUrl'), 'Helper de URL estática das áreas modernas ausente.');
+assert.ok(navigationSource.includes('window.location.assign(websiteAdminSectionUrl(key))'), 'Navegação web das áreas modernas não abre o HTML estático publicado.');
+assert.ok(dashboardSource.includes('isModernWebsiteAdminSection(requestedSection)'), 'Entrada legada não valida a área solicitada.');
+assert.ok(dashboardSource.includes('openWebsiteAdminSection(requestedSection)'), 'Entrada legada não redireciona para o HTML estático real da área.');
 
 const adminUiSource = readFileSync(resolve('src/components/admin-ui.tsx'), 'utf8');
 assert.ok(adminUiSource.includes("openWebsiteAdminSection('notifications')"), 'O sino de notificações não usa o roteamento seguro do site integrado.');
@@ -78,4 +78,4 @@ const scheduleService = readFileSync(resolve('src/services/construction-schedule
 assert.ok(scheduleService.includes('generate-construction-schedule-xlsx'), 'Cronograma completo sem integração com exportador Excel.');
 assert.ok(scheduleService.includes('admin_initialize_construction_schedule'), 'Cronograma completo sem inicialização automática do modelo padrão.');
 
-process.stdout.write('APROVADO: export web completo, rota-ponte Admin estável, navegação interna registrada, ordem preservada, CRM protegido e Cronograma de Obra Completo exportável.\n');
+process.stdout.write('APROVADO: export web completo, navegação Admin por HTML estático real, ordem preservada, CRM protegido e Cronograma de Obra Completo exportável.\n');
