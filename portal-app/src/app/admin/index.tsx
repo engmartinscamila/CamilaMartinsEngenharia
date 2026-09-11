@@ -1,7 +1,7 @@
-import { openWebsiteAdminHome, openWebsiteAdminSection, usesWebsiteAdminHome } from '@/lib/admin-navigation';
+import { isModernWebsiteAdminSection, openWebsiteAdminHome, openWebsiteAdminSection, usesWebsiteAdminHome } from '@/lib/admin-navigation';
 import { adminSections } from '@/lib/admin-sections';
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, useWindowDimensions, View } from 'react-native';
 
@@ -23,7 +23,19 @@ const initialCounts: DashboardCounts = { activeClients: null, activeProjects: nu
 
 export default function AdminDashboard() {
   const websiteHome = usesWebsiteAdminHome();
-  useEffect(() => { if (websiteHome) openWebsiteAdminHome(); }, [websiteHome]);
+  const router = useRouter();
+  const params = useLocalSearchParams<{ section?: string | string[] }>();
+  const requestedSection = Array.isArray(params.section) ? params.section[0] : params.section;
+
+  useEffect(() => {
+    if (!websiteHome) return;
+    if (requestedSection && isModernWebsiteAdminSection(requestedSection)) {
+      router.replace(`/admin/${requestedSection}` as never);
+      return;
+    }
+    openWebsiteAdminHome();
+  }, [requestedSection, router, websiteHome]);
+
   return websiteHome ? <FullScreenLoader /> : <MainAdminDashboard />;
 }
 
