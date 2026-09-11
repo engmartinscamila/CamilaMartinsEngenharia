@@ -76,17 +76,32 @@ assert.match(indexHtml, /<title>Portal do Cliente \| Camila Martins Engenharia<\
 // Rotas administrativas modernas nunca podem escapar para /admin/... na raiz,
 // pois isso aciona o fallback do site clássico e devolve a usuária ao dashboard.
 const navigationSource = readFileSync(resolve('src/lib/admin-navigation.ts'), 'utf8');
+const sectionSource = readFileSync(resolve('src/lib/admin-sections.ts'), 'utf8');
+const routePairs = [...navigationSource.matchAll(/^\s*(?:'([^']+)'|([a-z][a-z-]*)):\s*'([^']+)'/gm)];
+const webRoutes = new Map(routePairs.map((match) => [match[1] || match[2], match[3]]));
+const sectionKeys = [...sectionSource.matchAll(/\{\s*key:\s*'([^']+)'/g)].map((match) => match[1]);
+assert.ok(sectionKeys.length >= 20, 'A lista de áreas administrativas parece incompleta.');
+for (const key of sectionKeys) {
+  assert.ok(webRoutes.has(key), `A área administrativa ${key} não possui destino web explícito.`);
+}
+
 for (const [key, destination] of [
   ['crm', '/portal/admin/crm'],
   ['notifications', '/portal/admin/notifications'],
   ['security', '/portal/admin/security'],
 ]) {
-  assert.ok(navigationSource.includes(`${key}: '${destination}'`) || navigationSource.includes(`'${key}': '${destination}'`), `Destino web ausente/incorreto para ${key}: ${destination}`);
+  assert.equal(webRoutes.get(key), destination, `Destino web ausente/incorreto para ${key}.`);
 }
-assert.ok(navigationSource.includes("'system-health': '/integridade-sistema.html'"), 'Destino web incorreto para Verificar funcionamento.');
-assert.ok(navigationSource.includes("requests: '/solicitacoes.html'"), 'Destino web incorreto para Solicitações.');
+assert.equal(webRoutes.get('system-health'), '/integridade-sistema.html', 'Destino web incorreto para Verificar funcionamento.');
+assert.equal(webRoutes.get('requests'), '/solicitacoes.html', 'Destino web incorreto para Solicitações.');
 
 const adminUiSource = readFileSync(resolve('src/components/admin-ui.tsx'), 'utf8');
 assert.ok(adminUiSource.includes("openWebsiteAdminSection('notifications')"), 'O sino de notificações não usa o roteamento seguro do site integrado.');
 
-process.stdout.write('APROVADO: export web completo, rotas administrativas válidas e sem credenciais administrativas.\n');
+const dashboardSource = readFileSync(resolve('src/app/admin/index.tsx'), 'utf8');
+assert.ok(dashboardSource.includes('openWebsiteAdminSection(section.key)'), 'Os botões do dashboard não usam o roteamento seguro do site integrado.');
+assert.ok(dashboardSource.includes("openWebsiteAdminSection('contract-documents')"), 'Atalho de pendências contratuais não usa o roteamento seguro.');
+assert.ok(dashboardSource.includes("openWebsiteAdminSection('document-archive')"), 'Atalho de arquivo documental não usa o roteamento seguro.');
+assert.ok(dashboardSource.includes('openWebsiteAdminSection(metric.key)'), 'Os indicadores do dashboard não usam o roteamento seguro.');
+
+process.stdout.write('APROVADO: export web completo, todas as áreas administrativas possuem rota válida e não há credenciais administrativas.\n');
