@@ -84,8 +84,8 @@ function configurarMenuMobile(){
   const overlay=document.createElement('button');
   overlay.type='button';overlay.className='cme-admin-mobile-overlay';overlay.setAttribute('aria-label','Fechar menu administrativo');
   document.body.appendChild(overlay);document.body.appendChild(botao);
-  const fechar=()=>{document.body.classList.remove('cme-admin-menu-open');botao.setAttribute('aria-expanded','false');botao.setAttribute('aria-label','Abrir menu administrativo');botao.innerHTML='<i class="fa-solid fa-bars" aria-hidden="true"></i>';};
-  const abrir=()=>{document.body.classList.add('cme-admin-menu-open');botao.setAttribute('aria-expanded','true');botao.setAttribute('aria-label','Fechar menu administrativo');botao.innerHTML='<i class="fa-solid fa-xmark" aria-hidden="true"></i>';};
+  const fechar=()=>{document.body.classList.remove('cme-admin-menu-open');sidebar.classList.remove('open');botao.setAttribute('aria-expanded','false');botao.setAttribute('aria-label','Abrir menu administrativo');botao.innerHTML='<i class="fa-solid fa-bars" aria-hidden="true"></i>';};
+  const abrir=()=>{document.body.classList.add('cme-admin-menu-open');sidebar.classList.add('open');botao.setAttribute('aria-expanded','true');botao.setAttribute('aria-label','Fechar menu administrativo');botao.innerHTML='<i class="fa-solid fa-xmark" aria-hidden="true"></i>';};
   botao.addEventListener('click',()=>document.body.classList.contains('cme-admin-menu-open')?fechar():abrir());
   overlay.addEventListener('click',fechar);
   sidebar.addEventListener('click',event=>{if(event.target.closest('a.menu-item'))fechar()});
