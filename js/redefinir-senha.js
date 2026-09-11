@@ -23,6 +23,15 @@ function habilitarFormulario(habilitado) {
     if (botaoSalvar) botaoSalvar.disabled = !habilitado;
 }
 
+function erroPoliticaSenha(senha) {
+    if (senha.length < 12) return "A senha deve ter pelo menos 12 caracteres.";
+    if (!/[a-z]/.test(senha)) return "Inclua pelo menos uma letra minúscula.";
+    if (!/[A-Z]/.test(senha)) return "Inclua pelo menos uma letra maiúscula.";
+    if (!/[0-9]/.test(senha)) return "Inclua pelo menos um número.";
+    if (!/[^A-Za-z0-9]/.test(senha)) return "Inclua pelo menos um símbolo.";
+    return null;
+}
+
 async function ativarRecuperacao() {
     if (!window.supabaseClient) {
         mostrarMensagem("Não foi possível iniciar a recuperação de senha. Atualize a página e tente novamente.");
@@ -102,8 +111,9 @@ formulario?.addEventListener("submit", async (event) => {
 
     if (!novaSenha || !confirmarSenha || !botaoSalvar) return;
 
-    if (novaSenha.value.length < 8) {
-        mostrarMensagem("A senha deve ter pelo menos 8 caracteres.");
+    const erroSenha = erroPoliticaSenha(novaSenha.value);
+    if (erroSenha) {
+        mostrarMensagem(erroSenha);
         novaSenha.focus();
         return;
     }
