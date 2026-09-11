@@ -97,6 +97,8 @@ assert.equal(webRoutes.get('requests'), '/solicitacoes.html', 'Destino web incor
 
 const adminUiSource = readFileSync(resolve('src/components/admin-ui.tsx'), 'utf8');
 assert.ok(adminUiSource.includes("openWebsiteAdminSection('notifications')"), 'O sino de notificações não usa o roteamento seguro do site integrado.');
+assert.ok(adminUiSource.includes('adminSections.map((section)'), 'O menu de outras áreas precisa preservar a ordem fixa da lista administrativa.');
+assert.ok(!adminUiSource.includes('adminSections.filter('), 'O menu administrativo não pode remover a área atual e mudar a ordem visual dos botões.');
 
 const dashboardSource = readFileSync(resolve('src/app/admin/index.tsx'), 'utf8');
 assert.ok(dashboardSource.includes('openWebsiteAdminSection(section.key)'), 'Os botões do dashboard não usam o roteamento seguro do site integrado.');
@@ -104,4 +106,8 @@ assert.ok(dashboardSource.includes("openWebsiteAdminSection('contract-documents'
 assert.ok(dashboardSource.includes("openWebsiteAdminSection('document-archive')"), 'Atalho de arquivo documental não usa o roteamento seguro.');
 assert.ok(dashboardSource.includes('openWebsiteAdminSection(metric.key)'), 'Os indicadores do dashboard não usam o roteamento seguro.');
 
-process.stdout.write('APROVADO: export web completo, todas as áreas administrativas possuem rota válida e não há credenciais administrativas.\n');
+const crmSource = readFileSync(resolve('src/app/admin/crm.tsx'), 'utf8');
+assert.ok(crmSource.includes('detailBlock'), 'O CRM precisa manter campos comerciais em blocos próprios para evitar sobreposição visual.');
+assert.ok(crmSource.includes('flexShrink: 1'), 'O CRM precisa permitir quebra e encolhimento seguro de textos longos.');
+
+process.stdout.write('APROVADO: export web completo, rotas e ordem do Admin estáveis e layout comercial protegido contra sobreposição.\n');
