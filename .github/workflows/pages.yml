@@ -37,6 +37,7 @@ jobs:
         run: |
           node scripts/site-audit.mjs
           node scripts/admin-functional-audit.mjs
+          node scripts/document-generation-audit.mjs
 
       - name: Verificar segurança antes de publicar
         run: |
@@ -124,6 +125,7 @@ jobs:
         run: |
           node scripts/site-public-audit.mjs
           node scripts/admin-functional-audit.mjs
+          node scripts/document-generation-audit.mjs
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
