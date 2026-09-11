@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { openWebsiteAdminHome, openWebsiteAdminSection } from '@/lib/admin-navigation';
 import { adminSections } from '@/lib/admin-sections';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -15,7 +15,6 @@ export function AdminPageHeader({ title, description }: { title: string; descrip
   const styles = useThemeStyles(styleDefinitions);
   const router = useRouter();
   const pathname = usePathname();
-  const { tipo } = useLocalSearchParams<{ tipo?: string }>();
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <View style={styles.pageTop}>
@@ -26,7 +25,7 @@ export function AdminPageHeader({ title, description }: { title: string; descrip
           {pathname !== '/admin/notifications' ? <AdminNotificationBell /> : null}
         </View>
       </View>
-      {menuOpen ? <View style={styles.navigationMenu}>{adminSections.filter((section) => typeof section.href === 'string' ? section.href !== pathname : section.href.pathname !== pathname || section.href.params.tipo !== (tipo ?? 'document')).map((section) => <AdminMenuRow key={section.key} compact icon={section.icon} title={section.title} description={section.description} onPress={() => { setMenuOpen(false); if (!openWebsiteAdminSection(section.key)) router.push(section.href); }} />)}</View> : null}
+      {menuOpen ? <View style={styles.navigationMenu}>{adminSections.map((section) => <AdminMenuRow key={section.key} compact icon={section.icon} title={section.title} description={section.description} onPress={() => { setMenuOpen(false); if (!openWebsiteAdminSection(section.key)) router.push(section.href); }} />)}</View> : null}
       <PageHeader eyebrow="Administração" title={title} description={description} />
     </View>
   );
