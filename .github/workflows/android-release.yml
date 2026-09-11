@@ -1,5 +1,5 @@
 name: Android integrado - build e teste
-# Gatilho de build após auditoria funcional de 2026-09-10.
+# Gatilho de build após endurecimento de senha e homologação A/B de 2026-09-10.
 on:
   push:
     branches: [build/integrated-app]
