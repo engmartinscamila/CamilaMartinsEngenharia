@@ -7,6 +7,14 @@ const corsHeaders={
 };
 const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{...corsHeaders,'Content-Type':'application/json; charset=utf-8'}});
 
+type ProbeResult={ok:boolean;status:number};
+async function probe(url:string,anon:string,auth:string,slug:string,body:Record<string,unknown>,expected:number[]):Promise<ProbeResult>{
+  try{
+    const response=await fetch(`${url}/functions/v1/${slug}`,{method:'POST',headers:{Authorization:auth,apikey:anon,'Content-Type':'application/json'},body:JSON.stringify(body)});
+    return {ok:expected.includes(response.status),status:response.status};
+  }catch{return {ok:false,status:0};}
+}
+
 Deno.serve(async(req)=>{
   if(req.method==='OPTIONS')return new Response('ok',{headers:corsHeaders});
   if(req.method!=='POST')return json({error:'Método não permitido.'},405);
@@ -24,24 +32,30 @@ Deno.serve(async(req)=>{
     const {data:db,error:dbError}=await caller.rpc('admin_system_health');
     if(dbError)throw dbError;
     const service=createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});
-    const [{data:buckets,error:bucketError},deletionProbe]=await Promise.all([
+
+    const [bucketResult,deletionProbe,contractProbe,commercialProbe,deliveryProbe,scheduleProbe]=await Promise.all([
       service.storage.listBuckets(),
-      fetch(`${url}/functions/v1/admin-delete-client`,{
-        method:'POST',
-        headers:{Authorization:auth,apikey:anon,'Content-Type':'application/json'},
-        body:JSON.stringify({action:'health'}),
-      }).then(async response=>{
-        let data:Record<string,unknown>={};
-        try{data=await response.json()}catch{data={};}
-        return {ok:response.ok&&data.ok===true&&data.function==='admin-delete-client',status:response.status};
-      }).catch(()=>({ok:false,status:0})),
+      fetch(`${url}/functions/v1/admin-delete-client`,{method:'POST',headers:{Authorization:auth,apikey:anon,'Content-Type':'application/json'},body:JSON.stringify({action:'health'})}).then(async response=>{let data:Record<string,unknown>={};try{data=await response.json()}catch{}return {ok:response.ok&&data.ok===true&&data.function==='admin-delete-client',status:response.status};}).catch(()=>({ok:false,status:0})),
+      probe(url,anon,auth,'generate-contract-document-final',{documentId:'invalid',action:'generate',expectedDocumentKind:'anexo_i'},[400]),
+      probe(url,anon,auth,'generate-commercial-document-final',{recordId:'invalid',kind:'orcamento'},[400]),
+      probe(url,anon,auth,'deliver-generated-document',{documentId:'invalid',archive:false,expectedDocumentKind:'anexo_i'},[400]),
+      probe(url,anon,auth,'generate-construction-schedule-xlsx',{projectId:'invalid'},[400]),
     ]);
+    const probes={
+      adminDeleteClient:deletionProbe,
+      contractDocument:contractProbe,
+      commercialDocument:commercialProbe,
+      documentDelivery:deliveryProbe,
+      constructionScheduleExcel:scheduleProbe,
+    };
+    const edgeOk=Object.values(probes).every(item=>item.ok);
+    const criticalIssues=Number((db as Record<string,unknown>)?.critical_issues??0);
     return json({
       ok:true,
       checkedAt:new Date().toISOString(),
-      database:db,
-      storage:{ok:!bucketError,buckets:(buckets??[]).length},
-      edge:{ok:deletionProbe.ok,function:'system-health',adminDeleteClient:deletionProbe.ok,adminDeleteClientStatus:deletionProbe.status},
+      database:{...(db as Record<string,unknown>),ok:criticalIssues===0},
+      storage:{ok:!bucketResult.error,buckets:(bucketResult.data??[]).length},
+      edge:{ok:edgeOk,function:'system-health',probes},
     });
   }catch(error){
     return json({ok:false,error:error instanceof Error?error.message:'Falha na verificação.'},403);
