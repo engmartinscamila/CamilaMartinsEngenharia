@@ -26,10 +26,8 @@ begin
     select 'foto'::text,f.id::text,f.nome,f.storage_bucket,f.arquivo,f.projeto_id
     from public.fotos f where f.arquivo is not null
     union all
-    select 'biblioteca'::text,b.id::text,b.nome,b.storage_bucket,b.arquivo,f.projeto_id
-    from public.biblioteca b
-    join lateral (select b.projeto_id) f on true
-    where b.arquivo is not null
+    select 'biblioteca'::text,b.id::text,b.nome,b.storage_bucket,b.arquivo,b.projeto_id
+    from public.biblioteca b where b.arquivo is not null
   )
   select coalesce(
     jsonb_agg(
