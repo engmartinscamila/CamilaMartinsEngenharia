@@ -22,7 +22,8 @@
 
   body:has(.layout .conteudo) .sidebar {
     width: min(86vw, 320px) !important;
-    max-width: 320px !important;
+    max-width: min(86vw, 320px) !important;
+    box-sizing: border-box !important;
     height: 100dvh !important;
     inset: 0 auto 0 0 !important;
     padding: 22px 16px 24px !important;
