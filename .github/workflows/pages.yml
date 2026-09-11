@@ -33,8 +33,10 @@ jobs:
       - name: Gerar acervo de frases do dia
         run: node scripts/build-frases-do-dia-v7.mjs
 
-      - name: Auditoria estática
-        run: node scripts/site-audit.mjs
+      - name: Auditoria estática e funcional do Admin
+        run: |
+          node scripts/site-audit.mjs
+          node scripts/admin-functional-audit.mjs
 
       - name: Verificar segurança antes de publicar
         run: |
@@ -60,6 +62,7 @@ jobs:
           echo $! > /tmp/cme-http.pid
           sleep 2
           curl --fail http://127.0.0.1:4173/admin.html >/dev/null
+          curl --fail http://127.0.0.1:4173/integridade-sistema.html >/dev/null
 
       - name: Testes de interface
         run: node scripts/browser-smoke.mjs
@@ -118,7 +121,9 @@ jobs:
           done
 
       - name: Revalidar pacote final
-        run: node scripts/site-public-audit.mjs
+        run: |
+          node scripts/site-public-audit.mjs
+          node scripts/admin-functional-audit.mjs
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
