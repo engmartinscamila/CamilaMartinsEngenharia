@@ -10,36 +10,39 @@ function carregarAjustesVisuais(){if(!document.getElementById("cmeAdminPolish"))
 function fixarNomeAdministradora(){const alvo=document.querySelector("#adminName, #nomeAdministrador");if(!alvo)return;alvo.textContent="Camila";if(alvo.dataset.cmeNomeObserver==="true")return;alvo.dataset.cmeNomeObserver="true";new MutationObserver(()=>{if(alvo.textContent.trim()!=="Camila")alvo.textContent="Camila"}).observe(alvo,{childList:true,characterData:true,subtree:true})}
 function elementosLoading(){return[document.getElementById("loading"),document.getElementById("loader"),document.getElementById("carregando")].filter(Boolean)}function ocultarCarregamento(){for(const elemento of elementosLoading()){elemento.style.setProperty("display","none","important");elemento.style.setProperty("pointer-events","none","important");elemento.setAttribute("aria-hidden","true")}}function mostrarCarregamento(){for(const elemento of elementosLoading()){elemento.style.removeProperty("display");elemento.style.removeProperty("pointer-events");elemento.setAttribute("aria-hidden","false")}}function corValida(valor){return/^#[0-9a-f]{6}$/i.test(String(valor||"").trim())}
 function aplicarPreferencias(preferencias={}){const tema=preferencias.tema||localStorage.getItem(CHAVE_TEMA)||"escuro",cor=preferencias.cor_principal||localStorage.getItem(CHAVE_COR)||"#b89a63",notificacoes=preferencias.notificacoes;document.documentElement.dataset.adminTheme=tema==="claro"?"claro":"escuro";if(corValida(cor)){document.documentElement.style.setProperty("--dourado",cor);localStorage.setItem(CHAVE_COR,cor)}localStorage.setItem(CHAVE_TEMA,tema==="claro"?"claro":"escuro");if(typeof notificacoes==="boolean")localStorage.setItem(CHAVE_NOTIFICACOES,notificacoes?"ativo":"inativo")}
-function criarLinkMenu(href,icon,titulo){const link=document.createElement("a");link.href=href;link.className="menu-item";link.innerHTML=`<i class="fa-solid ${icon}"></i><span>${titulo}</span>`;return link}
+function rotaPortalDoHref(href){const match=String(href||"").match(/^\/?portal\/admin\/([a-z0-9-]+)$/i);return match?match[1]:null}
+function urlPontePortal(rota){return`portal/admin/index.html?section=${encodeURIComponent(rota)}`}
+function criarLinkMenu(href,icon,titulo){const link=document.createElement("a");link.href=href;link.className="menu-item";link.innerHTML=`<i class="fa-solid ${icon}"></i><span>${titulo}</span>`;const rota=rotaPortalDoHref(href);if(rota){link.dataset.cmePortalSection=rota;link.addEventListener("click",evento=>{evento.preventDefault();location.href=urlPontePortal(rota)})}return link}
 
 // Ordem única e imutável para TODAS as páginas do Admin clássico.
-// O menu não depende mais da ordem escrita em cada HTML individual.
+// Os hrefs modernos permanecem legíveis/compatíveis, mas o clique usa a rota-ponte
+// estável do portal para evitar qualquer fallback do servidor para o dashboard.
 const MENU_ADMIN_CANONICO=[
   ["admin.html","fa-house","Dashboard"],
   ["clientes.html","fa-users","Clientes"],
   ["projetos.html","fa-compass-drafting","Projetos"],
   ["orcamentos-contratos.html","fa-file-signature","Orçamentos e contratos"],
-  ["portal/admin/crm.html","fa-filter","Oportunidades comerciais"],
-  ["portal/admin/contract-documents.html","fa-file-contract","Documentos gerados e aceites"],
-  ["portal/admin/document-preparation.html","fa-file-pen","Preparar documento do projeto"],
-  ["portal/admin/document-governance.html","fa-list-check","Versões e pendências dos documentos"],
-  ["portal/admin/document-archive.html","fa-box-archive","Arquivos antigos e restauração"],
+  ["portal/admin/crm","fa-filter","Oportunidades comerciais"],
+  ["portal/admin/contract-documents","fa-file-contract","Documentos gerados e aceites"],
+  ["portal/admin/document-preparation","fa-file-pen","Preparar documento do projeto"],
+  ["portal/admin/document-governance","fa-list-check","Versões e pendências dos documentos"],
+  ["portal/admin/document-archive","fa-box-archive","Arquivos antigos e restauração"],
   ["documentos.html","fa-folder-open","Documentos"],
   ["fotos.html","fa-images","Fotos e evolução da obra"],
-  ["portal/admin/tasks.html","fa-check-square","Tarefas do projeto"],
-  ["portal/admin/work-diary.html","fa-book","Diário de obra"],
-  ["portal/admin/procurement.html","fa-cart-shopping","Fornecedores e cotações"],
+  ["portal/admin/tasks","fa-check-square","Tarefas do projeto"],
+  ["portal/admin/work-diary","fa-book","Diário de obra"],
+  ["portal/admin/procurement","fa-cart-shopping","Fornecedores e cotações"],
   ["biblioteca.html","fa-book-open","Biblioteca"],
   ["financeiro.html","fa-chart-line","Financeiro"],
-  ["portal/admin/financial.html","fa-building-columns","Contas bancárias e conciliação OFX"],
-  ["portal/admin/portal-control.html","fa-eye","Módulos do portal do cliente"],
+  ["portal/admin/financial","fa-building-columns","Contas bancárias e conciliação OFX"],
+  ["portal/admin/portal-control","fa-eye","Módulos do portal do cliente"],
   ["agenda.html","fa-calendar-days","Agenda"],
   ["cronograma.html","fa-list-check","Cronograma (simples)"],
-  ["portal/admin/construction-schedule.html","fa-chart-column","Cronograma de obra completo"],
-  ["portal/admin/approvals.html","fa-check-double","Aprovações"],
+  ["portal/admin/construction-schedule","fa-chart-column","Cronograma de obra completo"],
+  ["portal/admin/approvals","fa-check-double","Aprovações"],
   ["solicitacoes.html","fa-comments","Solicitações"],
-  ["portal/admin/notifications.html","fa-bell","Notificações internas"],
-  ["portal/admin/security.html","fa-shield-halved","Armazenamento e auditoria"],
+  ["portal/admin/notifications","fa-bell","Notificações internas"],
+  ["portal/admin/security","fa-shield-halved","Armazenamento e auditoria"],
   ["protecao-pdf-admin.html","fa-file-shield","Conteúdo do site"],
   ["configuracoes.html","fa-gear","Configurações"],
   ["integridade-sistema.html","fa-heart-pulse","Verificar funcionamento"],
@@ -60,7 +63,7 @@ const ferramentasAdministrativas=[
   ["notifications","fa-bell","Notificações internas"],
   ["security","fa-shield-halved","Armazenamento e auditoria"],
 ];
-function normalizarHref(valor){try{const url=new URL(valor,location.origin);return url.pathname.replace(/^\//,"").replace(/\/$/,"").toLowerCase()}catch{return String(valor||"").split("?")[0].replace(/^\//,"").replace(/\/$/,"").toLowerCase()}}
+function normalizarHref(valor){try{const url=new URL(valor,location.origin);return url.pathname.replace(/^\//,"").replace(/\.html$/i,"").replace(/\/$/,"").toLowerCase()}catch{return String(valor||"").split("?")[0].replace(/^\//,"").replace(/\.html$/i,"").replace(/\/$/,"").toLowerCase()}}
 function normalizarMenuAdministrativo(){
   const menu=document.querySelector(".menu-lateral");if(!menu)return;
   const atual=normalizarHref(location.pathname);
@@ -68,9 +71,9 @@ function normalizarMenuAdministrativo(){
   for(const[href,icone,titulo]of MENU_ADMIN_CANONICO){const link=criarLinkMenu(href,icone,titulo);const destino=normalizarHref(href);const ativo=destino===atual;if(ativo){link.classList.add("ativo");link.setAttribute("aria-current","page")}fragment.appendChild(link)}
   menu.replaceChildren(fragment);
   menu.dataset.cmeOrdemFixa="true";
-  if(atual==="admin.html"||atual.endsWith("/admin.html")){
+  if(atual==="admin"||atual.endsWith("/admin")){
     const card=Array.from(document.querySelectorAll('.card-lateral')).find(item=>item.querySelector('h2')?.textContent?.trim()==='Ações Rápidas');
-    if(card)for(const[rota,icone,titulo]of ferramentasAdministrativas){const id=`abrirFerramenta-${rota}`;if(document.getElementById(id))continue;const botao=document.createElement('button');botao.id=id;botao.type='button';botao.innerHTML=`<i class="fa-solid ${icone}"></i><span>${titulo}</span>`;botao.addEventListener('click',()=>{location.href=`portal/admin/${rota}.html`});card.appendChild(botao)}
+    if(card)for(const[rota,icone,titulo]of ferramentasAdministrativas){const id=`abrirFerramenta-${rota}`;if(document.getElementById(id))continue;const botao=document.createElement('button');botao.id=id;botao.type='button';botao.innerHTML=`<i class="fa-solid ${icone}"></i><span>${titulo}</span>`;botao.addEventListener('click',()=>{location.href=urlPontePortal(rota)});card.appendChild(botao)}
   }
 }
 function configurarMenuMobile(){
