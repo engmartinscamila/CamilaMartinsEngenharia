@@ -19,27 +19,27 @@ const MENU_ADMIN_CANONICO=[
   ["clientes.html","fa-users","Clientes"],
   ["projetos.html","fa-compass-drafting","Projetos"],
   ["orcamentos-contratos.html","fa-file-signature","Orçamentos e contratos"],
-  ["portal/admin/crm","fa-filter","Oportunidades comerciais"],
-  ["portal/admin/contract-documents","fa-file-contract","Documentos gerados e aceites"],
-  ["portal/admin/document-preparation","fa-file-pen","Preparar documento do projeto"],
-  ["portal/admin/document-governance","fa-list-check","Versões e pendências dos documentos"],
-  ["portal/admin/document-archive","fa-box-archive","Arquivos antigos e restauração"],
+  ["portal/admin/crm.html","fa-filter","Oportunidades comerciais"],
+  ["portal/admin/contract-documents.html","fa-file-contract","Documentos gerados e aceites"],
+  ["portal/admin/document-preparation.html","fa-file-pen","Preparar documento do projeto"],
+  ["portal/admin/document-governance.html","fa-list-check","Versões e pendências dos documentos"],
+  ["portal/admin/document-archive.html","fa-box-archive","Arquivos antigos e restauração"],
   ["documentos.html","fa-folder-open","Documentos"],
   ["fotos.html","fa-images","Fotos e evolução da obra"],
-  ["portal/admin/tasks","fa-check-square","Tarefas do projeto"],
-  ["portal/admin/work-diary","fa-book","Diário de obra"],
-  ["portal/admin/procurement","fa-cart-shopping","Fornecedores e cotações"],
+  ["portal/admin/tasks.html","fa-check-square","Tarefas do projeto"],
+  ["portal/admin/work-diary.html","fa-book","Diário de obra"],
+  ["portal/admin/procurement.html","fa-cart-shopping","Fornecedores e cotações"],
   ["biblioteca.html","fa-book-open","Biblioteca"],
   ["financeiro.html","fa-chart-line","Financeiro"],
-  ["portal/admin/financial","fa-building-columns","Contas bancárias e conciliação OFX"],
-  ["portal/admin/portal-control","fa-eye","Módulos do portal do cliente"],
+  ["portal/admin/financial.html","fa-building-columns","Contas bancárias e conciliação OFX"],
+  ["portal/admin/portal-control.html","fa-eye","Módulos do portal do cliente"],
   ["agenda.html","fa-calendar-days","Agenda"],
   ["cronograma.html","fa-list-check","Cronograma (simples)"],
-  ["portal/admin/construction-schedule","fa-chart-column","Cronograma de obra completo"],
-  ["portal/admin/approvals","fa-check-double","Aprovações"],
+  ["portal/admin/construction-schedule.html","fa-chart-column","Cronograma de obra completo"],
+  ["portal/admin/approvals.html","fa-check-double","Aprovações"],
   ["solicitacoes.html","fa-comments","Solicitações"],
-  ["portal/admin/notifications","fa-bell","Notificações internas"],
-  ["portal/admin/security","fa-shield-halved","Armazenamento e auditoria"],
+  ["portal/admin/notifications.html","fa-bell","Notificações internas"],
+  ["portal/admin/security.html","fa-shield-halved","Armazenamento e auditoria"],
   ["protecao-pdf-admin.html","fa-file-shield","Conteúdo do site"],
   ["configuracoes.html","fa-gear","Configurações"],
   ["integridade-sistema.html","fa-heart-pulse","Verificar funcionamento"],
@@ -70,7 +70,7 @@ function normalizarMenuAdministrativo(){
   menu.dataset.cmeOrdemFixa="true";
   if(atual==="admin.html"||atual.endsWith("/admin.html")){
     const card=Array.from(document.querySelectorAll('.card-lateral')).find(item=>item.querySelector('h2')?.textContent?.trim()==='Ações Rápidas');
-    if(card)for(const[rota,icone,titulo]of ferramentasAdministrativas){const id=`abrirFerramenta-${rota}`;if(document.getElementById(id))continue;const botao=document.createElement('button');botao.id=id;botao.type='button';botao.innerHTML=`<i class="fa-solid ${icone}"></i><span>${titulo}</span>`;botao.addEventListener('click',()=>{location.href=`portal/admin/${rota}`});card.appendChild(botao)}
+    if(card)for(const[rota,icone,titulo]of ferramentasAdministrativas){const id=`abrirFerramenta-${rota}`;if(document.getElementById(id))continue;const botao=document.createElement('button');botao.id=id;botao.type='button';botao.innerHTML=`<i class="fa-solid ${icone}"></i><span>${titulo}</span>`;botao.addEventListener('click',()=>{location.href=`portal/admin/${rota}.html`});card.appendChild(botao)}
   }
 }
 function configurarMenuMobile(){
