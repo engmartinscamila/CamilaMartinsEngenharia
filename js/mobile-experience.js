@@ -8,7 +8,7 @@
 
   function setupAdminDrawer(){
     const sidebar=document.querySelector('.layout .sidebar');
-    if(!sidebar || document.querySelector('.cme-mobile-menu-toggle')) return;
+    if(!sidebar || document.getElementById('cmeAdminMobileMenuButton') || document.querySelector('.cme-mobile-menu-toggle')) return;
 
     const button=document.createElement('button');
     button.type='button';
