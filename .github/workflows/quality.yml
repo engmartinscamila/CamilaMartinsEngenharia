@@ -52,6 +52,7 @@ jobs:
           node --check js/ui-core.js
           node --check js/auth.js
           node --check js/cliente-area.js
+          node --check scripts/mobile-admin-smoke.mjs
 
       - name: Instalar Chromium de teste
         run: |
@@ -68,9 +69,12 @@ jobs:
           curl --fail http://127.0.0.1:4173/documentos-contratuais.html >/dev/null
           curl --fail http://127.0.0.1:4173/arquivo-documental.html >/dev/null
           curl --fail http://127.0.0.1:4173/integridade-sistema.html >/dev/null
+          curl --fail http://127.0.0.1:4173/portal.html >/dev/null
 
-      - name: Testes de interface
-        run: node scripts/browser-smoke.mjs
+      - name: Testes de interface desktop e mobile
+        run: |
+          node scripts/browser-smoke.mjs
+          node scripts/mobile-admin-smoke.mjs
 
       - name: Testar Worker público Cloudflare
         if: github.ref_name == 'galeria-fotos-20260829'
