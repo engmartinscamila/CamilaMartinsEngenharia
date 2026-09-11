@@ -12,9 +12,7 @@ export function openWebsiteAdminHome() {
   return true;
 }
 
-// Áreas que continuam no Admin clássico. Somente estas exigem uma navegação completa
-// para fora do Expo Router. As áreas modernas DEVEM permanecer na navegação interna
-// do portal para não recarregar o app e cair novamente no dashboard.
+// Áreas que continuam no Admin clássico e saem do portal React para páginas HTML legadas.
 const classicWebsiteAdminRoutes: Record<string, string> = {
   'commercial-documents': '/orcamentos-contratos.html',
   clients: '/clientes.html',
@@ -49,17 +47,31 @@ export function isModernWebsiteAdminSection(key: string) {
   return modernWebsiteAdminSections.has(key);
 }
 
-// Entrada estável usada pelo Admin clássico. Carregamos somente /portal/admin/index.html,
-// que sempre existe no export estático, e a própria aplicação abre a área solicitada
-// internamente via Expo Router. Isso elimina dependência de rewrite/fallback do servidor.
+// No site publicado cada área moderna possui um HTML estático real em /portal/admin/.
+// Usamos esse arquivo diretamente em vez de depender de rewrite/fallback do servidor.
+export function websiteAdminSectionUrl(key: string) {
+  return `/portal/admin/${encodeURIComponent(key)}.html`;
+}
+
+// Compatibilidade com chamadas antigas: a antiga "ponte" agora resolve para o arquivo
+// estático real da área, evitando URLs ?section= que podiam cair em Página não encontrada.
 export function websiteAdminBridgeUrl(key: string) {
-  return `/portal/admin/index.html?section=${encodeURIComponent(key)}`;
+  return websiteAdminSectionUrl(key);
 }
 
 export function openWebsiteAdminSection(key: string) {
   if (!usesWebsiteAdminHome()) return false;
+
   const classicRoute = classicWebsiteAdminRoutes[key];
-  if (!classicRoute) return false;
-  window.location.assign(classicRoute);
-  return true;
+  if (classicRoute) {
+    window.location.assign(classicRoute);
+    return true;
+  }
+
+  if (isModernWebsiteAdminSection(key)) {
+    window.location.assign(websiteAdminSectionUrl(key));
+    return true;
+  }
+
+  return false;
 }
