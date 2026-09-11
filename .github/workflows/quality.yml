@@ -77,7 +77,7 @@ jobs:
           node scripts/mobile-admin-smoke.mjs
 
       - name: Testar Worker público Cloudflare
-        if: github.ref_name == 'galeria-fotos-20260829'
+        if: github.event_name == 'push'
         run: |
           set -euo pipefail
           BASE="https://cme-public-media.eng-martins-camila.workers.dev"
