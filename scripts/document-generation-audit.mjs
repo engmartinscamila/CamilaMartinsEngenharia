@@ -17,7 +17,16 @@ const commercialCore=read('portal-app/supabase/functions/generate-commercial-doc
 
 const contractKinds=['anexo_i','termo_aceite','estudo_preliminar','levantamento_tecnico','servico_adicional','autorizacao_imagem','quitacao_encerramento','notificacao_formal'];
 for(const kind of contractKinds) expect(workflow.includes(`'${kind}'`),`Tipo contratual ausente do serviço: ${kind}`);
-for(const kind of contractKinds.filter(kind=>kind!=='notificacao_formal')) expect(preparation.includes(kind),`Tela de preparação não expõe o tipo ${kind}`);
+
+// A tela de preparação recebe os documentos padrão pelo catálogo compartilhado
+// CONTRACT_DOCUMENT_OPTIONS e acrescenta Termo de Aceite localmente. Não exigir
+// que os identificadores do catálogo apareçam duplicados no JSX evita falsos positivos.
+expect(preparation.includes('...CONTRACT_DOCUMENT_OPTIONS'),'Tela de preparação não usa o catálogo compartilhado de documentos.');
+expect(preparation.includes("{kind:'termo_aceite'"),'Tela de preparação não expõe Termo de Aceite.');
+for(const kind of ['anexo_i','estudo_preliminar','levantamento_tecnico','servico_adicional','autorizacao_imagem','quitacao_encerramento']) {
+  expect(workflow.includes(`kind: '${kind}'`),`Catálogo compartilhado não expõe o tipo ${kind}`);
+}
+
 expect(contractScreen.includes("prepare('termo_aceite', approval.id)"),'Termo de Aceite não está ligado explicitamente à aprovação selecionada.');
 expect(contractScreen.includes('generateContractDocument(item.id, item.kind, archive)'),'Download contratual não usa o document_kind do registro selecionado.');
 expect(contractScreen.includes('sendContractDocument(item.id, item.kind)'),'Envio contratual não usa o document_kind do registro selecionado.');
