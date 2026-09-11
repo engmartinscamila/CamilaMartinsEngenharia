@@ -40,6 +40,7 @@ jobs:
         run: |
           node scripts/site-audit.mjs
           node scripts/admin-functional-audit.mjs
+          node scripts/document-generation-audit.mjs
           node scripts/document-governance-audit.mjs
 
       - name: Validar JavaScript novo
