@@ -13,6 +13,8 @@ const commercialService=read('portal-app/src/services/commercial-service.ts');
 const commercialScreen=read('portal-app/src/app/admin/commercial-documents.tsx');
 const delivery=read('portal-app/supabase/functions/deliver-generated-document/index.ts');
 const contractCore=read('portal-app/supabase/functions/generate-contract-document/index.ts');
+const contractFinal=read('portal-app/supabase/functions/generate-contract-document-final/index.ts');
+const contractNative=read('portal-app/supabase/functions/generate-contract-document-final/native-options-docx.ts');
 const commercialCore=read('portal-app/supabase/functions/generate-commercial-document/index.ts');
 
 const contractKinds=['anexo_i','termo_aceite','estudo_preliminar','levantamento_tecnico','servico_adicional','autorizacao_imagem','quitacao_encerramento','notificacao_formal'];
@@ -27,6 +29,7 @@ for(const kind of ['anexo_i','estudo_preliminar','levantamento_tecnico','servico
   expect(workflow.includes(`kind: '${kind}'`),`Catálogo compartilhado não expõe o tipo ${kind}`);
 }
 
+expect(preparation.includes("approvalId:kind==='termo_aceite'?approvalId:null"),'Preparação do Termo de Aceite não encaminha explicitamente a aprovação selecionada.');
 expect(contractScreen.includes("prepare('termo_aceite', approval.id)"),'Termo de Aceite não está ligado explicitamente à aprovação selecionada.');
 expect(contractScreen.includes('generateContractDocument(item.id, item.kind, archive)'),'Download contratual não usa o document_kind do registro selecionado.');
 expect(contractScreen.includes('sendContractDocument(item.id, item.kind)'),'Envio contratual não usa o document_kind do registro selecionado.');
@@ -35,6 +38,15 @@ expect(workflow.includes('expectedDocumentKind }'),'Serviço contratual não tra
 expect((workflow.match(/documentKind !== expectedDocumentKind/g)||[]).length>=2,'Serviço contratual não valida o tipo retornado na geração e na entrega.');
 expect(workflow.includes("generateContractDocument(documentId, 'notificacao_formal'"),'Notificação Formal não está presa ao tipo correto.');
 expect(workflow.includes("sendContractDocument(documentId, 'notificacao_formal'"),'Envio da Notificação Formal não está preso ao tipo correto.');
+
+// Regressão crítica histórica: “Aceite de Etapa” não pode cair em outro modelo.
+expect(contractCore.includes("if(kind==='termo_aceite')"),'Gerador contratual principal não possui bloco dedicado ao Termo de Aceite.');
+expect(contractCore.includes("termo_aceite:'termo-aceite'"),'Gerador contratual principal não possui nome de arquivo dedicado ao Termo de Aceite.');
+expect(contractFinal.includes("const nativeKinds=new Set(['termo_aceite'"),'Gerador final não inclui Termo de Aceite entre os documentos com renderização nativa governada.');
+expect(contractFinal.includes("if(kind==='termo_aceite')"),'Gerador final não valida as opções específicas do Termo de Aceite.');
+expect(contractNative.includes("if(kind==='termo_aceite')return makeDoc"),'Renderizador nativo não possui modelo exclusivo de Termo de Aceite.');
+expect(contractNative.includes('TERMO DE ACEITE DE ETAPA'),'Modelo nativo do Termo de Aceite perdeu seu título próprio.');
+expect(contractNative.includes("value(d,'approval_title')"),'Modelo nativo do Termo de Aceite não usa a etapa/aprovação vinculada.');
 
 expect(commercialScreen.includes('generateCommercialDocument(pending.record.id, pending.kind'),'Tela comercial não encaminha explicitamente orçamento/contrato selecionado.');
 expect(commercialService.includes("generate-commercial-document-final"),'Comercial não usa o gerador final governado.');
