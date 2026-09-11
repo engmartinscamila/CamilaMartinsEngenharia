@@ -1,7 +1,21 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { environment } from '../_shared/admin.ts';
-import { cleanText, corsHeaders, json } from '../_shared/http.ts';
+import { cleanText, corsHeaders } from '../_shared/http.ts';
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders,
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'private, no-store, max-age=0',
+      'Pragma': 'no-cache',
+      'X-Content-Type-Options': 'nosniff',
+      'Referrer-Policy': 'no-referrer',
+    },
+  });
+}
 
 async function sha256(value: string) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
