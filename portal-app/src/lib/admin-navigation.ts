@@ -34,6 +34,7 @@ const websiteAdminRoutes: Record<string, string> = {
   'document-archive': '/portal/admin/document-archive',
   agenda: '/agenda.html',
   schedule: '/cronograma.html',
+  'construction-schedule': '/portal/admin/construction-schedule',
   approvals: '/portal/admin/approvals',
   requests: '/solicitacoes.html',
   notifications: '/portal/admin/notifications',
