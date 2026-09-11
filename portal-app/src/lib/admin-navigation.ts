@@ -12,11 +12,11 @@ export function openWebsiteAdminHome() {
   return true;
 }
 
-// No site publicado, algumas áreas continuam nas telas clássicas e as áreas mais novas
-// vivem dentro do export do portal em /portal. Centralizar todos os destinos aqui evita
-// que um router.push('/admin/...') saia do /portal e caia no fallback do dashboard.
+// No site publicado, as rotas do Expo são exportadas como arquivos HTML estáticos.
+// Por isso os destinos modernos precisam apontar para o arquivo .html real; usar a rota
+// sem extensão funciona no dev server, mas no Pages pode cair no fallback e voltar ao dashboard.
 const websiteAdminRoutes: Record<string, string> = {
-  crm: '/portal/admin/crm',
+  crm: '/portal/admin/crm.html',
   'commercial-documents': '/orcamentos-contratos.html',
   clients: '/clientes.html',
   projects: '/projetos.html',
@@ -24,21 +24,21 @@ const websiteAdminRoutes: Record<string, string> = {
   photos: '/fotos.html',
   library: '/biblioteca.html',
   financial: '/financeiro.html',
-  tasks: '/portal/admin/tasks',
-  'work-diary': '/portal/admin/work-diary',
-  procurement: '/portal/admin/procurement',
-  'portal-control': '/portal/admin/portal-control',
-  'contract-documents': '/portal/admin/contract-documents',
-  'document-preparation': '/portal/admin/document-preparation',
-  'document-governance': '/portal/admin/document-governance',
-  'document-archive': '/portal/admin/document-archive',
+  tasks: '/portal/admin/tasks.html',
+  'work-diary': '/portal/admin/work-diary.html',
+  procurement: '/portal/admin/procurement.html',
+  'portal-control': '/portal/admin/portal-control.html',
+  'contract-documents': '/portal/admin/contract-documents.html',
+  'document-preparation': '/portal/admin/document-preparation.html',
+  'document-governance': '/portal/admin/document-governance.html',
+  'document-archive': '/portal/admin/document-archive.html',
   agenda: '/agenda.html',
   schedule: '/cronograma.html',
-  'construction-schedule': '/portal/admin/construction-schedule',
-  approvals: '/portal/admin/approvals',
+  'construction-schedule': '/portal/admin/construction-schedule.html',
+  approvals: '/portal/admin/approvals.html',
   requests: '/solicitacoes.html',
-  notifications: '/portal/admin/notifications',
-  security: '/portal/admin/security',
+  notifications: '/portal/admin/notifications.html',
+  security: '/portal/admin/security.html',
   'system-health': '/integridade-sistema.html',
 };
 
