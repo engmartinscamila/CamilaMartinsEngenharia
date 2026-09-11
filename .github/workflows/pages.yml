@@ -124,6 +124,44 @@ jobs:
             cp "$source" "site-public/portal/${route}/index.html"
           done
 
+      - name: Testar rotas reais do Admin integrado
+        run: |
+          set -euo pipefail
+          routes=(
+            crm
+            contract-documents
+            document-preparation
+            document-governance
+            document-archive
+            tasks
+            work-diary
+            procurement
+            financial
+            portal-control
+            construction-schedule
+            approvals
+            notifications
+            security
+          )
+          if grep -q 'portal/admin/index.html?section=' site-public/js/ui-core.js; then
+            echo 'ERRO: o pacote publicado ainda contém a rota-ponte quebrada ?section=.' >&2
+            exit 1
+          fi
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory site-public > /tmp/cme-integrated-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          sleep 2
+          for route in "${routes[@]}"; do
+            test -f "site-public/portal/admin/${route}.html"
+            test -f "site-public/portal/admin/${route}/index.html"
+            curl --fail --silent --show-error "http://127.0.0.1:4174/portal/admin/${route}.html" > /tmp/cme-route.html
+            if grep -q 'Página não encontrada' /tmp/cme-route.html; then
+              echo "ERRO: /portal/admin/${route}.html devolveu página não encontrada." >&2
+              exit 1
+            fi
+            echo "OK /portal/admin/${route}.html"
+          done
+
       - name: Revalidar pacote final
         run: |
           node scripts/site-public-audit.mjs
