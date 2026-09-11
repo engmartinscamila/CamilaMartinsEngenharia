@@ -53,7 +53,7 @@ export function AdminNotificationBell() {
     <Pressable
       accessibilityLabel={unread ? `${unread} notificações administrativas não lidas` : 'Abrir notificações administrativas'}
       accessibilityRole="button"
-      onPress={() => router.push('/admin/notifications')}
+      onPress={() => { if (!openWebsiteAdminSection('notifications')) router.push('/admin/notifications'); }}
       style={({ pressed }) => [styles.notificationButton, pressed && styles.pressed]}
     >
       <Ionicons color={unread ? colors.danger : colors.gold600} name={unread ? 'notifications' : 'notifications-outline'} size={21} />
