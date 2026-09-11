@@ -36,9 +36,10 @@ jobs:
       - name: Gerar e revisar acervo de frases
         run: node scripts/build-frases-do-dia-v7.mjs
 
-      - name: Auditoria estática
+      - name: Auditoria estática e funcional do Admin
         run: |
           node scripts/site-audit.mjs
+          node scripts/admin-functional-audit.mjs
           node scripts/document-governance-audit.mjs
 
       - name: Validar JavaScript novo
@@ -65,6 +66,7 @@ jobs:
           curl --fail http://127.0.0.1:4173/orcamentos-contratos.html >/dev/null
           curl --fail http://127.0.0.1:4173/documentos-contratuais.html >/dev/null
           curl --fail http://127.0.0.1:4173/arquivo-documental.html >/dev/null
+          curl --fail http://127.0.0.1:4173/integridade-sistema.html >/dev/null
 
       - name: Testes de interface
         run: node scripts/browser-smoke.mjs
