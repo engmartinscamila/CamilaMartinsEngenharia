@@ -3,6 +3,7 @@ import { chromium } from 'playwright';
 const BASE = process.env.SITE_BASE || 'http://127.0.0.1:4173';
 const failures = [];
 const assert = (condition, message) => { if (!condition) failures.push(message); };
+const rightEdge = (box) => box ? box.x + box.width : Number.POSITIVE_INFINITY;
 
 const supabaseMock = `
 (function(){
@@ -60,17 +61,17 @@ for (const file of ['admin.html', 'integridade-sistema.html', 'clientes.html', '
   if (await menuButton.count()) {
     assert(await menuButton.isVisible(), `${file}: botão do menu mobile não está visível`);
     const buttonBox = await menuButton.boundingBox();
-    assert(Boolean(buttonBox && buttonBox.x >= 0 && buttonBox.x + buttonBox.width <= 390), `${file}: botão mobile saiu da viewport`);
+    assert(Boolean(buttonBox && buttonBox.x >= 0 && rightEdge(buttonBox) <= 390), `${file}: botão mobile saiu da viewport`);
 
     const closedSidebar = await page.locator('.sidebar').boundingBox();
-    assert(Boolean(closedSidebar && closedSidebar.right <= 3), `${file}: sidebar deveria iniciar fechada no celular`);
+    assert(Boolean(closedSidebar && rightEdge(closedSidebar) <= 3), `${file}: sidebar deveria iniciar fechada no celular`);
 
     await menuButton.click();
     await page.waitForTimeout(280);
     assert(await page.locator('body').evaluate(el => el.classList.contains('cme-admin-menu-open')), `${file}: menu não abriu`);
     assert(await menuButton.getAttribute('aria-expanded') === 'true', `${file}: aria-expanded não indica menu aberto`);
     const openSidebar = await page.locator('.sidebar').boundingBox();
-    assert(Boolean(openSidebar && openSidebar.x >= -2 && openSidebar.width <= 322 && openSidebar.right <= 390), `${file}: drawer aberto extrapola a viewport`);
+    assert(Boolean(openSidebar && openSidebar.x >= -2 && openSidebar.width <= 322 && rightEdge(openSidebar) <= 390), `${file}: drawer aberto extrapola a viewport`);
     assert(await page.locator('.menu-lateral a.menu-item').count() === 28, `${file}: menu mobile não contém os 28 destinos canônicos`);
     assert(await page.locator('.cme-admin-mobile-overlay').isVisible(), `${file}: overlay do menu não apareceu`);
 
@@ -80,7 +81,7 @@ for (const file of ['admin.html', 'integridade-sistema.html', 'clientes.html', '
   }
 
   const contentBox = await page.locator('.conteudo').boundingBox();
-  assert(Boolean(contentBox && contentBox.x >= -1 && contentBox.right <= 391), `${file}: conteúdo principal extrapola a viewport`);
+  assert(Boolean(contentBox && contentBox.x >= -1 && rightEdge(contentBox) <= 391), `${file}: conteúdo principal extrapola a viewport`);
 
   const overflowCards = await page.locator('.card,.card-grande,.card-lateral,.health-card,.doc-shell').evaluateAll((els) => els.filter(el => {
     const r=el.getBoundingClientRect(); return r.left < -2 || r.right > window.innerWidth + 2;
