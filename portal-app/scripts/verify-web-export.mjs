@@ -65,11 +65,17 @@ const webRoutes = new Map(routePairs.map((match) => [match[1] || match[2], match
 const sectionKeys = [...sectionSource.matchAll(/\{\s*key:\s*'([^']+)'/g)].map((match) => match[1]);
 assert.ok(sectionKeys.length >= 20, 'A lista de áreas administrativas parece incompleta.');
 for (const key of sectionKeys) assert.ok(webRoutes.has(key), `A área administrativa ${key} não possui destino web explícito.`);
+for (const [key, destination] of webRoutes.entries()) {
+  if (!destination.startsWith('/portal/admin/')) continue;
+  assert.ok(destination.endsWith('.html'), `Destino publicado de ${key} precisa apontar para arquivo HTML real: ${destination}`);
+  const exported = destination.replace(/^\/portal\//, '');
+  assert.ok(existsSync(join(outputRoot, exported)), `Destino publicado de ${key} não existe no export: ${exported}`);
+}
 for (const [key, destination] of [
-  ['crm', '/portal/admin/crm'],
-  ['construction-schedule', '/portal/admin/construction-schedule'],
-  ['notifications', '/portal/admin/notifications'],
-  ['security', '/portal/admin/security'],
+  ['crm', '/portal/admin/crm.html'],
+  ['construction-schedule', '/portal/admin/construction-schedule.html'],
+  ['notifications', '/portal/admin/notifications.html'],
+  ['security', '/portal/admin/security.html'],
 ]) assert.equal(webRoutes.get(key), destination, `Destino web ausente/incorreto para ${key}.`);
 assert.equal(webRoutes.get('system-health'), '/integridade-sistema.html', 'Destino web incorreto para Verificar funcionamento.');
 assert.equal(webRoutes.get('requests'), '/solicitacoes.html', 'Destino web incorreto para Solicitações.');
@@ -95,4 +101,4 @@ const scheduleService = readFileSync(resolve('src/services/construction-schedule
 assert.ok(scheduleService.includes("generate-construction-schedule-xlsx"), 'Cronograma completo sem integração com exportador Excel.');
 assert.ok(scheduleService.includes('admin_initialize_construction_schedule'), 'Cronograma completo sem inicialização automática do modelo padrão.');
 
-process.stdout.write('APROVADO: export web completo, rotas e ordem do Admin estáveis, CRM protegido e Cronograma de Obra Completo exportável.\n');
+process.stdout.write('APROVADO: export web completo, destinos Admin apontam para HTML publicado, ordem estável, CRM protegido e Cronograma de Obra Completo exportável.\n');
