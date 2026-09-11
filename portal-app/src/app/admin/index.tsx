@@ -1,4 +1,4 @@
-import { openWebsiteAdminHome, usesWebsiteAdminHome } from '@/lib/admin-navigation';
+import { openWebsiteAdminHome, openWebsiteAdminSection, usesWebsiteAdminHome } from '@/lib/admin-navigation';
 import { adminSections } from '@/lib/admin-sections';
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
 import { useRouter } from 'expo-router';
@@ -57,13 +57,16 @@ function MainAdminDashboard() {
   const exit = async () => { await signOut(); router.replace('/login'); };
 
   const metrics = [
-    { label: 'Clientes ativos', value: counts.activeClients, route: '/admin/clients' as const },
-    { label: 'Projetos ativos', value: counts.activeProjects, route: '/admin/projects' as const },
-    { label: 'Solicitações abertas', value: counts.openRequests, route: '/admin/requests' as const },
-    { label: 'Aprovações pendentes', value: counts.pendingApprovals, route: '/admin/approvals' as const },
+    { key: 'clients', label: 'Clientes ativos', value: counts.activeClients, route: '/admin/clients' as const },
+    { key: 'projects', label: 'Projetos ativos', value: counts.activeProjects, route: '/admin/projects' as const },
+    { key: 'requests', label: 'Solicitações abertas', value: counts.openRequests, route: '/admin/requests' as const },
+    { key: 'approvals', label: 'Aprovações pendentes', value: counts.pendingApprovals, route: '/admin/approvals' as const },
   ] as const;
 
-  const modules = adminSections.map((section) => ({ ...section, onPress: () => router.push(section.href) }));
+  const modules = adminSections.map((section) => ({
+    ...section,
+    onPress: () => { if (!openWebsiteAdminSection(section.key)) router.push(section.href); },
+  }));
 
   return (
     <Screen>
@@ -73,10 +76,10 @@ function MainAdminDashboard() {
       </View>
       <PageHeader eyebrow="Administração" title={`Bem vinda, Engª ${adminFirstName}.`} description="Todas as áreas de gestão em um só lugar. Escolha uma função abaixo." />
       {env.isHomologation ? <Notice tone="info">Ambiente de homologação: os indicadores incluem as contas e os registros usados no teste de isolamento A/B.</Notice> : null}
-      {attentionCount > 0 ? <Card><Notice tone={overdueCount > 0 ? 'danger' : 'warning'}>{overdueCount > 0 ? `${overdueCount} aprovação(ões) já ultrapassaram o prazo contratual de manifestação. Há ${attentionCount} pendência(s) que exigem sua atenção.` : `${attentionCount} aprovação(ões) estão a até 3 dias do fim do prazo contratual de manifestação.`}</Notice><Button onPress={() => router.push('/admin/contract-documents')} title="Ver pendências contratuais" variant="secondary" /></Card> : null}
-      {archiveReminderCount > 0 ? <Card><Notice tone="info">Há {archiveReminderCount} documento(s) com mais de 180 dias aptos para manutenção de Storage. Nenhum será apagado automaticamente.</Notice><Button onPress={() => router.push('/admin/document-archive')} title="Revisar arquivo documental" variant="secondary" /></Card> : null}
+      {attentionCount > 0 ? <Card><Notice tone={overdueCount > 0 ? 'danger' : 'warning'}>{overdueCount > 0 ? `${overdueCount} aprovação(ões) já ultrapassaram o prazo contratual de manifestação. Há ${attentionCount} pendência(s) que exigem sua atenção.` : `${attentionCount} aprovação(ões) estão a até 3 dias do fim do prazo contratual de manifestação.`}</Notice><Button onPress={() => { if (!openWebsiteAdminSection('contract-documents')) router.push('/admin/contract-documents'); }} title="Ver pendências contratuais" variant="secondary" /></Card> : null}
+      {archiveReminderCount > 0 ? <Card><Notice tone="info">Há {archiveReminderCount} documento(s) com mais de 180 dias aptos para manutenção de Storage. Nenhum será apagado automaticamente.</Notice><Button onPress={() => { if (!openWebsiteAdminSection('document-archive')) router.push('/admin/document-archive'); }} title="Revisar arquivo documental" variant="secondary" /></Card> : null}
       {error ? <Notice tone="warning">{error} Valores indisponíveis não são exibidos como zero.</Notice> : null}
-      <View style={[styles.metrics, isMobile && styles.metricsMobile]}>{metrics.map((metric) => <Pressable accessibilityRole="button" key={metric.label} onPress={() => router.push(metric.route)} style={({ pressed }) => [styles.metricPressable, isMobile && styles.metricPressableMobile, pressed && styles.metricPressed]}><Card style={isMobile ? { ...styles.metric, ...styles.metricMobile } : styles.metric}><Text style={styles.metricLabel}>{metric.label}</Text><Text style={styles.metricValue}>{metric.value === null ? 'Indisponível' : metric.value}</Text><Text style={styles.metricLink}>Abrir</Text></Card></Pressable>)}</View>
+      <View style={[styles.metrics, isMobile && styles.metricsMobile]}>{metrics.map((metric) => <Pressable accessibilityRole="button" key={metric.label} onPress={() => { if (!openWebsiteAdminSection(metric.key)) router.push(metric.route); }} style={({ pressed }) => [styles.metricPressable, isMobile && styles.metricPressableMobile, pressed && styles.metricPressed]}><Card style={isMobile ? { ...styles.metric, ...styles.metricMobile } : styles.metric}><Text style={styles.metricLabel}>{metric.label}</Text><Text style={styles.metricValue}>{metric.value === null ? 'Indisponível' : metric.value}</Text><Text style={styles.metricLink}>Abrir</Text></Card></Pressable>)}</View>
       <View style={styles.moduleList}>{modules.map((module) => <AdminMenuRow compact={isMobile} description={module.description} icon={module.icon} key={module.key} onPress={module.onPress} title={module.title} />)}</View>
       <Button loading={loading} onPress={() => void load()} title="Atualizar indicadores" variant="secondary" />
     </Screen>
