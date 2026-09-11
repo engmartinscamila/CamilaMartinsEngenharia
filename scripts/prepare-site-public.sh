@@ -27,6 +27,22 @@ done
 node scripts/harden-client-area.mjs
 node scripts/harden-public-html.mjs
 
+# O Admin clássico precisa abrir diretamente os HTMLs estáticos exportados do portal.
+# A antiga rota ?section= dependia do Expo Router e podia cair em "Página não encontrada"
+# mesmo com o arquivo da área presente no deploy.
+node <<'NODE'
+const fs = require('node:fs');
+const file = 'site-public/js/ui-core.js';
+let source = fs.readFileSync(file, 'utf8');
+const oldRoute = 'function urlPontePortal(rota){return`portal/admin/index.html?section=${encodeURIComponent(rota)}`}';
+const directRoute = 'function urlPontePortal(rota){return`/portal/admin/${encodeURIComponent(rota)}.html`}';
+if (!source.includes(oldRoute) && !source.includes(directRoute)) {
+  throw new Error('Não foi possível localizar o roteamento das áreas modernas no ui-core.js.');
+}
+source = source.replace(oldRoute, directRoute);
+fs.writeFileSync(file, source);
+NODE
+
 # Todas as referências locais JS/CSS recebem o identificador exato do build.
 # Assim uma nova publicação não depende de cache-busting manual em cada HTML.
 node scripts/apply-build-version.mjs "$BUILD_VERSION"
