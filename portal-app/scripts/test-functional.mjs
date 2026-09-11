@@ -41,4 +41,29 @@ const deletionClient=fs.readFileSync('src/services/client-deletion-service.ts','
 eq(deletionClient.includes("functions.invoke('admin-delete-client'"),true,'client UI uses only the protected permanent-deletion endpoint');
 eq(deletionClient.includes('retainedSecurityEvents'),true,'client deletion preview exposes preserved security-event count');
 
+// Public Edge Functions intentionally run without the platform JWT gate, so their
+// own capability/secret/privacy boundaries must never disappear in a refactor.
+const prospectAccess=fs.readFileSync('supabase/functions/prospect-document-access/index.ts','utf8');
+eq(prospectAccess.includes("/^[a-f0-9]{48}$/.test(token)"),true,'prospect access requires a high-entropy capability token');
+eq(prospectAccess.includes(".eq('token_hash', tokenHash)"),true,'prospect access compares only the token hash stored server-side');
+eq(prospectAccess.includes(".eq('use_count', link.use_count).lt('use_count', link.max_uses)"),true,'prospect access consumes download uses atomically');
+eq(prospectAccess.includes("'Cache-Control': 'private, no-store, max-age=0'"),true,'prospect access responses must never be cached');
+eq(prospectAccess.includes("'Referrer-Policy': 'no-referrer'"),true,'prospect access must not leak capability context through referrers');
+
+const cleanup=fs.readFileSync('supabase/functions/cleanup-expired-assets/index.ts','utf8');
+eq(cleanup.includes("service_internal_secret_get"),true,'cleanup endpoint requires its server-side internal secret');
+eq(cleanup.includes('constantTimeEqual(suppliedToken, expectedToken)'),true,'cleanup endpoint compares its secret in constant time');
+eq(cleanup.includes("item.issued_storage_path?.startsWith('issued/')"),true,'cleanup removes only the recognized temporary protected-copy prefix');
+
+const passwordLink=fs.readFileSync('supabase/functions/client-password-link/index.ts','utf8');
+eq(passwordLink.includes('GENERIC_MESSAGE'),true,'password recovery keeps account-existence responses generic');
+eq(passwordLink.includes('service_consume_password_link_rate_limit'),true,'password recovery retains server-side rate limiting');
+eq(passwordLink.includes(".eq(\"status\", \"ativo\")"),true,'password recovery is restricted to active clients');
+eq(passwordLink.includes('admin.auth.admin.generateLink({ type: "recovery"'),true,'password recovery emits a scoped recovery link instead of a password');
+
+const protectedPdf=fs.readFileSync('supabase/functions/proteger-pdf/index.ts','utf8');
+eq(protectedPdf.includes('RATE_MAX_REQUESTS = 8'),true,'protected PDF issuance keeps a server-side emission rate limit');
+eq(protectedPdf.includes('SIGNED_URL_SECONDS = 60'),true,'protected PDF signed URLs remain short lived');
+eq(protectedPdf.includes('DOCUMENT_ACCESS_DENIED'),true,'protected portal PDFs retain explicit tenant access denial');
+
 process.stdout.write(`PASS: ${checks} functional regression checks; no production writes.\n`);
