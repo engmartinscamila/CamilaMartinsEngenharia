@@ -11,11 +11,13 @@ const preparation=read('portal-app/src/app/admin/document-preparation.tsx');
 const contractScreen=read('portal-app/src/app/admin/contract-documents.tsx');
 const commercialService=read('portal-app/src/services/commercial-service.ts');
 const commercialScreen=read('portal-app/src/app/admin/commercial-documents.tsx');
+const classicCommercial=read('js/commercial-documents-web.js');
 const delivery=read('portal-app/supabase/functions/deliver-generated-document/index.ts');
 const contractCore=read('portal-app/supabase/functions/generate-contract-document/index.ts');
 const contractFinal=read('portal-app/supabase/functions/generate-contract-document-final/index.ts');
 const contractNative=read('portal-app/supabase/functions/generate-contract-document-final/native-options-docx.ts');
 const commercialCore=read('portal-app/supabase/functions/generate-commercial-document/index.ts');
+const commercialAuditMigration=read('portal-app/supabase/migrations/20260911184323_allow_admin_audit_log_insert_for_commercial_flow.sql');
 
 const contractKinds=['anexo_i','termo_aceite','estudo_preliminar','levantamento_tecnico','servico_adicional','autorizacao_imagem','quitacao_encerramento','notificacao_formal'];
 for(const kind of contractKinds) expect(workflow.includes(`'${kind}'`),`Tipo contratual ausente do serviço: ${kind}`);
@@ -54,6 +56,15 @@ expect(commercialService.includes('expectedDocumentKind: kind'),'Entrega comerci
 expect(commercialService.includes('documentKind !== kind'),'Entrega comercial não recusa tipo divergente.');
 expect(commercialCore.includes("const kind=body.kind==='contrato'?'contrato':'orcamento'"),'Gerador comercial principal não normaliza o tipo solicitado.');
 
+// A criação comercial é SECURITY INVOKER; o audit_log precisa aceitar somente o Admin
+// via RLS. Sem estes grants/policy, ORC/CON falham após criar os dados e antes de concluir.
+expect(commercialAuditMigration.includes('grant insert on table public.audit_log to authenticated'),'Migração comercial não concede INSERT no audit_log ao papel autenticado.');
+expect(commercialAuditMigration.includes('for insert'),'Migração comercial não cria política INSERT no audit_log.');
+expect(commercialAuditMigration.includes('with check (public.is_portal_admin())'),'audit_log perdeu a restrição de escrita exclusiva do Admin.');
+// Evita a chamada ambígua do overload legado de dois parâmetros; a tela atual deve enviar
+// explicitamente o terceiro parâmetro, ainda que seja null.
+expect(classicCommercial.includes("p_source_project_id: sourceProjectId"),'Tela comercial clássica não envia explicitamente a origem do projeto ao criar contrato.');
+
 expect(contractCore.includes('row.document_kind!==expectedDocumentKind'),'Gerador contratual principal não bloqueia document_kind diferente do solicitado.');
 expect(contractCore.includes("if(!expectedDocumentKind"),'Gerador contratual principal aceita geração sem tipo esperado.');
 expect(delivery.includes('actualDocumentKind !== expectedDocumentKind'),'Entregador de Word não bloqueia tipo divergente.');
@@ -65,4 +76,4 @@ expect(directContractCalls===0,'Frontend chama diretamente o gerador contratual 
 expect(directCommercialCalls===0,'Frontend chama diretamente o gerador comercial legado em vez do wrapper final.');
 
 if(errors.length){console.error('\nERROS DE GERAÇÃO DOCUMENTAL:');errors.forEach((e,i)=>console.error(`${i+1}. ${e}`));process.exit(1);}
-console.log(`AUDITORIA DOCUMENTAL APROVADA: ${contractKinds.length} tipos contratuais + orçamento/contrato comercial protegidos por tipo esperado.`);
+console.log(`AUDITORIA DOCUMENTAL APROVADA: ${contractKinds.length} tipos contratuais + orçamento/contrato comercial protegidos por tipo esperado e RLS de auditoria.`);
