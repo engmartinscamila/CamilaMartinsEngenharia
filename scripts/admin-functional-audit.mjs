@@ -42,7 +42,7 @@ const classicKeys = new Set([...classicBlock.matchAll(/^\s*(?:'([^']+)'|([a-z][a
 const modernKeys = new Set([...modernBlock.matchAll(/'([^']+)'/g)].map((match) => match[1]));
 for (const key of sectionKeys) if (!classicKeys.has(key) && !modernKeys.has(key)) fail(`Admin React: seção ${key} não foi classificada como clássica nem moderna.`);
 for (const key of modernKeys) if (classicKeys.has(key)) fail(`Admin React: seção ${key} está duplicada entre navegação clássica e moderna.`);
-if (!navigation.includes('return false;\n}')) fail('Admin React: áreas modernas precisam cair no router.push interno, sem reload completo.');
+if (!navigation.includes('if (!classicRoute) return false;')) fail('Admin React: áreas modernas precisam cair no router.push interno, sem reload completo.');
 if (!navigation.includes('websiteAdminBridgeUrl')) fail('Admin React: helper da rota-ponte estável ausente.');
 if (!sections.includes("key: 'construction-schedule'")) fail('Admin React: Cronograma de obra completo não está no menu.');
 if (!modernKeys.has('construction-schedule')) fail('Admin React: Cronograma de obra completo não está classificado como área moderna.');
