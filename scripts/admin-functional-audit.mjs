@@ -17,8 +17,6 @@ const uiCore = read('js/ui-core.js');
 if (!uiCore.includes('MENU_ADMIN_CANONICO')) fail('ui-core.js: menu administrativo não possui lista canônica.');
 if (!uiCore.includes('menu.replaceChildren(fragment)')) fail('ui-core.js: menu clássico não é reconstruído em ordem fixa.');
 if (!uiCore.includes('menu.dataset.cmeOrdemFixa="true"')) fail('ui-core.js: marcador de ordem fixa ausente.');
-if (!uiCore.includes('portal/admin/index.html?section=')) fail('ui-core.js: rota-ponte estável do portal não está configurada.');
-if (!uiCore.includes('evento.preventDefault()')) fail('ui-core.js: links modernos não interceptam o reload direto para usar a rota-ponte.');
 const canonicalBlock = uiCore.match(/const MENU_ADMIN_CANONICO=\[([\s\S]*?)\];/i)?.[1] ?? '';
 const canonicalRoutes = [...canonicalBlock.matchAll(/\["([^"]+)","[^"]+","([^"]+)"\]/g)].map((match) => ({ href: match[1], title: match[2] }));
 if (canonicalRoutes.length < 25) fail(`ui-core.js: menu canônico incompleto (${canonicalRoutes.length} itens).`);
@@ -31,7 +29,10 @@ for (const item of canonicalRoutes) {
     if (!exists(source)) fail(`Menu "${item.title}": rota ${item.href} não possui tela fonte ${source}.`);
   } else if (!exists(item.href)) fail(`Menu "${item.title}": arquivo clássico ausente ${item.href}.`);
 }
-if (!uiCore.includes('location.href=urlPontePortal(rota)')) fail('Ações rápidas do Admin clássico não usam a rota-ponte estável do portal.');
+
+const prepareSite = read('scripts/prepare-site-public.sh');
+if (!prepareSite.includes('/portal/admin/${encodeURIComponent(rota)}.html')) fail('Publicação: links modernos do Admin não são convertidos para HTML estático direto.');
+if (!prepareSite.includes('site-public/js/ui-core.js')) fail('Publicação: correção dos links do Admin não é aplicada ao artefato final.');
 
 const sections = read('portal-app/src/lib/admin-sections.ts');
 const navigation = read('portal-app/src/lib/admin-navigation.ts');
@@ -42,8 +43,8 @@ const classicKeys = new Set([...classicBlock.matchAll(/^\s*(?:'([^']+)'|([a-z][a
 const modernKeys = new Set([...modernBlock.matchAll(/'([^']+)'/g)].map((match) => match[1]));
 for (const key of sectionKeys) if (!classicKeys.has(key) && !modernKeys.has(key)) fail(`Admin React: seção ${key} não foi classificada como clássica nem moderna.`);
 for (const key of modernKeys) if (classicKeys.has(key)) fail(`Admin React: seção ${key} está duplicada entre navegação clássica e moderna.`);
-if (!navigation.includes('if (!classicRoute) return false;')) fail('Admin React: áreas modernas precisam cair no router.push interno, sem reload completo.');
-if (!navigation.includes('websiteAdminBridgeUrl')) fail('Admin React: helper da rota-ponte estável ausente.');
+if (!navigation.includes('websiteAdminSectionUrl')) fail('Admin React: helper de URL estática das áreas modernas ausente.');
+if (!navigation.includes('window.location.assign(websiteAdminSectionUrl(key))')) fail('Admin React: áreas modernas web não abrem o HTML estático publicado.');
 if (!sections.includes("key: 'construction-schedule'")) fail('Admin React: Cronograma de obra completo não está no menu.');
 if (!modernKeys.has('construction-schedule')) fail('Admin React: Cronograma de obra completo não está classificado como área moderna.');
 
@@ -55,8 +56,8 @@ if (adminUi.includes('adminSections.filter(')) fail('Admin React: menu ainda rem
 if (!adminUi.includes('adminSections.map((section)')) fail('Admin React: menu não preserva a ordem fixa definida em adminSections.');
 
 const dashboard = read('portal-app/src/app/admin/index.tsx');
-if (!dashboard.includes('isModernWebsiteAdminSection(requestedSection)')) fail('Dashboard React: rota-ponte não valida a área moderna solicitada.');
-if (!dashboard.includes('router.replace(`/admin/${requestedSection}`')) fail('Dashboard React: rota-ponte não converte a seção em navegação interna.');
+if (!dashboard.includes('isModernWebsiteAdminSection(requestedSection)')) fail('Dashboard React: entrada legada não valida a área moderna solicitada.');
+if (!dashboard.includes('openWebsiteAdminSection(requestedSection)')) fail('Dashboard React: entrada legada não redireciona para o HTML estático real da área.');
 if (!dashboard.includes('openWebsiteAdminSection(section.key)')) fail('Dashboard React: botões não passam pelo roteamento web seguro.');
 if (!dashboard.includes('openWebsiteAdminSection(metric.key)')) fail('Dashboard React: indicadores não passam pelo roteamento web seguro.');
 
