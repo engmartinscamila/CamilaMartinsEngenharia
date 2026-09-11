@@ -204,7 +204,7 @@
         <h1>Redefinir senha</h1>
 
         <p class="description">
-            Digite e confirme a sua nova senha.
+            Digite e confirme a sua nova senha. Use pelo menos 12 caracteres, com letra maiúscula, minúscula, número e símbolo.
         </p>
 
         <form id="formRedefinirSenha">
@@ -213,7 +213,7 @@
             <input
                 type="password"
                 id="novaSenha"
-                minlength="8"
+                minlength="12"
                 autocomplete="new-password"
                 required
             >
@@ -223,7 +223,7 @@
             <input
                 type="password"
                 id="confirmarSenha"
-                minlength="8"
+                minlength="12"
                 autocomplete="new-password"
                 required
             >
@@ -242,6 +242,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.js?v=20260725-14"></script>
-    <script src="js/redefinir-senha.js?v=20260906-1"></script>
+    <script src="js/redefinir-senha.js?v=20260910-2"></script>
 </body>
 </html>
