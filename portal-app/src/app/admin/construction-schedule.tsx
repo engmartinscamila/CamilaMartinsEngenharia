@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
+import { useLiveRefresh } from '@/hooks/use-live-refresh';
 import { formatCurrency, formatDate, isValidIsoDate } from '@/lib/format';
 import { useThemeStyles } from '@/providers/theme-provider';
 import {
@@ -56,8 +57,7 @@ export default function ConstructionScheduleScreen() {
     setError(result.error);
     setLoading(false);
   }, []);
-
-  useEffect(() => { void loadProjects(); }, [loadProjects]);
+  useLiveRefresh(loadProjects);
 
   const openProject = async (selected: ConstructionProjectOption) => {
     setLoading(true); setError(null); setSuccess(null); setEditItem(null);
@@ -109,11 +109,16 @@ export default function ConstructionScheduleScreen() {
   };
 
   const addItem = async () => {
-    if (!header || saving) return;
+    if (!header || saving || !project) return;
     setSaving(true); setError(null); setSuccess(null);
     const result = await addConstructionScheduleItem(header.id, Math.max(0, ...items.map((item) => item.displayOrder)) + 1);
+    if (result.error) { setSaving(false); setError(result.error); return; }
+    const refreshed = await loadConstructionSchedule(project.id);
+    setHeader(refreshed.header); setItems(refreshed.items); setError(refreshed.error);
+    const created = refreshed.items.find((item) => item.id === result.id);
+    if (created) setEditItem(created);
+    setSuccess('Atividade específica criada. Edite os dados conforme a obra.');
     setSaving(false);
-    if (result.error) setError(result.error); else { setSuccess('Atividade específica criada. Edite os dados conforme a obra.'); await reload(); const created = (await loadConstructionSchedule(project!.id)).items.find((item) => item.id === result.id); if (created) setEditItem(created); }
   };
 
   const removeItem = async () => {
