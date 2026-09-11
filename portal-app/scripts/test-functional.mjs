@@ -66,4 +66,12 @@ eq(protectedPdf.includes('RATE_MAX_REQUESTS = 8'),true,'protected PDF issuance k
 eq(protectedPdf.includes('SIGNED_URL_SECONDS = 60'),true,'protected PDF signed URLs remain short lived');
 eq(protectedPdf.includes('DOCUMENT_ACCESS_DENIED'),true,'protected portal PDFs retain explicit tenant access denial');
 
+const agendaIcs=fs.readFileSync('supabase/functions/agenda-ics/index.ts','utf8');
+eq(agendaIcs.includes('!/^[0-9a-f]{64}$/i.test(assinatura)'),true,'calendar capability link requires a full HMAC signature');
+eq(agendaIcs.includes('hmacHex(serviceRoleKey, `agenda:${agendaId}`)'),true,'calendar capability is scoped to the exact agenda item');
+eq(agendaIcs.includes('compararConstante(assinatura, esperado)'),true,'calendar signature comparison remains constant time');
+eq(agendaIcs.includes('evento.cancelado === true'),true,'cancelled meetings cannot be exported');
+eq(agendaIcs.includes('48 * 60 * 60 * 1000'),true,'calendar capability expires shortly after the meeting date');
+eq(agendaIcs.includes('"Cache-Control": "private, no-store, max-age=0"'),true,'calendar responses must never be cached');
+
 process.stdout.write(`PASS: ${checks} functional regression checks; no production writes.\n`);
