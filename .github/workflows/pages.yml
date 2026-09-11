@@ -64,9 +64,12 @@ jobs:
           sleep 2
           curl --fail http://127.0.0.1:4173/admin.html >/dev/null
           curl --fail http://127.0.0.1:4173/integridade-sistema.html >/dev/null
+          curl --fail http://127.0.0.1:4173/portal.html >/dev/null
 
-      - name: Testes de interface
-        run: node scripts/browser-smoke.mjs
+      - name: Testes de interface desktop e mobile
+        run: |
+          node scripts/browser-smoke.mjs
+          node scripts/mobile-admin-smoke.mjs
 
       - name: Log do servidor em caso de falha
         if: failure()
