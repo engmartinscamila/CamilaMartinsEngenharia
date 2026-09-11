@@ -23,18 +23,17 @@ const initialCounts: DashboardCounts = { activeClients: null, activeProjects: nu
 
 export default function AdminDashboard() {
   const websiteHome = usesWebsiteAdminHome();
-  const router = useRouter();
   const params = useLocalSearchParams<{ section?: string | string[] }>();
   const requestedSection = Array.isArray(params.section) ? params.section[0] : params.section;
 
   useEffect(() => {
     if (!websiteHome) return;
     if (requestedSection && isModernWebsiteAdminSection(requestedSection)) {
-      router.replace(`/admin/${requestedSection}` as never);
+      openWebsiteAdminSection(requestedSection);
       return;
     }
     openWebsiteAdminHome();
-  }, [requestedSection, router, websiteHome]);
+  }, [requestedSection, websiteHome]);
 
   return websiteHome ? <FullScreenLoader /> : <MainAdminDashboard />;
 }
