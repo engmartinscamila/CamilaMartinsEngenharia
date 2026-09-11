@@ -162,6 +162,22 @@ jobs:
             echo "OK /portal/admin/${route}.html"
           done
 
+      - name: Instalar Chromium para teste real de cliques
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Testar cliques reais da navegação Admin
+        env:
+          SITE_BASE: http://127.0.0.1:4174
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory site-public > /tmp/cme-click-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          sleep 2
+          node scripts/admin-click-navigation-smoke.mjs
+
       - name: Revalidar pacote final
         run: |
           node scripts/site-public-audit.mjs
