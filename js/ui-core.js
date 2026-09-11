@@ -6,63 +6,71 @@ UI CORE — INTERFACE ADMINISTRATIVA COMPARTILHADA
 */
 (function(){"use strict";
 const CHAVE_TEMA="cme_admin_tema",CHAVE_COR="cme_admin_cor_principal",CHAVE_NOTIFICACOES="cme_admin_notificacoes";
-function carregarAjustesVisuais(){if(!document.getElementById("cmeAdminPolish")){const link=document.createElement("link");link.id="cmeAdminPolish";link.rel="stylesheet";link.href="css/admin-polish.css?v=20260901-1";document.head.appendChild(link)}if(!document.getElementById("cmeMobileLayoutFix")){const mobile=document.createElement("link");mobile.id="cmeMobileLayoutFix";mobile.rel="stylesheet";mobile.href="css/mobile-layout-fix.css?v=20260901-1";document.head.appendChild(mobile)}}
+function carregarAjustesVisuais(){if(!document.getElementById("cmeAdminPolish")){const link=document.createElement("link");link.id="cmeAdminPolish";link.rel="stylesheet";link.href="css/admin-polish.css?v=20260910-2";document.head.appendChild(link)}if(!document.getElementById("cmeMobileLayoutFix")){const mobile=document.createElement("link");mobile.id="cmeMobileLayoutFix";mobile.rel="stylesheet";mobile.href="css/mobile-layout-fix.css?v=20260901-1";document.head.appendChild(mobile)}}
 function fixarNomeAdministradora(){const alvo=document.querySelector("#adminName, #nomeAdministrador");if(!alvo)return;alvo.textContent="Camila";if(alvo.dataset.cmeNomeObserver==="true")return;alvo.dataset.cmeNomeObserver="true";new MutationObserver(()=>{if(alvo.textContent.trim()!=="Camila")alvo.textContent="Camila"}).observe(alvo,{childList:true,characterData:true,subtree:true})}
 function elementosLoading(){return[document.getElementById("loading"),document.getElementById("loader"),document.getElementById("carregando")].filter(Boolean)}function ocultarCarregamento(){for(const elemento of elementosLoading()){elemento.style.setProperty("display","none","important");elemento.style.setProperty("pointer-events","none","important");elemento.setAttribute("aria-hidden","true")}}function mostrarCarregamento(){for(const elemento of elementosLoading()){elemento.style.removeProperty("display");elemento.style.removeProperty("pointer-events");elemento.setAttribute("aria-hidden","false")}}function corValida(valor){return/^#[0-9a-f]{6}$/i.test(String(valor||"").trim())}
 function aplicarPreferencias(preferencias={}){const tema=preferencias.tema||localStorage.getItem(CHAVE_TEMA)||"escuro",cor=preferencias.cor_principal||localStorage.getItem(CHAVE_COR)||"#b89a63",notificacoes=preferencias.notificacoes;document.documentElement.dataset.adminTheme=tema==="claro"?"claro":"escuro";if(corValida(cor)){document.documentElement.style.setProperty("--dourado",cor);localStorage.setItem(CHAVE_COR,cor)}localStorage.setItem(CHAVE_TEMA,tema==="claro"?"claro":"escuro");if(typeof notificacoes==="boolean")localStorage.setItem(CHAVE_NOTIFICACOES,notificacoes?"ativo":"inativo")}
 function criarLinkMenu(href,icon,titulo){const link=document.createElement("a");link.href=href;link.className="menu-item";link.innerHTML=`<i class="fa-solid ${icon}"></i><span>${titulo}</span>`;return link}
-function garantirLink(menu,href,icon,titulo,referenciaHref,posicao="afterend"){let link=Array.from(menu.querySelectorAll("a.menu-item")).find(item=>(item.getAttribute("href")||"").split("?")[0]===href);if(!link){link=criarLinkMenu(href,icon,titulo);const referencia=Array.from(menu.querySelectorAll("a.menu-item")).find(item=>(item.getAttribute("href")||"").split("?")[0]===referenciaHref);if(referencia)referencia.insertAdjacentElement(posicao,link);else menu.appendChild(link)}link.innerHTML=`<i class="fa-solid ${icon}"></i><span>${titulo}</span>`;return link}
-// Funções exclusivas do aplicativo, acessíveis diretamente no painel principal do site.
-const ferramentasAdministrativas = [
-  ["crm", "fa-filter", "Oportunidades comerciais"],
-  ["contract-documents", "fa-file-contract", "Documentos gerados e aceites"],
-  ["document-preparation", "fa-file-pen", "Preparar documento do projeto"],
-  ["document-governance", "fa-list-check", "Versões e pendências dos documentos"],
-  ["document-archive", "fa-box-archive", "Arquivos antigos e restauração"],
-  ["tasks", "fa-check-square", "Tarefas do projeto"],
-  ["work-diary", "fa-book", "Diário de obra"],
-  ["procurement", "fa-cart-shopping", "Fornecedores e cotações"],
-  ["financial", "fa-building-columns", "Contas bancárias e conciliação OFX"],
-  ["portal-control", "fa-eye", "Módulos do portal do cliente"],
-  ["approvals", "fa-check-double", "Aprovações"],
-  ["notifications", "fa-bell", "Notificações internas"],
-  ["security", "fa-shield-halved", "Armazenamento e auditoria"],
+
+// Ordem única e imutável para TODAS as páginas do Admin clássico.
+// O menu não depende mais da ordem escrita em cada HTML individual.
+const MENU_ADMIN_CANONICO=[
+  ["admin.html","fa-house","Dashboard"],
+  ["clientes.html","fa-users","Clientes"],
+  ["projetos.html","fa-compass-drafting","Projetos"],
+  ["orcamentos-contratos.html","fa-file-signature","Orçamentos e contratos"],
+  ["portal/admin/crm","fa-filter","Oportunidades comerciais"],
+  ["portal/admin/contract-documents","fa-file-contract","Documentos gerados e aceites"],
+  ["portal/admin/document-preparation","fa-file-pen","Preparar documento do projeto"],
+  ["portal/admin/document-governance","fa-list-check","Versões e pendências dos documentos"],
+  ["portal/admin/document-archive","fa-box-archive","Arquivos antigos e restauração"],
+  ["documentos.html","fa-folder-open","Documentos"],
+  ["fotos.html","fa-images","Fotos e evolução da obra"],
+  ["portal/admin/tasks","fa-check-square","Tarefas do projeto"],
+  ["portal/admin/work-diary","fa-book","Diário de obra"],
+  ["portal/admin/procurement","fa-cart-shopping","Fornecedores e cotações"],
+  ["biblioteca.html","fa-book-open","Biblioteca"],
+  ["financeiro.html","fa-chart-line","Financeiro"],
+  ["portal/admin/financial","fa-building-columns","Contas bancárias e conciliação OFX"],
+  ["portal/admin/portal-control","fa-eye","Módulos do portal do cliente"],
+  ["agenda.html","fa-calendar-days","Agenda"],
+  ["cronograma.html","fa-list-check","Cronograma (simples)"],
+  ["portal/admin/construction-schedule","fa-chart-column","Cronograma de obra completo"],
+  ["portal/admin/approvals","fa-check-double","Aprovações"],
+  ["solicitacoes.html","fa-comments","Solicitações"],
+  ["portal/admin/notifications","fa-bell","Notificações internas"],
+  ["portal/admin/security","fa-shield-halved","Armazenamento e auditoria"],
+  ["protecao-pdf-admin.html","fa-file-shield","Conteúdo do site"],
+  ["configuracoes.html","fa-gear","Configurações"],
+  ["integridade-sistema.html","fa-heart-pulse","Verificar funcionamento"],
 ];
-function normalizarMenuAdministrativo() {
-  const menu = document.querySelector(".menu-lateral");
-  if (!menu) return;
-  menu.querySelectorAll('a.menu-item').forEach(link => {
-    const destino = (link.getAttribute('href') || '').split('?')[0].replace(/^\//, '').replace(/\/$/, '');
-    if (["portal/admin", "portal/admin.html", "documentos-contratuais.html", "arquivo-documental.html"].includes(destino)) link.remove();
-  });
-  garantirLink(menu, "protecao-pdf-admin.html", "fa-file-shield", "Conteúdo do site", "biblioteca.html");
-  garantirLink(menu, "orcamentos-contratos.html", "fa-file-signature", "Orçamentos e contratos", "projetos.html");
-  let anterior = "solicitacoes.html";
-  for (const [rota, icone, titulo] of ferramentasAdministrativas) {
-    const destino = `portal/admin/${rota}`;
-    garantirLink(menu, destino, icone, titulo, anterior);
-    anterior = destino;
-  }
-  garantirLink(menu, "integridade-sistema.html", "fa-heart-pulse", "Verificar funcionamento", "configuracoes.html");
-  const pagina = (location.pathname.split("/").filter(Boolean).pop() || "admin.html").toLowerCase();
-  menu.querySelectorAll("a.menu-item").forEach(link => {
-    const ativo = (link.getAttribute("href") || "").split("?")[0].toLowerCase() === pagina;
-    link.classList.toggle("ativo", ativo);
-    if (ativo) link.setAttribute("aria-current", "page"); else link.removeAttribute("aria-current");
-  });
-  // Os mesmos destinos também ficam visíveis nas ações da tela inicial.
-  if (pagina === "admin.html") {
-    const card = Array.from(document.querySelectorAll('.card-lateral')).find(item => item.querySelector('h2')?.textContent?.trim() === 'Ações Rápidas');
-    if (card) for (const [rota, icone, titulo] of ferramentasAdministrativas) {
-      const id = `abrirFerramenta-${rota}`;
-      if (document.getElementById(id)) continue;
-      const botao = document.createElement('button');
-      botao.id = id;
-      botao.type = 'button';
-      botao.innerHTML = `<i class="fa-solid ${icone}"></i><span>${titulo}</span>`;
-      botao.addEventListener('click', () => { location.href = `portal/admin/${rota}`; });
-      card.appendChild(botao);
-    }
+const ferramentasAdministrativas=[
+  ["crm","fa-filter","Oportunidades comerciais"],
+  ["contract-documents","fa-file-contract","Documentos gerados e aceites"],
+  ["document-preparation","fa-file-pen","Preparar documento do projeto"],
+  ["document-governance","fa-list-check","Versões e pendências dos documentos"],
+  ["document-archive","fa-box-archive","Arquivos antigos e restauração"],
+  ["tasks","fa-check-square","Tarefas do projeto"],
+  ["work-diary","fa-book","Diário de obra"],
+  ["procurement","fa-cart-shopping","Fornecedores e cotações"],
+  ["financial","fa-building-columns","Contas bancárias e conciliação OFX"],
+  ["portal-control","fa-eye","Módulos do portal do cliente"],
+  ["construction-schedule","fa-chart-column","Cronograma de obra completo"],
+  ["approvals","fa-check-double","Aprovações"],
+  ["notifications","fa-bell","Notificações internas"],
+  ["security","fa-shield-halved","Armazenamento e auditoria"],
+];
+function normalizarHref(valor){try{const url=new URL(valor,location.origin);return url.pathname.replace(/^\//,"").replace(/\/$/,"").toLowerCase()}catch{return String(valor||"").split("?")[0].replace(/^\//,"").replace(/\/$/,"").toLowerCase()}}
+function normalizarMenuAdministrativo(){
+  const menu=document.querySelector(".menu-lateral");if(!menu)return;
+  const atual=normalizarHref(location.pathname);
+  const fragment=document.createDocumentFragment();
+  for(const[href,icone,titulo]of MENU_ADMIN_CANONICO){const link=criarLinkMenu(href,icone,titulo);const destino=normalizarHref(href);const ativo=destino===atual;if(ativo){link.classList.add("ativo");link.setAttribute("aria-current","page")}fragment.appendChild(link)}
+  menu.replaceChildren(fragment);
+  menu.dataset.cmeOrdemFixa="true";
+  if(atual==="admin.html"||atual.endsWith("/admin.html")){
+    const card=Array.from(document.querySelectorAll('.card-lateral')).find(item=>item.querySelector('h2')?.textContent?.trim()==='Ações Rápidas');
+    if(card)for(const[rota,icone,titulo]of ferramentasAdministrativas){const id=`abrirFerramenta-${rota}`;if(document.getElementById(id))continue;const botao=document.createElement('button');botao.id=id;botao.type='button';botao.innerHTML=`<i class="fa-solid ${icone}"></i><span>${titulo}</span>`;botao.addEventListener('click',()=>{location.href=`portal/admin/${rota}`});card.appendChild(botao)}
   }
 }
 async function sincronizarPreferenciasDoBanco(){if(typeof window.dbBuscarConfiguracoes!=="function")return;try{const config=await window.dbBuscarConfiguracoes();if(!config)return;aplicarPreferencias({tema:config.tema,cor_principal:config.cor_principal,notificacoes:config.notificacoes!==false})}catch(erro){console.warn("Preferências administrativas não puderam ser sincronizadas.",erro)}}
