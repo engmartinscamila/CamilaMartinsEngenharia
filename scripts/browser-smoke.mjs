@@ -1051,7 +1051,7 @@ async function selecionarPrimeiraOpcaoValida(page, id) {
   assert(!menuLinks.some(href => /^\/?portal\/admin\/?$/.test(href || '')), 'Administração: o painel intermediário redundante reapareceu');
   assert(new Set(menuLinks).size === menuLinks.length, 'Administração: há destinos repetidos no menu');
   for (const route of ['crm', 'contract-documents', 'document-preparation', 'document-governance', 'document-archive', 'tasks', 'work-diary', 'procurement', 'financial', 'portal-control', 'approvals', 'notifications', 'security']) {
-    assert(menuLinks.filter(href => href === `portal/admin/${route}`).length === 1, `Administração: ${route} deve ter um acesso direto no menu`);
+    assert(menuLinks.filter(href => href === `/portal/admin/${route}/`).length === 1, `Administração: ${route} deve ter um acesso direto no menu`);
     assert(await page.locator(`#abrirFerramenta-${route}`).count() === 1, `Administração: ${route} deve aparecer uma vez nas ações principais`);
   }
   await responsive(page, 'admin.html com ferramentas diretas');

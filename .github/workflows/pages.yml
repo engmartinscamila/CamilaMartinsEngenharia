@@ -37,6 +37,7 @@ jobs:
         run: |
           node scripts/site-audit.mjs
           node scripts/admin-functional-audit.mjs
+          node scripts/portal-canonical-path-test.mjs
           node scripts/document-generation-audit.mjs
 
       - name: Verificar segurança antes de publicar
@@ -177,6 +178,7 @@ jobs:
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           sleep 2
           node scripts/admin-click-navigation-smoke.mjs
+          node scripts/portal-hydration-smoke.mjs
 
       - name: Instalar dependências dos geradores de arquivos
         run: npm install --no-save tsx@4.20.5 docx@9.5.1 jszip@3.10.1 exceljs@4.4.0 pngjs@7.0.0
@@ -198,6 +200,7 @@ jobs:
         run: |
           node scripts/site-public-audit.mjs
           node scripts/admin-functional-audit.mjs
+          node scripts/portal-canonical-path-test.mjs
           node scripts/document-generation-audit.mjs
 
       - name: Setup Pages

@@ -1,11 +1,16 @@
 import { ScrollViewStyleReset } from 'expo-router/html';
 import type { PropsWithChildren } from 'react';
 
+// Executa antes do bundle: o servidor conhece .html, mas o Expo Router não.
+// Preserva consultas/fragmentos e a sessão; não modifica as rotas do site clássico.
+const canonicalPortalPath = `(function(){var p=location.pathname;if(/^\\/portal(?:\\/|$)/.test(p)&&/\\.html$/.test(p)){var canonical=p.replace(/\\/index\\.html$/,'/').replace(/\\.html$/,'/');history.replaceState(history.state,'',canonical+location.search+location.hash);}})();`;
+
 export default function RootHtml({ children }: PropsWithChildren) {
   return (
     <html lang="pt-BR">
       <head>
         <meta charSet="utf-8" />
+        <script dangerouslySetInnerHTML={{ __html: canonicalPortalPath }} />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="theme-color" content="#010914" />

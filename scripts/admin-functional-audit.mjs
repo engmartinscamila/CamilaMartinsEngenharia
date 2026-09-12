@@ -30,9 +30,8 @@ for (const item of canonicalRoutes) {
   } else if (!exists(item.href)) fail(`Menu "${item.title}": arquivo clássico ausente ${item.href}.`);
 }
 
-const prepareSite = read('scripts/prepare-site-public.sh');
-if (!prepareSite.includes('/portal/admin/${encodeURIComponent(rota)}.html')) fail('Publicação: links modernos do Admin não são convertidos para HTML estático direto.');
-if (!prepareSite.includes('site-public/js/ui-core.js')) fail('Publicação: correção dos links do Admin não é aplicada ao artefato final.');
+if (!uiCore.includes('/portal/admin/${encodeURIComponent(rota)}/')) fail('Admin clássico: rotas modernas devem usar diretórios compatíveis com Expo Router.');
+if (!uiCore.includes('link.href=rota?urlPontePortal(rota):href')) fail('Admin clássico: o href real deve coincidir com o destino do clique.');
 
 const sections = read('portal-app/src/lib/admin-sections.ts');
 const navigation = read('portal-app/src/lib/admin-navigation.ts');

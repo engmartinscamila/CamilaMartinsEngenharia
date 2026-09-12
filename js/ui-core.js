@@ -11,12 +11,11 @@ function fixarNomeAdministradora(){const alvo=document.querySelector("#adminName
 function elementosLoading(){return[document.getElementById("loading"),document.getElementById("loader"),document.getElementById("carregando")].filter(Boolean)}function ocultarCarregamento(){for(const elemento of elementosLoading()){elemento.style.setProperty("display","none","important");elemento.style.setProperty("pointer-events","none","important");elemento.setAttribute("aria-hidden","true")}}function mostrarCarregamento(){for(const elemento of elementosLoading()){elemento.style.removeProperty("display");elemento.style.removeProperty("pointer-events");elemento.setAttribute("aria-hidden","false")}}function corValida(valor){return/^#[0-9a-f]{6}$/i.test(String(valor||"").trim())}
 function aplicarPreferencias(preferencias={}){const tema=preferencias.tema||localStorage.getItem(CHAVE_TEMA)||"escuro",cor=preferencias.cor_principal||localStorage.getItem(CHAVE_COR)||"#b89a63",notificacoes=preferencias.notificacoes;document.documentElement.dataset.adminTheme=tema==="claro"?"claro":"escuro";if(corValida(cor)){document.documentElement.style.setProperty("--dourado",cor);localStorage.setItem(CHAVE_COR,cor)}localStorage.setItem(CHAVE_TEMA,tema==="claro"?"claro":"escuro");if(typeof notificacoes==="boolean")localStorage.setItem(CHAVE_NOTIFICACOES,notificacoes?"ativo":"inativo")}
 function rotaPortalDoHref(href){const match=String(href||"").match(/^\/?portal\/admin\/([a-z0-9-]+)$/i);return match?match[1]:null}
-function urlPontePortal(rota){return`portal/admin/index.html?section=${encodeURIComponent(rota)}`}
-function criarLinkMenu(href,icon,titulo){const link=document.createElement("a");link.href=href;link.className="menu-item";link.innerHTML=`<i class="fa-solid ${icon}"></i><span>${titulo}</span>`;const rota=rotaPortalDoHref(href);if(rota){link.dataset.cmePortalSection=rota;link.addEventListener("click",evento=>{evento.preventDefault();location.href=urlPontePortal(rota)})}return link}
+function urlPontePortal(rota){return`/portal/admin/${encodeURIComponent(rota)}/`}
+function criarLinkMenu(href,icon,titulo){const link=document.createElement("a");const rota=rotaPortalDoHref(href);link.href=rota?urlPontePortal(rota):href;link.className="menu-item";link.innerHTML=`<i class="fa-solid ${icon}"></i><span>${titulo}</span>`;if(rota)link.dataset.cmePortalSection=rota;return link}
 
 // Ordem única e imutável para TODAS as páginas do Admin clássico.
-// Os hrefs modernos permanecem legíveis/compatíveis, mas o clique usa a rota-ponte
-// estável do portal para evitar qualquer fallback do servidor para o dashboard.
+// Os hrefs modernos usam a mesma rota canônica no clique, nova aba e copiar link.
 const MENU_ADMIN_CANONICO=[
   ["admin.html","fa-house","Dashboard"],
   ["clientes.html","fa-users","Clientes"],

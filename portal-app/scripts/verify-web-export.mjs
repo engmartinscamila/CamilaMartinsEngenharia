@@ -36,6 +36,9 @@ while (stack.length) {
   }
 }
 
+const exportedAdminHtml = readFileSync(join(outputRoot, 'admin/crm.html'), 'utf8');
+assert.ok(exportedAdminHtml.includes('history.replaceState'), 'Compatibilidade com links .html ausente no export.');
+
 const indexHtml = readFileSync(join(outputRoot, 'index.html'), 'utf8');
 assert.match(indexHtml, /<html[^>]+lang="pt-BR"/i, 'Idioma pt-BR ausente no HTML exportado.');
 assert.match(indexHtml, /<title>Portal do Cliente \| Camila Martins Engenharia<\/title>/i, 'Título institucional ausente no HTML exportado.');

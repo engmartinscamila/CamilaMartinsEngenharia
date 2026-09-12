@@ -12,47 +12,47 @@ const menuTargets = [
   ['Clientes', '/clientes.html'],
   ['Projetos', '/projetos.html'],
   ['Orçamentos e contratos', '/orcamentos-contratos.html'],
-  ['Oportunidades comerciais', '/portal/admin/crm.html'],
-  ['Documentos gerados e aceites', '/portal/admin/contract-documents.html'],
-  ['Preparar documento do projeto', '/portal/admin/document-preparation.html'],
-  ['Versões e pendências dos documentos', '/portal/admin/document-governance.html'],
-  ['Arquivos antigos e restauração', '/portal/admin/document-archive.html'],
+  ['Oportunidades comerciais', '/portal/admin/crm/'],
+  ['Documentos gerados e aceites', '/portal/admin/contract-documents/'],
+  ['Preparar documento do projeto', '/portal/admin/document-preparation/'],
+  ['Versões e pendências dos documentos', '/portal/admin/document-governance/'],
+  ['Arquivos antigos e restauração', '/portal/admin/document-archive/'],
   ['Documentos', '/documentos.html'],
   ['Fotos e evolução da obra', '/fotos.html'],
-  ['Tarefas do projeto', '/portal/admin/tasks.html'],
-  ['Diário de obra', '/portal/admin/work-diary.html'],
-  ['Fornecedores e cotações', '/portal/admin/procurement.html'],
+  ['Tarefas do projeto', '/portal/admin/tasks/'],
+  ['Diário de obra', '/portal/admin/work-diary/'],
+  ['Fornecedores e cotações', '/portal/admin/procurement/'],
   ['Biblioteca', '/biblioteca.html'],
   ['Financeiro', '/financeiro.html'],
-  ['Contas bancárias e conciliação OFX', '/portal/admin/financial.html'],
-  ['Módulos do portal do cliente', '/portal/admin/portal-control.html'],
+  ['Contas bancárias e conciliação OFX', '/portal/admin/financial/'],
+  ['Módulos do portal do cliente', '/portal/admin/portal-control/'],
   ['Agenda', '/agenda.html'],
   ['Cronograma (simples)', '/cronograma.html'],
-  ['Cronograma de obra completo', '/portal/admin/construction-schedule.html'],
-  ['Aprovações', '/portal/admin/approvals.html'],
+  ['Cronograma de obra completo', '/portal/admin/construction-schedule/'],
+  ['Aprovações', '/portal/admin/approvals/'],
   ['Solicitações', '/solicitacoes.html'],
-  ['Notificações internas', '/portal/admin/notifications.html'],
-  ['Armazenamento e auditoria', '/portal/admin/security.html'],
+  ['Notificações internas', '/portal/admin/notifications/'],
+  ['Armazenamento e auditoria', '/portal/admin/security/'],
   ['Conteúdo do site', '/protecao-pdf-admin.html'],
   ['Configurações', '/configuracoes.html'],
   ['Verificar funcionamento', '/integridade-sistema.html'],
 ];
 
 const quickTargets = [
-  ['crm', '/portal/admin/crm.html'],
-  ['contract-documents', '/portal/admin/contract-documents.html'],
-  ['document-preparation', '/portal/admin/document-preparation.html'],
-  ['document-governance', '/portal/admin/document-governance.html'],
-  ['document-archive', '/portal/admin/document-archive.html'],
-  ['tasks', '/portal/admin/tasks.html'],
-  ['work-diary', '/portal/admin/work-diary.html'],
-  ['procurement', '/portal/admin/procurement.html'],
-  ['financial', '/portal/admin/financial.html'],
-  ['portal-control', '/portal/admin/portal-control.html'],
-  ['construction-schedule', '/portal/admin/construction-schedule.html'],
-  ['approvals', '/portal/admin/approvals.html'],
-  ['notifications', '/portal/admin/notifications.html'],
-  ['security', '/portal/admin/security.html'],
+  ['crm', '/portal/admin/crm/'],
+  ['contract-documents', '/portal/admin/contract-documents/'],
+  ['document-preparation', '/portal/admin/document-preparation/'],
+  ['document-governance', '/portal/admin/document-governance/'],
+  ['document-archive', '/portal/admin/document-archive/'],
+  ['tasks', '/portal/admin/tasks/'],
+  ['work-diary', '/portal/admin/work-diary/'],
+  ['procurement', '/portal/admin/procurement/'],
+  ['financial', '/portal/admin/financial/'],
+  ['portal-control', '/portal/admin/portal-control/'],
+  ['construction-schedule', '/portal/admin/construction-schedule/'],
+  ['approvals', '/portal/admin/approvals/'],
+  ['notifications', '/portal/admin/notifications/'],
+  ['security', '/portal/admin/security/'],
 ];
 
 const browser = await chromium.launch({ headless: true });
@@ -66,7 +66,7 @@ async function newAdminPage(viewport) {
     const request = route.request();
     const url = request.url();
 
-    if (request.resourceType() === 'script' && !/\/js\/ui-core\.js(?:\?|$)/i.test(url)) {
+    if (!new URL(page.url()).pathname.startsWith('/portal/') && request.resourceType() === 'script' && !/\/js\/ui-core\.js(?:\?|$)/i.test(url)) {
       return route.fulfill({ status: 200, contentType: 'application/javascript', body: '' });
     }
 
@@ -110,10 +110,15 @@ async function clickAndAssert({ label, selector, expectedPath, viewport }) {
         target.click({ timeout: 5000 }),
       ]);
 
-      const current = new URL(page.url());
+      const current = new URL(response?.url() || page.url());
       assert(current.pathname === expectedPath, `${label}: clique abriu ${current.pathname}, esperado ${expectedPath}`);
       assert(Boolean(response) && response.status() < 400, `${label}: destino respondeu HTTP ${response?.status() ?? 'sem resposta'}`);
 
+      if (expectedPath.startsWith('/portal/')) {
+        // Executar o bundle real: sem sessão, a proteção deve montar o login.
+        await page.getByRole('textbox', { name: 'E-mail', exact: true }).waitFor({ timeout: 15000 });
+        assert(new URL(page.url()).pathname === '/portal/login', `${label}: a proteção não encaminhou ao login`);
+      }
       const body = (await page.locator('body').innerText().catch(() => '')) || '';
       assert(!/Página não encontrada|Page not found|\b404\b/i.test(body), `${label}: clique terminou em página não encontrada`);
     } catch (error) {
@@ -154,8 +159,8 @@ for (const [slug, expectedPath] of quickTargets) {
         page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
         target.click({ timeout: 5000 }),
       ]);
-      const current = new URL(page.url());
-      assert(current.pathname === '/portal/admin/construction-schedule.html', `Mobile: clique no Cronograma completo abriu ${current.pathname}`);
+      const current = new URL(response?.url() || page.url());
+      assert(current.pathname === '/portal/admin/construction-schedule/', `Mobile: clique no Cronograma completo abriu ${current.pathname}`);
       assert(Boolean(response) && response.status() < 400, `Mobile: Cronograma completo respondeu HTTP ${response?.status() ?? 'sem resposta'}`);
     } catch (error) {
       failures.push(`Mobile: clique no Cronograma completo falhou: ${error.message}`);
@@ -167,9 +172,9 @@ for (const [slug, expectedPath] of quickTargets) {
 await browser.close();
 
 if (failures.length) {
-  console.error('\nFALHAS NO TESTE REAL DE CLIQUES DO ADMIN:');
+  console.error('\nFALHAS NA NAVEGAÇÃO DO ADMIN (ORIGEM ISOLADA, DESTINOS REAIS):');
   failures.forEach((failure, index) => console.error(`${index + 1}. ${failure}`));
   process.exit(1);
 }
 
-console.log(`APROVADO: ${menuTargets.length} itens do menu + ${quickTargets.length} ações rápidas + navegação mobile foram clicados e abriram os destinos esperados.`);
+console.log(`APROVADO: ${menuTargets.length} itens do menu + ${quickTargets.length} ações rápidas + navegação mobile foram clicados; destinos modernos executaram o bundle real e chegaram ao login protegido (sem sessão admin).`);

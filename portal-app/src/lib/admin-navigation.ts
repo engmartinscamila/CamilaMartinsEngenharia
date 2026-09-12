@@ -47,14 +47,14 @@ export function isModernWebsiteAdminSection(key: string) {
   return modernWebsiteAdminSections.has(key);
 }
 
-// No site publicado cada área moderna possui um HTML estático real em /portal/admin/.
-// Usamos esse arquivo diretamente em vez de depender de rewrite/fallback do servidor.
+// O deploy publica cada área também como <rota>/index.html. A URL de diretório
+// funciona no servidor estático e corresponde à rota reconhecida pelo Expo Router.
 export function websiteAdminSectionUrl(key: string) {
-  return `/portal/admin/${encodeURIComponent(key)}.html`;
+  return `/portal/admin/${encodeURIComponent(key)}/`;
 }
 
 // Compatibilidade com chamadas antigas: a antiga "ponte" agora resolve para o arquivo
-// estático real da área, evitando URLs ?section= que podiam cair em Página não encontrada.
+// canônico da área, sem expor a extensão física do arquivo ao Expo Router.
 export function websiteAdminBridgeUrl(key: string) {
   return websiteAdminSectionUrl(key);
 }
