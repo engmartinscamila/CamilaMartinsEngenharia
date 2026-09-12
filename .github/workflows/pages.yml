@@ -178,6 +178,19 @@ jobs:
           sleep 2
           node scripts/admin-click-navigation-smoke.mjs
 
+      - name: Instalar dependências dos geradores de arquivos
+        run: npm install --no-save tsx@4.20.5 docx@9.5.1 jszip@3.10.1 exceljs@4.4.0 pngjs@7.0.0
+
+      - name: Gerar, reabrir e validar todos os arquivos finais
+        run: npx tsx scripts/generated-file-smoke.ts
+
+      - name: Guardar amostras geradas pela auditoria
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-generated-files
+          path: qa-generated-files
+          retention-days: 1
+
       - name: Revalidar pacote final
         run: |
           node scripts/site-public-audit.mjs
