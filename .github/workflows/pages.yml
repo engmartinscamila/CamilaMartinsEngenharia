@@ -182,7 +182,9 @@ jobs:
         run: npm install --no-save tsx@4.20.5 docx@9.5.1 jszip@3.10.1 exceljs@4.4.0 pngjs@7.0.0
 
       - name: Gerar, reabrir e validar todos os arquivos finais
-        run: npx tsx scripts/generated-file-smoke.ts
+        run: |
+          cp scripts/generated-file-smoke.ts scripts/generated-file-smoke.mts
+          npx tsx scripts/generated-file-smoke.mts
 
       - name: Guardar amostras geradas pela auditoria
         uses: actions/upload-artifact@v4
