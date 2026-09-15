@@ -36,7 +36,12 @@ async function testContext(viewport, admin = true) {
   return context;
 }
 async function verifyTool(page, section) {
-  await page.getByRole('button', { name: 'Início da administração', exact: true }).waitFor({ timeout: 20000 });
+  try {
+    await page.getByRole('button', { name: 'Início da administração', exact: true }).waitFor({ timeout: 20000 });
+  } catch (error) {
+    console.error('Falha na ferramenta sintética:', section, page.url(), await page.locator('body').innerText());
+    throw error;
+  }
   assert.equal(new URL(page.url()).pathname.replace(/\/$/, ''), `/portal/admin/${section}`, 'A sessão deve permanecer na ferramenta escolhida');
   assert.equal(await page.getByText('Página não encontrada', { exact: true }).count(), 0);
   assert.equal(await page.getByRole('heading', { name: 'Painel Administrativo', exact: true }).count(), 0);
@@ -46,7 +51,7 @@ try {
   for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
     const context = await testContext(viewport);
     const page = await context.newPage();
-    const errors = []; page.on('pageerror', error => errors.push(error.message));
+    const errors = []; page.on('pageerror', error => { errors.push(error.message); console.error('Exceção no bundle sintético:', error.message); });
     for (const section of sections) {
       await page.goto(new URL('/configuracoes.html', base).href);
       await page.locator('.menu-lateral[data-cme-ordem-fixa="true"]').waitFor();
