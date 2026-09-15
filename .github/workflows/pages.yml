@@ -179,6 +179,7 @@ jobs:
           sleep 2
           node scripts/admin-click-navigation-smoke.mjs
           node scripts/portal-hydration-smoke.mjs
+          node scripts/admin-session-navigation-smoke.mjs
 
       - name: Instalar dependências dos geradores de arquivos
         run: npm install --no-save tsx@4.20.5 docx@9.5.1 jszip@3.10.1 exceljs@4.4.0 pngjs@7.0.0

@@ -1,24 +1,29 @@
-import { Link, Redirect } from 'expo-router';
+import { type Href, Link, Redirect, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { AuthShell } from '@/components/auth-shell';
 import { Button, Field, Notice } from '@/components/ui';
 import { env } from '@/lib/env';
+import { safeAdminReturnPath } from '@/lib/auth-return-path';
 import { useAuth } from '@/providers/auth-provider';
 import { useThemeStyles } from '@/providers/theme-provider';
 import { spacing, ThemeColors, typography } from '@/theme/tokens';
 
 export default function LoginScreen() {
   const styles = useThemeStyles(styleDefinitions);
-  const { configured, loading: authLoading, session, signIn } = useAuth();
+  const { configured, loading: authLoading, session, role, signIn } = useAuth();
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!authLoading && session) return <Redirect href="/" />;
+  if (!authLoading && session) {
+    const destination = role === 'admin' ? safeAdminReturnPath(returnTo) : null;
+    return <Redirect href={(destination ?? '/') as Href} />;
+  }
 
   const submit = async () => {
     setError(null);

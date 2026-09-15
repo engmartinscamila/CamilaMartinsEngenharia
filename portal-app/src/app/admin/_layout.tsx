@@ -1,16 +1,24 @@
-import { Redirect, Stack } from 'expo-router';
+import { Redirect, Stack, useLocalSearchParams, usePathname } from 'expo-router';
 import React from 'react';
 
 import { FullScreenLoader, Screen, StateView } from '@/components/ui';
 import { useAuth } from '@/providers/auth-provider';
 import { useAppTheme } from '@/providers/theme-provider';
+import { safeAdminReturnPath } from '@/lib/auth-return-path';
 
 export default function AdminLayout() {
   const { colors } = useAppTheme();
   const { loading, role, session } = useAuth();
+  const pathname = usePathname();
+  const params = useLocalSearchParams<{ projectId?: string; tipo?: string; section?: string }>();
+  const query = new URLSearchParams();
+  for (const key of ['projectId', 'tipo', 'section'] as const) {
+    if (typeof params[key] === 'string') query.set(key, params[key]);
+  }
+  const returnTo = safeAdminReturnPath(`${pathname}?${query}`);
 
   if (loading) return <FullScreenLoader />;
-  if (!session) return <Redirect href="/login" />;
+  if (!session) return <Redirect href={returnTo ? { pathname: '/login', params: { returnTo } } : '/login'} />;
   if (role === 'client' || role === 'collaborator') return <Redirect href="/(client)/home" />;
   if (role !== 'admin') {
     return (

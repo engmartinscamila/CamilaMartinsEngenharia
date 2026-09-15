@@ -54,12 +54,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(env.isSupabaseConfigured);
   const identityGeneration = useRef(0);
 
-  const setIdentity = useCallback(async (nextSession: Session | null) => {
-    const generation = ++identityGeneration.current;
+  const setIdentity = useCallback(async (nextSession: Session | null, generation = ++identityGeneration.current) => {
+    if (generation !== identityGeneration.current) return;
     if (!nextSession?.user) {
       setSession(null);
       setRole('unassigned');
       setClient(null);
+      setLoading(false);
       return;
     }
 
@@ -74,6 +75,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(nextSession);
       setRole('unassigned');
       setClient(null);
+    } finally {
+      // Só a validação mais recente pode liberar as rotas protegidas.
+      if (generation === identityGeneration.current) setLoading(false);
     }
   }, []);
 
@@ -86,34 +90,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
     }
 
-    const initialGeneration = identityGeneration.current;
-    supabase.auth.getSession()
-      .then(async ({ data }) => {
-        if (active && identityGeneration.current === initialGeneration) await setIdentity(data.session);
-      })
-      .catch(() => {
-        if (!active) return;
-        setSession(null);
-        setRole('unassigned');
-        setClient(null);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
+    // INITIAL_SESSION já restaura a sessão persistida. Executar getSession em
+    // paralelo liberava loading antes da consulta de papel do evento terminar,
+    // causando /ferramenta -> /login -> /admin -> dashboard clássico.
     const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (!active) return;
       const eventGeneration = ++identityGeneration.current;
-      if (active && event !== 'TOKEN_REFRESHED') setLoading(true);
+      if (event !== 'TOKEN_REFRESHED') setLoading(true);
+      // A consulta de identidade sai do callback para não manter o lock do Auth.
       setTimeout(() => {
         if (!active || eventGeneration !== identityGeneration.current) return;
-        setIdentity(nextSession)
-          .catch(() => {
-            setRole('unassigned');
-            setClient(null);
-          })
-          .finally(() => {
-            if (active) setLoading(false);
-          });
+        void setIdentity(nextSession, eventGeneration);
       }, 0);
     });
 
@@ -151,8 +138,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshIdentity = useCallback(async () => {
-    if (session) await setIdentity(session);
-  }, [session, setIdentity]);
+    const generation = ++identityGeneration.current;
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      await setIdentity(data.session, generation);
+    } catch {
+      await setIdentity(null, generation);
+    }
+  }, [setIdentity]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -168,6 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(null);
         setRole('unassigned');
         setClient(null);
+        setLoading(false);
         await supabase.auth.signOut({ scope: 'local' });
       },
       requestAccessLink: sendAccessLink,
