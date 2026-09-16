@@ -5,52 +5,22 @@ html.doc-modal-open,body.doc-modal-open{overflow:hidden;overscroll-behavior:none
 @media(max-width:720px){.doc-shell{gap:12px}.doc-card{padding:14px;border-radius:13px}.doc-row-head{flex-direction:column}.doc-actions{display:grid}.doc-btn{width:100%}.conteudo{min-width:0}.doc-table{min-width:720px}.doc-picker{grid-template-columns:repeat(2,minmax(0,1fr));padding:9px;gap:7px}.doc-picker button{padding:10px 7px;font-size:.74rem;min-height:46px}.doc-compact-filters{grid-template-columns:1fr 1fr}.doc-extrato-head{display:grid}.doc-workspace-title{align-items:flex-start;display:grid;padding-right:52px}.doc-services{grid-template-columns:1fr}.doc-modal{padding:8px;align-items:flex-start}.doc-modal-panel{width:100%;max-height:calc(100dvh - 16px);margin:0;padding:18px 14px 20px;border-radius:12px}.doc-modal-close{width:44px;height:44px;margin-bottom:-44px}.doc-grid{grid-template-columns:1fr}.doc-code-note{display:grid;gap:3px}.doc-field input,.doc-field select,.doc-field textarea{font-size:16px;min-height:46px}.doc-card .doc-actions input{min-width:0}.doc-card .doc-actions:has(input){grid-template-columns:minmax(0,1fr) auto}.doc-card .doc-actions:has(input) .doc-btn{width:auto}}
 @media(max-width:430px){.doc-compact-filters{grid-template-columns:1fr}.doc-picker{grid-template-columns:1fr 1fr}.doc-table{font-size:.78rem}.doc-modal{padding:5px}.doc-modal-panel{max-height:calc(100dvh - 10px);padding:16px 12px 18px}.doc-workspace-title h2{font-size:1.12rem}}
 
-
 /* Vínculo direto de contrato com orçamento existente */
-.doc-contract-source{
-  margin:14px 0 18px;
-  padding:14px 16px;
-  border-left:3px solid #b89a63;
-  background:rgba(184,154,99,.07);
-  border-radius:10px;
-  display:grid;
-  gap:10px;
-}
-.doc-contract-source .doc-field label{
-  color:#b89a63;
-  font-size:.8rem;
-}
-.doc-contract-source select{
-  min-height:48px;
-  font-weight:600;
-}
-.doc-contract-source select[multiple]{
-  min-height:150px;
-  padding:7px;
-}
-.doc-contract-source select[multiple] option{
-  padding:8px 9px;
-  border-radius:6px;
-  white-space:normal;
-}
-.doc-contract-source select[multiple] option:checked{
-  background:#b89a63 linear-gradient(0deg,#b89a63 0%,#b89a63 100%);
-  color:#07111f;
-}
-.doc-contract-source .doc-help{
-  display:block;
-  color:var(--text-secondary,#aeb8c6);
-  font-size:.74rem;
-  line-height:1.45;
-}
-.doc-contract-source .doc-status{
-  margin:0;
-}
-
+.doc-contract-source{margin:14px 0 18px;padding:14px 16px;border-left:3px solid #b89a63;background:rgba(184,154,99,.07);border-radius:10px;display:grid;gap:10px}.doc-contract-source .doc-field label{color:#b89a63;font-size:.8rem}.doc-contract-source select{min-height:48px;font-weight:600}.doc-contract-source select[multiple]{min-height:150px;padding:7px}.doc-contract-source select[multiple] option{padding:8px 9px;border-radius:6px;white-space:normal}.doc-contract-source select[multiple] option:checked{background:#b89a63 linear-gradient(0deg,#b89a63 0%,#b89a63 100%);color:#07111f}.doc-contract-source .doc-help{display:block;color:var(--text-secondary,#aeb8c6);font-size:.74rem;line-height:1.45}.doc-contract-source .doc-status{margin:0}
 
 /* Catálogo inteligente de serviços e níveis */
-.doc-service-smart span{display:grid;gap:5px;min-width:0}
-.doc-service-description{display:block;color:var(--text-secondary,#aeb8c6);font-size:.76rem;line-height:1.45;font-weight:400}
-.doc-service-level{display:inline-flex;width:max-content;max-width:100%;padding:3px 7px;border:1px solid rgba(184,154,99,.28);border-radius:999px;color:#b89a63;font-size:.68rem;line-height:1.2}
-.doc-service-level.muted{color:var(--text-secondary,#aeb8c6);border-color:var(--border-color,rgba(184,154,99,.18))}
-.doc-level-info{margin-top:7px;font-size:.76rem;line-height:1.45;background:rgba(184,154,99,.07);border:1px solid rgba(184,154,99,.18)}
+.doc-service-smart span{display:grid;gap:5px;min-width:0}.doc-service-description{display:block;color:var(--text-secondary,#aeb8c6);font-size:.76rem;line-height:1.45;font-weight:400}.doc-service-level{display:inline-flex;width:max-content;max-width:100%;padding:3px 7px;border:1px solid rgba(184,154,99,.28);border-radius:999px;color:#b89a63;font-size:.68rem;line-height:1.2}.doc-service-level.muted{color:var(--text-secondary,#aeb8c6);border-color:var(--border-color,rgba(184,154,99,.18))}.doc-level-info{margin-top:7px;font-size:.76rem;line-height:1.45;background:rgba(184,154,99,.07);border:1px solid rgba(184,154,99,.18)}
+
+/* Contraste reforçado para criação, revisão, download e arquivamento de documentos */
+.doc-modal-panel,.doc-options-dialog{color:var(--text-primary,#f5f7fa);background:var(--card-bg,#0b1726)}
+.doc-modal-panel h2,.doc-modal-panel h3,.doc-options-dialog h2,.doc-options-dialog h3,.doc-options-dialog legend,.doc-options-dialog label{color:var(--text-primary,#f5f7fa)}
+.doc-modal-panel p,.doc-options-dialog p,.doc-options-dialog small,.doc-options-dialog .doc-preview-block span{color:var(--text-secondary,#c6cfda)}
+.doc-modal-panel .doc-field input,.doc-modal-panel .doc-field textarea,.doc-options-dialog .doc-field input,.doc-options-dialog .doc-field textarea,.doc-options-dialog .doc-field select{background:var(--input-bg,#142235);color:var(--text-primary,#f7f9fc);border-color:rgba(184,154,99,.58);caret-color:#b89a63}
+.doc-modal-panel .doc-field input::placeholder,.doc-modal-panel .doc-field textarea::placeholder,.doc-options-dialog input::placeholder,.doc-options-dialog textarea::placeholder{color:var(--text-secondary,#b6c0cd);opacity:.92}
+.doc-options-dialog .doc-options-group,.doc-options-dialog .doc-preview-grid>div,.doc-options-dialog .doc-preview-block{background:rgba(184,154,99,.055);border-color:rgba(184,154,99,.44)}
+.doc-options-dialog .doc-options-close{background:var(--card-bg,#0b1726);color:#d9bd82;border:1px solid rgba(184,154,99,.55);border-radius:9px;line-height:1}
+.doc-options-dialog .doc-options-close:hover,.doc-options-dialog .doc-options-close:focus-visible{background:#b89a63;color:#07111f;outline:2px solid rgba(184,154,99,.35);outline-offset:2px}
+.doc-options-dialog .doc-btn.ghost,.doc-modal-panel .doc-btn.ghost{color:#d9bd82;border-color:rgba(184,154,99,.35)}
+.doc-options-dialog .doc-btn.secondary,.doc-modal-panel .doc-btn.secondary{color:var(--text-primary,#f5f7fa);border-color:rgba(184,154,99,.6)}
+.doc-options-dialog .doc-status,.doc-modal-panel .doc-status{border:1px solid rgba(184,154,99,.24)}
+@media (prefers-contrast:more){.doc-modal-panel,.doc-options-dialog{border-width:2px}.doc-field input,.doc-field select,.doc-field textarea{border-width:2px}.doc-btn.secondary,.doc-btn.ghost{border-width:2px}}
