@@ -24,3 +24,7 @@ html.doc-modal-open,body.doc-modal-open{overflow:hidden;overscroll-behavior:none
 .doc-options-dialog .doc-btn.secondary,.doc-modal-panel .doc-btn.secondary{color:var(--text-primary,#f5f7fa);border-color:rgba(184,154,99,.6)}
 .doc-options-dialog .doc-status,.doc-modal-panel .doc-status{border:1px solid rgba(184,154,99,.24)}
 @media (prefers-contrast:more){.doc-modal-panel,.doc-options-dialog{border-width:2px}.doc-field input,.doc-field select,.doc-field textarea{border-width:2px}.doc-btn.secondary,.doc-btn.ghost{border-width:2px}}
+
+/* Garante precedência sobre o CSS injetado pelo modal auxiliar após o carregamento. */
+.doc-options-modal .doc-options-dialog{color:var(--text-primary,#f5f7fa);background:var(--card-bg,#0b1726)}
+.doc-options-modal .doc-options-dialog .doc-options-close{background:var(--card-bg,#0b1726);color:#d9bd82;border:1px solid rgba(184,154,99,.55)}
