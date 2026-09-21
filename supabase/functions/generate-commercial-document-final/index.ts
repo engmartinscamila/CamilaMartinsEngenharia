@@ -63,21 +63,26 @@ function contractScopeXml(services: unknown, customService: unknown, experienceL
   }
   return parts.join('');
 }
+function insertionBeforeParagraph(xml: string, marker: string) {
+  const markerIndex = xml.indexOf(marker);
+  if (markerIndex < 0) throw new Error('Marcador do resumo contratual não encontrado no Word.');
+  // <w:pPr> não é o começo de um parágrafo: o antigo lastIndexOf('<w:p')
+  // poderia introduzir parágrafos dentro de <w:pPr> e invalidar o Word.
+  const paragraphs = [...xml.slice(0, markerIndex).matchAll(/<w:p(?=[\s>])/g)];
+  const start = paragraphs.at(-1)?.index;
+  if (start === undefined) throw new Error('Não foi possível localizar um parágrafo válido para o escopo do contrato.');
+  return start;
+}
 async function enhanceContractDocument(bytes: Uint8Array, propertyAddress: string, services: unknown, customService: unknown, experienceLevel: unknown) {
   const zip = await JSZip.loadAsync(bytes);
   const file = zip.file('word/document.xml');
   if (!file) throw new Error('O contrato gerado não contém o documento Word esperado.');
   let xml = await file.async('string');
-  // O endereço cadastral do CONTRATANTE deve permanecer no preâmbulo.
-  // O endereço da obra é apresentado exclusivamente no bloco de escopo.
+  // Endereço cadastral do CONTRATANTE permanece no preâmbulo; endereço da obra só no escopo.
   const scopeXml = contractScopeXml(services, customService, experienceLevel, propertyAddress);
   if (scopeXml) {
-    const markerIndex = xml.indexOf('RESUMO COMERCIAL VINCULADO');
-    let insertAt = markerIndex >= 0 ? xml.lastIndexOf('<w:p', markerIndex) : -1;
-    if (insertAt < 0) insertAt = xml.lastIndexOf('<w:sectPr');
-    if (insertAt < 0) insertAt = xml.lastIndexOf('</w:body>');
-    if (insertAt < 0) throw new Error('Estrutura do Word incompatível com o bloco de escopo.');
-    xml = xml.slice(0, insertAt) + scopeXml + xml.slice(insertAt);
+    const insertion = insertionBeforeParagraph(xml, 'RESUMO COMERCIAL VINCULADO');
+    xml = xml.slice(0, insertion) + scopeXml + xml.slice(insertion);
   }
   zip.file('word/document.xml', xml);
   return await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
@@ -104,8 +109,8 @@ Deno.serve(async req => {
     if (source.error) throw source.error;
     if (!source.data) return json({ error: 'Registro comercial não encontrado.' }, 404);
     if (kind === 'contrato' && !text(source.data.property_address)) return json({ error: 'Informe o endereço do imóvel / obra antes de gerar o contrato.' }, 422);
-    const selected = Array.isArray(source.data.services) ? source.data.services.filter((item: Obj) => item?.included !== false) : [];
-    if (selected.some((item: Obj) => ['p', 'outro', 'outros'].includes(text(item.code).toLowerCase())) && text(source.data.custom_service).length < 12) {
+    const selected = Array.isArray(source.data.services) ? source.data.services.filter((item: unknown) => item && typeof item === 'object' && (item as Obj).included !== false) as Obj[] : [];
+    if (selected.some(item => ['p', 'outro', 'outros'].includes(text(item.code).toLowerCase())) && text(source.data.custom_service).length < 12) {
       return json({ error: 'Descreva a atividade Outros com pelo menos 12 caracteres antes de gerar o documento.' }, 422);
     }
     pointerField = kind === 'contrato' ? 'contract_document_id' : 'quote_document_id';
@@ -118,6 +123,20 @@ Deno.serve(async req => {
         if (!reason) return json({ error: 'Informe o motivo da nova versão antes de gerar novamente.' }, 422);
         const old = await service.from('documentos').select('*').eq('id', previousDocumentId).single();
         if (old.error) throw old.error;
+        // O gerador principal utiliza o mesmo caminho de objeto em novas versões.
+        // Antes de executá-lo, isolar o arquivo congelado para evitar sobrescrever o histórico.
+        const oldPath = text(old.data.arquivo);
+        const oldBucket = text(old.data.storage_bucket) || 'documentos';
+        if (!oldPath) throw new Error('A versão anterior foi congelada sem arquivo Word; emissão bloqueada para preservar o histórico.');
+        const oldDownload = await service.storage.from(oldBucket).download(oldPath);
+        if (oldDownload.error || !oldDownload.data) throw oldDownload.error ?? new Error('Não foi possível preservar o Word anterior.');
+        const backupPath = `comercial/${recordId}/historico/${previousDocumentId}-${kind}.docx`;
+        const backupUpload = await service.storage.from(oldBucket).upload(backupPath, new Uint8Array(await oldDownload.data.arrayBuffer()), {
+          contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', upsert: false,
+        });
+        if (backupUpload.error) throw backupUpload.error;
+        const preserved = await service.from('documentos').update({ arquivo: backupPath }).eq('id', previousDocumentId);
+        if (preserved.error) throw preserved.error;
         const oldData = old.data.generated_data && typeof old.data.generated_data === 'object' ? old.data.generated_data as Obj : {};
         const inserted = await service.from('documentos').insert({
           cliente_id: old.data.cliente_id, projeto_id: old.data.projeto_id, contract_id: old.data.contract_id,
