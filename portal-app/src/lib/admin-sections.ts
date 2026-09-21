@@ -17,10 +17,11 @@ export const adminSections = [
   { key: 'portal-control', href: '/admin/portal-control', icon: 'eye-outline', title: 'Módulos do portal do cliente', description: 'Escolha quais áreas ficam disponíveis em cada projeto.' },
   { key: 'agenda', href: '/admin/agenda', icon: 'calendar-outline', title: 'Agenda', description: 'Compromissos vinculados aos projetos.' },
   { key: 'schedule', href: '/admin/schedule', icon: 'git-branch-outline', title: 'Cronogramas', description: 'Acompanhamento simples por etapas, ordem, status e progresso.' },
-  { key: 'construction-schedule', href: '/admin/construction-schedule', icon: 'bar-chart-outline', title: 'Cronograma de obra completo', description: 'Planejamento físico-financeiro, pesos, dependências, Gantt, Curva S e Excel.' },
+  { key: 'construction-schedule', href: '/admin/construction-schedule', icon: 'bar-chart-outline', title: 'Cronograma de obra completo', description: 'Consultar cronogramas físico-financeiros existentes, Gantt, Curva S e Excel.' },
+  { key: 'construction-schedule-new', href: '/admin/construction-schedule-new', icon: 'calendar-outline', title: 'Criar cronograma contratado', description: 'Conferir orçamento, contrato, projeto, atividades e custos da obra antes de gerar um cronograma.' },
   { key: 'approvals', href: '/admin/approvals', icon: 'checkmark-done-outline', title: 'Aprovações', description: 'Criar decisões para resposta dos clientes.' },
   { key: 'requests', href: '/admin/requests', icon: 'chatbubbles-outline', title: 'Solicitações', description: 'Atender, responder e atualizar o andamento.' },
-  { key: 'notifications', href: '/admin/notifications', icon: 'notifications-outline', title: 'Notificações internas', description: 'Avisos direcionados por cliente, contrato e projeto.' },
+  { key: 'notifications', href: '/admin/notifications', icon: 'notifications-outline', title: 'Avisos internos direcionados por cliente, contrato e projeto.' },
   { key: 'security', href: '/admin/security', icon: 'shield-checkmark-outline', title: 'Armazenamento e auditoria', description: 'Uso de espaço, arquivos pendentes e histórico de ações.' },
   { key: 'system-health', href: '/admin/system-health', icon: 'pulse-outline', title: 'Verificar funcionamento', description: 'Confira a disponibilidade dos serviços e pendências técnicas.' },
 ] as const;
