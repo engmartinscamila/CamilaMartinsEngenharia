@@ -6,7 +6,7 @@ import { Button, Card, Field, Notice, Screen, StateView } from '@/components/ui'
 import { isValidIsoDate } from '@/lib/format';
 import { planConstructionSchedule, type WorkCalendar } from '@/lib/construction-schedule-engine';
 import {
-  approveVerifiedSchedule, loadScheduleCommercialOptions, previewScheduleTemplate, saveVerifiedSchedule,
+  approveVerifiedSchedule, exportApprovedScheduleXlsx, loadScheduleCommercialOptions, previewScheduleTemplate, saveVerifiedSchedule,
   type ScheduleCommercialOptions, type ScheduleTemplateItem, type ScheduleTemplatePreview,
 } from '@/services/construction-schedule-contract-service';
 
@@ -163,6 +163,14 @@ export default function NewConstructionScheduleScreen() {
     if (result) setError(result);
     else { setApproved(true); setSuccess('Linha de base aprovada pelo banco. Alterações estruturais exigem uma nova versão.'); }
   };
+  const exportExcel = async () => {
+    if (!scheduleId || !approved || busy) return;
+    setBusy(true); setError(null); setSuccess(null);
+    const result = await exportApprovedScheduleXlsx(scheduleId);
+    setBusy(false);
+    if (result) setError(result);
+    else setSuccess('Excel extraído da linha de base aprovada. O arquivo é editável e não altera os registros do portal.');
+  };
 
   return (
     <Screen>
@@ -233,6 +241,10 @@ export default function NewConstructionScheduleScreen() {
       {scheduleId ? <Card>
         <Text>Planejamento salvo. Aprovação congela a linha de base, sujeita a validações do banco.</Text>
         <Button title={approved ? 'Linha de base aprovada ✓' : 'Aprovar linha de base após conferência'} loading={busy} disabled={busy || approved} onPress={() => void approve()} />
+        {approved ? <>
+          <Notice tone="info">Excel editável com cronograma, Gantt, Curva S planejada, indicadores e versão aprovada. Dados reais históricos só aparecem após medições datadas, sem inventar evolução.</Notice>
+          <Button title="Extrair cronograma completo em Excel (.xlsx)" loading={busy} disabled={busy} onPress={() => void exportExcel()} />
+        </> : null}
         <Button title="Consultar cronograma" variant="secondary" onPress={() => router.replace('/admin/construction-schedule')} />
       </Card> : null}
     </Screen>
