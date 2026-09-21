@@ -9,6 +9,7 @@ const corsHeaders = {
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } });
 type Obj = Record<string, unknown>;
 const text = (value: unknown) => String(value ?? '').trim();
+const isOther = (item: Obj) => ['p', 'outro', 'outros'].includes(text(item.code).toLowerCase());
 const xmlEsc = (value: unknown) => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 function env() {
   const url = Deno.env.get('SUPABASE_URL');
@@ -38,8 +39,11 @@ async function proxyCore(url: string, anonKey: string, authorization: string, bo
 }
 const wordParagraph = (value: string, bold = false) => `<w:p><w:pPr><w:spacing w:after="120" w:line="300" w:lineRule="auto"/></w:pPr><w:r><w:rPr>${bold ? '<w:b/>' : ''}<w:rFonts w:ascii="Century Gothic" w:hAnsi="Century Gothic"/></w:rPr><w:t xml:space="preserve">${xmlEsc(value)}</w:t></w:r></w:p>`;
 const customScopeDescription = (specification: string) => `Atividade específica solicitada: ${specification}. A prestação abrange exclusivamente esta atividade e os resultados expressamente descritos e aprovados no orçamento e no Anexo I. Quantidades, formato de entrega, visitas, revisões, prazo e etapas somente serão considerados incluídos quando definidos expressamente; acréscimos exigem aprovação e contratação prévias.`;
+function selectedServices(services: unknown) {
+  return Array.isArray(services) ? services.filter(item => item && typeof item === 'object' && (item as Obj).included !== false) as Obj[] : [];
+}
 function contractScopeXml(services: unknown, customService: unknown, experienceLevel: unknown, propertyAddress: string) {
-  const selected = Array.isArray(services) ? services.filter(item => item && typeof item === 'object' && (item as Obj).included !== false) as Obj[] : [];
+  const selected = selectedServices(services);
   if (!selected.length && !text(customService)) return '';
   const level = text(experienceLevel).toUpperCase() || 'NÃO SELECIONADO';
   const parts = [
@@ -47,9 +51,9 @@ function contractScopeXml(services: unknown, customService: unknown, experienceL
     wordParagraph(`Local do serviço / endereço do imóvel ou obra: ${propertyAddress}.`),
     wordParagraph(`Nível de prestação: ${level}. O nível qualifica o grau de aprofundamento, detalhamento, apresentação e suporte somente dentro de cada serviço expressamente contratado, sem incluir automaticamente serviços, visitas, aprovações, execução, taxas, fornecimentos ou entregáveis de outra categoria.`),
   ];
-  const otherSelected = selected.some(item => ['p', 'outro', 'outros'].includes(text(item.code).toLowerCase()));
+  const otherSelected = selected.some(isOther);
   selected.forEach((item, index) => {
-    const other = ['p', 'outro', 'outros'].includes(text(item.code).toLowerCase());
+    const other = isOther(item);
     const name = other ? 'Serviço técnico personalizado' : text(item.name) || `Serviço ${index + 1}`;
     const description = other && text(customService)
       ? customScopeDescription(text(customService))
@@ -66,7 +70,6 @@ function contractScopeXml(services: unknown, customService: unknown, experienceL
 function insertionBeforeParagraph(xml: string, marker: string) {
   const markerIndex = xml.indexOf(marker);
   if (markerIndex < 0) throw new Error('Marcador do resumo contratual não encontrado no Word.');
-  // <w:pPr> não é início de parágrafo; nunca inserir conteúdo dentro dessa tag.
   const paragraphs = [...xml.slice(0, markerIndex).matchAll(/<w:p(?=[\s>])/g)];
   const start = paragraphs.at(-1)?.index;
   if (start === undefined) throw new Error('Não foi possível localizar um parágrafo válido para o escopo do contrato.');
@@ -77,7 +80,7 @@ async function enhanceContractDocument(bytes: Uint8Array, propertyAddress: strin
   const file = zip.file('word/document.xml');
   if (!file) throw new Error('O contrato gerado não contém o documento Word esperado.');
   let xml = await file.async('string');
-  // Endereço cadastral do CONTRATANTE permanece no preâmbulo; endereço da obra só no escopo.
+  // Nunca substituir o endereço cadastral do contratante no preâmbulo.
   const scopeXml = contractScopeXml(services, customService, experienceLevel, propertyAddress);
   if (scopeXml) {
     const insertion = insertionBeforeParagraph(xml, 'RESUMO COMERCIAL VINCULADO');
@@ -86,6 +89,70 @@ async function enhanceContractDocument(bytes: Uint8Array, propertyAddress: strin
   zip.file('word/document.xml', xml);
   return await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
 }
+
+function paragraphText(paragraph: string) {
+  return [...paragraph.matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g)].map(match => match[1]).join('');
+}
+/** Corrige somente parágrafos conhecidos do orçamento principal; outras peças e estilos permanecem intactos. */
+async function enhanceQuoteDocument(bytes: Uint8Array, services: unknown, customService: unknown) {
+  const selected = selectedServices(services);
+  const specification = text(customService);
+  const otherSelected = selected.some(isOther);
+  if (!otherSelected || !specification) return bytes;
+  const zip = await JSZip.loadAsync(bytes);
+  const word = zip.file('word/document.xml');
+  if (!word) throw new Error('O orçamento gerado não contém o documento Word esperado.');
+  const xml = await word.async('string');
+  const paragraphPattern = /<w:p(?=[\s>])[\s\S]*?<\/w:p>/g;
+  const paragraphs = [...xml.matchAll(paragraphPattern)];
+  const values = paragraphs.map(match => paragraphText(match[0]));
+  const otherHeadingIndex = values.findIndex(value => /^\d+\. (Outro|Serviço técnico personalizado)$/.test(value));
+  if (otherHeadingIndex < 0) throw new Error('O serviço personalizado não foi identificado no orçamento gerado.');
+  const replacement = new Map<number, string>();
+  const descriptionIndex = otherHeadingIndex + 1;
+  if (descriptionIndex >= values.length) throw new Error('Descrição personalizada ausente no orçamento gerado.');
+  replacement.set(descriptionIndex, wordParagraph(customScopeDescription(specification)));
+  for (let index = descriptionIndex + 1; index < values.length && index < descriptionIndex + 12; index += 1) {
+    if (values[index].startsWith('Revisões incluídas:')) {
+      replacement.set(index, wordParagraph('Revisões, formato de entrega e prazo desta atividade: somente os que forem discriminados no escopo específico e no Anexo I; nenhum pacote adicional é presumido.'));
+      break;
+    }
+    if (/^\d+\. /.test(values[index]) || values[index].includes('LIMITES E EXCLUSÕES')) break;
+  }
+  const duplicateIndex = values.findIndex(value => value === 'Serviço adicional descrito no orçamento');
+  if (duplicateIndex >= 0) {
+    if (!values[duplicateIndex + 2]?.startsWith('Este item somente integra o escopo')) {
+      throw new Error('Bloco personalizado duplicado em formato inesperado; emissão interrompida para evitar conteúdo incorreto.');
+    }
+    replacement.set(duplicateIndex, '');
+    replacement.set(duplicateIndex + 1, '');
+    replacement.set(duplicateIndex + 2, '');
+  }
+  const onlyNonProject = selected.every(item => item.levelApplicable !== true);
+  if (onlyNonProject) {
+    values.forEach((value, index) => {
+      if (value.startsWith('Na ausência de indicação específica no Anexo I, aplicam-se até 2')) {
+        replacement.set(index, wordParagraph('Para os serviços selecionados, o regime de revisões e as condições de aceite devem ser definidos por atividade no Anexo I. Não se presumem rodadas de alterações de escopo para consultorias, vistorias ou atividades personalizadas; correções técnicas seguem o contrato.'));
+      }
+      if (value.startsWith('O prazo geral de referência é de 45')) {
+        replacement.set(index, wordParagraph('O prazo técnico de cada serviço será definido no cronograma aprovado no Anexo I, conforme sua natureza e os insumos necessários. Prazos de análise de órgãos públicos ou terceiros não são prazos de elaboração técnica.'));
+      }
+    });
+  }
+  let output = '';
+  let cursor = 0;
+  paragraphs.forEach((match, index) => {
+    const start = match.index ?? 0;
+    output += xml.slice(cursor, start);
+    output += replacement.has(index) ? replacement.get(index) : match[0];
+    cursor = start + match[0].length;
+  });
+  output += xml.slice(cursor);
+  if (output.includes('Serviço adicional descrito no orçamento')) throw new Error('Orçamento contém bloco personalizado duplicado após revisão.');
+  zip.file('word/document.xml', output);
+  return await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+}
+
 async function sha256(value: unknown) {
   const raw = new TextEncoder().encode(JSON.stringify(value));
   const digest = await crypto.subtle.digest('SHA-256', raw);
@@ -108,8 +175,9 @@ Deno.serve(async req => {
     if (source.error) throw source.error;
     if (!source.data) return json({ error: 'Registro comercial não encontrado.' }, 404);
     if (kind === 'contrato' && !text(source.data.property_address)) return json({ error: 'Informe o endereço do imóvel / obra antes de gerar o contrato.' }, 422);
-    const selected = Array.isArray(source.data.services) ? source.data.services.filter((item: unknown) => item && typeof item === 'object' && (item as Obj).included !== false) as Obj[] : [];
-    if (selected.some(item => ['p', 'outro', 'outros'].includes(text(item.code).toLowerCase())) && text(source.data.custom_service).length < 12) {
+    const selected = selectedServices(source.data.services);
+    if (!selected.length && !text(source.data.custom_service)) return json({ error: 'Nenhuma atividade foi selecionada para este documento.' }, 422);
+    if (selected.some(isOther) && text(source.data.custom_service).length < 12) {
       return json({ error: 'Descreva a atividade Outros com pelo menos 12 caracteres antes de gerar o documento.' }, 422);
     }
     pointerField = kind === 'contrato' ? 'contract_document_id' : 'quote_document_id';
@@ -123,8 +191,7 @@ Deno.serve(async req => {
         const old = await service.from('documentos').select('*').eq('id', previousDocumentId).single();
         if (old.error) throw old.error;
         const oldPath = text(old.data.arquivo);
-        // Modo "baixar sem arquivar": arquivo nulo é intencional. Modo arquivado:
-        // caminho isolado _generated_archive não é sobrescrito pelo gerador principal.
+        // Download sem arquivamento remove o arquivo; arquivo arquivado usa caminho próprio.
         const number = kind === 'orcamento' ? text(source.data.quote_number) : text(source.data.contract_number) || 'contrato';
         const overwrittenPath = `comercial/${recordId}/${kind}-${number}-v1.0.docx`;
         if (oldPath && oldPath === overwrittenPath) {
@@ -169,19 +236,23 @@ Deno.serve(async req => {
     if (doc.error) throw doc.error;
     if (!doc.data.arquivo) throw new Error('O documento foi preparado sem arquivo Word.');
     const bucket = doc.data.storage_bucket || 'documentos';
-    if (kind === 'contrato') {
-      const downloaded = await service.storage.from(bucket).download(doc.data.arquivo);
-      if (downloaded.error || !downloaded.data) throw downloaded.error ?? new Error('Não foi possível abrir o contrato recém-gerado.');
-      const bytes = await enhanceContractDocument(new Uint8Array(await downloaded.data.arrayBuffer()), source.data.property_address, source.data.services, source.data.custom_service, source.data.experience_level);
-      const upload = await service.storage.from(bucket).upload(doc.data.arquivo, bytes, {
+    const downloaded = await service.storage.from(bucket).download(doc.data.arquivo);
+    if (downloaded.error || !downloaded.data) throw downloaded.error ?? new Error('Não foi possível abrir o documento recém-gerado.');
+    const originalBytes = new Uint8Array(await downloaded.data.arrayBuffer());
+    const finalBytes = kind === 'contrato'
+      ? await enhanceContractDocument(originalBytes, source.data.property_address, source.data.services, source.data.custom_service, source.data.experience_level)
+      : await enhanceQuoteDocument(originalBytes, source.data.services, source.data.custom_service);
+    if (finalBytes !== originalBytes) {
+      const uploaded = await service.storage.from(bucket).upload(doc.data.arquivo, finalBytes, {
         contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', upsert: true,
       });
-      if (upload.error) throw upload.error;
+      if (uploaded.error) throw uploaded.error;
     }
     const generatedData = doc.data.generated_data && typeof doc.data.generated_data === 'object' ? doc.data.generated_data as Obj : {};
     const finalData = { ...generatedData, commercial_record_snapshot: source.data, property_address: source.data.property_address,
       party_address: source.data.address, address_used_in_contract: kind === 'contrato' ? 'party_and_property_separate' : undefined,
-      contract_scope_texts_injected: kind === 'contrato', version_reason: doc.data.version_reason || text(body.versionReason) || null };
+      contract_scope_texts_injected: kind === 'contrato', quote_custom_scope_reconciled: kind === 'orcamento' && selected.some(isOther),
+      version_reason: doc.data.version_reason || text(body.versionReason) || null };
     const updated = await service.from('documentos').update({ generated_data: finalData, snapshot_frozen_at: new Date().toISOString() }).eq('id', documentId);
     if (updated.error) throw updated.error;
     const snapshot = { ...finalData, document_id: documentId, document_kind: kind, version: doc.data.versao };
@@ -196,7 +267,7 @@ Deno.serve(async req => {
         same_as_party_address: text(source.data.address) === text(source.data.property_address) } });
     return json({ ...core.data, documentId, version: doc.data.versao,
       addressUsed: kind === 'contrato' ? 'party_and_property_separate' : null,
-      scopeTextsInjected: kind === 'contrato', snapshotFrozen: true }, 200);
+      scopeTextsInjected: kind === 'contrato', quoteScopeReconciled: kind === 'orcamento' && selected.some(isOther), snapshotFrozen: true }, 200);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Não foi possível finalizar o documento comercial.';
     return json({ error: message }, message.includes('Acesso') ? 403 : message.includes('Sessão') ? 401 : 500);
