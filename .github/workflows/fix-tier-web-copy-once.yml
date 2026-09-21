@@ -36,8 +36,9 @@ jobs:
           assert(source.includes('Os níveis Bronze, Prata e Ouro também se aplicam aos serviços avulsos.'),'Regra nova ausente');
           fs.writeFileSync(path,source);
           NODE
-      - name: Validar sintaxe, links internos, governanca e testes de interface
+      - name: Validar sintaxe, links internos e governanca
         run: |
+          node scripts/build-frases-do-dia-v7.mjs
           node --check js/commercial-documents-web.js
           node scripts/site-audit.mjs
           node scripts/admin-functional-audit.mjs
