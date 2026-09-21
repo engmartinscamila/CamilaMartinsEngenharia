@@ -103,3 +103,27 @@ $save$;
 REVOKE ALL ON FUNCTION public.guard_full_schedule_status_transition() FROM PUBLIC,anon,authenticated;
 REVOKE ALL ON FUNCTION public.admin_save_full_schedule_plan(uuid,jsonb) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.admin_save_full_schedule_plan(uuid,jsonb) TO authenticated;
+
+-- A interface não deve abrir uma transação em duas chamadas HTTP: se a criação
+-- for bem-sucedida mas a gravação falhar, uma RPC separada deixaria rascunho órfão.
+-- Chamar os dois procedimentos no MESMO comando SQL garante rollback conjunto,
+-- mantendo a verificação comercial, RLS e as permissões existentes em cada RPC.
+CREATE OR REPLACE FUNCTION public.admin_initialize_and_save_full_schedule(
+ p_project_id uuid,p_quote_record_id uuid,p_contract_record_id uuid,p_plan jsonb
+) RETURNS uuid LANGUAGE plpgsql SECURITY INVOKER SET search_path=''
+AS $atomic$
+DECLARE v_schedule_id uuid;
+BEGIN
+ IF NOT public.is_portal_admin() THEN
+  RAISE EXCEPTION 'Acesso administrativo necessário';
+ END IF;
+ v_schedule_id := public.admin_initialize_construction_schedule(
+   p_project_id,p_quote_record_id,p_contract_record_id);
+ PERFORM public.admin_save_full_schedule_plan(v_schedule_id,p_plan);
+ RETURN v_schedule_id;
+END;
+$atomic$;
+REVOKE ALL ON FUNCTION public.admin_initialize_and_save_full_schedule(uuid,uuid,uuid,jsonb)
+ FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_initialize_and_save_full_schedule(uuid,uuid,uuid,jsonb)
+ TO authenticated;
