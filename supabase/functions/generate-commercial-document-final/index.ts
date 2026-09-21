@@ -93,12 +93,13 @@ async function enhanceContractDocument(bytes: Uint8Array, propertyAddress: strin
 function paragraphText(paragraph: string) {
   return [...paragraph.matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g)].map(match => match[1]).join('');
 }
-/** Corrige somente parágrafos conhecidos do orçamento principal; outras peças e estilos permanecem intactos. */
+/** Corrige apenas parágrafos conhecidos e preserva outros conteúdos e estilos do Word. */
 async function enhanceQuoteDocument(bytes: Uint8Array, services: unknown, customService: unknown) {
   const selected = selectedServices(services);
   const specification = text(customService);
   const otherSelected = selected.some(isOther);
-  if (!otherSelected || !specification) return bytes;
+  const onlyNonProject = selected.length > 0 && selected.every(item => item.levelApplicable !== true);
+  if ((!otherSelected || !specification) && !onlyNonProject) return bytes;
   const zip = await JSZip.loadAsync(bytes);
   const word = zip.file('word/document.xml');
   if (!word) throw new Error('O orçamento gerado não contém o documento Word esperado.');
@@ -106,29 +107,30 @@ async function enhanceQuoteDocument(bytes: Uint8Array, services: unknown, custom
   const paragraphPattern = /<w:p(?=[\s>])[\s\S]*?<\/w:p>/g;
   const paragraphs = [...xml.matchAll(paragraphPattern)];
   const values = paragraphs.map(match => paragraphText(match[0]));
-  const otherHeadingIndex = values.findIndex(value => /^\d+\. (Outro|Serviço técnico personalizado)$/.test(value));
-  if (otherHeadingIndex < 0) throw new Error('O serviço personalizado não foi identificado no orçamento gerado.');
   const replacement = new Map<number, string>();
-  const descriptionIndex = otherHeadingIndex + 1;
-  if (descriptionIndex >= values.length) throw new Error('Descrição personalizada ausente no orçamento gerado.');
-  replacement.set(descriptionIndex, wordParagraph(customScopeDescription(specification)));
-  for (let index = descriptionIndex + 1; index < values.length && index < descriptionIndex + 12; index += 1) {
-    if (values[index].startsWith('Revisões incluídas:')) {
-      replacement.set(index, wordParagraph('Revisões, formato de entrega e prazo desta atividade: somente os que forem discriminados no escopo específico e no Anexo I; nenhum pacote adicional é presumido.'));
-      break;
+  if (otherSelected && specification) {
+    const otherHeadingIndex = values.findIndex(value => /^\d+\. (Outro|Serviço técnico personalizado)$/.test(value));
+    if (otherHeadingIndex < 0) throw new Error('O serviço personalizado não foi identificado no orçamento gerado.');
+    const descriptionIndex = otherHeadingIndex + 1;
+    if (descriptionIndex >= values.length) throw new Error('Descrição personalizada ausente no orçamento gerado.');
+    replacement.set(descriptionIndex, wordParagraph(customScopeDescription(specification)));
+    for (let index = descriptionIndex + 1; index < values.length && index < descriptionIndex + 12; index += 1) {
+      if (values[index].startsWith('Revisões incluídas:')) {
+        replacement.set(index, wordParagraph('Revisões, formato de entrega e prazo desta atividade: somente os que forem discriminados no escopo específico e no Anexo I; nenhum pacote adicional é presumido.'));
+        break;
+      }
+      if (/^\d+\. /.test(values[index]) || values[index].includes('LIMITES E EXCLUSÕES')) break;
     }
-    if (/^\d+\. /.test(values[index]) || values[index].includes('LIMITES E EXCLUSÕES')) break;
-  }
-  const duplicateIndex = values.findIndex(value => value === 'Serviço adicional descrito no orçamento');
-  if (duplicateIndex >= 0) {
-    if (!values[duplicateIndex + 2]?.startsWith('Este item somente integra o escopo')) {
-      throw new Error('Bloco personalizado duplicado em formato inesperado; emissão interrompida para evitar conteúdo incorreto.');
+    const duplicateIndex = values.findIndex(value => value === 'Serviço adicional descrito no orçamento');
+    if (duplicateIndex >= 0) {
+      if (!values[duplicateIndex + 2]?.startsWith('Este item somente integra o escopo')) {
+        throw new Error('Bloco personalizado duplicado em formato inesperado; emissão interrompida para evitar conteúdo incorreto.');
+      }
+      replacement.set(duplicateIndex, '');
+      replacement.set(duplicateIndex + 1, '');
+      replacement.set(duplicateIndex + 2, '');
     }
-    replacement.set(duplicateIndex, '');
-    replacement.set(duplicateIndex + 1, '');
-    replacement.set(duplicateIndex + 2, '');
   }
-  const onlyNonProject = selected.every(item => item.levelApplicable !== true);
   if (onlyNonProject) {
     values.forEach((value, index) => {
       if (value.startsWith('Na ausência de indicação específica no Anexo I, aplicam-se até 2')) {
@@ -139,6 +141,7 @@ async function enhanceQuoteDocument(bytes: Uint8Array, services: unknown, custom
       }
     });
   }
+  if (!replacement.size) return bytes;
   let output = '';
   let cursor = 0;
   paragraphs.forEach((match, index) => {
@@ -148,7 +151,9 @@ async function enhanceQuoteDocument(bytes: Uint8Array, services: unknown, custom
     cursor = start + match[0].length;
   });
   output += xml.slice(cursor);
-  if (output.includes('Serviço adicional descrito no orçamento')) throw new Error('Orçamento contém bloco personalizado duplicado após revisão.');
+  if (otherSelected && specification && output.includes('Serviço adicional descrito no orçamento')) {
+    throw new Error('Orçamento contém bloco personalizado duplicado após revisão.');
+  }
   zip.file('word/document.xml', output);
   return await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
 }
