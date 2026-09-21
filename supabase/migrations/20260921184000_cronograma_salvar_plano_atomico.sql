@@ -28,19 +28,21 @@ DECLARE v_pred text;v_source text;v_code text;v_day_start date;v_day_finish date
 BEGIN
  IF NOT public.is_portal_admin() THEN RAISE EXCEPTION 'Acesso administrativo necessário'; END IF;
  SELECT * INTO v_header FROM public.construction_schedules WHERE id=p_schedule_id FOR UPDATE;
- IF v_header.id IS NULL OR v_header.activation_status<>'draft' THEN
+ IF v_header.id IS NULL OR v_header.activation_status IS DISTINCT FROM 'draft' THEN
    RAISE EXCEPTION 'Somente cronogramas novos em rascunho podem receber um plano'; END IF;
  v_scope:=public.assert_full_schedule_commercial_link(
     v_header.project_id,v_header.quote_record_id,v_header.contract_record_id);
  IF v_scope IS DISTINCT FROM v_header.source_scope_snapshot THEN
    RAISE EXCEPTION 'Vínculo comercial mudou; não usar escopo desatualizado'; END IF;
- IF p_plan->>'scope_confirmed' <> 'true' THEN
+ IF p_plan->>'scope_confirmed' IS DISTINCT FROM 'true' THEN
    RAISE EXCEPTION 'Confirme individualmente as atividades do escopo antes de salvar'; END IF;
- IF p_plan->>'calendar' NOT IN ('weekdays','calendar_days') OR
-    p_plan->>'weight_source' NOT IN ('construction_costs','confirmed_manual') THEN
+ IF p_plan->>'calendar' IS NULL OR p_plan->>'calendar' NOT IN ('weekdays','calendar_days') OR
+    p_plan->>'weight_source' IS NULL OR p_plan->>'weight_source' NOT IN ('construction_costs','confirmed_manual') THEN
    RAISE EXCEPTION 'Selecione calendário e origem dos pesos'; END IF;
  v_items:=p_plan->'items';
- IF jsonb_typeof(v_items) IS DISTINCT FROM 'array' OR jsonb_array_length(v_items)=0 OR jsonb_array_length(v_items)>200 THEN
+ IF jsonb_typeof(v_items) IS DISTINCT FROM 'array' THEN
+   RAISE EXCEPTION 'Atividades não informadas'; END IF;
+ IF jsonb_array_length(v_items)=0 OR jsonb_array_length(v_items)>200 THEN
    RAISE EXCEPTION 'Informe de 1 a 200 atividades confirmadas'; END IF;
  SELECT count(*),count(DISTINCT i->>'code'),sum((i->>'weight_percent')::numeric),
  min((i->>'planned_start')::date),max((i->>'planned_finish')::date)
@@ -59,7 +61,8 @@ BEGIN
    v_day_finish:=(v_item->>'planned_finish')::date;
    IF v_code IS NULL OR nullif(btrim(v_item->>'activity'),'') IS NULL OR
       v_day_start IS NULL OR v_day_finish IS NULL OR v_day_finish<v_day_start OR
-      (v_item->>'planned_duration_days')::integer<1 OR
+      v_item->>'planned_duration_days' IS NULL OR (v_item->>'planned_duration_days')::integer<1 OR
+      v_item->>'weight_percent' IS NULL OR
       (v_item->>'weight_percent')::numeric NOT BETWEEN 0 AND 100 THEN
       RAISE EXCEPTION 'Atividade inválida: %',coalesce(v_code,'sem código'); END IF;
    IF v_source IS NULL OR NOT EXISTS(
