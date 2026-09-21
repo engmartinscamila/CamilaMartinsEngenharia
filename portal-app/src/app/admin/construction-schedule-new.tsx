@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView } from '@/components/ui';
@@ -48,6 +48,7 @@ export default function NewConstructionScheduleScreen() {
   const [manualWeightsApproved, setManualWeightsApproved] = useState(false);
   const [saveConfirmed, setSaveConfirmed] = useState(false);
   const [scheduleId, setScheduleId] = useState<string | null>(null);
+  const [approved, setApproved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -73,8 +74,8 @@ export default function NewConstructionScheduleScreen() {
     project && (item.linkedProjectId === project.id || item.linkedClientId === project.clientId) &&
     item.services.some((service) => service.code === 's' && service.included),
   ) ?? [];
-  const allowedCodes = quote?.services.filter((service) => service.included).map((service) => service.code) ?? [];
-  const selected = rows.filter((row) => row.selected);
+  const allowedCodes = useMemo(() => quote?.services.filter((service) => service.included).map((service) => service.code) ?? [], [quote]);
+  const selected = useMemo(() => rows.filter((row) => row.selected), [rows]);
 
   const calculated = useMemo(() => {
     if (!template || !project || selected.length === 0 || !startDate) return { data: null, error: null };
@@ -138,11 +139,24 @@ export default function NewConstructionScheduleScreen() {
   }, [template, project, selected, startDate, calendar, manualWeightsApproved, allowedCodes]);
 
   const clearPlan = () => {
-    setTemplate(null); setRows([]); setTemplateCode(''); setScheduleId(null);
+    setTemplate(null); setRows([]); setTemplateCode(''); setScheduleId(null); setApproved(false);
     setSaveConfirmed(false); setManualWeightsApproved(false); setError(null); setSuccess(null);
   };
   const updateRow = (code: string, changes: Partial<DraftRow>) => {
     setRows((current) => current.map((row) => row.code === code ? { ...row, ...changes, confirmed: false } : row));
+    setSaveConfirmed(false);
+  };
+  const addManualRow = () => {
+    setRows((current) => {
+      let index = 1;
+      while (current.some((item) => item.code === `M${index}`)) index += 1;
+      return [...current, {
+        code: `M${index}`, category: 'Escopo específico', activity: '', display_order: current.length + 1,
+        reference_weight_percent: null, reference_duration_days: null, predecessor_code: null,
+        requires_scope_confirmation: true, selected: true, confirmed: false,
+        duration: '', cost: '', weight: '', sourceCode: '', predecessor: '',
+      }];
+    });
     setSaveConfirmed(false);
   };
   const loadTemplate = async () => {
@@ -168,12 +182,12 @@ export default function NewConstructionScheduleScreen() {
     setSuccess('Planejamento salvo como rascunho em uma única transação. Confira o resultado antes de aprovar a linha de base.');
   };
   const approve = async () => {
-    if (!scheduleId || busy) return;
+    if (!scheduleId || busy || approved) return;
     setBusy(true); setError(null); setSuccess(null);
     const result = await approveVerifiedSchedule(scheduleId);
     setBusy(false);
     if (result) setError(result);
-    else setSuccess('Linha de base aprovada pelo banco. Alterações estruturais exigem uma nova versão.');
+    else { setApproved(true); setSuccess('Linha de base aprovada pelo banco. Alterações estruturais exigem uma nova versão.'); }
   };
 
   return (
@@ -208,9 +222,10 @@ export default function NewConstructionScheduleScreen() {
         {template ? <>
           <Notice tone="warning">Modelo {template.template_code} v{template.template_version}. Selecione somente atividades efetivamente contratadas. Pesos, duração e custo de referência NÃO são dados da sua obra.</Notice>
           <Text>Códigos permitidos pelo orçamento: {quote?.services.filter((service) => service.included).map((service) => `${service.code} (${service.name ?? 'serviço'})`).join('; ')}</Text>
-          {rows.length === 0 ? <Notice tone="info">Modelo sem atividades pré-definidas. Cadastre o planejamento por atividade em uma etapa específica; não é permitido aprovar modelo vazio.</Notice> : null}
+          {rows.length === 0 ? <Notice tone="info">Este modelo não traz atividades por padrão. Cadastre apenas aquelas previstas no escopo.</Notice> : null}
+          <Button title="Adicionar atividade específica do contrato" variant="secondary" onPress={addManualRow} />
           {rows.map((row) => <Card key={row.code}>
-            <Text>{row.code} — {row.activity}</Text>
+            <Text>{row.code} — {row.activity || 'Atividade sem descrição'}</Text>
             <Text>Referência de duração: {row.reference_duration_days ?? 'não definida'} dias; peso apenas ilustrativo: {row.reference_weight_percent ?? 'não definido'}%</Text>
             <Button title={row.selected ? 'Retirar atividade' : 'Selecionar atividade contratada'} variant="secondary" onPress={() => updateRow(row.code, { selected: !row.selected })} />
             {row.selected ? <>
@@ -229,6 +244,7 @@ export default function NewConstructionScheduleScreen() {
             <Text>Calendário do trabalho</Text>
             <Button title={`Dias úteis, sem feriados cadastrados ${calendar === 'weekdays' ? '✓' : ''}`} variant="secondary" onPress={() => { setCalendar('weekdays'); setSaveConfirmed(false); }} />
             <Button title={`Dias corridos ${calendar === 'calendar_days' ? '✓' : ''}`} variant="secondary" onPress={() => { setCalendar('calendar_days'); setSaveConfirmed(false); }} />
+            <Notice tone="info">Quando os custos de obra estão completos, os pesos são calculados a partir deles. Pesos manuais não substituem custos financeiros.</Notice>
             <Button title={manualWeightsApproved ? 'Pesos manuais validados ✓' : 'Validar pesos manuais (se aplicável)'} variant="secondary" onPress={() => { setManualWeightsApproved((current) => !current); setSaveConfirmed(false); }} />
             {calculated.error ? <Notice tone="warning">{calculated.error}</Notice> : null}
             {calculated.data ? <>
@@ -242,7 +258,7 @@ export default function NewConstructionScheduleScreen() {
       </> : null}
       {scheduleId ? <Card>
         <Text>Planejamento salvo. A aprovação congela a linha de base, sujeita às validações do banco.</Text>
-        <Button title="Aprovar linha de base após conferência" loading={busy} disabled={busy} onPress={() => void approve()} />
+        <Button title={approved ? 'Linha de base aprovada ✓' : 'Aprovar linha de base após conferência'} loading={busy} disabled={busy || approved} onPress={() => void approve()} />
         <Button title="Consultar cronograma" variant="secondary" onPress={() => router.replace('/admin/construction-schedule')} />
       </Card> : null}
     </Screen>
