@@ -1,6 +1,6 @@
 -- Correção prospectiva do catálogo: NÃO altera contratos ou documentos já emitidos.
--- O Contrato Mestre v1 reserva Bronze/Prata/Ouro a serviços de projeto (cláusula 1.7).
--- Apenas vínculos de referência são registrados; revisões documentais seguem pendentes.
+-- O Contrato Mestre v1 reserva Bronze/Prata/Ouro aos serviços de projeto (1.7).
+-- Registra vínculos de referência; revisões documentais permanecem pendentes.
 DO $migration$
 DECLARE
   v_body text;
@@ -8,8 +8,8 @@ BEGIN
   SELECT body INTO v_body FROM public.contract_master_versions
   WHERE active = true ORDER BY version DESC LIMIT 1;
 
-  -- O fixture isolado de segurança pode não conter um Contrato Mestre. No banco
-  -- real, só associar referências cuja numeração já esteja presente no texto.
+  -- Fixtures isolados podem não conter Contrato Mestre. Quando houver um
+  -- texto ativo, conferir existência das cláusulas antes de vincular serviços.
   IF v_body IS NOT NULL AND NOT (
     position('1.1.' in v_body) > 0 AND
     position('1.2.' in v_body) > 0 AND
@@ -32,8 +32,16 @@ BEGIN
   WHERE code = 'q' AND active = true
     AND (level_applicable IS DISTINCT FROM false
          OR default_revisions IS NOT NULL
-         OR delivery_formats <> '[]'::jsonb
+         OR delivery_formats IS DISTINCT FROM '[]'::jsonb
          OR contract_clause_refs IS DISTINCT FROM ARRAY['1.1','1.2','1.7','10.1']::text[]);
+
+  -- Serviços administrativos, visitas, laudos e item personalizado não são,
+  -- por si, projetos elegíveis aos níveis de experiência. Preserve prazos,
+  -- formatos e revisões específicos desses serviços; altere só a elegibilidade.
+  UPDATE public.service_catalog
+  SET level_applicable = false, version = version + 1, updated_at = now()
+  WHERE code IN ('k','l','m','n','o','p')
+    AND active = true AND level_applicable IS DISTINCT FROM false;
 
   UPDATE public.service_catalog
   SET contract_clause_refs = ARRAY['1.1','1.2','1.3','1.7','10.1','10.2']::text[],
