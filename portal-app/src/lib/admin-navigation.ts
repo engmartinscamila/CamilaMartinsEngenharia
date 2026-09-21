@@ -38,6 +38,7 @@ export const modernWebsiteAdminSections = new Set([
   'financial',
   'portal-control',
   'construction-schedule',
+  'construction-schedule-new',
   'approvals',
   'notifications',
   'security',
