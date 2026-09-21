@@ -81,6 +81,7 @@ CREATE OR REPLACE FUNCTION public.guard_full_schedule_approval()
 RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path=''
 AS $approve$
 DECLARE v_count integer;v_sum numeric;v_missing integer;v_min date;v_max date;v_snapshot jsonb;
+DECLARE v_total_construction_cost numeric;
 BEGIN
  IF TG_OP='INSERT' AND NEW.activation_status='approved' THEN
   RAISE EXCEPTION 'Novo cronograma deve começar como rascunho'; END IF;
@@ -101,14 +102,29 @@ BEGIN
    RAISE EXCEPTION 'Orçamento ou contrato mudou: gere nova linha de base a partir dos documentos aprovados'; END IF;
  IF NEW.work_calendar NOT IN ('weekdays','calendar_days') OR NEW.weight_source IS NULL THEN
    RAISE EXCEPTION 'Defina calendário e origem dos pesos antes de aprovar'; END IF;
- SELECT count(*),sum(weight_percent),min(planned_start),max(planned_finish),
- count(*) FILTER (WHERE planned_cost IS NULL OR source_service_code IS NULL OR
+ SELECT count(*),sum(weight_percent),min(planned_start),max(planned_finish),sum(planned_cost),
+ count(*) FILTER (WHERE planned_cost IS NULL OR nullif(btrim(cost_source),'') IS NULL OR source_service_code IS NULL OR
     planned_start IS NULL OR planned_finish IS NULL OR planned_duration_days<=0 OR
     planned_finish<planned_start OR weight_percent<0 OR weight_percent>100)
- INTO v_count,v_sum,v_min,v_max,v_missing
+ INTO v_count,v_sum,v_min,v_max,v_total_construction_cost,v_missing
  FROM public.construction_schedule_items WHERE schedule_id=NEW.id;
  IF v_count=0 OR v_missing>0 OR abs(coalesce(v_sum,0)-100)>0.01 THEN
-  RAISE EXCEPTION 'Cronograma incompleto: conferir atividades, custos de obra, datas e pesos totalizando 100%%'; END IF;
+  RAISE EXCEPTION 'Cronograma incompleto: conferir atividades, origem dos custos, datas e pesos totalizando 100%%'; END IF;
+ IF v_total_construction_cost IS NULL OR v_total_construction_cost<=0 THEN
+  RAISE EXCEPTION 'Custo total da execução deve ser positivo para aprovar cronograma físico-financeiro'; END IF;
+ -- Todos os pesos derivados de custo, exceto o último ajuste de arredondamento,
+ -- devem corresponder ao custo físico da obra, não aos honorários comerciais.
+ IF NEW.weight_source='construction_costs' AND EXISTS(
+   SELECT 1 FROM (
+     SELECT i.weight_percent,i.planned_cost,
+       row_number() OVER (ORDER BY i.display_order,i.code) AS ord,
+       count(*) OVER () AS total
+     FROM public.construction_schedule_items i WHERE i.schedule_id=NEW.id
+   ) weights
+   WHERE weights.ord<weights.total AND
+     abs(weights.weight_percent-round(weights.planned_cost*100/v_total_construction_cost,2))>0.02
+ ) THEN
+   RAISE EXCEPTION 'Pesos financeiros divergem dos custos informados da obra'; END IF;
  IF NEW.planned_start IS DISTINCT FROM v_min OR NEW.planned_finish IS DISTINCT FROM v_max THEN
   RAISE EXCEPTION 'Datas do cabeçalho não coincidem com as atividades calculadas'; END IF;
  IF EXISTS(
