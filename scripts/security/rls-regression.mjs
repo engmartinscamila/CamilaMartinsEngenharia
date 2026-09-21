@@ -33,7 +33,11 @@ for (const t of baseline.tables.filter(t => t.schema === 'public' && ['r','p'].i
   await sql(`alter table public.${quote(t.relname)} enable row level security;`);
 }
 for (const f of [...baseline.privateFunctions,...baseline.functions]) await sql(f.def);
-await sql('alter table client_password_link_rate_limits add primary key(key_hash); grant all on client_password_link_rate_limits to service_role;');
+// The schema snapshot stores columns, but not constraints. Recreate the
+// production keys required by the migrations' ON CONFLICT statements.
+await sql(`alter table client_password_link_rate_limits add primary key(key_hash);
+alter table service_catalog add primary key(code);
+grant all on client_password_link_rate_limits to service_role;`);
 for (const g of baseline.grants) {
   if (baseline.tables.some(t => t.relname === g.table_name && t.relkind === 'v')) continue;
   await sql(`grant ${g.privilege_type} on public.${quote(g.table_name)} to ${quote(g.grantee)};`);
@@ -48,7 +52,14 @@ for (const p of baseline.policies) {
 const migrations = fs.readdirSync(new URL('supabase/migrations/',root))
   .filter(f => f >= '20260907233715_' && f.endsWith('.sql')).sort();
 assert(migrations.length, 'Missing security migration');
-for (const file of migrations) await sql(fs.readFileSync(new URL('supabase/migrations/'+file,root),'utf8'));
+for (const file of migrations) {
+  try {
+    await sql(fs.readFileSync(new URL('supabase/migrations/'+file,root),'utf8'));
+  } catch (error) {
+    throw new Error(`Security fixture migration ${file}: ${error.message} (${error.code})`);
+  }
+}
+eq(await count("select count(*) n from service_catalog where code in ('q','r')"),2,'latest service catalog migration runs before isolation checks');
 
 const a='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', b='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 const ca='10000000-0000-4000-8000-000000000001', cb='10000000-0000-4000-8000-000000000002';
