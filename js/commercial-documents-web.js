@@ -77,7 +77,7 @@
         : '';
       const level = meta.level_applicable
         ? `<small class="doc-service-level">Compatível com ${esc(levelNames || 'os níveis cadastrados')}</small>`
-        : '<small class="doc-service-level muted">Serviço independente de nível</small>';
+        : '<small class="doc-service-level muted">Consulte o nível no catálogo atualizado</small>';
 
       return `
         <label class="doc-service doc-service-smart">
@@ -132,13 +132,13 @@
 
     if (!info) return;
     if (!selected) {
-      info.textContent = 'Selecione um nível apenas para serviços de projeto elegíveis. Projetos complementares, aprovações, visitas e execução permanecem independentes.';
+      info.textContent = 'Os níveis cadastrados também se aplicam aos serviços avulsos. O pacote limita-se à atividade selecionada e às condições expressas no orçamento e no Anexo I.';
       return;
     }
 
     const level = levelCatalog.find(item => item.code === selected);
     if (!level) {
-      info.textContent = 'O nível selecionado será aplicado somente aos serviços elegíveis e não incluirá serviços técnicos que não tenham sido marcados.';
+      info.textContent = 'Selecione um nível ativo no catálogo. O pacote não acrescenta serviços, entregáveis ou formatos não descritos na proposta e no Anexo I.';
       return;
     }
 
