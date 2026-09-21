@@ -61,8 +61,20 @@ assert.ok(!revisedXml.includes('até 2 (duas) rodadas'), 'Rodadas foram presumid
 assert.ok(!revisedXml.includes('prazo geral de referência é de 45'), 'Prazo geral de projeto foi presumido para atividade personalizada');
 assert.ok(revisedXml.includes('Atividade específica solicitada:'), 'Texto personalizado não foi construído');
 
-const unchanged = await api.enhanceQuoteDocument(quote, [{ code: 'a', name: 'Estudo Preliminar', included: true }], '');
-assert.equal(unchanged, quote, 'Orçamento sem Outros sofreu modificação indevida');
+const unchanged = await api.enhanceQuoteDocument(quote, [{ code: 'a', name: 'Estudo Preliminar', included: true, levelApplicable: true }], '');
+assert.equal(unchanged, quote, 'Orçamento de projeto regular sofreu modificação indevida');
+
+const consultoria = await fixture([
+  '1. Consultoria Técnica',
+  'Prestação de consultoria técnica conforme finalidade contratada.',
+  'Na ausência de indicação específica no Anexo I, aplicam-se até 2 (duas) rodadas de revisão por etapa para ajustes dentro do escopo original.',
+  'O prazo geral de referência é de 45 (quarenta e cinco) dias úteis, contado conforme as condições previstas no Contrato.',
+]);
+const consultoriaResult = await api.enhanceQuoteDocument(consultoria, [{ code: 'q', name: 'Consultoria Técnica', included: true, levelApplicable: false }], '');
+const consultoriaXml = await xmlOf(consultoriaResult);
+assert.ok(consultoriaXml.includes('Consultoria Técnica'), 'Descrição de consultoria desapareceu');
+assert.ok(!consultoriaXml.includes('até 2 (duas) rodadas'), 'Consultoria mantém revisões genéricas');
+assert.ok(!consultoriaXml.includes('prazo geral de referência é de 45'), 'Consultoria mantém prazo geral de projeto');
 
 const partyAddress = 'Rua do Contratante, 100';
 const propertyAddress = 'Rua da Obra, 200';
@@ -78,4 +90,4 @@ assert.ok(contractXml.includes(partyAddress), 'Endereço cadastral foi substitu�
 assert.ok(contractXml.includes(propertyAddress), 'Endereço da obra não aparece no escopo');
 assert.equal(contractXml.split(specification).length - 1, 1, 'Atividade personalizada duplicada no contrato');
 assert.ok(contractXml.includes('RESUMO COMERCIAL VINCULADO'), 'Resumo comercial desapareceu');
-console.log('PASS: DOCX orçamento e contrato íntegros; Outros sem duplicação; endereços separados; prazos/formatos não presumidos.');
+console.log('PASS: DOCX íntegros; Outros sem duplicação; endereços separados; consultoria sem prazo/revisões gerais presumidos.');
