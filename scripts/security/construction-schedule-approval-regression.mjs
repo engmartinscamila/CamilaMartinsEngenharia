@@ -59,6 +59,16 @@ ok(await scalar(`select count(*)::integer value from construction_schedule_items
 await bad(`select public.admin_save_full_schedule_plan('${schedule}'::uuid,${json({...plan(),items:[{...item(),predecessor_code:'99'}]})})`,'Predecessora inválida deve impedir alteração');
 ok(await scalar(`select count(*)::integer value from construction_schedule_items where schedule_id='${schedule}'`)===1,'Erro preserva o plano anterior');
 await bad(`update public.construction_schedules set activation_status='approved' where id='${schedule}'`,'Sem custos de obra não pode aprovar plano financeiro');
+await sql(`select public.admin_save_full_schedule_plan('${schedule}'::uuid,${json(plan(0))})`);
+await bad(`update public.construction_schedules set activation_status='approved' where id='${schedule}'`,'Orçamento da obra totalmente zerado não é plano financeiro');
+ok(await scalar(`select activation_status value from construction_schedules where id='${schedule}'`)==='draft','Custo zero mantém rascunho sem aprovar');
+const misweighted={...plan(100),weight_source:'construction_costs',items:[
+ {...item(100),weight_percent:90},
+ {...item(100),code:'02',activity:'Outra atividade confirmada',display_order:2,weight_percent:10},
+]};
+await sql(`select public.admin_save_full_schedule_plan('${schedule}'::uuid,${json(misweighted)})`);
+await bad(`update public.construction_schedules set activation_status='approved' where id='${schedule}'`,'Peso de 90% para metade do orçamento deve recusar');
+ok(await scalar(`select activation_status value from construction_schedules where id='${schedule}'`)==='draft','Pesos incoerentes não aprovam linha de base');
 await sql(`select public.admin_save_full_schedule_plan('${schedule}'::uuid,${json(plan(200))})`);
 await sql(`update public.construction_schedules set activation_status='approved' where id='${schedule}'`);
 ok(await scalar(`select baseline_version value from construction_schedules where id='${schedule}'`)===1,'Primeira linha de base versionada');
@@ -69,7 +79,6 @@ await bad(`update construction_schedules set activation_status='draft' where id=
 await sql(`update construction_schedule_items set actual_progress=50 where schedule_id='${schedule}'`);
 ok(await scalar(`select actual_progress value from construction_schedule_items where schedule_id='${schedule}'` )===50,'Avanço real continua permitido');
 ok(await scalar(`select baseline_version value from construction_schedules where id='${legacy}'`)===0,'Histórico legado preservado');
-
 await bad(`select public.admin_initialize_and_save_full_schedule('${project}'::uuid,'${client}'::uuid,'${project}'::uuid,${json({...plan(300),scope_confirmed:false})})`,'RPC única deve rejeitar plano não confirmado');
 ok(await scalar(`select count(*)::integer value from construction_schedules where id='${atomic}'`)===0,'Erro na segunda etapa desfaz a inserção do cabeçalho');
 ok(await scalar(`select count(*)::integer value from construction_schedule_items where schedule_id='${atomic}'`)===0,'Falha na RPC conjunta não deixa etapas órfãs');
