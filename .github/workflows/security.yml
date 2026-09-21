@@ -40,6 +40,9 @@ jobs:
       - name: Testar biblioteca versionada e prévia de cronogramas
         run: node scripts/security/construction-schedule-template-regression.mjs
 
+      - name: Testar aprovação e congelamento da linha de base
+        run: node scripts/security/construction-schedule-approval-regression.mjs
+
       - name: Bloquear arquivos de ambiente reais
         shell: bash
         run: |
