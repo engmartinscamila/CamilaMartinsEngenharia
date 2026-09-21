@@ -11,7 +11,8 @@ const portalRequire = createRequire(pathToFileURL(resolve(root, 'portal-app/pack
 const JSZip = portalRequire('jszip');
 const { Document, Paragraph, TextRun, Packer } = portalRequire('docx');
 const source = readFileSync(resolve(root, 'supabase/functions/generate-commercial-document-final/index.ts'), 'utf8');
-const start = source.indexOf('const wordParagraph =');
+// Inclui classificação de serviços legados e funções de ajuste Word no mesmo teste.
+const start = source.indexOf('const nonProjectServiceCodes =');
 const end = source.indexOf('async function sha256(');
 assert.ok(start > 0 && end > start, 'Funções de revisão Word não foram encontradas');
 const isolatedCode = stripTypeScriptTypes(source.slice(start, end), { mode: 'strip' });
@@ -20,7 +21,6 @@ const context = {
   Uint8Array,
   text: value => String(value ?? '').trim(),
   isOther: item => ['p', 'outro', 'outros'].includes(String(item.code ?? '').trim().toLowerCase()),
-  xmlEsc: value => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;'),
 };
 const api = runInNewContext(`${isolatedCode}\n({ enhanceQuoteDocument, enhanceContractDocument });`, context);
 
@@ -64,17 +64,20 @@ assert.ok(revisedXml.includes('Atividade específica solicitada:'), 'Texto perso
 const unchanged = await api.enhanceQuoteDocument(quote, [{ code: 'a', name: 'Estudo Preliminar', included: true, levelApplicable: true }], '');
 assert.equal(unchanged, quote, 'Orçamento de projeto regular sofreu modificação indevida');
 
-const consultoria = await fixture([
+const legacyConsultancy = { code: 'q', name: 'Consultoria Técnica', included: true, levelApplicable: true };
+const consultancyWord = await fixture([
   '1. Consultoria Técnica',
   'Prestação de consultoria técnica conforme finalidade contratada.',
+  'Revisões incluídas: 2 • Formatos: PDF • Prazo: integrado ao cronograma geral',
   'Na ausência de indicação específica no Anexo I, aplicam-se até 2 (duas) rodadas de revisão por etapa para ajustes dentro do escopo original.',
   'O prazo geral de referência é de 45 (quarenta e cinco) dias úteis, contado conforme as condições previstas no Contrato.',
 ]);
-const consultoriaResult = await api.enhanceQuoteDocument(consultoria, [{ code: 'q', name: 'Consultoria Técnica', included: true, levelApplicable: false }], '');
-const consultoriaXml = await xmlOf(consultoriaResult);
-assert.ok(consultoriaXml.includes('Consultoria Técnica'), 'Descrição de consultoria desapareceu');
-assert.ok(!consultoriaXml.includes('até 2 (duas) rodadas'), 'Consultoria mantém revisões genéricas');
-assert.ok(!consultoriaXml.includes('prazo geral de referência é de 45'), 'Consultoria mantém prazo geral de projeto');
+const consultancyXml = await xmlOf(await api.enhanceQuoteDocument(consultancyWord, [legacyConsultancy], ''));
+assert.ok(consultancyXml.includes('Consultoria Técnica'), 'Descrição de consultoria desapareceu');
+assert.ok(!consultancyXml.includes('Formatos: PDF'), 'Consultoria legada mantém formato presumido');
+assert.ok(!consultancyXml.includes('Revisões incluídas: 2'), 'Consultoria legada mantém revisões presumidas');
+assert.ok(!consultancyXml.includes('até 2 (duas) rodadas'), 'Consultoria mantém revisões globais genéricas');
+assert.ok(!consultancyXml.includes('prazo geral de referência é de 45'), 'Consultoria mantém prazo geral de projeto');
 
 const partyAddress = 'Rua do Contratante, 100';
 const propertyAddress = 'Rua da Obra, 200';
@@ -90,4 +93,8 @@ assert.ok(contractXml.includes(partyAddress), 'Endereço cadastral foi substitu�
 assert.ok(contractXml.includes(propertyAddress), 'Endereço da obra não aparece no escopo');
 assert.equal(contractXml.split(specification).length - 1, 1, 'Atividade personalizada duplicada no contrato');
 assert.ok(contractXml.includes('RESUMO COMERCIAL VINCULADO'), 'Resumo comercial desapareceu');
-console.log('PASS: DOCX íntegros; Outros sem duplicação; endereços separados; consultoria sem prazo/revisões gerais presumidos.');
+const consultancyContract = await xmlOf(await api.enhanceContractDocument(contract, propertyAddress, [legacyConsultancy], '', 'bronze'));
+assert.ok(!consultancyContract.includes('Nível de prestação:'), 'Consultoria recebeu indevidamente nível de projeto');
+const mixedContract = await xmlOf(await api.enhanceContractDocument(contract, propertyAddress, [legacyConsultancy, { code: 'a', name: 'Estudo Preliminar', included: true, levelApplicable: true }], '', 'bronze'));
+assert.ok(mixedContract.includes('aplicável exclusivamente aos serviços de projeto elegíveis'), 'Nível não foi restrito ao projeto da proposta mista');
+console.log('PASS: DOCX íntegros; Outros sem duplicação; endereços independentes; consultoria legada sem PDF, revisões, prazo ou nível presumidos; projeto regular preservado.');
