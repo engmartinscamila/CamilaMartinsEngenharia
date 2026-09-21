@@ -51,6 +51,9 @@ jobs:
       - name: Testar motor de cronograma físico-financeiro
         run: node scripts/test-construction-schedule-engine.mjs
 
+      - name: Testar métricas e Curva S com medições históricas
+        run: node scripts/test-construction-schedule-progress.mjs
+
       - name: ESLint
         run: npm run lint
 
