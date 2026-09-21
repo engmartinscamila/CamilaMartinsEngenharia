@@ -84,6 +84,7 @@ export const CONTRACT_SCOPE_PRESETS = [
   ['i', 'Paisagismo'], ['j', 'Render 3D / Maquete eletrônica'], ['k', 'Legalização / Aprovação junto à Prefeitura'],
   ['l', 'Obtenção de Alvará de Construção'], ['m', 'Obtenção de Habite-se'], ['n', 'Acompanhamento técnico de obra'],
   ['o', 'Laudo técnico / avaliação / vistoria'], ['p', 'Outro'],
+  ['q', 'Consultoria Técnica'], ['r', 'Projeto de Combate a Incêndio'],
 ] as const;
 
 export const CONTRACT_DOCUMENT_OPTIONS: { kind: Exclude<ContractDocumentKind, 'notificacao_formal' | 'termo_aceite'>; title: string; description: string }[] = [
