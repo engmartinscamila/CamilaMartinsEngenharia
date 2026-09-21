@@ -41,8 +41,9 @@ function epoch(day: string): number {
 const iso = (timestamp: number) => new Date(timestamp).toISOString().slice(0, 10);
 const next = (day: string, count = 1) => iso(epoch(day) + count * 86400000);
 function workday(day: string, calendar: ScheduleCalendar, holidays: Set<string>): boolean {
+  if (calendar === 'calendar_days') return true;
   const weekday = new Date(epoch(day)).getUTCDay();
-  return !holidays.has(day) && (calendar === 'calendar_days' || (weekday !== 0 && weekday !== 6));
+  return !holidays.has(day) && weekday !== 0 && weekday !== 6;
 }
 /** Planejado inclusivo, consistente com o motor de planejamento e com feriados declarados. */
 export function plannedPercentAt(start: string, finish: string, reference: string, calendar: ScheduleCalendar, holidays: readonly string[] = []): number {
@@ -134,8 +135,10 @@ export function scheduleWeeklyCurve(items: readonly FinancialScheduleActivity[],
   const points: ScheduleCurvePoint[] = [];
   let previous: ScheduleMeasurement | null = null, offset = 0;
   for (const date of [...dates].sort()) {
-    while (offset < observed.length && observed[offset].measuredAt <= date) {
-      const measurement = observed[offset++];
+    while (true) {
+      const measurement = observed[offset];
+      if (!measurement || measurement.measuredAt > date) break;
+      offset += 1;
       epoch(measurement.measuredAt);
       for (const value of [measurement.physicalPercent, measurement.financialPercent]) {
         if (value !== null && (!Number.isFinite(value) || value < 0 || value > 100)) throw new Error('Medição percentual inválida');
