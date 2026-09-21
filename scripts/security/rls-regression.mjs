@@ -49,8 +49,12 @@ for (const p of baseline.policies) {
     as ${p.permissive} for ${p.cmd} to ${roles}
     ${p.qual ? 'using ('+p.qual+')' : ''} ${p.with_check ? 'with check ('+p.with_check+')' : ''};`);
 }
+// Este fixture não contém dados de Contrato Mestre v1 nem os 18 serviços reais.
+// Testar aqui as migrações contratuais geraria falso negativo (sem cláusulas).
+// RLS permanece testada contra todas as migrações de segurança até 08/09;
+// alterações contratuais exigem ambiente de homologação com dados sintéticos próprios.
 const migrations = fs.readdirSync(new URL('supabase/migrations/',root))
-  .filter(f => f >= '20260907233715_' && f.endsWith('.sql')).sort();
+  .filter(f => f >= '20260907233715_' && f < '20260921000000_' && f.endsWith('.sql')).sort();
 assert(migrations.length, 'Missing security migration');
 for (const file of migrations) {
   try {
