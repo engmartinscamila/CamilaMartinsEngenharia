@@ -482,10 +482,15 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
             if (padrao) texto = "Texto padrão " + codigo + ":\n" + (padrao.body || "");
         }
         const refs = [...new Set((Array.isArray(item.clause_refs) ? item.clause_refs : []).map(String))];
-        const clausulas = String(governanceState.contractBody || "").split(/\r?\n/).filter(linha => {
-            const numeracao = linha.trim().match(/^(\d+(?:\.\d+)*)\.\s/);
-            return numeracao && refs.includes(numeracao[1]);
-        });
+const linhas = String(governanceState.contractBody || "").split(/\r?\n/);
+const inicios = linhas.flatMap((linha, indice) => {
+    const numeracao = linha.trim().match(/^(\d+(?:\.\d+)*)\.\s/);
+    return numeracao ? [{ numero: numeracao[1], indice }] : [];
+});
+const clausulas = inicios.filter(inicio => refs.includes(inicio.numero)).map(inicio => {
+    const proxima = inicios.find(outra => outra.indice > inicio.indice);
+    return linhas.slice(inicio.indice, proxima?.indice ?? linhas.length).join("\n").trim();
+});
         return {
             sourceText: texto,
             contractText: clausulas.join("\n\n"),
