@@ -26,6 +26,7 @@ export interface CommercialRecord {
   propertyAddress: string | null;
   propertyType: string | null;
   experienceLevel: string | null;
+  customService: string | null;
   totalValue: number | null;
   services: CommercialServiceSelection[];
   quoteDocumentId: string | null;
@@ -92,10 +93,28 @@ export interface CommercialCnpjLookup extends CommercialAddressLookup {
   registrationStatus?: string;
 }
 
+const isOtherCode = (code: string) => ['p', 'outro', 'outros'].includes(code.trim().toLowerCase());
+const genericDescription = /^(outro|outros|a definir|servi[cç]o t[eé]cnico)$/i;
+
+/** Retorna uma descrição identificável antes de gravar o escopo que será congelado nos documentos. */
+export function validateCustomCommercialService(input: Pick<NewCommercialRecordInput, 'services' | 'customService'>): string | null {
+  const selected = input.services.filter(item => item.included);
+  const otherSelected = selected.some(item => isOtherCode(item.code));
+  const description = (input.customService ?? '').trim();
+  if (otherSelected && (description.length < 12 || genericDescription.test(description))) {
+    return 'Descreva a atividade selecionada em Outros com pelo menos 12 caracteres. Informe o serviço concreto; não use apenas "outros" ou "a definir".';
+  }
+  if (description && (description.length < 12 || genericDescription.test(description))) {
+    return 'A descrição do serviço personalizado deve identificar a atividade com pelo menos 12 caracteres.';
+  }
+  if (!selected.length && !description) return 'Selecione ao menos uma atividade ou descreva um serviço personalizado.';
+  return null;
+}
+
 export async function listCommercialRecords(): Promise<ServiceResult<CommercialRecord[]>> {
   const result = await supabase
     .from('commercial_records')
-    .select('id, quote_number, contract_number, status, prospect_name, cpf_cnpj, email, phone, address, city, state, property_address, property_type, experience_level, total_value, services, quote_document_id, contract_document_id, linked_client_id, linked_contract_id, linked_project_id, crm_stage, crm_priority, crm_source, next_action_at, lost_reason, created_at')
+    .select('id, quote_number, contract_number, status, prospect_name, cpf_cnpj, email, phone, address, city, state, property_address, property_type, experience_level, custom_service, total_value, services, quote_document_id, contract_document_id, linked_client_id, linked_contract_id, linked_project_id, crm_stage, crm_priority, crm_source, next_action_at, lost_reason, created_at')
     .order('created_at', { ascending: false })
     .limit(100);
   if (result.error) return { data: [], error: 'Não foi possível carregar os orçamentos e contratos.' };
@@ -115,6 +134,7 @@ export async function listCommercialRecords(): Promise<ServiceResult<CommercialR
       propertyAddress: row.property_address,
       propertyType: row.property_type,
       experienceLevel: row.experience_level,
+      customService: row.custom_service,
       totalValue: row.total_value === null ? null : Number(row.total_value),
       services: Array.isArray(row.services) ? row.services as unknown as CommercialServiceSelection[] : [],
       quoteDocumentId: row.quote_document_id,
@@ -146,6 +166,15 @@ export async function lookupCommercialCnpj(cnpj: string): Promise<ServiceResult<
 }
 
 export async function createCommercialRecord(input: NewCommercialRecordInput) {
+  const invalid = validateCustomCommercialService(input);
+  if (invalid) return { recordId: null, error: invalid };
+  const description = (input.customService ?? '').trim();
+  // Ao descrever uma atividade personalizada, sua categoria deve integrar o snapshot.
+  // Um serviço já selecionado não é removido nem convertido em "Outros".
+  const services = input.services.map(item => isOtherCode(item.code) && description ? { ...item, included: true } : item);
+  if (description && !services.some(item => isOtherCode(item.code))) {
+    services.push({ code: 'p', name: 'Outro', included: true, acceptanceRequired: true, displayOrder: services.length + 1 });
+  }
   const result = await supabase.rpc('admin_create_commercial_record', {
     p_data: {
       prospect_name: input.prospectName,
@@ -162,8 +191,8 @@ export async function createCommercialRecord(input: NewCommercialRecordInput) {
       area_construida_m2: input.areaConstruidaM2 ?? '',
       construction_standard: input.constructionStandard ?? '',
       experience_level: input.experienceLevel ?? '',
-      services: input.services,
-      custom_service: input.customService ?? '',
+      services,
+      custom_service: description,
       total_value: input.totalValue ?? '',
       notes: input.notes ?? '',
     },
@@ -201,7 +230,9 @@ export async function previewCommercialDocument(record: CommercialRecord, kind: 
     partyAddress: record.address,
     propertyAddress: record.propertyAddress,
     totalValue: record.totalValue,
-    services: record.services.filter((item) => item.included !== false).map((item) => `(${item.code}) ${item.name}`),
+    services: record.services.filter(item => item.included !== false).map(item => isOtherCode(item.code) && record.customService
+      ? `(p) Serviço personalizado: ${record.customService}`
+      : `(${item.code}) ${item.name}`),
     currentVersion,
     nextVersion: frozen ? bumpVersion(currentVersion, bump) : currentVersion ?? '1.0',
     frozen,
