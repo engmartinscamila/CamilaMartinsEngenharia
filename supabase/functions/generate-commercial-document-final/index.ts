@@ -10,6 +10,10 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 type Obj = Record<string, unknown>;
 const text = (value: unknown) => String(value ?? '').trim();
 const isOther = (item: Obj) => ['p', 'outro', 'outros'].includes(text(item.code).toLowerCase());
+// Snapshots antigos podem conter levelApplicable=true indevidamente para serviços
+// que não são projetos; o Contrato Mestre restringe níveis aos projetos (1.7).
+const nonProjectServiceCodes = new Set(['k', 'l', 'm', 'n', 'o', 'p', 'q']);
+const isProjectTierEligible = (item: Obj) => item.levelApplicable === true && !nonProjectServiceCodes.has(text(item.code).toLowerCase());
 const xmlEsc = (value: unknown) => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 function env() {
   const url = Deno.env.get('SUPABASE_URL');
@@ -45,12 +49,15 @@ function selectedServices(services: unknown) {
 function contractScopeXml(services: unknown, customService: unknown, experienceLevel: unknown, propertyAddress: string) {
   const selected = selectedServices(services);
   if (!selected.length && !text(customService)) return '';
-  const level = text(experienceLevel).toUpperCase() || 'NÃO SELECIONADO';
   const parts = [
     wordParagraph('ESCOPO TÉCNICO CONTRATADO', true),
     wordParagraph(`Local do serviço / endereço do imóvel ou obra: ${propertyAddress}.`),
-    wordParagraph(`Nível de prestação: ${level}. O nível qualifica o grau de aprofundamento, detalhamento, apresentação e suporte somente dentro de cada serviço expressamente contratado, sem incluir automaticamente serviços, visitas, aprovações, execução, taxas, fornecimentos ou entregáveis de outra categoria.`),
   ];
+  // Não exibe "nível não selecionado" nem aplica Bronze/Prata/Ouro a consultoria.
+  // Em contratação mista, o nível qualifica exclusivamente os projetos elegíveis.
+  if (text(experienceLevel) && selected.some(isProjectTierEligible)) {
+    parts.push(wordParagraph(`Nível de prestação: ${text(experienceLevel).toUpperCase()}, aplicável exclusivamente aos serviços de projeto elegíveis expressamente contratados. Não acrescenta serviços, visitas, aprovações, execução, taxas, fornecimentos ou entregáveis de outra categoria.`));
+  }
   const otherSelected = selected.some(isOther);
   selected.forEach((item, index) => {
     const other = isOther(item);
@@ -98,8 +105,9 @@ async function enhanceQuoteDocument(bytes: Uint8Array, services: unknown, custom
   const selected = selectedServices(services);
   const specification = text(customService);
   const otherSelected = selected.some(isOther);
-  const onlyNonProject = selected.length > 0 && selected.every(item => item.levelApplicable !== true);
-  if ((!otherSelected || !specification) && !onlyNonProject) return bytes;
+  const onlyNonProject = selected.length > 0 && selected.every(item => !isProjectTierEligible(item));
+  const legacyConsultancy = selected.some(item => text(item.code).toLowerCase() === 'q');
+  if ((!otherSelected || !specification) && !onlyNonProject && !legacyConsultancy) return bytes;
   const zip = await JSZip.loadAsync(bytes);
   const word = zip.file('word/document.xml');
   if (!word) throw new Error('O orçamento gerado não contém o documento Word esperado.');
@@ -130,6 +138,20 @@ async function enhanceQuoteDocument(bytes: Uint8Array, services: unknown, custom
       replacement.set(duplicateIndex + 1, '');
       replacement.set(duplicateIndex + 2, '');
     }
+  }
+  // Os registros antigos de Consultoria têm metadados 2 revisões/PDF/nível;
+  // o catálogo novo não regrava snapshots emitidos, então saneamos apenas o Word novo.
+  if (legacyConsultancy) {
+    values.forEach((value, index) => {
+      if (!/^\d+\. Consultoria Técnica$/.test(value)) return;
+      for (let next = index + 1; next < values.length && next < index + 12; next += 1) {
+        if (values[next].startsWith('Revisões incluídas:')) {
+          replacement.set(next, wordParagraph('Revisões, formato de entrega e prazo da consultoria: somente conforme condições expressas no orçamento e no Anexo I.'));
+          break;
+        }
+        if (/^\d+\. /.test(values[next]) || values[next].includes('LIMITES E EXCLUSÕES')) break;
+      }
+    });
   }
   if (onlyNonProject) {
     values.forEach((value, index) => {
