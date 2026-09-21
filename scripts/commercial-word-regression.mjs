@@ -11,7 +11,6 @@ const portalRequire = createRequire(pathToFileURL(resolve(root, 'portal-app/pack
 const JSZip = portalRequire('jszip');
 const { Document, Paragraph, TextRun, Packer } = portalRequire('docx');
 const source = readFileSync(resolve(root, 'supabase/functions/generate-commercial-document-final/index.ts'), 'utf8');
-// Inclui classificação de serviços legados e funções de ajuste Word no mesmo teste.
 const start = source.indexOf('const nonProjectServiceCodes =');
 const end = source.indexOf('async function sha256(');
 assert.ok(start > 0 && end > start, 'Funções de revisão Word não foram encontradas');
@@ -40,6 +39,9 @@ const specification = 'Levantamento de informações para diagnóstico de infilt
 const service = { code: 'p', name: 'Outro', included: true, levelApplicable: false };
 const quote = await fixture([
   'PROPOSTA COMERCIAL',
+  '2. NÍVEL DE PRESTAÇÃO DE SERVIÇO',
+  'Nível selecionado: BRONZE — Essencial',
+  'Recursos visuais exclusivos de projeto',
   '3. ESCOPO INTELIGENTE DE SERVIÇOS',
   '1. Outro',
   'Prestação de serviço técnico conforme escopo específico descrito nesta proposta e no Anexo I.',
@@ -59,6 +61,8 @@ assert.ok(!revisedXml.includes('Serviço adicional descrito no orçamento'), 'Du
 assert.ok(!revisedXml.includes('Formatos: PDF'), 'Formato PDF foi presumido para atividade personalizada');
 assert.ok(!revisedXml.includes('até 2 (duas) rodadas'), 'Rodadas foram presumidas para serviço não relacionado a projeto');
 assert.ok(!revisedXml.includes('prazo geral de referência é de 45'), 'Prazo geral de projeto foi presumido para atividade personalizada');
+assert.ok(!revisedXml.includes('Nível selecionado: BRONZE'), 'Nível de projeto aplicado indevidamente a Outros');
+assert.ok(!revisedXml.includes('Recursos visuais exclusivos de projeto'), 'Recursos de projetos mantidos em Outros');
 assert.ok(revisedXml.includes('Atividade específica solicitada:'), 'Texto personalizado não foi construído');
 
 const unchanged = await api.enhanceQuoteDocument(quote, [{ code: 'a', name: 'Estudo Preliminar', included: true, levelApplicable: true }], '');
@@ -66,6 +70,11 @@ assert.equal(unchanged, quote, 'Orçamento de projeto regular sofreu modificaç�
 
 const legacyConsultancy = { code: 'q', name: 'Consultoria Técnica', included: true, levelApplicable: true };
 const consultancyWord = await fixture([
+  '2. NÍVEL DE PRESTAÇÃO DE SERVIÇO',
+  'Nível selecionado: BRONZE — Essencial',
+  'Maior detalhamento de projeto não contratado',
+  'O nível selecionado aplica-se somente aos serviços de projeto elegíveis nesta proposta: Consultoria Técnica.',
+  '3. ESCOPO INTELIGENTE DE SERVIÇOS',
   '1. Consultoria Técnica',
   'Prestação de consultoria técnica conforme finalidade contratada.',
   'Revisões incluídas: 2 • Formatos: PDF • Prazo: integrado ao cronograma geral',
@@ -78,6 +87,18 @@ assert.ok(!consultancyXml.includes('Formatos: PDF'), 'Consultoria legada mantém
 assert.ok(!consultancyXml.includes('Revisões incluídas: 2'), 'Consultoria legada mantém revisões presumidas');
 assert.ok(!consultancyXml.includes('até 2 (duas) rodadas'), 'Consultoria mantém revisões globais genéricas');
 assert.ok(!consultancyXml.includes('prazo geral de referência é de 45'), 'Consultoria mantém prazo geral de projeto');
+assert.ok(!consultancyXml.includes('Nível selecionado: BRONZE'), 'Consultoria ainda recebe Bronze no orçamento');
+assert.ok(!consultancyXml.includes('Maior detalhamento de projeto não contratado'), 'Benefícios de projeto permanecem em consultoria');
+
+const mixed = await fixture([
+  '2. NÍVEL DE PRESTAÇÃO DE SERVIÇO',
+  'Nível selecionado: BRONZE — Essencial',
+  'O nível selecionado aplica-se somente aos serviços de projeto elegíveis nesta proposta: Consultoria Técnica, Estudo Preliminar.',
+  '3. ESCOPO INTELIGENTE DE SERVIÇOS',
+]);
+const mixedXml = await xmlOf(await api.enhanceQuoteDocument(mixed, [legacyConsultancy, { code: 'a', name: 'Estudo Preliminar', included: true, levelApplicable: true }], ''));
+assert.ok(mixedXml.includes('O nível selecionado aplica-se exclusivamente aos serviços de projeto elegíveis desta proposta: Estudo Preliminar.'), 'Proposta mista inclui consultoria como elegível');
+assert.ok(!mixedXml.includes('Consultoria Técnica, Estudo Preliminar'), 'O texto antigo de elegibilidade não foi substituído');
 
 const partyAddress = 'Rua do Contratante, 100';
 const propertyAddress = 'Rua da Obra, 200';
@@ -86,6 +107,7 @@ const contract = await fixture([
   'CLÁUSULA 1ª – DO OBJETO',
   'RESUMO COMERCIAL VINCULADO',
   'Valor total dos honorários: R$ 1.000,00.',
+  'Nível de experiência: BRONZE — Essencial.',
 ]);
 const revisedContract = await api.enhanceContractDocument(contract, propertyAddress, [service], specification, '');
 const contractXml = await xmlOf(revisedContract);
@@ -93,8 +115,11 @@ assert.ok(contractXml.includes(partyAddress), 'Endereço cadastral foi substitu�
 assert.ok(contractXml.includes(propertyAddress), 'Endereço da obra não aparece no escopo');
 assert.equal(contractXml.split(specification).length - 1, 1, 'Atividade personalizada duplicada no contrato');
 assert.ok(contractXml.includes('RESUMO COMERCIAL VINCULADO'), 'Resumo comercial desapareceu');
+assert.ok(!contractXml.includes('Nível de experiência: BRONZE'), 'Contrato de Outros ainda contém nível de projeto do gerador principal');
 const consultancyContract = await xmlOf(await api.enhanceContractDocument(contract, propertyAddress, [legacyConsultancy], '', 'bronze'));
-assert.ok(!consultancyContract.includes('Nível de prestação:'), 'Consultoria recebeu indevidamente nível de projeto');
+assert.ok(!consultancyContract.includes('Nível de prestação:'), 'Consultoria recebeu indevidamente nível no escopo');
+assert.ok(!consultancyContract.includes('Nível de experiência: BRONZE'), 'Consultoria recebeu Bronze no resumo do contrato');
 const mixedContract = await xmlOf(await api.enhanceContractDocument(contract, propertyAddress, [legacyConsultancy, { code: 'a', name: 'Estudo Preliminar', included: true, levelApplicable: true }], '', 'bronze'));
 assert.ok(mixedContract.includes('aplicável exclusivamente aos serviços de projeto elegíveis'), 'Nível não foi restrito ao projeto da proposta mista');
-console.log('PASS: DOCX íntegros; Outros sem duplicação; endereços independentes; consultoria legada sem PDF, revisões, prazo ou nível presumidos; projeto regular preservado.');
+assert.ok(mixedContract.includes('Nível de experiência: BRONZE'), 'Nível de projeto foi removido indevidamente de contrato misto');
+console.log('PASS: DOCX/ZIP/XML; Outros sem duplicação; endereços independentes; consultoria legada sem PDF/revisões/prazo/nível; proposta mista e projeto regular preservados.');
