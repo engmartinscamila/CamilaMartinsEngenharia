@@ -87,6 +87,7 @@ export default function AdminCommercialDocumentsScreen() {
   const create = async () => {
     if (!form.prospectName.trim()) { setError('Informe o nome do prospect.'); return; }
     if (!selectedCodes.length && !form.customService.trim()) { setError('Selecione ao menos um serviço ou descreva um serviço personalizado.'); return; }
+    if (!form.experienceLevel.trim()) { setError('Selecione o nível de prestação cadastrado para os serviços escolhidos.'); return; }
     setLoadingKey('create'); setError(null); setSuccess(null);
     const result = await createCommercialRecord({ ...form, propertyAddress:sameAddress?form.address:form.propertyAddress, services });
     if (result.error) setError(result.error);
@@ -161,7 +162,7 @@ export default function AdminCommercialDocumentsScreen() {
         <Field editable={!sameAddress} label="Endereço do imóvel / obra" value={sameAddress?form.address:form.propertyAddress} onChangeText={(value) => update('propertyAddress', value)} />
         <View style={styles.twoColumns}><Field label="Tipo de imóvel" value={form.propertyType} onChangeText={(value) => update('propertyType', value)} /><Field label="Padrão construtivo" value={form.constructionStandard} onChangeText={(value) => update('constructionStandard', value)} /></View>
         <View style={styles.twoColumns}><Field keyboardType="decimal-pad" label="Área do terreno (m²)" value={form.areaTerrenoM2} onChangeText={(value) => update('areaTerrenoM2', value)} /><Field keyboardType="decimal-pad" label="Área construída prevista (m²)" value={form.areaConstruidaM2} onChangeText={(value) => update('areaConstruidaM2', value)} /></View>
-        <Field label="Nível de experiência (Bronze / Prata / Ouro)" value={form.experienceLevel} onChangeText={(value) => update('experienceLevel', value)} />
+        <Field label="Nível de prestação (código ativo no catálogo) *" value={form.experienceLevel} onChangeText={(value) => update('experienceLevel', value)} />
         <Text style={styles.subTitle}>Serviços propostos *</Text>
         <View style={styles.serviceList}>{CONTRACT_SCOPE_PRESETS.map(([code, name]) => { const selected = selectedCodes.includes(code); return <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: selected }} key={code} onPress={() => toggleService(code)} style={[styles.serviceRow, selected && styles.serviceSelected]}><Text style={styles.check}>{selected ? '☒' : '☐'}</Text><Text style={styles.serviceText}>({code}) {name}</Text></Pressable>; })}</View>
         <Field label="Outro serviço / especificação livre" value={form.customService} onChangeText={(value) => update('customService', value)} />
