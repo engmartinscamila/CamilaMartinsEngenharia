@@ -9,6 +9,7 @@ const client='10000000-0000-4000-8000-000000000001';
 const project='10000000-0000-4000-8000-000000000002';
 const schedule='10000000-0000-4000-8000-000000000003';
 const legacy='10000000-0000-4000-8000-000000000004';
+const atomic='10000000-0000-4000-8000-000000000006';
 const scope={services:[{code:'s',included:true}]};
 const json=(value)=>`'${JSON.stringify(value).replaceAll("'","''")}'::jsonb`;
 const item=(cost=null)=>({code:'01',category:'Planejamento',activity:'Etapa confirmada',display_order:1,weight_percent:100,planned_duration_days:2,predecessor_code:null,planned_start:'2026-09-21',planned_finish:'2026-09-22',planned_cost:cost,source_service_code:'s',cost_source:'orçamento de obra separado'});
@@ -30,6 +31,16 @@ planned_cost numeric,actual_cost numeric,status text,notes text,is_default boole
 created_at timestamptz default now(),updated_at timestamptz default now());
 create function public.assert_full_schedule_commercial_link(uuid,uuid,uuid) returns jsonb language sql as
 $$select jsonb_build_object('services',jsonb_build_array(jsonb_build_object('code','s','included',true)))$$;
+-- Dublê isolado do inicializador: insere um cronograma, permitindo testar
+-- se a RPC conjunta desfaz ESTE INSERT quando a validação do plano falha.
+create function public.admin_initialize_construction_schedule(uuid,uuid,uuid) returns uuid
+language plpgsql as $$
+begin
+ insert into public.construction_schedules(
+ id,project_id,client_id,quote_record_id,contract_record_id,source_scope_snapshot,activation_status)
+ values('${atomic}',$1,'${client}',$2,$3,public.assert_full_schedule_commercial_link($1,$2,$3),'draft');
+ return '${atomic}'::uuid;
+end $$;
 insert into public.projetos values('${project}','2026-10-01');
 insert into public.construction_schedules(id,project_id,client_id,activation_status)
 values('${legacy}','${project}','${client}','legacy');
@@ -58,4 +69,11 @@ await bad(`update construction_schedules set activation_status='draft' where id=
 await sql(`update construction_schedule_items set actual_progress=50 where schedule_id='${schedule}'`);
 ok(await scalar(`select actual_progress value from construction_schedule_items where schedule_id='${schedule}'` )===50,'Avanço real continua permitido');
 ok(await scalar(`select baseline_version value from construction_schedules where id='${legacy}'`)===0,'Histórico legado preservado');
+
+await bad(`select public.admin_initialize_and_save_full_schedule('${project}'::uuid,'${client}'::uuid,'${project}'::uuid,${json({...plan(300),scope_confirmed:false})})`,'RPC única deve rejeitar plano não confirmado');
+ok(await scalar(`select count(*)::integer value from construction_schedules where id='${atomic}'`)===0,'Erro na segunda etapa desfaz a inserção do cabeçalho');
+ok(await scalar(`select count(*)::integer value from construction_schedule_items where schedule_id='${atomic}'`)===0,'Falha na RPC conjunta não deixa etapas órfãs');
+await sql(`select public.admin_initialize_and_save_full_schedule('${project}'::uuid,'${client}'::uuid,'${project}'::uuid,${json(plan(300))})`);
+ok(await scalar(`select count(*)::integer value from construction_schedules where id='${atomic}'`)===1,'RPC conjunta grava cabeçalho após plano válido');
+ok(await scalar(`select count(*)::integer value from construction_schedule_items where schedule_id='${atomic}'`)===1,'RPC conjunta grava exatamente as atividades validadas');
 console.log(`APROVAÇÃO DO CRONOGRAMA: ${checks} verificações com dados fictícios aprovadas.`);
