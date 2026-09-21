@@ -1,0 +1,36 @@
+name: Regressão de orçamentos e contratos
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/functions/generate-commercial-document-final/**'
+      - 'portal-app/src/services/commercial-service.ts'
+      - 'portal-app/src/services/document-workflow-service.ts'
+      - 'js/document-function-routing-web.js'
+      - 'scripts/commercial-word-regression.mjs'
+      - '.github/workflows/commercial-documents.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  document-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar sintaxe do roteamento web
+        run: node --check js/document-function-routing-web.js
+      - name: Instalar dependências travadas do aplicativo
+        run: npm ci --prefix portal-app
+      - name: Verificar TypeScript do aplicativo
+        run: npm run typecheck --prefix portal-app
+      - name: Instalar bibliotecas isoladas para os testes de documento
+        run: npm install --no-save --prefix portal-app docx@9.5.1 jszip@3.10.1
+      - name: Gerar DOCX de teste e validar ZIP, XML, escopo e endereços
+        run: node --experimental-strip-types scripts/commercial-word-regression.mjs
