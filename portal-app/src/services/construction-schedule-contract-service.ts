@@ -72,14 +72,12 @@ export async function previewScheduleTemplate(projectId:string,quoteId:string,co
   return {data:preview,error:null};
 }
 export async function saveVerifiedSchedule(projectId:string,quoteId:string,contractId:string,plan:Record<string,unknown>):Promise<{scheduleId:string|null;error:string|null}> {
-  const init=await supabase.rpc('admin_initialize_construction_schedule',{
-    p_project_id:projectId,p_quote_record_id:quoteId,p_contract_record_id:contractId,
+  // Uma chamada HTTP e uma transação no Postgres: falha no plano desfaz também a criação.
+  const result=await supabase.rpc('admin_initialize_and_save_full_schedule',{
+    p_project_id:projectId,p_quote_record_id:quoteId,p_contract_record_id:contractId,p_plan:plan,
   });
-  if (init.error || !init.data) return {scheduleId:null,error:init.error?.message??'Vínculo não autorizado: nenhum cronograma foi criado.'};
-  const scheduleId=String(init.data);
-  const saved=await supabase.rpc('admin_save_full_schedule_plan',{p_schedule_id:scheduleId,p_plan:plan});
-  if (saved.error || !saved.data) return {scheduleId,error:saved.error?.message??'Cronograma iniciado em rascunho, mas o plano não foi salvo.'};
-  return {scheduleId,error:null};
+  if (result.error || !result.data) return {scheduleId:null,error:result.error?.message??'Cronograma não foi criado: verifique escopo e planejamento.'};
+  return {scheduleId:String(result.data),error:null};
 }
 export async function approveVerifiedSchedule(scheduleId:string):Promise<string|null> {
   const result=await supabase.from('construction_schedules').update({activation_status:'approved'}).eq('id',scheduleId).select('id').single();
