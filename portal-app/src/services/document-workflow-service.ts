@@ -84,6 +84,7 @@ export const CONTRACT_SCOPE_PRESETS = [
   ['i', 'Paisagismo'], ['j', 'Render 3D / Maquete eletrônica'], ['k', 'Legalização / Aprovação junto à Prefeitura'],
   ['l', 'Obtenção de Alvará de Construção'], ['m', 'Obtenção de Habite-se'], ['n', 'Acompanhamento técnico de obra'],
   ['o', 'Laudo técnico / avaliação / vistoria'], ['p', 'Outro'],
+  ['q', 'Consultoria Técnica'], ['r', 'Projeto de Combate a Incêndio'],
 ] as const;
 
 export const CONTRACT_DOCUMENT_OPTIONS: { kind: Exclude<ContractDocumentKind, 'notificacao_formal' | 'termo_aceite'>; title: string; description: string }[] = [
@@ -120,7 +121,7 @@ export async function listAdminDocumentAttention(): Promise<ServiceResult<Docume
     const documents = await supabase.from('documentos').select('id, workflow_status').in('id', documentIds);
     for (const row of documents.data ?? []) statusById.set(row.id, row.workflow_status);
   }
-  return { data: rows.map((row) => ({ approvalId: row.approval_id, projectId: row.project_id, clientId: row.client_id, contractId: row.contract_id, contractNumber: row.contract_number, clientName: row.client_name ?? 'Cliente', projectName: row.project_name, approvalType: row.approval_type, approvalTitle: row.approval_title, deliveredAt: row.delivered_at, dueAt: row.due_at, daysRemaining: Number(row.days_remaining ?? 0), attentionLevel: row.attention_level, formalNoticeRecommended: row.formal_notice_recommended === true, formalNoticeDocumentId: row.formal_notice_document_id, formalNoticeStatus: row.formal_notice_document_id ? statusById.get(row.formal_notice_document_id) ?? null : null })), error: null };
+  return { data: rows.map((row) => ({ approvalId: row.approval_id, projectId: row.project_id, clientId: row.client_id, contractId: row.contract_id, contractNumber: row.contract_number, clientName: row.client_name ?? 'Cliente', projectName: row.project_name, approvalType: row.approval_type, approvalTitle: row.approval_title, deliveredAt: row.delivered_at, dueAt: row.approval_due_at, daysRemaining: Number(row.days_remaining ?? 0), attentionLevel: row.attention_level, formalNoticeRecommended: row.formal_notice_recommended === true, formalNoticeDocumentId: row.formal_notice_document_id, formalNoticeStatus: row.formal_notice_document_id ? statusById.get(row.formal_notice_document_id) ?? null : null })), error: null };
 }
 
 export async function listProjectApprovals(projectId: string): Promise<ServiceResult<ProjectApprovalItem[]>> {
