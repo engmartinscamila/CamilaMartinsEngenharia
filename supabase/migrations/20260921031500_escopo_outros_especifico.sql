@@ -32,9 +32,10 @@ BEGIN
       );
       v_item := jsonb_set(v_item, '{name}', to_jsonb('Serviço técnico personalizado'::text), true);
       v_item := jsonb_set(v_item, '{description}', to_jsonb(v_description), true);
-      -- Não prometer PDF, rodadas de revisão ou entregáveis desconhecidos.
+      -- Não prometer formatos, revisões ou entregáveis não especificados.
       v_item := jsonb_set(v_item, '{deliverables}', '[]'::jsonb, true);
-      v_item := jsonb_set(v_item, '{deliveryFormats}', '[]'::jsonb, true);
+      v_item := jsonb_set(v_item, '{deliveryFormats}',
+        to_jsonb(ARRAY['Conforme formato acordado no orçamento e no Anexo I']::text[]), true);
       v_item := jsonb_set(v_item, '{revisions}', 'null'::jsonb, true);
       v_item := jsonb_set(v_item, '{planningReference}',
         to_jsonb('Prazo e marcos a definir expressamente no orçamento e no Anexo I.'::text), true);
