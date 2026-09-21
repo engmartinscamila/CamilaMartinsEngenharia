@@ -147,10 +147,11 @@
   }
 
   function form() {
+    const customService = $('customService').value.trim();
     const services = servicesCatalog.map(([code, name], index) => ({
       code,
       name,
-      included: Boolean(document.querySelector(`[data-service="${code}"]`)?.checked),
+      included: Boolean(document.querySelector(`[data-service="${code}"]`)?.checked) || (code === 'p' && Boolean(customService)),
       acceptanceRequired: true,
       displayOrder: index + 1
     }));
@@ -171,7 +172,7 @@
       construction_standard: $('constructionStandard').value.trim(),
       experience_level: $('experienceLevel').value.trim(),
       services,
-      custom_service: $('customService').value.trim(),
+      custom_service: customService,
       total_value: $('totalValue').value.trim(),
       notes: $('notes').value.trim()
     };
@@ -464,6 +465,10 @@
     const payload = form();
     const isContract = mode() === 'contrato';
 
+    if (!serviceCatalogMeta.length || !levelCatalog.length) {
+      msg('Catálogo de serviços ou níveis não carregado. Recarregue a página antes de criar documentos; os dados existentes foram preservados.', 'error');
+      return;
+    }
     if (!payload.prospect_name) {
       msg('Informe o nome / razão social.', 'error');
       return;
@@ -795,6 +800,12 @@
     $('lookupCnpj')?.addEventListener('click', () => lookup('cnpj'));
     $('lookupCep')?.addEventListener('click', () => lookup('cep'));
     $('createCommercial')?.addEventListener('click', create);
+    $('customService')?.addEventListener('input', event => {
+      if (String(event.target.value || '').trim()) {
+        const other = document.querySelector('[data-service="p"]');
+        if (other) other.checked = true;
+      }
+    });
 
     $('commercialList')?.addEventListener('click', event => {
       const button = event.target.closest('button[data-action]');
