@@ -66,8 +66,7 @@ function contractScopeXml(services: unknown, customService: unknown, experienceL
 function insertionBeforeParagraph(xml: string, marker: string) {
   const markerIndex = xml.indexOf(marker);
   if (markerIndex < 0) throw new Error('Marcador do resumo contratual não encontrado no Word.');
-  // <w:pPr> não é o começo de um parágrafo: o antigo lastIndexOf('<w:p')
-  // poderia introduzir parágrafos dentro de <w:pPr> e invalidar o Word.
+  // <w:pPr> não é início de parágrafo; nunca inserir conteúdo dentro dessa tag.
   const paragraphs = [...xml.slice(0, markerIndex).matchAll(/<w:p(?=[\s>])/g)];
   const start = paragraphs.at(-1)?.index;
   if (start === undefined) throw new Error('Não foi possível localizar um parágrafo válido para o escopo do contrato.');
@@ -123,20 +122,23 @@ Deno.serve(async req => {
         if (!reason) return json({ error: 'Informe o motivo da nova versão antes de gerar novamente.' }, 422);
         const old = await service.from('documentos').select('*').eq('id', previousDocumentId).single();
         if (old.error) throw old.error;
-        // O gerador principal utiliza o mesmo caminho de objeto em novas versões.
-        // Antes de executá-lo, isolar o arquivo congelado para evitar sobrescrever o histórico.
         const oldPath = text(old.data.arquivo);
-        const oldBucket = text(old.data.storage_bucket) || 'documentos';
-        if (!oldPath) throw new Error('A versão anterior foi congelada sem arquivo Word; emissão bloqueada para preservar o histórico.');
-        const oldDownload = await service.storage.from(oldBucket).download(oldPath);
-        if (oldDownload.error || !oldDownload.data) throw oldDownload.error ?? new Error('Não foi possível preservar o Word anterior.');
-        const backupPath = `comercial/${recordId}/historico/${previousDocumentId}-${kind}.docx`;
-        const backupUpload = await service.storage.from(oldBucket).upload(backupPath, new Uint8Array(await oldDownload.data.arrayBuffer()), {
-          contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', upsert: false,
-        });
-        if (backupUpload.error) throw backupUpload.error;
-        const preserved = await service.from('documentos').update({ arquivo: backupPath }).eq('id', previousDocumentId);
-        if (preserved.error) throw preserved.error;
+        // Modo "baixar sem arquivar": arquivo nulo é intencional. Modo arquivado:
+        // caminho isolado _generated_archive não é sobrescrito pelo gerador principal.
+        const number = kind === 'orcamento' ? text(source.data.quote_number) : text(source.data.contract_number) || 'contrato';
+        const overwrittenPath = `comercial/${recordId}/${kind}-${number}-v1.0.docx`;
+        if (oldPath && oldPath === overwrittenPath) {
+          const oldBucket = text(old.data.storage_bucket) || 'documentos';
+          const oldDownload = await service.storage.from(oldBucket).download(oldPath);
+          if (oldDownload.error || !oldDownload.data) throw oldDownload.error ?? new Error('Não foi possível preservar o Word anterior.');
+          const backupPath = `comercial/${recordId}/historico/${previousDocumentId}-${kind}.docx`;
+          const backupUpload = await service.storage.from(oldBucket).upload(backupPath, new Uint8Array(await oldDownload.data.arrayBuffer()), {
+            contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', upsert: false,
+          });
+          if (backupUpload.error) throw backupUpload.error;
+          const preserved = await service.from('documentos').update({ arquivo: backupPath }).eq('id', previousDocumentId);
+          if (preserved.error) throw preserved.error;
+        }
         const oldData = old.data.generated_data && typeof old.data.generated_data === 'object' ? old.data.generated_data as Obj : {};
         const inserted = await service.from('documentos').insert({
           cliente_id: old.data.cliente_id, projeto_id: old.data.projeto_id, contract_id: old.data.contract_id,
