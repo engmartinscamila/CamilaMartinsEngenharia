@@ -1,0 +1,54 @@
+name: Corrigir ordem de validacao comercial (execucao unica)
+on:
+  push:
+    branches:
+      - fix/governanca-preflight-dupla-auditoria-20260921
+    paths:
+      - .github/workflows/fix-commercial-preflight-once.yml
+permissions:
+  contents: write
+jobs:
+  fix-preflight:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Antecipar conferencias de identidade e Contrato Mestre sem alterar comportamento posterior
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          canonical=Path('supabase/functions/generate-commercial-document/index.ts')
+          mirror=Path('portal-app/supabase/functions/generate-commercial-document/index.ts')
+          source=canonical.read_text()
+          assert mirror.read_text()==source, 'Geradores divergentes antes da correcao'
+          first="  let documentId=kind==='orcamento'?record.quote_document_id:record.contract_document_id;"
+          second='  const professionalProfile=await loadProfessionalIdentity(service,kind);'
+          final='  const generatedAt=new Date();'
+          assert all(source.count(part)==1 for part in (first,second,final)), 'Marcador de edição ausente ou duplicado'
+          a=source.index(first); b=source.index(second); c=source.index(final)
+          assert a < b < c, 'Ordem esperada mudou; abortando edicao'
+          moved=source[:a]+source[b:c]+source[a:b]+source[c:]
+          assert moved!=source and moved.count(first)==1 and moved.count(second)==1
+          canonical.write_text(moved)
+          mirror.write_text(moved)
+          PY
+      - name: Testar ordem, sincronia e governanca
+        run: |
+          node scripts/build-frases-do-dia-v7.mjs
+          node scripts/commercial-generator-preflight-regression.mjs
+          node scripts/document-governance-audit.mjs
+          node scripts/document-generation-audit.mjs
+      - name: Commit apenas dos dois geradores sincronizados
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- supabase/functions/generate-commercial-document/index.ts portal-app/supabase/functions/generate-commercial-document/index.ts
+          git diff --cached --quiet && exit 1 || true
+          git commit -m 'fix: validar identidade e contrato mestre antes de criar documento'
+          git push origin HEAD:fix/governanca-preflight-dupla-auditoria-20260921
