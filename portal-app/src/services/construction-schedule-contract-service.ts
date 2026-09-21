@@ -1,3 +1,4 @@
+import { downloadBase64File } from '@/lib/download-generated-file';
 import { supabase } from '@/lib/supabase';
 import { listConstructionScheduleProjects, type ConstructionProjectOption } from '@/services/construction-schedule-service';
 
@@ -82,4 +83,21 @@ export async function saveVerifiedSchedule(projectId:string,quoteId:string,contr
 export async function approveVerifiedSchedule(scheduleId:string):Promise<string|null> {
   const result=await supabase.from('construction_schedules').update({activation_status:'approved'}).eq('id',scheduleId).select('id').single();
   return result.error?.message??null;
+}
+
+export async function exportApprovedScheduleXlsx(scheduleId: string): Promise<string | null> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(scheduleId)) {
+    return 'Identificador do cronograma inválido.';
+  }
+  // Edge independente, sem criação implícita, exige sessão admin e linha de base aprovada.
+  const result = await supabase.functions.invoke('generate-verified-construction-schedule-xlsx', {body: {scheduleId}});
+  if (result.error || result.data?.generated !== true || typeof result.data?.contentBase64 !== 'string') {
+    return typeof result.data?.error === 'string' ? result.data.error : result.error?.message ?? 'Não foi possível extrair o Excel do cronograma aprovado.';
+  }
+  try {
+    await downloadBase64File(result.data.contentBase64, String(result.data.fileName ?? 'Cronograma-Aprovado.xlsx'));
+    return null;
+  } catch (error) {
+    return error instanceof Error ? error.message : 'Excel gerado, mas não foi possível abrir o download.';
+  }
 }
