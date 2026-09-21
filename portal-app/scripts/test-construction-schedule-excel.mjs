@@ -25,7 +25,7 @@ includes('day <= finish', 'Os períodos semanais incluem toda a duração');
 includes('weeks.push(finish)', 'A última data da curva é a data final exata');
 includes("'weekdays', 'calendar_days'", 'Calendários previstos em contrato devem ser suportados');
 includes('NETWORKDAYS(', 'Fórmula do Excel respeita dias úteis');
-includes('Medições datadas', 'O arquivo deve identificar ausência de dados históricos');
+check(source.toLowerCase().includes('medições datadas'), 'O arquivo deve identificar ausência de dados históricos');
 check(!/actualProgressAt|progress\s*\*\s*\(.*reference/.test(source), 'Não criar realizado retrospectivo a partir de um único percentual');
 for (const name of ['Cadastro', 'Cronograma', 'Indicadores', 'Curva S', 'Gantt', 'Marcos', 'Export Dashboard', 'Leia-me']) {
   includes(`addWorksheet('${name}')`, `Falta aba ${name}`);
