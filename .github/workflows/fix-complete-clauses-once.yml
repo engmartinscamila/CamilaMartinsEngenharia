@@ -1,0 +1,63 @@
+name: Corrigir visualizacao de clausulas inteiras (execucao unica)
+on:
+  push:
+    branches:
+      - fix/governanca-preflight-dupla-auditoria-20260921
+    paths:
+      - .github/workflows/fix-complete-clauses-once.yml
+permissions:
+  contents: write
+jobs:
+  fix-clauses:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Incluir todo texto ate o inicio da clausula seguinte
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('js/configuracoes.js')
+          source=p.read_text()
+          helper=source.index('    function conteudoDaRevisao(item) {')
+          start=source.index('        const refs = [...new Set(',helper)
+          end=source.index('        return {',start)
+          old=source[start:end]
+          assert old.count('const clausulas = String(governanceState.contractBody || "").split(')==1
+          assert old.count('return numeracao && refs.includes(numeracao[1]);')==1
+          replacement=r'''        const refs = [...new Set((Array.isArray(item.clause_refs) ? item.clause_refs : []).map(String))];
+          const linhas = String(governanceState.contractBody || "").split(/\r?\n/);
+          const inicios = linhas.flatMap((linha, indice) => {
+              const numeracao = linha.trim().match(/^(\d+(?:\.\d+)*)\.\s/);
+              return numeracao ? [{ numero: numeracao[1], indice }] : [];
+          });
+          const clausulas = inicios.filter(inicio => refs.includes(inicio.numero)).map(inicio => {
+              const proxima = inicios.find(outra => outra.indice > inicio.indice);
+              return linhas.slice(inicio.indice, proxima?.indice ?? linhas.length).join("\n").trim();
+          });
+          '''
+          source=source[:start]+replacement+source[end:]
+          assert source.count('const inicios = linhas.flatMap(')==1
+          p.write_text(source)
+          PY
+      - name: Verificar sintaxe e cobertura de clausulas multilinha
+        run: |
+          node scripts/build-frases-do-dia-v7.mjs
+          node --check js/configuracoes.js
+          node scripts/governance-review-preview-regression.mjs
+          node scripts/site-audit.mjs
+          node scripts/document-governance-audit.mjs
+      - name: Commit somente da interface de governanca
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- js/configuracoes.js
+          git diff --cached --quiet && exit 1 || true
+          git commit -m 'fix: exibir clausulas completas antes de aprovar regras'
+          git push origin HEAD:fix/governanca-preflight-dupla-auditoria-20260921
