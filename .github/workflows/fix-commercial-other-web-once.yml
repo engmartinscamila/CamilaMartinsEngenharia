@@ -1,0 +1,58 @@
+name: Alinhar Outros na web com aplicativo (execucao unica)
+on:
+  push:
+    branches:
+      - fix/governanca-preflight-dupla-auditoria-20260921
+    paths:
+      - .github/workflows/fix-commercial-other-web-once.yml
+permissions:
+  contents: write
+jobs:
+  fix-custom:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Corrigir apenas a associacao da descricao ao servico e falhar fechado sem catalogo
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const path = 'js/commercial-documents-web.js';
+          let source = fs.readFileSync(path, 'utf8');
+          const replacements = [
+            ["  function form() {\n    const services = servicesCatalog.map", "  function form() {\n    const customService = $('customService').value.trim();\n    const services = servicesCatalog.map"],
+            ['included: Boolean(document.querySelector(`[data-service="${code}"]`)?.checked),', 'included: Boolean(document.querySelector(`[data-service="${code}"]`)?.checked) || (code === \'p\' && Boolean(customService)),'],
+            ["      custom_service: $('customService').value.trim(),", '      custom_service: customService,'],
+            ["    const isContract = mode() === 'contrato';\n\n    if (!payload.prospect_name)", "    const isContract = mode() === 'contrato';\n\n    if (!serviceCatalogMeta.length || !levelCatalog.length) {\n      msg('Catálogo de serviços ou níveis não carregado. Recarregue a página antes de criar documentos; os dados existentes foram preservados.', 'error');\n      return;\n    }\n    if (!payload.prospect_name)"],
+            ["    $('createCommercial')?.addEventListener('click', create);", "    $('createCommercial')?.addEventListener('click', create);\n    $('customService')?.addEventListener('input', event => {\n      if (String(event.target.value || '').trim()) {\n        const other = document.querySelector('[data-service=\"p\"]');\n        if (other) other.checked = true;\n      }\n    });"]
+          ];
+          for (const [before, after] of replacements) {
+            assert.equal(source.split(before).length, 2, `Trecho alterado ou ambíguo: ${before}`);
+            source = source.replace(before, after);
+          }
+          fs.writeFileSync(path, source);
+          NODE
+      - name: Executar dupla checagem de escopo e regressao do site
+        run: |
+          node scripts/build-frases-do-dia-v7.mjs
+          node --check js/commercial-documents-web.js
+          node scripts/commercial-custom-scope-regression.mjs
+          node scripts/site-audit.mjs
+          node scripts/admin-functional-audit.mjs
+          node scripts/document-governance-audit.mjs
+          node scripts/document-generation-audit.mjs
+      - name: Registrar apenas a correcao de formulario validada
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- js/commercial-documents-web.js
+          git diff --cached --exit-code && exit 1 || true
+          git commit -m 'fix: vincular descricao Outros ao snapshot comercial web'
+          git push origin HEAD:fix/governanca-preflight-dupla-auditoria-20260921
