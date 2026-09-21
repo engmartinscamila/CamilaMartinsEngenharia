@@ -95,12 +95,16 @@ export function planConstructionSchedule(
     }
     if (source.requestedStart && source.requestedStart>earliest) earliest=source.requestedStart;
     const dates=advance(earliest,source.durationDays);
-    const result:PlannedActivity={...source,plannedStart:dates.start,plannedFinish:dates.finish,assignedWeightPercent:weights[indices.get(code) as number]};
+    const index=indices.get(code);
+    const assignedWeightPercent=index===undefined?undefined:weights[index];
+    if (assignedWeightPercent===undefined) throw new Error(`Peso não calculado para ${code}.`);
+    const result:PlannedActivity={...source,plannedStart:dates.start,plannedFinish:dates.finish,assignedWeightPercent};
     visiting.delete(code);planned.set(code,result);return result;
   };
   const resolved=activities.map(a=>resolve(a.code));
-  const end=resolved.map(a=>a.plannedFinish).sort().at(-1) as string;
+  const end=resolved.map(a=>a.plannedFinish).sort().at(-1);
   const start=resolved.map(a=>a.plannedStart).sort()[0];
+  if (!start || !end) throw new Error('Nenhuma atividade válida para planejar.');
   if (options.contractualDeadline && end>options.contractualDeadline) throw new Error('Plano calculado excede o prazo contratual; revisar recursos ou formalizar aditivo antes de aprovar.');
   const progress=round(resolved.reduce((sum,a)=>sum+a.assignedWeightPercent*a.actualProgress/100,0));
   return {activities:resolved,plannedStart:start,plannedFinish:end,weightSource,totalConstructionCost:useCosts?sumCosts:null,progressPercent:progress};
