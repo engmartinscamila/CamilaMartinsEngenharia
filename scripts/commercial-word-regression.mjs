@@ -11,7 +11,7 @@ const portalRequire = createRequire(pathToFileURL(resolve(root, 'portal-app/pack
 const JSZip = portalRequire('jszip');
 const { Document, Paragraph, TextRun, Packer } = portalRequire('docx');
 const source = readFileSync(resolve(root, 'supabase/functions/generate-commercial-document-final/index.ts'), 'utf8');
-const start = source.indexOf('const nonProjectServiceCodes =');
+const start = source.indexOf('const isProjectTierEligible =');
 const end = source.indexOf('async function sha256(');
 assert.ok(start > 0 && end > start, 'Funções de revisão Word não foram encontradas');
 const isolatedCode = stripTypeScriptTypes(source.slice(start, end), { mode: 'strip' });
@@ -68,7 +68,7 @@ assert.ok(revisedXml.includes('Atividade específica solicitada:'), 'Texto perso
 const unchanged = await api.enhanceQuoteDocument(quote, [{ code: 'a', name: 'Estudo Preliminar', included: true, levelApplicable: true }], '');
 assert.equal(unchanged, quote, 'Orçamento de projeto regular sofreu modificação indevida');
 
-const legacyConsultancy = { code: 'q', name: 'Consultoria Técnica', included: true, levelApplicable: true };
+const legacyConsultancy = { code: 'q', name: 'Consultoria Técnica', included: true, levelApplicable: false };
 const consultancyWord = await fixture([
   '2. NÍVEL DE PRESTAÇÃO DE SERVIÇO',
   'Nível selecionado: BRONZE — Essencial',
@@ -120,6 +120,28 @@ const consultancyContract = await xmlOf(await api.enhanceContractDocument(contra
 assert.ok(!consultancyContract.includes('Nível de prestação:'), 'Consultoria recebeu indevidamente nível no escopo');
 assert.ok(!consultancyContract.includes('Nível de experiência: BRONZE'), 'Consultoria recebeu Bronze no resumo do contrato');
 const mixedContract = await xmlOf(await api.enhanceContractDocument(contract, propertyAddress, [legacyConsultancy, { code: 'a', name: 'Estudo Preliminar', included: true, levelApplicable: true }], '', 'bronze'));
-assert.ok(mixedContract.includes('aplicável exclusivamente aos serviços de projeto elegíveis'), 'Nível não foi restrito ao projeto da proposta mista');
+assert.ok(mixedContract.includes('aplicável exclusivamente às atividades elegíveis'), 'Nível não foi restrito às atividades com pacote da proposta mista');
 assert.ok(mixedContract.includes('Nível de experiência: BRONZE'), 'Nível de projeto foi removido indevidamente de contrato misto');
-console.log('PASS: DOCX/ZIP/XML; Outros sem duplicação; endereços independentes; consultoria legada sem PDF/revisões/prazo/nível; proposta mista e projeto regular preservados.');
+const tieredConsultancy = { ...legacyConsultancy, levelApplicable: true };
+const tieredConsultancyWord = await fixture([
+ '2. NÍVEL DE PRESTAÇÃO DE SERVIÇO',
+ 'Nível selecionado: OURO — Completo',
+ 'Benefícios apenas do serviço expressamente contratado',
+ '3. ESCOPO INTELIGENTE DE SERVIÇOS',
+ '1. Consultoria Técnica',
+ 'Prestação de consultoria conforme escopo aprovado.',
+ 'Revisões incluídas: 2 • Formatos: PDF • Prazo: conforme cronograma',
+ 'Na ausência de indicação específica no Anexo I, aplicam-se até 2 (duas) rodadas de revisão por etapa.',
+ 'O prazo geral de referência é de 45 (quarenta e cinco) dias úteis.',
+]);
+const tieredXml = await xmlOf(await api.enhanceQuoteDocument(tieredConsultancyWord,[tieredConsultancy],''));
+assert.ok(tieredXml.includes('Nível selecionado: OURO'), 'Consultoria avulsa perdeu o pacote contratado');
+assert.ok(!tieredXml.includes('Revisões incluídas: 2'), 'Consultoria avulsa recebeu revisões de projeto automaticamente');
+assert.ok(!tieredXml.includes('prazo geral de referência é de 45'), 'Consultoria avulsa recebeu prazo de projeto automaticamente');
+const tieredContract = await xmlOf(await api.enhanceContractDocument(contract,propertyAddress,[tieredConsultancy],'','bronze'));
+assert.ok(tieredContract.includes('Nível de prestação: BRONZE'), 'Contrato da consultoria avulsa perdeu o pacote');
+assert.ok(tieredContract.includes(partyAddress) && tieredContract.includes(propertyAddress), 'Endereços divergiram');
+const coreGenerator = readFileSync(resolve(root,'supabase/functions/generate-commercial-document/index.ts'),'utf8');
+assert.ok(coreGenerator.includes('às atividades elegíveis incluídas nesta proposta'), 'Orçamento ainda restringe nível a projetos');
+assert.ok(coreGenerator.includes("||'conforme Anexo I'"), 'Orçamento ainda presume PDF sem formato');
+console.log('PASS: históricos preservados; consultoria avulsa com pacote; sem prazos e revisões presumidos; escopo, endereços e Word válidos.');

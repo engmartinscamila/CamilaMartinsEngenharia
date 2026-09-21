@@ -259,7 +259,7 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
      serviceBlocks.push(small('Informações e insumos normalmente necessários do cliente:'));
      inputs.forEach(value=>serviceBlocks.push(bullet(value)));
    }
-   serviceBlocks.push(small(`Revisões incluídas: ${serviceRevisions(item)} • Formatos: ${arrStrings(item.deliveryFormats).join(', ')||'PDF'} • Prazo: ${String(item.planningReference??'integrado ao cronograma geral')}`));
+   serviceBlocks.push(small(`Revisões incluídas: ${serviceRevisions(item)} • Formatos: ${arrStrings(item.deliveryFormats).join(', ')||'conforme Anexo I'} • Prazo: ${String(item.planningReference??'integrado ao cronograma geral')}`));
  });
 
  if(record.custom_service){
@@ -285,7 +285,7 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
   h('2. NÍVEL DE PRESTAÇÃO DE SERVIÇO'),
   p(`Nível selecionado: ${levelDisplay(record,level)}`,true,GOLD),
   ...(level?[p(String(level.description??''))]:[p('O nível de experiência não foi selecionado. Quando aplicável, ele deverá ser definido antes da formalização definitiva.')]),
-  ...(eligibleServices.length?[small(`O nível selecionado aplica-se somente aos serviços de projeto elegíveis nesta proposta: ${eligibleServices.join(', ')}.`)]:[small('Nenhum serviço selecionado nesta proposta recebe ampliação automática por nível de experiência.')]),
+  ...(eligibleServices.length?[small(`O nível selecionado aplica-se somente às atividades elegíveis incluídas nesta proposta: ${eligibleServices.join(', ')}.`)]:[small('Nenhum serviço selecionado nesta proposta recebe ampliação automática por nível de experiência.')]),
   ...levelFeatures.map(value=>bullet(value)),
   ...levelExclusions.map(value=>bullet(`Não incluído neste nível: ${value}`)),
   small(smartRule(record,'level_scope_rule','O nível selecionado aplica-se somente aos serviços elegíveis e não acrescenta automaticamente itens que não tenham sido contratados expressamente.')),
