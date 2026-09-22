@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Text } from 'react-native';
 import { AdminPageHeader } from '@/components/admin-ui';
+import { ConstructionScheduleClientPublication } from '@/components/construction-schedule-client-publication';
 import { Button, Card, Field, Notice, Screen, StateView } from '@/components/ui';
 import { formatCurrency, isValidIsoDate } from '@/lib/format';
 import {
@@ -140,6 +141,7 @@ export default function ConstructionScheduleMeasurementsScreen() {
         })}
         <Button title="Registrar medição datada (não altera a linha de base)" loading={busy} disabled={busy} onPress={() => void save()} />
       </Card>
+      <ConstructionScheduleClientPublication scheduleId={active.id} projectId={active.projectId}/>
       <Card>
         <Text>Curva S — planejado × medido</Text>
         {overview.curve.map((point) => <Text key={point.date}>{point.date}: planejado {displayPercent(point.plannedFinancialPercent)} • realizado {displayPercent(point.measuredFinancialPercent)}{point.measurementDate ? ` (vistoria ${point.measurementDate})` : ''}</Text>)}
