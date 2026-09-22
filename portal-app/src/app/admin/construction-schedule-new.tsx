@@ -18,7 +18,7 @@ const templates = [
 ] as const;
 type DraftRow = ScheduleTemplateItem & {
   selected: boolean; confirmed: boolean; duration: string; cost: string; weight: string;
-  sourceCode: string; predecessor: string;
+  sourceCode: string; predecessor: string; physicalWeight: string; physicalBasis: string;
 };
 const numeric = (value: string) => Number(value.replace(',', '.'));
 
@@ -35,6 +35,7 @@ export default function NewConstructionScheduleScreen() {
   const [calendar, setCalendar] = useState<WorkCalendar>('weekdays');
   const [holidaysText, setHolidaysText] = useState('');
   const [manualWeightsApproved, setManualWeightsApproved] = useState(false);
+  const [physicalWeightsApproved, setPhysicalWeightsApproved] = useState(false);
   const [saveConfirmed, setSaveConfirmed] = useState(false);
   const [scheduleId, setScheduleId] = useState<string | null>(null);
   const [approved, setApproved] = useState(false);
@@ -66,7 +67,7 @@ export default function NewConstructionScheduleScreen() {
   const allowedCodes = quote?.services.filter((service) => service.included).map((service) => service.code) ?? [];
   const selected = rows.filter((row) => row.selected);
 
-  // Derivação pura em cada render. Evita caches manuais de objetos mutáveis do formulário.
+  // Cálculo puro: datas, custos e peso financeiro não dependem da regra física.
   const calculated = (() => {
     if (!template || !project || selected.length === 0 || !startDate) return { data: null, error: null };
     try {
@@ -93,6 +94,17 @@ export default function NewConstructionScheduleScreen() {
       if (holidays.some((day) => day < result.plannedStart || day > result.plannedFinish)) {
         throw new Error('Um feriado está fora do período calculado da obra. Confira as datas antes de confirmar.');
       }
+      const physicalWeights = physicalWeightsApproved ? selected.map((row) => {
+        const percent = numeric(row.physicalWeight);
+        if (!row.physicalWeight.trim() || !Number.isFinite(percent) || percent < 0 || percent > 100 ||
+          row.physicalBasis.trim().length < 10) {
+          throw new Error(`A atividade ${row.code} exige peso físico de 0–100% e critério técnico confirmado com 10 caracteres.`);
+        }
+        return { code: row.code, percent, basis: row.physicalBasis.trim() };
+      }) : [];
+      if (physicalWeights.length && Math.abs(physicalWeights.reduce((sum, weight) => sum + weight.percent, 0) - 100) > 0.01) {
+        throw new Error('Pesos FÍSICOS independentes devem somar 100% e ter critério específico por atividade.');
+      }
       const items = result.activities.map((activity, index) => {
         const source = selected.find((row) => row.code === activity.code);
         if (!source) throw new Error('Atividade não localizada entre os itens revisados.');
@@ -107,7 +119,7 @@ export default function NewConstructionScheduleScreen() {
       });
       return {
         data: {
-          scope_confirmed: true, calendar, holidays, weight_source: result.weightSource,
+          scope_confirmed: true, calendar, holidays, physical_weights: physicalWeights, weight_source: result.weightSource,
           planned_start: result.plannedStart, planned_finish: result.plannedFinish,
           notes: `Modelo ${template.template_code} v${template.template_version}: referência revisada, custos de obra separados dos honorários.`,
           items,
@@ -120,11 +132,11 @@ export default function NewConstructionScheduleScreen() {
 
   const clearPlan = () => {
     setTemplate(null); setRows([]); setTemplateCode(''); setScheduleId(null); setApproved(false);
-    setSaveConfirmed(false); setManualWeightsApproved(false); setHolidaysText(''); setError(null); setSuccess(null);
+    setSaveConfirmed(false); setManualWeightsApproved(false); setPhysicalWeightsApproved(false); setHolidaysText(''); setError(null); setSuccess(null);
   };
   const updateRow = (code: string, changes: Partial<DraftRow>) => {
     setRows((current) => current.map((row) => row.code === code ? { ...row, ...changes, confirmed: false } : row));
-    setSaveConfirmed(false);
+    setSaveConfirmed(false); setPhysicalWeightsApproved(false);
   };
   const addManualRow = () => {
     setRows((current) => {
@@ -134,10 +146,10 @@ export default function NewConstructionScheduleScreen() {
         code: `M${index}`, category: 'Escopo específico', activity: '', display_order: current.length + 1,
         reference_weight_percent: null, reference_duration_days: null, predecessor_code: null,
         requires_scope_confirmation: true, selected: true, confirmed: false,
-        duration: '', cost: '', weight: '', sourceCode: '', predecessor: '',
+        duration: '', cost: '', weight: '', sourceCode: '', predecessor: '', physicalWeight: '', physicalBasis: '',
       }];
     });
-    setSaveConfirmed(false);
+    setSaveConfirmed(false); setPhysicalWeightsApproved(false);
   };
   const loadTemplate = async () => {
     if (!projectId || !quoteId || !contractId || !templateCode || busy) return;
@@ -151,8 +163,9 @@ export default function NewConstructionScheduleScreen() {
     setRows(result.data.items.map((item) => ({
       ...item, selected: false, confirmed: false,
       duration: item.reference_duration_days === null ? '' : String(item.reference_duration_days),
-      weight: '', cost: '', sourceCode: '', predecessor: item.predecessor_code ?? '',
+      weight: '', cost: '', sourceCode: '', predecessor: item.predecessor_code ?? '', physicalWeight: '', physicalBasis: '',
     })));
+    setPhysicalWeightsApproved(false);
   };
   const save = async () => {
     if (!calculated.data || !projectId || !quoteId || !contractId || !saveConfirmed || busy) return;
@@ -161,7 +174,7 @@ export default function NewConstructionScheduleScreen() {
     setBusy(false);
     if (result.error || !result.scheduleId) { setError(result.error ?? 'Não foi possível salvar.'); return; }
     setScheduleId(result.scheduleId);
-    setSuccess('Planejamento e calendário de feriados salvos em rascunho numa única transação. Confira o resultado antes de aprovar a linha de base.');
+    setSuccess('Planejamento, feriados e pesos físicos confirmados salvos em rascunho numa única transação. Confira antes de aprovar.');
   };
   const approve = async () => {
     if (!scheduleId || busy || approved) return;
@@ -169,7 +182,7 @@ export default function NewConstructionScheduleScreen() {
     const result = await approveVerifiedSchedule(scheduleId);
     setBusy(false);
     if (result) setError(result);
-    else { setApproved(true); setSuccess('Linha de base e calendário aprovados pelo banco. Alterações estruturais exigem uma nova versão.'); }
+    else { setApproved(true); setSuccess('Linha de base, feriados e critérios físicos aprovados pelo banco. Alterações estruturais exigem nova versão.'); }
   };
   const exportExcel = async () => {
     if (!scheduleId || !approved || busy) return;
@@ -206,7 +219,7 @@ export default function NewConstructionScheduleScreen() {
         </Card> : null}
         {contractId ? <Card>
           <Text>4. Modelo versionado (apenas referência)</Text>
-          {templates.map((item) => <Button key={item.code} title={`${item.title}${templateCode === item.code ? ' ✓' : ''}`} variant={templateCode === item.code ? 'primary' : 'secondary'} onPress={() => { setTemplateCode(item.code); setTemplate(null); setRows([]); setSaveConfirmed(false); }} />)}
+          {templates.map((item) => <Button key={item.code} title={`${item.title}${templateCode === item.code ? ' ✓' : ''}`} variant={templateCode === item.code ? 'primary' : 'secondary'} onPress={() => { setTemplateCode(item.code); setTemplate(null); setRows([]); setPhysicalWeightsApproved(false); setSaveConfirmed(false); }} />)}
           <Button title="Conferir contrato e carregar modelo" loading={busy} disabled={!templateCode || busy} onPress={() => void loadTemplate()} />
         </Card> : null}
         {template ? <>
@@ -224,7 +237,9 @@ export default function NewConstructionScheduleScreen() {
               <Field label="Duração prevista (dias)" value={row.duration} keyboardType="numeric" onChangeText={(duration) => updateRow(row.code, { duration })} />
               <Field label="Código da predecessora selecionada (opcional)" value={row.predecessor} onChangeText={(predecessor) => updateRow(row.code, { predecessor })} />
               <Field label="Custo da execução (R$, sem honorários)" value={row.cost} keyboardType="decimal-pad" onChangeText={(cost) => updateRow(row.code, { cost })} />
-              <Field label="Peso manual (%) — somente se validado" value={row.weight} keyboardType="decimal-pad" onChangeText={(weight) => updateRow(row.code, { weight })} />
+              <Field label="Peso manual FINANCEIRO (%) — somente se validado" value={row.weight} keyboardType="decimal-pad" onChangeText={(weight) => updateRow(row.code, { weight })} />
+              <Field label="Peso FÍSICO independente (%) — se houver critério técnico" value={row.physicalWeight} keyboardType="decimal-pad" onChangeText={(physicalWeight) => updateRow(row.code, { physicalWeight })} />
+              <Field label="Critério do peso físico (quantitativo, unidade ou evidência)" value={row.physicalBasis} multiline onChangeText={(physicalBasis) => updateRow(row.code, { physicalBasis })} />
               <Button title={row.confirmed ? 'Atividade confirmada ✓' : 'Confirmar atividade, escopo e premissas'} variant={row.confirmed ? 'secondary' : 'primary'} onPress={() => { setRows((current) => current.map((item) => item.code === row.code ? { ...item, confirmed: !item.confirmed } : item)); setSaveConfirmed(false); }} />
             </> : null}
           </Card>)}
@@ -236,23 +251,24 @@ export default function NewConstructionScheduleScreen() {
             <Button title={`Dias corridos ${calendar === 'calendar_days' ? '✓' : ''}`} variant="secondary" onPress={() => { setCalendar('calendar_days'); setSaveConfirmed(false); }} />
             <Field label="Datas não úteis/feriados da obra (AAAA-MM-DD; separados por vírgula)" value={holidaysText} multiline onChangeText={(value) => { setHolidaysText(value); setSaveConfirmed(false); }} />
             <Notice tone="info">Cadastre apenas datas conferidas para esta obra. Em dias úteis, elas são descontadas; em dias corridos, não estendem o prazo. O calendário ficará congelado na aprovação.</Notice>
-            <Notice tone="info">Com custos completos, pesos financeiros derivam deles; pesos manuais não substituem orçamento da obra.</Notice>
-            <Button title={manualWeightsApproved ? 'Pesos manuais validados ✓' : 'Validar pesos manuais (se aplicável)'} variant="secondary" onPress={() => { setManualWeightsApproved((current) => !current); setSaveConfirmed(false); }} />
+            <Notice tone="info">Pesos financeiros decorrem de custos completos. Pesos físicos são independentes: só informe e aprove se houver critério técnico conferido para TODAS as atividades. Caso contrário, o indicador físico permanece indisponível.</Notice>
+            <Button title={manualWeightsApproved ? 'Pesos manuais financeiros validados ✓' : 'Validar pesos manuais financeiros (se aplicável)'} variant="secondary" onPress={() => { setManualWeightsApproved((current) => !current); setSaveConfirmed(false); }} />
+            <Button title={physicalWeightsApproved ? 'Pesos físicos independentes confirmados ✓' : 'Confirmar critério físico de todas as atividades (se conferido)'} variant="secondary" onPress={() => { setPhysicalWeightsApproved((current) => !current); setSaveConfirmed(false); }} />
             {calculated.error ? <Notice tone="warning">{calculated.error}</Notice> : null}
             {calculated.data ? <>
-              <Notice tone="info">Período: {calculated.data.planned_start} a {calculated.data.planned_finish}; {calculated.data.items.length} atividades; {calculated.data.holidays.length} data(s) não útil(eis) informada(s). Confira predecessoras, custos e prazos.</Notice>
-              {calculated.data.items.map((item) => <Text key={item.code}>{item.code}: {item.planned_start} → {item.planned_finish}; peso {item.weight_percent}%; custo R$ {item.planned_cost}</Text>)}
-              <Button title={saveConfirmed ? 'Planejamento revisado ✓' : 'Confirmo planejamento, custos e escopo acima'} variant="secondary" onPress={() => setSaveConfirmed((current) => !current)} />
-              <Button title="Salvar rascunho e feriados com vínculo verificado" loading={busy} disabled={!saveConfirmed || busy} onPress={() => void save()} />
+              <Notice tone="info">Período: {calculated.data.planned_start} a {calculated.data.planned_finish}; {calculated.data.items.length} atividades; {calculated.data.holidays.length} feriado(s); pesos físicos {calculated.data.physical_weights.length ? 'conferidos' : 'não informados'}.</Notice>
+              {calculated.data.items.map((item) => <Text key={item.code}>{item.code}: {item.planned_start} → {item.planned_finish}; peso financeiro {item.weight_percent}%; custo R$ {item.planned_cost}</Text>)}
+              <Button title={saveConfirmed ? 'Planejamento revisado ✓' : 'Confirmo planejamento, custos, pesos físicos e escopo acima'} variant="secondary" onPress={() => setSaveConfirmed((current) => !current)} />
+              <Button title="Salvar rascunho, feriados e pesos com vínculo verificado" loading={busy} disabled={!saveConfirmed || busy} onPress={() => void save()} />
             </> : null}
           </Card>
         </> : null}
       </> : null}
       {scheduleId ? <Card>
-        <Text>Planejamento salvo. Aprovação congela a linha de base e os feriados, sujeita a validações do banco.</Text>
+        <Text>Planejamento salvo. Aprovação congela linha de base, feriados e critérios físicos, sujeita a validações do banco.</Text>
         <Button title={approved ? 'Linha de base aprovada ✓' : 'Aprovar linha de base após conferência'} loading={busy} disabled={busy || approved} onPress={() => void approve()} />
         {approved ? <>
-          <Notice tone="info">Excel editável com cronograma, Gantt, Curva S planejada, indicadores e versão aprovada. Dados reais históricos só aparecem após medições datadas, sem inventar evolução.</Notice>
+          <Notice tone="info">Excel editável com cronograma, Gantt, Curva S, indicadores e versão aprovada. Dados históricos reais exigem medições datadas, sem inventar evolução.</Notice>
           <Button title="Extrair cronograma completo em Excel (.xlsx)" loading={busy} disabled={busy} onPress={() => void exportExcel()} />
         </> : null}
         <Button title="Consultar cronograma" variant="secondary" onPress={() => router.replace('/admin/construction-schedule')} />
