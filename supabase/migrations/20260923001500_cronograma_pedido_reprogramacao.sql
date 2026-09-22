@@ -120,7 +120,13 @@ BEGIN
  IF v_current.id IS NULL OR (v_current.activation_status='draft' AND v_current.revision_number=1) THEN
    v_schedule_id := public.admin_initialize_construction_schedule(
      p_project_id,p_quote_record_id,p_contract_record_id);
+   -- Preservar integralmente a versão anterior do wrapper: plano, feriados e
+   -- pesos físicos são a MESMA transação também no primeiro cronograma.
    PERFORM public.admin_save_full_schedule_plan(v_schedule_id,p_plan);
+   PERFORM public.admin_set_construction_schedule_holidays(
+     v_schedule_id,coalesce(p_plan->'holidays','[]'::jsonb));
+   PERFORM public.admin_set_full_schedule_physical_weights(
+     v_schedule_id,coalesce(p_plan->'physical_weights','[]'::jsonb));
    RETURN v_schedule_id;
  END IF;
 
