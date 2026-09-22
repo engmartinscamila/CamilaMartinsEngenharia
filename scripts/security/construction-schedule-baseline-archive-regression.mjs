@@ -42,10 +42,13 @@ await run(`update construction_schedules set activation_status='approved',baseli
  baseline_snapshot='${snapshot}'::jsonb,approved_at=now(),approved_by='${user}' where id='${next}'`);
 ok(await value(`select count(*)::integer value from construction_schedule_baseline_versions where schedule_id='${next}'`)===1,
  'Aprovação nova arquiva automaticamente no mesmo comando');
-await reject(`update construction_schedules set activation_status='draft' where id='${next}'`,
- 'Não é possível reverter aprovação sem histórico duplicado');
-// O mock não instala os demais guards do produto: esta suíte testa apenas o arquivo,
-// por isso confirma que a tentativa não pode gravar segundo arquivo idêntico.
+// A proibição de voltar um plano aprovado a rascunho é coberta pela migration
+// de estado anterior. Esta suíte isolada valida unicidade e preservação do arquivo.
+await reject(`insert into construction_schedule_baseline_versions(
+ schedule_id,baseline_version,baseline_snapshot,source_scope_snapshot,approved_at,approved_by)
+ select id,baseline_version,baseline_snapshot,source_scope_snapshot,approved_at,approved_by
+ from construction_schedules where id='${next}'`,
+ 'Não é possível duplicar uma linha de base arquivada');
 ok(await value(`select count(*)::integer value from construction_schedule_baseline_versions where schedule_id='${next}'`)===1,
  'Arquivos duplicados são proibidos');
 await run(`select set_config('app.is_admin','false',false)`);
