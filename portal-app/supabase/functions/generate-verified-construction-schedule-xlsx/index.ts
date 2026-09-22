@@ -3,7 +3,7 @@ import ExcelJS from 'npm:exceljs@4.4.0';
 import { Buffer } from 'node:buffer';
 import { renderScheduleCurveChart } from './curve-chart.ts';
 
-// Exportador novo, independente do legado: não cria nem altera cronogramas.
+// Exportador independente do legado: nunca cria, aprova nem altera cronogramas.
 const cors = {
   'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -24,19 +24,21 @@ const date = (value: unknown): Date | null => {
   return parsed;
 };
 const addDays = (value: Date, days: number) => new Date(value.getTime() + days * 86400000);
-const countDays = (start: Date, end: Date, calendar: string) => {
+const countDays = (start: Date, end: Date, calendar: string, holidays: ReadonlySet<string> = new Set<string>()) => {
   let count = 0;
   for (let current = start; current <= end; current = addDays(current, 1)) {
-    if (calendar === 'calendar_days' || (current.getUTCDay() !== 0 && current.getUTCDay() !== 6)) count++;
+    if (calendar === 'calendar_days' || (
+      current.getUTCDay() !== 0 && current.getUTCDay() !== 6 && !holidays.has(dateText(current.toISOString()))
+    )) count++;
   }
   return count;
 };
-const progress = (start: Date, end: Date, at: Date, calendar: string) => {
+const progress = (start: Date, end: Date, at: Date, calendar: string, holidays: ReadonlySet<string> = new Set<string>()) => {
   if (at < start) return 0;
   if (at >= end) return 100;
-  const total = countDays(start, end, calendar);
+  const total = countDays(start, end, calendar, holidays);
   if (!total) throw new Error('Período sem dias de trabalho.');
-  return 100 * countDays(start, at, calendar) / total;
+  return 100 * countDays(start, at, calendar, holidays) / total;
 };
 const numberOrNull = (value: unknown) => value === null || value === undefined || value === '' ? null : Number(value);
 const safe = (value: unknown) => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/-+/g, '-').slice(0, 45) || 'Obra';
@@ -51,7 +53,7 @@ Deno.serve(async (req) => {
     const key = Deno.env.get('SUPABASE_ANON_KEY');
     const jwt = req.headers.get('Authorization');
     if (!url || !key || !jwt?.startsWith('Bearer ')) throw new Error('Sessão ou configuração ausente.');
-    // Todo dado passa pela identidade real e RLS: sem service role no exportador.
+    // Toda leitura com JWT do usuário e RLS: sem service role.
     const db = createClient(url, key, {global: {headers: {Authorization: jwt}}, auth: {persistSession: false, autoRefreshToken: false}});
     const {data: identity, error: identityError} = await db.auth.getUser();
     if (identityError || !identity.user) throw new Error('Sessão inválida.');
@@ -71,12 +73,25 @@ Deno.serve(async (req) => {
     if (baseline.scope?.quote_id !== schedule.quote_record_id || baseline.scope?.contract_record_id !== schedule.contract_record_id) {
       throw new Error('A origem comercial da linha de base não coincide com o cronograma.');
     }
-    const [{data: project, error: projectError}, {data: current, error: itemError}, measurementCount] = await Promise.all([
+    const [{data: project, error: projectError}, {data: current, error: itemError}, measurementCount,
+      holidayResponse, archiveResponse] = await Promise.all([
       db.from('projetos').select('id,cliente_id,nome,numero_contrato,numero_orcamento,endereco_obra,numero_obra,complemento_obra,bairro_obra,cidade_obra,estado_obra').eq('id', schedule.project_id).single(),
       db.from('construction_schedule_items').select('*').eq('schedule_id', scheduleId).order('display_order', {ascending: true}),
       db.from('construction_schedule_measurements').select('id', {count: 'exact', head: true}).eq('schedule_id', scheduleId),
+      db.from('construction_schedule_holidays').select('holiday_date').eq('schedule_id', scheduleId).order('holiday_date').limit(367),
+      db.from('construction_schedule_baseline_versions').select('baseline_snapshot,holiday_dates')
+        .eq('schedule_id', scheduleId).eq('baseline_version', schedule.baseline_version).single(),
     ]);
     if (projectError || !project || itemError || !current || project.cliente_id !== schedule.client_id) throw new Error('Projeto e atividades indisponíveis ou inconsistentes.');
+    if (holidayResponse.error || !holidayResponse.data || holidayResponse.data.length > 366 || archiveResponse.error || !archiveResponse.data) {
+      throw new Error('Calendário de feriados ou versão aprovada indisponível para conferir.');
+    }
+    const holidayDates = holidayResponse.data.map((row) => String(row.holiday_date));
+    if (JSON.stringify(holidayDates) !== JSON.stringify(archiveResponse.data.holiday_dates) ||
+      JSON.stringify(archiveResponse.data.baseline_snapshot) !== JSON.stringify(schedule.baseline_snapshot)) {
+      throw new Error('Feriados e linha de base atuais divergem do arquivo aprovado.');
+    }
+    const holidays = new Set<string>(holidayDates);
     if (measurementCount.error || measurementCount.count === null) throw new Error('O histórico de medições deve estar disponível antes de exportar.');
     if (measurementCount.count > 1000) throw new Error('O histórico tem mais de 1.000 medições; paginação integral necessária antes de exportar.');
     const {data: measurements, error: measurementError} = await db.from('construction_schedule_measurements')
@@ -108,7 +123,6 @@ Deno.serve(async (req) => {
     const finish: Date = activities.reduce((latest: Date, item: any) => item.finish > latest ? item.finish : latest, activities[0].finish);
     const reference = date(schedule.reference_date) ?? new Date();
     const calendar = String(baseline.calendar);
-    // Inclui a última medição, mesmo se o acompanhamento ultrapassar o prazo-base.
     const lastMeasurement = events.length ? date(events[events.length - 1]?.measured_on) : null;
     const end = lastMeasurement && lastMeasurement > finish ? lastMeasurement : finish;
     const weeks: Date[] = [];
@@ -130,7 +144,7 @@ Deno.serve(async (req) => {
         state.set(event.item_id, {progress: Number(event.actual_progress),
           cost: event.actual_construction_cost === null ? prior?.cost ?? null : Number(event.actual_construction_cost)});
       }
-      const plannedCost = activities.reduce((total: number, item: any) => total + item.cost * progress(item.start, item.finish, at, calendar) / 100, 0);
+      const plannedCost = activities.reduce((total: number, item: any) => total + item.cost * progress(item.start, item.finish, at, calendar, holidays) / 100, 0);
       const completeProgress = activities.every(({live}: any) => state.has(String(live.id)));
       const completeCost = activities.every(({live}: any) => state.get(String(live.id))?.cost !== null && state.get(String(live.id))?.cost !== undefined);
       const measuredPercent = completeProgress ? activities.reduce((total: number, item: any) =>
@@ -138,13 +152,12 @@ Deno.serve(async (req) => {
       const measuredCost = completeCost ? activities.reduce((total: number, item: any) => total + (state.get(String(item.live.id))?.cost ?? 0), 0) : null;
       const physicalWeights = activities.every(({base}: any) => numberOrNull(base.physical_weight_percent) !== null);
       const physicalPlanned = physicalWeights ? activities.reduce((total: number, item: any) =>
-        total + Number(item.base.physical_weight_percent) * progress(item.start, item.finish, at, calendar) / 100, 0) : null;
+        total + Number(item.base.physical_weight_percent) * progress(item.start, item.finish, at, calendar, holidays) / 100, 0) : null;
       const physicalMeasured = physicalWeights && completeProgress ? activities.reduce((total: number, item: any) =>
         total + Number(item.base.physical_weight_percent) * (state.get(String(item.live.id))?.progress ?? 0) / 100, 0) : null;
       return {at, plannedCost, planned: plannedCost / totalCost * 100, actual: measuredPercent, actualCost: measuredCost,
         physicalPlanned, physicalActual: physicalMeasured};
     });
-    // Evita usar 0% atual do campo legado quando nunca houve medição datada.
     const latestByItem = new Map<string, {progress: number; cost: number | null}>();
     for (const event of events) {
       if (event.measured_on > dateText(reference.toISOString())) break;
@@ -176,14 +189,25 @@ Deno.serve(async (req) => {
       ['Contrato comercial', baseline.scope?.contract_number ?? project.numero_contrato ?? ''],
       ['Linha de base', Number(schedule.baseline_version)], ['Aprovada em', schedule.approved_at ? date(schedule.approved_at) : null],
       ['Data de referência', reference], ['Calendário', calendar], ['Início base', start], ['Fim base', finish],
-      ['Orçamento da EXECUÇÃO (R$)', totalCost], ['Situação', 'APROVADO — não alterar a linha de base; edite somente atual/real'],
+      ['Orçamento da EXECUÇÃO (R$)', totalCost], ['Situação', 'APROVADO — linha de base e feriados congelados'],
     ];
     meta.forEach((pair) => cadastro.addRow(pair));
     style(cadastro, [39, 78]);
     for (const index of [8, 9, 11, 12]) cadastro.getCell(index, 2).numFmt = 'dd/mm/yyyy';
     cadastro.getCell('B13').numFmt = money;
     cadastro.getCell('A17').value = 'Custos da obra não são honorários; realizado exige medições datadas e documentos comprovantes.';
-    cadastro.getCell('A18').value = 'Sem feriados persistidos: dias úteis consideram segunda–sexta, sem feriados.';
+    cadastro.getCell('A18').value = 'Feriados da obra congelados na aprovação: consulte a aba Feriados.';
+    const holidaysSheet = book.addWorksheet('Feriados');
+    holidaysSheet.addRow(['Data não útil conferida para a obra', 'Origem e regra']);
+    for (const holiday of holidayDates) {
+      const holidayDay = date(holiday);
+      if (!holidayDay) throw new Error('Feriado inválido no calendário aprovado.');
+      holidaysSheet.addRow([holidayDay, 'Data informada e conferida pela administradora']);
+      holidaysSheet.getCell(holidaysSheet.rowCount, 1).numFmt = 'dd/mm/yyyy';
+    }
+    if (!holidayDates.length) holidaysSheet.addRow([null, 'Nenhum feriado informado e aprovado para a obra.']);
+    style(holidaysSheet, [37, 70]);
+    const holidayRange = `Feriados!$A$2:$A$${Math.max(2, holidayDates.length + 1)}`;
     const cron = book.addWorksheet('Cronograma');
     cron.addRow(['ID', 'EAP', 'Etapa', 'Atividade', 'Responsável', 'Início base', 'Fim base', 'Duração (dias)', 'Predecessora', 'Início atual', 'Fim atual', '% previsto', '% real atual', 'Peso físico', 'Peso financeiro', 'Custo previsto obra', 'Custo real informado', 'Desvio (p.p.)', 'Status', 'Origem do custo', 'Serviço contratado']);
     style(cron, [11, 13, 19, 46, 23, 16, 16, 16, 15, 16, 16, 14, 14, 14, 16, 19, 20, 17, 18, 40, 20]);
@@ -194,7 +218,7 @@ Deno.serve(async (req) => {
         Number(base.planned_duration_days), base.predecessor_code ?? null, date(live.actual_start), date(live.actual_finish), null,
         known?.progress ?? null, numberOrNull(base.physical_weight_percent), weight, cost,
         known?.cost ?? null, null, live.status ?? 'Pendente', base.cost_source ?? '', base.source_service_code ?? '']);
-      cron.getCell(r, 12).value = {formula: `IF(OR(F${r}="",G${r}=""),"",IF(Cadastro!$B$9<F${r},0,IF(Cadastro!$B$9>=G${r},100,IF(Cadastro!$B$10="weekdays",NETWORKDAYS(F${r},Cadastro!$B$9)/MAX(1,NETWORKDAYS(F${r},G${r}))*100,(Cadastro!$B$9-F${r}+1)/(G${r}-F${r}+1)*100))))`};
+      cron.getCell(r, 12).value = {formula: `IF(OR(F${r}="",G${r}=""),"",IF(Cadastro!$B$9<F${r},0,IF(Cadastro!$B$9>=G${r},100,IF(Cadastro!$B$10="weekdays",NETWORKDAYS(F${r},Cadastro!$B$9,${holidayRange})/MAX(1,NETWORKDAYS(F${r},G${r},${holidayRange}))*100,(Cadastro!$B$9-F${r}+1)/(G${r}-F${r}+1)*100))))`};
       cron.getCell(r, 18).value = {formula: `IF(OR(L${r}="",M${r}=""),"",M${r}-L${r})`};
       for (const col of [6, 7, 10, 11]) cron.getCell(r, col).numFmt = 'dd/mm/yyyy';
       for (const col of [12, 13, 14, 15, 18]) cron.getCell(r, col).numFmt = '0.00"%"';
@@ -272,7 +296,7 @@ Deno.serve(async (req) => {
       ['Planejamento', 'Datas, pesos e custos da linha de base refletem a versão aprovada; alterações exigem aditivo/versão.'],
       ['Realizado', 'Somente medições datadas. Valores ausentes são desconhecidos e ficam em branco, nunca 0 automático.'],
       ['Curva S', 'Gráfico visual e dados planejados cobrem todo o prazo; real só existe após medições de todas as atividades.'],
-      ['Dias úteis', 'Segunda a sexta, sem feriados: feriados ainda não estão armazenados na versão atual.'],
+      ['Dias úteis', 'Segunda a sexta, excluindo apenas as datas conferidas na aba Feriados. Dias corridos incluem essas datas.'],
       ['Custos', 'Nunca usar honorários como orçamento de execução. Em branco NÃO representa custo zero.'],
       ['Atualização', 'A planilha é cópia editável, não sincroniza com o portal; o gráfico embutido é uma imagem e não se recalcula após editar células.'],
       ['Privacidade', 'A função verifica sessão administrativa; não distribuir dados do cliente sem autorização.'],
@@ -282,7 +306,6 @@ Deno.serve(async (req) => {
     const contentBase64 = Buffer.from(bytes as ArrayBuffer).toString('base64');
     return reply({generated: true, fileName: `Cronograma-${safe(project.nome)}-base-v${schedule.baseline_version}.xlsx`, contentBase64, scheduleId, baselineVersion: schedule.baseline_version, itemCount: activities.length});
   } catch (error) {
-    // Mensagens de erro funcionais sem dump do objeto/registro ou token.
     const message = error instanceof Error ? error.message : 'Não foi possível gerar o arquivo Excel.';
     return reply({generated: false, error: message}, 400);
   }
