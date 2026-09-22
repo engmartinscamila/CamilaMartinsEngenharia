@@ -48,8 +48,9 @@ export default function ConstructionScheduleBudgetScreen() {
     return {total,invalid};
   },[draft]);
 
-  const load=async(id:string)=>{
-    setProjectId(id);setDraft(null);setLoading(true);setError(null);setSuccess(null);
+  const load=async(id:string, preserveSuccess=false)=>{
+    setProjectId(id);setDraft(null);setLoading(true);setError(null);
+    if(!preserveSuccess)setSuccess(null);
     const result=await loadCurrentScheduleBudget(id);
     setLoading(false);
     if(result.error||!result.data){setError(result.error??'Orçamento indisponível.');return;}
@@ -67,8 +68,8 @@ export default function ConstructionScheduleBudgetScreen() {
     const result=await saveCurrentScheduleBudget(draft);
     setLoading(false);
     if(result.error){setError(result.error);return;}
+    await load(projectId, true);
     setSuccess(`Orçamento de execução salvo. Custo total: ${(result.total??0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}. Os pesos financeiros foram recalculados a partir destes custos.`);
-    await load(projectId);
   };
 
   return <Screen>
@@ -81,7 +82,7 @@ export default function ConstructionScheduleBudgetScreen() {
       {projects.map(project=><Button key={project.id} title={`${project.clientName} — ${project.name}${projectId===project.id?' ✓':''}`} variant={projectId===project.id?'primary':'secondary'} onPress={()=>void load(project.id)} />)}
       {!projects.length?<StateView icon="briefcase-outline" title="Nenhum projeto" description="Cadastre ou vincule um projeto antes de montar o orçamento da execução." />:null}
     </Card>
-    {loading&&!draft?<StateView icon="calculator-outline" title="Carregando orçamento" description="Conferindo a revisão vigente e as atividades do rascunho." />:null}
+    {loading&&!draft?<StateView icon="calculator-outline" title="Carregando orçamento" description="Conferindo a revisão em rascunho e suas atividades." />:null}
     {draft?<>
       <Card>
         <Text>{draft.title} • revisão {draft.revisionNumber}</Text>
