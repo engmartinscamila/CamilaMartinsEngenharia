@@ -55,8 +55,21 @@ export interface CommercialDocumentPreview {
   frozen: boolean;
 }
 
+export interface ExistingCommercialClient {
+  id: string;
+  name: string;
+  cpfCnpj: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  cep: string | null;
+}
+
 export interface NewCommercialRecordInput {
   prospectName: string;
+  linkedClientId?: string | null;
   cpfCnpj?: string;
   email?: string;
   phone?: string;
@@ -109,6 +122,29 @@ export function validateCustomCommercialService(input: Pick<NewCommercialRecordI
   }
   if (!selected.length && !description) return 'Selecione ao menos uma atividade ou descreva um serviço personalizado.';
   return null;
+}
+
+export async function searchExistingCommercialClients(query: string): Promise<ServiceResult<ExistingCommercialClient[]>> {
+  const value = query.trim();
+  const digits = value.replace(/\D/g, '');
+  if (value.length < 2 && digits.length < 3) return { data: [], error: null };
+  const result = await supabase.rpc('admin_search_existing_clients', { p_query: value, p_limit: 12 });
+  if (result.error) return { data: [], error: result.error.message ?? 'Não foi possível pesquisar clientes existentes.' };
+  const rows = Array.isArray(result.data) ? result.data : [];
+  return {
+    data: rows.map((row: any) => ({
+      id: String(row.id),
+      name: String(row.nome ?? ''),
+      cpfCnpj: row.cpf_cnpj ?? null,
+      email: row.email ?? null,
+      phone: row.telefone ?? null,
+      address: row.endereco ?? null,
+      city: row.cidade ?? null,
+      state: row.estado ?? null,
+      cep: row.cep ?? null,
+    })),
+    error: null,
+  };
 }
 
 export async function listCommercialRecords(): Promise<ServiceResult<CommercialRecord[]>> {
@@ -175,28 +211,29 @@ export async function createCommercialRecord(input: NewCommercialRecordInput) {
   if (description && !services.some(item => isOtherCode(item.code))) {
     services.push({ code: 'p', name: 'Outro', included: true, acceptanceRequired: true, displayOrder: services.length + 1 });
   }
-  const result = await supabase.rpc('admin_create_commercial_record', {
-    p_data: {
-      prospect_name: input.prospectName,
-      cpf_cnpj: input.cpfCnpj ?? '',
-      email: input.email ?? '',
-      phone: input.phone ?? '',
-      cep: input.cep ?? '',
-      address: input.address ?? '',
-      city: input.city ?? '',
-      state: input.state ?? '',
-      property_address: input.propertyAddress ?? '',
-      property_type: input.propertyType ?? '',
-      area_terreno_m2: input.areaTerrenoM2 ?? '',
-      area_construida_m2: input.areaConstruidaM2 ?? '',
-      construction_standard: input.constructionStandard ?? '',
-      experience_level: input.experienceLevel ?? '',
-      services,
-      custom_service: description,
-      total_value: input.totalValue ?? '',
-      notes: input.notes ?? '',
-    },
-  });
+  const p_data = {
+    prospect_name: input.prospectName,
+    cpf_cnpj: input.cpfCnpj ?? '',
+    email: input.email ?? '',
+    phone: input.phone ?? '',
+    cep: input.cep ?? '',
+    address: input.address ?? '',
+    city: input.city ?? '',
+    state: input.state ?? '',
+    property_address: input.propertyAddress ?? '',
+    property_type: input.propertyType ?? '',
+    area_terreno_m2: input.areaTerrenoM2 ?? '',
+    area_construida_m2: input.areaConstruidaM2 ?? '',
+    construction_standard: input.constructionStandard ?? '',
+    experience_level: input.experienceLevel ?? '',
+    services,
+    custom_service: description,
+    total_value: input.totalValue ?? '',
+    notes: input.notes ?? '',
+  };
+  const result = input.linkedClientId
+    ? await supabase.rpc('admin_create_commercial_record_from_client', { p_client_id: input.linkedClientId, p_data })
+    : await supabase.rpc('admin_create_commercial_record', { p_data });
   return result.error || !result.data
     ? { recordId: null, error: result.error?.message ?? 'Não foi possível criar o orçamento.' }
     : { recordId: result.data as string, error: null };
