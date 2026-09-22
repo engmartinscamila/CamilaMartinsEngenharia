@@ -22,6 +22,9 @@ const record = (day, entries, reason = 'Medição vistoriada e registrada') =>
 await exec(`create role anon; create role authenticated;
 create schema auth;
 create function auth.uid() returns uuid language sql as $$select nullif(current_setting('app.test_uid',true),'')::uuid$$;
+-- O Supabase concede USAGE em auth ao papel authenticated; o dublê isolado deve fazer o mesmo.
+grant usage on schema auth to authenticated;
+grant execute on function auth.uid() to authenticated;
 create function public.is_portal_admin() returns boolean language sql as $$select coalesce(current_setting('app.is_admin',true),'false')='true'$$;
 create table public.construction_schedules(id uuid primary key,activation_status text,baseline_version integer,baseline_snapshot jsonb);
 create table public.construction_schedule_items(id uuid primary key,schedule_id uuid,code text,actual_progress integer default 0,
