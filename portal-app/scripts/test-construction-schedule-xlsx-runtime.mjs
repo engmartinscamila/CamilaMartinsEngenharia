@@ -13,9 +13,10 @@ const root = new URL('../supabase/functions/generate-verified-construction-sched
 const js = (source) => ts.transpileModule(source, {
   reportDiagnostics: true, compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext},
 }).outputText;
+globalThis.__mockPNG = PNG;
 const chartSource = fs.readFileSync(new URL('curve-chart.ts', root), 'utf8')
-  .replace(/^import \{ PNG \} from .*;\s*$/m, '');
-const renderScheduleCurveChart = new Function('PNG', `${js(chartSource)}\nreturn renderScheduleCurveChart;`)(PNG);
+  .replace(/^import \{ PNG \} from .*;\s*$/m, 'const PNG = globalThis.__mockPNG;');
+const {renderScheduleCurveChart} = await import(`data:text/javascript,${encodeURIComponent(js(chartSource))}`);
 
 const ids = {
   schedule: '10000000-0000-4000-8000-000000000001',
@@ -121,6 +122,7 @@ test(curve.getCell('D3').value === 60, 'Avanço medido completo ponderado result
 test(curve.getImages().length === 1, 'Imagem gráfica de Curva S está incorporada ao XLSX');
 test(Number(curve.getCell('B3').value) === 100, 'Planejado chega a 100% no término da obra');
 test(answer.itemCount === 2 && answer.baselineVersion === 1, 'Exportação preserva vínculo e versão-base');
+delete globalThis.__mockPNG;
 delete globalThis.__mockCreateClient;
 delete globalThis.__mockExcelJS;
 delete globalThis.__mockCurve;
