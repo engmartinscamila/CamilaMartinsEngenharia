@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Text } from 'react-native';
 import { AdminPageHeader } from '@/components/admin-ui';
 import { ConstructionScheduleClientPublication } from '@/components/construction-schedule-client-publication';
+import { ConstructionScheduleCurve } from '@/components/construction-schedule-curve';
 import { Button, Card, Field, Notice, Screen, StateView } from '@/components/ui';
 import { formatCurrency, isValidIsoDate } from '@/lib/format';
 import {
@@ -120,6 +121,16 @@ export default function ConstructionScheduleMeasurementsScreen() {
         <Text>Progresso físico: {displayPercent(overview.summary.actualPhysicalPercent)}</Text>
         <Notice tone="info">O peso físico separado exige quantitativos conferidos. Sem esses dados, não será substituído artificialmente pelo peso financeiro.</Notice>
       </Card>
+      <ConstructionScheduleCurve
+        title="Curva S — planejado × medido"
+        description="Planejamento acumulado versus medições históricas. O gráfico não interpola um realizado que não foi medido."
+        points={overview.curve.map(point=>({
+          date:point.date,
+          planned:point.plannedFinancialPercent,
+          actual:point.measuredFinancialPercent,
+          measurementDate:point.measurementDate,
+        }))}
+      />
       <Card>
         <Text>Nova medição / correção auditável</Text>
         <Field label="Data da vistoria (AAAA-MM-DD)" value={measuredOn} onChangeText={setMeasuredOn} />
@@ -142,10 +153,6 @@ export default function ConstructionScheduleMeasurementsScreen() {
         <Button title="Registrar medição datada (não altera a linha de base)" loading={busy} disabled={busy} onPress={() => void save()} />
       </Card>
       <ConstructionScheduleClientPublication scheduleId={active.id} projectId={active.projectId}/>
-      <Card>
-        <Text>Curva S — planejado × medido</Text>
-        {overview.curve.map((point) => <Text key={point.date}>{point.date}: planejado {displayPercent(point.plannedFinancialPercent)} • realizado {displayPercent(point.measuredFinancialPercent)}{point.measurementDate ? ` (vistoria ${point.measurementDate})` : ''}</Text>)}
-      </Card>
       <Card>
         <Text>Histórico auditável: {overview.history.length} evento(s)</Text>
         {overview.history.slice(-30).reverse().map((event) => <Text key={event.id}>{event.measuredOn} — {event.code}: {event.progress}% • custo {displayCost(event.cost)} • {event.reason}</Text>)}
