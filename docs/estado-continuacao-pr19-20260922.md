@@ -1,48 +1,39 @@
-# Estado de continuidade verificável — PR #19 — 22/09/2026
+# PR #19 — estado de continuidade verificável (22/09/2026)
 
-**Regra de liberação:** código na PR ≠ CI verde ≠ homologação autenticada ≠ implantação sincronizada ≠ confirmação pós-publicação. Não marcar como concluído um módulo que possui apenas código, documentação ou ensaio sintético.
+**Regra de conclusão:** código na PR ≠ testes automatizados no SHA final ≠ homologação autenticada ≠ deploy ≠ verificação pós-publicação. Este arquivo registra evidências e bloqueadores; nenhuma etapa operacional é declarada concluída por haver apenas migration/tela/CI. Consultar o HEAD da PR e as quatro suítes no GitHub antes de usar este documento: novos commits invalidam o status de CI anterior.
 
-**Repositório:** `engmartinscamila/CamilaMartinsEngenharia`; PR #19 `fix/governanca-preflight-dupla-auditoria-20260921` permanece DRAFT, sem merge/publicação. PR #18 já estava em produção na transferência e deve ser preservada. A PR #19 possuía HEAD inicial `3faa5d43476847acf053c3d2446b85772b837cac` e quatro workflows success. Após novos commits, **sempre usar o SHA atual da PR no GitHub Actions**, não o SHA histórico. Nenhuma alteração de produção foi executada nesta retomada.
+**Repositório:** `engmartinscamila/CamilaMartinsEngenharia`; PR #19, branch `fix/governanca-preflight-dupla-auditoria-20260921`, permanece DRAFT, não mesclada. Preservar a PR #18 publicada, arquivos e baselines legadas, Contratos Mestre v1/v2 e documentos existentes. Não executar testes destrutivos nem migrations de PR em produção.
 
-## Trabalho efetivamente realizado nesta retomada
+## Implementado somente no código da PR (necessita homologação integrada)
 
-| Área | Evidência | Estado honesto |
-|---|---|---|
-| Pesquisa/benchmark de cronogramas | `docs/benchmark-cronograma-construcao-20260922.md`, fontes PMI/Smartsheet consultadas, commit `91357917` | Pesquisa documental concluída; parâmetros produtivos reais não definidos. |
-| CPM, calendário e folgas | `portal-app/src/lib/construction-schedule-critical-path.ts` e `portal-app/scripts/test-construction-schedule-critical-path.mjs`; commits `99195db1`, `7ca389ee`, correção de TypeScript `4bfc1aba` | **Módulo de cálculo isolado e testes automatizados**, ainda não ligado à UI, às RPCs ou ao XLSX oficial. Não equivale ao requisito integral concluído. |
-| CI do CPM | `.github/workflows/portal-app-pr.yml`, commit `90877b60` adiciona etapa obrigatória de CPM | Teste incluído na suíte; houve falha inicial TypeScript TS2532 em `90877b60`, corrigida em `4bfc1aba`. No SHA `4bfc1aba`, segurança, documentos e portal-app concluíram com success; auditoria completa foi cancelada por push posterior. |
-| Segurança: metadados de funções privilegiadas | `docs/seguranca-inventario-rpcs-pr19-20260922.md`, commit `0910267d`; Advisor e SQL read-only de metadados produção | Inventário/triagem preliminar de 39 funções; **não** validação semântica, correção, certificação ou teste com usuário real. |
-| Ambientes | `portal-cliente` e `camila-martins-homologacao` consultados sem escrita | Ambos ativos; homologação ainda não possui o legado e as estruturas novas indispensáveis ao cronograma. |
-| Produção | PR mantida draft; nenhuma migration/deploy/merge/grant aplicado | Preservada. |
+- Contratação explícita do serviço de cronograma e vínculo ORC→CON→projeto; modelos por natureza apenas como sugestão, não como prazo/peso universal. Benchmark em `docs/benchmark-cronograma-construcao-20260922.md`.
+- Formulário guiado com opções avançadas, feriados informados para a obra, pesos físicos independentes e revisão expressa de escopo. Motor de dependências/datas e análise de CPM/folga em módulo único, com regressões automatizadas.
+- Separação entre honorários comerciais e orçamento da execução. RPC `admin_set_full_schedule_execution_budget`, serviço e tela de quantitativos exigem custo/fonte e permitem quantidade × preço unitário; peso financeiro recalculado a partir dos custos; peso físico mantém critério próprio.
+- Baselines arquivadas, medição datada imutável, bloqueio de alteração direta do realizado, publicação explícita e revogável, snapshot do cliente sem custo/nota interna, Curva S, Gantt e indicadores. XLSX gerado sob demanda e testado em ambiente sintético (não via sessão autenticada de homologação).
+- Revisões/aditivos usam novo schedule_id, justificativa, versão vigente distinta da histórica e preparação temporária ligada ao contrato/usuário; consultas legadas apontam para a versão vigente. A mudança de versão e as funções que dependem dela ainda exigem E2E no staging equivalente.
+- Reuso de cliente existente por busca autorizada, sem alterar silenciosamente cadastro histórico; busca tolerante de serviços com confirmação, não seleção automática; texto de 'Outros' com escopo fechado e referência normativa documentada.
+- Regressões de documentos comerciais e testes de segurança com fixtures; inventário das 39 funções SECURITY DEFINER em `docs/seguranca-inventario-rpcs-pr19-20260922.md`, mas não houve prova autenticada de autorização por função nem pentest de produção.
 
-## Backlog integral — implementação e validação pendentes
+## Correções adicionais desta retomada (22/09/2026)
 
-1. **Segurança antes de expandir módulos:** confrontar bundle realmente publicado, variáveis e segredos sem revelá-los; analisar por inteiro 39 corpos de RPC, roles, grants, RLS, views e Storage com testes fictícios A/B/admin, sem revogar em massa. Auditar Auth leaked-password, entrada/SQL/XSS/CSP, SSRF somente se houver URL configurável, LLM somente se houver integração, rate limits, erros e painéis Cloudflare. Não assumir vulnerabilidade só pelo vídeo.
-2. **Formulário guiado do cronograma:** hoje tela nova exibe numerosos campos ao mesmo tempo. Introduzir etapa curta, campos avançados sob demanda, menos repetição, ajustes seguros e revisão individual de escopo/pressupostos.
-3. **Presets versionados:** validar por natureza e obra, sem pesos/duração universais; documentar critérios efetivos antes de promover valores à produção.
-4. **Gráficos em tela:** Admin e Cliente com planejado×realizado, Curva S, marcos e desvios, restrição de custos internos para cliente. Exportador Excel tem gráficos; tela ainda não equivale ao requisito.
-5. **Aditivos/reprogramação:** atualmente um cronograma por projeto (`UNIQUE (project_id)` no legado), embora baselines arquivadas existam na PR. Projetar revisão vigente explícita, preservar histórico e adaptar RPCs, RLS, medições, publicações, consultas, exportador e UI; não remover constraint isoladamente.
-6. **Orçamento executivo e quantitativos:** itens, unidade, quantidade, preço, composição/fonte, custo, vínculo com atividades e critério de peso físico separado. Honorários de engenharia nunca são custo da obra.
-7. **CPM integral:** ligar o módulo isolado ao planejamento real, garantir dependências e calendários coerentes na persistência, exibir no Admin e no XLSX, incluir marcos/deadlines e testar E2E.
-8. **Selecionar cliente existente:** busca restrita/autorizada por nome, CPF/CNPJ, autocompletar orçamento/contrato, não sobrescrever histórico, preservar novo prospect.
-9. **Serviços com erro ortográfico:** normalizar caixa/acentos, sugerir aproximações conservadoras, confirmação obrigatória para serviço oficial; nunca selecionar ambiguidade automaticamente.
-10. **Texto de Outros:** auditar escopo fechado, coerência ORC/CON/Anexo I e confirmar legislação brasileira antes de citar artigo; não inventar base legal.
-11. **Demais documentos/botões:** verificar tipo correto, origem, versão, snapshot, arquivo gerado, integridade, compensação quando Edge final falhar depois do gerador canônico; preservar documentos anteriores.
-12. **51 revisões materiais do Contrato Mestre v3:** submissão INDIVIDUAL à administradora para aprovar/rejeitar/ajustar; não aprovar automaticamente; manter `assert_document_governance_ready` e histórico v1/v2.
+1. `scripts/security/construction-schedule-budget-regression.mjs`: eliminou falso positivo causado por comentário SQL com a palavra honorários; verificação agora olha o SQL executável e mantém exigência de nenhuma origem comercial de custo.
+2. `supabase/migrations/20260923000500_cronograma_publicacao_curva_cliente.sql`: consertou `permission denied` nas funções auxiliares do editor administrativo com EXECUTE restrito a `authenticated` e predicados `is_portal_admin()`; função permanece SECURITY INVOKER e `anon` não obtém acesso. Regressão de publicação/isolamento A/B passou na suíte de segurança no commit `955178f`.
+3. `supabase/migrations/20260923001500_cronograma_pedido_reprogramacao.sql`: preservou no caminho de primeira criação da RPC atômica a gravação de feriados e pesos físicos que havia sido perdida ao sobrescrever o wrapper anterior.
+4. `portal-app/src/services/construction-schedule-budget-service.ts`: orçamento passa a encontrar a revisão mais recente **em rascunho**, mesmo que ainda não seja vigente. A baseline anterior aprovada não se torna editável; RPC exige `activation_status='draft'`.
+5. `scripts/security/construction-schedule-revision-request-regression.mjs`: regressões acrescentadas para persistência de feriados, pesos físicos e orçamento de aditivo em rascunho.
 
-## Portões operacionais em ordem
+**CI:** no commit `955178f`, segurança e documentos comerciais obtiveram success; portal-app e auditoria ainda executavam durante a leitura. Foram adicionados commits depois disso, portanto esse resultado NÃO vale como quatro suítes aprovadas no HEAD final. Reconsultar GitHub Actions e registrar os quatro IDs/conclusões sobre o mesmo SHA antes de homologar.
 
-A. **Código:** implementar pendências na PR, teste de regressão defensivo por alteração, comparar diff e validar migrações/dependências e contratos do app, sem tocar produção.
-B. **CI do SHA FINAL:** quatro workflows success no mesmo SHA; registrar IDs e conclusão, não inferir do SHA anterior.
-C. **Homologação isolada:** construir esquema equivalente aplicando histórico completo/Edge compatível, sem copiar dados pessoais; frontend/app/staging todos na mesma versão.
-D. **Testes autenticados Work:** admin/cliente sintético, A/B, CPF/CNPJ e novo cliente, ORC→CON→Anexo I→DOCX e demais tipos, emissão/download/histórico, cronograma contratado/não contratado, aprovação/medição/republicação/aditivo, XLSX real aberto, recuperação/primeiro acesso, responsividade, temas, expiração, falhas simuladas seguras e rollback. Registrar PASS/FAIL e evidência redigida.
-E. **Revisões humanas e autorização:** obter decisões individuais sobre 51 textos e os demais parâmetros técnicos sem base objetiva; não decidir pela administradora. Preparar rollback e plano SHA sincronizado banco+Edge+frontend+app.
-F. **Produção:** somente após gates anteriores e autorização expressa, publicação coordenada e verificação pós-deploy; nunca usar produção para ensaios invasivos.
+## Bloqueado por ambiente/execução operacional (ChatGPT Work)
 
-## Transferência específica ao ChatGPT Work
+- Staging Supabase `nvhjcoxnzigwwbdbhkhq` divergente: consulta somente leitura desta retomada confirmou que, entre oito tabelas relevantes consultadas, existem `commercial_records` e `commercial_contract_quote_links`, mas não há as seis tabelas do cronograma consultadas; não instalar só a migration nova. Reconstruir cadeia completa/dependências e Edge Functions em staging isolado com fixtures fictícias, sem dados pessoais reais nem custo não autorizado.
+- Testar com sessões legítimas A/B/admin: orçamento→contrato→Anexo I→DOCX→arquivo/histórico; cada botão/tipo de documento; cronograma contratado/não contratado, aditivo, orçamento/quantitativos, feriados, aprovação, medição, publicação/revogação, XLSX real aberto, temas/desktop/mobile, primeiro acesso/recuperação de senha, expiração/falha de Edge/snapshot e rollback. Registrar PASS/FAIL por cenário e SHA de frontend/Edge/banco.
+- Auditar bundle publicado, configurações Auth e Cloudflare, WAF/rate limit, RLS/views/Storage, 39 funções privilegiadas individualmente, validação de servidor e endpoints; avisos do Advisor não equivalem a exploração comprovada. Não imprimir segredos, não conceder privilégios em massa, não testar produção com identidades reais.
+- Plano de deploy sincronizado com rollback testado só após os gates; manter a PR em draft e produção inalterada até então.
 
-Trabalhar apenas depois que a PR estiver tecnicamente pronta, tomando este arquivo e o relatório original atualizado de 22/09/2026 como fontes. Ler o SHA real e não confiar nos SHAs históricos. O ambiente staging está incompleto (inclusive ausência de `construction_schedules`/`construction_schedule_items`). Recriar dependências e migrations completas e usar apenas fixtures fictícias. Não reutilizar segredos nem pedir senha em chat. Não marcar documento, feature nem segurança como concluídos antes de sessão autenticada, teste real do artefato, rollback e evidência. Não aprovar as 51 revisões e não publicar sem consentimento de produção.
+## Decisão humana obrigatória (administradora)
 
-## Referências de origem
+- Rever individualmente as 51 pendências materiais da versão v3 do Contrato Mestre, aprovando/rejeitando/ajustando com justificativa; não aprovar em massa e não remover `assert_document_governance_ready`.
+- Confirmar parâmetros de cada obra sem base objetiva e critérios de peso físico, validar material jurídico/normativo e autorizar explicitamente publicação só após homologação. Nenhuma destas decisões é inferida da solicitação genérica de continuar o desenvolvimento.
 
-Documento de transferência `Relatorio_transferencia_estrutura_site_ATUALIZADO_AUDITORIA_VIDEO_SEGURANCA_2026-09-22(1).docx`, seções 1–20. Estado inicial da PR #19 e `docs/estado-implantacao-cronograma-20260922.md` no repositório. Fontes oficiais de Supabase indicadas no inventário. Não usar a existência deste relatório de estado como prova de execução dos itens pendentes.
+**Condição de entrega:** quatro suítes verdes no HEAD, staging equivalente e E2E autenticado documentado, 51 decisões materiais quando aplicáveis, rollback testado e autorização expressa antes de produção. Para detalhes de origem, consultar o DOCX de transferência de 22/09/2026, seções 1–20. A própria existência deste registro não é evidência de homologação.
