@@ -3,14 +3,17 @@ import fs from 'node:fs';
 import ts from 'typescript';
 const path = new URL('../supabase/functions/generate-verified-construction-schedule-xlsx/index.ts', import.meta.url);
 const source = fs.readFileSync(path, 'utf8');
+const graph = fs.readFileSync(new URL('../supabase/functions/generate-verified-construction-schedule-xlsx/curve-chart.ts', import.meta.url),'utf8');
 let checks = 0;
 function check(condition, reason) { assert.ok(condition, reason); checks++; }
 function includes(value, reason) { check(source.includes(value), reason); }
-const compiled = ts.transpileModule(source, { reportDiagnostics: true, compilerOptions: {
-  target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext,
-}});
-const errors = (compiled.diagnostics ?? []).filter(item => item.category === ts.DiagnosticCategory.Error);
-check(errors.length === 0, `Erro sintático no gerador Edge: ${errors.map(error => ts.flattenDiagnosticMessageText(error.messageText, ' ')).join('; ')}`);
+for (const content of [source, graph]) {
+  const compiled = ts.transpileModule(content, { reportDiagnostics: true, compilerOptions: {
+    target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext,
+  }});
+  const errors = (compiled.diagnostics ?? []).filter(item => item.category === ts.DiagnosticCategory.Error);
+  check(errors.length === 0, `Erro sintático no gerador Edge: ${errors.map(error => ts.flattenDiagnosticMessageText(error.messageText, ' ')).join('; ')}`);
+}
 includes("db.auth.getUser()", 'Sessão deve ser validada no servidor');
 includes("db.rpc('is_portal_admin')", 'Somente administradora extrai dados completos');
 includes("schedule.activation_status !== 'approved'", 'Rascunho não pode ser exportado como aprovado');
@@ -21,11 +24,12 @@ includes("db.from('construction_schedule_items').select('*')", 'Consultar avanç
 check(!/admin_initialize_construction_schedule|\.insert\(|\.upsert\(|\.update\(|\.delete\(/.test(source), 'Exportação não pode criar ou alterar registros');
 check(!source.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Exportador usa exclusivamente sessão e RLS');
 check(!source.includes('length:27') && !source.includes('i < 27'), 'Gantt/Curva S não podem cortar em 27 semanas');
-includes('day <= finish', 'Os períodos semanais incluem toda a duração');
-includes('weeks.push(finish)', 'A última data da curva é a data final exata');
+includes('day <= end', 'Os períodos semanais incluem a duração, inclusive atraso');
+includes('weeks.push(finish)', 'Data final contratada aparece na série');
+includes('weeks.push(end)', 'Última medição posterior ao prazo também aparece na série');
 includes("'weekdays', 'calendar_days'", 'Calendários previstos em contrato devem ser suportados');
 includes('NETWORKDAYS(', 'Fórmula do Excel respeita dias úteis');
-check(source.toLowerCase().includes('medições datadas'), 'O arquivo deve identificar ausência de dados históricos');
+check(source.toLowerCase().includes('medições datadas'), 'O arquivo deve identificar origem do realizado');
 check(!/actualProgressAt|progress\s*\*\s*\(.*reference/.test(source), 'Não criar realizado retrospectivo a partir de um único percentual');
 for (const name of ['Cadastro', 'Cronograma', 'Indicadores', 'Curva S', 'Gantt', 'Marcos', 'Export Dashboard', 'Leia-me']) {
   includes(`addWorksheet('${name}')`, `Falta aba ${name}`);
@@ -33,7 +37,17 @@ for (const name of ['Cadastro', 'Cronograma', 'Indicadores', 'Curva S', 'Gantt',
 includes('baselineVersion: schedule.baseline_version', 'Resposta deve indicar versão da linha de base');
 includes('contentBase64', 'Resposta deve trazer dados .xlsx');
 includes('totalCost <= 0', 'Não permitir orçamento de obra zerado');
-// Executa o cálculo de datas real isoladamente, sem iniciar Deno.serve nem rede.
+includes("db.from('construction_schedule_measurements')", 'Curva S realizada requer histórico real');
+includes("count: 'exact'", 'Contagem exata deve impedir paginação incompleta');
+includes('measurements.length !== measurementCount.count', 'Não exportar histórico truncado');
+includes('state.has(String(live.id))', 'Série realizada requer atividades medidas');
+includes('known?.progress ?? null', 'Percentual sem medição é desconhecido, não zero');
+includes('renderScheduleCurveChart(', 'Curva S tem visual gráfico');
+includes('book.addImage(', 'Imagem PNG deve entrar no XLSX');
+includes('curve.addImage(', 'Gráfico deve aparecer na aba Curva S');
+check(graph.includes('preceding.actual !== null && point.actual !== null'), 'Imagem não pode ligar períodos de real desconhecido');
+check(graph.includes('PNG.sync.write(image)'), 'Imagem é PNG válido, não decoração textual');
+// Executa o cálculo isoladamente, sem iniciar Deno.serve nem usar banco.
 const helperSource = source.slice(source.indexOf('const dateText'), source.indexOf('Deno.serve'));
 const helperJavaScript = ts.transpileModule(`${helperSource}\nexport { date, countDays, progress, addDays };`, {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
