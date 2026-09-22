@@ -8,6 +8,18 @@ export interface ClientConstructionStage {
   actual_progress: number | null;
   measurement_date: string | null;
 }
+export interface ClientConstructionCurvePoint {
+  date: string;
+  plannedPercent: number;
+  actualPercent: number | null;
+}
+export interface ClientConstructionSummary {
+  referenceDate: string | null;
+  plannedPercent: number;
+  actualPercent: number | null;
+  deadline: string | null;
+  revisionNumber: number;
+}
 export interface ClientConstructionSchedulePublication {
   id: string;
   projectId: string;
@@ -16,6 +28,8 @@ export interface ClientConstructionSchedulePublication {
   title: string;
   plannedStart: string | null;
   plannedFinish: string | null;
+  summary: ClientConstructionSummary | null;
+  curve: ClientConstructionCurvePoint[];
   activities: ClientConstructionStage[];
 }
 
@@ -36,12 +50,27 @@ export async function loadClientConstructionSchedulePublication(projectId: strin
     measurement_date:typeof item.measurement_date==='string'?item.measurement_date:null,
   }));
   if (activities.some((item)=>!item.code || !item.activity)) return {data:null,error:'Atividade publicada inválida.'};
+
+  const rawSummary=snapshot.summary && typeof snapshot.summary==='object' ? snapshot.summary as Record<string,unknown> : null;
+  const summary:ClientConstructionSummary|null=rawSummary?{
+    referenceDate:typeof rawSummary.reference_date==='string'?rawSummary.reference_date:null,
+    plannedPercent:typeof rawSummary.planned_percent==='number'?rawSummary.planned_percent:Number(rawSummary.planned_percent??0),
+    actualPercent:rawSummary.actual_percent===null||rawSummary.actual_percent===undefined?null:Number(rawSummary.actual_percent),
+    deadline:typeof rawSummary.deadline==='string'?rawSummary.deadline:null,
+    revisionNumber:Number(rawSummary.revision_number??1),
+  }:null;
+  const curve:Array<ClientConstructionCurvePoint>=Array.isArray(snapshot.curve)?snapshot.curve.map((item:Record<string,unknown>)=>({
+    date:String(item.date??''),
+    plannedPercent:Number(item.planned_percent??0),
+    actualPercent:item.actual_percent===null||item.actual_percent===undefined?null:Number(item.actual_percent),
+  })).filter(point=>/^\d{4}-\d{2}-\d{2}$/.test(point.date)&&Number.isFinite(point.plannedPercent)&&(point.actualPercent===null||Number.isFinite(point.actualPercent))):[];
+
   return {data:{id:String(result.data.id),projectId:String(result.data.project_id),
     version:Number(result.data.baseline_version),publishedAt:String(result.data.published_at),
     title:String(snapshot.title??'Cronograma de obra'),
     plannedStart:typeof snapshot.planned_start==='string'?snapshot.planned_start:null,
     plannedFinish:typeof snapshot.planned_finish==='string'?snapshot.planned_finish:null,
-    activities},error:null};
+    summary,curve,activities},error:null};
 }
 
 export async function adminPublishConstructionSchedule(scheduleId: string):Promise<string|null> {
