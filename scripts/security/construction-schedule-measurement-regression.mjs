@@ -22,7 +22,6 @@ const record = (day, entries, reason = 'Medição vistoriada e registrada') =>
 await exec(`create role anon; create role authenticated;
 create schema auth;
 create function auth.uid() returns uuid language sql as $$select nullif(current_setting('app.test_uid',true),'')::uuid$$;
--- O Supabase concede USAGE em auth ao papel authenticated; o dublê isolado deve fazer o mesmo.
 grant usage on schema auth to authenticated;
 grant execute on function auth.uid() to authenticated;
 create function public.is_portal_admin() returns boolean language sql as $$select coalesce(current_setting('app.is_admin',true),'false')='true'$$;
@@ -32,7 +31,9 @@ create table public.construction_schedule_items(id uuid primary key,schedule_id 
 insert into construction_schedules values ('${schedule}','approved',1,'{"activities":[{"code":"01"}]}'),('${draft}','draft',0,null);
 insert into construction_schedule_items(id,schedule_id,code) values
  ('${item1}','${schedule}','01'),('${item2}','${schedule}','02'),('${foreign}','${draft}','01');
-grant select on public.construction_schedules to authenticated;
+-- A RPC SECURITY INVOKER usa SELECT ... FOR UPDATE, que exige UPDATE também.
+-- Este GRANT reproduz a configuração verificada no projeto publicado sem mudar a produção.
+grant select,update on public.construction_schedules to authenticated;
 grant select,update on public.construction_schedule_items to authenticated;
 select set_config('app.is_admin','true',false);
 select set_config('app.test_uid','${me}',false);`);
