@@ -33,6 +33,7 @@ export default function NewConstructionScheduleScreen() {
   const [rows, setRows] = useState<DraftRow[]>([]);
   const [startDate, setStartDate] = useState('');
   const [calendar, setCalendar] = useState<WorkCalendar>('weekdays');
+  const [holidaysText, setHolidaysText] = useState('');
   const [manualWeightsApproved, setManualWeightsApproved] = useState(false);
   const [saveConfirmed, setSaveConfirmed] = useState(false);
   const [scheduleId, setScheduleId] = useState<string | null>(null);
@@ -70,6 +71,10 @@ export default function NewConstructionScheduleScreen() {
     if (!template || !project || selected.length === 0 || !startDate) return { data: null, error: null };
     try {
       if (!isValidIsoDate(startDate)) throw new Error('Informe uma data inicial real no formato AAAA-MM-DD.');
+      const holidays = holidaysText.trim() ? holidaysText.split(/[,;\n]+/).map((value) => value.trim()) : [];
+      if (holidays.length > 366 || holidays.some((day) => !isValidIsoDate(day)) || new Set(holidays).size !== holidays.length) {
+        throw new Error('Informe até 366 feriados distintos no formato AAAA-MM-DD, separados por vírgula.');
+      }
       if (selected.some((row) => !row.confirmed)) throw new Error('Revise e confirme individualmente cada atividade selecionada.');
       if (selected.some((row) => !allowedCodes.includes(row.sourceCode.trim()))) {
         throw new Error('Cada atividade precisa corresponder a um código de serviço do orçamento contratado.');
@@ -80,10 +85,13 @@ export default function NewConstructionScheduleScreen() {
         weightPercent: row.weight.trim() ? numeric(row.weight) : null, actualProgress: 0,
       }));
       const result = planConstructionSchedule(activities, {
-        startDate, calendar, contractualDeadline: project.finishDate, manualWeightsApproved,
+        startDate, calendar, holidays, contractualDeadline: project.finishDate, manualWeightsApproved,
       });
       if (result.totalConstructionCost === null || result.totalConstructionCost <= 0) {
         throw new Error('Informe custos de execução da obra, separados dos honorários, antes de emitir o plano físico-financeiro.');
+      }
+      if (holidays.some((day) => day < result.plannedStart || day > result.plannedFinish)) {
+        throw new Error('Um feriado está fora do período calculado da obra. Confira as datas antes de confirmar.');
       }
       const items = result.activities.map((activity, index) => {
         const source = selected.find((row) => row.code === activity.code);
@@ -99,7 +107,7 @@ export default function NewConstructionScheduleScreen() {
       });
       return {
         data: {
-          scope_confirmed: true, calendar, weight_source: result.weightSource,
+          scope_confirmed: true, calendar, holidays, weight_source: result.weightSource,
           planned_start: result.plannedStart, planned_finish: result.plannedFinish,
           notes: `Modelo ${template.template_code} v${template.template_version}: referência revisada, custos de obra separados dos honorários.`,
           items,
@@ -112,7 +120,7 @@ export default function NewConstructionScheduleScreen() {
 
   const clearPlan = () => {
     setTemplate(null); setRows([]); setTemplateCode(''); setScheduleId(null); setApproved(false);
-    setSaveConfirmed(false); setManualWeightsApproved(false); setError(null); setSuccess(null);
+    setSaveConfirmed(false); setManualWeightsApproved(false); setHolidaysText(''); setError(null); setSuccess(null);
   };
   const updateRow = (code: string, changes: Partial<DraftRow>) => {
     setRows((current) => current.map((row) => row.code === code ? { ...row, ...changes, confirmed: false } : row));
@@ -153,7 +161,7 @@ export default function NewConstructionScheduleScreen() {
     setBusy(false);
     if (result.error || !result.scheduleId) { setError(result.error ?? 'Não foi possível salvar.'); return; }
     setScheduleId(result.scheduleId);
-    setSuccess('Planejamento salvo em rascunho numa única transação. Confira o resultado antes de aprovar a linha de base.');
+    setSuccess('Planejamento e calendário de feriados salvos em rascunho numa única transação. Confira o resultado antes de aprovar a linha de base.');
   };
   const approve = async () => {
     if (!scheduleId || busy || approved) return;
@@ -161,7 +169,7 @@ export default function NewConstructionScheduleScreen() {
     const result = await approveVerifiedSchedule(scheduleId);
     setBusy(false);
     if (result) setError(result);
-    else { setApproved(true); setSuccess('Linha de base aprovada pelo banco. Alterações estruturais exigem uma nova versão.'); }
+    else { setApproved(true); setSuccess('Linha de base e calendário aprovados pelo banco. Alterações estruturais exigem uma nova versão.'); }
   };
   const exportExcel = async () => {
     if (!scheduleId || !approved || busy) return;
@@ -224,22 +232,24 @@ export default function NewConstructionScheduleScreen() {
             <Text>5. Planejamento e conferência</Text>
             <Field label="Data de início (AAAA-MM-DD)" value={startDate} onChangeText={(value) => { setStartDate(value); setSaveConfirmed(false); }} />
             <Text>Calendário de execução</Text>
-            <Button title={`Dias úteis, sem feriados cadastrados ${calendar === 'weekdays' ? '✓' : ''}`} variant="secondary" onPress={() => { setCalendar('weekdays'); setSaveConfirmed(false); }} />
+            <Button title={`Dias úteis ${calendar === 'weekdays' ? '✓' : ''}`} variant="secondary" onPress={() => { setCalendar('weekdays'); setSaveConfirmed(false); }} />
             <Button title={`Dias corridos ${calendar === 'calendar_days' ? '✓' : ''}`} variant="secondary" onPress={() => { setCalendar('calendar_days'); setSaveConfirmed(false); }} />
+            <Field label="Datas não úteis/feriados da obra (AAAA-MM-DD; separados por vírgula)" value={holidaysText} multiline onChangeText={(value) => { setHolidaysText(value); setSaveConfirmed(false); }} />
+            <Notice tone="info">Cadastre apenas datas conferidas para esta obra. Em dias úteis, elas são descontadas; em dias corridos, não estendem o prazo. O calendário ficará congelado na aprovação.</Notice>
             <Notice tone="info">Com custos completos, pesos financeiros derivam deles; pesos manuais não substituem orçamento da obra.</Notice>
             <Button title={manualWeightsApproved ? 'Pesos manuais validados ✓' : 'Validar pesos manuais (se aplicável)'} variant="secondary" onPress={() => { setManualWeightsApproved((current) => !current); setSaveConfirmed(false); }} />
             {calculated.error ? <Notice tone="warning">{calculated.error}</Notice> : null}
             {calculated.data ? <>
-              <Notice tone="info">Período: {calculated.data.planned_start} a {calculated.data.planned_finish}; {calculated.data.items.length} atividades. Confira predecessoras, custos e prazos.</Notice>
+              <Notice tone="info">Período: {calculated.data.planned_start} a {calculated.data.planned_finish}; {calculated.data.items.length} atividades; {calculated.data.holidays.length} data(s) não útil(eis) informada(s). Confira predecessoras, custos e prazos.</Notice>
               {calculated.data.items.map((item) => <Text key={item.code}>{item.code}: {item.planned_start} → {item.planned_finish}; peso {item.weight_percent}%; custo R$ {item.planned_cost}</Text>)}
               <Button title={saveConfirmed ? 'Planejamento revisado ✓' : 'Confirmo planejamento, custos e escopo acima'} variant="secondary" onPress={() => setSaveConfirmed((current) => !current)} />
-              <Button title="Salvar rascunho com vínculo verificado" loading={busy} disabled={!saveConfirmed || busy} onPress={() => void save()} />
+              <Button title="Salvar rascunho e feriados com vínculo verificado" loading={busy} disabled={!saveConfirmed || busy} onPress={() => void save()} />
             </> : null}
           </Card>
         </> : null}
       </> : null}
       {scheduleId ? <Card>
-        <Text>Planejamento salvo. Aprovação congela a linha de base, sujeita a validações do banco.</Text>
+        <Text>Planejamento salvo. Aprovação congela a linha de base e os feriados, sujeita a validações do banco.</Text>
         <Button title={approved ? 'Linha de base aprovada ✓' : 'Aprovar linha de base após conferência'} loading={busy} disabled={busy || approved} onPress={() => void approve()} />
         {approved ? <>
           <Notice tone="info">Excel editável com cronograma, Gantt, Curva S planejada, indicadores e versão aprovada. Dados reais históricos só aparecem após medições datadas, sem inventar evolução.</Notice>
