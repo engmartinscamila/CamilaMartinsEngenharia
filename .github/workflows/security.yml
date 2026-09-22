@@ -49,6 +49,9 @@ jobs:
       - name: Bloquear atualização direta do avanço de cronograma aprovado
         run: node scripts/security/construction-schedule-actual-write-guard-regression.mjs
 
+      - name: Testar arquivo imutável e atômico das linhas de base
+        run: node scripts/security/construction-schedule-baseline-archive-regression.mjs
+
       - name: Testar publicação sanitizada do cronograma e isolamento entre clientes
         run: node scripts/security/construction-schedule-publication-regression.mjs
 
