@@ -37,6 +37,12 @@ export interface ScheduleTemplatePreview {
   requires_scope_confirmation: boolean;
   items: ScheduleTemplateItem[];
 }
+export interface CurrentScheduleState {
+  id: string;
+  activationStatus: 'legacy' | 'draft' | 'approved';
+  revisionNumber: number;
+  isCurrent: boolean;
+}
 const toDocument = (row: Record<string, unknown>): CommercialScheduleDocument => ({
   id: String(row.id),
   recordKind: String(row.record_kind),
@@ -63,6 +69,26 @@ export async function loadScheduleCommercialOptions(): Promise<{ data: ScheduleC
     links:(links.data ?? []).map(row=>({quoteRecordId:String(row.quote_record_id),contractRecordId:String(row.contract_record_id)})),
   },error:null};
 }
+
+export async function loadCurrentScheduleState(projectId: string): Promise<{ data: CurrentScheduleState | null; error: string | null }> {
+  const result = await supabase
+    .from('construction_schedules')
+    .select('id,activation_status,revision_number,is_current')
+    .eq('project_id', projectId)
+    .eq('is_current', true)
+    .maybeSingle();
+  if (result.error) return { data: null, error: result.error.message ?? 'Não foi possível conferir a revisão vigente.' };
+  if (!result.data) return { data: null, error: null };
+  const status = String(result.data.activation_status ?? 'legacy');
+  if (!['legacy','draft','approved'].includes(status)) return { data: null, error: 'Estado inválido do cronograma vigente.' };
+  return { data: {
+    id: String(result.data.id),
+    activationStatus: status as CurrentScheduleState['activationStatus'],
+    revisionNumber: Number(result.data.revision_number ?? 1),
+    isCurrent: result.data.is_current === true,
+  }, error: null };
+}
+
 export async function previewScheduleTemplate(projectId:string,quoteId:string,contractId:string,templateCode:string):Promise<{data:ScheduleTemplatePreview|null;error:string|null}> {
   const result=await supabase.rpc('admin_preview_full_schedule_template',{
     p_project_id:projectId,p_quote_record_id:quoteId,p_contract_record_id:contractId,p_template_code:templateCode,
@@ -72,11 +98,24 @@ export async function previewScheduleTemplate(projectId:string,quoteId:string,co
   if (!preview.requires_scope_confirmation || !Array.isArray(preview.items)) return {data:null,error:'Modelo inválido: falta revisão individual das atividades.'};
   return {data:preview,error:null};
 }
-export async function saveVerifiedSchedule(projectId:string,quoteId:string,contractId:string,plan:Record<string,unknown>):Promise<{scheduleId:string|null;error:string|null}> {
-  // Uma chamada HTTP e uma transação no Postgres: falha no plano desfaz também a criação.
-  const result=await supabase.rpc('admin_initialize_and_save_full_schedule',{
-    p_project_id:projectId,p_quote_record_id:quoteId,p_contract_record_id:contractId,p_plan:plan,
-  });
+export async function saveVerifiedSchedule(
+  projectId:string,
+  quoteId:string,
+  contractId:string,
+  plan:Record<string,unknown>,
+  revision?: { previousScheduleId: string; reason: string } | null,
+):Promise<{scheduleId:string|null;error:string|null}> {
+  const result = revision
+    ? await supabase.rpc('admin_begin_and_save_full_schedule_revision', {
+        p_previous_schedule_id: revision.previousScheduleId,
+        p_quote_record_id: quoteId,
+        p_contract_record_id: contractId,
+        p_reason: revision.reason,
+        p_plan: plan,
+      })
+    : await supabase.rpc('admin_initialize_and_save_full_schedule',{
+        p_project_id:projectId,p_quote_record_id:quoteId,p_contract_record_id:contractId,p_plan:plan,
+      });
   if (result.error || !result.data) return {scheduleId:null,error:result.error?.message??'Cronograma não foi criado: verifique escopo e planejamento.'};
   return {scheduleId:String(result.data),error:null};
 }
@@ -89,7 +128,6 @@ export async function exportApprovedScheduleXlsx(scheduleId: string): Promise<st
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(scheduleId)) {
     return 'Identificador do cronograma inválido.';
   }
-  // Edge independente, sem criação implícita, exige sessão admin e linha de base aprovada.
   const result = await supabase.functions.invoke('generate-verified-construction-schedule-xlsx', {body: {scheduleId}});
   if (result.error || result.data?.generated !== true || typeof result.data?.contentBase64 !== 'string') {
     return typeof result.data?.error === 'string' ? result.data.error : result.error?.message ?? 'Não foi possível extrair o Excel do cronograma aprovado.';
