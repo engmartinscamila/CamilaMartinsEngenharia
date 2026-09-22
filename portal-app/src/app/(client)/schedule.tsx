@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 
+import { ConstructionScheduleClientGantt } from '@/components/construction-schedule-client-gantt';
 import { ProjectPicker } from '@/components/project-picker';
 import { Button, Card, Notice, PageHeader, Screen, StateView, StatusPill } from '@/components/ui';
 import { formatDate, humanizeStatus } from '@/lib/format';
@@ -79,6 +80,7 @@ export default function ScheduleScreen() {
         <Text style={styles.dates}>{published.title}</Text>
         <Text style={styles.dates}>Planejamento: {formatDate(published.plannedStart, 'Não informado')} — {formatDate(published.plannedFinish, 'Não informado')}</Text>
         <Text style={styles.description}>Resumo liberado pela engenharia em {formatDate(published.publishedAt)}. Os percentuais só aparecem quando existe medição registrada; custos e documentos comerciais não são compartilhados aqui.</Text>
+        <ConstructionScheduleClientGantt publication={published} />
         {published.activities.map((activity) => <View key={activity.code} style={styles.publishedStage}>
           <Text style={styles.title}>{activity.code} — {activity.activity}</Text>
           <Text style={styles.dates}>{formatDate(activity.planned_start, 'Início não informado')} — {formatDate(activity.planned_finish, 'Fim não informado')}</Text>
