@@ -46,10 +46,12 @@ insert into public.construction_schedules(id,project_id,client_id,activation_sta
 values('${legacy}','${project}','${client}','legacy');
 insert into public.construction_schedule_items(schedule_id,code,category,activity,display_order,weight_percent,planned_duration_days,planned_cost,is_default)
 values('${legacy}','L','Histórico','Histórico existente',1,100,1,null,true);`);
-for (const filename of ['20260921183000_cronograma_planejamento_aprovacao_linha_base.sql','20260921184000_cronograma_salvar_plano_atomico.sql']) {
+for (const filename of ['20260921183000_cronograma_planejamento_aprovacao_linha_base.sql','20260921184000_cronograma_salvar_plano_atomico.sql','20260922010000_cronograma_arquivo_imutavel_linhas_base.sql']) {
  await sql(fs.readFileSync(new URL(`supabase/migrations/${filename}`,root),'utf8'));
  checks++;
 }
+ok(await scalar('select count(*)::integer value from construction_schedule_baseline_versions')===0,
+ 'Arquivo não presume aprovação para cronogramas legados');
 await sql(`insert into public.construction_schedules(id,project_id,client_id,activation_status,quote_record_id,contract_record_id,source_scope_snapshot,work_calendar,weight_source)
 values('${schedule}','${project}','${client}','draft','${client}','${project}',${json(scope)},'weekdays','confirmed_manual');`);
 await bad(`select public.admin_save_full_schedule_plan('${schedule}'::uuid,${json({...plan(),scope_confirmed:undefined})})`,'Sem confirmação deve recusar');
@@ -73,11 +75,17 @@ await sql(`select public.admin_save_full_schedule_plan('${schedule}'::uuid,${jso
 await sql(`update public.construction_schedules set activation_status='approved' where id='${schedule}'`);
 ok(await scalar(`select baseline_version value from construction_schedules where id='${schedule}'`)===1,'Primeira linha de base versionada');
 ok(await scalar(`select baseline_snapshot->'activities'->0->>'code' value from construction_schedules where id='${schedule}'`)==='01','Linha de base contém o escopo');
+ok(await scalar(`select count(*)::integer value from construction_schedule_baseline_versions where schedule_id='${schedule}'`)===1,
+ 'Aprovação e arquivamento devem ocorrer na mesma transação');
+ok(await scalar(`select baseline_snapshot->'activities'->0->>'planned_cost' value from construction_schedule_baseline_versions where schedule_id='${schedule}'`)==='200',
+ 'Arquivo conserva o custo de obra aprovado sem consultar estado posterior');
 await bad(`update construction_schedule_items set planned_cost=300 where schedule_id='${schedule}'`,'Não alterar custo da linha de base');
 await bad(`insert into construction_schedule_items(schedule_id,code,category,activity,display_order,weight_percent,planned_duration_days,source_service_code) values('${schedule}','02','Obra','Etapa tardia',2,0,1,'s')`,'Não inserir etapa após aprovação');
 await bad(`update construction_schedules set activation_status='draft' where id='${schedule}'`,'Linha de base não pode reabrir para modificar');
 await sql(`update construction_schedule_items set actual_progress=50 where schedule_id='${schedule}'`);
 ok(await scalar(`select actual_progress value from construction_schedule_items where schedule_id='${schedule}'` )===50,'Avanço real continua permitido');
+ok(await scalar(`select baseline_snapshot->'activities'->0->>'actual_progress' value from construction_schedule_baseline_versions where schedule_id='${schedule}'`)!=='50',
+ 'Avanço real não altera retroativamente o arquivo de planejamento');
 ok(await scalar(`select baseline_version value from construction_schedules where id='${legacy}'`)===0,'Histórico legado preservado');
 await bad(`select public.admin_initialize_and_save_full_schedule('${project}'::uuid,'${client}'::uuid,'${project}'::uuid,${json({...plan(300),scope_confirmed:false})})`,'RPC única deve rejeitar plano não confirmado');
 ok(await scalar(`select count(*)::integer value from construction_schedules where id='${atomic}'`)===0,'Erro na segunda etapa desfaz a inserção do cabeçalho');
