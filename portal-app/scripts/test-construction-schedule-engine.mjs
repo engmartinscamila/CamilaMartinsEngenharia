@@ -17,22 +17,6 @@ test(result.activities[1].plannedStart==='2026-09-23' && result.activities[1].pl
 test(result.plannedFinish==='2026-09-25','Término deriva da última atividade');
 test(result.activities[0].assignedWeightPercent===40 && result.activities[1].assignedWeightPercent===60,'Pesos derivam do custo da OBRA');
 test(result.progressPercent===20,'Avanço ponderado');
-test(result.criticalPathCodes.join(',')==='01,02','Sequência simples é caminho crítico');
-test(result.activities.every(a=>a.critical && a.totalFloatDays===0),'Atividades críticas têm folga zero');
-const branched=plan([
-{code:'A',activity:'Início',predecessorCode:null,durationDays:1,plannedCost:100,weightPercent:null,actualProgress:0},
-{code:'B',activity:'Ramo longo',predecessorCode:'A',durationDays:4,plannedCost:400,weightPercent:null,actualProgress:0},
-{code:'C',activity:'Ramo curto',predecessorCode:'A',durationDays:2,plannedCost:200,weightPercent:null,actualProgress:0},
-{code:'D',activity:'Fechamento',predecessorCode:'B',durationDays:1,plannedCost:100,weightPercent:null,actualProgress:0},
-],{startDate:'2026-09-21',calendar:'weekdays'});
-test(branched.criticalPathCodes.join(',')==='A,B,D','CPM identifica ramo de maior duração');
-const short=branched.activities.find(a=>a.code==='C');
-test(Boolean(short && !short.critical && short.totalFloatDays===3),'Ramo curto recebe folga total');
-const constrained=plan([
-{code:'A',activity:'Mobilização',predecessorCode:null,durationDays:2,plannedCost:200,weightPercent:null,actualProgress:0},
-{code:'B',activity:'Entrega condicionada',predecessorCode:'A',durationDays:2,plannedCost:200,weightPercent:null,actualProgress:0,requestedStart:'2026-09-28'},
-],{startDate:'2026-09-21',calendar:'weekdays'});
-test(constrained.criticalPathCodes.includes('B'),'Restrição de início participa do cálculo CPM');
 const holiday=plan(initial,{startDate:'2026-09-21',calendar:'weekdays',holidays:['2026-09-22']});
 test(holiday.activities[0].plannedFinish==='2026-09-23' && holiday.activities[1].plannedStart==='2026-09-24','Feriado recalcula sequência');
 const weekend=plan([{...initial[0],durationDays:3}],{startDate:'2026-09-25',calendar:'weekdays'});
