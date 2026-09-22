@@ -57,6 +57,12 @@ jobs:
       - name: Testar exportação Excel do cronograma aprovado
         run: node scripts/test-construction-schedule-excel.mjs
 
+      - name: Instalar gerador Excel somente no ambiente isolado de teste
+        run: npm install --prefix "$RUNNER_TEMP/schedule-xlsx-test" --no-save --package-lock=false --ignore-scripts exceljs@4.4.0 pngjs@7.0.0
+
+      - name: Gerar e reabrir arquivo XLSX real com dados sintéticos
+        run: node scripts/test-construction-schedule-xlsx-runtime.mjs
+
       - name: ESLint
         run: npm run lint
 
