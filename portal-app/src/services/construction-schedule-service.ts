@@ -85,8 +85,8 @@ export async function initializeConstructionSchedule(projectId: string) {
 }
 
 export async function loadConstructionSchedule(projectId: string) {
-  const headerResult = await supabase.from('construction_schedules').select('id,project_id,client_id,contract_id,title,template_version,reference_date,planned_start,planned_finish,notes').eq('project_id', projectId).maybeSingle();
-  if (headerResult.error) return { header: null, items: [] as ConstructionScheduleItem[], error: 'Não foi possível carregar o cronograma.' };
+  const headerResult = await supabase.from('construction_schedules').select('id,project_id,client_id,contract_id,title,template_version,reference_date,planned_start,planned_finish,notes').eq('project_id', projectId).eq('is_current', true).maybeSingle();
+  if (headerResult.error) return { header: null, items: [] as ConstructionScheduleItem[], error: 'Não foi possível carregar o cronograma vigente.' };
   if (!headerResult.data) return { header: null, items: [] as ConstructionScheduleItem[], error: null };
   const itemsResult = await supabase.from('construction_schedule_items').select('id,schedule_id,code,category,activity,display_order,weight_percent,planned_duration_days,predecessor_code,planned_start,planned_finish,actual_start,actual_finish,actual_progress,planned_cost,actual_cost,status,notes,is_default').eq('schedule_id', headerResult.data.id).order('display_order', { ascending: true });
   if (itemsResult.error) return { header: null, items: [], error: 'Não foi possível carregar as atividades do cronograma.' };
