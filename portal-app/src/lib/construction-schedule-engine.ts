@@ -67,8 +67,9 @@ export function planConstructionSchedule(
   const visiting=new Set<string>();
   const planned=new Map<string,PlannedActivity>();
   const workday = (day: string): boolean => {
+    if (options.calendar === 'calendar_days') return true; // Dias corridos incluem fins de semana e feriados.
     const d=asDate(day); const weekday=d.getUTCDay();
-    return !holidays.has(day) && (options.calendar==='calendar_days' || (weekday!==0 && weekday!==6));
+    return !holidays.has(day) && weekday!==0 && weekday!==6;
   };
   const advance = (start: string,duration: number): {start:string;finish:string} => {
     let cursor=start;
