@@ -27,6 +27,17 @@ DROP POLICY IF EXISTS construction_baseline_versions_admin_insert ON public.cons
 CREATE POLICY construction_baseline_versions_admin_insert ON public.construction_schedule_baseline_versions
  FOR INSERT TO authenticated WITH CHECK (public.is_portal_admin() AND (SELECT auth.uid()) IS NOT NULL);
 
+-- Primeiro arquivar as versões já aprovadas com os privilégios de migração.
+-- Se a proteção de INSERT fosse instalada antes, o contexto de migração sem
+-- JWT legítimo bloquearia a cópia e reverteria a atualização de esquema.
+INSERT INTO public.construction_schedule_baseline_versions(
+ schedule_id,baseline_version,baseline_snapshot,source_scope_snapshot,approved_at,approved_by)
+SELECT id,baseline_version,baseline_snapshot,source_scope_snapshot,approved_at,approved_by
+FROM public.construction_schedules
+WHERE activation_status='approved' AND baseline_version>=1
+ AND baseline_snapshot IS NOT NULL AND source_scope_snapshot IS NOT NULL
+ON CONFLICT (schedule_id,baseline_version) DO NOTHING;
+
 CREATE OR REPLACE FUNCTION public.guard_construction_baseline_archive()
 RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path=''
 AS $guard$
@@ -76,15 +87,5 @@ DROP TRIGGER IF EXISTS construction_archive_approved_baseline ON public.construc
 CREATE TRIGGER construction_archive_approved_baseline AFTER INSERT OR UPDATE OF activation_status
  ON public.construction_schedules FOR EACH ROW
  EXECUTE FUNCTION public.archive_approved_construction_baseline();
-
--- Migrações incrementais devem preservar qualquer linha de base já aprovada;
--- nenhum registro legado/draft recebe aprovação presumida.
-INSERT INTO public.construction_schedule_baseline_versions(
- schedule_id,baseline_version,baseline_snapshot,source_scope_snapshot,approved_at,approved_by)
-SELECT id,baseline_version,baseline_snapshot,source_scope_snapshot,approved_at,approved_by
-FROM public.construction_schedules
-WHERE activation_status='approved' AND baseline_version>=1
- AND baseline_snapshot IS NOT NULL AND source_scope_snapshot IS NOT NULL
-ON CONFLICT (schedule_id,baseline_version) DO NOTHING;
 REVOKE ALL ON FUNCTION public.guard_construction_baseline_archive() FROM PUBLIC,anon,authenticated;
 REVOKE ALL ON FUNCTION public.archive_approved_construction_baseline() FROM PUBLIC,anon,authenticated;
