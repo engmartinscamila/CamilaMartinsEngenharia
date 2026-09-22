@@ -15,7 +15,7 @@ const schedule='10000000-0000-4000-8000-000000000006';
 const item='10000000-0000-4000-8000-000000000007';
 const quote='10000000-0000-4000-8000-000000000008';
 const contractRecord='10000000-0000-4000-8000-000000000009';
-const baseline=JSON.stringify({activities:[{code:'01',display_order:1,activity:'Fundação planejada',planned_start:'2026-09-01',planned_finish:'2026-09-30',planned_cost:100000,notes:'CUSTO CONFIDENCIAL'}]});
+const baseline=JSON.stringify({activities:[{code:'01',display_order:1,activity:'Fundação planejada',planned_start:'2026-09-01',planned_finish:'2026-09-30',weight_percent:100,planned_cost:100000,notes:'CUSTO CONFIDENCIAL'}]});
 await run(`create role anon;create role authenticated;create schema auth;
 create function auth.uid() returns uuid language sql as $$select nullif(current_setting('app.test_uid',true),'')::uuid$$;
 grant usage on schema auth to authenticated;grant execute on function auth.uid() to authenticated;
@@ -23,17 +23,18 @@ create function public.is_portal_admin() returns boolean language sql as $$selec
 create function public.current_client_id() returns uuid language sql as $$select nullif(current_setting('app.client_id',true),'')::uuid$$;
 create table public.projetos(id uuid primary key,cliente_id uuid,contract_id uuid);
 create table public.project_portal_settings(project_id uuid primary key,show_schedule boolean);
-create table public.construction_schedules(id uuid primary key,project_id uuid,client_id uuid,contract_id uuid,quote_record_id uuid,contract_record_id uuid,activation_status text,baseline_version integer,baseline_snapshot jsonb,title text,planned_start date,planned_finish date);
+create table public.construction_schedules(id uuid primary key,project_id uuid,client_id uuid,contract_id uuid,quote_record_id uuid,contract_record_id uuid,activation_status text,baseline_version integer,baseline_snapshot jsonb,title text,planned_start date,planned_finish date,work_calendar text,is_current boolean,revision_number integer);
 create table public.construction_schedule_items(id uuid primary key,schedule_id uuid,code text);
 create table public.construction_schedule_measurements(id uuid primary key,schedule_id uuid,item_id uuid,actual_progress integer,measured_on date,recorded_at timestamptz);
+create table public.construction_schedule_holidays(schedule_id uuid,holiday_date date);
 insert into projetos values('${project}','${client}','${contract}'),('${otherProject}','${otherClient}','${contract}');
 insert into project_portal_settings values('${project}',true),('${otherProject}',true);
-insert into construction_schedules values('${schedule}','${project}','${client}','${contract}','${quote}','${contractRecord}','approved',1,'${baseline.replaceAll("'","''")}'::jsonb,'Projeto testado','2026-09-01','2026-09-30');
+insert into construction_schedules values('${schedule}','${project}','${client}','${contract}','${quote}','${contractRecord}','approved',1,'${baseline.replaceAll("'","''")}'::jsonb,'Projeto testado','2026-09-01','2026-09-30','weekdays',true,1);
 insert into construction_schedule_items values('${item}','${schedule}','01');
 insert into construction_schedule_measurements values(gen_random_uuid(),'${schedule}','${item}',40,'2026-09-21',now());
-grant select on public.projetos,public.project_portal_settings,public.construction_schedule_items,public.construction_schedule_measurements to authenticated;
+grant select on public.projetos,public.project_portal_settings,public.construction_schedule_items,public.construction_schedule_measurements,public.construction_schedule_holidays to authenticated;
 grant select,update on public.construction_schedules to authenticated;`);
-for(const name of ['20260922004000_cronograma_publicacao_cliente_isolada.sql','20260922004100_cronograma_publicacao_minimizar_colunas_cliente.sql']) {
+for(const name of ['20260922004000_cronograma_publicacao_cliente_isolada.sql','20260922004100_cronograma_publicacao_minimizar_colunas_cliente.sql','20260923000500_cronograma_publicacao_curva_cliente.sql']) {
  await run(fs.readFileSync(new URL(`supabase/migrations/${name}`,root),'utf8'));checks++;
 }
 const pol=await db.query(`select policyname,cmd from pg_policies where tablename='construction_schedule_publications'`);
@@ -51,8 +52,15 @@ await run(`select public.admin_publish_full_schedule_to_client('${schedule}')`);
 ok(await scalar('select count(*)::integer value from construction_schedule_publications where revoked_at is null')===1,'Publicação consciente cria resumo');
 const snapshot=await db.query('select published_snapshot from construction_schedule_publications where revoked_at is null');
 const publicValue=JSON.stringify(snapshot.rows[0]?.published_snapshot??{});
-ok(publicValue.includes('Fundação planejada') && !publicValue.includes('100000') && !publicValue.includes('CONFIDENCIAL') && !publicValue.includes('planned_cost') && !publicValue.includes('contract_record'), 'Somente campos explicitamente liberados chegam ao cliente');
+ok(publicValue.includes('Fundação planejada') && !publicValue.includes('100000') && !publicValue.includes('CONFIDENCIAL') && !publicValue.includes('planned_cost') && !publicValue.includes('contract_record'), 'Custos, notas e vínculos internos não chegam ao cliente');
 ok(publicValue.includes('actual_progress'), 'Publicado usa somente medição real existente');
+ok(publicValue.includes('curve') && publicValue.includes('planned_percent') && publicValue.includes('actual_percent'), 'Snapshot publica Curva S somente como agregados');
+ok(!publicValue.includes('weight_percent') && !publicValue.includes('cost_source') && !publicValue.includes('unit_cost'), 'Curva do cliente não expõe pesos ou composição de custo');
+const curve=await db.query(`select published_snapshot->'curve' value from construction_schedule_publications where revoked_at is null`);
+const points=curve.rows[0]?.value??[];
+ok(Array.isArray(points)&&points.length>=2,'Curva contém pontos do início ao término');
+const measuredPoint=points.find((point)=>point.date==='2026-09-21');
+ok(measuredPoint?.actual_percent===40,'Medição real aparece no ponto da vistoria sem inventar custo');
 await run(`select set_config('app.is_admin','false',false)`);
 await rejected('select published_by from construction_schedule_publications','Cliente não pode solicitar identidade interna do responsável pela publicação');
 ok(await scalar('select count(*)::integer value from construction_schedule_publications')===1,'Cliente da própria obra lê publicação');
