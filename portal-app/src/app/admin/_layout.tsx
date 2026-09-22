@@ -48,6 +48,8 @@ export default function AdminLayout() {
       <Stack.Screen name="schedule" />
       <Stack.Screen name="construction-schedule" />
       <Stack.Screen name="construction-schedule-new" />
+      <Stack.Screen name="construction-schedule-revision" />
+      <Stack.Screen name="construction-schedule-budget" />
       <Stack.Screen name="construction-schedule-measurements" />
       <Stack.Screen name="construction-schedule-baselines" />
       <Stack.Screen name="approvals" />
