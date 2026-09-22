@@ -23,6 +23,10 @@ const weekend=plan([{...initial[0],durationDays:3}],{startDate:'2026-09-25',cale
 test(weekend.plannedFinish==='2026-09-29','Sexta+segunda+terça');
 const calendar=plan([{...initial[0],durationDays:3}],{startDate:'2026-09-25',calendar:'calendar_days'});
 test(calendar.plannedFinish==='2026-09-27','Dias corridos incluem fim de semana');
+const calendarWithHolidays=plan([{...initial[0],durationDays:3}],{
+ startDate:'2026-09-25',calendar:'calendar_days',holidays:['2026-09-26','2026-09-27'],
+});
+test(calendarWithHolidays.plannedFinish==='2026-09-27','Dias corridos incluem feriados sem estender prazo');
 bad(()=>plan(initial,{startDate:'2026-09-21',calendar:'weekdays',contractualDeadline:'2026-09-24'}),/excede o prazo/);
 bad(()=>plan(initial.map(a=>({...a,plannedCost:null})),{startDate:'2026-09-21',calendar:'weekdays'}),/custos completos/);
 const manual=plan(initial.map(a=>({...a,plannedCost:null,weightPercent:a.code==='01'?40:60})),{startDate:'2026-09-21',calendar:'weekdays',manualWeightsApproved:true});
