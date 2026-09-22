@@ -54,6 +54,9 @@ jobs:
       - name: Testar caminho crítico, folga e feriados
         run: node scripts/test-construction-schedule-critical-path.mjs
 
+      - name: Testar Gantt sanitizado do cliente
+        run: node scripts/test-construction-schedule-client-gantt.mjs
+
       - name: Testar métricas e Curva S com medições históricas
         run: node scripts/test-construction-schedule-progress.mjs
 
