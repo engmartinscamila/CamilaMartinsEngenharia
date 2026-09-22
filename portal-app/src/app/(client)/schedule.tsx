@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 
 import { ConstructionScheduleClientGantt } from '@/components/construction-schedule-client-gantt';
+import { ConstructionScheduleCurve } from '@/components/construction-schedule-curve';
 import { ProjectPicker } from '@/components/project-picker';
 import { Button, Card, Notice, PageHeader, Screen, StateView, StatusPill } from '@/components/ui';
 import { formatDate, humanizeStatus } from '@/lib/format';
@@ -69,27 +70,50 @@ export default function ScheduleScreen() {
     return Math.round(known.reduce((sum, stage) => sum + stage.progress!, 0) / known.length);
   }, [stages]);
 
+  const publishedDeviation=published?.summary?.actualPercent===null||published?.summary?.actualPercent===undefined
+    ? null
+    : published.summary.actualPercent-published.summary.plannedPercent;
+
   return (
     <Screen>
       <PageHeader eyebrow="Planejamento" title="Cronograma e linha do tempo" description="Etapas reais, datas e andamento do projeto selecionado." />
       <ProjectPicker />
       {error ? <Notice tone="danger">{error}</Notice> : null}
       {loading ? <ActivityIndicator color={colors.gold600} /> : null}
-      {published && !loading ? <Card>
-        <Text style={styles.overallTitle}>Cronograma físico-financeiro contratado — versão publicada {published.version}</Text>
-        <Text style={styles.dates}>{published.title}</Text>
-        <Text style={styles.dates}>Planejamento: {formatDate(published.plannedStart, 'Não informado')} — {formatDate(published.plannedFinish, 'Não informado')}</Text>
-        <Text style={styles.description}>Resumo liberado pela engenharia em {formatDate(published.publishedAt)}. Os percentuais só aparecem quando existe medição registrada; custos e documentos comerciais não são compartilhados aqui.</Text>
-        <ConstructionScheduleClientGantt publication={published} />
-        {published.activities.map((activity) => <View key={activity.code} style={styles.publishedStage}>
-          <Text style={styles.title}>{activity.code} — {activity.activity}</Text>
-          <Text style={styles.dates}>{formatDate(activity.planned_start, 'Início não informado')} — {formatDate(activity.planned_finish, 'Fim não informado')}</Text>
-          {activity.actual_progress === null ? <Text style={styles.progressLabel}>Avanço ainda não medido</Text> : <>
-            <View style={styles.track}><View style={[styles.progress, {width:`${Math.max(0,Math.min(100,activity.actual_progress))}%`}]} /></View>
-            <Text style={styles.progressLabel}>{activity.actual_progress}% medido em {formatDate(activity.measurement_date)}</Text>
-          </>}
-        </View>)}
-      </Card> : null}
+      {published && !loading ? <>
+        <Card>
+          <Text style={styles.overallTitle}>Cronograma físico-financeiro contratado — versão publicada {published.version}</Text>
+          <Text style={styles.dates}>{published.title}</Text>
+          <Text style={styles.dates}>Planejamento: {formatDate(published.plannedStart, 'Não informado')} — {formatDate(published.plannedFinish, 'Não informado')}</Text>
+          {published.summary?<>
+            <View style={styles.summaryGrid}>
+              <View style={styles.summaryItem}><Text style={styles.order}>PLANEJADO</Text><Text style={styles.overallValue}>{published.summary.plannedPercent.toFixed(1)}%</Text></View>
+              <View style={styles.summaryItem}><Text style={styles.order}>REALIZADO MEDIDO</Text><Text style={styles.overallValue}>{published.summary.actualPercent===null?'—':`${published.summary.actualPercent.toFixed(1)}%`}</Text></View>
+              <View style={styles.summaryItem}><Text style={styles.order}>DESVIO</Text><Text style={styles.overallValue}>{publishedDeviation===null?'—':`${publishedDeviation.toFixed(1)} p.p.`}</Text></View>
+              <View style={styles.summaryItem}><Text style={styles.order}>PRAZO</Text><Text style={styles.summaryDate}>{formatDate(published.summary.deadline,'Não informado')}</Text></View>
+            </View>
+            <Text style={styles.description}>Indicadores na data de referência {formatDate(published.summary.referenceDate)}. O realizado só considera medições registradas.</Text>
+          </>:null}
+          <Text style={styles.description}>Resumo liberado pela engenharia em {formatDate(published.publishedAt)}. Custos, pesos internos, honorários e documentos comerciais não são compartilhados aqui.</Text>
+          <ConstructionScheduleClientGantt publication={published} />
+        </Card>
+        {published.curve.length?<ConstructionScheduleCurve
+          title="Curva S simplificada"
+          description="Comparação do planejamento acumulado com o avanço efetivamente medido."
+          points={published.curve.map(point=>({date:point.date,planned:point.plannedPercent,actual:point.actualPercent}))}
+        />:null}
+        <Card>
+          <Text style={styles.overallTitle}>Etapas publicadas</Text>
+          {published.activities.map((activity) => <View key={activity.code} style={styles.publishedStage}>
+            <Text style={styles.title}>{activity.code} — {activity.activity}</Text>
+            <Text style={styles.dates}>{formatDate(activity.planned_start, 'Início não informado')} — {formatDate(activity.planned_finish, 'Fim não informado')}</Text>
+            {activity.actual_progress === null ? <Text style={styles.progressLabel}>Avanço ainda não medido</Text> : <>
+              <View style={styles.track}><View style={[styles.progress, {width:`${Math.max(0,Math.min(100,activity.actual_progress))}%`}]} /></View>
+              <Text style={styles.progressLabel}>{activity.actual_progress}% medido em {formatDate(activity.measurement_date)}</Text>
+            </>}
+          </View>)}
+        </Card>
+      </> : null}
       {overall !== null && !loading ? (
         <Card>
           <View style={styles.overallHeader}><Text style={styles.overallTitle}>Progresso calculado das etapas simples</Text><Text style={styles.overallValue}>{overall}%</Text></View>
@@ -127,6 +151,9 @@ const styleDefinitions = (colors: ThemeColors) => ({
   overallHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   overallTitle: { color: colors.ink, fontSize: typography.size.body, fontWeight: '700', fontFamily: typography.family },
   overallValue: { color: colors.gold600, fontSize: 22, fontWeight: '700', fontFamily: typography.family },
+  summaryGrid:{flexDirection:'row',flexWrap:'wrap',gap:spacing.sm},
+  summaryItem:{minWidth:130,flexGrow:1,borderWidth:1,borderColor:colors.line,borderRadius:radius.md,padding:spacing.sm},
+  summaryDate:{color:colors.ink,fontSize:typography.size.body,fontWeight:'700',fontFamily:typography.family},
   timeline: { gap: 0 },
   stageRow: { flexDirection: 'row', alignItems: 'stretch', gap: spacing.sm },
   rail: { width: 22, alignItems: 'center' },
