@@ -3,6 +3,7 @@ import { Pressable, Share, Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
+import { suggestCommercialServices } from '@/lib/commercial-service-match';
 import { formatDate } from '@/lib/format';
 import { useThemeStyles } from '@/providers/theme-provider';
 import {
@@ -14,9 +15,11 @@ import {
   lookupCommercialCep,
   lookupCommercialCnpj,
   previewCommercialDocument,
+  searchExistingCommercialClients,
   type CommercialDocumentPreview,
   type CommercialRecord,
   type CommercialServiceSelection,
+  type ExistingCommercialClient,
 } from '@/services/commercial-service';
 import { CONTRACT_SCOPE_PRESETS } from '@/services/document-workflow-service';
 import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
@@ -39,10 +42,19 @@ export default function AdminCommercialDocumentsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [prospectLink, setProspectLink] = useState<string | null>(null);
+  const [clientQuery,setClientQuery]=useState('');
+  const [clientMatches,setClientMatches]=useState<ExistingCommercialClient[]>([]);
+  const [selectedClient,setSelectedClient]=useState<ExistingCommercialClient|null>(null);
+  const [serviceQuery,setServiceQuery]=useState('');
 
   const services = useMemo<CommercialServiceSelection[]>(() => CONTRACT_SCOPE_PRESETS.map(([code, name], index) => ({
     code, name, included: selectedCodes.includes(code), acceptanceRequired: true, displayOrder: index + 1,
   })), [selectedCodes]);
+  const serviceSuggestions=useMemo(()=>suggestCommercialServices(
+    serviceQuery,
+    CONTRACT_SCOPE_PRESETS.map(([code,name])=>({code,name})),
+    5,
+  ),[serviceQuery]);
 
   const load = useCallback(async () => {
     const result = await listCommercialRecords();
@@ -56,6 +68,33 @@ export default function AdminCommercialDocumentsScreen() {
   });
   const toggleService = (code: string) => setSelectedCodes((current) => current.includes(code) ? current.filter((item) => item !== code) : [...current, code]);
   const toggleSameAddress=()=>setSameAddress(current=>{const next=!current;if(next)setForm(value=>({...value,propertyAddress:value.address}));return next;});
+
+  const searchClients=async()=>{
+    setLoadingKey('search-client');setError(null);setSuccess(null);
+    const result=await searchExistingCommercialClients(clientQuery);
+    setLoadingKey(null);
+    if(result.error){setClientMatches([]);setError(result.error);return;}
+    setClientMatches(result.data);
+    if(!result.data.length)setSuccess('Nenhum cliente cadastrado corresponde à busca. Você pode continuar como novo prospect.');
+  };
+  const chooseClient=(client:ExistingCommercialClient)=>{
+    setSelectedClient(client);setClientMatches([]);setClientQuery(client.name);setSameAddress(false);
+    setForm(current=>({
+      ...current,
+      prospectName:client.name,
+      cpfCnpj:client.cpfCnpj??'',
+      email:client.email??'',
+      phone:client.phone??'',
+      cep:client.cep??'',
+      address:client.address??'',
+      city:client.city??'',
+      state:client.state??'',
+      // O endereço da obra não é inferido do endereço cadastral do cliente.
+      propertyAddress:current.propertyAddress,
+    }));
+    setSuccess('Cliente existente selecionado. Os dados foram copiados para este orçamento como snapshot; o cadastro original não será alterado.');
+  };
+  const clearClient=()=>{setSelectedClient(null);setClientMatches([]);setClientQuery('');setForm(emptyForm);setSameAddress(false);setSuccess('Fluxo de novo prospect selecionado.');};
 
   const lookupCnpj = async () => {
     const cnpj = digitsOnly(form.cpfCnpj);
@@ -89,9 +128,12 @@ export default function AdminCommercialDocumentsScreen() {
     if (!selectedCodes.length && !form.customService.trim()) { setError('Selecione ao menos um serviço ou descreva um serviço personalizado.'); return; }
     if (!form.experienceLevel.trim()) { setError('Selecione o nível de prestação cadastrado para os serviços escolhidos.'); return; }
     setLoadingKey('create'); setError(null); setSuccess(null);
-    const result = await createCommercialRecord({ ...form, propertyAddress:sameAddress?form.address:form.propertyAddress, services });
+    const result = await createCommercialRecord({ ...form, linkedClientId:selectedClient?.id??null, propertyAddress:sameAddress?form.address:form.propertyAddress, services });
     if (result.error) setError(result.error);
-    else { setSuccess('Orçamento criado com numeração automática. O prospect ainda não foi cadastrado como cliente.'); setForm(emptyForm); setSameAddress(false); setSelectedCodes([]); await load(); }
+    else {
+      setSuccess(selectedClient?'Orçamento criado e vinculado ao cliente existente sem alterar o cadastro original.':'Orçamento criado com numeração automática. O prospect ainda não foi cadastrado como cliente.');
+      setForm(emptyForm);setSameAddress(false);setSelectedCodes([]);setSelectedClient(null);setClientQuery('');setClientMatches([]);setServiceQuery('');await load();
+    }
     setLoadingKey(null);
   };
 
@@ -145,13 +187,22 @@ export default function AdminCommercialDocumentsScreen() {
 
   return (
     <Screen>
-      <AdminPageHeader title="Orçamentos e contratos" description="Crie documentos comerciais antes do cadastro do cliente. Endereço cadastral e endereço da obra permanecem independentes." />
+      <AdminPageHeader title="Orçamentos e contratos" description="Crie documentos comerciais para cliente existente ou novo prospect. Endereço cadastral e endereço da obra permanecem independentes." />
       <Notice tone="info">Antes de gerar um Word, o app mostra a prévia da versão, endereço da obra, endereço cadastral, valor e serviços. Uma versão já emitida exige motivo para nova revisão.</Notice>
       {error ? <Notice tone="danger">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}
       {prospectLink ? <Card><Text style={styles.sectionTitle}>Acesso temporário do prospect</Text><Text selectable style={styles.previewStrong}>{prospectLink}</Text><Text style={styles.help}>O link expira automaticamente e pode ser revogado pelo banco sem alterar o documento original.</Text></Card> : null}
 
       <Card>
-        <Text style={styles.sectionTitle}>Novo prospect / orçamento</Text>
+        <Text style={styles.sectionTitle}>Cliente existente ou novo prospect</Text>
+        <Text style={styles.help}>Pesquise por nome, CPF ou CNPJ. Selecionar um cliente apenas copia os dados atuais para o novo orçamento; alterações feitas aqui não sobrescrevem o cadastro original.</Text>
+        <Field label="Pesquisar cliente cadastrado" value={clientQuery} onChangeText={(value)=>{setClientQuery(value);setClientMatches([]);}} />
+        <View style={styles.actions}><Button loading={loadingKey==='search-client'} disabled={clientQuery.trim().length<2&&digitsOnly(clientQuery).length<3} onPress={()=>void searchClients()} title="Pesquisar cliente" variant="secondary" />{selectedClient?<Button onPress={clearClient} title="Usar novo prospect" variant="ghost" />:null}</View>
+        {selectedClient?<Notice tone="success">Cliente vinculado: {selectedClient.name}{selectedClient.cpfCnpj?` • ${selectedClient.cpfCnpj}`:''}. O endereço da obra continua separado e precisa ser confirmado.</Notice>:null}
+        {clientMatches.map(client=><View key={client.id} style={styles.matchRow}><View style={{flex:1}}><Text style={styles.recordTitle}>{client.name}</Text><Text style={styles.meta}>{client.cpfCnpj||'CPF/CNPJ não informado'} • {client.email||'e-mail não informado'}</Text></View><Button onPress={()=>chooseClient(client)} title="Selecionar" variant="secondary" /></View>)}
+      </Card>
+
+      <Card>
+        <Text style={styles.sectionTitle}>{selectedClient?'Novo orçamento para cliente existente':'Novo prospect / orçamento'}</Text>
         <Text style={styles.help}>A numeração ORC-AAAA-MM-0001 é criada automaticamente. O endereço cadastral identifica o contratante; o endereço do imóvel/obra identifica o local do serviço.</Text>
         <Field label="Nome / razão social *" value={form.prospectName} onChangeText={(value) => update('prospectName', value)} />
         <View style={styles.twoColumns}><View style={styles.lookupField}><Field label="CPF / CNPJ" value={form.cpfCnpj} onChangeText={(value) => update('cpfCnpj', value)} /><Button loading={loadingKey === 'lookup-cnpj'} onPress={() => void lookupCnpj()} title="Buscar CNPJ" variant="secondary" /></View><Field label="Telefone / WhatsApp" value={form.phone} onChangeText={(value) => update('phone', value)} /></View>
@@ -164,6 +215,9 @@ export default function AdminCommercialDocumentsScreen() {
         <View style={styles.twoColumns}><Field keyboardType="decimal-pad" label="Área do terreno (m²)" value={form.areaTerrenoM2} onChangeText={(value) => update('areaTerrenoM2', value)} /><Field keyboardType="decimal-pad" label="Área construída prevista (m²)" value={form.areaConstruidaM2} onChangeText={(value) => update('areaConstruidaM2', value)} /></View>
         <Field label="Nível de prestação (código ativo no catálogo) *" value={form.experienceLevel} onChangeText={(value) => update('experienceLevel', value)} />
         <Text style={styles.subTitle}>Serviços propostos *</Text>
+        <Field label="Localizar serviço por nome ou código" value={serviceQuery} onChangeText={setServiceQuery} />
+        {serviceQuery.trim().length>=2&&serviceSuggestions.length===0?<Notice tone="info">Nenhuma correspondência segura. Revise o termo ou selecione manualmente no catálogo abaixo.</Notice>:null}
+        {serviceSuggestions.map(item=><View key={`suggest-${item.code}`} style={styles.matchRow}><View style={{flex:1}}><Text style={styles.serviceText}>({item.code}) {item.name}</Text><Text style={styles.meta}>{item.exact?'Correspondência exata':'Sugestão aproximada — confirme antes de selecionar'}</Text></View><Button onPress={()=>{if(!selectedCodes.includes(item.code))setSelectedCodes(current=>[...current,item.code]);setServiceQuery('');}} title={selectedCodes.includes(item.code)?'Já selecionado':'Confirmar serviço'} variant="secondary" /></View>)}
         <View style={styles.serviceList}>{CONTRACT_SCOPE_PRESETS.map(([code, name]) => { const selected = selectedCodes.includes(code); return <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: selected }} key={code} onPress={() => toggleService(code)} style={[styles.serviceRow, selected && styles.serviceSelected]}><Text style={styles.check}>{selected ? '☒' : '☐'}</Text><Text style={styles.serviceText}>({code}) {name}</Text></Pressable>; })}</View>
         <Field label="Outro serviço / especificação livre" value={form.customService} onChangeText={(value) => update('customService', value)} />
         <Field keyboardType="decimal-pad" label="Valor total dos honorários (R$)" value={form.totalValue} onChangeText={(value) => update('totalValue', value)} />
@@ -197,5 +251,6 @@ const styleDefinitions = (colors: ThemeColors) => ({
   help: { color: colors.slate, fontSize: 12, lineHeight: 18, fontFamily: typography.family },
   twoColumns: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }, lookupField: { flex: 1, minWidth: 220, gap: spacing.xs }, serviceList: { gap: spacing.xs },
   serviceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, padding: spacing.sm }, serviceSelected: { borderColor: colors.gold500, backgroundColor: colors.warningSoft }, check: { color: colors.gold600, fontSize: 18, fontFamily: typography.family }, serviceText: { flex: 1, color: colors.ink, fontSize: 12, fontFamily: typography.family },
+  matchRow:{flexDirection:'row',alignItems:'center',gap:spacing.sm,borderWidth:1,borderColor:colors.line,borderRadius:radius.md,padding:spacing.sm},
   recordCard: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.sm, gap: spacing.sm }, recordHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm }, recordTitle: { color: colors.ink, fontSize: 14, fontWeight: '700', fontFamily: typography.family }, meta: { color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 3, fontFamily: typography.family }, previewStrong:{color:colors.ink,fontSize:12,lineHeight:18,fontWeight:'700',fontFamily:typography.family}, actions: { gap: spacing.xs },
 });
