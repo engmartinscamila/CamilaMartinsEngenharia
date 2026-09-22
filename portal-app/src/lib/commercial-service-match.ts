@@ -59,7 +59,17 @@ export function suggestCommercialServices(
   limit = 5,
 ): ServiceMatchSuggestion[] {
   const normalizedQuery = normalizeServiceText(query);
-  if (normalizedQuery.length < 2) return [];
+  if (!normalizedQuery) return [];
+
+  // Códigos oficiais podem ser curtos (ex.: "o"). Para consultas de um
+  // caractere, só uma correspondência EXATA de código é permitida; fuzzy
+  // matching continua desativado para evitar sugestões ambíguas.
+  if (normalizedQuery.length < 2) {
+    return candidates
+      .filter((candidate) => normalizeServiceText(candidate.code) === normalizedQuery)
+      .slice(0, 1)
+      .map((candidate) => ({ ...candidate, score: 1, exact: true }));
+  }
 
   const suggestions = candidates.map((candidate) => {
     const normalizedName = normalizeServiceText(candidate.name);
