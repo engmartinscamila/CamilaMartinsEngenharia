@@ -56,8 +56,11 @@ export async function listApprovedSchedules(): Promise<{data: ApprovedScheduleOp
   })), error: null};
 }
 
-/** Acesso via JWT administrador e RLS; consultas não inicializam nem modificam cronogramas. */
+/** Acesso via JWT administrativo e RLS; consultas não criam cronogramas. */
 export async function loadScheduleMeasurementOverview(scheduleId: string, reference: string): Promise<{data: ScheduleMeasurementOverview | null; error: string | null}> {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(reference) || !Number.isFinite(Date.parse(`${reference}T12:00:00Z`))) {
+    return {data: null, error: 'Data de referência inválida.'};
+  }
   const [scheduleResponse, itemResponse, eventResponse] = await Promise.all([
     supabase.from('construction_schedules').select('id,activation_status,baseline_version,baseline_snapshot,work_calendar').eq('id', scheduleId).single(),
     supabase.from('construction_schedule_items').select('id,code,activity,weight_percent,planned_cost,actual_progress,actual_cost').eq('schedule_id', scheduleId).order('display_order'),
@@ -86,6 +89,7 @@ export async function loadScheduleMeasurementOverview(scheduleId: string, refere
   }));
   if (events.some((event) => !event.code)) return {data: null, error: 'O histórico contém uma atividade sem vínculo. Revisar a integridade.'};
   const latest = new Map<string, {progress: number; cost: number | null}>();
+  const asOf = new Map<string, {progress: number; cost: number | null}>();
   const snapshots: ScheduleMeasurement[] = [];
   let lastDate = '';
   const consolidate = (measuredAt: string) => {
@@ -111,7 +115,10 @@ export async function loadScheduleMeasurementOverview(scheduleId: string, refere
   for (const event of events) {
     if (lastDate && event.measuredOn !== lastDate) consolidate(lastDate);
     const previous = latest.get(event.code);
-    latest.set(event.code, {progress: event.progress, cost: event.cost ?? previous?.cost ?? null});
+    const next = {progress: event.progress, cost: event.cost ?? previous?.cost ?? null};
+    latest.set(event.code, next);
+    // Uma medição de amanhã nunca deve aparecer no painel consultado ontem.
+    if (event.measuredOn <= reference) asOf.set(event.code, next);
     lastDate = event.measuredOn;
   }
   if (lastDate) consolidate(lastDate);
@@ -120,7 +127,7 @@ export async function loadScheduleMeasurementOverview(scheduleId: string, refere
     const code = String(baseItem.code);
     const live = itemByCode.get(code);
     if (!live) return {data: null, error: `Atividade ${code} não corresponde à linha de base.`};
-    const measurement = latest.get(code);
+    const measurement = asOf.get(code);
     activities.push({
       code, plannedStart: String(baseItem.planned_start), plannedFinish: String(baseItem.planned_finish),
       financialWeightPercent: Number(baseItem.weight_percent),
@@ -136,8 +143,8 @@ export async function loadScheduleMeasurementOverview(scheduleId: string, refere
       id: String(item.id), code: String(item.code), activity: String(item.activity),
       weightPercent: Number(item.weight_percent),
       plannedCost: item.planned_cost === null ? null : Number(item.planned_cost),
-      progress: latest.get(String(item.code))?.progress ?? null,
-      cost: latest.get(String(item.code))?.cost ?? null,
+      progress: asOf.get(String(item.code))?.progress ?? null,
+      cost: asOf.get(String(item.code))?.cost ?? null,
     }));
     return {data: {items, history: events, calendar, baselineVersion: Number(header.baseline_version), summary, curve}, error: null};
   } catch (error) {
