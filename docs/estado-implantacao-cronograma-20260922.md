@@ -2,22 +2,61 @@
 
 ## Alterações executadas somente na PR #19
 
-- Serviço opcional contratado (`s`), validação ORC→CON→projeto e vínculo com documentos; modelos de quatro naturezas usados apenas como referência, sem injetar 20 atividades em qualquer obra.
-- Plano com custos de execução separados dos honorários, pesos financeiros, dependências, cálculo de datas, revisão de atividades e aprovação com snapshot congelado; pendem pesos físicos independentes e feriados persistidos.
-- Medições efetivas com data, responsável e justificativa, sem inventar histórico. Bloqueio adicional de UPDATE direto nos campos reais de linhas aprovadas: migration `20260922005000`, regressão SQL real em PGlite.
-- Exportador novo XLSX de cronograma aprovado, com oito abas, gráfico visual Curva S, linha de base, Gantt, medições históricas e controles de acesso; não há comprovação de geração XLSX real em Supabase homologado. Não publicar frontend isoladamente da Edge Function.
-- Publicação explícita ao cliente em snapshot mínimo e restrito ao projeto; revogação e histórico, teste de isolamento A/B.
-- Arquivo imutável e paginado de snapshots aprovados, tela administrativa para consulta, migração `20260922010000`, regressão de unicidade, RLS e aprovação atômica. Não confundir consulta de versões com criação/ativação de aditivo.
-- Teste automático de timestamps SQL válidos e ausência de números de versão duplicados.
+- **Contratação expressa e vínculo comercial:** serviço opcional de cronograma completo (`s`), validação ORC→CON→projeto e titularidade; modelos de quatro naturezas continuam referências revisáveis, nunca parâmetros universais.
+- **Preenchimento guiado:** a criação passou a usar modo guiado por padrão; predecessoras manuais, feriados, pesos manuais e critérios físicos ficam em opções avançadas. A administradora confirma atividade/escopo antes de salvar.
+- **Cliente existente:** novo orçamento pode pesquisar cliente cadastrado por nome/CPF/CNPJ e usar seus dados como snapshot sem alterar silenciosamente o cadastro original; novo prospect continua disponível.
+- **Busca tolerante de serviços:** normalização de caixa/acentos e similaridade conservadora; pequenos erros geram sugestões, nunca vínculo automático. Código oficial curto só é aceito por correspondência exata. A seleção exige confirmação explícita.
+- **Custos e pesos:** custos da execução permanecem separados dos honorários. Peso financeiro é derivado de custos completos da obra; peso físico permanece independente e exige critério técnico quando utilizado.
+- **Orçamento executivo / quantitativos:** módulo administrativo específico para unidade, quantidade, preço unitário, fonte e custo; composição unitária é validada no servidor e `planned_cost = quantidade × preço unitário`. O RPC recalcula os pesos financeiros pela participação de cada custo no total da execução.
+- **CPM/caminho crítico:** o módulo dedicado existente de caminho crítico e folga foi integrado à conferência do planejamento; atividades críticas e folga total são exibidas antes da aprovação. O motor de datas continua separado para não haver dois algoritmos concorrentes.
+- **Feriados/calendário:** calendário e feriados conferidos continuam persistidos e congelados na aprovação; dias úteis e corridos permanecem semanticamente separados.
+- **Medições:** avanço real exige evento datado, responsável e justificativa; UPDATE direto de campos reais em linha aprovada permanece bloqueado. Correções geram nova medição, não reescrevem histórico.
+- **Gráficos Admin:** Curva S planejado × medido ganhou visual responsivo usando as métricas históricas já existentes; realizado não é interpolado quando não há medição.
+- **Gráficos Cliente:** a publicação agora pode carregar resumo sanitizado (planejado, realizado medido, desvio, prazo), Gantt e Curva S agregada. Custos, pesos internos, fontes, honorários, notas e vínculos comerciais não integram o snapshot público.
+- **Publicação ao cliente:** continua explícita, revogável e vinculada ao próprio projeto. A publicação de uma revisão exige que ela seja vigente e aprovada.
+- **Linha de base:** snapshots aprovados permanecem imutáveis e paginados; medições/publicações continuam vinculadas por `schedule_id`.
+- **Aditivo/reprogramação:** deixou de depender conceitualmente de um único cronograma por projeto. Cada revisão usa novo `schedule_id`, `revision_number`, `supersedes_schedule_id` e marcador `is_current`; a versão anterior não é apagada. Uma nova revisão parte somente da versão vigente/aprovada, revalida orçamento/contrato e não copia custos, datas, pesos, avanço ou medições como verdade atual.
+- **Preparação de aditivo:** uma tela administrativa registra versão anterior, novo orçamento/contrato e justificativa. O pedido expira em 24 h, fica ligado ao mesmo usuário e é consumido uma vez pelo formulário guiado. Sem pedido compatível, o fluxo normal recusa sobrescrever cronograma aprovado.
+- **Exportador XLSX:** continua gerando arquivo sob demanda a partir da linha de base, sem usar Storage como banco paralelo. Suítes sintéticas geram/reabrem XLSX; a geração autenticada pelo site e abertura manual em homologação ainda são gates do Work.
+- **“Outros” / atividade personalizada:** base normativa oficial foi documentada, mas o escopo continua fechado e literal. O sistema não inventa visitas, revisões, acompanhamento, execução ou entregáveis e não usa citação legal como decoração contratual.
+- **Segurança:** inventário das 39 `SECURITY DEFINER` foi atualizado com leitura semântica direcionada. Funções amostradas de push, agenda, aprovação e notificação contêm controles de sessão/ownership; isso é controle existente, não substitui o teste A/B autenticado em homologação. Nenhuma revogação em massa foi feita.
+- **Homologação/rollback:** foram adicionados `docs/homologacao-pr19-manifesto-20260922.md` e `docs/plano-deploy-rollback-pr19-20260922.md` com ordem, gates, dados sintéticos, arquivos reais, segurança, desktop/mobile, evidência e rollback. O staging divergente não deve receber somente as migrations novas.
 
-## O que continua bloqueando uma declaração de conclusão
+## Testes automáticos adicionados/reforçados
 
-1. **Aditivo completo:** a produção tem `construction_schedules_project_id_key UNIQUE (project_id)`. A estratégia atual mantém um cronograma por projeto, e o arquivo guarda apenas snapshots aprovados. Não remover a UNIQUE nem desbloquear a edição de planejamentos aprovados sem adaptar inicializador, todas as consultas, medições, exportação, status, revisões e RLS para distinguir versão vigente vs. histórica.
-2. **Planejamento por quantitativos:** custos unitários, fontes verificáveis, orçamento de construção auditável, peso físico independente, calendário com feriados e caminho crítico ainda não estão implementados integralmente na interface, gravação e XLSX.
-3. **Homologação:** o projeto Supabase de staging `nvhjcoxnzigwwbdbhkhq` não contém sequer as tabelas `construction_schedules`, `construction_schedule_items`, `construction_schedule_measurements`, `construction_schedule_publications` e `construction_schedule_baseline_versions`, enquanto o projeto de produção possui as duas primeiras e não possui as três seguintes. Históricos de migrations divergem: reconstruir esquema isolado com todas as dependências primeiro. Nunca executar só o último SQL e declarar homologado.
-4. **Documentos contratuais:** auditoria anterior encontrou 51 revisões individuais de conteúdo pendentes no Contrato Mestre v3. Revalidar a quantidade e registrar apreciação individual pela administradora. O bloqueio `assert_document_governance_ready` deve permanecer.
-5. **Teste fim a fim:** login de administradora e clientes sintéticos, aprovação, medição, revogação de acesso, DOCX, geração do XLSX real e abertura no Excel, expiração de sessão, recuperação de senha, desktop/mobile e rollback de Edge/frontend/banco. CI sintético não equivale a homologação real.
+- reuso de cliente existente sem UPDATE silencioso de `clientes`;
+- busca tolerante de serviços sem auto-seleção;
+- cadeia de revisões/aditivos e preservação histórica;
+- pedido temporário/consumível de reprogramação;
+- quantitativos, fonte, composição unitária e derivação de peso financeiro;
+- vínculo contratual e contratação expressa do cronograma;
+- biblioteca/modelos versionados;
+- aprovação/linha de base;
+- medições e rollback transacional;
+- bloqueio de avanço sem medição;
+- arquivo imutável de baselines;
+- feriados/calendário;
+- publicação e isolamento A/B sintético;
+- snapshot do cliente sem custo/peso/fonte/nota interna;
+- Curva S agregada sanitizada;
+- timestamps únicos de migrations;
+- scanner de segredos;
+- geração/reabertura de XLSX sintético.
+
+## Estado do CI
+
+A referência correta é sempre o **HEAD final da PR**, não um commit anterior. Durante esta rodada, regressões encontradas foram corrigidas em commits subsequentes (TypeScript estrito da busca tolerante; código oficial curto; permissão da função auxiliar de Curva S). As quatro suítes devem estar `success` no HEAD final antes de considerar a fase de código pronta para homologação.
+
+## O que continua bloqueando uma declaração de conclusão do sistema
+
+1. **Homologação equivalente:** o projeto Supabase de staging `nvhjcoxnzigwwbdbhkhq` continua com histórico/schema divergente. Deve ser reconstruído/atualizado de forma isolada com a cadeia completa de dependências e dados sintéticos; não aplicar apenas migrations novas e declarar homologado.
+2. **Teste E2E autenticado:** administradora + cliente A/B, orçamento → contrato → Anexo I → DOCX → histórico → cronograma → orçamento executivo → aprovação → medição → gráficos → publicação → XLSX → revogação → reprogramação, além de primeiro acesso/recuperação, sessão expirada, erros e rollback.
+3. **Arquivos reais:** gerar pelo site, baixar e abrir todos os documentos e o XLSX no ambiente homologado.
+4. **Desktop/mobile/temas:** validar navegação, responsividade, claro/escuro/automático e retorno.
+5. **Segurança operacional:** testar as 39 RPCs com A/B/admin fictícios, Storage e objetos; conferir bundle/configuração, Cloudflare WAF/rate limit/CAPTCHA e Supabase Auth. Proteção de senhas vazadas continua dependente de confirmação de plano/custo/UX antes de ativação.
+6. **51 revisões materiais do Contrato Mestre v3:** permanecem decisão individual da administradora. Não aprovar em massa nem remover `assert_document_governance_ready`.
+7. **Deploy:** banco, Edge, frontend e app somente no mesmo SHA homologado, com rollback ensaiado e autorização expressa. Produção permanece inalterada nesta fase.
 
 ## Regra para continuidade
 
-**Quatro níveis de estado:** código salvo na PR → verificações automatizadas no commit final → homologação autenticada no esquema equivalente → deploy sincronizado e verificação pós-publicação. Não marcar etapas 4–7 como completas por existirem apenas arquivos, mocks ou uma visualização. Não alterar dados de cliente/produção para validar hipóteses. Preservar PR #18, versões v1/v2, contratos e cronogramas legados.
+**Cinco estados distintos:** código na PR → CI automatizado no SHA final → homologação autenticada equivalente → deploy sincronizado autorizado → verificação pós-publicação. Não marcar uma funcionalidade como concluída apenas porque existe migration, tela, Edge Function ou teste sintético. Preservar PR #18, versões v1/v2, contratos, documentos, cronogramas e arquivos legados.
