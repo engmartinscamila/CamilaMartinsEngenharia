@@ -28,6 +28,9 @@ jobs:
       - name: Examinar segredos no histórico sem revelar valores
         run: node scripts/security/secret-scan.mjs
 
+      - name: Validar datas e versões únicas das migrações
+        run: node scripts/security/migration-timestamp-regression.mjs
+
       - name: Instalar ambiente isolado de testes SQL
         run: npm ci --prefix scripts/security
 
