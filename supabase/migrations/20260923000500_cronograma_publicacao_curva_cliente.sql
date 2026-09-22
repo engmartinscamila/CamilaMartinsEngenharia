@@ -1,6 +1,8 @@
 -- Curva S sanitizada para o portal do cliente.
 -- O snapshot publica SOMENTE datas e percentuais agregados; não publica pesos,
 -- custos, honorários, fontes, notas internas ou identificadores de medições.
+-- Auxiliares SECURITY INVOKER: precisam de EXECUTE para a role que chama a RPC
+-- administrativa, mas verificam is_portal_admin também quando chamadas diretamente.
 
 CREATE OR REPLACE FUNCTION public.full_schedule_planned_percent_at(
   p_schedule_id uuid,
@@ -14,7 +16,7 @@ AS $planned$
 WITH schedule AS (
   SELECT s.work_calendar, s.baseline_snapshot
   FROM public.construction_schedules s
-  WHERE s.id = p_schedule_id
+  WHERE s.id = p_schedule_id AND public.is_portal_admin()
 ), activities AS (
   SELECT
     (a->>'weight_percent')::numeric AS weight_percent,
@@ -69,7 +71,7 @@ WITH baseline AS (
   SELECT a->>'code' code,(a->>'weight_percent')::numeric weight_percent
   FROM public.construction_schedules s,
        LATERAL jsonb_array_elements(s.baseline_snapshot->'activities') a
-  WHERE s.id=p_schedule_id
+  WHERE s.id=p_schedule_id AND public.is_portal_admin()
 ), latest AS (
   SELECT b.code,b.weight_percent,m.actual_progress
   FROM baseline b
@@ -187,7 +189,11 @@ BEGIN
 END;
 $publish$;
 
+-- SECURITY INVOKER exige EXECUTE também nas dependências chamadas internamente.
+-- O predicado administrativo acima bloqueia leitura direta das auxiliares por clientes.
 REVOKE ALL ON FUNCTION public.full_schedule_planned_percent_at(uuid,date) FROM PUBLIC,anon,authenticated;
 REVOKE ALL ON FUNCTION public.full_schedule_measured_percent_at(uuid,date) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.full_schedule_planned_percent_at(uuid,date) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.full_schedule_measured_percent_at(uuid,date) TO authenticated;
 REVOKE ALL ON FUNCTION public.admin_publish_full_schedule_to_client(uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.admin_publish_full_schedule_to_client(uuid) TO authenticated;
