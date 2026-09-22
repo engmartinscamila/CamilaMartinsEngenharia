@@ -37,7 +37,8 @@ export function analyzeConstructionCriticalPath(
   activities: PlannedActivity[],
   options: { calendar: WorkCalendar; holidays?: string[] },
 ): CriticalPathResult {
-  if (!activities.length) throw new Error('Caminho crítico exige pelo menos uma atividade.');
+  const first = activities[0];
+  if (!first) throw new Error('Caminho crítico exige pelo menos uma atividade.');
   if (!['weekdays', 'calendar_days'].includes(options.calendar)) throw new Error('Calendário inválido para caminho crítico.');
   const holidays = new Set(options.holidays ?? []);
   for (const holiday of holidays) date(holiday);
@@ -89,7 +90,7 @@ export function analyzeConstructionCriticalPath(
     }
     successors.get(predecessor.code)!.push(task.code);
   }
-  const plannedFinish = activities.reduce((last, task) => task.plannedFinish > last ? task.plannedFinish : last, activities[0].plannedFinish);
+  const plannedFinish = activities.reduce((last, task) => task.plannedFinish > last ? task.plannedFinish : last, first.plannedFinish);
   const latest = new Map<string, { start: string; finish: string }>();
   const visiting = new Set<string>();
   function resolve(code: string): { start: string; finish: string } {
