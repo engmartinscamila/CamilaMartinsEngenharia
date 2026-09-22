@@ -25,7 +25,7 @@ insert into construction_schedules values
 grant select,update on public.construction_schedules to authenticated;
 select set_config('app.test_uid','${user}',false);
 select set_config('app.is_admin','true',false);`);
-await run(fs.readFileSync(new URL('supabase/migrations/20260922006000_cronograma_arquivo_imutavel_linhas_base.sql',root),'utf8'));
+await run(fs.readFileSync(new URL('supabase/migrations/20260922010000_cronograma_arquivo_imutavel_linhas_base.sql',root),'utf8'));
 checks++;
 ok(await value('select count(*)::integer value from construction_schedule_baseline_versions')===1,
  'Backfill arquiva somente aprovação preexistente; rascunho não recebe versão presumida');
