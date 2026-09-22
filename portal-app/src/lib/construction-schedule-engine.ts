@@ -1,6 +1,7 @@
 /* Motor puro de planejamento. Sem chamadas ao banco ou mudanças em cronogramas antigos.
  * Pesos financeiros só derivam de CUSTOS DA OBRA, nunca de honorários comerciais.
- * O calendário deve ser informado; não inferir um prazo contratual universal. */
+ * O calendário deve ser informado; não inferir um prazo contratual universal.
+ * CPM considera relações término→início (FS) e durações em unidades do calendário escolhido. */
 export type WorkCalendar = 'weekdays' | 'calendar_days';
 export interface PlanningActivity {
   code: string;
@@ -16,6 +17,8 @@ export interface PlannedActivity extends PlanningActivity {
   plannedStart: string;
   plannedFinish: string;
   assignedWeightPercent: number;
+  critical: boolean;
+  totalFloatDays: number;
 }
 export interface PlanResult {
   activities: PlannedActivity[];
@@ -24,6 +27,7 @@ export interface PlanResult {
   weightSource: 'construction_costs' | 'confirmed_manual';
   totalConstructionCost: number | null;
   progressPercent: number;
+  criticalPathCodes: string[];
 }
 const isoPattern = /^\d{4}-\d{2}-\d{2}$/;
 const round = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -65,9 +69,9 @@ export function planConstructionSchedule(
   if (weights.some(n=>n<0 || n>100)) throw new Error('Pesos inválidos após arredondamento; verifique custos.');
   const indices = new Map(activities.map((a,i)=>[a.code,i]));
   const visiting=new Set<string>();
-  const planned=new Map<string,PlannedActivity>();
+  const planned=new Map<string,Omit<PlannedActivity,'critical'|'totalFloatDays'>>();
   const workday = (day: string): boolean => {
-    if (options.calendar === 'calendar_days') return true; // Dias corridos incluem fins de semana e feriados.
+    if (options.calendar === 'calendar_days') return true;
     const d=asDate(day); const weekday=d.getUTCDay();
     return !holidays.has(day) && weekday!==0 && weekday!==6;
   };
@@ -81,7 +85,17 @@ export function planConstructionSchedule(
     }
     return {start:first,finish:cursor};
   };
-  const resolve = (code: string): PlannedActivity => {
+  const workUnitsBefore = (target: string): number => {
+    if (target <= options.startDate) return 0;
+    let cursor=options.startDate;
+    let units=0;
+    while (cursor < target) {
+      if (workday(cursor)) units++;
+      cursor=nextDay(cursor);
+    }
+    return units;
+  };
+  const resolve = (code: string): Omit<PlannedActivity,'critical'|'totalFloatDays'> => {
     const previous=planned.get(code);
     if (previous) return previous;
     if (visiting.has(code)) throw new Error(`Dependências circulares em ${code}.`);
@@ -99,14 +113,60 @@ export function planConstructionSchedule(
     const index=indices.get(code);
     const assignedWeightPercent=index===undefined?undefined:weights[index];
     if (assignedWeightPercent===undefined) throw new Error(`Peso não calculado para ${code}.`);
-    const result:PlannedActivity={...source,plannedStart:dates.start,plannedFinish:dates.finish,assignedWeightPercent};
+    const result={...source,plannedStart:dates.start,plannedFinish:dates.finish,assignedWeightPercent};
     visiting.delete(code);planned.set(code,result);return result;
   };
-  const resolved=activities.map(a=>resolve(a.code));
-  const end=resolved.map(a=>a.plannedFinish).sort().at(-1);
-  const start=resolved.map(a=>a.plannedStart).sort()[0];
+  const resolvedBase=activities.map(a=>resolve(a.code));
+  const end=resolvedBase.map(a=>a.plannedFinish).sort().at(-1);
+  const start=resolvedBase.map(a=>a.plannedStart).sort()[0];
   if (!start || !end) throw new Error('Nenhuma atividade válida para planejar.');
   if (options.contractualDeadline && end>options.contractualDeadline) throw new Error('Plano calculado excede o prazo contratual; revisar recursos ou formalizar aditivo antes de aprovar.');
+
+  // CPM por rede término→início. O eixo usa unidades úteis do calendário escolhido,
+  // permitindo comparar folga sem transformar feriados/fins de semana em duração produtiva.
+  const successors = new Map<string,string[]>();
+  for (const activity of activities) successors.set(activity.code,[]);
+  for (const activity of activities) {
+    if (activity.predecessorCode) successors.get(activity.predecessorCode)?.push(activity.code);
+  }
+  const es=new Map<string,number>();
+  const ef=new Map<string,number>();
+  const cpmVisit=new Set<string>();
+  const forward=(code:string):number => {
+    if (ef.has(code)) return ef.get(code) as number;
+    if (cpmVisit.has(code)) throw new Error(`Dependências circulares em ${code}.`);
+    const activity=byCode.get(code);
+    if (!activity) throw new Error(`Atividade inexistente no CPM: ${code}.`);
+    cpmVisit.add(code);
+    let earliest=activity.predecessorCode ? forward(activity.predecessorCode) : 0;
+    if (activity.requestedStart) earliest=Math.max(earliest,workUnitsBefore(activity.requestedStart));
+    es.set(code,earliest);
+    const finish=earliest+activity.durationDays;
+    ef.set(code,finish);
+    cpmVisit.delete(code);
+    return finish;
+  };
+  for (const activity of activities) forward(activity.code);
+  const projectDuration=Math.max(...activities.map(a=>ef.get(a.code) ?? 0));
+  const ls=new Map<string,number>();
+  const lf=new Map<string,number>();
+  const backward=(code:string):number => {
+    if (ls.has(code)) return ls.get(code) as number;
+    const activity=byCode.get(code);
+    if (!activity) throw new Error(`Atividade inexistente no CPM: ${code}.`);
+    const next=successors.get(code) ?? [];
+    const latestFinish=next.length ? Math.min(...next.map(backward)) : projectDuration;
+    lf.set(code,latestFinish);
+    const latestStart=latestFinish-activity.durationDays;
+    ls.set(code,latestStart);
+    return latestStart;
+  };
+  for (const activity of [...activities].reverse()) backward(activity.code);
+  const resolved:PlannedActivity[]=resolvedBase.map(activity => {
+    const totalFloatDays=Math.max(0,(ls.get(activity.code) ?? 0)-(es.get(activity.code) ?? 0));
+    return {...activity,totalFloatDays,critical:totalFloatDays===0};
+  });
+  const criticalPathCodes=resolved.filter(a=>a.critical).sort((a,b)=>(es.get(a.code) ?? 0)-(es.get(b.code) ?? 0)).map(a=>a.code);
   const progress=round(resolved.reduce((sum,a)=>sum+a.assignedWeightPercent*a.actualProgress/100,0));
-  return {activities:resolved,plannedStart:start,plannedFinish:end,weightSource,totalConstructionCost:useCosts?sumCosts:null,progressPercent:progress};
+  return {activities:resolved,plannedStart:start,plannedFinish:end,weightSource,totalConstructionCost:useCosts?sumCosts:null,progressPercent:progress,criticalPathCodes};
 }
