@@ -27,7 +27,8 @@ insert into construction_schedules values
  ('${draft}','draft',0,null),('${legacy}','legacy',0,null);
 insert into construction_schedule_items(id,schedule_id,code) values
  ('${item}','${approved}','01'),('${draftItem}','${draft}','01'),('${legacyItem}','${legacy}','01');
-grant select on public.construction_schedules to authenticated;
+-- SELECT FOR UPDATE da RPC exige também a permissão UPDATE sobre o cabeçalho.
+grant select,update on public.construction_schedules to authenticated;
 grant select,update on public.construction_schedule_items to authenticated;
 select set_config('app.test_uid','${uid}',false);select set_config('app.is_admin','true',false);`);
 await exec(fs.readFileSync(new URL('supabase/migrations/20260922002000_cronograma_medicoes_auditaveis.sql',root),'utf8'));
