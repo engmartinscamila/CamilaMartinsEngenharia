@@ -37,6 +37,9 @@ jobs:
       - name: Proteger cadeia de revisões e aditivos do cronograma
         run: node scripts/security/construction-schedule-revision-regression.mjs
 
+      - name: Validar orçamento executivo e quantitativos
+        run: node scripts/security/construction-schedule-budget-regression.mjs
+
       - name: Instalar ambiente isolado de testes SQL
         run: npm ci --prefix scripts/security
 
