@@ -19,6 +19,7 @@ export const adminSections = [
   { key: 'schedule', href: '/admin/schedule', icon: 'git-branch-outline', title: 'Cronogramas', description: 'Acompanhamento simples por etapas, ordem, status e progresso.' },
   { key: 'construction-schedule', href: '/admin/construction-schedule', icon: 'bar-chart-outline', title: 'Cronograma de obra completo', description: 'Consultar cronogramas físico-financeiros existentes, Gantt, Curva S e Excel.' },
   { key: 'construction-schedule-new', href: '/admin/construction-schedule-new', icon: 'calendar-outline', title: 'Criar cronograma contratado', description: 'Conferir orçamento, contrato, projeto, atividades e custos da obra antes de gerar um cronograma.' },
+  { key: 'construction-schedule-measurements', href: '/admin/construction-schedule-measurements', icon: 'pulse-outline', title: 'Medições do cronograma contratado', description: 'Registre avanços reais com data, custo da obra e justificativa, sem alterar a linha de base.' },
   { key: 'approvals', href: '/admin/approvals', icon: 'checkmark-done-outline', title: 'Aprovações', description: 'Criar decisões para resposta dos clientes.' },
   { key: 'requests', href: '/admin/requests', icon: 'chatbubbles-outline', title: 'Solicitações', description: 'Atender, responder e atualizar o andamento.' },
   { key: 'notifications', href: '/admin/notifications', icon: 'notifications-outline', title: 'Notificações internas', description: 'Avisos direcionados por cliente, contrato e projeto.' },
