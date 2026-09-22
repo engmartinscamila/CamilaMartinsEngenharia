@@ -33,6 +33,7 @@ export interface ScheduleMeasurementOverview {
   items: ScheduleMeasuredItem[];
   history: ScheduleMeasurementEvent[];
   calendar: ScheduleCalendar;
+  holidays: string[];
   baselineVersion: number;
   summary: ReturnType<typeof scheduleIndicators>;
   curve: ReturnType<typeof scheduleWeeklyCurve>;
@@ -61,16 +62,19 @@ export async function loadScheduleMeasurementOverview(scheduleId: string, refere
   if (!/^\d{4}-\d{2}-\d{2}$/.test(reference) || !Number.isFinite(Date.parse(`${reference}T12:00:00Z`))) {
     return {data: null, error: 'Data de referência inválida.'};
   }
-  const [scheduleResponse, itemResponse, eventResponse] = await Promise.all([
+  const [scheduleResponse, itemResponse, eventResponse, holidayResponse] = await Promise.all([
     supabase.from('construction_schedules').select('id,activation_status,baseline_version,baseline_snapshot,work_calendar').eq('id', scheduleId).single(),
     supabase.from('construction_schedule_items').select('id,code,activity,weight_percent,planned_cost,actual_progress,actual_cost').eq('schedule_id', scheduleId).order('display_order'),
     supabase.from('construction_schedule_measurements').select('id,item_id,measured_on,recorded_at,actual_progress,actual_construction_cost,reason')
       .eq('schedule_id', scheduleId).order('measured_on').order('recorded_at').order('id').limit(2000),
+    supabase.from('construction_schedule_holidays').select('holiday_date').eq('schedule_id', scheduleId).order('holiday_date').limit(367),
   ]);
-  if (scheduleResponse.error || itemResponse.error || eventResponse.error || !scheduleResponse.data || !itemResponse.data || !eventResponse.data) {
-    return {data: null, error: scheduleResponse.error?.message ?? itemResponse.error?.message ?? eventResponse.error?.message ?? 'Falha ao carregar as medições.'};
+  if (scheduleResponse.error || itemResponse.error || eventResponse.error || holidayResponse.error ||
+    !scheduleResponse.data || !itemResponse.data || !eventResponse.data || !holidayResponse.data) {
+    return {data: null, error: scheduleResponse.error?.message ?? itemResponse.error?.message ?? eventResponse.error?.message ?? holidayResponse.error?.message ?? 'Falha ao carregar as medições.'};
   }
   if (eventResponse.data.length >= 2000) return {data: null, error: 'O histórico supera 2.000 eventos. A paginação integral é necessária antes de calcular indicadores.'};
+  if (holidayResponse.data.length > 366) return {data: null, error: 'Calendário de feriados incompleto: revisar os dados antes de calcular.'};
   const header = scheduleResponse.data;
   const baseline = header.baseline_snapshot as {activities?: Array<Record<string, unknown>>; calendar?: string} | null;
   if (header.activation_status !== 'approved' || Number(header.baseline_version) < 1 || !Array.isArray(baseline?.activities)) {
@@ -78,6 +82,15 @@ export async function loadScheduleMeasurementOverview(scheduleId: string, refere
   }
   const calendar = header.work_calendar;
   if (calendar !== 'weekdays' && calendar !== 'calendar_days') return {data: null, error: 'Calendário de trabalho inválido.'};
+  const {data: archived, error: archivedError} = await supabase.from('construction_schedule_baseline_versions')
+    .select('holiday_dates').eq('schedule_id', scheduleId).eq('baseline_version', header.baseline_version).single();
+  if (archivedError || !archived || !Array.isArray(archived.holiday_dates)) {
+    return {data: null, error: 'Versão aprovada sem calendário arquivado: conferência necessária.'};
+  }
+  const holidays = holidayResponse.data.map((row) => String(row.holiday_date));
+  if (JSON.stringify(holidays) !== JSON.stringify(archived.holiday_dates)) {
+    return {data: null, error: 'Feriados atuais não coincidem com o calendário aprovado.'};
+  }
   const codeById = new Map(itemResponse.data.map((item) => [String(item.id), String(item.code)]));
   const itemByCode = new Map(itemResponse.data.map((item) => [String(item.code), item]));
   const events: ScheduleMeasurementEvent[] = eventResponse.data.map((event) => ({
@@ -137,8 +150,8 @@ export async function loadScheduleMeasurementOverview(scheduleId: string, refere
     });
   }
   try {
-    const summary = scheduleIndicators(activities, reference, calendar);
-    const curve = scheduleWeeklyCurve(activities, calendar, [], snapshots);
+    const summary = scheduleIndicators(activities, reference, calendar, holidays);
+    const curve = scheduleWeeklyCurve(activities, calendar, holidays, snapshots);
     const items: ScheduleMeasuredItem[] = itemResponse.data.map((item) => ({
       id: String(item.id), code: String(item.code), activity: String(item.activity),
       weightPercent: Number(item.weight_percent),
@@ -146,7 +159,7 @@ export async function loadScheduleMeasurementOverview(scheduleId: string, refere
       progress: asOf.get(String(item.code))?.progress ?? null,
       cost: asOf.get(String(item.code))?.cost ?? null,
     }));
-    return {data: {items, history: events, calendar, baselineVersion: Number(header.baseline_version), summary, curve}, error: null};
+    return {data: {items, history: events, calendar, holidays, baselineVersion: Number(header.baseline_version), summary, curve}, error: null};
   } catch (error) {
     return {data: null, error: error instanceof Error ? error.message : 'Não foi possível validar os indicadores.'};
   }
