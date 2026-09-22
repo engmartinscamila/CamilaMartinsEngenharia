@@ -21,17 +21,19 @@ export interface ScheduleBudgetDraft {
 }
 
 export async function loadCurrentScheduleBudget(projectId: string): Promise<{data: ScheduleBudgetDraft | null; error: string | null}> {
+  // Uma revisão ainda não aprovada é is_current=false por design. Buscar apenas
+  // is_current=true tornaria impossível compor o orçamento do aditivo em rascunho.
+  // Somente rascunhos aparecem, sem abrir a baseline vigente já aprovada à edição.
   const schedule = await supabase
     .from('construction_schedules')
     .select('id,project_id,title,activation_status,revision_number,is_current')
     .eq('project_id', projectId)
-    .eq('is_current', true)
+    .eq('activation_status', 'draft')
+    .order('revision_number', { ascending: false })
+    .limit(1)
     .maybeSingle();
-  if (schedule.error) return { data: null, error: schedule.error.message ?? 'Não foi possível conferir o cronograma vigente.' };
-  if (!schedule.data) return { data: null, error: 'O projeto ainda não possui cronograma vigente.' };
-  if (schedule.data.activation_status !== 'draft') {
-    return { data: null, error: 'O orçamento executivo só pode ser alterado enquanto a revisão vigente estiver em rascunho.' };
-  }
+  if (schedule.error) return { data: null, error: schedule.error.message ?? 'Não foi possível conferir os rascunhos do cronograma.' };
+  if (!schedule.data) return { data: null, error: 'O projeto ainda não possui cronograma em rascunho. Para alterar um cronograma aprovado, prepare a reprogramação/aditivo e salve o novo plano.' };
 
   const items = await supabase
     .from('construction_schedule_items')
