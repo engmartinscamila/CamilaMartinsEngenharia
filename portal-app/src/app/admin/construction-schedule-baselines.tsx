@@ -35,10 +35,13 @@ export default function ConstructionScheduleBaselinesScreen() {
       <Text>Contrato: {row.contractNumber ?? 'Número não disponível'} • linha de base v{row.version}</Text>
       <Text>ID do cronograma: {row.scheduleId}</Text>
       <Text>Aprovada: {row.approvedAt ? row.approvedAt.slice(0, 10) : 'Data não informada'} • arquivada: {row.archivedAt.slice(0, 10)}</Text>
-      <Text>{row.activities.length} atividade(s) preservada(s)</Text>
-      <Button title={selected === row.id ? 'Ocultar atividades' : 'Conferir atividades arquivadas'} variant="secondary" onPress={() => setSelected((current) => current === row.id ? null : row.id)} />
-      {selected === row.id ? row.activities.map((activity, index) =>
-        <Text key={`${row.id}:${activity.code}:${index}`}>{activity.code} — {activity.activity} • {activity.start ?? 'Sem início'} a {activity.finish ?? 'Sem término'}</Text>) : null}
+      <Text>{row.activities.length} atividade(s) • {row.holidays.length} feriado(s) conferido(s) e congelado(s)</Text>
+      <Button title={selected === row.id ? 'Ocultar planejamento' : 'Conferir atividades e feriados arquivados'} variant="secondary" onPress={() => setSelected((current) => current === row.id ? null : row.id)} />
+      {selected === row.id ? <>
+        {row.activities.map((activity, index) =>
+          <Text key={`${row.id}:${activity.code}:${index}`}>{activity.code} — {activity.activity} • {activity.start ?? 'Sem início'} a {activity.finish ?? 'Sem término'}</Text>)}
+        <Text>Feriados e datas não úteis aprovados: {row.holidays.length ? row.holidays.join(', ') : 'Nenhuma data informada'}</Text>
+      </> : null}
     </Card>)}
     <Text>{total === 0 ? 0 : page * 50 + 1}–{page * 50 + rows.length} de {total} versão(ões) arquivada(s)</Text>
     <Button title="Página anterior" variant="secondary" disabled={page === 0 || loading} onPress={() => setPage((current) => Math.max(0, current - 1))} />
