@@ -7,6 +7,10 @@ import { formatDate, humanizeStatus } from '@/lib/format';
 import { useProject } from '@/providers/project-provider';
 import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
 import { listSchedule } from '@/services/portal-service';
+import {
+  loadClientConstructionSchedulePublication,
+  type ClientConstructionSchedulePublication,
+} from '@/services/construction-schedule-publication-service';
 import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 import type { ScheduleStageSummary } from '@/types/domain';
 
@@ -20,6 +24,7 @@ function statusTone(status: string): 'neutral' | 'success' | 'warning' | 'danger
 export default function ScheduleScreen() {
   const { selectedProject } = useProject();
   const [stages, setStages] = useState<ScheduleStageSummary[]>([]);
+  const [published, setPublished] = useState<ClientConstructionSchedulePublication | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { colors } = useAppTheme();
@@ -28,13 +33,22 @@ export default function ScheduleScreen() {
   const load = useCallback(async () => {
     if (!selectedProject) {
       setStages([]);
+      setPublished(null);
       return;
     }
+    // Limpar antes da nova leitura evita exibir momentaneamente dados do
+    // cliente/projeto anterior durante uma troca de contrato.
+    setStages([]);
+    setPublished(null);
     setLoading(true);
     setError(null);
-    const result = await listSchedule(selectedProject.id);
-    setStages(result.data);
-    setError(result.error);
+    const projectId = selectedProject.id;
+    const [simple, approved] = await Promise.all([
+      listSchedule(projectId), loadClientConstructionSchedulePublication(projectId),
+    ]);
+    setStages(simple.data);
+    setPublished(approved.data?.projectId === projectId ? approved.data : null);
+    setError(simple.error ?? approved.error);
     setLoading(false);
   }, [selectedProject]);
 
@@ -59,14 +73,28 @@ export default function ScheduleScreen() {
       <PageHeader eyebrow="Planejamento" title="Cronograma e linha do tempo" description="Etapas reais, datas e andamento do projeto selecionado." />
       <ProjectPicker />
       {error ? <Notice tone="danger">{error}</Notice> : null}
-      {overall !== null ? (
+      {loading ? <ActivityIndicator color={colors.gold600} /> : null}
+      {published && !loading ? <Card>
+        <Text style={styles.overallTitle}>Cronograma físico-financeiro contratado — versão publicada {published.version}</Text>
+        <Text style={styles.dates}>{published.title}</Text>
+        <Text style={styles.dates}>Planejamento: {formatDate(published.plannedStart, 'Não informado')} — {formatDate(published.plannedFinish, 'Não informado')}</Text>
+        <Text style={styles.description}>Resumo liberado pela engenharia em {formatDate(published.publishedAt)}. Os percentuais só aparecem quando existe medição registrada; custos e documentos comerciais não são compartilhados aqui.</Text>
+        {published.activities.map((activity) => <View key={activity.code} style={styles.publishedStage}>
+          <Text style={styles.title}>{activity.code} — {activity.activity}</Text>
+          <Text style={styles.dates}>{formatDate(activity.planned_start, 'Início não informado')} — {formatDate(activity.planned_finish, 'Fim não informado')}</Text>
+          {activity.actual_progress === null ? <Text style={styles.progressLabel}>Avanço ainda não medido</Text> : <>
+            <View style={styles.track}><View style={[styles.progress, {width:`${Math.max(0,Math.min(100,activity.actual_progress))}%`}]} /></View>
+            <Text style={styles.progressLabel}>{activity.actual_progress}% medido em {formatDate(activity.measurement_date)}</Text>
+          </>}
+        </View>)}
+      </Card> : null}
+      {overall !== null && !loading ? (
         <Card>
-          <View style={styles.overallHeader}><Text style={styles.overallTitle}>Progresso calculado das etapas</Text><Text style={styles.overallValue}>{overall}%</Text></View>
+          <View style={styles.overallHeader}><Text style={styles.overallTitle}>Progresso calculado das etapas simples</Text><Text style={styles.overallValue}>{overall}%</Text></View>
           <View style={styles.track}><View style={[styles.progress, { width: `${overall}%` }]} /></View>
         </Card>
       ) : null}
-      {loading ? <ActivityIndicator color={colors.gold600} /> : null}
-      {!loading && selectedProject && stages.length === 0 ? (
+      {!loading && selectedProject && stages.length === 0 && !published ? (
         <StateView actionLabel="Atualizar" description="As etapas aparecerão assim que o cronograma for publicado pela equipe." icon="git-branch-outline" onAction={() => void load()} title="Cronograma em preparação" />
       ) : null}
       <View style={styles.timeline}>
@@ -88,7 +116,7 @@ export default function ScheduleScreen() {
           </View>
         ))}
       </View>
-      {stages.length > 0 ? <Button loading={loading} onPress={() => void load()} title="Atualizar cronograma" variant="ghost" /> : null}
+      {stages.length > 0 || published ? <Button loading={loading} onPress={() => void load()} title="Atualizar cronograma" variant="ghost" /> : null}
     </Screen>
   );
 }
@@ -112,4 +140,5 @@ const styleDefinitions = (colors: ThemeColors) => ({
   track: { height: 8, borderRadius: radius.pill, overflow: 'hidden', backgroundColor: colors.line },
   progress: { height: '100%', borderRadius: radius.pill, backgroundColor: colors.gold500 },
   progressLabel: { color: colors.muted, fontSize: 11, fontFamily: typography.family },
+  publishedStage: {paddingVertical:spacing.sm,borderTopWidth:1,borderTopColor:colors.line,gap:spacing.xs},
 });
