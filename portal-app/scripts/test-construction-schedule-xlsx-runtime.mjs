@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import {Buffer} from 'node:buffer';
 import {createRequire} from 'node:module';
 import ts from 'typescript';
 
