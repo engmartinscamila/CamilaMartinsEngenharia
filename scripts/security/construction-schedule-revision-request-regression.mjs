@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const sql=fs.readFileSync(new URL('../../supabase/migrations/20260923001500_cronograma_pedido_reprogramacao.sql',import.meta.url),'utf8');
+let checks=0;const ok=(value,message)=>{assert.ok(value,message);checks+=1;};
+ok(/construction_schedule_revision_requests/i.test(sql),'tabela de pedido de revisão existe');
+ok(/expires_at timestamptz NOT NULL DEFAULT \(now\(\) \+ interval '24 hours'\)/i.test(sql),'pedido expira em 24 horas');
+ok(/previous_schedule_id uuid NOT NULL[\s\S]*ON DELETE RESTRICT/i.test(sql),'versão anterior não pode ser apagada em cascata');
+ok(/requested_by uuid NOT NULL DEFAULT auth\.uid\(\)/i.test(sql),'pedido fica ligado ao usuário autenticado');
+ok(/admin_prepare_full_schedule_revision/i.test(sql),'RPC explícita prepara reprogramação');
+ok(/assert_full_schedule_commercial_link/i.test(sql),'novo orçamento/contrato são revalidados');
+ok(/previous_schedule_id=v_current\.id[\s\S]*quote_record_id=p_quote_record_id[\s\S]*contract_record_id=p_contract_record_id/i.test(sql),'consumo exige versão e vínculos comerciais exatos');
+ok(/requested_by=\(SELECT auth\.uid\(\)\)/i.test(sql),'consumo exige o mesmo usuário administrador');
+ok(/expires_at>now\(\)/i.test(sql),'pedido expirado não é aceito');
+ok(/admin_begin_and_save_full_schedule_revision/i.test(sql),'novo plano usa revisão atômica');
+ok(/SET consumed_at=now\(\),consumed_schedule_id=v_schedule_id/i.test(sql),'pedido é consumido após salvar a nova revisão');
+ok(/Projeto possui cronograma aprovado; prepare uma reprogramação\/aditivo/i.test(sql),'sem pedido compatível o aprovado não é sobrescrito');
+ok(/SECURITY INVOKER/i.test(sql),'novas RPCs permanecem invoker');
+console.log(`PEDIDO DE REPROGRAMAÇÃO: ${checks} verificações defensivas passaram.`);
