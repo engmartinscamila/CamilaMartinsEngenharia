@@ -69,11 +69,15 @@ export async function signInWithPassword(email: string, password: string) {
 }
 
 export async function sendAccessLink(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail || normalizedEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    return 'Informe um e-mail válido.';
+  }
   try {
     // Uses the same invitation, email delivery and rate limit as the website.
     // The link opens the verified website; the new password works in both.
     const { error } = await supabase.functions.invoke('client-password-link', {
-      body: { email: email.trim().toLowerCase() },
+      body: { email: normalizedEmail },
     });
     return error ? toUserMessage(error) : null;
   } catch (error) {
