@@ -37,7 +37,7 @@ export default function ServiceLevelGovernanceScreen() {
     setLoading(true); setError(null);
     const result = await listServiceLevelScopeReviews(status, PAGE_SIZE, offset);
     setItems(result.data);
-    setDrafts(Object.fromEntries(result.data.map(item => [keyOf(item), {
+    setDrafts(Object.fromEntries(result.data.map((item: AdminServiceLevelScopeReview) => [keyOf(item), {
       budgetDescription: item.budgetDescription,
       contractScope: item.contractScope,
       annexScope: item.annexScope,
@@ -53,7 +53,15 @@ export default function ServiceLevelGovernanceScreen() {
   };
 
   const updateDraft = (key: string, field: keyof Draft, value: string) => {
-    setDrafts(current => ({ ...current, [key]: { ...current[key], [field]: value } }));
+    setDrafts(current => {
+      const base: Draft = current[key] ?? {
+        budgetDescription: '',
+        contractScope: '',
+        annexScope: '',
+        reason: '',
+      };
+      return { ...current, [key]: { ...base, [field]: value } };
+    });
   };
 
   const save = async (item: AdminServiceLevelScopeReview, decision: ServiceLevelReviewStatus) => {
