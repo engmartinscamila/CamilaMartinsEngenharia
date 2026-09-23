@@ -44,6 +44,7 @@ export function AccessLinkScreen({ firstAccess = false }: { firstAccess?: boolea
         autoCorrect={false}
         keyboardType="email-address"
         label="E-mail autorizado"
+        maxLength={254}
         onChangeText={setEmail}
         placeholder="seu@email.com"
         value={email}
