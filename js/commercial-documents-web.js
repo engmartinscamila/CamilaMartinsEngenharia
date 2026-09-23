@@ -21,6 +21,16 @@
   ];
   let serviceCatalogMeta = [];
   let levelCatalog = [];
+  let clientCatalog = [];
+
+  const paymentOptions = [
+    ['pix', 'Pix'],
+    ['cartao_vista', 'Cartão de crédito à vista'],
+    ['cartao_parcelado', 'Cartão de crédito parcelado'],
+    ['dinheiro', 'Dinheiro'],
+    ['transferencia', 'Transferência bancária'],
+    ['outro', 'Outro']
+  ];
 
   const $ = id => document.getElementById(id);
   const client = () => window.supabaseClient;
@@ -146,6 +156,55 @@
     info.textContent = `${level.label} — ${level.subtitle}: ${level.description}${features ? ' Principais recursos: ' + features + '.' : ''}`;
   }
 
+  function renderClientOptions() {
+    const select = $('linkedClientId');
+    if (!select) return;
+    const current = String(select.value || '');
+    select.innerHTML = '<option value="">Novo cliente / prospect</option>' + clientCatalog.map(item =>
+      `<option value="${esc(item.id)}">${esc(item.nome || 'Sem nome')}${item.cpf_cnpj ? ' • ' + esc(item.cpf_cnpj) : ''}</option>`
+    ).join('');
+    if (current && clientCatalog.some(item => String(item.id) === current)) select.value = current;
+  }
+
+  function applyClient(id) {
+    const item = clientCatalog.find(clientItem => String(clientItem.id) === String(id));
+    if (!item) return;
+    setField('prospectName', item.nome);
+    setField('cpfCnpj', item.cpf_cnpj);
+    setField('email', item.email);
+    setField('phone', item.telefone);
+    setField('address', item.endereco);
+    setField('city', item.cidade);
+    setField('state', item.estado);
+    setField('cep', item.cep);
+    msg('Cliente cadastrado selecionado. Revise o endereço da obra antes de continuar.', 'success');
+  }
+
+  function ensureCommercialSelectors() {
+    if ($('commercialContextFields')) return;
+    const panel = $('panelCommercialCreate');
+    const grid = panel?.querySelector('.doc-grid');
+    if (!panel || !grid) return;
+    const box = document.createElement('div');
+    box.id = 'commercialContextFields';
+    box.className = 'doc-grid doc-context-grid';
+    box.innerHTML = `
+      <div class="doc-field">
+        <label for="linkedClientId">Cliente cadastrado</label>
+        <select id="linkedClientId"><option value="">Novo cliente / prospect</option></select>
+        <small class="doc-help">Selecione um cliente já cadastrado para reutilizar seus dados, sem duplicar cadastro.</small>
+      </div>
+      <div class="doc-field">
+        <label for="paymentMethod">Forma de pagamento</label>
+        <select id="paymentMethod"><option value="">Selecione</option>${paymentOptions.map(([value,label]) => `<option value="${value}">${label}</option>`).join('')}</select>
+      </div>
+    `;
+    panel.insertBefore(box, grid);
+    $('linkedClientId')?.addEventListener('change', event => {
+      if (event.target.value) applyClient(event.target.value);
+    });
+  }
+
   function form() {
     const customService = $('customService').value.trim();
     const services = servicesCatalog.map(([code, name], index) => ({
@@ -157,6 +216,7 @@
     }));
 
     return {
+      linked_client_id: $('linkedClientId')?.value || null,
       prospect_name: $('prospectName').value.trim(),
       cpf_cnpj: $('cpfCnpj').value.trim(),
       email: $('email').value.trim(),
@@ -174,7 +234,8 @@
       services,
       custom_service: customService,
       total_value: $('totalValue').value.trim(),
-      notes: $('notes').value.trim()
+      notes: $('notes').value.trim(),
+      payment_terms: $('paymentMethod')?.value ? [{ method: $('paymentMethod').value, label: paymentOptions.find(([value]) => value === $('paymentMethod').value)?.[1] || $('paymentMethod').value }] : []
     };
   }
 
@@ -318,6 +379,8 @@
     });
 
     if ($('experienceLevel')) $('experienceLevel').value = '';
+    if ($('linkedClientId')) $('linkedClientId').value = '';
+    if ($('paymentMethod')) $('paymentMethod').value = '';
     document.querySelectorAll('[data-service]').forEach(input => { input.checked = false; });
 
     if (clearSource && $('contractQuoteSelect')) {
@@ -720,7 +783,7 @@
   }
 
   async function load() {
-    const [recordsRes, projectsRes, servicesRes, levelsRes] = await Promise.all([
+    const [recordsRes, projectsRes, servicesRes, levelsRes, clientsRes] = await Promise.all([
       client().from('commercial_records')
         .select('id,quote_number,contract_number,record_kind,source_mode,status,prospect_name,cpf_cnpj,email,phone,cep,address,city,state,property_address,property_type,area_terreno_m2,area_construida_m2,construction_standard,experience_level,services,custom_service,total_value,payment_terms,valid_until,notes,quote_document_id,contract_document_id,source_project_id,created_at')
         .order('created_at', { ascending: false })
@@ -737,7 +800,12 @@
       client().from('service_level_catalog')
         .select('code,label,subtitle,description,features,exclusions,version')
         .eq('active', true)
-        .order('code')
+        .order('code'),
+      client().from('clientes')
+        .select('id,nome,cpf_cnpj,telefone,email,endereco,cidade,estado,cep')
+        .eq('status', 'ativo')
+        .order('nome')
+        .limit(300)
     ]);
 
     if (recordsRes.error) {
@@ -759,6 +827,9 @@
       renderServices();
     }
 
+    clientCatalog = clientsRes.error ? [] : (clientsRes.data || []);
+    ensureCommercialSelectors();
+    renderClientOptions();
     ensureLevelInfo();
     renderLevelInfo();
 
@@ -791,6 +862,7 @@
   }
 
   function bind() {
+    ensureCommercialSelectors();
     renderServices();
     ensureLevelInfo();
     renderLevelOptions();
