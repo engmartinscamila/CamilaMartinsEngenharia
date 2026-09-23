@@ -76,7 +76,7 @@ function contractScopeXml(services: unknown, customService: unknown, experienceL
     const name = other ? 'Serviço técnico personalizado' : text(item.name) || `Serviço ${index + 1}`;
     const description = other && text(customService)
       ? customScopeDescription(text(customService))
-      : text(item.description) || 'Serviço técnico conforme o escopo expressamente contratado e detalhado no Anexo I.';
+      : text(item.contractScope) || text(item.description) || 'Serviço técnico conforme o escopo expressamente contratado e detalhado no Anexo I.';
     parts.push(wordParagraph(`${index + 1}. ${name}`, true));
     if (isProjectTierEligible(item) && serviceLevelCode(item)) {
       parts.push(wordParagraph(`Nível desta atividade: ${serviceLevelLabel(item)}.`));
