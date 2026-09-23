@@ -38,3 +38,7 @@ html.doc-modal-open,body.doc-modal-open{overflow:hidden;overscroll-behavior:none
 .doc-service-picker summary strong{color:#b89a63;font-size:.78rem;white-space:nowrap}
 .doc-services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px;padding:0 0 12px}
 @media(max-width:720px){.doc-services-grid{grid-template-columns:1fr}.doc-service-picker summary{font-size:.9rem}}
+
+/* Campos de serviço adicional */
+.doc-additional-fields{display:grid;gap:12px;margin-top:12px;padding:12px;border:1px solid rgba(184,154,99,.2);border-radius:10px;background:rgba(184,154,99,.045)}
+.doc-additional-fields textarea{min-height:96px}
