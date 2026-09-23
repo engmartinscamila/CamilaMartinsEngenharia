@@ -3,12 +3,17 @@ import { supabase } from '@/lib/supabase';
 import * as Linking from 'expo-linking';
 import type { ServiceResult } from '@/types/domain';
 
+export type CommercialServiceLevelCode = 'bronze' | 'prata' | 'ouro';
+
 export interface CommercialServiceSelection {
   code: string;
   name: string;
   included: boolean;
   acceptanceRequired: boolean;
   displayOrder: number;
+  levelApplicable?: boolean;
+  levelCode?: CommercialServiceLevelCode | null;
+  level?: { code?: string; label?: string; subtitle?: string } | null;
 }
 
 export interface CommercialCatalogService {
@@ -96,6 +101,7 @@ export interface NewCommercialRecordInput {
   experienceLevel?: string;
   services: CommercialServiceSelection[];
   customService?: string;
+  customServiceLevel?: CommercialServiceLevelCode | null;
   totalValue?: string;
   notes?: string;
 }
@@ -244,10 +250,43 @@ export async function createCommercialRecord(input: NewCommercialRecordInput) {
   const description = (input.customService ?? '').trim();
   // Ao descrever uma atividade personalizada, sua categoria deve integrar o snapshot.
   // Um serviço já selecionado não é removido nem convertido em "Outros".
-  const services = input.services.map(item => isOtherCode(item.code) && description ? { ...item, included: true } : item);
+  const services = input.services.map(item => isOtherCode(item.code) && description
+    ? { ...item, included: true, levelCode: item.levelCode ?? input.customServiceLevel ?? null }
+    : item);
   if (description && !services.some(item => isOtherCode(item.code))) {
-    services.push({ code: 'p', name: 'Outro', included: true, acceptanceRequired: true, displayOrder: services.length + 1 });
+    services.push({
+      code: 'p',
+      name: 'Outro',
+      included: true,
+      acceptanceRequired: true,
+      displayOrder: services.length + 1,
+      levelApplicable: true,
+      levelCode: input.customServiceLevel ?? null,
+    });
   }
+
+  const legacyLevel = (input.experienceLevel ?? '').trim().toLowerCase();
+  const missingLevel = services.find(item =>
+    item.included !== false &&
+    item.levelApplicable !== false &&
+    !item.levelCode &&
+    !legacyLevel
+  );
+  if (missingLevel) {
+    return { recordId: null, error: `Selecione Bronze, Prata ou Ouro para o serviço ${missingLevel.name}.` };
+  }
+  if (description) {
+    const custom = services.find(item => isOtherCode(item.code) && item.included !== false);
+    if (custom?.levelApplicable !== false && !custom?.levelCode && !legacyLevel) {
+      return { recordId: null, error: 'Selecione Bronze, Prata ou Ouro para a atividade personalizada.' };
+    }
+  }
+
+  const explicitLevels = [...new Set(services
+    .filter(item => item.included !== false && item.levelCode)
+    .map(item => item.levelCode as CommercialServiceLevelCode))];
+  const compatibilityLevel = explicitLevels.length === 1 ? explicitLevels[0] : explicitLevels.length === 0 ? legacyLevel : '';
+
   const p_data = {
     prospect_name: input.prospectName,
     cpf_cnpj: input.cpfCnpj ?? '',
@@ -262,7 +301,7 @@ export async function createCommercialRecord(input: NewCommercialRecordInput) {
     area_terreno_m2: input.areaTerrenoM2 ?? '',
     area_construida_m2: input.areaConstruidaM2 ?? '',
     construction_standard: input.constructionStandard ?? '',
-    experience_level: input.experienceLevel ?? '',
+    experience_level: compatibilityLevel,
     services,
     custom_service: description,
     total_value: input.totalValue ?? '',
@@ -306,7 +345,7 @@ export async function previewCommercialDocument(record: CommercialRecord, kind: 
     totalValue: record.totalValue,
     services: record.services.filter(item => item.included !== false).map(item => isOtherCode(item.code) && record.customService
       ? `(p) Serviço personalizado: ${record.customService}`
-      : `(${item.code}) ${item.name}`),
+      : `(${item.code}) ${item.name}${item.levelCode ? ` — ${String(item.levelCode).toUpperCase()}` : ''}`),
     currentVersion,
     nextVersion: frozen ? bumpVersion(currentVersion, bump) : currentVersion ?? '1.0',
     frozen,
