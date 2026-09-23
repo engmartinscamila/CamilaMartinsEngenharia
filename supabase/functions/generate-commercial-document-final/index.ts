@@ -66,7 +66,7 @@ function contractScopeXml(services: unknown, customService: unknown, experienceL
     wordParagraph(`Local do serviço / endereço do imóvel ou obra: ${propertyAddress}.`),
   ];
   if (!perItemLevels.length && text(experienceLevel) && selected.some(isProjectTierEligible)) {
-    parts.push(wordParagraph(`Nível de prestação legado: ${text(experienceLevel).toUpperCase()}, aplicável exclusivamente às atividades elegíveis expressamente contratadas. Não acrescenta serviços, visitas, aprovações, execução, taxas, fornecimentos ou entregáveis de outra categoria.`));
+    parts.push(wordParagraph(`Nível de prestação: ${text(experienceLevel).toUpperCase()}, aplicável exclusivamente às atividades elegíveis expressamente contratadas. Não acrescenta serviços, visitas, aprovações, execução, taxas, fornecimentos ou entregáveis de outra categoria.`));
   } else if (distinctLevels.length > 1) {
     parts.push(wordParagraph('Os níveis de prestação são definidos individualmente por atividade e não ampliam automaticamente o escopo de outras atividades.'));
   }
