@@ -53,9 +53,13 @@ export async function resolveIdentity(user: User): Promise<{
 }
 
 export async function signInWithPassword(email: string, password: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail || normalizedEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail) || !password || password.length > 256) {
+    return 'E-mail ou senha incorretos.';
+  }
   try {
     const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
+      email: normalizedEmail,
       password,
     });
     return error ? toUserMessage(error) : null;
@@ -65,11 +69,15 @@ export async function signInWithPassword(email: string, password: string) {
 }
 
 export async function sendAccessLink(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail || normalizedEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    return 'Informe um e-mail válido.';
+  }
   try {
     // Uses the same invitation, email delivery and rate limit as the website.
     // The link opens the verified website; the new password works in both.
     const { error } = await supabase.functions.invoke('client-password-link', {
-      body: { email: email.trim().toLowerCase() },
+      body: { email: normalizedEmail },
     });
     return error ? toUserMessage(error) : null;
   } catch (error) {
@@ -79,6 +87,7 @@ export async function sendAccessLink(email: string) {
 
 function newPasswordPolicyError(password: string) {
   if (password.length < 12) return 'A senha deve ter pelo menos 12 caracteres.';
+  if (password.length > 256) return 'A senha deve ter no máximo 256 caracteres.';
   if (!/[a-z]/.test(password)) return 'Inclua pelo menos uma letra minúscula.';
   if (!/[A-Z]/.test(password)) return 'Inclua pelo menos uma letra maiúscula.';
   if (!/[0-9]/.test(password)) return 'Inclua pelo menos um número.';

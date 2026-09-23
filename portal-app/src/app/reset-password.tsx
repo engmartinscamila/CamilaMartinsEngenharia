@@ -23,6 +23,10 @@ export default function ResetPasswordScreen() {
       setError('A senha deve ter pelo menos 12 caracteres.');
       return;
     }
+    if (password.length > 256) {
+      setError('A senha deve ter no máximo 256 caracteres.');
+      return;
+    }
     if (password !== confirmation) {
       setError('As senhas não coincidem.');
       return;
@@ -39,6 +43,7 @@ export default function ResetPasswordScreen() {
       <Field
         autoComplete="new-password"
         label="Nova senha"
+        maxLength={256}
         onChangeText={setPassword}
         placeholder="Mínimo de 12 caracteres"
         secureTextEntry
@@ -47,6 +52,7 @@ export default function ResetPasswordScreen() {
       <Field
         autoComplete="new-password"
         label="Confirmar nova senha"
+        maxLength={256}
         onChangeText={setConfirmation}
         placeholder="Digite a senha novamente"
         secureTextEntry
