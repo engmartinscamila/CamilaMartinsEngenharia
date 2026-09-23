@@ -43,6 +43,7 @@ export default function AdminLayout() {
       <Stack.Screen name="contract-documents" />
       <Stack.Screen name="document-preparation" />
       <Stack.Screen name="document-governance" />
+      <Stack.Screen name="service-level-governance" />
       <Stack.Screen name="document-archive" />
       <Stack.Screen name="agenda" />
       <Stack.Screen name="schedule" />
