@@ -257,7 +257,7 @@ export async function createCommercialRecord(input: NewCommercialRecordInput) {
   // Ao descrever uma atividade personalizada, sua categoria deve integrar o snapshot.
   // Um serviço já selecionado não é removido nem convertido em "Outros".
   const services = input.services.map(item => isOtherCode(item.code) && description
-    ? { ...item, included: true, levelCode: item.levelCode ?? input.customServiceLevel ?? null }
+    ? { ...item, included: true, levelCode: item.levelCode ?? input.customServiceLevel ?? null, customDescription: description }
     : item);
   if (description && !services.some(item => isOtherCode(item.code))) {
     services.push({
@@ -268,6 +268,7 @@ export async function createCommercialRecord(input: NewCommercialRecordInput) {
       displayOrder: services.length + 1,
       levelApplicable: true,
       levelCode: input.customServiceLevel ?? null,
+      customDescription: description,
     });
   }
 
