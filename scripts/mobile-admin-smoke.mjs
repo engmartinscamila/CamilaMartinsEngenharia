@@ -1,9 +1,14 @@
 import { chromium } from 'playwright';
+import { readFileSync } from 'node:fs';
 
 const BASE = process.env.SITE_BASE || 'http://127.0.0.1:4173';
 const failures = [];
 const assert = (condition, message) => { if (!condition) failures.push(message); };
 const rightEdge = (box) => box ? box.x + box.width : Number.POSITIVE_INFINITY;
+const uiCoreSource = readFileSync('js/ui-core.js', 'utf8');
+const canonicalMenuBlock = uiCoreSource.match(/const MENU_ADMIN_CANONICO=\[([\s\S]*?)\];/i)?.[1] ?? '';
+const canonicalMenuCount = [...canonicalMenuBlock.matchAll(/\["[^"]+","[^"]+","[^"]+"\]/g)].length;
+if (!canonicalMenuCount) throw new Error('Não foi possível determinar a quantidade canônica do menu administrativo.');
 
 const supabaseMock = `
 (function(){
@@ -72,7 +77,11 @@ for (const file of ['admin.html', 'integridade-sistema.html', 'clientes.html', '
     assert(await menuButton.getAttribute('aria-expanded') === 'true', `${file}: aria-expanded não indica menu aberto`);
     const openSidebar = await page.locator('.sidebar').boundingBox();
     assert(Boolean(openSidebar && openSidebar.x >= -2 && openSidebar.width <= 322 && rightEdge(openSidebar) <= 390), `${file}: drawer aberto extrapola a viewport`);
-    assert(await page.locator('.menu-lateral a.menu-item').count() === 28, `${file}: menu mobile não contém os 28 destinos canônicos`);
+    const mobileMenuCount = await page.locator('.menu-lateral a.menu-item').count();
+    assert(
+      mobileMenuCount === canonicalMenuCount,
+      `${file}: menu mobile contém ${mobileMenuCount} destinos; esperado ${canonicalMenuCount} conforme MENU_ADMIN_CANONICO`,
+    );
     assert(await page.locator('.cme-admin-mobile-overlay').isVisible(), `${file}: overlay do menu não apareceu`);
 
     await page.keyboard.press('Escape');
