@@ -18,6 +18,7 @@ import {
   previewCommercialDocument,
   searchExistingCommercialClients,
   type CommercialCatalogService,
+  type CommercialCoobligor,
   type CommercialDocumentPreview,
   type CommercialRecord,
   type CommercialServiceLevelCode,
@@ -29,6 +30,8 @@ import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 const emptyForm = {
   prospectName: '', cpfCnpj: '', email: '', phone: '', cep: '', address: '', city: '', state: '', propertyAddress: '', propertyType: '',
   areaTerrenoM2: '', areaConstruidaM2: '', constructionStandard: '', customService: '', totalValue: '', notes: '',
+  spouseCoobligorName: '', spouseCoobligorCpf: '',
+  companyCoobligorName: '', companyCoobligorCpf: '', companyCoobligorRole: '',
 };
 const SERVICE_LEVELS: { code: CommercialServiceLevelCode; label: string }[] = [
   { code: 'bronze', label: 'Bronze' },
@@ -158,13 +161,33 @@ export default function AdminCommercialDocumentsScreen() {
     if(missingLevel){setError(`Selecione Bronze, Prata ou Ouro para ${missingLevel.name}.`);return;}
     const otherSelected=selectedCodes.some(code=>['p','outro','outros'].includes(code.toLowerCase()));
     if(form.customService.trim()&&!otherSelected&&!customServiceLevel){setError('Selecione Bronze, Prata ou Ouro para a atividade personalizada.');return;}
+
+    const spouseName=form.spouseCoobligorName.trim();
+    const spouseCpf=digitsOnly(form.spouseCoobligorCpf);
+    const companyName=form.companyCoobligorName.trim();
+    const companyCpf=digitsOnly(form.companyCoobligorCpf);
+    if((spouseName||spouseCpf)&&(!spouseName||spouseCpf.length!==11)){setError('Para o cônjuge/companheiro coobrigado, informe nome completo e CPF com 11 dígitos.');return;}
+    if((companyName||companyCpf)&&(!companyName||companyCpf.length!==11)){setError('Para o sócio/administrador coobrigado, informe nome completo e CPF com 11 dígitos.');return;}
+    const coobligors:CommercialCoobligor[]=[];
+    if(spouseName)coobligors.push({kind:'spouse_companion',name:spouseName,cpf:spouseCpf,role:'Cônjuge/companheiro(a)'});
+    if(companyName)coobligors.push({kind:'company_guarantor',name:companyName,cpf:companyCpf,role:form.companyCoobligorRole.trim()||'Sócio/administrador'});
+
     setLoadingKey('create'); setError(null); setSuccess(null);
+    const {
+      spouseCoobligorName: _spouseName,
+      spouseCoobligorCpf: _spouseCpf,
+      companyCoobligorName: _companyName,
+      companyCoobligorCpf: _companyCpf,
+      companyCoobligorRole: _companyRole,
+      ...commercialForm
+    }=form;
     const result = await createCommercialRecord({
-      ...form,
+      ...commercialForm,
       linkedClientId:selectedClient?.id??null,
       propertyAddress:sameAddress?form.address:form.propertyAddress,
       services,
       customServiceLevel: otherSelected ? (selectedLevels.p ?? null) : customServiceLevel,
+      coobligors,
     });
     if (result.error) setError(result.error);
     else {
@@ -244,6 +267,10 @@ export default function AdminCommercialDocumentsScreen() {
         <Field label="Nome / razão social *" value={form.prospectName} onChangeText={(value) => update('prospectName', value)} />
         <View style={styles.twoColumns}><View style={styles.lookupField}><Field label="CPF / CNPJ" value={form.cpfCnpj} onChangeText={(value) => update('cpfCnpj', value)} /><Button loading={loadingKey === 'lookup-cnpj'} onPress={() => void lookupCnpj()} title="Buscar CNPJ" variant="secondary" /></View><Field label="Telefone / WhatsApp" value={form.phone} onChangeText={(value) => update('phone', value)} /></View>
         <Field autoCapitalize="none" keyboardType="email-address" label="E-mail" value={form.email} onChangeText={(value) => update('email', value)} />
+        <Text style={styles.subTitle}>Coobrigação solidária (opcional)</Text>
+        <Text style={styles.help}>Preencha somente quando a pessoa realmente assinar o contrato como coobrigada. A solidariedade não será presumida.</Text>
+        <View style={styles.twoColumns}><Field label="Cônjuge/companheiro(a) coobrigado(a)" value={form.spouseCoobligorName} onChangeText={(value)=>update('spouseCoobligorName',value)} /><Field keyboardType="numeric" label="CPF do cônjuge/companheiro(a)" value={form.spouseCoobligorCpf} onChangeText={(value)=>update('spouseCoobligorCpf',value)} /></View>
+        <View style={styles.twoColumns}><Field label="Sócio/administrador coobrigado(a)" value={form.companyCoobligorName} onChangeText={(value)=>update('companyCoobligorName',value)} /><Field keyboardType="numeric" label="CPF do coobrigado da empresa" value={form.companyCoobligorCpf} onChangeText={(value)=>update('companyCoobligorCpf',value)} /><Field label="Função / relação societária" value={form.companyCoobligorRole} onChangeText={(value)=>update('companyCoobligorRole',value)} /></View>
         <View style={styles.twoColumns}><View style={styles.lookupField}><Field label="CEP" value={form.cep} onChangeText={(value) => update('cep', value)} /><Button loading={loadingKey === 'lookup-cep'} onPress={() => void lookupCep()} title="Buscar CEP" variant="secondary" /></View><Field label="Cidade" value={form.city} onChangeText={(value) => update('city', value)} /><Field label="UF" value={form.state} onChangeText={(value) => update('state', value)} /></View>
         <Field label="Endereço cadastral / residência do contratante" value={form.address} onChangeText={(value) => update('address', value)} />
         <Pressable accessibilityRole="checkbox" accessibilityState={{checked:sameAddress}} onPress={toggleSameAddress} style={[styles.serviceRow,sameAddress&&styles.serviceSelected]}><Text style={styles.check}>{sameAddress?'☒':'☐'}</Text><Text style={styles.serviceText}>O endereço da obra é o mesmo endereço cadastral / residencial do contratante</Text></Pressable>
