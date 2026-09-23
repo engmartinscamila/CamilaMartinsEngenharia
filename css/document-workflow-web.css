@@ -28,3 +28,13 @@ html.doc-modal-open,body.doc-modal-open{overflow:hidden;overscroll-behavior:none
 /* Garante precedência sobre o CSS injetado pelo modal auxiliar após o carregamento. */
 .doc-options-modal .doc-options-dialog{color:var(--text-primary,#f5f7fa);background:var(--card-bg,#0b1726)}
 .doc-options-modal .doc-options-dialog .doc-options-close{background:var(--card-bg,#0b1726);color:#d9bd82;border:1px solid rgba(184,154,99,.55)}
+
+/* Seleção compacta de atividades comerciais */
+.doc-service-picker{border:1px solid var(--border-color,rgba(184,154,99,.25));border-radius:12px;padding:0 12px;background:rgba(255,255,255,.018)}
+.doc-service-picker summary{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:48px;cursor:pointer;color:var(--text-primary,#fff);font-weight:700;list-style:none}
+.doc-service-picker summary::-webkit-details-marker{display:none}
+.doc-service-picker summary::after{content:'+';color:#b89a63;font-size:1.25rem}
+.doc-service-picker[open] summary::after{content:'−'}
+.doc-service-picker summary strong{color:#b89a63;font-size:.78rem;white-space:nowrap}
+.doc-services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px;padding:0 0 12px}
+@media(max-width:720px){.doc-services-grid{grid-template-columns:1fr}.doc-service-picker summary{font-size:.9rem}}
