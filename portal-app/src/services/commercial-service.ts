@@ -5,6 +5,13 @@ import type { ServiceResult } from '@/types/domain';
 
 export type CommercialServiceLevelCode = 'bronze' | 'prata' | 'ouro';
 
+export interface CommercialCoobligor {
+  kind: 'spouse_companion' | 'company_guarantor' | 'other_guarantor';
+  name: string;
+  cpf: string;
+  role?: string | null;
+}
+
 export interface CommercialServiceSelection {
   code: string;
   name: string;
@@ -48,6 +55,7 @@ export interface CommercialRecord {
   customService: string | null;
   totalValue: number | null;
   services: CommercialServiceSelection[];
+  coobligors: CommercialCoobligor[];
   quoteDocumentId: string | null;
   contractDocumentId: string | null;
   linkedClientId: string | null;
@@ -107,6 +115,7 @@ export interface NewCommercialRecordInput {
   customServiceLevel?: CommercialServiceLevelCode | null;
   totalValue?: string;
   notes?: string;
+  coobligors?: CommercialCoobligor[];
 }
 
 export interface CommercialAddressLookup {
@@ -199,7 +208,7 @@ export async function searchExistingCommercialClients(query: string): Promise<Se
 export async function listCommercialRecords(): Promise<ServiceResult<CommercialRecord[]>> {
   const result = await supabase
     .from('commercial_records')
-    .select('id, quote_number, contract_number, status, prospect_name, cpf_cnpj, email, phone, address, city, state, property_address, property_type, experience_level, custom_service, total_value, services, quote_document_id, contract_document_id, linked_client_id, linked_contract_id, linked_project_id, crm_stage, crm_priority, crm_source, next_action_at, lost_reason, created_at')
+    .select('id, quote_number, contract_number, status, prospect_name, cpf_cnpj, email, phone, address, city, state, property_address, property_type, experience_level, custom_service, total_value, services, coobligors, quote_document_id, contract_document_id, linked_client_id, linked_contract_id, linked_project_id, crm_stage, crm_priority, crm_source, next_action_at, lost_reason, created_at')
     .order('created_at', { ascending: false })
     .limit(100);
   if (result.error) return { data: [], error: 'Não foi possível carregar os orçamentos e contratos.' };
@@ -222,6 +231,7 @@ export async function listCommercialRecords(): Promise<ServiceResult<CommercialR
       customService: row.custom_service,
       totalValue: row.total_value === null ? null : Number(row.total_value),
       services: Array.isArray(row.services) ? row.services as unknown as CommercialServiceSelection[] : [],
+      coobligors: Array.isArray(row.coobligors) ? row.coobligors as CommercialCoobligor[] : [],
       quoteDocumentId: row.quote_document_id,
       contractDocumentId: row.contract_document_id,
       linkedClientId: row.linked_client_id,
@@ -317,9 +327,20 @@ export async function createCommercialRecord(input: NewCommercialRecordInput) {
   const result = input.linkedClientId
     ? await supabase.rpc('admin_create_commercial_record_from_client', { p_client_id: input.linkedClientId, p_data })
     : await supabase.rpc('admin_create_commercial_record', { p_data });
-  return result.error || !result.data
-    ? { recordId: null, error: result.error?.message ?? 'Não foi possível criar o orçamento.' }
-    : { recordId: result.data as string, error: null };
+  if (result.error || !result.data) {
+    return { recordId: null, error: result.error?.message ?? 'Não foi possível criar o orçamento.' };
+  }
+  const recordId = result.data as string;
+  if ((input.coobligors ?? []).length) {
+    const coobligorResult = await supabase.rpc('admin_set_commercial_coobligors', {
+      p_record_id: recordId,
+      p_coobligors: input.coobligors,
+    });
+    if (coobligorResult.error) {
+      return { recordId, error: `Orçamento criado, mas os coobrigados não foram gravados: ${coobligorResult.error.message}` };
+    }
+  }
+  return { recordId, error: null };
 }
 
 function bumpVersion(current: string | null, bump: 'minor' | 'major') {
@@ -390,4 +411,12 @@ export async function createProspectAccessLink(recordId: string, expiresHours = 
     url: Linking.createURL('/prospect-access', { queryParams: { token: String(result.data) } }),
     error: null,
   };
+}
+
+export async function setCommercialCoobligors(recordId: string, coobligors: CommercialCoobligor[]) {
+  const result = await supabase.rpc('admin_set_commercial_coobligors', {
+    p_record_id: recordId,
+    p_coobligors: coobligors,
+  });
+  return result.error ? result.error.message ?? 'Não foi possível atualizar os coobrigados.' : null;
 }
