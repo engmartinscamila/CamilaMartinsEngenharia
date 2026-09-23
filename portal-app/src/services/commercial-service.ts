@@ -25,6 +25,9 @@ export interface CommercialCatalogService {
   description: string;
   deliverables: string[];
   exclusions: string[];
+  aliases: string[];
+  synonyms: string[];
+  keywords: string[];
 }
 
 export interface CommercialRecord {
@@ -144,7 +147,7 @@ export function validateCustomCommercialService(input: Pick<NewCommercialRecordI
 export async function listCommercialServiceCatalog(): Promise<ServiceResult<CommercialCatalogService[]>> {
   const result = await supabase
     .from('service_catalog')
-    .select('code, name, category, level_applicable, acceptance_required, description, deliverables, exclusions')
+    .select('code, name, category, level_applicable, acceptance_required, description, deliverables, exclusions, aliases, synonyms, keywords')
     .eq('active', true)
     .order('code');
 
@@ -162,6 +165,9 @@ export async function listCommercialServiceCatalog(): Promise<ServiceResult<Comm
       description: String(row.description ?? ''),
       deliverables: Array.isArray(row.deliverables) ? row.deliverables.map(String) : [],
       exclusions: Array.isArray(row.exclusions) ? row.exclusions.map(String) : [],
+      aliases: Array.isArray(row.aliases) ? row.aliases.map(String) : [],
+      synonyms: Array.isArray(row.synonyms) ? row.synonyms.map(String) : [],
+      keywords: Array.isArray(row.keywords) ? row.keywords.map(String) : [],
     })).filter((row) => row.code && row.name),
     error: null,
   };
