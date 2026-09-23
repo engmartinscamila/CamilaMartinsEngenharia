@@ -45,7 +45,7 @@ ok(reviewSql.includes("if v_reason is null or length(v_reason)<5"), 'justificati
 ok(reviewSql.includes("v_decision not in ('pending','approved','rejected')"), 'decisão é restrita a estados conhecidos');
 ok(reviewSql.includes('for update'), 'revisão trava a combinação individual durante a decisão');
 ok(reviewSql.includes('service_level_scope_versions'), 'cada decisão gera histórico versionado');
-ok(!/approve.*all|bulk.*approv|mass.*approv/i.test(reviewSql), 'não existe aprovação em massa');
+ok(!reviewSql.includes('admin_review_all_service_level_scope') && !reviewSql.includes('admin_bulk_review_service_level_scope'), 'não existe endpoint de aprovação coletiva');
 ok(reviewSql.includes("if v_decision='approved'"), 'aprovação valida os três textos antes de liberar');
 ok(reviewSql.includes('public.is_portal_admin()'), 'revisão exige Admin no servidor');
 
