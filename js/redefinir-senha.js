@@ -24,7 +24,8 @@ function habilitarFormulario(habilitado) {
 }
 
 function erroPoliticaSenha(senha) {
-    if (senha.length < 12) return "A senha deve ter pelo menos 12 caracteres.";\n    if (senha.length > 256) return "A senha deve ter no máximo 256 caracteres.";
+    if (senha.length < 12) return "A senha deve ter pelo menos 12 caracteres.";
+    if (senha.length > 256) return "A senha deve ter no máximo 256 caracteres.";
     if (!/[a-z]/.test(senha)) return "Inclua pelo menos uma letra minúscula.";
     if (!/[A-Z]/.test(senha)) return "Inclua pelo menos uma letra maiúscula.";
     if (!/[0-9]/.test(senha)) return "Inclua pelo menos um número.";
