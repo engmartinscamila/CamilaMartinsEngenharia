@@ -98,8 +98,13 @@ function prepararLogin() {
     const grupoConfirmarSenha = document.getElementById("confirmarSenhaGroup");
     const campoConfirmarSenha = document.getElementById("confirmarSenha");
     const orientacaoSenha = document.getElementById("passwordSecurityAdvice");
+    const turnstileContainer = document.getElementById("turnstileContainer");
+    const turnstileSiteKey = document.querySelector('meta[name="cme-turnstile-site-key"]')?.content?.trim() || "";
 
     let modoPrimeiroAcesso = false;
+    let captchaToken = "";
+    let turnstileWidgetId = null;
+    const captchaAtivo = Boolean(turnstileSiteKey);
     if (!formulario || !campoEmail || !campoSenha) return;
 
     const mostrarMensagem = (texto, tipo = "erro") => {
@@ -123,11 +128,60 @@ function prepararLogin() {
         }
     };
 
+    const resetarCaptcha = () => {
+        captchaToken = "";
+        if (turnstileWidgetId !== null && window.turnstile?.reset) {
+            window.turnstile.reset(turnstileWidgetId);
+        }
+    };
+
+    const prepararTurnstile = () => {
+        if (!captchaAtivo || !turnstileContainer) return;
+        turnstileContainer.hidden = false;
+
+        const renderizar = () => {
+            if (!window.turnstile?.render || turnstileWidgetId !== null) return;
+            turnstileWidgetId = window.turnstile.render(turnstileContainer, {
+                sitekey: turnstileSiteKey,
+                theme: "auto",
+                callback: (token) => { captchaToken = String(token || ""); },
+                "expired-callback": () => { captchaToken = ""; },
+                "error-callback": () => { captchaToken = ""; }
+            });
+        };
+
+        if (window.turnstile?.render) {
+            renderizar();
+            return;
+        }
+
+        let script = document.getElementById("cmeTurnstileScript");
+        if (!script) {
+            script = document.createElement("script");
+            script.id = "cmeTurnstileScript";
+            script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+        }
+        script.addEventListener("load", renderizar, { once: true });
+    };
+
+    prepararTurnstile();
+
     const solicitarLinkSenha = async (email) => {
         try {
+            if (captchaAtivo && !captchaToken) {
+                return {
+                    ok: false,
+                    mensagem: "Conclua a verificação de segurança para continuar."
+                };
+            }
+
             const { data, error } = await window.supabaseClient.functions.invoke("client-password-link", {
-                body: { email }
+                body: { email, captchaToken: captchaToken || undefined }
             });
+            if (captchaAtivo) resetarCaptcha();
 
             if (error || data?.ok === false) {
                 console.error("Erro ao solicitar link de senha:", error || data);
@@ -222,9 +276,9 @@ function prepararLogin() {
         event.preventDefault();
         mostrarMensagem("");
 
-        const email = campoEmail.value.trim();
-        if (!email) {
-            mostrarMensagem("Digite seu e-mail.");
+        const email = campoEmail.value.trim().toLowerCase();
+        if (!email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            mostrarMensagem("Digite um e-mail válido.");
             campoEmail.focus();
             return;
         }
@@ -237,13 +291,25 @@ function prepararLogin() {
             return;
         }
 
+        if (!campoSenha.value || campoSenha.value.length > 256) {
+            mostrarMensagem("E-mail ou senha incorretos.");
+            campoSenha.focus();
+            return;
+        }
+        if (captchaAtivo && !captchaToken) {
+            mostrarMensagem("Conclua a verificação de segurança para continuar.");
+            return;
+        }
+
         definirCarregamento(true, "Entrando...");
         const { data, error } = await window.supabaseClient.auth.signInWithPassword({
             email,
-            password: campoSenha.value
+            password: campoSenha.value,
+            ...(captchaAtivo ? { options: { captchaToken } } : {})
         });
 
         if (error || !data.session) {
+            if (captchaAtivo) resetarCaptcha();
             mostrarMensagem("E-mail ou senha incorretos.");
             definirCarregamento(false);
             return;
