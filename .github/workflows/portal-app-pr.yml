@@ -54,6 +54,9 @@ jobs:
       - name: Confirmar catálogo central no fluxo comercial
         run: node scripts/test-commercial-catalog-source.mjs
 
+      - name: Testar nível Bronze Prata Ouro por serviço
+        run: node scripts/test-commercial-service-levels.mjs
+
       - name: Testar carregamento completo de clientes, documentos e vínculos
         run: node scripts/test-construction-schedule-pagination.mjs
 
