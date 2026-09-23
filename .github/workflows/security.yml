@@ -37,6 +37,9 @@ jobs:
       - name: Proteger matriz serviço por nível
         run: node scripts/security/service-level-scope-matrix-regression.mjs
 
+      - name: Proteger snapshot de nível por serviço
+        run: node scripts/security/commercial-service-level-per-item-regression.mjs
+
       - name: Proteger cadeia de revisões e aditivos do cronograma
         run: node scripts/security/construction-schedule-revision-regression.mjs
 
