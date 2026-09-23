@@ -13,6 +13,10 @@ import {
 import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 import type { AdminProjectSummary, PurchaseQuoteSummary, SupplierSummary } from '@/types/domain';
 
+const SUPPLIER_CATEGORIES = ['Material de construção','Elétrica','Hidráulica','Estrutura','Acabamento','Pintura','Esquadrias','Equipamentos','Serviços terceirizados','Outros'];
+const MEASURE_UNITS = ['un','m','m linear','m²','m³','kg','t','L','h','diária','pacote'];
+const PAYMENT_OPTIONS = ['Pix','Dinheiro','Transferência','Cartão à vista','Cartão parcelado','Boleto','Faturado','Outro'];
+
 export default function AdminProcurementScreen() {
   const styles = useThemeStyles(styleDefinitions);
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
@@ -81,15 +85,15 @@ export default function AdminProcurementScreen() {
       {error ? <Notice tone="danger">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}
       <Card><Text style={styles.sectionTitle}>Projeto</Text><View style={styles.chips}>{projects.map((project) => <Pressable key={project.id} onPress={() => setProjectId(project.id)} style={[styles.chip, projectId === project.id && styles.selected]}><Text style={styles.chipText}>{project.contractNumber} • {project.name}</Text></Pressable>)}</View></Card>
       <View style={styles.columns}>
-        <Card style={styles.column}><Text style={styles.sectionTitle}>Novo fornecedor</Text><Field label="Nome *" onChangeText={setSupplierName} value={supplierName} /><Field label="Categoria" onChangeText={setSupplierCategory} value={supplierCategory} /><Field label="Telefone / WhatsApp" onChangeText={setSupplierPhone} value={supplierPhone} /><Button onPress={() => void saveSupplier()} title="Cadastrar fornecedor" /></Card>
-        <Card style={styles.column}><Text style={styles.sectionTitle}>Abrir cotação</Text><Field label="Título *" onChangeText={setTitle} value={title} /><Field label="Descrição" multiline onChangeText={setDescription} value={description} /><Field label="Data limite (AAAA-MM-DD)" onChangeText={setDueDate} value={dueDate} /><Field label="Primeiro item *" onChangeText={setItemDescription} value={itemDescription} /><View style={styles.row}><Field keyboardType="decimal-pad" label="Quantidade" onChangeText={setQuantity} value={quantity} /><Field label="Unidade" onChangeText={setUnit} value={unit} /></View><Button onPress={() => void saveQuote()} title="Abrir cotação" /></Card>
+        <Card style={styles.column}><Text style={styles.sectionTitle}>Novo fornecedor</Text><Field label="Nome *" onChangeText={setSupplierName} value={supplierName} /><Text style={styles.label}>Categoria predefinida</Text><View style={styles.chips}>{SUPPLIER_CATEGORIES.map((item) => <Pressable key={item} onPress={() => setSupplierCategory(item)} style={[styles.chip, supplierCategory === item && styles.selected]}><Text style={styles.chipText}>{item}</Text></Pressable>)}</View><Field label="Telefone / WhatsApp" onChangeText={setSupplierPhone} value={supplierPhone} /><Button onPress={() => void saveSupplier()} title="Cadastrar fornecedor" /></Card>
+        <Card style={styles.column}><Text style={styles.sectionTitle}>Abrir cotação</Text><Field label="Título do pedido *" onChangeText={setTitle} value={title} /><Field label="Descrição" multiline onChangeText={setDescription} value={description} /><Field label="Prazo para receber propostas (AAAA-MM-DD)" placeholder="Use o calendário do dispositivo" onChangeText={setDueDate} value={dueDate} /><Field label="Item ou material cotado *" onChangeText={setItemDescription} value={itemDescription} /><View style={styles.row}><Field keyboardType="decimal-pad" label="Quantidade" onChangeText={setQuantity} value={quantity} /></View><Text style={styles.label}>Unidade de medida</Text><View style={styles.chips}>{MEASURE_UNITS.map((item) => <Pressable key={item} onPress={() => setUnit(item)} style={[styles.chip, unit === item && styles.selected]}><Text style={styles.chipText}>{item}</Text></Pressable>)}</View><Button onPress={() => void saveQuote()} title="Abrir cotação" /></Card>
       </View>
       <Card>
         <Text style={styles.sectionTitle}>Registrar proposta recebida</Text>
         <Text style={styles.label}>Cotação</Text><View style={styles.chips}>{quotes.filter((quote) => !['approved', 'ordered', 'cancelled'].includes(quote.status)).map((quote) => <Pressable key={quote.id} onPress={() => setQuoteId(quote.id)} style={[styles.chip, quoteId === quote.id && styles.selected]}><Text style={styles.chipText}>{quote.title}</Text></Pressable>)}</View>
         <Text style={styles.label}>Fornecedor</Text><View style={styles.chips}>{suppliers.map((supplier) => <Pressable key={supplier.id} onPress={() => setSupplierId(supplier.id)} style={[styles.chip, supplierId === supplier.id && styles.selected]}><Text style={styles.chipText}>{supplier.name}</Text></Pressable>)}</View>
         <View style={styles.row}><Field keyboardType="decimal-pad" label="Valor total (R$)" onChangeText={setBidAmount} value={bidAmount} /><Field keyboardType="number-pad" label="Prazo (dias)" onChangeText={setLeadTime} value={leadTime} /></View>
-        <Field label="Condição de pagamento" onChangeText={setPaymentTerms} value={paymentTerms} />
+        <Text style={styles.label}>Condição de pagamento</Text><View style={styles.chips}>{PAYMENT_OPTIONS.map((item) => <Pressable key={item} onPress={() => setPaymentTerms(item)} style={[styles.chip, paymentTerms === item && styles.selected]}><Text style={styles.chipText}>{item}</Text></Pressable>)}</View>
         <Button onPress={() => void saveBid()} title="Registrar proposta" />
       </Card>
       <Card>
