@@ -8,7 +8,7 @@ import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
 import { listAdminProjects } from '@/services/admin-service';
 import { listCommercialServiceCatalog, type CommercialCatalogService } from '@/services/commercial-service';
 import {
-  CONTRACT_DOCUMENT_OPTIONS, generateContractDocument, generateFormalNotice, listAdminDocumentAttention,
+  CONTRACT_DOCUMENT_OPTIONS, generateContractDocument, generateFormalNotice, getCommercialContractScopeGuard, listAdminDocumentAttention,
   listContractScope, listProjectApprovals, listProjectContractDocuments, prepareContractDocument, prepareFormalNotice,
   sendContractDocument, sendFormalNotice, setContractScopeItem,
   type ContractDocumentKind, type ContractDocumentSummary, type ContractScopeItem, type DocumentAttentionItem, type ProjectApprovalItem,
@@ -23,6 +23,7 @@ export default function AdminContractDocumentsScreen() {
   const [projectId, setProjectId] = useState<string | null>(null);
   const [scope, setScope] = useState<ContractScopeItem[]>([]);
   const [catalogServices, setCatalogServices] = useState<CommercialCatalogService[]>([]);
+  const [commercialScopeManaged, setCommercialScopeManaged] = useState(false);
   const [attention, setAttention] = useState<DocumentAttentionItem[]>([]);
   const [approvals, setApprovals] = useState<ProjectApprovalItem[]>([]);
   const [documents, setDocuments] = useState<ContractDocumentSummary[]>([]);
@@ -52,10 +53,20 @@ export default function AdminContractDocumentsScreen() {
   }, []);
 
   const loadProjectData = useCallback(async () => {
-    if (!selectedProject?.contractId || !selectedProject.id) { setScope([]); setApprovals([]); setDocuments([]); return; }
-    const [scopeResult, approvalResult, documentResult] = await Promise.all([listContractScope(selectedProject.contractId), listProjectApprovals(selectedProject.id), listProjectContractDocuments(selectedProject.id)]);
-    setScope(scopeResult.data); setApprovals(approvalResult.data); setDocuments(documentResult.data);
-    if (scopeResult.error || approvalResult.error || documentResult.error) setError(scopeResult.error ?? approvalResult.error ?? documentResult.error);
+    if (!selectedProject?.contractId || !selectedProject.id) { setScope([]); setCommercialScopeManaged(false); setApprovals([]); setDocuments([]); return; }
+    const [scopeResult, approvalResult, documentResult, scopeGuardResult] = await Promise.all([
+      listContractScope(selectedProject.contractId),
+      listProjectApprovals(selectedProject.id),
+      listProjectContractDocuments(selectedProject.id),
+      getCommercialContractScopeGuard(selectedProject.contractId),
+    ]);
+    setScope(scopeResult.data);
+    setCommercialScopeManaged(scopeGuardResult.data.managed);
+    setApprovals(approvalResult.data);
+    setDocuments(documentResult.data);
+    if (scopeResult.error || approvalResult.error || documentResult.error || scopeGuardResult.error) {
+      setError(scopeResult.error ?? approvalResult.error ?? documentResult.error ?? scopeGuardResult.error);
+    }
   }, [selectedProject]);
 
   useEffect(() => { const task = setTimeout(() => void loadBase(), 0); return () => clearTimeout(task); }, [loadBase]);
@@ -121,7 +132,7 @@ export default function AdminContractDocumentsScreen() {
 
       <Card><Text style={styles.sectionTitle}>Contrato / projeto</Text><View style={styles.projectList}>{projects.map((project) => <Pressable key={project.id} onPress={() => setProjectId(project.id)} style={[styles.projectChip, projectId === project.id && styles.selected]}><Text style={[styles.projectText, projectId === project.id && styles.selectedText]}>{project.contractNumber} • {project.name}</Text></Pressable>)}</View></Card>
 
-      {selectedProject?.contractId ? <Card><Text style={styles.sectionTitle}>Serviços efetivamente contratados</Text><Text style={styles.help}>Marque somente o que integra o Anexo I. Itens não marcados continuam fora do escopo.</Text>{catalogServices.length===0?<Notice tone="warning">O catálogo central de serviços não pôde ser carregado. O escopo não será editado usando uma lista local desatualizada.</Notice>:null}<View style={styles.scopeList}>{catalogServices.map((service, index) => { const { code, name } = service; const included = scopeByCode.get(code)?.included === true; return <Pressable disabled={savingKey === `scope-${code}`} key={code} onPress={() => void toggleScope(code, name, index)} style={[styles.scopeRow, included && styles.scopeIncluded]}><Text style={styles.scopeMark}>{included ? '☒' : '☐'}</Text><View style={{ flex: 1 }}><Text style={styles.scopeName}>({code}) {name}</Text><Text style={styles.scopeMeta}>{included ? 'Contratado' : 'Não contratado / opcional'}</Text></View></Pressable>; })}</View></Card> : <Notice tone="warning">Este projeto ainda não possui vínculo moderno de contrato.</Notice>}
+      {selectedProject?.contractId ? <Card><Text style={styles.sectionTitle}>Serviços efetivamente contratados</Text><Text style={styles.help}>{commercialScopeManaged ? 'Este escopo é controlado pelo orçamento/contrato comercial vinculado. Para alterar serviços, faça a alteração comercial ou um aditivo; aqui o escopo é somente leitura.' : 'Contrato legado: marque somente o que integra o Anexo I. Itens não marcados continuam fora do escopo.'}</Text>{catalogServices.length===0?<Notice tone="warning">O catálogo central de serviços não pôde ser carregado. O escopo não será editado usando uma lista local desatualizada.</Notice>:null}<View style={styles.scopeList}>{catalogServices.map((service, index) => { const { code, name } = service; const included = scopeByCode.get(code)?.included === true; return <Pressable disabled={commercialScopeManaged || savingKey === `scope-${code}`} key={code} onPress={() => void toggleScope(code, name, index)} style={[styles.scopeRow, included && styles.scopeIncluded]}><Text style={styles.scopeMark}>{included ? '☒' : '☐'}</Text><View style={{ flex: 1 }}><Text style={styles.scopeName}>({code}) {name}</Text><Text style={styles.scopeMeta}>{included ? 'Contratado' : 'Não contratado / opcional'}</Text></View></Pressable>; })}</View></Card> : <Notice tone="warning">Este projeto ainda não possui vínculo moderno de contrato.</Notice>}
 
       <Card><Text style={styles.sectionTitle}>Gerar documento</Text><Text style={styles.help}>O sistema cria primeiro um rascunho com os dados conhecidos. Depois você escolhe se quer apenas baixar ou também arquivar.</Text>{CONTRACT_DOCUMENT_OPTIONS.map((option) => { const auxiliaryPreliminary = option.kind === 'estudo_preliminar' && !preliminaryIncluded; return <View key={option.kind} style={styles.generatorRow}><View style={{ flex: 1 }}><Text style={styles.generatorTitle}>{option.title}</Text><Text style={styles.help}>{auxiliaryPreliminary ? 'Documento auxiliar opcional. Gerá-lo não inclui o Estudo Preliminar no Anexo I nem altera o escopo contratado.' : option.description}</Text></View><Button loading={savingKey === `prepare-${option.kind}-`} onPress={() => void prepare(option.kind)} title="Preparar" variant="secondary" /></View>; })}</Card>
 
