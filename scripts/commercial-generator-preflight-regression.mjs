@@ -19,3 +19,11 @@ const pointerUpdate = position("service.from('commercial_records').update(kind==
 assert.ok(userProfile < missingCheck && missingCheck < masterCheck && masterCheck < pointerRead && pointerRead < documentInsert && documentInsert < pointerUpdate,
   'O gerador criou/vinculou documento antes de validar identidade profissional e Contrato Mestre.');
 console.log('PASS: validação de identidade e Contrato Mestre antes de criar/vincular documento; espelho idêntico.');
+
+assert.ok(canonical.includes('serviceBudgetDescription'), 'Orçamento não usa campo específico da matriz.');
+assert.ok(canonical.includes('item.budgetDescription??item.description'), 'Orçamento não preserva fallback legado quando a matriz não está aprovada.');
+const finalGenerator = readFileSync('supabase/functions/generate-commercial-document-final/index.ts', 'utf8');
+assert.ok(finalGenerator.includes('text(item.contractScope) || text(item.description)'), 'Contrato não prioriza contractScope aprovado.');
+const derivedGenerator = readFileSync('supabase/functions/generate-contract-document/index.ts', 'utf8');
+assert.ok(derivedGenerator.includes('item.annexScope??item.description'), 'Anexo I não prioriza annexScope aprovado.');
+assert.ok(derivedGenerator.includes('item.customDescription'), 'Documento derivado não preserva descrição de serviço personalizado.');
