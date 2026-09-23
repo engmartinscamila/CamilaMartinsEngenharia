@@ -20,6 +20,8 @@ const ALLOWED_ORIGINS = new Set([
 const GENERIC_MESSAGE = "Se este e-mail estiver autorizado, enviaremos um link seguro para criar ou redefinir a senha. Verifique também a caixa de spam.";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_REQUEST_BYTES = 4096;
+const TURNSTILE_REQUIRED = Deno.env.get("TURNSTILE_REQUIRED") === "true";
+const TURNSTILE_SECRET_KEY = Deno.env.get("TURNSTILE_SECRET_KEY") ?? "";
 
 function corsHeaders(request: Request) {
   const origin = request.headers.get("origin") ?? "";
@@ -70,6 +72,31 @@ function escapeHtml(value: unknown) {
     .replaceAll("'", "&#039;");
 }
 
+function normalizeCaptchaToken(value: unknown) {
+  return typeof value === "string" ? value.trim().slice(0, 4096) : "";
+}
+
+async function verifyTurnstile(request: Request, token: string) {
+  if (!TURNSTILE_REQUIRED) return true;
+  if (!TURNSTILE_SECRET_KEY || token.length < 10) return false;
+
+  const payload = new FormData();
+  payload.append("secret", TURNSTILE_SECRET_KEY);
+  payload.append("response", token);
+
+  const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  if (forwardedFor) payload.append("remoteip", forwardedFor);
+
+  const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    method: "POST",
+    body: payload,
+  });
+  if (!response.ok) return false;
+
+  const result = await response.json().catch(() => ({}));
+  return result?.success === true;
+}
+
 async function sha256(value: string) {
   const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)));
   return Array.from(digest).map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -112,7 +139,11 @@ const handler = withSupabase({ auth: "publishable" }, async (request: Request, c
   try {
     const body = await readRequestBody(request);
     const email = normalizeEmail(body?.email);
+    const captchaToken = normalizeCaptchaToken(body?.captchaToken);
     if (!EMAIL_PATTERN.test(email)) return json(request, { ok: true, message: GENERIC_MESSAGE });
+    if (!(await verifyTurnstile(request, captchaToken))) {
+      return json(request, { ok: false, message: "Conclua a verificação de segurança para continuar." }, 400);
+    }
 
     const admin = ctx.supabaseAdmin;
     // Consume the quota before looking the address up. This keeps unknown and
