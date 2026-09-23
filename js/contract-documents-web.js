@@ -30,7 +30,19 @@ function renderScope(){
     return `<label class="doc-service doc-service-smart"><input type="checkbox" data-scope="${code}" ${included(code)?'checked':''}><span><strong>(${code}) ${esc(name)}</strong>${meta.description?`<small class="doc-service-description">${esc(meta.description)}</small>`:''}<small class="doc-service-level ${meta.level_applicable?'':'muted'}">${included(code)?'Contratado':'Não contratado / opcional'} • ${meta.level_applicable?'elegível a nível':'independente de nível'}</small></span></label>`;
   }).join('')
 }
-function renderGenerators(){$('contractGenerators').innerHTML=generators.map(([kind,title,desc])=>`<div class="doc-row" data-generator-kind="${kind}"><div class="doc-row-head"><div><strong>${esc(title)}</strong><div class="doc-meta">${esc(desc)}</div></div><button class="doc-btn secondary" data-prepare="${kind}">Preparar</button></div>${kind==='estudo_preliminar'&&!included('a')?'<div class="doc-note">Este documento será tratado como auxiliar opcional e não passará a integrar automaticamente o escopo contratado.</div>':''}</div>`).join('')}
+function additionalFields(){
+  const options=serviceCatalogMeta.map(item=>`<option value="${esc(item.code)}">${esc(item.name)}</option>`).join('');
+  return `<div class="doc-additional-fields" data-additional-fields>
+    <div class="doc-grid">
+      <div class="doc-field"><label>Atividade adicional *</label><select data-additional-service><option value="">Selecione a atividade</option>${options}</select></div>
+      <div class="doc-field"><label>Nível do atendimento</label><select data-additional-level><option value="">Herdar do contrato</option><option value="bronze">Bronze</option><option value="prata">Prata</option><option value="ouro">Ouro</option></select></div>
+      <div class="doc-field"><label>Valor adicional (R$) *</label><input data-additional-value inputmode="decimal" placeholder="0,00"></div>
+      <div class="doc-field"><label>Forma de pagamento *</label><select data-additional-payment><option value="">Selecione</option><option value="pix">Pix</option><option value="cartao_vista">Cartão de crédito à vista</option><option value="cartao_parcelado">Cartão de crédito parcelado</option><option value="dinheiro">Dinheiro</option><option value="transferencia">Transferência bancária</option><option value="outro">Outro</option></select></div>
+    </div>
+    <div class="doc-field"><label>Descrição e observações</label><textarea data-additional-description rows="4" placeholder="O texto padrão da atividade será usado e poderá ser ajustado aqui."></textarea></div>
+  </div>`;
+}
+function renderGenerators(){$('contractGenerators').innerHTML=generators.map(([kind,title,desc])=>`<div class="doc-row" data-generator-kind="${kind}"><div class="doc-row-head"><div><strong>${esc(title)}</strong><div class="doc-meta">${esc(desc)}</div></div><button class="doc-btn secondary" data-prepare="${kind}">Preparar</button></div>${kind==='servico_adicional'?additionalFields():''}${kind==='estudo_preliminar'&&!included('a')?'<div class="doc-note">Este documento será tratado como auxiliar opcional e não passará a integrar automaticamente o escopo contratado.</div>':''}</div>`).join('')}
 function renderApprovals(){
   const labels={aguardando:'Aguardando cliente',pendente:'Pendente',aceito:'Aceito',aprovado:'Aceito',recusado:'Recusado',rejeitado:'Recusado'};
   $('approvalList').innerHTML=approvals.length?approvals.map(a=>{
@@ -44,7 +56,28 @@ function renderDocs(){const visibleDocs=activeDocumentKind?docs.filter(d=>d.docu
 function renderAttention(){$('contractAttention').innerHTML=attention.length?attention.map(a=>`<div class="doc-row"><div class="doc-row-head"><div><strong>${esc(a.approval_title)}</strong><div class="doc-meta">${esc(a.client_name||'Cliente')} • ${esc(a.contract_number||'Contrato')}</div></div><span class="doc-badge">${a.attention_level==='overdue'?'Prazo vencido':'Prazo próximo'}</span></div><div class="doc-meta">Entrega: ${new Date(a.delivered_at).toLocaleDateString('pt-BR')} • limite: ${new Date(a.due_at).toLocaleDateString('pt-BR')}</div><div class="doc-actions"><button class="doc-btn secondary" data-notice="${a.approval_id}">Preparar / gerar Notificação Formal</button></div></div>`).join(''):'<p>Nenhuma aprovação atrasada ou próxima do prazo.</p>'}
 function renderAll(){renderScope();renderGenerators();renderApprovals();renderDocs();renderAttention();window.dispatchEvent(new CustomEvent('cme:contract-rendered'))}
 async function toggleScope(code,checked){if(!project?.contract_id)return;const preset=scopePresets.find(x=>x[0]===code);const meta=serviceCatalogMeta.find(x=>x.code===code);const old=scope.find(x=>x.service_code===code);const payload={contract_id:project.contract_id,service_code:code,service_name:preset?.[1]||code,included:checked,acceptance_required:old?.acceptance_required??meta?.acceptance_required??true,display_order:scopePresets.findIndex(x=>x[0]===code)+1,updated_at:new Date().toISOString()};const {error}=await client().from('contract_scope_items').upsert(payload,{onConflict:'contract_id,service_code'});if(error){msg('Não foi possível atualizar o escopo.','error');return}msg(checked?`${preset?.[1]} incluído no escopo.`:`${preset?.[1]} marcado como não contratado.`,'success');await chooseProject(project.id)}
-async function prepare(kind,approvalId=null){if(!project)return;msg('Preparando documento com textos e escopo inteligentes...');try{const optionalStudy=kind==='estudo_preliminar'&&!included('a');const {data,error}=await client().rpc('admin_prepare_contract_document',{p_project_id:project.id,p_document_kind:kind,p_approval_id:approvalId,p_extra_data:{}});if(error)throw error;const documentId=data;if(!documentId)throw new Error('Documento não preparado');msg(optionalStudy?'Estudo Preliminar preparado como documento auxiliar opcional, com o catálogo inteligente, sem alterar o Anexo I.':'Rascunho preparado com dados do contrato, escopo e catálogo inteligente.','success');await chooseProject(project.id)}catch(error){msg(safeError(error,'Não foi possível preparar o documento. Tente novamente.'),'error')}}
+async function prepare(kind,approvalId=null){
+  if(!project)return;
+  const row=document.querySelector(`[data-generator-kind="${kind}"]`);
+  const extra={};
+  if(kind==='servico_adicional'){
+    extra.service_code=row?.querySelector('[data-additional-service]')?.value||'';
+    extra.level_code=row?.querySelector('[data-additional-level]')?.value||'';
+    extra.additional_value=row?.querySelector('[data-additional-value]')?.value||'';
+    extra.payment_method=row?.querySelector('[data-additional-payment]')?.value||'';
+    extra.description=row?.querySelector('[data-additional-description]')?.value||'';
+    if(!extra.service_code||!extra.additional_value||!extra.payment_method){msg('Informe atividade, valor e forma de pagamento do serviço adicional.','error');return}
+  }
+  msg('Preparando documento com textos e escopo inteligentes...');
+  try{
+    const optionalStudy=kind==='estudo_preliminar'&&!included('a');
+    const {data,error}=await client().rpc('admin_prepare_contract_document',{p_project_id:project.id,p_document_kind:kind,p_approval_id:approvalId,p_extra_data:extra});
+    if(error)throw error;
+    const documentId=data;if(!documentId)throw new Error('Documento não preparado');
+    msg(optionalStudy?'Estudo Preliminar preparado como documento auxiliar opcional, com o catálogo inteligente, sem alterar o Anexo I.':'Rascunho preparado com dados do contrato, escopo e dados adicionais informados.','success');
+    await chooseProject(project.id)
+  }catch(error){msg(safeError(error,'Não foi possível preparar o documento. Tente novamente.','error'))}
+}
 async function generateAndDeliver(id,archive,expectedDocumentKind){const expected=supportedDocumentKinds.has(expectedDocumentKind)?expectedDocumentKind:null;const selected=docs.find(d=>d.id===id);if(!expected||(selected&&selected.document_kind!==expected)){msg('O documento selecionado não corresponde ao tipo aberto. A lista foi atualizada para evitar o download incorreto.','error');if(project)await chooseProject(project.id);return}msg(`Gerando ${documentKindLabels[expected]||'documento'}...`);const gen=await client().functions.invoke('generate-contract-document',{body:{documentId:id,action:'generate',expectedDocumentKind:expected}});if(gen.error||!gen.data?.generated||gen.data?.documentKind!==expected){msg(safeError(gen.data?.error||gen.error,'Não foi possível gerar o Word correto. Tente novamente.'),'error');return}const out=await client().functions.invoke('deliver-generated-document',{body:{documentId:id,archive,expectedDocumentKind:expected}});if(out.error||!out.data?.delivered||out.data?.documentKind!==expected){msg(safeError(out.data?.error||out.error,'O Word foi gerado, mas o tipo retornado não corresponde ao solicitado.'),'error');return}download(out.data.contentBase64,out.data.fileName);msg(archive?'Word baixado e arquivado.':'Word baixado; o arquivo temporário foi removido e o extrato foi preservado.','success');await chooseProject(project.id)}
 async function send(id,expectedDocumentKind){const expected=supportedDocumentKinds.has(expectedDocumentKind)?expectedDocumentKind:null;if(!expected){msg('Tipo de documento inválido.','error');return}const out=await client().functions.invoke('generate-contract-document',{body:{documentId:id,action:'send',expectedDocumentKind:expected}});if(out.error||!out.data?.sent||out.data?.documentKind!==expected){msg(safeError(out.data?.error||out.error,'Não foi possível disponibilizar o documento correto ao cliente.'),'error');return}msg('Documento disponibilizado ao cliente.','success');await chooseProject(project.id)}
 async function notice(approvalId){msg('Preparando Notificação Formal...');const p=await client().rpc('admin_prepare_formal_notice',{p_approval_id:approvalId});if(p.error||!p.data){msg(safeError(p.error,'Não foi possível preparar a notificação.'),'error');return}await generateAndDeliver(p.data,false,'notificacao_formal')}
