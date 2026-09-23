@@ -12,16 +12,17 @@ import {
   createCommercialRecord,
   generateCommercialDocument,
   listCommercialRecords,
+  listCommercialServiceCatalog,
   lookupCommercialCep,
   lookupCommercialCnpj,
   previewCommercialDocument,
   searchExistingCommercialClients,
+  type CommercialCatalogService,
   type CommercialDocumentPreview,
   type CommercialRecord,
   type CommercialServiceSelection,
   type ExistingCommercialClient,
 } from '@/services/commercial-service';
-import { CONTRACT_SCOPE_PRESETS } from '@/services/document-workflow-service';
 import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 
 const emptyForm = {
@@ -46,19 +47,29 @@ export default function AdminCommercialDocumentsScreen() {
   const [clientMatches,setClientMatches]=useState<ExistingCommercialClient[]>([]);
   const [selectedClient,setSelectedClient]=useState<ExistingCommercialClient|null>(null);
   const [serviceQuery,setServiceQuery]=useState('');
+  const [catalogServices,setCatalogServices]=useState<CommercialCatalogService[]>([]);
 
-  const services = useMemo<CommercialServiceSelection[]>(() => CONTRACT_SCOPE_PRESETS.map(([code, name], index) => ({
-    code, name, included: selectedCodes.includes(code), acceptanceRequired: true, displayOrder: index + 1,
-  })), [selectedCodes]);
+  const services = useMemo<CommercialServiceSelection[]>(() => catalogServices.map((item, index) => ({
+    code: item.code,
+    name: item.name,
+    included: selectedCodes.includes(item.code),
+    acceptanceRequired: item.acceptanceRequired,
+    displayOrder: index + 1,
+  })), [catalogServices, selectedCodes]);
   const serviceSuggestions=useMemo(()=>suggestCommercialServices(
     serviceQuery,
-    CONTRACT_SCOPE_PRESETS.map(([code,name])=>({code,name})),
+    catalogServices.map(({code,name})=>({code,name})),
     5,
-  ),[serviceQuery]);
+  ),[catalogServices,serviceQuery]);
 
   const load = useCallback(async () => {
-    const result = await listCommercialRecords();
-    setRecords(result.data); setError(result.error);
+    const [recordsResult,catalogResult]=await Promise.all([
+      listCommercialRecords(),
+      listCommercialServiceCatalog(),
+    ]);
+    setRecords(recordsResult.data);
+    setCatalogServices(catalogResult.data);
+    setError(recordsResult.error ?? catalogResult.error);
   }, []);
   useEffect(() => { const task = setTimeout(() => void load(), 0); return () => clearTimeout(task); }, [load]);
   const update = (key: keyof typeof emptyForm, value: string) => setForm((current) => {
@@ -218,11 +229,12 @@ export default function AdminCommercialDocumentsScreen() {
         <Field label="Localizar serviço por nome ou código" value={serviceQuery} onChangeText={setServiceQuery} />
         {serviceQuery.trim().length>=2&&serviceSuggestions.length===0?<Notice tone="info">Nenhuma correspondência segura. Revise o termo ou selecione manualmente no catálogo abaixo.</Notice>:null}
         {serviceSuggestions.map(item=><View key={`suggest-${item.code}`} style={styles.matchRow}><View style={{flex:1}}><Text style={styles.serviceText}>({item.code}) {item.name}</Text><Text style={styles.meta}>{item.exact?'Correspondência exata':'Sugestão aproximada — confirme antes de selecionar'}</Text></View><Button onPress={()=>{if(!selectedCodes.includes(item.code))setSelectedCodes(current=>[...current,item.code]);setServiceQuery('');}} title={selectedCodes.includes(item.code)?'Já selecionado':'Confirmar serviço'} variant="secondary" /></View>)}
-        <View style={styles.serviceList}>{CONTRACT_SCOPE_PRESETS.map(([code, name]) => { const selected = selectedCodes.includes(code); return <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: selected }} key={code} onPress={() => toggleService(code)} style={[styles.serviceRow, selected && styles.serviceSelected]}><Text style={styles.check}>{selected ? '☒' : '☐'}</Text><Text style={styles.serviceText}>({code}) {name}</Text></Pressable>; })}</View>
+        {catalogServices.length===0?<Notice tone="warning">O catálogo central de serviços não pôde ser carregado. A criação do orçamento fica bloqueada para evitar usar uma lista desatualizada.</Notice>:null}
+        <View style={styles.serviceList}>{catalogServices.map(({code, name}) => { const selected = selectedCodes.includes(code); return <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: selected }} key={code} onPress={() => toggleService(code)} style={[styles.serviceRow, selected && styles.serviceSelected]}><Text style={styles.check}>{selected ? '☒' : '☐'}</Text><Text style={styles.serviceText}>({code}) {name}</Text></Pressable>; })}</View>
         <Field label="Outro serviço / especificação livre" value={form.customService} onChangeText={(value) => update('customService', value)} />
         <Field keyboardType="decimal-pad" label="Valor total dos honorários (R$)" value={form.totalValue} onChangeText={(value) => update('totalValue', value)} />
         <Field label="Observações / condição de pagamento" multiline value={form.notes} onChangeText={(value) => update('notes', value)} />
-        <Button loading={loadingKey === 'create'} onPress={() => void create()} title="Criar orçamento numerado" />
+        <Button disabled={catalogServices.length===0} loading={loadingKey === 'create'} onPress={() => void create()} title="Criar orçamento numerado" />
       </Card>
 
       {pending?<Card><View style={styles.recordHeader}><View style={{flex:1}}><Text style={styles.sectionTitle}>Prévia antes do Word</Text><Text style={styles.help}>Confira os dados que serão usados. Nenhum novo Word será gerado até a confirmação.</Text></View><StatusPill label={`v${pending.preview.nextVersion}`} tone="warning" /></View><Text style={styles.meta}>{pending.kind==='contrato'?'Contrato':'Orçamento'}: {pending.preview.number}</Text><Text style={styles.meta}>Cliente/prospect: {pending.preview.prospectName}</Text><Text style={styles.meta}>Endereço cadastral: {pending.preview.partyAddress||'Não informado'}</Text><Text style={styles.previewStrong}>Endereço da obra: {pending.preview.propertyAddress||'Não informado'}</Text><Text style={styles.meta}>Valor: {pending.preview.totalValue===null?'Não informado':pending.preview.totalValue.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</Text><Text style={styles.meta}>Serviços: {pending.preview.services.join(' • ')||'Nenhum serviço localizado'}</Text>{pending.preview.frozen?<><Text style={styles.subTitle}>Nova versão</Text><View style={styles.twoColumns}><Button onPress={()=>void changeBump('minor')} title="Revisão menor" variant={pending.bump==='minor'?'secondary':'ghost'} /><Button onPress={()=>void changeBump('major')} title="Nova versão principal" variant={pending.bump==='major'?'secondary':'ghost'} /></View><Field label="Motivo da nova versão *" value={pending.reason} onChangeText={reason=>setPending(current=>current?{...current,reason}:current)} /></>:<Notice tone="info">Primeira emissão ou versão ainda não congelada: não é necessário motivo de revisão.</Notice>}<View style={styles.actions}><Button loading={Boolean(loadingKey?.includes(pending.record.id))} onPress={()=>void confirmGenerate()} title={pending.archive?'Confirmar, baixar + arquivar':'Confirmar e baixar Word'} /><Button disabled={Boolean(loadingKey)} onPress={()=>setPending(null)} title="Cancelar" variant="ghost" /></View></Card>:null}
