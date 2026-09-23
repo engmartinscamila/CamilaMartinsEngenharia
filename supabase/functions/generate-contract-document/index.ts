@@ -421,6 +421,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      ...identity(d,profile,generatedAt),
      p(`Data e horário da vistoria: ${value(d,'survey_datetime',value(d,'visit_datetime','a preencher'))}`),
      p(`Responsável pelo acompanhamento no local: ${value(d,'site_companion',value(d,'accompanying_person','a preencher'))}`),
+     p(`Responsável técnico pelo registro: ${value(d,'technical_responsible','a preencher')}`),
      h('2. DADOS DO IMÓVEL'),
      p(`Tipo: ${value(d,'project_type')} • Área do terreno: ${String(d.area_terreno_m2??'não informada')} m² • Área construída: ${String(d.area_construida_m2??'não informada')} m²`),
      p(`Endereço: ${value(d,'property_address')}`),
