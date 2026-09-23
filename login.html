@@ -7,6 +7,8 @@
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
+    <!-- Chave pública do Cloudflare Turnstile. Permanece vazia até o widget real ser criado. -->
+    <meta name="cme-turnstile-site-key" content="">
 <link rel="icon" href="assets/logo.png" type="image/png">
 
     <meta
@@ -261,6 +263,17 @@
             color: var(--texto-suave);
             cursor: pointer;
             font-size: 1rem;
+        }
+
+        .turnstile-container {
+            display: flex;
+            justify-content: center;
+            min-height: 0;
+            margin: 6px 0 10px;
+        }
+
+        .turnstile-container[hidden] {
+            display: none !important;
         }
 
         .login-button {
@@ -528,6 +541,13 @@
                     crie uma senha exclusiva para este portal. Para proteger suas contas,
                     evite usar a mesma senha do seu e-mail ou de outros serviços.
                 </p>
+
+                <div
+                    id="turnstileContainer"
+                    class="turnstile-container"
+                    hidden
+                    aria-label="Verificação de segurança"
+                ></div>
 
                 <button
                     type="submit"
