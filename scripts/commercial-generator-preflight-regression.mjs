@@ -27,3 +27,15 @@ assert.ok(finalGenerator.includes('text(item.contractScope) || text(item.descrip
 const derivedGenerator = readFileSync('supabase/functions/generate-contract-document/index.ts', 'utf8');
 assert.ok(derivedGenerator.includes('item.annexScope??item.description'), 'Anexo I não prioriza annexScope aprovado.');
 assert.ok(derivedGenerator.includes('item.customDescription'), 'Documento derivado não preserva descrição de serviço personalizado.');
+
+const strictChainMigration = readFileSync('supabase/migrations/20260923061000_document_chain_strict_snapshot.sql', 'utf8');
+assert.ok(!canonical.includes('Base documental: Contrato Mestre v'), 'Contrato do cliente voltou a exibir metadado interno de governança.');
+assert.ok(canonical.includes("admin_prepare_commercial_scope_for_generation"), 'Gerador comercial não prepara/valida a matriz aprovada antes da emissão.');
+assert.ok(finalGenerator.includes("admin_prepare_commercial_scope_for_generation"), 'Finalizador comercial não congela o escopo aprovado antes do snapshot.');
+assert.ok(strictChainMigration.includes('assert_commercial_contract_quote_consistency'), 'Não existe validação forte Orçamento x Contrato.');
+assert.ok(strictChainMigration.includes('enforce_annex_contract_emission_snapshot'), 'Anexo I não está preso ao snapshot do contrato emitido.');
+assert.ok(strictChainMigration.includes("'source_contract_document_id'"), 'Anexo I não registra o documento de contrato que lhe deu origem.');
+assert.ok(strictChainMigration.includes("'scope_snapshot',v_scope"), 'Anexo I não recebe o mesmo snapshot de serviços do contrato.');
+assert.ok(strictChainMigration.includes("q.contract_master_version is distinct from c.contract_master_version"), 'Versões diferentes do Contrato Mestre não são bloqueadas.');
+assert.ok(strictChainMigration.includes("item->>'levelScopeReviewStatus'='approved'"), 'Documento oficial não exige matriz serviço x nível aprovada.');
+assert.ok(strictChainMigration.includes('Documento bloqueado: foi encontrado placeholder'), 'Placeholder interno não é bloqueado antes da emissão.');
