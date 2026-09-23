@@ -20,7 +20,7 @@ async function requireAdmin(req:Request){
  return {caller,service:createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}}),user:userData.user};
 }
 
-type CommercialRecord={id:string;quote_number:string;contract_number:string|null;status:string;prospect_name:string;cpf_cnpj:string|null;email:string|null;phone:string|null;address:string|null;city:string|null;state:string|null;property_address:string|null;property_type:string|null;area_terreno_m2:number|null;area_construida_m2:number|null;construction_standard:string|null;experience_level:string|null;services:unknown;custom_service:string|null;total_value:number|null;payment_terms:unknown;valid_until:string|null;notes:string|null;quote_document_id:string|null;contract_document_id:string|null;contract_master_id:string|null;contract_master_version:number|null;smart_texts:unknown};
+type CommercialRecord={id:string;quote_number:string;contract_number:string|null;status:string;prospect_name:string;cpf_cnpj:string|null;email:string|null;phone:string|null;address:string|null;city:string|null;state:string|null;property_address:string|null;property_type:string|null;area_terreno_m2:number|null;area_construida_m2:number|null;construction_standard:string|null;experience_level:string|null;services:unknown;coobligors:unknown;custom_service:string|null;total_value:number|null;payment_terms:unknown;valid_until:string|null;notes:string|null;quote_document_id:string|null;contract_document_id:string|null;contract_master_id:string|null;contract_master_version:number|null;smart_texts:unknown};
 type ServiceItem=Record<string,unknown>;
 type ProfessionalIdentity=Record<string,string|undefined>;
 
@@ -37,6 +37,26 @@ const professionalLabel=(profile:ProfessionalIdentity)=>{
  const parts=[profileValue(profile,'full_name'),profileValue(profile,'professional_title')||'Engenheira Civil',creaLabel(profile)].filter(Boolean);
  return parts.join(' — ');
 };
+const cpfDisplay=(value:unknown)=>{
+ const digits=String(value??'').replace(/\D/g,'');
+ return digits.length===11?`${digits.slice(0,3)}.${digits.slice(3,6)}.${digits.slice(6,9)}-${digits.slice(9)}`:String(value??'').trim();
+};
+const contractCoobligors=(record:CommercialRecord)=>{
+ const raw=Array.isArray(record.coobligors)?record.coobligors as Array<Record<string,unknown>>:[];
+ return raw.map(item=>({
+   kind:String(item.kind??''),
+   name:String(item.name??'').trim(),
+   cpf:cpfDisplay(item.cpf),
+   role:String(item.role??'').trim(),
+ })).filter(item=>item.name&&item.cpf);
+};
+const coobligorRole=(item:{kind:string;role:string})=>{
+ if(item.role)return item.role;
+ if(item.kind==='spouse_companion')return 'Cônjuge/companheiro(a) — interveniente anuente e coobrigado(a) solidário(a)';
+ if(item.kind==='company_guarantor')return 'Sócio/administrador — coobrigado(a) solidário(a)';
+ return 'Coobrigado(a) solidário(a)';
+};
+
 const professionalQualification=(profile:ProfessionalIdentity)=>{
  const fullName=profileValue(profile,'full_name');
  const nationality=profileValue(profile,'nationality');
@@ -366,6 +386,7 @@ function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,c
    p('Pelo presente instrumento particular de Contrato de Prestação de Serviços de Engenharia, de um lado:'),
    p(`CONTRATADO(A): ${professionalQualification(profile)}, doravante denominada simplesmente CONTRATADO(A);`),
    p(`CONTRATANTE: ${record.prospect_name}, CPF/CNPJ ${text(record.cpf_cnpj)}, com endereço em ${text(record.address)}, e-mail ${text(record.email)} e telefone/WhatsApp ${text(record.phone)}, doravante denominado(a) simplesmente CONTRATANTE.`),
+   ...contractCoobligors(record).map(item=>p(`COOBRIGADO(A) SOLIDÁRIO(A): ${item.name}, CPF nº ${item.cpf}, na qualidade de ${coobligorRole(item)}, aderindo expressamente às obrigações solidárias previstas neste instrumento.`)),
    p('Têm entre si, justo e acertado, o presente Contrato de Prestação de Serviços de Engenharia, que se regerá pelas cláusulas e condições a seguir:'),
    ...body,
    h('RESUMO COMERCIAL VINCULADO'),
@@ -378,6 +399,11 @@ function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,c
    p(professionalLabel(profile)),
    p('_____________________________________________'),
    p('CONTRATANTE'),
+   ...contractCoobligors(record).flatMap(item=>[
+     p('_____________________________________________'),
+     p(`${item.name} — CPF ${item.cpf}`),
+     small(coobligorRole(item)),
+   ]),
    p('Testemunhas:'),
    p('1) ______________________________  CPF: ______________________'),
    p('2) ______________________________  CPF: ______________________')
@@ -402,11 +428,11 @@ Deno.serve(async(req)=>{
   if(missingProfile.length)return json({error:`Complete a identificação profissional sigilosa em Configurações antes de gerar este documento. Campos pendentes: ${missingProfile.join(', ')}.`},422);
   const contractMaster=kind==='contrato'?await loadContractMaster(service,record):null;
   let documentId=kind==='orcamento'?record.quote_document_id:record.contract_document_id;
-  if(!documentId){const inserted=await service.from('documentos').insert({nome:kind==='orcamento'?`Orçamento ${record.quote_number} — ${record.prospect_name}`:`Contrato ${record.contract_number} — ${record.prospect_name}`,tipo:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',categoria:'Comercial',versao:'1.0',storage_bucket:'documentos',permitir_download:true,protection_mode:'administrative',autoral:false,workflow_status:'rascunho',optional_document:false,generated_data:{commercial_document_kind:kind,commercial_record_id:record.id,quote_number:record.quote_number,contract_number:record.contract_number,prospect_name:record.prospect_name,contract_master_id:record.contract_master_id,contract_master_version:record.contract_master_version,smart_texts:record.smart_texts}}).select('id').single();if(inserted.error)throw inserted.error;documentId=inserted.data.id;const linked=await service.from('commercial_records').update(kind==='orcamento'?{quote_document_id:documentId}:{contract_document_id:documentId}).eq('id',record.id);if(linked.error)throw linked.error;}
+  if(!documentId){const inserted=await service.from('documentos').insert({nome:kind==='orcamento'?`Orçamento ${record.quote_number} — ${record.prospect_name}`:`Contrato ${record.contract_number} — ${record.prospect_name}`,tipo:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',categoria:'Comercial',versao:'1.0',storage_bucket:'documentos',permitir_download:true,protection_mode:'administrative',autoral:false,workflow_status:'rascunho',optional_document:false,generated_data:{commercial_document_kind:kind,commercial_record_id:record.id,quote_number:record.quote_number,contract_number:record.contract_number,prospect_name:record.prospect_name,contract_master_id:record.contract_master_id,contract_master_version:record.contract_master_version,smart_texts:record.smart_texts,coobligors:record.coobligors}}).select('id').single();if(inserted.error)throw inserted.error;documentId=inserted.data.id;const linked=await service.from('commercial_records').update(kind==='orcamento'?{quote_document_id:documentId}:{contract_document_id:documentId}).eq('id',record.id);if(linked.error)throw linked.error;}
   const generatedAt=new Date();
   const generatedAtIso=generatedAt.toISOString();
   const documentDate=generatedDateIso(generatedAt);
-  const generatedData={commercial_document_kind:kind,commercial_record_id:record.id,quote_number:record.quote_number,contract_number:record.contract_number,prospect_name:record.prospect_name,contract_master_id:record.contract_master_id,contract_master_version:record.contract_master_version,smart_texts:record.smart_texts,services:record.services,experience_level:record.experience_level,emitted_at:generatedAtIso,document_date:documentDate,...(kind==='contrato'?{contract_signed_at:documentDate}:{})};
+  const generatedData={commercial_document_kind:kind,commercial_record_id:record.id,quote_number:record.quote_number,contract_number:record.contract_number,prospect_name:record.prospect_name,contract_master_id:record.contract_master_id,contract_master_version:record.contract_master_version,smart_texts:record.smart_texts,services:record.services,coobligors:record.coobligors,experience_level:record.experience_level,emitted_at:generatedAtIso,document_date:documentDate,...(kind==='contrato'?{contract_signed_at:documentDate}:{})};
   const word=kind==='orcamento'?quoteDocument(record,professionalProfile,generatedAt):contractDocument(record,professionalProfile,contractMaster!.body,generatedAt);const buffer=await Packer.toBuffer(word);const number=kind==='orcamento'?record.quote_number:record.contract_number??'contrato';const path=`comercial/${record.id}/${kind}-${number}-v1.0.docx`;
   const uploaded=await service.storage.from('documentos').upload(path,buffer,{contentType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',upsert:true});if(uploaded.error)throw uploaded.error;
   const updatedDocument=await service.from('documentos').update({arquivo:path,workflow_status:'gerado',generated_at:generatedAtIso,generated_data:generatedData}).eq('id',documentId);if(updatedDocument.error)throw updatedDocument.error;
