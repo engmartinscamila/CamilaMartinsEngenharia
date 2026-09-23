@@ -200,22 +200,23 @@ const brandFooter=(profile:ProfessionalIdentity,documentCode:string)=>new Footer
    children:[new TextRun({text:`${professionalLabel(profile)}  •  ${documentCode}`,font:'Century Gothic',size:13,color:MUTED})]
  })
 ]});
+const clientIdentity=(d:Data)=>value(d,'client_cpf_cnpj',value(d,'client_document',value(d,'cpf_cnpj','não informado')));
 const identity=(d:Data,profile:ProfessionalIdentity,generatedAt:Date)=>[
  h('1. IDENTIFICAÇÃO'),
- p(`Data de emissão: ${generatedDatePt(generatedAt)} • Base documental: ${contractMasterLabel(d)}`),
- p(`Contrato: ${value(d,'contract_number')} • Data de assinatura: ${generatedDatePt(generatedAt)}`),
+ p(`Data de emissão: ${generatedDatePt(generatedAt)}`),
+ p(`Contrato: ${value(d,'contract_number')} • Data de assinatura: ${datePt(d.contract_signed_at,generatedDatePt(generatedAt))}`),
  p(`CONTRATADO(A): ${professionalLabel(profile)}`),
- p(`CONTRATANTE: ${value(d,'client_name')}`),
+ p(`CONTRATANTE: ${value(d,'client_name')} • CPF/CNPJ: ${clientIdentity(d)}`),
  p(`Projeto: ${value(d,'project_name')} • Tipo: ${value(d,'project_type')}`),
  p(`Imóvel / obra: ${value(d,'property_address')}`),
  ...(d.source_quote_number?[small(`Orçamento de origem: ${String(d.source_quote_number)}`)]:[])
 ];
-const sig=(profile:ProfessionalIdentity,generatedAt:Date)=>[
+const sig=(profile:ProfessionalIdentity,generatedAt:Date,d:Data={})=>[
  p(`Local: _______________________________ • Data: ${generatedDatePt(generatedAt)}`),
  p('_______________________________________________'),
  p(professionalLabel(profile)),
  p('_______________________________________________'),
- p('CONTRATANTE')
+ p(`CONTRATANTE: ${value(d,'client_name')} • CPF/CNPJ: ${clientIdentity(d)}`)
 ];
 const doc=(children:Paragraph[],profile:ProfessionalIdentity,documentCode:string)=>new Document({
  styles:{
@@ -290,7 +291,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      bullet('A retomada do fluxo ocorrerá após o recebimento das informações ou aprovações necessárias.'),
      h('6. CANAIS E REGISTRO'),
      p('Esta notificação integra o histórico documental do projeto e é encaminhada pelos canais oficiais previstos no contrato.'),
-     ...sig(profile,generatedAt)
+     ...sig(profile,generatedAt,d)
    ],profile,code);
  }
 
@@ -319,7 +320,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      h('5. CONTINUIDADE DO PROJETO'),
      p('Após a validação, o fluxo segue para a próxima etapa efetivamente prevista no Anexo I e no cronograma aplicável.'),
      h('6. ASSINATURAS'),
-     ...sig(profile,generatedAt)
+     ...sig(profile,generatedAt,d)
    ],profile,code);
  }
 
@@ -339,15 +340,15 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      p('☐ Arquivo editável ou formato não previsto.'),
      p('☐ Outro: _______________________________________________'),
      h('4. DESCRIÇÃO DO SERVIÇO ADICIONAL'),
-     p(value(d,'additional_service_description','Descrever somente a nova solicitação; o escopo original já está registrado acima.')),
+     p(value(d,'additional_service_description',value(d,'service_description','Descrever somente a nova solicitação; o escopo original já está registrado acima.'))),
      h('5. IMPACTO COMERCIAL E DE PRAZO'),
-     p('Critério aplicável: ☐ hora técnica   ☐ percentual sobre etapa afetada   ☐ valor fechado aprovado por orçamento específico.'),
-     p('Valor adicional aprovado: _______________________________________________'),
-     p('Impacto adicional no cronograma: _________________________________________'),
+     p(`Critério aplicável: ${value(d,'additional_level',value(d,'experience_level','conforme orçamento específico'))}.`),
+     p(`Valor adicional aprovado: ${money(d.additional_value??d.contract_value)}.`),
+     p(`Forma de pagamento: ${value(d,'additional_payment_method',value(d,'payment_method','conforme orçamento específico'))}.`),
      p(smartRule(d,'additional_service_rule','O serviço adicional somente será iniciado após aprovação por escrito. Valores, horas ou percentuais devem respeitar o Contrato e o orçamento específico aprovado para esta alteração.')),
      h('6. APROVAÇÃO'),
      p('☐ Aprovo a alteração acima e autorizo o início do serviço adicional nos limites deste termo.'),
-     ...sig(profile,generatedAt)
+     ...sig(profile,generatedAt,d)
    ],profile,code);
  }
 
@@ -376,7 +377,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      p(smartRule(d,'image_authorization_conditions','A autorização é gratuita e não exclusiva, limitada aos materiais e canais assinalados. A divulgação deverá respeitar as restrições indicadas, a legislação aplicável e os direitos autorais técnicos.')),
      p('A revogação futura poderá ser solicitada por escrito com efeitos prospectivos, sem exigir a retirada de materiais já publicados de boa-fé quando isso não for técnica ou razoavelmente possível, ressalvados direitos legais.'),
      h('6. ASSINATURAS'),
-     ...sig(profile,generatedAt)
+     ...sig(profile,generatedAt,d)
    ],profile,code);
  }
 
@@ -409,7 +410,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      h('7. DECLARAÇÃO FINAL'),
      p(smartRule(d,'closing_release_rule','A quitação, quando assinalada, refere-se às obrigações identificadas neste instrumento e não representa renúncia a direitos irrenunciáveis ou exclusão de responsabilidades legais.')),
      h('8. ASSINATURAS'),
-     ...sig(profile,generatedAt)
+     ...sig(profile,generatedAt,d)
    ],profile,code);
  }
 
@@ -418,8 +419,8 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
    return doc([
      ...t('FICHA DE LEVANTAMENTO TÉCNICO / VISTORIA','Registro padronizado das condições verificadas no local'),
      ...identity(d,profile,generatedAt),
-     p('Data e horário da vistoria: _______________________________________________'),
-     p('Responsável pelo acompanhamento no local: __________________________________'),
+     p(`Data e horário da vistoria: ${value(d,'survey_datetime',value(d,'visit_datetime','a preencher'))}`),
+     p(`Responsável pelo acompanhamento no local: ${value(d,'site_companion',value(d,'accompanying_person','a preencher'))}`),
      h('2. DADOS DO IMÓVEL'),
      p(`Tipo: ${value(d,'project_type')} • Área do terreno: ${String(d.area_terreno_m2??'não informada')} m² • Área construída: ${String(d.area_construida_m2??'não informada')} m²`),
      p(`Endereço: ${value(d,'property_address')}`),
@@ -440,7 +441,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      h('8. LIMITES DA VISTORIA'),
      p(smartRule(d,'survey_limit','O registro limita-se às condições acessíveis e observáveis no momento da visita e não substitui ensaios, investigações destrutivas ou serviços especializados não contratados.')),
      h('9. ASSINATURAS / CIÊNCIA'),
-     ...sig(profile,generatedAt)
+     ...sig(profile,generatedAt,d)
    ],profile,code);
  }
 
@@ -477,9 +478,9 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      ...levelSection(d,'9. NÍVEL DE PRESTAÇÃO DE SERVIÇO',compactH),
      compactH('10. LIMITES E PRÓXIMOS PASSOS'),
      p(smartRule(d,'study_prelim_limit','O Estudo Preliminar não substitui Projeto Legal, Projeto Executivo ou projetos complementares. Após sua validação, seguem somente as etapas efetivamente contratadas no Anexo I. Alterações posteriores de premissas já aprovadas podem caracterizar alteração de escopo.')),
-     compactH('11. ACEITE DA ETAPA'),
-     p('Quando esta etapa integrar o escopo contratado, seu aceite deve ser formalizado no Termo de Aceite correspondente.'),
-     ...sig(profile,generatedAt)
+     compactH('11. REGISTRO DA ETAPA'),
+     p('O aceite desta etapa é registrado separadamente no Termo de Aceite correspondente, mantendo este estudo como documento técnico de referência.'),
+     ...sig(profile,generatedAt,d)
    ],profile,code);
  }
 
@@ -538,7 +539,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      p(smartRule(d,'anexo_revision_rule','Na ausência de indicação diversa em item específico, aplicam-se até 2 (duas) rodadas de revisão por etapa para ajustes dentro do escopo original. Pedidos que alterem programa, metragem, layout, partido, premissas aprovadas ou serviços não listados poderão exigir orçamento e aditivo.')),
      p('Os aceites de etapa previstos acima serão registrados por Termo de Aceite ou pelo mecanismo contratual aplicável.'),
      h('11. ASSINATURAS'),
-     ...sig(profile,generatedAt)
+     ...sig(profile,generatedAt,d)
    ],profile,code);
  }
 
