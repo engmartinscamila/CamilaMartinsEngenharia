@@ -1,5 +1,5 @@
 import { createClient } from 'supabase';
-import { AlignmentType, BorderStyle, Document, Footer, Header, HeadingLevel, Packer, Paragraph, TextRun } from 'docx';
+import { AlignmentType, BorderStyle, Document, Footer, Header, HeadingLevel, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, VerticalAlign } from 'docx';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*',
@@ -66,6 +66,13 @@ const h=(text:string)=>new Paragraph({
  spacing:{before:300,after:130},
  border:{bottom:{color:GOLD,style:BorderStyle.SINGLE,size:8,space:5}},
  children:[new TextRun({text,bold:true,font:'Century Gothic',size:23,color:NAVY})]
+});
+const gridTable=(headers:string[],rows:string[][])=>new Table({
+ width:{size:100,type:WidthType.PERCENTAGE},
+ rows:[
+  new TableRow({children:headers.map(text=>new TableCell({width:{size:Math.floor(100/headers.length),type:WidthType.PERCENTAGE},verticalAlign:VerticalAlign.CENTER,children:[p(text,true,NAVY)]}))}),
+  ...rows.map(row=>new TableRow({children:headers.map((_,index)=>new TableCell({verticalAlign:VerticalAlign.CENTER,children:[p(row[index]||' ')]}))}))
+ ]
 });
 const compactH=(text:string)=>new Paragraph({
  heading:HeadingLevel.HEADING_2,
@@ -427,8 +434,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      h('3. INFORMAÇÕES E DOCUMENTOS RELEVANTES AO ESCOPO'),
      ...(inputs.length?inputs.map(item=>p(`☐ ${item}`)):[p('☐ Documentação e informações necessárias ao escopo contratado.')]),
      h('4. MEDIDAS E AMBIENTES'),
-     p('Ambiente / setor | Comprimento | Largura | Pé-direito | Observações'),
-     ...Array.from({length:10},()=>p('________________ | ______ | ______ | ______ | ______________________________')),
+     gridTable(['Ambiente / setor','Comprimento','Largura','Pé-direito','Observações'],Array.from({length:10},()=>['','','','',''])),
      h('5. INSTALAÇÕES E ELEMENTOS OBSERVÁVEIS'),
      p('☐ Pontos elétricos   ☐ Pontos hidráulicos   ☐ Estrutura aparente   ☐ Esquadrias'),
      p('☐ Revestimentos   ☐ Cobertura   ☐ Drenagem   ☐ Acessos   ☐ Outros'),
@@ -438,6 +444,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      p('Descrição: _____________________________________________________________________'),
      h('7. REGISTRO FOTOGRÁFICO E RASTREABILIDADE'),
      p('As fotografias correspondentes devem ser vinculadas ao projeto no portal, preservando data e contexto da vistoria quando possível.'),
+     gridTable(['Arquivo / referência','Data','Descrição'],Array.from({length:4},()=>['','',''])),
      h('8. LIMITES DA VISTORIA'),
      p(smartRule(d,'survey_limit','O registro limita-se às condições acessíveis e observáveis no momento da visita e não substitui ensaios, investigações destrutivas ou serviços especializados não contratados.')),
      h('9. ASSINATURAS / CIÊNCIA'),
@@ -460,8 +467,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      compactH('3. INSUMOS NECESSÁRIOS'),
      ...(inputs.length?inputs.map(item=>p(`☐ ${item}`)):[p('☐ Briefing e informações do cliente   ☐ Medidas/documentos disponíveis do imóvel')]),
      compactH('4. PROGRAMA DE NECESSIDADES'),
-     p('Ambiente / setor | Quantidade | Prioridade | Observações'),
-     ...Array.from({length:4},()=>p('____________________________ | ______ | ______ | __________________________')),
+     gridTable(['Ambiente / setor','Quantidade','Prioridade','Observações'],Array.from({length:4},()=>['','','',''])),
      compactH('5. CONDICIONANTES E PREMISSAS'),
      p('Restrições legais/condominiais conhecidas: ________________________________________'),
      p('Premissas funcionais e de uso: ____________________________________________________'),
