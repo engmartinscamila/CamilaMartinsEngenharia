@@ -140,6 +140,23 @@ const includedScope=(d:Data)=>scopeItems(d).filter(item=>item.included===true);
 const excludedScope=(d:Data)=>scopeItems(d).filter(item=>item.included!==true);
 const serviceName=(item:Record<string,unknown>)=>String(item.name??item.service_name??item.code??'Serviço');
 const serviceDescription=(item:Record<string,unknown>)=>String(item.description??'Serviço técnico conforme escopo contratado e Anexo I.');
+const serviceAnnexDescription=(item:Record<string,unknown>)=>{
+ const custom=String(item.customDescription??'').trim();
+ const code=String(item.code??'').trim().toLowerCase();
+ if(['p','outro','outros'].includes(code)&&custom){
+   return `Atividade específica contratada: ${custom}. O escopo fica limitado às atividades, etapas, entregáveis, quantidades, formatos, revisões, visitas e prazos expressamente registrados neste Anexo I; qualquer ampliação dependerá de aprovação e contratação prévias.`;
+ }
+ return String(item.annexScope??item.description??'Serviço técnico conforme escopo contratado e Anexo I.');
+};
+const itemLevelCode=(item:Record<string,unknown>)=>{
+ const level=item.level&&typeof item.level==='object'?item.level as Record<string,unknown>:null;
+ return String(level?.code??item.levelCode??'').trim().toLowerCase();
+};
+const itemLevelLabel=(item:Record<string,unknown>)=>{
+ const level=item.level&&typeof item.level==='object'?item.level as Record<string,unknown>:null;
+ const label=[String(level?.label??'').trim(),String(level?.subtitle??'').trim()].filter(Boolean).join(' — ');
+ return label||itemLevelCode(item).toUpperCase();
+};
 const levelData=(d:Data)=>d.service_level&&typeof d.service_level==='object'?d.service_level as Record<string,unknown>:null;
 const levelName=(d:Data)=>{
  const level=levelData(d);
@@ -217,6 +234,19 @@ const doc=(children:Paragraph[],profile:ProfessionalIdentity,documentCode:string
  }]
 });
 const levelSection=(d:Data,heading='NÍVEL DE PRESTAÇÃO DE SERVIÇO',headingBuilder=h)=>{
+ const perItem=includedScope(d)
+   .filter(item=>item.levelApplicable===true&&itemLevelCode(item))
+   .map(item=>({item,code:itemLevelCode(item),label:itemLevelLabel(item)}));
+ const distinct=[...new Set(perItem.map(entry=>entry.code))];
+ if(perItem.length){
+   const out:Paragraph[]=[headingBuilder(heading)];
+   out.push(p(distinct.length===1
+     ? `Nível aplicado às atividades elegíveis: ${perItem[0]?.label||distinct[0].toUpperCase()}.`
+     : 'Os níveis de prestação foram definidos individualmente por atividade.',true,GOLD));
+   perItem.forEach(entry=>out.push(bullet(`(${String(entry.item.code??'')}) ${serviceName(entry.item)} — ${entry.label}`)));
+   out.push(small('O nível de uma atividade não amplia automaticamente o escopo de outra atividade nem acrescenta serviços, visitas, aprovações, execução, taxas, fornecimentos ou entregáveis não contratados.'));
+   return out;
+ }
  const level=levelData(d);
  const eligible=levelEligibleServices(d);
  const out:Paragraph[]=[
@@ -229,9 +259,9 @@ const levelSection=(d:Data,heading='NÍVEL DE PRESTAÇÃO DE SERVIÇO',headingBu
    arrStrings(level.exclusions).forEach(item=>out.push(bullet(`Não incluído neste nível: ${item}`)));
  }
  if(eligible.length){
-   out.push(small(`Aplicável aos serviços de projeto elegíveis: ${eligible.join(', ')}.`));
+   out.push(small(`Aplicável aos serviços elegíveis: ${eligible.join(', ')}.`));
  }else{
-   out.push(small('O nível de experiência não amplia serviços que não sejam elegíveis ou que não tenham sido contratados expressamente.'));
+   out.push(small('O nível não amplia serviços que não tenham sido contratados expressamente.'));
  }
  out.push(small(smartRule(d,'level_scope_rule','O nível selecionado aplica-se somente aos serviços elegíveis e não acrescenta automaticamente itens que não tenham sido contratados expressamente.')));
  return out;
@@ -462,7 +492,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
 
    included.forEach((item,index)=>{
      serviceBlocks.push(sub(`${index+1}. (${String(item.code??'')}) ${serviceName(item)}`));
-     serviceBlocks.push(p(serviceDescription(item)));
+     serviceBlocks.push(p(serviceAnnexDescription(item)));
      const deliverables=arrStrings(item.deliverables);
      if(deliverables.length){
        serviceBlocks.push(small('Entregáveis contratados a partir do padrão deste serviço:'));
