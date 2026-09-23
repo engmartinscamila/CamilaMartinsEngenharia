@@ -24,4 +24,16 @@ ok(sql.includes('revoke all on public.service_level_scope_catalog from public, a
 ok(!/grant\s+(insert|update|delete|all)\s+on\s+public\.service_level_scope_catalog\s+to\s+authenticated/i.test(sql), 'authenticated não recebe escrita direta');
 ok(sql.includes('on conflict (service_code, level_code) do nothing'), 'backfill é idempotente e preserva combinações existentes');
 
+const draftMigration = fs.readdirSync(migrationDir).find((name) => name.endsWith('_draft_service_level_texts_and_search_metadata.sql'));
+ok(Boolean(draftMigration), 'migration de rascunhos e busca existe');
+const draftSql = fs.readFileSync(path.join(migrationDir, draftMigration), 'utf8');
+ok(draftSql.includes("'t','Reforma / adequação de edificação'"), 'reforma é serviço canônico');
+ok(draftSql.includes("review_status='pending'"), 'rascunhos permanecem pendentes de revisão');
+ok(draftSql.includes('budget_description = concat('), 'rascunho de orçamento é preenchido');
+ok(draftSql.includes('contract_scope = concat('), 'rascunho de contrato é preenchido');
+ok(draftSql.includes('annex_scope = concat('), 'rascunho de Anexo I é preenchido');
+ok(draftSql.includes("aliases = case code"), 'aliases são alimentados no catálogo');
+ok(draftSql.includes("synonyms = case code"), 'sinônimos são alimentados no catálogo');
+ok(draftSql.includes("keywords = case code"), 'palavras-chave são alimentadas no catálogo');
+
 console.log(`MATRIZ SERVIÇO X NÍVEL: ${checks} verificações passaram.`);
