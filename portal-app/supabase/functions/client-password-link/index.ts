@@ -56,9 +56,25 @@ async function sha256(value: string) {
   return Array.from(digest).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function consumeRateLimit(admin: any, email: string) {
+async function consumeEmailRateLimit(admin: any, email: string) {
   const { data, error } = await admin.rpc("service_consume_password_link_rate_limit", {
-    p_key_hash: await sha256(email),
+    p_key_hash: await sha256("email:" + email),
+  });
+  if (error) throw new Error("Controle de solicitações temporariamente indisponível.");
+  return data === true;
+}
+
+function requestNetworkFingerprint(request: Request) {
+  const cfIp = (request.headers.get("cf-connecting-ip") ?? "").trim();
+  const forwardedIp = (request.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() ?? "";
+  const ip = cfIp || forwardedIp || "unknown";
+  const userAgent = (request.headers.get("user-agent") ?? "unknown").slice(0, 180);
+  return ip + "|" + userAgent;
+}
+
+async function consumeNetworkRateLimit(admin: any, request: Request) {
+  const { data, error } = await admin.rpc("service_consume_password_link_network_rate_limit", {
+    p_key_hash: await sha256("network:" + requestNetworkFingerprint(request)),
   });
   if (error) throw new Error("Controle de solicitações temporariamente indisponível.");
   return data === true;
@@ -91,11 +107,27 @@ const handler = withSupabase({ auth: "publishable" }, async (request: Request, c
   if (!validSiteUrl) return json(request, { ok: false, message: "Canal de acesso temporariamente indisponível." }, 503);
 
   try {
-    const body = await request.json().catch(() => ({}));
+    const declaredLength = Number(request.headers.get("content-length") || 0);
+    if (Number.isFinite(declaredLength) && declaredLength > 4096) {
+      return json(request, { ok: false, message: "Solicitação inválida." }, 413);
+    }
+    const rawBody = await request.text();
+    if (rawBody.length > 4096) {
+      return json(request, { ok: false, message: "Solicitação inválida." }, 413);
+    }
+    let body: any = {};
+    try {
+      body = rawBody ? JSON.parse(rawBody) : {};
+    } catch {
+      return json(request, { ok: false, message: "Solicitação inválida." }, 400);
+    }
     const email = normalizeEmail(body?.email);
     if (!EMAIL_PATTERN.test(email)) return json(request, { ok: true, message: GENERIC_MESSAGE });
 
     const admin = ctx.supabaseAdmin;
+    if (!(await consumeNetworkRateLimit(admin, request))) {
+      return json(request, { ok: true, message: GENERIC_MESSAGE });
+    }
     const { data: client, error: clientError } = await admin
       .from("clientes")
       .select("id,nome,email,auth_id,status")
@@ -105,7 +137,7 @@ const handler = withSupabase({ auth: "publishable" }, async (request: Request, c
     if (clientError) throw clientError;
     if (!client?.auth_id) return json(request, { ok: true, message: GENERIC_MESSAGE });
 
-    if (!(await consumeRateLimit(admin, email))) return json(request, { ok: true, message: GENERIC_MESSAGE });
+    if (!(await consumeEmailRateLimit(admin, email))) return json(request, { ok: true, message: GENERIC_MESSAGE });
 
     const { data: userData, error: userError } = await admin.auth.admin.getUserById(client.auth_id);
     const user = !userError ? userData?.user : null;

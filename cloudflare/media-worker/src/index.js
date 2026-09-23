@@ -11,6 +11,9 @@ export default {
     const method = request.method.toUpperCase();
 
     if (method === "OPTIONS") {
+      if (!isAllowedOrigin(request, env)) {
+        return new Response(null, { status: 403, headers: { vary: "Origin" } });
+      }
       return new Response(null, {
         status: 204,
         headers: corsHeaders(request, env)
@@ -32,21 +35,25 @@ export default {
       }
 
       if (url.pathname === "/api/manifest" && method === "PUT") {
+        requireAllowedOrigin(request, env);
         await requireAdmin(request, env);
         return await putManifestOnGitHub(request, env);
       }
 
       if (url.pathname === "/api/upload" && method === "PUT") {
+        requireAllowedOrigin(request, env);
         await requireAdmin(request, env);
         return await uploadObject(request, env, url);
       }
 
       if (url.pathname === "/api/object" && method === "DELETE") {
+        requireAllowedOrigin(request, env);
         await requireAdmin(request, env);
         return await deleteObject(request, env, url);
       }
 
       if (url.pathname === "/api/delete-batch" && method === "POST") {
+        requireAllowedOrigin(request, env);
         await requireAdmin(request, env);
         return await deleteBatchWithRollback(request, env);
       }
@@ -58,9 +65,20 @@ export default {
 
       return json({ ok: false, error: "Rota não encontrada." }, 404, request, env);
     } catch (error) {
-      const status = Number(error?.status || 500);
+      const rawStatus = Number(error?.status || 500);
+      const status = Number.isInteger(rawStatus) && rawStatus >= 400 && rawStatus <= 599
+        ? rawStatus
+        : 500;
+      const publicMessage = status >= 500
+        ? "Erro interno."
+        : safePublicErrorMessage(error?.message);
+      console.error("media-worker", {
+        status,
+        route: url.pathname,
+        message: error instanceof Error ? error.message : "erro não tipado"
+      });
       return json(
-        { ok: false, error: error?.message || "Erro interno." },
+        { ok: false, error: publicMessage },
         status,
         request,
         env
@@ -497,11 +515,16 @@ function publicUrl(request, key) {
 }
 
 function normalizeKey(value) {
-  return String(value || "")
+  const normalized = String(value || "")
     .replace(/^\/+/, "")
     .replace(/\\/g, "/")
     .replace(/\/{2,}/g, "/")
     .trim();
+
+  if (!normalized || normalized.includes("\0")) return "";
+  const segments = normalized.split("/");
+  if (segments.some(segment => segment === "." || segment === "..")) return "";
+  return normalized;
 }
 
 function normalizeExistingJson(text) {
@@ -535,23 +558,43 @@ function base64ToUtf8(base64) {
   return new TextDecoder().decode(bytes);
 }
 
-function corsHeaders(request, env) {
-  const origin = request.headers.get("origin") || "";
+function allowedOrigins(env) {
   const configured = String(env.ALLOWED_ORIGINS || "")
     .split(",")
     .map(item => item.trim())
     .filter(Boolean);
+  return configured.length ? configured : DEFAULT_ALLOWED_ORIGINS;
+}
 
-  const allowed = configured.length ? configured : DEFAULT_ALLOWED_ORIGINS;
-  const allowOrigin = allowed.includes(origin) ? origin : allowed[0];
+function isAllowedOrigin(request, env) {
+  const origin = request.headers.get("origin") || "";
+  return !origin || allowedOrigins(env).includes(origin);
+}
 
-  return {
-    "access-control-allow-origin": allowOrigin,
+function requireAllowedOrigin(request, env) {
+  if (!isAllowedOrigin(request, env)) {
+    throw httpError(403, "Origem não autorizada.");
+  }
+}
+
+function corsHeaders(request, env) {
+  const origin = request.headers.get("origin") || "";
+  const headers = {
     "access-control-allow-methods": "GET,PUT,POST,DELETE,OPTIONS",
     "access-control-allow-headers": "authorization,content-type",
     "access-control-max-age": "86400",
     vary: "Origin"
   };
+  if (origin && allowedOrigins(env).includes(origin)) {
+    headers["access-control-allow-origin"] = origin;
+  }
+  return headers;
+}
+
+function safePublicErrorMessage(value) {
+  const message = String(value || "").trim();
+  if (!message) return "Solicitação inválida.";
+  return message.length <= 220 ? message : "Solicitação inválida.";
 }
 
 function json(data, status, request, env) {

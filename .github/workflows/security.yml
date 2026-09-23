@@ -28,6 +28,18 @@ jobs:
       - name: Examinar segredos no histórico sem revelar valores
         run: node scripts/security/secret-scan.mjs
 
+      - name: Validar superfícies críticas do navegador
+        run: node scripts/security/browser-security-regression.mjs
+
+      - name: Validar proteção antiabuso da recuperação de senha
+        run: node scripts/security/password-link-abuse-regression.mjs
+
+      - name: Validar hardening do Worker de mídia
+        run: node scripts/security/media-worker-hardening-regression.mjs
+
+      - name: Validar funções públicas com autenticação alternativa
+        run: node scripts/security/public-edge-functions-regression.mjs
+
       - name: Validar datas e versões únicas das migrações
         run: node scripts/security/migration-timestamp-regression.mjs
 
