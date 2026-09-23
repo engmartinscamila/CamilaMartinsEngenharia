@@ -20,6 +20,7 @@ import {
   type CommercialCatalogService,
   type CommercialDocumentPreview,
   type CommercialRecord,
+  type CommercialServiceLevelCode,
   type CommercialServiceSelection,
   type ExistingCommercialClient,
 } from '@/services/commercial-service';
@@ -27,8 +28,13 @@ import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 
 const emptyForm = {
   prospectName: '', cpfCnpj: '', email: '', phone: '', cep: '', address: '', city: '', state: '', propertyAddress: '', propertyType: '',
-  areaTerrenoM2: '', areaConstruidaM2: '', constructionStandard: '', experienceLevel: '', customService: '', totalValue: '', notes: '',
+  areaTerrenoM2: '', areaConstruidaM2: '', constructionStandard: '', customService: '', totalValue: '', notes: '',
 };
+const SERVICE_LEVELS: { code: CommercialServiceLevelCode; label: string }[] = [
+  { code: 'bronze', label: 'Bronze' },
+  { code: 'prata', label: 'Prata' },
+  { code: 'ouro', label: 'Ouro' },
+];
 const digitsOnly = (value: string) => value.replace(/\D/g, '');
 type PendingGeneration={record:CommercialRecord;kind:'orcamento'|'contrato';archive:boolean;preview:CommercialDocumentPreview;bump:'minor'|'major';reason:string};
 
@@ -48,6 +54,8 @@ export default function AdminCommercialDocumentsScreen() {
   const [selectedClient,setSelectedClient]=useState<ExistingCommercialClient|null>(null);
   const [serviceQuery,setServiceQuery]=useState('');
   const [catalogServices,setCatalogServices]=useState<CommercialCatalogService[]>([]);
+  const [selectedLevels,setSelectedLevels]=useState<Record<string,CommercialServiceLevelCode>>({});
+  const [customServiceLevel,setCustomServiceLevel]=useState<CommercialServiceLevelCode|null>(null);
 
   const services = useMemo<CommercialServiceSelection[]>(() => catalogServices.map((item, index) => ({
     code: item.code,
@@ -55,7 +63,9 @@ export default function AdminCommercialDocumentsScreen() {
     included: selectedCodes.includes(item.code),
     acceptanceRequired: item.acceptanceRequired,
     displayOrder: index + 1,
-  })), [catalogServices, selectedCodes]);
+    levelApplicable: item.levelApplicable,
+    levelCode: selectedLevels[item.code] ?? null,
+  })), [catalogServices, selectedCodes, selectedLevels]);
   const serviceSuggestions=useMemo(()=>suggestCommercialServices(
     serviceQuery,
     catalogServices.map(({code,name})=>({code,name})),
@@ -77,7 +87,14 @@ export default function AdminCommercialDocumentsScreen() {
     if(key==='address'&&sameAddress)next.propertyAddress=value;
     return next;
   });
-  const toggleService = (code: string) => setSelectedCodes((current) => current.includes(code) ? current.filter((item) => item !== code) : [...current, code]);
+  const toggleService = (code: string) => setSelectedCodes((current) => {
+    if (!current.includes(code)) return [...current, code];
+    setSelectedLevels((levels) => {
+      const next={...levels}; delete next[code]; return next;
+    });
+    return current.filter((item) => item !== code);
+  });
+  const chooseServiceLevel=(code:string,level:CommercialServiceLevelCode)=>setSelectedLevels(current=>({...current,[code]:level}));
   const toggleSameAddress=()=>setSameAddress(current=>{const next=!current;if(next)setForm(value=>({...value,propertyAddress:value.address}));return next;});
 
   const searchClients=async()=>{
@@ -137,13 +154,22 @@ export default function AdminCommercialDocumentsScreen() {
   const create = async () => {
     if (!form.prospectName.trim()) { setError('Informe o nome do prospect.'); return; }
     if (!selectedCodes.length && !form.customService.trim()) { setError('Selecione ao menos um serviço ou descreva um serviço personalizado.'); return; }
-    if (!form.experienceLevel.trim()) { setError('Selecione o nível de prestação cadastrado para os serviços escolhidos.'); return; }
+    const missingLevel=services.find(item=>item.included&&item.levelApplicable!==false&&!item.levelCode);
+    if(missingLevel){setError(`Selecione Bronze, Prata ou Ouro para ${missingLevel.name}.`);return;}
+    const otherSelected=selectedCodes.some(code=>['p','outro','outros'].includes(code.toLowerCase()));
+    if(form.customService.trim()&&!otherSelected&&!customServiceLevel){setError('Selecione Bronze, Prata ou Ouro para a atividade personalizada.');return;}
     setLoadingKey('create'); setError(null); setSuccess(null);
-    const result = await createCommercialRecord({ ...form, linkedClientId:selectedClient?.id??null, propertyAddress:sameAddress?form.address:form.propertyAddress, services });
+    const result = await createCommercialRecord({
+      ...form,
+      linkedClientId:selectedClient?.id??null,
+      propertyAddress:sameAddress?form.address:form.propertyAddress,
+      services,
+      customServiceLevel: otherSelected ? (selectedLevels.p ?? null) : customServiceLevel,
+    });
     if (result.error) setError(result.error);
     else {
       setSuccess(selectedClient?'Orçamento criado e vinculado ao cliente existente sem alterar o cadastro original.':'Orçamento criado com numeração automática. O prospect ainda não foi cadastrado como cliente.');
-      setForm(emptyForm);setSameAddress(false);setSelectedCodes([]);setSelectedClient(null);setClientQuery('');setClientMatches([]);setServiceQuery('');await load();
+      setForm(emptyForm);setSameAddress(false);setSelectedCodes([]);setSelectedLevels({});setCustomServiceLevel(null);setSelectedClient(null);setClientQuery('');setClientMatches([]);setServiceQuery('');await load();
     }
     setLoadingKey(null);
   };
@@ -224,14 +250,23 @@ export default function AdminCommercialDocumentsScreen() {
         <Field editable={!sameAddress} label="Endereço do imóvel / obra" value={sameAddress?form.address:form.propertyAddress} onChangeText={(value) => update('propertyAddress', value)} />
         <View style={styles.twoColumns}><Field label="Tipo de imóvel" value={form.propertyType} onChangeText={(value) => update('propertyType', value)} /><Field label="Padrão construtivo" value={form.constructionStandard} onChangeText={(value) => update('constructionStandard', value)} /></View>
         <View style={styles.twoColumns}><Field keyboardType="decimal-pad" label="Área do terreno (m²)" value={form.areaTerrenoM2} onChangeText={(value) => update('areaTerrenoM2', value)} /><Field keyboardType="decimal-pad" label="Área construída prevista (m²)" value={form.areaConstruidaM2} onChangeText={(value) => update('areaConstruidaM2', value)} /></View>
-        <Field label="Nível de prestação (código ativo no catálogo) *" value={form.experienceLevel} onChangeText={(value) => update('experienceLevel', value)} />
         <Text style={styles.subTitle}>Serviços propostos *</Text>
+        <Text style={styles.help}>Selecione cada atividade e, em seguida, o nível Bronze, Prata ou Ouro correspondente. O nível fica vinculado à atividade no snapshot do orçamento.</Text>
         <Field label="Localizar serviço por nome ou código" value={serviceQuery} onChangeText={setServiceQuery} />
         {serviceQuery.trim().length>=2&&serviceSuggestions.length===0?<Notice tone="info">Nenhuma correspondência segura. Revise o termo ou selecione manualmente no catálogo abaixo.</Notice>:null}
         {serviceSuggestions.map(item=><View key={`suggest-${item.code}`} style={styles.matchRow}><View style={{flex:1}}><Text style={styles.serviceText}>({item.code}) {item.name}</Text><Text style={styles.meta}>{item.exact?'Correspondência exata':'Sugestão aproximada — confirme antes de selecionar'}</Text></View><Button onPress={()=>{if(!selectedCodes.includes(item.code))setSelectedCodes(current=>[...current,item.code]);setServiceQuery('');}} title={selectedCodes.includes(item.code)?'Já selecionado':'Confirmar serviço'} variant="secondary" /></View>)}
         {catalogServices.length===0?<Notice tone="warning">O catálogo central de serviços não pôde ser carregado. A criação do orçamento fica bloqueada para evitar usar uma lista desatualizada.</Notice>:null}
-        <View style={styles.serviceList}>{catalogServices.map(({code, name}) => { const selected = selectedCodes.includes(code); return <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: selected }} key={code} onPress={() => toggleService(code)} style={[styles.serviceRow, selected && styles.serviceSelected]}><Text style={styles.check}>{selected ? '☒' : '☐'}</Text><Text style={styles.serviceText}>({code}) {name}</Text></Pressable>; })}</View>
+        <View style={styles.serviceList}>{catalogServices.map(({code, name, levelApplicable}) => {
+          const selected = selectedCodes.includes(code);
+          return <View key={code} style={[styles.serviceCard, selected && styles.serviceSelected]}>
+            <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: selected }} onPress={() => toggleService(code)} style={styles.serviceSelector}>
+              <Text style={styles.check}>{selected ? '☒' : '☐'}</Text><Text style={styles.serviceText}>({code}) {name}</Text>
+            </Pressable>
+            {selected&&levelApplicable?<View style={styles.levelChoices}>{SERVICE_LEVELS.map(level=><Pressable key={level.code} accessibilityRole="radio" accessibilityState={{selected:selectedLevels[code]===level.code}} onPress={()=>chooseServiceLevel(code,level.code)} style={[styles.levelChip,selectedLevels[code]===level.code&&styles.levelChipSelected]}><Text style={styles.levelChipText}>{level.label}</Text></Pressable>)}</View>:null}
+          </View>;
+        })}</View>
         <Field label="Outro serviço / especificação livre" value={form.customService} onChangeText={(value) => update('customService', value)} />
+        {form.customService.trim()&&!selectedCodes.includes('p')?<View><Text style={styles.help}>Nível da atividade personalizada:</Text><View style={styles.levelChoices}>{SERVICE_LEVELS.map(level=><Pressable key={`custom-${level.code}`} accessibilityRole="radio" accessibilityState={{selected:customServiceLevel===level.code}} onPress={()=>setCustomServiceLevel(level.code)} style={[styles.levelChip,customServiceLevel===level.code&&styles.levelChipSelected]}><Text style={styles.levelChipText}>{level.label}</Text></Pressable>)}</View></View>:null}
         <Field keyboardType="decimal-pad" label="Valor total dos honorários (R$)" value={form.totalValue} onChangeText={(value) => update('totalValue', value)} />
         <Field label="Observações / condição de pagamento" multiline value={form.notes} onChangeText={(value) => update('notes', value)} />
         <Button disabled={catalogServices.length===0} loading={loadingKey === 'create'} onPress={() => void create()} title="Criar orçamento numerado" />
@@ -262,7 +297,7 @@ const styleDefinitions = (colors: ThemeColors) => ({
   subTitle: { color: colors.ink, fontSize: 14, fontWeight: '700', fontFamily: typography.family, marginTop: spacing.xs },
   help: { color: colors.slate, fontSize: 12, lineHeight: 18, fontFamily: typography.family },
   twoColumns: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }, lookupField: { flex: 1, minWidth: 220, gap: spacing.xs }, serviceList: { gap: spacing.xs },
-  serviceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, padding: spacing.sm }, serviceSelected: { borderColor: colors.gold500, backgroundColor: colors.warningSoft }, check: { color: colors.gold600, fontSize: 18, fontFamily: typography.family }, serviceText: { flex: 1, color: colors.ink, fontSize: 12, fontFamily: typography.family },
+  serviceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, padding: spacing.sm }, serviceCard:{borderWidth:1,borderColor:colors.line,borderRadius:radius.md,padding:spacing.sm,gap:spacing.xs}, serviceSelector:{flexDirection:'row',alignItems:'center',gap:spacing.sm}, serviceSelected: { borderColor: colors.gold500, backgroundColor: colors.warningSoft }, check: { color: colors.gold600, fontSize: 18, fontFamily: typography.family }, serviceText: { flex: 1, color: colors.ink, fontSize: 12, fontFamily: typography.family }, levelChoices:{flexDirection:'row',flexWrap:'wrap',gap:spacing.xs,marginLeft:28}, levelChip:{borderWidth:1,borderColor:colors.line,borderRadius:radius.md,paddingHorizontal:spacing.sm,paddingVertical:spacing.xs}, levelChipSelected:{borderColor:colors.gold500,backgroundColor:colors.warningSoft}, levelChipText:{color:colors.ink,fontSize:11,fontWeight:'700',fontFamily:typography.family},
   matchRow:{flexDirection:'row',alignItems:'center',gap:spacing.sm,borderWidth:1,borderColor:colors.line,borderRadius:radius.md,padding:spacing.sm},
   recordCard: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.sm, gap: spacing.sm }, recordHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm }, recordTitle: { color: colors.ink, fontSize: 14, fontWeight: '700', fontFamily: typography.family }, meta: { color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 3, fontFamily: typography.family }, previewStrong:{color:colors.ink,fontSize:12,lineHeight:18,fontWeight:'700',fontFamily:typography.family}, actions: { gap: spacing.xs },
 });
