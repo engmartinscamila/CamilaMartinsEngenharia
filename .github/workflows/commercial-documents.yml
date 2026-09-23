@@ -1,17 +1,49 @@
 name: Regressão de orçamentos e contratos
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/generate-commercial-document/**'
+      - 'portal-app/supabase/functions/generate-commercial-document/**'
+      - 'supabase/functions/generate-commercial-document-final/**'
+      - 'supabase/functions/generate-contract-document/**'
+      - 'portal-app/supabase/functions/generate-contract-document/**'
+      - 'portal-app/src/services/commercial-service.ts'
+      - 'portal-app/src/services/document-workflow-service.ts'
+      - 'portal-app/src/app/admin/commercial-documents.tsx'
+      - 'portal-app/src/app/admin/contract-documents.tsx'
+      - 'portal-app/src/app/admin/service-level-governance.tsx'
+      - 'supabase/migrations/**service_level**.sql'
+      - 'supabase/migrations/**commercial**.sql'
+      - 'supabase/migrations/**contract_master**.sql'
+      - 'supabase/migrations/**document_chain**.sql'
+      - 'js/document-function-routing-web.js'
+      - 'scripts/commercial-word-regression.mjs'
+      - 'scripts/commercial-generator-preflight-regression.mjs'
+      - 'scripts/commercial-custom-scope-regression.mjs'
+      - '.github/workflows/commercial-documents.yml'
   pull_request:
     branches: [main]
     paths:
       - 'supabase/functions/generate-commercial-document/**'
       - 'portal-app/supabase/functions/generate-commercial-document/**'
       - 'supabase/functions/generate-commercial-document-final/**'
+      - 'supabase/functions/generate-contract-document/**'
+      - 'portal-app/supabase/functions/generate-contract-document/**'
       - 'portal-app/src/services/commercial-service.ts'
       - 'portal-app/src/services/document-workflow-service.ts'
+      - 'portal-app/src/app/admin/commercial-documents.tsx'
+      - 'portal-app/src/app/admin/contract-documents.tsx'
+      - 'portal-app/src/app/admin/service-level-governance.tsx'
+      - 'supabase/migrations/**service_level**.sql'
+      - 'supabase/migrations/**commercial**.sql'
+      - 'supabase/migrations/**contract_master**.sql'
+      - 'supabase/migrations/**document_chain**.sql'
       - 'js/document-function-routing-web.js'
       - 'scripts/commercial-word-regression.mjs'
       - 'scripts/commercial-generator-preflight-regression.mjs'
+      - 'scripts/commercial-custom-scope-regression.mjs'
       - '.github/workflows/commercial-documents.yml'
   workflow_dispatch:
 
