@@ -31,6 +31,7 @@ export const modernWebsiteAdminSections = new Set([
   'contract-documents',
   'document-preparation',
   'document-governance',
+  'service-level-governance',
   'document-archive',
   'tasks',
   'work-diary',
