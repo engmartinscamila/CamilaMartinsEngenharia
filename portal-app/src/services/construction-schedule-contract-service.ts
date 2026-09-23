@@ -54,20 +54,51 @@ const toDocument = (row: Record<string, unknown>): CommercialScheduleDocument =>
   services: Array.isArray(row.services) ? row.services as CommercialScheduleDocument['services'] : [],
   totalValue: row.total_value === null || row.total_value === undefined ? null : Number(row.total_value),
 });
+
+// PostgREST devolve no máximo o limite por consulta; um .limit(500) silencioso
+// fazia orçamentos/contratos ou vínculos existentes desaparecerem da seleção.
+// Ordenação estável e páginas inclusivas permitem recuperar tudo sem duplicar
+// registros; o teto defensivo produz erro explícito, nunca lista incompleta.
+const PAGE_SIZE = 200;
+const MAX_ROWS = 20000;
 export async function loadScheduleCommercialOptions(): Promise<{ data: ScheduleCommercialOptions | null; error: string | null }> {
-  const [projects,records,links] = await Promise.all([
-    listConstructionScheduleProjects(),
-    supabase.from('commercial_records').select('id,record_kind,quote_number,contract_number,status,linked_project_id,linked_client_id,linked_contract_id,services,total_value').in('record_kind',['orcamento','contrato']).limit(500),
-    supabase.from('commercial_contract_quote_links').select('quote_record_id,contract_record_id').limit(1000),
-  ]);
-  if (projects.error || records.error || links.error) return {data:null,error:projects.error ?? records.error?.message ?? links.error?.message ?? 'Não foi possível conferir os documentos comerciais.'};
-  const documents = (records.data ?? []).map(row=>toDocument(row as Record<string,unknown>));
-  return {data:{
-    projects:projects.data,
-    quotes:documents.filter(doc=>doc.recordKind==='orcamento'),
-    contracts:documents.filter(doc=>doc.recordKind==='contrato'),
-    links:(links.data ?? []).map(row=>({quoteRecordId:String(row.quote_record_id),contractRecordId:String(row.contract_record_id)})),
-  },error:null};
+  const projects = await listConstructionScheduleProjects();
+  if (projects.error) return { data: null, error: projects.error };
+
+  const documents: CommercialScheduleDocument[] = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    if (offset >= MAX_ROWS) return { data: null, error: 'Há muitos documentos comerciais para esta consulta. Refine a seleção de cliente/projeto antes de continuar.' };
+    const page = await supabase.from('commercial_records')
+      .select('id,record_kind,quote_number,contract_number,status,linked_project_id,linked_client_id,linked_contract_id,services,total_value')
+      .in('record_kind', ['orcamento', 'contrato'])
+      .order('id', { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (page.error) return { data: null, error: page.error.message ?? 'Não foi possível carregar todos os documentos comerciais.' };
+    const rows = page.data ?? [];
+    documents.push(...rows.map((row) => toDocument(row as Record<string, unknown>)));
+    if (rows.length < PAGE_SIZE) break;
+  }
+
+  const links: CommercialScheduleLink[] = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    if (offset >= MAX_ROWS) return { data: null, error: 'Há muitos vínculos de orçamento/contrato para esta consulta. Refine a seleção antes de continuar.' };
+    const page = await supabase.from('commercial_contract_quote_links')
+      .select('quote_record_id,contract_record_id')
+      .order('quote_record_id', { ascending: true })
+      .order('contract_record_id', { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (page.error) return { data: null, error: page.error.message ?? 'Não foi possível carregar os vínculos comerciais.' };
+    const rows = page.data ?? [];
+    links.push(...rows.map((row) => ({ quoteRecordId: String(row.quote_record_id), contractRecordId: String(row.contract_record_id) })));
+    if (rows.length < PAGE_SIZE) break;
+  }
+
+  return { data: {
+    projects: projects.data,
+    quotes: documents.filter((doc) => doc.recordKind === 'orcamento'),
+    contracts: documents.filter((doc) => doc.recordKind === 'contrato'),
+    links,
+  }, error: null };
 }
 
 export async function loadCurrentScheduleState(projectId: string): Promise<{ data: CurrentScheduleState | null; error: string | null }> {
@@ -80,7 +111,7 @@ export async function loadCurrentScheduleState(projectId: string): Promise<{ dat
   if (result.error) return { data: null, error: result.error.message ?? 'Não foi possível conferir a revisão vigente.' };
   if (!result.data) return { data: null, error: null };
   const status = String(result.data.activation_status ?? 'legacy');
-  if (!['legacy','draft','approved'].includes(status)) return { data: null, error: 'Estado inválido do cronograma vigente.' };
+  if (!['legacy', 'draft', 'approved'].includes(status)) return { data: null, error: 'Estado inválido do cronograma vigente.' };
   return { data: {
     id: String(result.data.id),
     activationStatus: status as CurrentScheduleState['activationStatus'],
@@ -89,22 +120,22 @@ export async function loadCurrentScheduleState(projectId: string): Promise<{ dat
   }, error: null };
 }
 
-export async function previewScheduleTemplate(projectId:string,quoteId:string,contractId:string,templateCode:string):Promise<{data:ScheduleTemplatePreview|null;error:string|null}> {
-  const result=await supabase.rpc('admin_preview_full_schedule_template',{
-    p_project_id:projectId,p_quote_record_id:quoteId,p_contract_record_id:contractId,p_template_code:templateCode,
+export async function previewScheduleTemplate(projectId: string, quoteId: string, contractId: string, templateCode: string): Promise<{ data: ScheduleTemplatePreview | null; error: string | null }> {
+  const result = await supabase.rpc('admin_preview_full_schedule_template', {
+    p_project_id: projectId, p_quote_record_id: quoteId, p_contract_record_id: contractId, p_template_code: templateCode,
   });
-  if (result.error || !result.data) return {data:null,error:result.error?.message??'O escopo não pôde ser verificado.'};
-  const preview=result.data as ScheduleTemplatePreview;
-  if (!preview.requires_scope_confirmation || !Array.isArray(preview.items)) return {data:null,error:'Modelo inválido: falta revisão individual das atividades.'};
-  return {data:preview,error:null};
+  if (result.error || !result.data) return { data: null, error: result.error?.message ?? 'O escopo não pôde ser verificado.' };
+  const preview = result.data as ScheduleTemplatePreview;
+  if (!preview.requires_scope_confirmation || !Array.isArray(preview.items)) return { data: null, error: 'Modelo inválido: falta revisão individual das atividades.' };
+  return { data: preview, error: null };
 }
 export async function saveVerifiedSchedule(
-  projectId:string,
-  quoteId:string,
-  contractId:string,
-  plan:Record<string,unknown>,
+  projectId: string,
+  quoteId: string,
+  contractId: string,
+  plan: Record<string, unknown>,
   revision?: { previousScheduleId: string; reason: string } | null,
-):Promise<{scheduleId:string|null;error:string|null}> {
+): Promise<{ scheduleId: string | null; error: string | null }> {
   const result = revision
     ? await supabase.rpc('admin_begin_and_save_full_schedule_revision', {
         p_previous_schedule_id: revision.previousScheduleId,
@@ -113,22 +144,22 @@ export async function saveVerifiedSchedule(
         p_reason: revision.reason,
         p_plan: plan,
       })
-    : await supabase.rpc('admin_initialize_and_save_full_schedule',{
-        p_project_id:projectId,p_quote_record_id:quoteId,p_contract_record_id:contractId,p_plan:plan,
+    : await supabase.rpc('admin_initialize_and_save_full_schedule', {
+        p_project_id: projectId, p_quote_record_id: quoteId, p_contract_record_id: contractId, p_plan: plan,
       });
-  if (result.error || !result.data) return {scheduleId:null,error:result.error?.message??'Cronograma não foi criado: verifique escopo e planejamento.'};
-  return {scheduleId:String(result.data),error:null};
+  if (result.error || !result.data) return { scheduleId: null, error: result.error?.message ?? 'Cronograma não foi criado: verifique escopo e planejamento.' };
+  return { scheduleId: String(result.data), error: null };
 }
-export async function approveVerifiedSchedule(scheduleId:string):Promise<string|null> {
-  const result=await supabase.from('construction_schedules').update({activation_status:'approved'}).eq('id',scheduleId).select('id').single();
-  return result.error?.message??null;
+export async function approveVerifiedSchedule(scheduleId: string): Promise<string | null> {
+  const result = await supabase.from('construction_schedules').update({ activation_status: 'approved' }).eq('id', scheduleId).select('id').single();
+  return result.error?.message ?? null;
 }
 
 export async function exportApprovedScheduleXlsx(scheduleId: string): Promise<string | null> {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(scheduleId)) {
     return 'Identificador do cronograma inválido.';
   }
-  const result = await supabase.functions.invoke('generate-verified-construction-schedule-xlsx', {body: {scheduleId}});
+  const result = await supabase.functions.invoke('generate-verified-construction-schedule-xlsx', { body: { scheduleId } });
   if (result.error || result.data?.generated !== true || typeof result.data?.contentBase64 !== 'string') {
     return typeof result.data?.error === 'string' ? result.data.error : result.error?.message ?? 'Não foi possível extrair o Excel do cronograma aprovado.';
   }
