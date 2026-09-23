@@ -31,6 +31,9 @@ jobs:
       - name: Validar datas e versões únicas das migrações
         run: node scripts/security/migration-timestamp-regression.mjs
 
+      - name: Regressão dos riscos do vídeo de segurança
+        run: node scripts/security/video-risk-regression.mjs
+
       - name: Proteger reuso de cliente existente
         run: node scripts/security/commercial-existing-client-regression.mjs
 
