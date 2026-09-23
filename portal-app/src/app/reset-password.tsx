@@ -19,8 +19,8 @@ export default function ResetPasswordScreen() {
       setError('Este link não é mais válido. Solicite um novo link de acesso.');
       return;
     }
-    if (password.length < 8) {
-      setError('A senha deve ter pelo menos 8 caracteres.');
+    if (password.length < 12) {
+      setError('A senha deve ter pelo menos 12 caracteres.');
       return;
     }
     if (password !== confirmation) {
@@ -40,7 +40,7 @@ export default function ResetPasswordScreen() {
         autoComplete="new-password"
         label="Nova senha"
         onChangeText={setPassword}
-        placeholder="Mínimo de 8 caracteres"
+        placeholder="Mínimo de 12 caracteres"
         secureTextEntry
         value={password}
       />
