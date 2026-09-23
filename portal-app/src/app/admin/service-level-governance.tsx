@@ -117,7 +117,7 @@ export default function ServiceLevelGovernanceScreen() {
                 tone={item.reviewStatus === 'approved' ? 'success' : item.reviewStatus === 'rejected' ? 'danger' : 'warning'}
               />
             </View>
-            <Text style={styles.level}>{item.levelLabel} — {item.levelSubtitle}</Text>
+            <Text style={styles.level}>{item.levelLabel}</Text>
             {item.professionalScopeCheckRequired ? <Notice tone="warning">Antes da aprovação comercial definitiva deste serviço, confirme a atribuição profissional aplicável ao caso concreto.</Notice> : null}
             <Field label="Texto do orçamento" multiline value={draft.budgetDescription} onChangeText={value => updateDraft(key, 'budgetDescription', value)} />
             <Field label="Texto do contrato" multiline value={draft.contractScope} onChangeText={value => updateDraft(key, 'contractScope', value)} />
