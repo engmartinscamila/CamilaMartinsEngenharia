@@ -42,7 +42,11 @@ function additionalFields(){
     <div class="doc-field"><label>Descrição e observações</label><textarea data-additional-description rows="4" placeholder="O texto padrão da atividade será usado e poderá ser ajustado aqui."></textarea></div>
   </div>`;
 }
-function renderGenerators(){$('contractGenerators').innerHTML=generators.map(([kind,title,desc])=>`<div class="doc-row" data-generator-kind="${kind}"><div class="doc-row-head"><div><strong>${esc(title)}</strong><div class="doc-meta">${esc(desc)}</div></div><button class="doc-btn secondary" data-prepare="${kind}">Preparar</button></div>${kind==='servico_adicional'?additionalFields():''}${kind==='estudo_preliminar'&&!included('a')?'<div class="doc-note">Este documento será tratado como auxiliar opcional e não passará a integrar automaticamente o escopo contratado.</div>':''}</div>`).join('')}
+function structuredFields(kind){
+  if(kind==='levantamento_tecnico')return '<div class="doc-additional-fields" data-survey-fields><div class="doc-grid"><div class="doc-field"><label>Data e horário da vistoria</label><input type="datetime-local" data-survey-datetime></div><div class="doc-field"><label>Acompanhante no local</label><input data-survey-companion placeholder="Nome do responsável"></div><div class="doc-field"><label>Responsável técnico</label><input data-survey-technical placeholder="Responsável pelo registro"></div></div></div>';
+  return '';
+}
+function renderGenerators(){$('contractGenerators').innerHTML=generators.map(([kind,title,desc])=>`<div class="doc-row" data-generator-kind="${kind}"><div class="doc-row-head"><div><strong>${esc(title)}</strong><div class="doc-meta">${esc(desc)}</div></div><button class="doc-btn secondary" data-prepare="${kind}">Preparar</button></div>${kind==='servico_adicional'?additionalFields():structuredFields(kind)}${kind==='estudo_preliminar'&&!included('a')?'<div class="doc-note">Este documento será tratado como auxiliar opcional e não passará a integrar automaticamente o escopo contratado.</div>':''}</div>`).join('')}
 function renderApprovals(){
   const labels={aguardando:'Aguardando cliente',pendente:'Pendente',aceito:'Aceito',aprovado:'Aceito',recusado:'Recusado',rejeitado:'Recusado'};
   $('approvalList').innerHTML=approvals.length?approvals.map(a=>{
@@ -67,6 +71,11 @@ async function prepare(kind,approvalId=null){
     extra.payment_method=row?.querySelector('[data-additional-payment]')?.value||'';
     extra.description=row?.querySelector('[data-additional-description]')?.value||'';
     if(!extra.service_code||!extra.additional_value||!extra.payment_method){msg('Informe atividade, valor e forma de pagamento do serviço adicional.','error');return}
+  }
+  if(kind==='levantamento_tecnico'){
+    extra.survey_datetime=row?.querySelector('[data-survey-datetime]')?.value||'';
+    extra.site_companion=row?.querySelector('[data-survey-companion]')?.value||'';
+    extra.technical_responsible=row?.querySelector('[data-survey-technical]')?.value||'';
   }
   msg('Preparando documento com textos e escopo inteligentes...');
   try{
