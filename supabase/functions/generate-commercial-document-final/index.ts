@@ -251,6 +251,8 @@ Deno.serve(async req => {
     const recordId = text(body.recordId);
     const kind = body.kind === 'contrato' ? 'contrato' : 'orcamento';
     if (!/^[0-9a-f-]{36}$/i.test(recordId)) return json({ error: 'Registro comercial inválido.' }, 400);
+    const preparedScope = await service.rpc('admin_prepare_commercial_scope_for_generation', { p_record_id: recordId });
+    if (preparedScope.error) throw preparedScope.error;
     const source = await service.from('commercial_records').select('*').eq('id', recordId).maybeSingle();
     if (source.error) throw source.error;
     if (!source.data) return json({ error: 'Registro comercial não encontrado.' }, 404);
