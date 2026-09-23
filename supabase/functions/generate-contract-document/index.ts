@@ -154,13 +154,13 @@ const itemLevelCode=(item:Record<string,unknown>)=>{
 };
 const itemLevelLabel=(item:Record<string,unknown>)=>{
  const level=item.level&&typeof item.level==='object'?item.level as Record<string,unknown>:null;
- const label=[String(level?.label??'').trim(),String(level?.subtitle??'').trim()].filter(Boolean).join(' — ');
+ const label=String(level?.label??'').trim();
  return label||itemLevelCode(item).toUpperCase();
 };
 const levelData=(d:Data)=>d.service_level&&typeof d.service_level==='object'?d.service_level as Record<string,unknown>:null;
 const levelName=(d:Data)=>{
  const level=levelData(d);
- if(level)return `${String(level.label??'')} — ${String(level.subtitle??'')}`.replace(/\s+—\s+$/,'');
+ if(level)return String(level.label??'').trim()||String(d.experience_level??'').trim().toUpperCase();
  const code=String(d.experience_level??'').trim();
  if(code)return code.toUpperCase();
  return 'Não aplicável / não selecionado';
