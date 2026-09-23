@@ -53,29 +53,50 @@ export interface ConstructionScheduleItem {
 
 const workAddress = (row: Record<string, unknown>) => [row.endereco_obra, row.numero_obra, row.complemento_obra, row.bairro_obra, row.cidade_obra, row.estado_obra].filter(Boolean).join(', ') || null;
 
+// As listas anteriores usavam .limit(200) para projetos e .limit(500) para
+// clientes, ocultando registros legítimos à medida que o escritório crescia.
+// Paginar com desempate por ID e buscar apenas os clientes dos projetos lidos.
+const PAGE_SIZE = 200;
+const MAX_PROJECTS = 20000;
 export async function listConstructionScheduleProjects() {
-  const [projectsResult, clientsResult] = await Promise.all([
-    supabase.from('projetos').select('id,cliente_id,contract_id,nome,tipo,numero_contrato,data_inicio,data_fim,area_construida_m2,area_terreno_m2,endereco_obra,numero_obra,complemento_obra,bairro_obra,cidade_obra,estado_obra').order('created_at', { ascending: false }).limit(200),
-    supabase.from('clientes').select('id,nome').limit(500),
-  ]);
-  if (projectsResult.error) return { data: [] as ConstructionProjectOption[], error: 'Não foi possível carregar os projetos.' };
-  const names = new Map((clientsResult.data ?? []).map((row) => [row.id, row.nome]));
+  const projects: Array<Record<string, unknown>> = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    if (offset >= MAX_PROJECTS) return { data: [] as ConstructionProjectOption[], error: 'Há muitos projetos para carregar de uma só vez. Utilize uma seleção por cliente antes de continuar.' };
+    const page = await supabase.from('projetos')
+      .select('id,cliente_id,contract_id,nome,tipo,numero_contrato,data_inicio,data_fim,area_construida_m2,area_terreno_m2,endereco_obra,numero_obra,complemento_obra,bairro_obra,cidade_obra,estado_obra')
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (page.error) return { data: [] as ConstructionProjectOption[], error: 'Não foi possível carregar todos os projetos.' };
+    const rows = page.data ?? [];
+    projects.push(...rows);
+    if (rows.length < PAGE_SIZE) break;
+  }
+
+  const clientIds = [...new Set(projects.map((row) => String(row.cliente_id ?? '')).filter(Boolean))];
+  const names = new Map<string, string>();
+  let namesError = false;
+  for (let index = 0; index < clientIds.length; index += 100) {
+    const page = await supabase.from('clientes').select('id,nome').in('id', clientIds.slice(index, index + 100));
+    if (page.error) { namesError = true; break; }
+    for (const row of page.data ?? []) names.set(row.id, row.nome);
+  }
   return {
-    data: (projectsResult.data ?? []).map((row) => ({
-      id: row.id,
-      clientId: row.cliente_id,
-      contractId: row.contract_id,
-      name: row.nome,
-      type: row.tipo,
-      clientName: names.get(row.cliente_id) ?? 'Cliente',
-      contractNumber: row.numero_contrato,
-      workAddress: workAddress(row as Record<string, unknown>),
-      startDate: row.data_inicio,
-      finishDate: row.data_fim,
+    data: projects.map((row) => ({
+      id: String(row.id),
+      clientId: String(row.cliente_id),
+      contractId: row.contract_id ? String(row.contract_id) : null,
+      name: String(row.nome ?? ''),
+      type: row.tipo ? String(row.tipo) : null,
+      clientName: names.get(String(row.cliente_id)) ?? 'Cliente',
+      contractNumber: row.numero_contrato ? String(row.numero_contrato) : null,
+      workAddress: workAddress(row),
+      startDate: row.data_inicio ? String(row.data_inicio) : null,
+      finishDate: row.data_fim ? String(row.data_fim) : null,
       builtArea: row.area_construida_m2 === null ? null : Number(row.area_construida_m2),
       landArea: row.area_terreno_m2 === null ? null : Number(row.area_terreno_m2),
     })),
-    error: clientsResult.error ? 'Projetos carregados, mas alguns nomes de cliente podem estar indisponíveis.' : null,
+    error: namesError ? 'Projetos carregados, mas alguns nomes de cliente podem estar indisponíveis.' : null,
   };
 }
 
