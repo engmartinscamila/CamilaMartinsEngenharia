@@ -18,7 +18,8 @@ const ALLOWED_ORIGINS = new Set([
   ...(production ? ["https://www.camilamartinsengenharia.com.br"] : []),
 ]);
 const GENERIC_MESSAGE = "Se este e-mail estiver autorizado, enviaremos um link seguro para criar ou redefinir a senha. Verifique também a caixa de spam.";
-const EMAIL_PATTERN = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_REQUEST_BYTES = 4096;
 
 function corsHeaders(request: Request) {
   const origin = request.headers.get("origin") ?? "";
