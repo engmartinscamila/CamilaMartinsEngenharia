@@ -11,6 +11,17 @@ export interface CommercialServiceSelection {
   displayOrder: number;
 }
 
+export interface CommercialCatalogService {
+  code: string;
+  name: string;
+  category: string;
+  levelApplicable: boolean;
+  acceptanceRequired: boolean;
+  description: string;
+  deliverables: string[];
+  exclusions: string[];
+}
+
 export interface CommercialRecord {
   id: string;
   quoteNumber: string;
@@ -122,6 +133,32 @@ export function validateCustomCommercialService(input: Pick<NewCommercialRecordI
   }
   if (!selected.length && !description) return 'Selecione ao menos uma atividade ou descreva um serviço personalizado.';
   return null;
+}
+
+export async function listCommercialServiceCatalog(): Promise<ServiceResult<CommercialCatalogService[]>> {
+  const result = await supabase
+    .from('service_catalog')
+    .select('code, name, category, level_applicable, acceptance_required, description, deliverables, exclusions')
+    .eq('active', true)
+    .order('code');
+
+  if (result.error) {
+    return { data: [], error: result.error.message ?? 'Não foi possível carregar o catálogo central de serviços.' };
+  }
+
+  return {
+    data: (result.data ?? []).map((row: any) => ({
+      code: String(row.code ?? ''),
+      name: String(row.name ?? ''),
+      category: String(row.category ?? ''),
+      levelApplicable: row.level_applicable === true,
+      acceptanceRequired: row.acceptance_required !== false,
+      description: String(row.description ?? ''),
+      deliverables: Array.isArray(row.deliverables) ? row.deliverables.map(String) : [],
+      exclusions: Array.isArray(row.exclusions) ? row.exclusions.map(String) : [],
+    })).filter((row) => row.code && row.name),
+    error: null,
+  };
 }
 
 export async function searchExistingCommercialClients(query: string): Promise<ServiceResult<ExistingCommercialClient[]>> {
