@@ -592,7 +592,7 @@ Deno.serve(async(req)=>{
      cliente_id:row.cliente_id,projeto_id:row.projeto_id,titulo:`${row.nome} disponível`,
      mensagem:'Um novo documento vinculado ao seu contrato foi disponibilizado em Documentos.',
      tipo:'documento_contratual',destinatario:'cliente',referencia_tipo:'documento',
-     referencia_id:row.id,link_path:'/(client)/documents',lida:false
+     referencia_id:row.id,link_path:'/(client)/documents',lida:false,delivery_status:'sent',sent_at:new Date().toISOString()
     });
     if(notification.error)throw notification.error;
    }
