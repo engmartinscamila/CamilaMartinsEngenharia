@@ -90,6 +90,7 @@ Deno.serve(async (request) => {
     if (signed.error || !signed.data?.signedUrl) throw new Error('Não foi possível emitir o acesso temporário.');
     return json({ url: signed.data.signedUrl, expiresInSeconds: 600 });
   } catch (error) {
-    return json({ error: error instanceof Error ? error.message : 'Falha no acesso temporário.' }, 500);
+    console.error('prospect-document-access:', error instanceof Error ? error.message : 'Falha interna.');
+    return json({ error: 'Falha no acesso temporário.' }, 500);
   }
 });
