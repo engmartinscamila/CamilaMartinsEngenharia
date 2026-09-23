@@ -77,7 +77,7 @@
         : '';
       const level = meta.level_applicable
         ? `<small class="doc-service-level">Compatível com ${esc(levelNames || 'os níveis cadastrados')}</small>`
-        : '<small class="doc-service-level muted">Serviço independente de nível</small>';
+        : '<small class="doc-service-level muted">Consulte o nível no catálogo atualizado</small>';
 
       return `
         <label class="doc-service doc-service-smart">
@@ -132,13 +132,13 @@
 
     if (!info) return;
     if (!selected) {
-      info.textContent = 'Selecione um nível apenas para serviços de projeto elegíveis. Projetos complementares, aprovações, visitas e execução permanecem independentes.';
+      info.textContent = 'Os níveis cadastrados também se aplicam aos serviços avulsos. O pacote limita-se à atividade selecionada e às condições expressas no orçamento e no Anexo I.';
       return;
     }
 
     const level = levelCatalog.find(item => item.code === selected);
     if (!level) {
-      info.textContent = 'O nível selecionado será aplicado somente aos serviços elegíveis e não incluirá serviços técnicos que não tenham sido marcados.';
+      info.textContent = 'Selecione um nível ativo no catálogo. O pacote não acrescenta serviços, entregáveis ou formatos não descritos na proposta e no Anexo I.';
       return;
     }
 
@@ -147,10 +147,11 @@
   }
 
   function form() {
+    const customService = $('customService').value.trim();
     const services = servicesCatalog.map(([code, name], index) => ({
       code,
       name,
-      included: Boolean(document.querySelector(`[data-service="${code}"]`)?.checked),
+      included: Boolean(document.querySelector(`[data-service="${code}"]`)?.checked) || (code === 'p' && Boolean(customService)),
       acceptanceRequired: true,
       displayOrder: index + 1
     }));
@@ -171,7 +172,7 @@
       construction_standard: $('constructionStandard').value.trim(),
       experience_level: $('experienceLevel').value.trim(),
       services,
-      custom_service: $('customService').value.trim(),
+      custom_service: customService,
       total_value: $('totalValue').value.trim(),
       notes: $('notes').value.trim()
     };
@@ -464,6 +465,10 @@
     const payload = form();
     const isContract = mode() === 'contrato';
 
+    if (!serviceCatalogMeta.length || !levelCatalog.length) {
+      msg('Catálogo de serviços ou níveis não carregado. Recarregue a página antes de criar documentos; os dados existentes foram preservados.', 'error');
+      return;
+    }
     if (!payload.prospect_name) {
       msg('Informe o nome / razão social.', 'error');
       return;
@@ -795,6 +800,12 @@
     $('lookupCnpj')?.addEventListener('click', () => lookup('cnpj'));
     $('lookupCep')?.addEventListener('click', () => lookup('cep'));
     $('createCommercial')?.addEventListener('click', create);
+    $('customService')?.addEventListener('input', event => {
+      if (String(event.target.value || '').trim()) {
+        const other = document.querySelector('[data-service="p"]');
+        if (other) other.checked = true;
+      }
+    });
 
     $('commercialList')?.addEventListener('click', event => {
       const button = event.target.closest('button[data-action]');

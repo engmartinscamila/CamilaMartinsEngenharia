@@ -1,0 +1,68 @@
+# Homologação operacional da PR 19 — evidências em andamento
+
+Atualizado em 23/09/2026. Estado: **Gate A parcial, homologação integrada bloqueada**. Ambiente gratuito existente `nvhjcoxnzigwwbdbhkhq` (staging); produção `hghtwlopqztfcosfxafd` não alterada. A PR segue draft, sem autorização de publicação.
+
+## Versão e CI
+
+- HEAD remoto anterior consultado: `ca469a8c44831d84b16c531e9aa38f6a323e2965`. As quatro suítes neste commit concluíram com `success`: regressão de orçamentos/contratos `35800410779`, segurança `35800410733`, validação portal-app `35800410714`, auditoria completa `35800410741`. No commit `4d9e65c47a932f0c8f2b91f47a9e75075a37f0c6`, as quatro suítes também concluíram com `success`. Novo commit documental requer CI novo no SHA final.
+- Esse commit alterou apenas o registro inicial de evidências em relação ao SHA de código `1cb8a99b505bfb90b63a3f328d34675f8615b282`. CI verde não equivale a homologação remota autenticada.
+
+## Mudanças efetivas somente no staging
+
+Foram aplicadas, em ordem, as migrações agregadas `reconcile_governance_base_pr19_20260922`, `reconcile_governance_v3_prelevel_pr19_20260922`, `reconcile_legacy_schedule_base_pr19_20260922` e `reconcile_full_schedule_pr19_20260922`. A primeira reúne a base de governança `202609020*.sql`; a segunda reúne `20260915234000` e as migrações `202609210*.sql` anteriores ao alinhamento final de subtítulos; a terceira reúne as duas migrações legadas do cronograma em `portal-app`; a quarta reúne a cadeia incremental do cronograma e o reuso de cliente existente até `20260923001500`. Não houve aplicação de DDL em produção.
+
+Uma tentativa de incluir `20260921065500_alinhar_subtitulos_pacotes_contrato_v3.sql` falhou de forma atômica com o guard `Catálogo de pacotes mudou; revisar subtítulos e versões antes da atualização`: o staging já tinha versões 4, enquanto a migração pressupõe versões 2. Com autorização expressa da administradora, foi aplicada somente no staging a migração protegida `reconcile_three_existing_levels_v3_staging_20260923` (`20260923001003`). Ela mantém exatamente os três códigos existentes: Bronze/Essencial v4 sem alteração, Prata/Ampliado v5 e Ouro/Completo v5. Os subtítulos correspondem ao Contrato Mestre v3 e não criam novos níveis ou serviços. A atualização exigiu estado anterior exato, incrementou versões e registrou auditoria; não alterou snapshots emitidos nem aprovou revisões. O histórico do staging permanece diferente do de produção e precisa de comparação antes de qualquer deploy.
+
+As Edge Functions `generate-commercial-document`, `generate-commercial-document-final` e `generate-verified-construction-schedule-xlsx` foram implantadas somente no staging, a partir do código da PR e com verificação JWT habilitada. Ainda falta exercitar chamadas autenticadas e arquivos reais por meio da aplicação.
+
+## Verificações observadas
+
+| Item | Resultado | Limite da evidência |
+| --- | --- | --- |
+| Tabelas do cronograma, catálogo e colunas de governança | PARCIAL | Staging com 72 tabelas públicas, 19 serviços, 4 modelos de cronograma e três níveis ativos com os subtítulos v3; numeração histórica de versões difere da produção. |
+| RLS das tabelas públicas consultadas | PASS estrutural | Todas habilitadas; policies e grants ainda não estão completamente comparados com produção. |
+| Storage | PARCIAL | Sete buckets privados identificados; policy por objeto e arquivo sintético ainda não testados. |
+| Projeto de cliente A e B | PASS limitado | SQL em sessão com papel `authenticated` e `auth.uid()` sintéticos: A enxerga seu projeto e não o de B; B enxerga o seu e não o de A; admin enxerga ambos. Não é login Auth real. |
+| Inicialização de cronograma | PASS negativo limitado | A chamada por cliente sintético foi recusada (`Acesso negado`); a chamada por admin em projeto sem cronograma contratado foi recusada pelo guard comercial. Não foram criados cronogramas. |
+| Revisão de regras de documentos | BLOQUEADO | 145 linhas `pending` e zero `approved` observadas no staging após o alinhamento dos níveis; não aprovar em massa. As 51 decisões materiais v3 exigem revisão individual da administradora. |
+| Security Advisor | PENDENTE | Alertas de funções `SECURITY DEFINER` executáveis precisam de triagem individual; proteção de senhas vazadas desativada e aviso de `google_calendar_tokens` com RLS sem policy. Nenhum privilégio foi revogado em massa. |
+
+Uma simulação anterior com `BEGIN; ...; ROLLBACK` foi insuficiente para validar integralmente uma migração: o `ROLLBACK` final pode mascarar o erro intermediário no retorno da ferramenta. A tentativa real via `apply_migration` revelou o guard acima. Não usar a simulação como evidência de sucesso.
+
+## Conferência adicional de 23/09/2026
+
+- As quatro suítes no SHA documental `9afb7d8c446377589e94f79f9eac7b31b96ae004` concluíram com `success`: documentos `35804374034`, segurança `35804372896`, portal-app `35804372993` e auditoria completa `35804372889`. Novo commit invalida a afirmação de CI no SHA final até nova verificação.
+- Testes adicionais de SQL com papéis `authenticated` e identidades sintéticas A, B e admin passaram: `can_access_project`, `user_has_project_access`, `current_client_id` e `is_portal_admin` aplicaram o escopo esperado; a função administrativa `admin_professional_identity_status` rejeitou A/B e `admin_document_pending_alerts` não retornou linhas a A/B. Isto não equivale a um JWT real pela API.
+- `storage.objects` não tinha objetos no staging. As sete buckets são privadas e há policy de leitura por objeto, porém não foi possível provar upload/download e isolamento A/B com arquivo real.
+- Comparação somente de metadados: staging possui 72 tabelas públicas, 133 funções, 181 policies, 223 índices e 867 colunas; produção possui 69 tabelas, 102 funções, 133 policies, 237 índices e 809 colunas. Os índices diferem por nomes e evolução histórica (62 nomes exclusivos de produção, 48 exclusivos de staging); esses totais não provam equivalência nem autorizam copiar schema/dados da produção. O staging contém mudanças novas da PR enquanto produção ainda não recebeu a PR. A cadeia histórica diferente requer reconciliação específica antes de homologar. A comparação por nome encontrou seis tabelas somente em produção (`client_password_link_rate_limits`, `client_retention_event_archive`, `clientes_camila`, `google_calendar_oauth_states`, `push_diagnosticos`, `push_dispositivos`) e nove somente no staging (sete tabelas da evolução do cronograma, `extrato_financeiro`, `google_calendar_tokens`). A tabela de limite de recuperação de senha foi criada no staging em 23/09 e versionada em migração aditiva; as demais diferenças de retenção, calendário e push continuam sem reconciliação. Não criar estruturas por cópia cega.
+- Security Advisor após DDL no staging: 64 avisos de funções `SECURITY DEFINER` executáveis por `authenticated`, proteção de senhas vazadas desativada e `google_calendar_tokens` com RLS sem policy. Revisão individual ainda necessária; não revogar privilégios em massa.
+
+## Gates do manifesto
+
+| Gate | Estado | Próximo requisito |
+| --- | --- | --- |
+| A — equivalência de banco, Storage, Edge e frontend | FAIL / PARCIAL | Subtítulos v3 alinhados; build local de staging passou, quatro Edge Functions implantadas, mas não há frontend remoto de staging nem equivalência integral de constraints, policies, grants e Storage. |
+| B — fluxo autenticado admin | NÃO EXECUTADO | Login real, orçamento→contrato→cronograma, aprovação, medição e publicação. |
+| C — cliente A/B e primeiro acesso | PARCIAL | Isolamento SQL de projetos passou; login Auth, publicações, mutações e Storage exigem testes reais. |
+| D — DOCX e XLSX pela aplicação | NÃO EXECUTADO | Gerar, baixar e abrir os arquivos em staging. |
+| E — falhas controladas e rollback | PARCIAL | Guards negativos do cronograma passaram; ensaio de migração incompatível em cópia descartável ainda não realizado. |
+| F — segurança operacional | PARCIAL | Revisar RPCs, configuração de Auth, bundle, logs e Cloudflare/WAF. |
+| G — desktop, mobile e temas | NÃO EXECUTADO | Frontend de homologação e navegação autenticada. |
+
+**Próximo passo:** executar testes autenticados com usuários e arquivos sintéticos. A usuária esclareceu que só utiliza autenticação Google. A tela GitHub acionada anteriormente não oferecia esse método e respondeu `This account does not support password sign-in`; nenhuma sessão de painel foi confirmada. A leitura ampla da página de chaves foi rejeitada pela revisão automática por poder expor material secreto. Em seguida, a **integração Supabase forneceu a chave publicável ativa**, sem painel ou login; ela foi usada somente no `.env.local` ignorado pelo Git. `npm run check:homologation` passou e confirmou que o app aponta ao projeto de staging. O `npm ci` com registry funcionou em nova tentativa. `check:homologation`, typecheck, lint (zero erros e 12 avisos), `security:audit`, `test:integration` (20 integração e 56 regressões funcionais, além das suítes auxiliares) e `export:web` passaram localmente. O bundle exportado apontou ao projeto de staging, sem referência à URL de produção nem padrões de chave secreta na inspeção estática. Não houve geração ou validação E2E de arquivos. Continuam vedados publicação, merge, cópia de dados reais e aprovação automática das 51 decisões materiais.
+
+## Atualização de primeiro acesso e validação local (23/09/2026)
+
+- Migração aditiva `reconcile_password_link_rate_limit_staging_20260923` criou somente no staging a tabela de limites ausente, com RLS, policy de negação para `anon`/`authenticated`, privilégios restritos e RPC invocável apenas por `service_role`. Conferência de grants: ambos os papéis públicos sem SELECT nem EXECUTE; `service_role` com SELECT/INSERT/UPDATE e EXECUTE. A migração `20260907225000_create_password_link_rate_limits.sql` entrou na PR antes das duas migrações que dependem dessa tabela. Produção não alterada.
+- A Edge Function `client-password-link` v1 foi implantada no staging com autenticação publicável interna (JWT do gateway desativado como na função existente em produção). O código da PR bloqueia destino de produção quando executado fora do projeto de produção e exige `SITE_URL` HTTPS da própria homologação. Sem URL configurada, retorna indisponibilidade; não é teste de envio de e-mail nem aprovação de primeiro acesso.
+- `portal-app/src/app/reset-password.tsx` passou a exigir 12 caracteres, coerente com a política do serviço. Typecheck e testes de integração repetidos após essa mudança passaram.
+- Tentativa de servidor Expo para validação visual falhou neste executor por erro de interfaces de rede (`uv_interface_addresses`). Servindo a exportação estática no mesmo processo, as rotas `/`, `/admin/index.html`, `/reset-password.html`, `/admin/construction-schedule.html` e `/admin/document-governance.html` responderam HTTP 200. O navegador de homologação não tem acesso ao localhost desta execução. Os Gates B, D e G seguem sem prova autenticada/visual.
+- SHA de código e migração atualizado: `2a83d60d0bd7eafd5caa685c02395707b8c89067`; CI foi disparado, sujeito a verificação após conclusão. A PR permanece draft.
+
+**Dependências concretas para fechar a homologação:** publicar uma prévia HTTPS isolada e gratuita apontando só ao staging; configurar `SITE_URL` da Edge Function com essa origem e o canal de e-mail de homologação; disponibilizar identidades Auth sintéticas de admin e clientes A/B para teste real, sem compartilhar credenciais pelo chat; ensaiar arquivos e interface; revisar individualmente as 51 decisões materiais e os avisos de segurança aplicáveis. Até essas verificações, não marcar os gates como PASS nem publicar em produção.
+
+## Bloqueio do painel de hospedagem e checks (23/09/2026)
+
+- As quatro suítes de GitHub Actions no SHA `3440df085a038b21ea70914bb893681439bf5f5a` concluíram com `success`: segurança, regressão comercial, validação portal-app e auditoria completa. Este acréscimo documental gera novo SHA, que precisará de verificação própria.
+- O painel Cloudflare no navegador desta sessão apresentou verificação de segurança repetida, observada também pela administradora. Não contornar o desafio nem interpretar o loop como erro do site institucional. Não foi criado projeto Pages, prévia externa ou cobrança.
+- Consulta agregada ao Auth do staging encontrou zero contas de teste com domínio `example.test`/`example.invalid`. Os testes autenticados admin e clientes A/B continuam pendentes. A integração Supabase atual permite DDL e inspeções, mas não oferece gestão de usuários Auth ou segredos Edge; não criar identidades por inserção direta em `auth.users`.

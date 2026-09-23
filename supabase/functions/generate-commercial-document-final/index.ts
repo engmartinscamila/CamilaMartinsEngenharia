@@ -10,10 +10,16 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 type Obj = Record<string, unknown>;
 const text = (value: unknown) => String(value ?? '').trim();
 const isOther = (item: Obj) => ['p', 'outro', 'outros'].includes(text(item.code).toLowerCase());
-// Snapshots anteriores podem indicar indevidamente elegibilidade de nível para
-// consultorias e serviços que não são projetos, contrariando o Contrato Mestre.
-const nonProjectServiceCodes = new Set(['k', 'l', 'm', 'n', 'o', 'p', 'q']);
-const isProjectTierEligible = (item: Obj) => item.levelApplicable === true && !nonProjectServiceCodes.has(text(item.code).toLowerCase());
+// A elegibilidade vem do snapshot versionado; serviços avulsos também podem ter pacote.
+// Não recalcular contratos históricos usando códigos fixos.
+const isProjectTierEligible = (item: Obj) => item.levelApplicable === true;
+const serviceLevelObject = (item: Obj) => item.level && typeof item.level === 'object' ? item.level as Obj : null;
+const serviceLevelCode = (item: Obj) => text(serviceLevelObject(item)?.code ?? item.levelCode).toLowerCase();
+const serviceLevelLabel = (item: Obj) => {
+  const level = serviceLevelObject(item);
+  const label = text(level?.label);
+  return label || serviceLevelCode(item).toUpperCase();
+};
 const xmlEsc = (value: unknown) => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 function env() {
   const url = Deno.env.get('SUPABASE_URL');
@@ -52,12 +58,16 @@ function paragraphText(paragraph: string) {
 function contractScopeXml(services: unknown, customService: unknown, experienceLevel: unknown, propertyAddress: string) {
   const selected = selectedServices(services);
   if (!selected.length && !text(customService)) return '';
+  const perItemLevels = selected.filter(item => isProjectTierEligible(item) && serviceLevelCode(item));
+  const distinctLevels = [...new Set(perItemLevels.map(serviceLevelCode))];
   const parts = [
     wordParagraph('ESCOPO TÉCNICO CONTRATADO', true),
     wordParagraph(`Local do serviço / endereço do imóvel ou obra: ${propertyAddress}.`),
   ];
-  if (text(experienceLevel) && selected.some(isProjectTierEligible)) {
-    parts.push(wordParagraph(`Nível de prestação: ${text(experienceLevel).toUpperCase()}, aplicável exclusivamente aos serviços de projeto elegíveis expressamente contratados. Não acrescenta serviços, visitas, aprovações, execução, taxas, fornecimentos ou entregáveis de outra categoria.`));
+  if (!perItemLevels.length && text(experienceLevel) && selected.some(isProjectTierEligible)) {
+    parts.push(wordParagraph(`Nível de prestação: ${text(experienceLevel).toUpperCase()}, aplicável exclusivamente às atividades elegíveis expressamente contratadas. Não acrescenta serviços, visitas, aprovações, execução, taxas, fornecimentos ou entregáveis de outra categoria.`));
+  } else if (distinctLevels.length > 1) {
+    parts.push(wordParagraph('Os níveis de prestação são definidos individualmente por atividade e não ampliam automaticamente o escopo de outras atividades.'));
   }
   const otherSelected = selected.some(isOther);
   selected.forEach((item, index) => {
@@ -65,8 +75,12 @@ function contractScopeXml(services: unknown, customService: unknown, experienceL
     const name = other ? 'Serviço técnico personalizado' : text(item.name) || `Serviço ${index + 1}`;
     const description = other && text(customService)
       ? customScopeDescription(text(customService))
-      : text(item.description) || 'Serviço técnico conforme o escopo expressamente contratado e detalhado no Anexo I.';
-    parts.push(wordParagraph(`${index + 1}. ${name}`, true), wordParagraph(description));
+      : text(item.contractScope) || text(item.description) || 'Serviço técnico conforme o escopo expressamente contratado e detalhado no Anexo I.';
+    parts.push(wordParagraph(`${index + 1}. ${name}`, true));
+    if (isProjectTierEligible(item) && serviceLevelCode(item)) {
+      parts.push(wordParagraph(`Nível desta atividade: ${serviceLevelLabel(item)}.`));
+    }
+    parts.push(wordParagraph(description));
   });
   if (text(customService) && !otherSelected) {
     parts.push(wordParagraph('Serviço adicional / especificação complementar', true));
@@ -89,12 +103,17 @@ async function enhanceContractDocument(bytes: Uint8Array, propertyAddress: strin
   if (!file) throw new Error('O contrato gerado não contém o documento Word esperado.');
   let xml = await file.async('string');
   const selected = selectedServices(services);
+  const selectedLevelCodes = [...new Set(selected.filter(isProjectTierEligible).map(serviceLevelCode).filter(Boolean))];
   if (selected.length > 0 && selected.every(item => !isProjectTierEligible(item))) {
-    // O gerador principal contém resumo de nível mesmo quando a contratação é
-    // exclusivamente consultoria. Corrigir só esse parágrafo do novo Word.
+    // Snapshot histórico sem nível aplicável: não atribuir pacote retroativamente.
     xml = xml.replace(/<w:p(?=[\s>])[\s\S]*?<\/w:p>/g, paragraph =>
-      paragraphText(paragraph).startsWith('Nível de experiência:')
+      /^Nível de (experiência|prestação):/.test(paragraphText(paragraph))
         ? wordParagraph('Níveis Bronze/Prata/Ouro: não aplicáveis às atividades desta contratação; prevalece o escopo aprovado no Anexo I.')
+        : paragraph);
+  } else if (selectedLevelCodes.length > 1) {
+    xml = xml.replace(/<w:p(?=[\s>])[\s\S]*?<\/w:p>/g, paragraph =>
+      /^Nível de (experiência|prestação):/.test(paragraphText(paragraph))
+        ? wordParagraph('Níveis de prestação: definidos individualmente por atividade no escopo técnico vinculado.')
         : paragraph);
   }
   // Não substitui endereço cadastral do contratante no preâmbulo.
@@ -113,8 +132,9 @@ async function enhanceQuoteDocument(bytes: Uint8Array, services: unknown, custom
   const specification = text(customService);
   const otherSelected = selected.some(isOther);
   const onlyNonProject = selected.length > 0 && selected.every(item => !isProjectTierEligible(item));
+  const onlyStandaloneService = selected.length > 0 && selected.every(item => ['j', 'k', 'l', 'm', 'n', 'o', 'p', 'q'].includes(text(item.code).toLowerCase()));
   const legacyConsultancy = selected.some(item => text(item.code).toLowerCase() === 'q');
-  if ((!otherSelected || !specification) && !onlyNonProject && !legacyConsultancy && selected.every(isProjectTierEligible)) return bytes;
+  if ((!otherSelected || !specification) && !onlyNonProject && !onlyStandaloneService && !legacyConsultancy && selected.every(isProjectTierEligible)) return bytes;
   const zip = await JSZip.loadAsync(bytes);
   const word = zip.file('word/document.xml');
   if (!word) throw new Error('O orçamento gerado não contém o documento Word esperado.');
@@ -164,7 +184,7 @@ async function enhanceQuoteDocument(bytes: Uint8Array, services: unknown, custom
     const levelStart = values.findIndex(value => value === '2. NÍVEL DE PRESTAÇÃO DE SERVIÇO');
     const scopeStart = values.findIndex((value, index) => index > levelStart && value === '3. ESCOPO INTELIGENTE DE SERVIÇOS');
     if (levelStart >= 0 && scopeStart > levelStart + 1) {
-      replacement.set(levelStart + 1, wordParagraph('Bronze, Prata e Ouro aplicam-se apenas a serviços de projeto. As atividades desta proposta seguem exclusivamente as condições específicas aprovadas no orçamento e no Anexo I.'));
+      replacement.set(levelStart + 1, wordParagraph('O registro anterior não contém pacote válido no snapshot; prevalecem as condições específicas aprovadas no orçamento e no Anexo I, sem atribuição retroativa de nível.'));
       for (let index = levelStart + 2; index < scopeStart; index += 1) replacement.set(index, '');
     }
     values.forEach((value, index) => {
@@ -182,6 +202,17 @@ async function enhanceQuoteDocument(bytes: Uint8Array, services: unknown, custom
     values.forEach((value, index) => {
       if (value.startsWith('O nível selecionado aplica-se somente aos serviços de projeto elegíveis nesta proposta:')) {
         replacement.set(index, wordParagraph(`O nível selecionado aplica-se exclusivamente aos serviços de projeto elegíveis desta proposta: ${eligible.join(', ')}.`));
+      }
+    });
+  }
+  if (onlyStandaloneService && !onlyNonProject) {
+    // A contratação avulsa pode ter pacote, mas não herda prazos/revisões de projeto.
+    values.forEach((value, index) => {
+      if (value.startsWith('Na ausência de indicação específica no Anexo I, aplicam-se até 2')) {
+        replacement.set(index, wordParagraph('Revisões e condições de aceite deste serviço avulso são as expressamente aprovadas para a atividade no Anexo I; erros técnicos continuam sujeitos a correção.'));
+      }
+      if (value.startsWith('O prazo geral de referência é de 45')) {
+        replacement.set(index, wordParagraph('O prazo do serviço avulso é o cronograma específico aprovado no Anexo I, sem aplicação automática de prazo de projeto ou de análise de terceiros.'));
       }
     });
   }
@@ -220,6 +251,8 @@ Deno.serve(async req => {
     const recordId = text(body.recordId);
     const kind = body.kind === 'contrato' ? 'contrato' : 'orcamento';
     if (!/^[0-9a-f-]{36}$/i.test(recordId)) return json({ error: 'Registro comercial inválido.' }, 400);
+    const preparedScope = await service.rpc('admin_prepare_commercial_scope_for_generation', { p_record_id: recordId });
+    if (preparedScope.error) throw preparedScope.error;
     const source = await service.from('commercial_records').select('*').eq('id', recordId).maybeSingle();
     if (source.error) throw source.error;
     if (!source.data) return json({ error: 'Registro comercial não encontrado.' }, 404);

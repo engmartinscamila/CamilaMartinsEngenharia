@@ -78,15 +78,6 @@ export interface ProjectApprovalItem {
   dueAt: string | null;
 }
 
-export const CONTRACT_SCOPE_PRESETS = [
-  ['a', 'Estudo Preliminar'], ['b', 'Anteprojeto'], ['c', 'Projeto Legal'], ['d', 'Projeto Executivo / detalhamento'],
-  ['e', 'Projeto Estrutural'], ['f', 'Projeto Elétrico'], ['g', 'Projeto Hidrossanitário'], ['h', 'Projeto de Interiores'],
-  ['i', 'Paisagismo'], ['j', 'Render 3D / Maquete eletrônica'], ['k', 'Legalização / Aprovação junto à Prefeitura'],
-  ['l', 'Obtenção de Alvará de Construção'], ['m', 'Obtenção de Habite-se'], ['n', 'Acompanhamento técnico de obra'],
-  ['o', 'Laudo técnico / avaliação / vistoria'], ['p', 'Outro'],
-  ['q', 'Consultoria Técnica'], ['r', 'Projeto de Combate a Incêndio'],
-] as const;
-
 export const CONTRACT_DOCUMENT_OPTIONS: { kind: Exclude<ContractDocumentKind, 'notificacao_formal' | 'termo_aceite'>; title: string; description: string }[] = [
   { kind: 'anexo_i', title: 'Anexo I', description: 'Escopo, proposta comercial, valores e cronograma somente dos serviços contratados.' },
   { kind: 'estudo_preliminar', title: 'Estudo Preliminar', description: 'Documento auxiliar opcional. Se não estiver contratado no item (a), sua geração não altera o escopo do Anexo I.' },
@@ -100,6 +91,29 @@ const ACCEPTANCE_REQUIRED_KINDS = new Set<ContractDocumentKind>([
   'anexo_i', 'termo_aceite', 'servico_adicional', 'autorizacao_imagem', 'quitacao_encerramento',
 ]);
 
+export async function getCommercialContractScopeGuard(contractId: string): Promise<ServiceResult<{ managed: boolean; serviceCodes: string[] }>> {
+  const result = await supabase
+    .from('commercial_records')
+    .select('services, status, record_kind')
+    .eq('linked_contract_id', contractId)
+    .eq('record_kind', 'contrato')
+    .in('status', ['contrato_gerado', 'convertido'])
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (result.error) return { data: { managed: false, serviceCodes: [] }, error: 'Não foi possível conferir a origem comercial do escopo.' };
+  if (!result.data) return { data: { managed: false, serviceCodes: [] }, error: null };
+
+  const services = Array.isArray(result.data.services) ? result.data.services as Array<Record<string, unknown>> : [];
+  const serviceCodes = services
+    .filter(item => item?.included !== false)
+    .map(item => String(item?.code ?? '').trim())
+    .filter(Boolean);
+
+  return { data: { managed: true, serviceCodes }, error: null };
+}
+
 export async function listContractScope(contractId: string): Promise<ServiceResult<ContractScopeItem[]>> {
   const result = await supabase.from('contract_scope_items').select('id, contract_id, service_code, service_name, included, acceptance_required, display_order, notes').eq('contract_id', contractId).order('display_order');
   if (result.error) return { data: [], error: 'Não foi possível carregar o escopo contratual.' };
@@ -107,6 +121,11 @@ export async function listContractScope(contractId: string): Promise<ServiceResu
 }
 
 export async function setContractScopeItem(input: { contractId: string; serviceCode: string; serviceName: string; included: boolean; displayOrder: number; acceptanceRequired?: boolean }) {
+  const guard = await getCommercialContractScopeGuard(input.contractId);
+  if (guard.error) return guard.error;
+  if (guard.data.managed) {
+    return 'Este contrato tem origem comercial estruturada. Altere o escopo pelo orçamento/contrato ou por aditivo; a tela de documentos não pode incluir ou remover serviços.';
+  }
   const result = await supabase.from('contract_scope_items').upsert({ contract_id: input.contractId, service_code: input.serviceCode, service_name: input.serviceName, included: input.included, acceptance_required: input.acceptanceRequired ?? true, display_order: input.displayOrder, updated_at: new Date().toISOString() }, { onConflict: 'contract_id,service_code' });
   return result.error ? 'Não foi possível atualizar o escopo contratado.' : null;
 }

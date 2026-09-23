@@ -80,6 +80,8 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
 
         document.getElementById("governancePendingReviews")
             ?.addEventListener("click", tratarCliqueRevisao);
+        document.getElementById("governancePendingReviews")
+            ?.addEventListener("toggle", habilitarRevisaoExaminada, true);
     }
 
     async function carregarConfiguracoes() {
@@ -448,6 +450,61 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
         return Array.isArray(lista) ? lista.join(", ") : "";
     }
 
+    function conteudoDaRevisao(item) {
+        let tipo = String(item.source_type || "");
+        let codigo = String(item.source_code || "");
+        if (tipo === "contract" && codigo.startsWith("service:")) {
+            tipo = "service";
+            codigo = codigo.slice("service:".length);
+        } else if (tipo === "contract" && codigo.startsWith("level:")) {
+            tipo = "level";
+            codigo = codigo.slice("level:".length);
+        }
+        let texto = "";
+        if (tipo === "service") {
+            const servico = governanceState.services.find(itemCatalogo => itemCatalogo.code === codigo);
+            if (servico) texto = [
+                "Atividade: " + (servico.name || codigo),
+                "Descrição: " + (servico.description || ""),
+                "Entregáveis: " + (Array.isArray(servico.deliverables) ? servico.deliverables.join("; ") : ""),
+                "Exclusões: " + (Array.isArray(servico.exclusions) ? servico.exclusions.join("; ") : "")
+            ].join("\n");
+        } else if (tipo === "level") {
+            const nivel = governanceState.levels.find(itemCatalogo => itemCatalogo.code === codigo);
+            if (nivel) texto = [
+                "Nível: " + (nivel.label || codigo) + " — " + (nivel.subtitle || ""),
+                "Descrição: " + (nivel.description || ""),
+                "Recursos: " + (Array.isArray(nivel.features) ? nivel.features.join("; ") : ""),
+                "Exclusões: " + (Array.isArray(nivel.exclusions) ? nivel.exclusions.join("; ") : "")
+            ].join("\n");
+        } else if (tipo === "text") {
+            const padrao = governanceState.texts.find(itemCatalogo => itemCatalogo.code === codigo);
+            if (padrao) texto = "Texto padrão " + codigo + ":\n" + (padrao.body || "");
+        }
+        const refs = [...new Set((Array.isArray(item.clause_refs) ? item.clause_refs : []).map(String))];
+const linhas = String(governanceState.contractBody || "").split(/\r?\n/);
+const inicios = linhas.flatMap((linha, indice) => {
+    const numeracao = linha.trim().match(/^(\d+(?:\.\d+)*)\.\s/);
+    return numeracao ? [{ numero: numeracao[1], indice }] : [];
+});
+const clausulas = inicios.filter(inicio => refs.includes(inicio.numero)).map(inicio => {
+    const proxima = inicios.find(outra => outra.indice > inicio.indice);
+    return linhas.slice(inicio.indice, proxima?.indice ?? linhas.length).join("\n").trim();
+});
+        return {
+            sourceText: texto,
+            contractText: clausulas.join("\n\n"),
+            complete: Boolean(texto.trim() && refs.length && clausulas.length === refs.length)
+        };
+    }
+
+    function habilitarRevisaoExaminada(event) {
+        const detalhes = event.target;
+        if (!detalhes?.matches?.("details[data-governance-details]")) return;
+        const botao = detalhes.closest(".governance-review")?.querySelector("button[data-governance-review]");
+        if (botao) botao.disabled = !detalhes.open || detalhes.dataset.reviewComplete !== "true";
+    }
+
     function renderizarPendenciasGovernanca() {
         const box = document.getElementById("governancePendingReviews");
         if (!box) return;
@@ -470,14 +527,22 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
             const refs = Array.isArray(item.clause_refs) && item.clause_refs.length
                 ? item.clause_refs.join(", ")
                 : "revisão geral";
-
+            const preview = conteudoDaRevisao(item);
+            const id = escaparGovernanca(item.id);
             return '<div class="governance-review">' +
                 '<div><strong>' + escaparGovernanca(tipo[item.source_type] || item.source_type) +
                 ': ' + escaparGovernanca(item.source_code) + '</strong>' +
                 '<small>' + escaparGovernanca(item.reason || "") +
-                ' Cláusulas: ' + escaparGovernanca(refs) + '.</small></div>' +
-                '<button type="button" data-governance-review="' +
-                escaparGovernanca(item.id) + '">Confirmar sem alteração</button>' +
+                ' Cláusulas: ' + escaparGovernanca(refs) + '.</small>' +
+                '<details data-governance-details="' + id + '" data-review-complete="' +
+                (preview.complete ? 'true' : 'false') + '">' +
+                '<summary>Conferir conteúdo e cláusulas antes da aprovação</summary>' +
+                '<strong>Texto ou regras do cadastro</strong><pre style="white-space:pre-wrap;overflow-wrap:anywhere">' +
+                escaparGovernanca(preview.sourceText || 'Conteúdo não localizado: revise o cadastro antes de aprovar.') + '</pre>' +
+                '<strong>Cláusulas do Contrato Mestre ativo</strong><pre style="white-space:pre-wrap;overflow-wrap:anywhere">' +
+                escaparGovernanca(preview.contractText || 'Cláusulas não localizadas: corrigir referência antes de aprovar.') +
+                '</pre></details></div>' +
+                '<button type="button" data-governance-review="' + id + '" disabled>Confirmar após conferência</button>' +
                 '</div>';
         }).join("");
     }
@@ -498,6 +563,8 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
         const reviewId = botao.dataset.governanceReview;
         if (!reviewId) return;
         const review = governanceState.pending.find(item => item.id === reviewId);
+        const detalhes = botao.closest(".governance-review")?.querySelector("details[data-governance-details]");
+        if (!detalhes?.open || detalhes.dataset.reviewComplete !== "true") return;
         const pergunta = review?.source_type === "contract"
             ? "Confirma que o Contrato Mestre já cobre corretamente este serviço ou nível, sem necessidade de publicar uma nova versão?"
             : "Confirma que este texto/regra continua coerente com a versão atual do Contrato Mestre, sem necessidade de alteração?";

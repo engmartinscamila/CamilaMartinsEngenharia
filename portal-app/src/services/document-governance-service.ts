@@ -42,6 +42,31 @@ export interface AdminDocumentAlertItem {
   sourceDocumentId: string | null;
 }
 
+export type ServiceLevelReviewStatus = 'pending' | 'approved' | 'rejected';
+
+export interface AdminServiceLevelScopeReview {
+  serviceCode: string;
+  serviceName: string;
+  category: string;
+  professionalScopeCheckRequired: boolean;
+  levelCode: 'bronze' | 'prata' | 'ouro';
+  levelLabel: string;
+  levelSubtitle: string;
+  reviewStatus: ServiceLevelReviewStatus;
+  budgetDescription: string;
+  contractScope: string;
+  annexScope: string;
+  includedDeliverables: string[];
+  excludedDeliverables: string[];
+  parameters: unknown[];
+  revisionsIncluded: number | null;
+  visitsIncluded: number | null;
+  detailLevel: string | null;
+  deliveryFormats: string[];
+  version: number;
+  updatedAt: string;
+}
+
 export async function listClientDocumentGovernance(projectId: string) {
   const { data, error } = await supabase.rpc('client_document_map', { p_project_id: projectId });
   return {
@@ -137,4 +162,62 @@ export async function supersedeDocument(oldDocumentId: string, newDocumentId: st
     p_reason: reason,
   });
   return error ? error.message || 'Não foi possível registrar a substituição.' : null;
+}
+
+
+export async function listServiceLevelScopeReviews(status: ServiceLevelReviewStatus | 'all' = 'pending', limit = 25, offset = 0) {
+  const { data, error } = await supabase.rpc('admin_list_service_level_scope_reviews', {
+    p_status: status,
+    p_limit: limit,
+    p_offset: offset,
+  });
+  return {
+    data: (data ?? []).map((row: any): AdminServiceLevelScopeReview => ({
+      serviceCode: String(row.service_code ?? ''),
+      serviceName: String(row.service_name ?? ''),
+      category: String(row.category ?? ''),
+      professionalScopeCheckRequired: row.professional_scope_check_required === true,
+      levelCode: row.level_code,
+      levelLabel: String(row.level_label ?? '').toUpperCase(),
+      levelSubtitle: String(row.level_subtitle ?? ''),
+      reviewStatus: row.review_status,
+      budgetDescription: String(row.budget_description ?? ''),
+      contractScope: String(row.contract_scope ?? ''),
+      annexScope: String(row.annex_scope ?? ''),
+      includedDeliverables: Array.isArray(row.included_deliverables) ? row.included_deliverables.map(String) : [],
+      excludedDeliverables: Array.isArray(row.excluded_deliverables) ? row.excluded_deliverables.map(String) : [],
+      parameters: Array.isArray(row.parameters) ? row.parameters : [],
+      revisionsIncluded: row.revisions_included === null ? null : Number(row.revisions_included),
+      visitsIncluded: row.visits_included === null ? null : Number(row.visits_included),
+      detailLevel: row.detail_level ?? null,
+      deliveryFormats: Array.isArray(row.delivery_formats) ? row.delivery_formats.map(String) : [],
+      version: Number(row.version ?? 1),
+      updatedAt: String(row.updated_at ?? ''),
+    })),
+    error: error ? error.message || 'Não foi possível carregar a revisão dos serviços por nível.' : null,
+  };
+}
+
+export async function reviewServiceLevelScope(input: {
+  serviceCode: string;
+  levelCode: 'bronze' | 'prata' | 'ouro';
+  decision: ServiceLevelReviewStatus;
+  reason: string;
+  budgetDescription: string;
+  contractScope: string;
+  annexScope: string;
+}) {
+  const { data, error } = await supabase.rpc('admin_review_service_level_scope', {
+    p_service_code: input.serviceCode,
+    p_level_code: input.levelCode,
+    p_decision: input.decision,
+    p_reason: input.reason.trim(),
+    p_budget_description: input.budgetDescription.trim(),
+    p_contract_scope: input.contractScope.trim(),
+    p_annex_scope: input.annexScope.trim(),
+  });
+  return {
+    version: error || data === null ? null : Number(data),
+    error: error ? error.message || 'Não foi possível salvar a revisão do serviço.' : null,
+  };
 }

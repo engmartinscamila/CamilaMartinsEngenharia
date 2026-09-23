@@ -28,11 +28,56 @@ jobs:
       - name: Examinar segredos no histórico sem revelar valores
         run: node scripts/security/secret-scan.mjs
 
+      - name: Validar datas e versões únicas das migrações
+        run: node scripts/security/migration-timestamp-regression.mjs
+
+      - name: Proteger reuso de cliente existente
+        run: node scripts/security/commercial-existing-client-regression.mjs
+
+      - name: Proteger matriz serviço por nível
+        run: node scripts/security/service-level-scope-matrix-regression.mjs
+
+      - name: Proteger snapshot de nível por serviço
+        run: node scripts/security/commercial-service-level-per-item-regression.mjs
+
+      - name: Proteger cadeia de revisões e aditivos do cronograma
+        run: node scripts/security/construction-schedule-revision-regression.mjs
+
+      - name: Proteger pedido temporário de reprogramação
+        run: node scripts/security/construction-schedule-revision-request-regression.mjs
+
+      - name: Validar orçamento executivo e quantitativos
+        run: node scripts/security/construction-schedule-budget-regression.mjs
+
       - name: Instalar ambiente isolado de testes SQL
         run: npm ci --prefix scripts/security
 
       - name: Testar isolamento real das policies em PostgreSQL
         run: node scripts/security/rls-regression.mjs
+
+      - name: Testar vínculo e bloqueio de cronogramas com contratos sintéticos
+        run: node scripts/security/construction-schedule-contract-regression.mjs
+
+      - name: Testar biblioteca versionada e prévia de cronogramas
+        run: node scripts/security/construction-schedule-template-regression.mjs
+
+      - name: Testar aprovação e congelamento da linha de base
+        run: node scripts/security/construction-schedule-approval-regression.mjs
+
+      - name: Testar medições imutáveis, RLS e rollback transacional
+        run: node scripts/security/construction-schedule-measurement-regression.mjs
+
+      - name: Bloquear atualização direta do avanço de cronograma aprovado
+        run: node scripts/security/construction-schedule-actual-write-guard-regression.mjs
+
+      - name: Testar arquivo imutável e atômico das linhas de base
+        run: node scripts/security/construction-schedule-baseline-archive-regression.mjs
+
+      - name: Testar calendário e feriados conferidos com aprovação real
+        run: node scripts/security/construction-schedule-holiday-regression.mjs
+
+      - name: Testar publicação sanitizada do cronograma e isolamento entre clientes
+        run: node scripts/security/construction-schedule-publication-regression.mjs
 
       - name: Bloquear arquivos de ambiente reais
         shell: bash

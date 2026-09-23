@@ -48,6 +48,39 @@ jobs:
       - name: Regressões de integração
         run: npm run test:integration
 
+      - name: Testar busca tolerante de serviços sem auto seleção
+        run: node scripts/test-commercial-service-match.mjs
+
+      - name: Confirmar catálogo central no fluxo comercial
+        run: node scripts/test-commercial-catalog-source.mjs
+
+      - name: Testar nível Bronze Prata Ouro por serviço
+        run: node scripts/test-commercial-service-levels.mjs
+
+      - name: Testar carregamento completo de clientes, documentos e vínculos
+        run: node scripts/test-construction-schedule-pagination.mjs
+
+      - name: Testar motor de cronograma físico-financeiro
+        run: node scripts/test-construction-schedule-engine.mjs
+
+      - name: Testar caminho crítico, folga e feriados
+        run: node scripts/test-construction-schedule-critical-path.mjs
+
+      - name: Testar Gantt sanitizado do cliente
+        run: node scripts/test-construction-schedule-client-gantt.mjs
+
+      - name: Testar métricas e Curva S com medições históricas
+        run: node scripts/test-construction-schedule-progress.mjs
+
+      - name: Testar exportação Excel do cronograma aprovado
+        run: node scripts/test-construction-schedule-excel.mjs
+
+      - name: Instalar gerador Excel somente no ambiente isolado de teste
+        run: npm install --prefix "$RUNNER_TEMP/schedule-xlsx-test" --no-save --package-lock=false --ignore-scripts exceljs@4.4.0 pngjs@7.0.0
+
+      - name: Gerar e reabrir arquivo XLSX real com dados sintéticos
+        run: node scripts/test-construction-schedule-xlsx-runtime.mjs
+
       - name: ESLint
         run: npm run lint
 

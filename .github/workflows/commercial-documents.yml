@@ -4,11 +4,14 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'supabase/functions/generate-commercial-document/**'
+      - 'portal-app/supabase/functions/generate-commercial-document/**'
       - 'supabase/functions/generate-commercial-document-final/**'
       - 'portal-app/src/services/commercial-service.ts'
       - 'portal-app/src/services/document-workflow-service.ts'
       - 'js/document-function-routing-web.js'
       - 'scripts/commercial-word-regression.mjs'
+      - 'scripts/commercial-generator-preflight-regression.mjs'
       - '.github/workflows/commercial-documents.yml'
   workflow_dispatch:
 
@@ -26,6 +29,8 @@ jobs:
           node-version: '22'
       - name: Verificar sintaxe do roteamento web
         run: node --check js/document-function-routing-web.js
+      - name: Conferir validação antes de criar documento e sincronismo dos geradores
+        run: node scripts/commercial-generator-preflight-regression.mjs
       - name: Instalar dependências travadas do aplicativo
         run: npm ci --prefix portal-app
       - name: Verificar TypeScript do aplicativo

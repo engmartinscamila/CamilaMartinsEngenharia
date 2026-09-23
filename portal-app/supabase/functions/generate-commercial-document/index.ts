@@ -20,7 +20,7 @@ async function requireAdmin(req:Request){
  return {caller,service:createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}}),user:userData.user};
 }
 
-type CommercialRecord={id:string;quote_number:string;contract_number:string|null;status:string;prospect_name:string;cpf_cnpj:string|null;email:string|null;phone:string|null;address:string|null;city:string|null;state:string|null;property_address:string|null;property_type:string|null;area_terreno_m2:number|null;area_construida_m2:number|null;construction_standard:string|null;experience_level:string|null;services:unknown;custom_service:string|null;total_value:number|null;payment_terms:unknown;valid_until:string|null;notes:string|null;quote_document_id:string|null;contract_document_id:string|null;contract_master_id:string|null;contract_master_version:number|null;smart_texts:unknown};
+type CommercialRecord={id:string;quote_number:string;contract_number:string|null;status:string;prospect_name:string;cpf_cnpj:string|null;email:string|null;phone:string|null;address:string|null;city:string|null;state:string|null;property_address:string|null;property_type:string|null;area_terreno_m2:number|null;area_construida_m2:number|null;construction_standard:string|null;experience_level:string|null;services:unknown;coobligors:unknown;custom_service:string|null;total_value:number|null;payment_terms:unknown;valid_until:string|null;notes:string|null;quote_document_id:string|null;contract_document_id:string|null;contract_master_id:string|null;contract_master_version:number|null;smart_texts:unknown};
 type ServiceItem=Record<string,unknown>;
 type ProfessionalIdentity=Record<string,string|undefined>;
 
@@ -37,6 +37,26 @@ const professionalLabel=(profile:ProfessionalIdentity)=>{
  const parts=[profileValue(profile,'full_name'),profileValue(profile,'professional_title')||'Engenheira Civil',creaLabel(profile)].filter(Boolean);
  return parts.join(' — ');
 };
+const cpfDisplay=(value:unknown)=>{
+ const digits=String(value??'').replace(/\D/g,'');
+ return digits.length===11?`${digits.slice(0,3)}.${digits.slice(3,6)}.${digits.slice(6,9)}-${digits.slice(9)}`:String(value??'').trim();
+};
+const contractCoobligors=(record:CommercialRecord)=>{
+ const raw=Array.isArray(record.coobligors)?record.coobligors as Array<Record<string,unknown>>:[];
+ return raw.map(item=>({
+   kind:String(item.kind??''),
+   name:String(item.name??'').trim(),
+   cpf:cpfDisplay(item.cpf),
+   role:String(item.role??'').trim(),
+ })).filter(item=>item.name&&item.cpf);
+};
+const coobligorRole=(item:{kind:string;role:string})=>{
+ if(item.role)return item.role;
+ if(item.kind==='spouse_companion')return 'Cônjuge/companheiro(a) — interveniente anuente e coobrigado(a) solidário(a)';
+ if(item.kind==='company_guarantor')return 'Sócio/administrador — coobrigado(a) solidário(a)';
+ return 'Coobrigado(a) solidário(a)';
+};
+
 const professionalQualification=(profile:ProfessionalIdentity)=>{
  const fullName=profileValue(profile,'full_name');
  const nationality=profileValue(profile,'nationality');
@@ -195,17 +215,28 @@ const levelName=(value:string|null)=> {
  if(code)return code.toUpperCase();
  return 'Não aplicável / não selecionado';
 };
-const levelFromServices=(items:ServiceItem[])=>{
- for(const item of items){
-   const level=item.level;
-   if(level&&typeof level==='object')return level as Record<string,unknown>;
- }
- return null;
+const serviceLevelObject=(item:ServiceItem)=>{
+ const level=item.level;
+ return level&&typeof level==='object'?level as Record<string,unknown>:null;
 };
-const levelDisplay=(record:CommercialRecord,level:Record<string,unknown>|null)=>level
- ? [String(level.label??'').trim(),String(level.subtitle??'').trim()].filter(Boolean).join(' — ')
- : levelName(record.experience_level);
+const serviceLevelCode=(item:ServiceItem)=>{
+ const level=serviceLevelObject(item);
+ return String(level?.code??item.levelCode??'').trim().toLowerCase();
+};
+const levelLabel=(level:Record<string,unknown>|null)=>{
+ if(!level)return '';
+ return String(level.label??'').trim();
+};
+const serviceLevelDisplay=(item:ServiceItem)=>{
+ const level=serviceLevelObject(item);
+ return levelLabel(level)||levelName(serviceLevelCode(item)||null);
+};
+const levelEntries=(items:ServiceItem[])=>items
+ .filter(item=>item.levelApplicable===true)
+ .map(item=>({item,level:serviceLevelObject(item),code:serviceLevelCode(item)}))
+ .filter(entry=>Boolean(entry.code));
 const serviceDescription=(item:ServiceItem)=>String(item.description??'Serviço técnico conforme escopo descrito no orçamento e no Anexo I.');
+const serviceBudgetDescription=(item:ServiceItem)=>String(item.budgetDescription??item.description??'Serviço técnico conforme escopo descrito no orçamento e no Anexo I.');
 const serviceRevisions=(item:ServiceItem)=>{
  const value=item.revisions;
  return typeof value==='number'?String(value):'conforme condição específica do Anexo I';
@@ -238,17 +269,22 @@ const paymentLines=(record:CommercialRecord)=>{
 };
 function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,generatedAt:Date){
  const selected=selectedServices(record);
- const level=levelFromServices(selected);
- const levelFeatures=arrStrings(level?.features);
- const levelExclusions=arrStrings(level?.exclusions);
- const eligibleServices=selected.filter(item=>item.levelApplicable===true).map(item=>String(item.name??'Serviço'));
+ const entries=levelEntries(selected);
+ const distinctLevels=[...new Set(entries.map(entry=>entry.code))];
+ const commonLevel=distinctLevels.length===1?entries.find(entry=>entry.code===distinctLevels[0])?.level??null:null;
+ const commonLevelFeatures=arrStrings(commonLevel?.features);
+ const commonLevelExclusions=arrStrings(commonLevel?.exclusions);
+ const legacyLevel=entries.length===0&&record.experience_level?levelName(record.experience_level):'';
  const consolidatedExclusions=unique(selected.flatMap(item=>arrStrings(item.exclusions)));
  const today=generatedDatePt(generatedAt);
 
  const serviceBlocks:Paragraph[]=[];
  selected.forEach((item,index)=>{
    serviceBlocks.push(serviceHeading(`${index+1}. ${String(item.name??'Serviço')}`));
-   serviceBlocks.push(p(serviceDescription(item)));
+   if(item.levelApplicable===true&&serviceLevelCode(item)){
+     serviceBlocks.push(small(`Nível desta atividade: ${serviceLevelDisplay(item)}.`));
+   }
+   serviceBlocks.push(p(serviceBudgetDescription(item)));
    const deliverables=arrStrings(item.deliverables);
    if(deliverables.length){
      serviceBlocks.push(small('Entregáveis previstos no escopo padrão deste serviço:'));
@@ -259,7 +295,7 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
      serviceBlocks.push(small('Informações e insumos normalmente necessários do cliente:'));
      inputs.forEach(value=>serviceBlocks.push(bullet(value)));
    }
-   serviceBlocks.push(small(`Revisões incluídas: ${serviceRevisions(item)} • Formatos: ${arrStrings(item.deliveryFormats).join(', ')||'PDF'} • Prazo: ${String(item.planningReference??'integrado ao cronograma geral')}`));
+   serviceBlocks.push(small(`Revisões incluídas: ${serviceRevisions(item)} • Formatos: ${arrStrings(item.deliveryFormats).join(', ')||'conforme Anexo I'} • Prazo: ${String(item.planningReference??'integrado ao cronograma geral')}`));
  });
 
  if(record.custom_service){
@@ -282,13 +318,21 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
   p(`Tipo de imóvel: ${text(record.property_type)} • Padrão construtivo: ${text(record.construction_standard)}`),
   p(`Área do terreno: ${record.area_terreno_m2??'não informada'} m² • Área construída prevista: ${record.area_construida_m2??'não informada'} m²`),
 
-  h('2. NÍVEL DE PRESTAÇÃO DE SERVIÇO'),
-  p(`Nível selecionado: ${levelDisplay(record,level)}`,true,GOLD),
-  ...(level?[p(String(level.description??''))]:[p('O nível de experiência não foi selecionado. Quando aplicável, ele deverá ser definido antes da formalização definitiva.')]),
-  ...(eligibleServices.length?[small(`O nível selecionado aplica-se somente aos serviços de projeto elegíveis nesta proposta: ${eligibleServices.join(', ')}.`)]:[small('Nenhum serviço selecionado nesta proposta recebe ampliação automática por nível de experiência.')]),
-  ...levelFeatures.map(value=>bullet(value)),
-  ...levelExclusions.map(value=>bullet(`Não incluído neste nível: ${value}`)),
-  small(smartRule(record,'level_scope_rule','O nível selecionado aplica-se somente aos serviços elegíveis e não acrescenta automaticamente itens que não tenham sido contratados expressamente.')),
+  h('2. NÍVEIS DE PRESTAÇÃO POR ATIVIDADE'),
+  ...(entries.length===0
+    ? [p(legacyLevel?`Nível legado do registro: ${legacyLevel}.`:'Nenhum nível foi localizado no snapshot. Revise o orçamento antes da formalização definitiva.')]
+    : distinctLevels.length===1
+      ? [
+          p(`Nível selecionado para as atividades aplicáveis: ${levelLabel(commonLevel)||levelName(distinctLevels[0])}.`,true,GOLD),
+          ...(commonLevel?[p(String(commonLevel.description??''))]:[]),
+          ...commonLevelFeatures.map(value=>bullet(value)),
+          ...commonLevelExclusions.map(value=>bullet(`Não incluído neste nível: ${value}`)),
+        ]
+      : [
+          p('Os níveis de prestação foram definidos individualmente por atividade.',true,GOLD),
+          ...entries.map(({item})=>bullet(`${String(item.name??'Serviço')}: ${serviceLevelDisplay(item)}`)),
+        ]),
+  small(smartRule(record,'level_scope_rule','O nível de cada atividade altera somente o escopo daquela atividade e não acrescenta automaticamente serviços, visitas, aprovações, execução, taxas, fornecimentos ou entregáveis de outra categoria.')),
 
   h('3. ESCOPO INTELIGENTE DE SERVIÇOS'),
   ...(selected.length?serviceBlocks:[p('Nenhum serviço foi selecionado. Revise o orçamento antes da emissão definitiva.')]),
@@ -328,22 +372,26 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
 
 function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,contractMasterBody:string,generatedAt:Date){
  const body=contractMasterBody.split('\n').filter(Boolean).map(line=>line.startsWith('CLÁUSULA')?h(line):p(line));
- const level=levelFromServices(selectedServices(record));
- const levelDisplay=level
-   ? [String(level.label??'').trim(),String(level.subtitle??'').trim()].filter(Boolean).join(' — ')
-   : levelName(record.experience_level);
+ const selected=selectedServices(record);
+ const entries=levelEntries(selected);
+ const distinctLevels=[...new Set(entries.map(entry=>entry.code))];
+ const contractLevelSummary=entries.length===0
+   ? levelName(record.experience_level)
+   : distinctLevels.length===1
+     ? serviceLevelDisplay(entries[0].item)
+     : 'definidos individualmente por atividade no escopo técnico vinculado';
  return makeDoc([
    ...title(`CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE ENGENHARIA — ${text(record.contract_number,'CONTRATO SEM NUMERAÇÃO — NÃO EMITIR')}`,'Instrumento particular • identidade profissional protegida'),
    small(`Data de emissão: ${generatedDatePt(generatedAt)} • Data de assinatura: ${generatedDatePt(generatedAt)}`),
-   small(`Base documental: Contrato Mestre v${record.contract_master_version??'não informada'}`),
    p('Pelo presente instrumento particular de Contrato de Prestação de Serviços de Engenharia, de um lado:'),
    p(`CONTRATADO(A): ${professionalQualification(profile)}, doravante denominada simplesmente CONTRATADO(A);`),
    p(`CONTRATANTE: ${record.prospect_name}, CPF/CNPJ ${text(record.cpf_cnpj)}, com endereço em ${text(record.address)}, e-mail ${text(record.email)} e telefone/WhatsApp ${text(record.phone)}, doravante denominado(a) simplesmente CONTRATANTE.`),
+   ...contractCoobligors(record).map(item=>p(`COOBRIGADO(A) SOLIDÁRIO(A): ${item.name}, CPF nº ${item.cpf}, na qualidade de ${coobligorRole(item)}, aderindo expressamente às obrigações solidárias previstas neste instrumento.`)),
    p('Têm entre si, justo e acertado, o presente Contrato de Prestação de Serviços de Engenharia, que se regerá pelas cláusulas e condições a seguir:'),
    ...body,
    h('RESUMO COMERCIAL VINCULADO'),
    p(`Valor total dos honorários: ${money(record.total_value)}.`,true,GOLD),
-   p(`Nível de experiência: ${levelDisplay}.`),
+   p(`Nível de prestação: ${contractLevelSummary}.`),
    p('O detalhamento definitivo dos serviços, entregáveis, revisões, formatos e cronograma consta do Anexo I, que deve refletir o mesmo escopo estruturado utilizado na proposta comercial.'),
    p('E por estarem assim justas e contratadas, as partes assinam o presente instrumento em 2 (duas) vias de igual teor e forma, na presença das testemunhas abaixo.'),
    p(signaturePlaceAndDate(record.city,generatedAt)),
@@ -351,6 +399,11 @@ function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,c
    p(professionalLabel(profile)),
    p('_____________________________________________'),
    p('CONTRATANTE'),
+   ...contractCoobligors(record).flatMap(item=>[
+     p('_____________________________________________'),
+     p(`${item.name} — CPF ${item.cpf}`),
+     small(coobligorRole(item)),
+   ]),
    p('Testemunhas:'),
    p('1) ______________________________  CPF: ______________________'),
    p('2) ______________________________  CPF: ______________________')
@@ -368,17 +421,18 @@ Deno.serve(async(req)=>{
   const firstRead=await service.from('commercial_records').select('*').eq('id',recordId).maybeSingle();if(firstRead.error)throw firstRead.error;if(!firstRead.data)return json({error:'Registro comercial não encontrado.'},404);
   if(firstRead.data.status==='convertido'&&kind==='contrato')return json({error:'O registro já foi convertido. O contrato histórico não pode ser substituído.'},409);
   if(kind==='contrato'){const assigned=await caller.rpc('admin_assign_commercial_contract_number',{p_record_id:recordId});if(assigned.error)throw assigned.error;}
+  const preparedScope=await service.rpc('admin_prepare_commercial_scope_for_generation',{p_record_id:recordId});if(preparedScope.error)throw preparedScope.error;
   const refreshed=await service.from('commercial_records').select('*').eq('id',recordId).single();if(refreshed.error)throw refreshed.error;const record=refreshed.data as CommercialRecord;
-  let documentId=kind==='orcamento'?record.quote_document_id:record.contract_document_id;
-  if(!documentId){const inserted=await service.from('documentos').insert({nome:kind==='orcamento'?`Orçamento ${record.quote_number} — ${record.prospect_name}`:`Contrato ${record.contract_number} — ${record.prospect_name}`,tipo:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',categoria:'Comercial',versao:'1.0',storage_bucket:'documentos',permitir_download:true,protection_mode:'administrative',autoral:false,workflow_status:'rascunho',optional_document:false,generated_data:{commercial_document_kind:kind,commercial_record_id:record.id,quote_number:record.quote_number,contract_number:record.contract_number,prospect_name:record.prospect_name,contract_master_id:record.contract_master_id,contract_master_version:record.contract_master_version,smart_texts:record.smart_texts}}).select('id').single();if(inserted.error)throw inserted.error;documentId=inserted.data.id;const linked=await service.from('commercial_records').update(kind==='orcamento'?{quote_document_id:documentId}:{contract_document_id:documentId}).eq('id',record.id);if(linked.error)throw linked.error;}
   const professionalProfile=await loadProfessionalIdentity(service,kind);
   const missingProfile=missingProfessionalFields(professionalProfile,kind);
   if(missingProfile.length)return json({error:`Complete a identificação profissional sigilosa em Configurações antes de gerar este documento. Campos pendentes: ${missingProfile.join(', ')}.`},422);
   const contractMaster=kind==='contrato'?await loadContractMaster(service,record):null;
+  let documentId=kind==='orcamento'?record.quote_document_id:record.contract_document_id;
+  if(!documentId){const inserted=await service.from('documentos').insert({nome:kind==='orcamento'?`Orçamento ${record.quote_number} — ${record.prospect_name}`:`Contrato ${record.contract_number} — ${record.prospect_name}`,tipo:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',categoria:'Comercial',versao:'1.0',storage_bucket:'documentos',permitir_download:true,protection_mode:'administrative',autoral:false,workflow_status:'rascunho',optional_document:false,generated_data:{commercial_document_kind:kind,commercial_record_id:record.id,quote_number:record.quote_number,contract_number:record.contract_number,prospect_name:record.prospect_name,contract_master_id:record.contract_master_id,contract_master_version:record.contract_master_version,smart_texts:record.smart_texts,coobligors:record.coobligors}}).select('id').single();if(inserted.error)throw inserted.error;documentId=inserted.data.id;const linked=await service.from('commercial_records').update(kind==='orcamento'?{quote_document_id:documentId}:{contract_document_id:documentId}).eq('id',record.id);if(linked.error)throw linked.error;}
   const generatedAt=new Date();
   const generatedAtIso=generatedAt.toISOString();
   const documentDate=generatedDateIso(generatedAt);
-  const generatedData={commercial_document_kind:kind,commercial_record_id:record.id,quote_number:record.quote_number,contract_number:record.contract_number,prospect_name:record.prospect_name,contract_master_id:record.contract_master_id,contract_master_version:record.contract_master_version,smart_texts:record.smart_texts,services:record.services,experience_level:record.experience_level,emitted_at:generatedAtIso,document_date:documentDate,...(kind==='contrato'?{contract_signed_at:documentDate}:{})};
+  const generatedData={commercial_document_kind:kind,commercial_record_id:record.id,quote_number:record.quote_number,contract_number:record.contract_number,prospect_name:record.prospect_name,contract_master_id:record.contract_master_id,contract_master_version:record.contract_master_version,smart_texts:record.smart_texts,services:record.services,coobligors:record.coobligors,experience_level:record.experience_level,emitted_at:generatedAtIso,document_date:documentDate,...(kind==='contrato'?{contract_signed_at:documentDate}:{})};
   const word=kind==='orcamento'?quoteDocument(record,professionalProfile,generatedAt):contractDocument(record,professionalProfile,contractMaster!.body,generatedAt);const buffer=await Packer.toBuffer(word);const number=kind==='orcamento'?record.quote_number:record.contract_number??'contrato';const path=`comercial/${record.id}/${kind}-${number}-v1.0.docx`;
   const uploaded=await service.storage.from('documentos').upload(path,buffer,{contentType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',upsert:true});if(uploaded.error)throw uploaded.error;
   const updatedDocument=await service.from('documentos').update({arquivo:path,workflow_status:'gerado',generated_at:generatedAtIso,generated_data:generatedData}).eq('id',documentId);if(updatedDocument.error)throw updatedDocument.error;

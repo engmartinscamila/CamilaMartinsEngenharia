@@ -42,6 +42,8 @@ jobs:
           node scripts/admin-functional-audit.mjs
           node scripts/document-generation-audit.mjs
           node scripts/document-governance-audit.mjs
+          node scripts/commercial-custom-scope-regression.mjs
+          node scripts/governance-review-preview-regression.mjs
 
       - name: Validar JavaScript novo
         run: |

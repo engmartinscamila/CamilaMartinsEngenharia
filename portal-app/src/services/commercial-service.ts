@@ -3,12 +3,38 @@ import { supabase } from '@/lib/supabase';
 import * as Linking from 'expo-linking';
 import type { ServiceResult } from '@/types/domain';
 
+export type CommercialServiceLevelCode = 'bronze' | 'prata' | 'ouro';
+
+export interface CommercialCoobligor {
+  kind: 'spouse_companion' | 'company_guarantor' | 'other_guarantor';
+  name: string;
+  cpf: string;
+  role?: string | null;
+}
+
 export interface CommercialServiceSelection {
   code: string;
   name: string;
   included: boolean;
   acceptanceRequired: boolean;
   displayOrder: number;
+  levelApplicable?: boolean;
+  levelCode?: CommercialServiceLevelCode | null;
+  level?: { code?: string; label?: string; subtitle?: string } | null;
+}
+
+export interface CommercialCatalogService {
+  code: string;
+  name: string;
+  category: string;
+  levelApplicable: boolean;
+  acceptanceRequired: boolean;
+  description: string;
+  deliverables: string[];
+  exclusions: string[];
+  aliases: string[];
+  synonyms: string[];
+  keywords: string[];
 }
 
 export interface CommercialRecord {
@@ -29,6 +55,7 @@ export interface CommercialRecord {
   customService: string | null;
   totalValue: number | null;
   services: CommercialServiceSelection[];
+  coobligors: CommercialCoobligor[];
   quoteDocumentId: string | null;
   contractDocumentId: string | null;
   linkedClientId: string | null;
@@ -55,8 +82,21 @@ export interface CommercialDocumentPreview {
   frozen: boolean;
 }
 
+export interface ExistingCommercialClient {
+  id: string;
+  name: string;
+  cpfCnpj: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  cep: string | null;
+}
+
 export interface NewCommercialRecordInput {
   prospectName: string;
+  linkedClientId?: string | null;
   cpfCnpj?: string;
   email?: string;
   phone?: string;
@@ -72,8 +112,10 @@ export interface NewCommercialRecordInput {
   experienceLevel?: string;
   services: CommercialServiceSelection[];
   customService?: string;
+  customServiceLevel?: CommercialServiceLevelCode | null;
   totalValue?: string;
   notes?: string;
+  coobligors?: CommercialCoobligor[];
 }
 
 export interface CommercialAddressLookup {
@@ -111,10 +153,62 @@ export function validateCustomCommercialService(input: Pick<NewCommercialRecordI
   return null;
 }
 
+export async function listCommercialServiceCatalog(): Promise<ServiceResult<CommercialCatalogService[]>> {
+  const result = await supabase
+    .from('service_catalog')
+    .select('code, name, category, level_applicable, acceptance_required, description, deliverables, exclusions, aliases, synonyms, keywords')
+    .eq('active', true)
+    .order('code');
+
+  if (result.error) {
+    return { data: [], error: result.error.message ?? 'Não foi possível carregar o catálogo central de serviços.' };
+  }
+
+  return {
+    data: (result.data ?? []).map((row: any) => ({
+      code: String(row.code ?? ''),
+      name: String(row.name ?? ''),
+      category: String(row.category ?? ''),
+      levelApplicable: row.level_applicable === true,
+      acceptanceRequired: row.acceptance_required !== false,
+      description: String(row.description ?? ''),
+      deliverables: Array.isArray(row.deliverables) ? row.deliverables.map(String) : [],
+      exclusions: Array.isArray(row.exclusions) ? row.exclusions.map(String) : [],
+      aliases: Array.isArray(row.aliases) ? row.aliases.map(String) : [],
+      synonyms: Array.isArray(row.synonyms) ? row.synonyms.map(String) : [],
+      keywords: Array.isArray(row.keywords) ? row.keywords.map(String) : [],
+    })).filter((row) => row.code && row.name),
+    error: null,
+  };
+}
+
+export async function searchExistingCommercialClients(query: string): Promise<ServiceResult<ExistingCommercialClient[]>> {
+  const value = query.trim();
+  const digits = value.replace(/\D/g, '');
+  if (value.length < 2 && digits.length < 3) return { data: [], error: null };
+  const result = await supabase.rpc('admin_search_existing_clients', { p_query: value, p_limit: 12 });
+  if (result.error) return { data: [], error: result.error.message ?? 'Não foi possível pesquisar clientes existentes.' };
+  const rows = Array.isArray(result.data) ? result.data : [];
+  return {
+    data: rows.map((row: any) => ({
+      id: String(row.id),
+      name: String(row.nome ?? ''),
+      cpfCnpj: row.cpf_cnpj ?? null,
+      email: row.email ?? null,
+      phone: row.telefone ?? null,
+      address: row.endereco ?? null,
+      city: row.cidade ?? null,
+      state: row.estado ?? null,
+      cep: row.cep ?? null,
+    })),
+    error: null,
+  };
+}
+
 export async function listCommercialRecords(): Promise<ServiceResult<CommercialRecord[]>> {
   const result = await supabase
     .from('commercial_records')
-    .select('id, quote_number, contract_number, status, prospect_name, cpf_cnpj, email, phone, address, city, state, property_address, property_type, experience_level, custom_service, total_value, services, quote_document_id, contract_document_id, linked_client_id, linked_contract_id, linked_project_id, crm_stage, crm_priority, crm_source, next_action_at, lost_reason, created_at')
+    .select('id, quote_number, contract_number, status, prospect_name, cpf_cnpj, email, phone, address, city, state, property_address, property_type, experience_level, custom_service, total_value, services, coobligors, quote_document_id, contract_document_id, linked_client_id, linked_contract_id, linked_project_id, crm_stage, crm_priority, crm_source, next_action_at, lost_reason, created_at')
     .order('created_at', { ascending: false })
     .limit(100);
   if (result.error) return { data: [], error: 'Não foi possível carregar os orçamentos e contratos.' };
@@ -137,6 +231,7 @@ export async function listCommercialRecords(): Promise<ServiceResult<CommercialR
       customService: row.custom_service,
       totalValue: row.total_value === null ? null : Number(row.total_value),
       services: Array.isArray(row.services) ? row.services as unknown as CommercialServiceSelection[] : [],
+      coobligors: Array.isArray(row.coobligors) ? row.coobligors as CommercialCoobligor[] : [],
       quoteDocumentId: row.quote_document_id,
       contractDocumentId: row.contract_document_id,
       linkedClientId: row.linked_client_id,
@@ -171,35 +266,81 @@ export async function createCommercialRecord(input: NewCommercialRecordInput) {
   const description = (input.customService ?? '').trim();
   // Ao descrever uma atividade personalizada, sua categoria deve integrar o snapshot.
   // Um serviço já selecionado não é removido nem convertido em "Outros".
-  const services = input.services.map(item => isOtherCode(item.code) && description ? { ...item, included: true } : item);
+  const services = input.services.map(item => isOtherCode(item.code) && description
+    ? { ...item, included: true, levelCode: item.levelCode ?? input.customServiceLevel ?? null, customDescription: description }
+    : item);
   if (description && !services.some(item => isOtherCode(item.code))) {
-    services.push({ code: 'p', name: 'Outro', included: true, acceptanceRequired: true, displayOrder: services.length + 1 });
+    services.push({
+      code: 'p',
+      name: 'Outro',
+      included: true,
+      acceptanceRequired: true,
+      displayOrder: services.length + 1,
+      levelApplicable: true,
+      levelCode: input.customServiceLevel ?? null,
+      customDescription: description,
+    });
   }
-  const result = await supabase.rpc('admin_create_commercial_record', {
-    p_data: {
-      prospect_name: input.prospectName,
-      cpf_cnpj: input.cpfCnpj ?? '',
-      email: input.email ?? '',
-      phone: input.phone ?? '',
-      cep: input.cep ?? '',
-      address: input.address ?? '',
-      city: input.city ?? '',
-      state: input.state ?? '',
-      property_address: input.propertyAddress ?? '',
-      property_type: input.propertyType ?? '',
-      area_terreno_m2: input.areaTerrenoM2 ?? '',
-      area_construida_m2: input.areaConstruidaM2 ?? '',
-      construction_standard: input.constructionStandard ?? '',
-      experience_level: input.experienceLevel ?? '',
-      services,
-      custom_service: description,
-      total_value: input.totalValue ?? '',
-      notes: input.notes ?? '',
-    },
-  });
-  return result.error || !result.data
-    ? { recordId: null, error: result.error?.message ?? 'Não foi possível criar o orçamento.' }
-    : { recordId: result.data as string, error: null };
+
+  const legacyLevel = (input.experienceLevel ?? '').trim().toLowerCase();
+  const missingLevel = services.find(item =>
+    item.included !== false &&
+    item.levelApplicable !== false &&
+    !item.levelCode &&
+    !legacyLevel
+  );
+  if (missingLevel) {
+    return { recordId: null, error: `Selecione Bronze, Prata ou Ouro para o serviço ${missingLevel.name}.` };
+  }
+  if (description) {
+    const custom = services.find(item => isOtherCode(item.code) && item.included !== false);
+    if (custom?.levelApplicable !== false && !custom?.levelCode && !legacyLevel) {
+      return { recordId: null, error: 'Selecione Bronze, Prata ou Ouro para a atividade personalizada.' };
+    }
+  }
+
+  const explicitLevels = [...new Set(services
+    .filter(item => item.included !== false && item.levelCode)
+    .map(item => item.levelCode as CommercialServiceLevelCode))];
+  const compatibilityLevel = explicitLevels.length === 1 ? explicitLevels[0] : explicitLevels.length === 0 ? legacyLevel : '';
+
+  const p_data = {
+    prospect_name: input.prospectName,
+    cpf_cnpj: input.cpfCnpj ?? '',
+    email: input.email ?? '',
+    phone: input.phone ?? '',
+    cep: input.cep ?? '',
+    address: input.address ?? '',
+    city: input.city ?? '',
+    state: input.state ?? '',
+    property_address: input.propertyAddress ?? '',
+    property_type: input.propertyType ?? '',
+    area_terreno_m2: input.areaTerrenoM2 ?? '',
+    area_construida_m2: input.areaConstruidaM2 ?? '',
+    construction_standard: input.constructionStandard ?? '',
+    experience_level: compatibilityLevel,
+    services,
+    custom_service: description,
+    total_value: input.totalValue ?? '',
+    notes: input.notes ?? '',
+  };
+  const result = input.linkedClientId
+    ? await supabase.rpc('admin_create_commercial_record_from_client', { p_client_id: input.linkedClientId, p_data })
+    : await supabase.rpc('admin_create_commercial_record', { p_data });
+  if (result.error || !result.data) {
+    return { recordId: null, error: result.error?.message ?? 'Não foi possível criar o orçamento.' };
+  }
+  const recordId = result.data as string;
+  if ((input.coobligors ?? []).length) {
+    const coobligorResult = await supabase.rpc('admin_set_commercial_coobligors', {
+      p_record_id: recordId,
+      p_coobligors: input.coobligors,
+    });
+    if (coobligorResult.error) {
+      return { recordId, error: `Orçamento criado, mas os coobrigados não foram gravados: ${coobligorResult.error.message}` };
+    }
+  }
+  return { recordId, error: null };
 }
 
 function bumpVersion(current: string | null, bump: 'minor' | 'major') {
@@ -232,7 +373,7 @@ export async function previewCommercialDocument(record: CommercialRecord, kind: 
     totalValue: record.totalValue,
     services: record.services.filter(item => item.included !== false).map(item => isOtherCode(item.code) && record.customService
       ? `(p) Serviço personalizado: ${record.customService}`
-      : `(${item.code}) ${item.name}`),
+      : `(${item.code}) ${item.name}${item.levelCode ? ` — ${String(item.levelCode).toUpperCase()}` : ''}`),
     currentVersion,
     nextVersion: frozen ? bumpVersion(currentVersion, bump) : currentVersion ?? '1.0',
     frozen,
@@ -270,4 +411,12 @@ export async function createProspectAccessLink(recordId: string, expiresHours = 
     url: Linking.createURL('/prospect-access', { queryParams: { token: String(result.data) } }),
     error: null,
   };
+}
+
+export async function setCommercialCoobligors(recordId: string, coobligors: CommercialCoobligor[]) {
+  const result = await supabase.rpc('admin_set_commercial_coobligors', {
+    p_record_id: recordId,
+    p_coobligors: coobligors,
+  });
+  return result.error ? result.error.message ?? 'Não foi possível atualizar os coobrigados.' : null;
 }

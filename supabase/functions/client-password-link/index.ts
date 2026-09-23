@@ -1,18 +1,30 @@
 import { withSupabase } from "npm:@supabase/server@1.5.3";
 
-const SITE_URL = (Deno.env.get("SITE_URL") ?? "https://camilamartinsengenharia.com.br").replace(/\/$/, "");
+const PRODUCTION_SITE_URL = "https://camilamartinsengenharia.com.br";
+const projectRef = new URL(Deno.env.get("SUPABASE_URL") ?? "https://unconfigured.invalid").hostname.split(".")[0];
+const production = projectRef === "hghtwlopqztfcosfxafd";
+const SITE_URL = (Deno.env.get("SITE_URL") ?? (production ? PRODUCTION_SITE_URL : "")).replace(/\/$/, "");
+const validSiteUrl = (() => {
+  try {
+    const url = new URL(SITE_URL);
+    return url.protocol === "https:" && url.origin === SITE_URL &&
+      (production || !["camilamartinsengenharia.com.br", "www.camilamartinsengenharia.com.br"].includes(url.hostname));
+  } catch {
+    return false;
+  }
+})();
 const ALLOWED_ORIGINS = new Set([
-  "https://camilamartinsengenharia.com.br",
-  "https://www.camilamartinsengenharia.com.br",
+  ...(validSiteUrl ? [SITE_URL] : []),
+  ...(production ? ["https://www.camilamartinsengenharia.com.br"] : []),
 ]);
 const GENERIC_MESSAGE = "Se este e-mail estiver autorizado, enviaremos um link seguro para criar ou redefinir a senha. Verifique também a caixa de spam.";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function corsHeaders(request: Request) {
   const origin = request.headers.get("origin") ?? "";
-  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : "https://camilamartinsengenharia.com.br";
+  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : "";
   return {
-    "Access-Control-Allow-Origin": allowed,
+    ...(allowed ? { "Access-Control-Allow-Origin": allowed } : {}),
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Vary": "Origin",
@@ -76,6 +88,7 @@ const handler = withSupabase({ auth: "publishable" }, async (request: Request, c
 
   const origin = request.headers.get("origin");
   if (origin && !ALLOWED_ORIGINS.has(origin)) return json(request, { ok: false }, 403);
+  if (!validSiteUrl) return json(request, { ok: false, message: "Canal de acesso temporariamente indisponível." }, 503);
 
   try {
     const body = await request.json().catch(() => ({}));
