@@ -67,7 +67,7 @@ export default function AdminPortalControlScreen() {
 
   return (
     <Screen>
-      <AdminPageHeader title="Módulos do portal do cliente" description="Escolha as áreas disponíveis para cada projeto e consulte seus registros." />
+      <AdminPageHeader title="Prévia do portal do cliente" description="Veja os módulos que o cliente verá e escolha o que ficará disponível em cada projeto." />
       {error ? <Notice tone="warning">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}
       <Card><Text style={styles.sectionTitle}>Projeto</Text><View style={styles.chips}>{projects.map((item) => <Pressable key={item.id} onPress={() => setProjectId(item.id)} style={[styles.chip, projectId === item.id && styles.selected]}><Text style={styles.chipText}>{item.contractNumber} • {item.name}</Text></Pressable>)}</View></Card>
       {!project || !settings ? <StateView icon="person-circle-outline" title="Selecione um projeto" description="A configuração é individual por contrato e projeto." /> : <>
@@ -78,8 +78,8 @@ export default function AdminPortalControlScreen() {
           <Button loading={loading} onPress={() => void save()} title="Salvar visibilidade" />
         </Card>
         <Card>
-          <View style={styles.header}><View><Text style={styles.sectionTitle}>Resumo dos módulos selecionados</Text><Text style={styles.meta}>{project.contractNumber} • {project.name}</Text></View><StatusPill label="resumo administrativo" tone="warning" /></View>
-          <View style={styles.preview}>{labels.filter((item) => settings[item.key]).map((item) => <View key={item.key} style={styles.previewCard}><Text style={styles.title}>{item.label}</Text><Text style={styles.previewValue}>{counts[item.key] ?? 'Indisponível'}</Text><Text style={styles.meta}>registro(s) cadastrados</Text></View>)}</View>
+          <View style={styles.header}><View><Text style={styles.sectionTitle}>Prévia da tela do cliente</Text><Text style={styles.meta}>{project.contractNumber} • {project.name}</Text></View><StatusPill label="prévia do cliente" tone="success" /></View>
+          <View style={styles.preview}>{labels.filter((item) => settings[item.key]).map((item) => <View key={item.key} style={styles.previewCard}><Text style={styles.title}>{item.label}</Text><Text style={styles.previewValue}>{counts[item.key] ?? 'Indisponível'}</Text><Text style={styles.meta}>visível ao cliente • {counts[item.key] ?? "Indisponível"} registro(s)</Text></View>)}</View>
           {labels.every((item) => !settings[item.key]) ? <Notice tone="warning">Nenhum módulo está liberado para este projeto.</Notice> : null}
         </Card>
       </>}
