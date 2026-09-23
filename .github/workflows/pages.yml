@@ -17,7 +17,7 @@ concurrency:
 jobs:
   auditoria:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -46,6 +46,23 @@ jobs:
           npm ci --prefix scripts/security
           node scripts/security/rls-regression.mjs
           node scripts/security/ofx-regression.mjs
+
+      - name: Regressões estruturais completas antes da publicação
+        run: |
+          node scripts/security/commercial-existing-client-regression.mjs
+          node scripts/security/service-level-scope-matrix-regression.mjs
+          node scripts/security/commercial-service-level-per-item-regression.mjs
+          node scripts/security/construction-schedule-revision-regression.mjs
+          node scripts/security/construction-schedule-revision-request-regression.mjs
+          node scripts/security/construction-schedule-budget-regression.mjs
+          node scripts/security/construction-schedule-contract-regression.mjs
+          node scripts/security/construction-schedule-template-regression.mjs
+          node scripts/security/construction-schedule-approval-regression.mjs
+          node scripts/security/construction-schedule-measurement-regression.mjs
+          node scripts/security/construction-schedule-actual-write-guard-regression.mjs
+          node scripts/security/construction-schedule-baseline-archive-regression.mjs
+          node scripts/security/construction-schedule-holiday-regression.mjs
+          node scripts/security/construction-schedule-publication-regression.mjs
 
       - name: Preparar versão pública protegida
         run: bash scripts/prepare-site-public.sh
@@ -105,6 +122,34 @@ jobs:
         working-directory: portal-app
         run: npm ci
 
+      - name: Regressões completas do portal integrado
+        working-directory: portal-app
+        run: |
+          npm run typecheck
+          npm run test:integration
+          node scripts/test-commercial-service-match.mjs
+          node scripts/test-commercial-catalog-source.mjs
+          node scripts/test-commercial-service-levels.mjs
+          node scripts/test-construction-schedule-pagination.mjs
+          node scripts/test-construction-schedule-engine.mjs
+          node scripts/test-construction-schedule-critical-path.mjs
+          node scripts/test-construction-schedule-client-gantt.mjs
+          node scripts/test-construction-schedule-progress.mjs
+          node scripts/test-construction-schedule-excel.mjs
+          npm install --prefix "$RUNNER_TEMP/schedule-xlsx-test" --no-save --package-lock=false --ignore-scripts exceljs@4.4.0 pngjs@7.0.0
+          node scripts/test-construction-schedule-xlsx-runtime.mjs
+          npm run lint
+          npm run security:test
+          npm run security:audit
+
+      - name: Regressão integral de Orçamento, Contrato e Anexo I
+        run: |
+          npm install --no-save --prefix portal-app docx@9.5.1 jszip@3.10.1
+          node --check js/document-function-routing-web.js
+          node scripts/commercial-generator-preflight-regression.mjs
+          node scripts/commercial-custom-scope-regression.mjs
+          node --experimental-strip-types scripts/commercial-word-regression.mjs
+
       - name: Validar e exportar portal integrado
         working-directory: portal-app
         env:
@@ -112,7 +157,7 @@ jobs:
           EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_-unXLR2NSSACLs01Sr60GA_uCFnJ74f
           EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF: hghtwlopqztfcosfxafd
           EXPO_PUBLIC_APP_ENV: production
-        run: npm run check:production:cloudflare && npm run typecheck && npm run lint && npm run security:audit && npm run export:web && npm run verify:web-export
+        run: npm run check:production:cloudflare && npm run export:web && npm run verify:web-export
 
       - name: Integrar portal ao domínio
         run: |
