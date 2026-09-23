@@ -39,3 +39,15 @@ assert.ok(strictChainMigration.includes("'scope_snapshot',v_scope"), 'Anexo I n�
 assert.ok(strictChainMigration.includes("q.contract_master_version is distinct from c.contract_master_version"), 'Versões diferentes do Contrato Mestre não são bloqueadas.');
 assert.ok(strictChainMigration.includes("item->>'levelScopeReviewStatus'='approved'"), 'Documento oficial não exige matriz serviço x nível aprovada.');
 assert.ok(strictChainMigration.includes('Documento bloqueado: foi encontrado placeholder'), 'Placeholder interno não é bloqueado antes da emissão.');
+
+const v4Activation = readFileSync('supabase/migrations/20260923063200_contract_master_v4_approved_activate.sql', 'utf8');
+const coobligorMigration = readFileSync('supabase/migrations/20260923063500_commercial_coobligors_v4.sql', 'utf8');
+assert.ok(v4Activation.includes('Contrato Mestre v4 - aprovado'), 'Migration não cria/ativa a v4 aprovada.');
+assert.ok(v4Activation.includes('25% (vinte e cinco por cento)'), 'V4 não contém a multa rescisória aprovada de 25%.');
+assert.ok(v4Activation.includes('Portal do Cliente'), 'V4 não contém as regras aprovadas do Portal do Cliente.');
+assert.ok(v4Activation.includes('COOBRIGADO(A) SOLIDÁRIO(A)'), 'V4 não contém a coobrigação aprovada.');
+assert.ok(v4Activation.includes('Inteligência Artificial'), 'V4 não contém a regra aprovada sobre materiais/IA.');
+assert.ok(coobligorMigration.includes('admin_set_commercial_coobligors'), 'RPC de coobrigados não existe.');
+assert.ok(canonical.includes('contractCoobligors(record)'), 'Gerador Word não lê coobrigados estruturados.');
+assert.ok(canonical.includes('COOBRIGADO(A) SOLIDÁRIO(A):'), 'Contrato Word não qualifica coobrigados.');
+assert.ok(canonical.includes('coobligors:record.coobligors'), 'Snapshot do Word não guarda coobrigados.');
