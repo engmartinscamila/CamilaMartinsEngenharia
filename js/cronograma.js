@@ -12,6 +12,7 @@ CRONOGRAMA.JS - CRUD ADMINISTRATIVO
     let clientes = [];
     let projetos = [];
     let etapaSelecionadaId = null;
+    let modoTeste = false;
 
     document.addEventListener("DOMContentLoaded", iniciar);
 
@@ -39,6 +40,9 @@ CRONOGRAMA.JS - CRUD ADMINISTRATIVO
     }
 
     function configurarEventos() {
+        const botaoTeste = document.getElementById("modoTesteCronograma");
+        botaoTeste?.addEventListener("click", alternarModoTeste);
+
         const botaoNovo = document.getElementById("novaEtapa");
         if (botaoNovo) {
             botaoNovo.removeAttribute("onclick");
@@ -59,6 +63,28 @@ CRONOGRAMA.JS - CRUD ADMINISTRATIVO
         document.getElementById("modalCronograma")?.addEventListener("click", event => {
             if (event.target.id === "modalCronograma") fecharModal();
         });
+    }
+
+    function alternarModoTeste() {
+        modoTeste = !modoTeste;
+        const botao = document.getElementById("modoTesteCronograma");
+        if (modoTeste) {
+            const cliente = clientes[0];
+            const projeto = projetos.find(item => item.cliente_id === cliente?.id) || projetos[0];
+            const hoje = new Date();
+            const iso = valor => new Date(hoje.getTime() + valor * 86400000).toISOString().slice(0, 10);
+            etapas = cliente && projeto ? [
+                { id: "teste-1", cliente_id: cliente.id, projeto_id: projeto.id, nome: "Levantamento inicial", data_inicio: iso(0), data_fim: iso(5), status: "Concluído", percentual_conclusao: 100, peso_percentual: 20, ordem: 1, descricao: "Exemplo de etapa concluída." },
+                { id: "teste-2", cliente_id: cliente.id, projeto_id: projeto.id, nome: "Desenvolvimento do estudo", data_inicio: iso(6), data_fim: iso(15), status: "Em andamento", percentual_conclusao: 40, peso_percentual: 50, ordem: 2, descricao: "Exemplo de etapa em andamento." },
+                { id: "teste-3", cliente_id: cliente.id, projeto_id: projeto.id, nome: "Entrega e aceite", data_inicio: iso(16), data_fim: iso(20), status: "Pendente", percentual_conclusao: 0, peso_percentual: 30, ordem: 3, descricao: "Exemplo de etapa futura." }
+            ] : [];
+            if (botao) { botao.textContent = "Sair do teste"; botao.classList.add("ativo"); }
+        } else {
+            dbBuscarCronograma().then(data => { etapas = data; renderizar(); atualizarResumo(); });
+            if (botao) { botao.innerHTML = '<i class="fa-solid fa-flask"></i>Testar cronograma'; botao.classList.remove("ativo"); }
+        }
+        renderizar();
+        atualizarResumo();
     }
 
     function renderizar(lista = etapas, abrirPastas = false) {
@@ -168,6 +194,11 @@ CRONOGRAMA.JS - CRUD ADMINISTRATIVO
 
     async function salvarEtapa(event) {
         event.preventDefault();
+
+        if (modoTeste) {
+            alert("O modo de teste é somente visual. Saia do teste para cadastrar uma etapa real.");
+            return;
+        }
 
         const dados = {
             nome: valor("nomeEtapa"),
