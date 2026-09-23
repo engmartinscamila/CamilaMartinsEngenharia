@@ -428,6 +428,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      ...identity(d,profile,generatedAt),
      p(`Data e horário da vistoria: ${value(d,'survey_datetime',value(d,'visit_datetime','a preencher'))}`),
      p(`Responsável pelo acompanhamento no local: ${value(d,'site_companion',value(d,'accompanying_person','a preencher'))}`),
+     p(`Responsável técnico pelo registro: ${value(d,'technical_responsible','a preencher')}`),
      h('2. DADOS DO IMÓVEL'),
      p(`Tipo: ${value(d,'project_type')} • Área do terreno: ${String(d.area_terreno_m2??'não informada')} m² • Área construída: ${String(d.area_construida_m2??'não informada')} m²`),
      p(`Endereço: ${value(d,'property_address')}`),
@@ -563,6 +564,8 @@ Deno.serve(async(req)=>{
   const documentId=typeof body.documentId==='string'?body.documentId:'';
   const action=body.action==='send'?'send':'generate';
   const expectedDocumentKind=typeof body.expectedDocumentKind==='string'?body.expectedDocumentKind:'';
+  const scheduledFor=typeof body.scheduledFor==='string'&&body.scheduledFor?new Date(body.scheduledFor):null;
+  const isScheduled=scheduledFor&&!Number.isNaN(scheduledFor.getTime())&&scheduledFor.getTime()>Date.now();
   if(!/^[0-9a-f-]{36}$/i.test(documentId))return json({error:'Documento inválido.'},400);
   const {error:rateError}=await caller.rpc('consume_admin_rate_limit',{p_action:`contract-document-${action}`});
   if(rateError)return json({error:'Muitas tentativas. Aguarde antes de repetir a operação.'},429);
@@ -591,12 +594,12 @@ Deno.serve(async(req)=>{
      cliente_id:row.cliente_id,projeto_id:row.projeto_id,titulo:`${row.nome} disponível`,
      mensagem:'Um novo documento vinculado ao seu contrato foi disponibilizado em Documentos.',
      tipo:'documento_contratual',destinatario:'cliente',referencia_tipo:'documento',
-     referencia_id:row.id,link_path:'/(client)/documents',lida:false
+     referencia_id:row.id,link_path:'/(client)/documents',lida:false,delivery_status:isScheduled?'scheduled':'sent',scheduled_for:isScheduled?scheduledFor.toISOString():null,sent_at:isScheduled?null:new Date().toISOString()
     });
     if(notification.error)throw notification.error;
    }
    await service.from('audit_log').insert({user_id:user.id,action:'send_contract_document',entity_type:'documentos',entity_id:row.id,details:{document_kind:row.document_kind}});
-   return json({sent:true,documentKind:row.document_kind});
+   return json({sent:true,scheduled:Boolean(isScheduled),scheduledFor:isScheduled?scheduledFor.toISOString():null,documentKind:row.document_kind});
   }
 
   if(row.workflow_status==='enviado'||row.workflow_status==='assinado'||row.workflow_status==='aceito'){
