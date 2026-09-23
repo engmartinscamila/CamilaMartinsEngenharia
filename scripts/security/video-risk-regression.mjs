@@ -71,16 +71,24 @@ ok(rlsTest.includes('other project denied'), 'Teste de projeto de outro cliente 
 ok(rlsTest.includes('cross-client document metadata denied'), 'Teste de documento de outro cliente ausente');
 ok(rlsTest.includes('client cannot become admin'), 'Teste de escalada cliente→admin ausente');
 
-// 06 — SSRF: recuperação de senha só pode chamar o provedor fixo de e-mail.
+// 06 — SSRF: recuperação só chama endpoints fixos e revisados.
 const passwordFetches = [...passwordLink.matchAll(/fetch\(([^\n,]+)/g)].map(match => match[1].trim());
-ok(passwordFetches.length === 1, 'Recuperação de senha ganhou chamada HTTP não revisada');
-ok(passwordFetches[0]?.includes('"https://api.resend.com/emails"'), 'Destino HTTP da recuperação não é fixo');
+ok(passwordFetches.length === 2, 'Recuperação de senha ganhou chamada HTTP não revisada');
+ok(passwordFetches.some(value => value.includes('"https://api.resend.com/emails"')), 'Destino do provedor de e-mail deixou de ser fixo');
+ok(passwordFetches.some(value => value.includes('"https://challenges.cloudflare.com/turnstile/v0/siteverify"')), 'Validação Turnstile não usa endpoint fixo');
 ok(!/fetch\s*\(\s*(?:body|payload|params|input)\b/.test(passwordLink), 'Entrada do usuário virou destino HTTP');
 
 // 07 — Senha: política local gratuita continua forte, sem depender de recurso pago.
 for (const token of ['/[^a-z]/', '/[^A-Z]/']) void token; // documentação da intenção abaixo
 ok(resetJs.includes('/[a-z]/') && resetJs.includes('/[A-Z]/') && resetJs.includes('/[0-9]/') && resetJs.includes('/[^A-Za-z0-9]/'), 'Política web de senha forte foi reduzida');
 ok(appAuth.includes('/[a-z]/') && appAuth.includes('/[A-Z]/') && appAuth.includes('/[0-9]/') && appAuth.includes('/[^A-Za-z0-9]/'), 'Política do app de senha forte foi reduzida');
+
+// CAPTCHA gratuito — código fica pronto, porém só exige desafio quando a chave real for configurada.
+ok(login.includes('name="cme-turnstile-site-key"'), 'Slot da Site Key do Turnstile ausente');
+ok(login.includes('id="turnstileContainer"'), 'Container do Turnstile ausente');
+ok(auth.includes('options: { captchaToken }'), 'Login não encaminha token CAPTCHA ao Supabase Auth');
+ok(passwordLink.includes('TURNSTILE_REQUIRED'), 'Endpoint de recuperação não possui gate de Turnstile');
+ok(passwordLink.includes('verifyTurnstile(request, captchaToken)'), 'Recuperação não valida CAPTCHA no servidor quando ativado');
 
 // 08 — Abuso/DoS: recuperação limita corpo e consome quota antes da consulta cadastral.
 ok(passwordLink.includes('const MAX_REQUEST_BYTES = 4096;'), 'Limite de corpo da recuperação ausente');
