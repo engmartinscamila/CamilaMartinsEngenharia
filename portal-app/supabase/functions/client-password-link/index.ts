@@ -18,7 +18,7 @@ const ALLOWED_ORIGINS = new Set([
   ...(production ? ["https://www.camilamartinsengenharia.com.br"] : []),
 ]);
 const GENERIC_MESSAGE = "Se este e-mail estiver autorizado, enviaremos um link seguro para criar ou redefinir a senha. Verifique também a caixa de spam.";
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
 
 function corsHeaders(request: Request) {
   const origin = request.headers.get("origin") ?? "";
@@ -40,6 +40,24 @@ function json(request: Request, body: unknown, status = 200) {
 
 function normalizeEmail(value: unknown) {
   return typeof value === "string" ? value.trim().toLowerCase().slice(0, 254) : "";
+}
+
+async function readRequestBody(request: Request) {
+  const contentLength = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(contentLength) && contentLength > MAX_REQUEST_BYTES) {
+    throw new Error("request_too_large");
+  }
+
+  const raw = await request.text();
+  if (new TextEncoder().encode(raw).byteLength > MAX_REQUEST_BYTES) {
+    throw new Error("request_too_large");
+  }
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
 }
 
 function escapeHtml(value: unknown) {
@@ -91,11 +109,15 @@ const handler = withSupabase({ auth: "publishable" }, async (request: Request, c
   if (!validSiteUrl) return json(request, { ok: false, message: "Canal de acesso temporariamente indisponível." }, 503);
 
   try {
-    const body = await request.json().catch(() => ({}));
+    const body = await readRequestBody(request);
     const email = normalizeEmail(body?.email);
     if (!EMAIL_PATTERN.test(email)) return json(request, { ok: true, message: GENERIC_MESSAGE });
 
     const admin = ctx.supabaseAdmin;
+    // Consume the quota before looking the address up. This keeps unknown and
+    // known addresses on the same path and limits repeated database probing.
+    if (!(await consumeRateLimit(admin, email))) return json(request, { ok: true, message: GENERIC_MESSAGE });
+
     const { data: client, error: clientError } = await admin
       .from("clientes")
       .select("id,nome,email,auth_id,status")
@@ -104,8 +126,6 @@ const handler = withSupabase({ auth: "publishable" }, async (request: Request, c
       .maybeSingle();
     if (clientError) throw clientError;
     if (!client?.auth_id) return json(request, { ok: true, message: GENERIC_MESSAGE });
-
-    if (!(await consumeRateLimit(admin, email))) return json(request, { ok: true, message: GENERIC_MESSAGE });
 
     const { data: userData, error: userError } = await admin.auth.admin.getUserById(client.auth_id);
     const user = !userError ? userData?.user : null;
@@ -121,7 +141,10 @@ const handler = withSupabase({ auth: "publishable" }, async (request: Request, c
 
     return json(request, { ok: true, message: GENERIC_MESSAGE });
   } catch (error) {
-    console.error("client-password-link", error instanceof Error ? error.message : error);
+    if (error instanceof Error && error.message === "request_too_large") {
+      return json(request, { ok: false, message: "Requisição inválida." }, 413);
+    }
+    console.error("client-password-link", error instanceof Error ? error.message : "erro_interno");
     return json(request, { ok: false, message: "Não foi possível enviar o link agora. Tente novamente em alguns minutos." }, 503);
   }
 });
