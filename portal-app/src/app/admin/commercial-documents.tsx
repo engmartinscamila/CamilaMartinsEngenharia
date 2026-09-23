@@ -68,7 +68,7 @@ export default function AdminCommercialDocumentsScreen() {
   })), [catalogServices, selectedCodes, selectedLevels]);
   const serviceSuggestions=useMemo(()=>suggestCommercialServices(
     serviceQuery,
-    catalogServices.map(({code,name})=>({code,name})),
+    catalogServices.map(({code,name,aliases,synonyms,keywords})=>({code,name,aliases,synonyms,keywords})),
     5,
   ),[catalogServices,serviceQuery]);
 
