@@ -40,13 +40,16 @@ assert.ok(strictChainMigration.includes("q.contract_master_version is distinct f
 assert.ok(strictChainMigration.includes("item->>'levelScopeReviewStatus'='approved'"), 'Documento oficial não exige matriz serviço x nível aprovada.');
 assert.ok(strictChainMigration.includes('Documento bloqueado: foi encontrado placeholder'), 'Placeholder interno não é bloqueado antes da emissão.');
 
-const v4Activation = readFileSync('supabase/migrations/20260923063200_contract_master_v4_approved_activate.sql', 'utf8');
+const v4Part1 = readFileSync('supabase/migrations/20260923063000_contract_master_v4_approved_part1.sql', 'utf8');
+const v4Part2 = readFileSync('supabase/migrations/20260923063100_contract_master_v4_approved_part2.sql', 'utf8');
+const v4Part3 = readFileSync('supabase/migrations/20260923063200_contract_master_v4_approved_activate.sql', 'utf8');
+const v4Approved = [v4Part1,v4Part2,v4Part3].join('\n');
 const coobligorMigration = readFileSync('supabase/migrations/20260923063500_commercial_coobligors_v4.sql', 'utf8');
-assert.ok(v4Activation.includes('Contrato Mestre v4 - aprovado'), 'Migration não cria/ativa a v4 aprovada.');
-assert.ok(v4Activation.includes('25% (vinte e cinco por cento)'), 'V4 não contém a multa rescisória aprovada de 25%.');
-assert.ok(v4Activation.includes('Portal do Cliente'), 'V4 não contém as regras aprovadas do Portal do Cliente.');
-assert.ok(v4Activation.includes('COOBRIGADO(A) SOLIDÁRIO(A)'), 'V4 não contém a coobrigação aprovada.');
-assert.ok(v4Activation.includes('Inteligência Artificial'), 'V4 não contém a regra aprovada sobre materiais/IA.');
+assert.ok(v4Approved.includes('Contrato Mestre v4 - aprovado'), 'Migrations não criam/ativam a v4 aprovada.');
+assert.ok(v4Approved.includes('25% (vinte e cinco por cento)'), 'V4 não contém a multa rescisória aprovada de 25%.');
+assert.ok(v4Approved.includes('Portal do Cliente'), 'V4 não contém as regras aprovadas do Portal do Cliente.');
+assert.ok(v4Approved.includes('COOBRIGADO(A) SOLIDÁRIO(A)'), 'V4 não contém a coobrigação aprovada.');
+assert.ok(v4Approved.includes('Inteligência Artificial'), 'V4 não contém a regra aprovada sobre materiais/IA.');
 assert.ok(coobligorMigration.includes('admin_set_commercial_coobligors'), 'RPC de coobrigados não existe.');
 assert.ok(canonical.includes('contractCoobligors(record)'), 'Gerador Word não lê coobrigados estruturados.');
 assert.ok(canonical.includes('COOBRIGADO(A) SOLIDÁRIO(A):'), 'Contrato Word não qualifica coobrigados.');
