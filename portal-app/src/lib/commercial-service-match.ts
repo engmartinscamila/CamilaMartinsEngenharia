@@ -1,6 +1,9 @@
 export interface ServiceMatchCandidate {
   code: string;
   name: string;
+  aliases?: string[];
+  synonyms?: string[];
+  keywords?: string[];
 }
 
 export interface ServiceMatchSuggestion extends ServiceMatchCandidate {
@@ -74,8 +77,14 @@ export function suggestCommercialServices(
   const suggestions = candidates.map((candidate) => {
     const normalizedName = normalizeServiceText(candidate.name);
     const normalizedCode = normalizeServiceText(candidate.code);
-    const words = normalizedName.split(' ').filter(Boolean);
+    const alternateTerms = [
+      ...(candidate.aliases ?? []),
+      ...(candidate.synonyms ?? []),
+      ...(candidate.keywords ?? []),
+    ].map(normalizeServiceText).filter(Boolean);
+    const words = [normalizedName, ...alternateTerms].flatMap(value => value.split(' ').filter(Boolean));
     const scores = [similarity(normalizedQuery, normalizedName), similarity(normalizedQuery, normalizedCode)];
+    for (const term of alternateTerms) scores.push(similarity(normalizedQuery, term));
     for (const word of words) scores.push(similarity(normalizedQuery, word));
     const score = Math.max(...scores);
     return {
