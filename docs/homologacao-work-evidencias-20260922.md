@@ -29,6 +29,14 @@ As Edge Functions `generate-commercial-document`, `generate-commercial-document-
 
 Uma simulação anterior com `BEGIN; ...; ROLLBACK` foi insuficiente para validar integralmente uma migração: o `ROLLBACK` final pode mascarar o erro intermediário no retorno da ferramenta. A tentativa real via `apply_migration` revelou o guard acima. Não usar a simulação como evidência de sucesso.
 
+## Conferência adicional de 23/09/2026
+
+- As quatro suítes no SHA documental `9afb7d8c446377589e94f79f9eac7b31b96ae004` concluíram com `success`: documentos `35804374034`, segurança `35804372896`, portal-app `35804372993` e auditoria completa `35804372889`. Novo commit invalida a afirmação de CI no SHA final até nova verificação.
+- Testes adicionais de SQL com papéis `authenticated` e identidades sintéticas A, B e admin passaram: `can_access_project`, `user_has_project_access`, `current_client_id` e `is_portal_admin` aplicaram o escopo esperado; a função administrativa `admin_professional_identity_status` rejeitou A/B e `admin_document_pending_alerts` não retornou linhas a A/B. Isto não equivale a um JWT real pela API.
+- `storage.objects` não tinha objetos no staging. As sete buckets são privadas e há policy de leitura por objeto, porém não foi possível provar upload/download e isolamento A/B com arquivo real.
+- Comparação somente de metadados: staging possui 72 tabelas públicas, 133 funções, 181 policies, 223 índices e 867 colunas; produção possui 69 tabelas, 102 funções, 133 policies, 237 índices e 809 colunas. Os índices diferem por nomes e evolução histórica (62 nomes exclusivos de produção, 48 exclusivos de staging); esses totais não provam equivalência nem autorizam copiar schema/dados da produção. O staging contém mudanças novas da PR enquanto produção ainda não recebeu a PR. A cadeia histórica diferente requer reconciliação específica antes de homologar.
+- Security Advisor após DDL no staging: 64 avisos de funções `SECURITY DEFINER` executáveis por `authenticated`, proteção de senhas vazadas desativada e `google_calendar_tokens` com RLS sem policy. Revisão individual ainda necessária; não revogar privilégios em massa.
+
 ## Gates do manifesto
 
 | Gate | Estado | Próximo requisito |
