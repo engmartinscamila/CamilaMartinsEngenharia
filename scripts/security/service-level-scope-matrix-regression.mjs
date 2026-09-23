@@ -57,4 +57,13 @@ ok(consumeSql.includes("'budgetDescription'"), 'snapshot guarda texto específic
 ok(consumeSql.includes("'contractScope'"), 'snapshot guarda texto específico de contrato aprovado');
 ok(consumeSql.includes("'annexScope'"), 'snapshot guarda texto específico de Anexo I aprovado');
 
+const approvalMigration = fs.readdirSync(migrationDir).find((name) => name.endsWith('_approve_service_level_scope_owner_authorized.sql'));
+ok(Boolean(approvalMigration), 'migration de aprovação autorizada da matriz existe');
+const approvalSql = fs.readFileSync(path.join(migrationDir, approvalMigration), 'utf8');
+ok(approvalSql.includes("v_total<>114 or v_pending<>114"), 'aprovação em lote exige a matriz exata que foi autorizada');
+ok(approvalSql.includes("v_invalid>0"), 'aprovação autorizada ainda valida completude antes de liberar');
+ok(approvalSql.includes("review_status='approved'"), 'matriz autorizada é publicada como aprovada');
+ok(approvalSql.includes('service_level_scope_versions'), 'aprovação preserva histórico de versões');
+ok(approvalSql.includes('owner_authorized'), 'audit log registra autorização explícita da titular');
+
 console.log(`MATRIZ SERVIÇO X NÍVEL: ${checks} verificações passaram.`);
