@@ -154,10 +154,11 @@ const mixedLevelContractWord = await fixture([
   'Nível de prestação: BRONZE — Essencial.',
 ]);
 const mixedLevelContract = await xmlOf(await api.enhanceContractDocument(mixedLevelContractWord, propertyAddress, mixedLevelServices, '', ''));
-assert.ok(mixedLevelContract.includes('Nível desta atividade: BRONZE — Essencial.'), 'Nível Bronze da primeira atividade não foi preservado');
-assert.ok(mixedLevelContract.includes('Nível desta atividade: OURO — Completo.'), 'Nível Ouro da segunda atividade não foi preservado');
+assert.ok(mixedLevelContract.includes('Nível desta atividade: BRONZE.'), 'Nível Bronze da primeira atividade não foi preservado');
+assert.ok(mixedLevelContract.includes('Nível desta atividade: OURO.'), 'Nível Ouro da segunda atividade não foi preservado');
 assert.ok(mixedLevelContract.includes('Níveis de prestação: definidos individualmente por atividade no escopo técnico vinculado.'), 'Resumo do contrato não reconheceu níveis mistos');
 assert.ok(!mixedLevelContract.includes('Nível de prestação: BRONZE — Essencial.'), 'Primeiro nível vazou para o resumo de toda a contratação');
+assert.ok(!mixedLevelContract.includes('BRONZE — Essencial') && !mixedLevelContract.includes('OURO — Completo'), 'Descritores não podem virar nomes paralelos dos níveis');
 
 const coreGenerator = readFileSync(resolve(root,'supabase/functions/generate-commercial-document/index.ts'),'utf8');
 assert.ok(coreGenerator.includes('2. NÍVEIS DE PRESTAÇÃO POR ATIVIDADE'), 'Orçamento não apresenta níveis por atividade');
@@ -165,4 +166,5 @@ assert.ok(coreGenerator.includes('Nível desta atividade:'), 'Bloco individual d
 assert.ok(coreGenerator.includes('definidos individualmente por atividade no escopo técnico vinculado'), 'Contrato não possui resumo seguro para níveis mistos');
 assert.ok(!coreGenerator.includes('levelFromServices('), 'Gerador voltou a usar o primeiro nível como nível global');
 assert.ok(coreGenerator.includes("||'conforme Anexo I'"), 'Orçamento ainda presume PDF sem formato');
+assert.ok(!coreGenerator.includes("String(level.subtitle??'').trim()].filter(Boolean).join(' — ')"), 'Gerador voltou a compor nome do nível com subtítulo');
 console.log('PASS: históricos preservados; níveis por atividade isolados; consultoria avulsa com pacote; sem prazos e revisões presumidos; escopo, endereços e Word válidos.');
