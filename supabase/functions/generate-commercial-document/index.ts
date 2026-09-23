@@ -195,16 +195,26 @@ const levelName=(value:string|null)=> {
  if(code)return code.toUpperCase();
  return 'Não aplicável / não selecionado';
 };
-const levelFromServices=(items:ServiceItem[])=>{
- for(const item of items){
-   const level=item.level;
-   if(level&&typeof level==='object')return level as Record<string,unknown>;
- }
- return null;
+const serviceLevelObject=(item:ServiceItem)=>{
+ const level=item.level;
+ return level&&typeof level==='object'?level as Record<string,unknown>:null;
 };
-const levelDisplay=(record:CommercialRecord,level:Record<string,unknown>|null)=>level
- ? [String(level.label??'').trim(),String(level.subtitle??'').trim()].filter(Boolean).join(' — ')
- : levelName(record.experience_level);
+const serviceLevelCode=(item:ServiceItem)=>{
+ const level=serviceLevelObject(item);
+ return String(level?.code??item.levelCode??'').trim().toLowerCase();
+};
+const levelLabel=(level:Record<string,unknown>|null)=>{
+ if(!level)return '';
+ return [String(level.label??'').trim(),String(level.subtitle??'').trim()].filter(Boolean).join(' — ');
+};
+const serviceLevelDisplay=(item:ServiceItem)=>{
+ const level=serviceLevelObject(item);
+ return levelLabel(level)||levelName(serviceLevelCode(item)||null);
+};
+const levelEntries=(items:ServiceItem[])=>items
+ .filter(item=>item.levelApplicable===true)
+ .map(item=>({item,level:serviceLevelObject(item),code:serviceLevelCode(item)}))
+ .filter(entry=>Boolean(entry.code));
 const serviceDescription=(item:ServiceItem)=>String(item.description??'Serviço técnico conforme escopo descrito no orçamento e no Anexo I.');
 const serviceRevisions=(item:ServiceItem)=>{
  const value=item.revisions;
@@ -238,16 +248,21 @@ const paymentLines=(record:CommercialRecord)=>{
 };
 function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,generatedAt:Date){
  const selected=selectedServices(record);
- const level=levelFromServices(selected);
- const levelFeatures=arrStrings(level?.features);
- const levelExclusions=arrStrings(level?.exclusions);
- const eligibleServices=selected.filter(item=>item.levelApplicable===true).map(item=>String(item.name??'Serviço'));
+ const entries=levelEntries(selected);
+ const distinctLevels=[...new Set(entries.map(entry=>entry.code))];
+ const commonLevel=distinctLevels.length===1?entries.find(entry=>entry.code===distinctLevels[0])?.level??null:null;
+ const commonLevelFeatures=arrStrings(commonLevel?.features);
+ const commonLevelExclusions=arrStrings(commonLevel?.exclusions);
+ const legacyLevel=entries.length===0&&record.experience_level?levelName(record.experience_level):'';
  const consolidatedExclusions=unique(selected.flatMap(item=>arrStrings(item.exclusions)));
  const today=generatedDatePt(generatedAt);
 
  const serviceBlocks:Paragraph[]=[];
  selected.forEach((item,index)=>{
    serviceBlocks.push(serviceHeading(`${index+1}. ${String(item.name??'Serviço')}`));
+   if(item.levelApplicable===true&&serviceLevelCode(item)){
+     serviceBlocks.push(small(`Nível desta atividade: ${serviceLevelDisplay(item)}.`));
+   }
    serviceBlocks.push(p(serviceDescription(item)));
    const deliverables=arrStrings(item.deliverables);
    if(deliverables.length){
@@ -282,13 +297,21 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
   p(`Tipo de imóvel: ${text(record.property_type)} • Padrão construtivo: ${text(record.construction_standard)}`),
   p(`Área do terreno: ${record.area_terreno_m2??'não informada'} m² • Área construída prevista: ${record.area_construida_m2??'não informada'} m²`),
 
-  h('2. NÍVEL DE PRESTAÇÃO DE SERVIÇO'),
-  p(`Nível selecionado: ${levelDisplay(record,level)}`,true,GOLD),
-  ...(level?[p(String(level.description??''))]:[p('O nível de experiência não foi selecionado. Quando aplicável, ele deverá ser definido antes da formalização definitiva.')]),
-  ...(eligibleServices.length?[small(`O nível selecionado aplica-se somente às atividades elegíveis incluídas nesta proposta: ${eligibleServices.join(', ')}.`)]:[small('Nenhum serviço selecionado nesta proposta recebe ampliação automática por nível de experiência.')]),
-  ...levelFeatures.map(value=>bullet(value)),
-  ...levelExclusions.map(value=>bullet(`Não incluído neste nível: ${value}`)),
-  small(smartRule(record,'level_scope_rule','O nível selecionado aplica-se somente aos serviços elegíveis e não acrescenta automaticamente itens que não tenham sido contratados expressamente.')),
+  h('2. NÍVEIS DE PRESTAÇÃO POR ATIVIDADE'),
+  ...(entries.length===0
+    ? [p(legacyLevel?`Nível legado do registro: ${legacyLevel}.`:'Nenhum nível foi localizado no snapshot. Revise o orçamento antes da formalização definitiva.')]
+    : distinctLevels.length===1
+      ? [
+          p(`Nível selecionado para as atividades aplicáveis: ${levelLabel(commonLevel)||levelName(distinctLevels[0])}.`,true,GOLD),
+          ...(commonLevel?[p(String(commonLevel.description??''))]:[]),
+          ...commonLevelFeatures.map(value=>bullet(value)),
+          ...commonLevelExclusions.map(value=>bullet(`Não incluído neste nível: ${value}`)),
+        ]
+      : [
+          p('Os níveis de prestação foram definidos individualmente por atividade.',true,GOLD),
+          ...entries.map(({item})=>bullet(`${String(item.name??'Serviço')}: ${serviceLevelDisplay(item)}`)),
+        ]),
+  small(smartRule(record,'level_scope_rule','O nível de cada atividade altera somente o escopo daquela atividade e não acrescenta automaticamente serviços, visitas, aprovações, execução, taxas, fornecimentos ou entregáveis de outra categoria.')),
 
   h('3. ESCOPO INTELIGENTE DE SERVIÇOS'),
   ...(selected.length?serviceBlocks:[p('Nenhum serviço foi selecionado. Revise o orçamento antes da emissão definitiva.')]),
@@ -328,10 +351,14 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
 
 function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,contractMasterBody:string,generatedAt:Date){
  const body=contractMasterBody.split('\n').filter(Boolean).map(line=>line.startsWith('CLÁUSULA')?h(line):p(line));
- const level=levelFromServices(selectedServices(record));
- const levelDisplay=level
-   ? [String(level.label??'').trim(),String(level.subtitle??'').trim()].filter(Boolean).join(' — ')
-   : levelName(record.experience_level);
+ const selected=selectedServices(record);
+ const entries=levelEntries(selected);
+ const distinctLevels=[...new Set(entries.map(entry=>entry.code))];
+ const contractLevelSummary=entries.length===0
+   ? levelName(record.experience_level)
+   : distinctLevels.length===1
+     ? serviceLevelDisplay(entries[0].item)
+     : 'definidos individualmente por atividade no escopo técnico vinculado';
  return makeDoc([
    ...title(`CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE ENGENHARIA — ${text(record.contract_number,'CONTRATO SEM NUMERAÇÃO — NÃO EMITIR')}`,'Instrumento particular • identidade profissional protegida'),
    small(`Data de emissão: ${generatedDatePt(generatedAt)} • Data de assinatura: ${generatedDatePt(generatedAt)}`),
@@ -343,7 +370,7 @@ function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,c
    ...body,
    h('RESUMO COMERCIAL VINCULADO'),
    p(`Valor total dos honorários: ${money(record.total_value)}.`,true,GOLD),
-   p(`Nível de experiência: ${levelDisplay}.`),
+   p(`Nível de prestação: ${contractLevelSummary}.`),
    p('O detalhamento definitivo dos serviços, entregáveis, revisões, formatos e cronograma consta do Anexo I, que deve refletir o mesmo escopo estruturado utilizado na proposta comercial.'),
    p('E por estarem assim justas e contratadas, as partes assinam o presente instrumento em 2 (duas) vias de igual teor e forma, na presença das testemunhas abaixo.'),
    p(signaturePlaceAndDate(record.city,generatedAt)),
