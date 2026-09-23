@@ -51,6 +51,9 @@ jobs:
       - name: Testar busca tolerante de serviços sem auto seleção
         run: node scripts/test-commercial-service-match.mjs
 
+      - name: Confirmar catálogo central no fluxo comercial
+        run: node scripts/test-commercial-catalog-source.mjs
+
       - name: Testar carregamento completo de clientes, documentos e vínculos
         run: node scripts/test-construction-schedule-pagination.mjs
 
