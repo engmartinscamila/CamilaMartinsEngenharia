@@ -564,6 +564,8 @@ Deno.serve(async(req)=>{
   const documentId=typeof body.documentId==='string'?body.documentId:'';
   const action=body.action==='send'?'send':'generate';
   const expectedDocumentKind=typeof body.expectedDocumentKind==='string'?body.expectedDocumentKind:'';
+  const scheduledFor=typeof body.scheduledFor==='string'&&body.scheduledFor?new Date(body.scheduledFor):null;
+  const isScheduled=scheduledFor&&!Number.isNaN(scheduledFor.getTime())&&scheduledFor.getTime()>Date.now();
   if(!/^[0-9a-f-]{36}$/i.test(documentId))return json({error:'Documento inválido.'},400);
   const {error:rateError}=await caller.rpc('consume_admin_rate_limit',{p_action:`contract-document-${action}`});
   if(rateError)return json({error:'Muitas tentativas. Aguarde antes de repetir a operação.'},429);
@@ -592,12 +594,12 @@ Deno.serve(async(req)=>{
      cliente_id:row.cliente_id,projeto_id:row.projeto_id,titulo:`${row.nome} disponível`,
      mensagem:'Um novo documento vinculado ao seu contrato foi disponibilizado em Documentos.',
      tipo:'documento_contratual',destinatario:'cliente',referencia_tipo:'documento',
-     referencia_id:row.id,link_path:'/(client)/documents',lida:false,delivery_status:'sent',sent_at:new Date().toISOString()
+     referencia_id:row.id,link_path:'/(client)/documents',lida:false,delivery_status:isScheduled?'scheduled':'sent',scheduled_for:isScheduled?scheduledFor.toISOString():null,sent_at:isScheduled?null:new Date().toISOString()
     });
     if(notification.error)throw notification.error;
    }
    await service.from('audit_log').insert({user_id:user.id,action:'send_contract_document',entity_type:'documentos',entity_id:row.id,details:{document_kind:row.document_kind}});
-   return json({sent:true,documentKind:row.document_kind});
+   return json({sent:true,scheduled:Boolean(isScheduled),scheduledFor:isScheduled?scheduledFor.toISOString():null,documentKind:row.document_kind});
   }
 
   if(row.workflow_status==='enviado'||row.workflow_status==='assinado'||row.workflow_status==='aceito'){
