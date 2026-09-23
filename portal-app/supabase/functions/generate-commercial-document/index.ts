@@ -205,7 +205,7 @@ const serviceLevelCode=(item:ServiceItem)=>{
 };
 const levelLabel=(level:Record<string,unknown>|null)=>{
  if(!level)return '';
- return [String(level.label??'').trim(),String(level.subtitle??'').trim()].filter(Boolean).join(' — ');
+ return String(level.label??'').trim();
 };
 const serviceLevelDisplay=(item:ServiceItem)=>{
  const level=serviceLevelObject(item);
