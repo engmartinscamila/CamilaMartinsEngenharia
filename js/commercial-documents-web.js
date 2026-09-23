@@ -586,7 +586,12 @@
           p_quote_ids: quoteIds,
           p_source_project_id: sourceProjectId
         })
-      : await client().rpc('admin_create_commercial_record', { p_data: payload });
+      : payload.linked_client_id
+        ? await client().rpc('admin_create_commercial_record_from_client', {
+            p_client_id: payload.linked_client_id,
+            p_data: payload
+          })
+        : await client().rpc('admin_create_commercial_record', { p_data: payload });
 
     if (result.error || !result.data) {
       msg(result.error?.message || `Não foi possível criar o ${isContract ? 'contrato' : 'orçamento'}.`, 'error');
