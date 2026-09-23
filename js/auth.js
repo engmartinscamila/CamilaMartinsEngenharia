@@ -222,9 +222,9 @@ function prepararLogin() {
         event.preventDefault();
         mostrarMensagem("");
 
-        const email = campoEmail.value.trim();
-        if (!email) {
-            mostrarMensagem("Digite seu e-mail.");
+        const email = campoEmail.value.trim().toLowerCase();
+        if (!email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            mostrarMensagem("Digite um e-mail válido.");
             campoEmail.focus();
             return;
         }
@@ -234,6 +234,12 @@ function prepararLogin() {
             const resultado = await solicitarLinkSenha(email);
             mostrarMensagem(resultado.mensagem, resultado.ok ? "sucesso" : "erro");
             definirCarregamento(false);
+            return;
+        }
+
+        if (!campoSenha.value || campoSenha.value.length > 256) {
+            mostrarMensagem("E-mail ou senha incorretos.");
+            campoSenha.focus();
             return;
         }
 
