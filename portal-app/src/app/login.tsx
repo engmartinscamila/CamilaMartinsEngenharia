@@ -53,6 +53,7 @@ export default function LoginScreen() {
         autoCorrect={false}
         keyboardType="email-address"
         label="E-mail"
+        maxLength={254}
         onChangeText={setEmail}
         placeholder="seu@email.com"
         value={email}
@@ -61,6 +62,7 @@ export default function LoginScreen() {
         autoCapitalize="none"
         autoComplete="current-password"
         label="Senha"
+        maxLength={256}
         onChangeText={setPassword}
         placeholder="Sua senha"
         secureTextEntry={!showPassword}
