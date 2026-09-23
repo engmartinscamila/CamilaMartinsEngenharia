@@ -181,6 +181,7 @@ export default function AdminCommercialDocumentsScreen() {
       companyCoobligorRole: _companyRole,
       ...commercialForm
     }=form;
+    void _spouseName; void _spouseCpf; void _companyName; void _companyCpf; void _companyRole;
     const result = await createCommercialRecord({
       ...commercialForm,
       linkedClientId:selectedClient?.id??null,
