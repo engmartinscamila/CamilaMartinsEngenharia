@@ -216,6 +216,7 @@ const levelEntries=(items:ServiceItem[])=>items
  .map(item=>({item,level:serviceLevelObject(item),code:serviceLevelCode(item)}))
  .filter(entry=>Boolean(entry.code));
 const serviceDescription=(item:ServiceItem)=>String(item.description??'Serviço técnico conforme escopo descrito no orçamento e no Anexo I.');
+const serviceBudgetDescription=(item:ServiceItem)=>String(item.budgetDescription??item.description??'Serviço técnico conforme escopo descrito no orçamento e no Anexo I.');
 const serviceRevisions=(item:ServiceItem)=>{
  const value=item.revisions;
  return typeof value==='number'?String(value):'conforme condição específica do Anexo I';
@@ -263,7 +264,7 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
    if(item.levelApplicable===true&&serviceLevelCode(item)){
      serviceBlocks.push(small(`Nível desta atividade: ${serviceLevelDisplay(item)}.`));
    }
-   serviceBlocks.push(p(serviceDescription(item)));
+   serviceBlocks.push(p(serviceBudgetDescription(item)));
    const deliverables=arrStrings(item.deliverables);
    if(deliverables.length){
      serviceBlocks.push(small('Entregáveis previstos no escopo padrão deste serviço:'));
