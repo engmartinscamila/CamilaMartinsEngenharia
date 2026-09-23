@@ -18,8 +18,7 @@ const serviceLevelCode = (item: Obj) => text(serviceLevelObject(item)?.code ?? i
 const serviceLevelLabel = (item: Obj) => {
   const level = serviceLevelObject(item);
   const label = text(level?.label);
-  const subtitle = text(level?.subtitle);
-  return [label, subtitle].filter(Boolean).join(' — ') || serviceLevelCode(item).toUpperCase();
+  return label || serviceLevelCode(item).toUpperCase();
 };
 const xmlEsc = (value: unknown) => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 function env() {
