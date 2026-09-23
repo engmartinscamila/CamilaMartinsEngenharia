@@ -12,6 +12,7 @@ const catalog = [
   { code: 'f', name: 'Projeto Elétrico' },
   { code: 'g', name: 'Projeto Hidrossanitário' },
   { code: 'o', name: 'Laudo técnico / avaliação / vistoria' },
+  { code: 't', name: 'Reforma / adequação de edificação', aliases: ['reforma residencial', 'reforma comercial'], synonyms: ['projeto de reforma'], keywords: ['adequação', 'intervenção'] },
 ];
 let checks = 0;
 const ok = (condition, message) => { assert.ok(condition, message); checks += 1; };
@@ -24,6 +25,12 @@ result = suggestCommercialServices('HIDROSSANITÁRIO', catalog);
 ok(result[0]?.code === 'g', 'acentos e caixa não impedem sugestão');
 result = suggestCommercialServices('o', catalog);
 ok(result[0]?.code === 'o' && result[0]?.exact === true, 'código oficial exato pode ser sugerido');
+result = suggestCommercialServices('reforma', catalog);
+ok(result[0]?.code === 't', 'atividade reforma é localizada no catálogo canônico');
+result = suggestCommercialServices('adequacao', catalog);
+ok(result[0]?.code === 't', 'alias/sinônimo normalizado encontra reforma/adequação');
+result = suggestCommercialServices('intervencao', catalog);
+ok(result[0]?.code === 't', 'palavra-chave encontra a atividade sem auto seleção');
 result = suggestCommercialServices('xyz totalmente diferente', catalog);
 ok(result.length === 0, 'entrada sem proximidade não inventa correspondência');
 
