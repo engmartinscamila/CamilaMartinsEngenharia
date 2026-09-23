@@ -13,6 +13,8 @@ import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 import type { AdminProjectSummary, WorkDiarySummary } from '@/types/domain';
 
 const today = () => new Date().toISOString().slice(0, 10);
+const timeNow = () => new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date());
+const formatTime = (value: string | null | undefined) => value ? new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(value)) : '—';
 const escapeHtml = (value: string | null) => (value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char] ?? char);
 
 export default function AdminWorkDiaryScreen() {
@@ -84,7 +86,7 @@ export default function AdminWorkDiaryScreen() {
       {error ? <Notice tone="danger">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}
       <Card><Text style={styles.sectionTitle}>Projeto</Text><View style={styles.chips}>{projects.map((item) => <Pressable key={item.id} onPress={() => setProjectId(item.id)} style={[styles.chip, projectId === item.id && styles.selected]}><Text style={styles.chipText}>{item.contractNumber} • {item.name}</Text></Pressable>)}</View></Card>
       <Card>
-        <Text style={styles.sectionTitle}>Registro do dia</Text>
+        <Text style={styles.sectionTitle}>Registro do dia</Text><Text style={styles.meta}>Horário registrado automaticamente ao salvar: {timeNow()}</Text>
         <View style={styles.twoColumns}><Field label="Data (AAAA-MM-DD)" onChangeText={setEntryDate} value={entryDate} /><Field label="Clima" onChangeText={setWeather} value={weather} /><Field keyboardType="number-pad" label="Pessoas na equipe" onChangeText={setTeamCount} value={teamCount} /></View>
         <Field label="Atividades executadas *" multiline onChangeText={setActivities} value={activities} />
         <Field label="Transcrição por voz para revisar" multiline onChangeText={setVoiceTranscript} value={voiceTranscript} />
@@ -96,7 +98,7 @@ export default function AdminWorkDiaryScreen() {
       </Card>
       <Card>
         <View style={styles.header}><Text style={styles.sectionTitle}>Histórico</Text><Button onPress={() => void exportPdf()} title="Gerar PDF" variant="secondary" /></View>
-        {entries.length === 0 ? <StateView icon="book-outline" title="Diário ainda vazio" description="O primeiro registro estruturado aparecerá aqui." /> : entries.map((entry) => <View key={entry.id} style={styles.entry}><View style={styles.header}><Text style={styles.title}>{formatDate(entry.entryDate)}</Text><StatusPill label={entry.clientVisible ? 'cliente acompanha' : 'interno'} tone={entry.clientVisible ? 'success' : 'neutral'} /></View><Text style={styles.meta}>{entry.weather || 'Clima não informado'} • {entry.teamCount ?? '—'} pessoa(s)</Text><Text style={styles.body}>{entry.activities}</Text>{entry.occurrences ? <Text style={styles.warning}>Ocorrências: {entry.occurrences}</Text> : null}{entry.nextSteps ? <Text style={styles.meta}>Próximos passos: {entry.nextSteps}</Text> : null}</View>)}
+        {entries.length === 0 ? <StateView icon="book-outline" title="Diário ainda vazio" description="O primeiro registro estruturado aparecerá aqui." /> : entries.map((entry) => <View key={entry.id} style={styles.entry}><View style={styles.header}><Text style={styles.title}>{formatDate(entry.entryDate)}</Text><StatusPill label={entry.clientVisible ? 'cliente acompanha' : 'interno'} tone={entry.clientVisible ? 'success' : 'neutral'} /></View><Text style={styles.meta}>{entry.weather || 'Clima não informado'} • {entry.teamCount ?? '—'} pessoa(s) • registrado às {formatTime(entry.createdAt)}</Text><Text style={styles.body}>{entry.activities}</Text>{entry.occurrences ? <Text style={styles.warning}>Ocorrências: {entry.occurrences}</Text> : null}{entry.nextSteps ? <Text style={styles.meta}>Próximos passos: {entry.nextSteps}</Text> : null}</View>)}
       </Card>
       <Button loading={loading} onPress={() => void loadEntries()} title="Atualizar diário" variant="secondary" />
     </Screen>
