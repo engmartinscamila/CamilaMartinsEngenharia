@@ -36,4 +36,25 @@ ok(draftSql.includes("aliases = case code"), 'aliases são alimentados no catál
 ok(draftSql.includes("synonyms = case code"), 'sinônimos são alimentados no catálogo');
 ok(draftSql.includes("keywords = case code"), 'palavras-chave são alimentadas no catálogo');
 
+
+const reviewMigration = fs.readdirSync(migrationDir).find((name) => name.endsWith('_service_level_scope_admin_review.sql'));
+ok(Boolean(reviewMigration), 'migration de revisão individual existe');
+const reviewSql = fs.readFileSync(path.join(migrationDir, reviewMigration), 'utf8');
+ok(reviewSql.includes('admin_review_service_level_scope'), 'RPC de revisão individual existe');
+ok(reviewSql.includes("if v_reason is null or length(v_reason)<5"), 'justificativa é obrigatória');
+ok(reviewSql.includes("v_decision not in ('pending','approved','rejected')"), 'decisão é restrita a estados conhecidos');
+ok(reviewSql.includes('for update'), 'revisão trava a combinação individual durante a decisão');
+ok(reviewSql.includes('service_level_scope_versions'), 'cada decisão gera histórico versionado');
+ok(!/approve.*all|bulk.*approv|mass.*approv/i.test(reviewSql), 'não existe aprovação em massa');
+ok(reviewSql.includes("if v_decision='approved'"), 'aprovação valida os três textos antes de liberar');
+ok(reviewSql.includes('public.is_portal_admin()'), 'revisão exige Admin no servidor');
+
+const consumeMigration = fs.readdirSync(migrationDir).find((name) => name.endsWith('_use_service_level_scope_matrix.sql'));
+ok(Boolean(consumeMigration), 'migration de consumo da matriz existe');
+const consumeSql = fs.readFileSync(path.join(migrationDir, consumeMigration), 'utf8');
+ok(consumeSql.includes("v_scope.review_status='approved'"), 'somente matriz aprovada substitui texto legado');
+ok(consumeSql.includes("'budgetDescription'"), 'snapshot guarda texto específico de orçamento aprovado');
+ok(consumeSql.includes("'contractScope'"), 'snapshot guarda texto específico de contrato aprovado');
+ok(consumeSql.includes("'annexScope'"), 'snapshot guarda texto específico de Anexo I aprovado');
+
 console.log(`MATRIZ SERVIÇO X NÍVEL: ${checks} verificações passaram.`);
