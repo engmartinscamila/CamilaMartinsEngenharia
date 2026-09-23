@@ -38,6 +38,8 @@ import type {
   TimesheetSummary,
 } from '@/types/domain';
 
+const FINANCIAL_CATEGORIES = ['Projetos','Vistorias e laudos','Acompanhamento de obra','Cronogramas','Serviços adicionais','Materiais','Fornecedores','Deslocamentos','Softwares','Impostos','Administrativo','Marketing','Outros'];
+
 function localDate() {
   const now = new Date();
   return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
@@ -211,7 +213,7 @@ export default function AdminFinancialScreen() {
         <Text style={styles.label}>Contrato e projeto</Text>
         <View style={styles.selector}>{projects.map((project) => <Pressable key={project.id} onPress={() => setSelectedProjectId(project.id)} style={[styles.choice, selectedProjectId === project.id && styles.choiceSelected]}><Text style={[styles.choiceText, selectedProjectId === project.id && styles.choiceTextSelected]}>{project.contractNumber} • {project.clientName} • {project.name}</Text></Pressable>)}</View>
         <Field label="Descrição" onChangeText={setDescription} placeholder="Ex.: Parcela 2 do contrato" value={description} />
-        <Field label="Categoria / centro de custo" onChangeText={setCategory} value={category} />
+        <Text style={styles.label}>Categoria / centro de custo</Text><View style={styles.selector}>{FINANCIAL_CATEGORIES.map((item) => <Pressable key={item} onPress={() => setCategory(item)} style={[styles.choice, category === item && styles.choiceSelected]}><Text style={[styles.choiceText, category === item && styles.choiceTextSelected]}>{item}</Text></Pressable>)}</View>
         <Field keyboardType="decimal-pad" label="Valor (R$)" onChangeText={setAmount} placeholder="Ex.: 2.500,00" value={amount} />
         <View style={styles.rowFields}><Field label="Data (AAAA-MM-DD)" onChangeText={setDate} value={date} /><Field label="Vencimento (AAAA-MM-DD)" onChangeText={setDueDate} value={dueDate} /></View>
         {accounts.length ? <><Text style={styles.label}>Conta</Text><View style={styles.selector}>{accounts.map((account) => <Pressable key={account.id} onPress={() => setAccountId(account.id)} style={[styles.choice, accountId === account.id && styles.choiceSelected]}><Text style={[styles.choiceText, accountId === account.id && styles.choiceTextSelected]}>{account.name} • {account.accountType}</Text></Pressable>)}</View></> : <Notice tone="warning">Cadastre uma conta para conciliar os lançamentos.</Notice>}
@@ -232,7 +234,7 @@ export default function AdminFinancialScreen() {
         <Card style={styles.column}>
           <Text style={styles.sectionTitle}>Horas por projeto</Text>
           <Field keyboardType="decimal-pad" label="Horas trabalhadas" onChangeText={setTimeHours} value={timeHours} />
-          <Field keyboardType="decimal-pad" label="Custo por hora (R$)" onChangeText={setHourlyCost} value={hourlyCost} />
+          <Field keyboardType="decimal-pad" label="Custo por hora (R$)" placeholder="Configure sua taxa padrão" onChangeText={setHourlyCost} value={hourlyCost} /><Text style={styles.meta}>A taxa é editável e deve seguir a referência profissional adotada no escritório.</Text>
           <Field label="Atividade" onChangeText={setTimeDescription} value={timeDescription} />
           <Button onPress={() => void saveTime()} title="Registrar horas" variant="secondary" />
           <Text style={styles.meta}>{timesheets.length} apontamento(s) • {timesheets.reduce((sum, item) => sum + item.hours, 0).toLocaleString('pt-BR')} h registradas</Text>
