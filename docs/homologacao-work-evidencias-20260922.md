@@ -4,7 +4,7 @@ Atualizado em 23/09/2026. Estado: **Gate A parcial, homologação integrada bloq
 
 ## Versão e CI
 
-- HEAD remoto anterior consultado: `ca469a8c44831d84b16c531e9aa38f6a323e2965`. As quatro suítes neste commit concluíram com `success`: regressão de orçamentos/contratos `35800410779`, segurança `35800410733`, validação portal-app `35800410714`, auditoria completa `35800410741`. Um novo commit documental requer CI novo no SHA final.
+- HEAD remoto anterior consultado: `ca469a8c44831d84b16c531e9aa38f6a323e2965`. As quatro suítes neste commit concluíram com `success`: regressão de orçamentos/contratos `35800410779`, segurança `35800410733`, validação portal-app `35800410714`, auditoria completa `35800410741`. No commit `4d9e65c47a932f0c8f2b91f47a9e75075a37f0c6`, as quatro suítes também concluíram com `success`. Novo commit documental requer CI novo no SHA final.
 - Esse commit alterou apenas o registro inicial de evidências em relação ao SHA de código `1cb8a99b505bfb90b63a3f328d34675f8615b282`. CI verde não equivale a homologação remota autenticada.
 
 ## Mudanças efetivas somente no staging
@@ -33,7 +33,7 @@ Uma simulação anterior com `BEGIN; ...; ROLLBACK` foi insuficiente para valida
 
 | Gate | Estado | Próximo requisito |
 | --- | --- | --- |
-| A — equivalência de banco, Storage, Edge e frontend | FAIL / PARCIAL | Subtítulos v3 alinhados nos três níveis; conferir constraints, policies, grants, Storage e frontend de staging do mesmo SHA. |
+| A — equivalência de banco, Storage, Edge e frontend | FAIL / PARCIAL | Subtítulos v3 alinhados; configuração local de staging validada, sem build local ou deploy; conferir constraints, policies, grants e Storage. |
 | B — fluxo autenticado admin | NÃO EXECUTADO | Login real, orçamento→contrato→cronograma, aprovação, medição e publicação. |
 | C — cliente A/B e primeiro acesso | PARCIAL | Isolamento SQL de projetos passou; login Auth, publicações, mutações e Storage exigem testes reais. |
 | D — DOCX e XLSX pela aplicação | NÃO EXECUTADO | Gerar, baixar e abrir os arquivos em staging. |
@@ -41,4 +41,4 @@ Uma simulação anterior com `BEGIN; ...; ROLLBACK` foi insuficiente para valida
 | F — segurança operacional | PARCIAL | Revisar RPCs, configuração de Auth, bundle, logs e Cloudflare/WAF. |
 | G — desktop, mobile e temas | NÃO EXECUTADO | Frontend de homologação e navegação autenticada. |
 
-**Próximo passo:** preparar frontend isolado apontado ao staging e completar os testes autenticados com usuários e arquivos sintéticos. Acesso ao painel Supabase pela opção GitHub escolhida pela usuária chegou à tela GitHub, que respondeu `This account does not support password sign-in, please try another sign-in method or account recovery.` Nenhuma chave pública foi obtida e nenhum login no painel foi confirmado. A leitura ampla da página de chaves foi rejeitada pela revisão automática por poder expor material secreto; após autorização, a navegação foi permitida, mas uma tentativa de snapshot amplo foi novamente rejeitada. Somente um localizador estreito da chave pública será usado após autenticação. Continuam vedados publicação, merge, cópia de dados reais e aprovação automática das 51 decisões materiais.
+**Próximo passo:** executar testes autenticados com usuários e arquivos sintéticos. A usuária esclareceu que só utiliza autenticação Google. A tela GitHub acionada anteriormente não oferecia esse método e respondeu `This account does not support password sign-in`; nenhuma sessão de painel foi confirmada. A leitura ampla da página de chaves foi rejeitada pela revisão automática por poder expor material secreto. Em seguida, a **integração Supabase forneceu a chave publicável ativa**, sem painel ou login; ela foi usada somente no `.env.local` ignorado pelo Git. `npm run check:homologation` passou e confirmou que o app aponta ao projeto de staging. O build local ficou pendente: `npm ci --offline` falhou porque falta `zod-validation-error@4.0.2` no cache e a rede do executor não fornece o registry npm. Não houve geração ou validação E2E de arquivos. Continuam vedados publicação, merge, cópia de dados reais e aprovação automática das 51 decisões materiais.
