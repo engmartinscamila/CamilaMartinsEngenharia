@@ -141,7 +141,28 @@ assert.ok(!tieredXml.includes('prazo geral de referência é de 45'), 'Consultor
 const tieredContract = await xmlOf(await api.enhanceContractDocument(contract,propertyAddress,[tieredConsultancy],'','bronze'));
 assert.ok(tieredContract.includes('Nível de prestação: BRONZE'), 'Contrato da consultoria avulsa perdeu o pacote');
 assert.ok(tieredContract.includes(partyAddress) && tieredContract.includes(propertyAddress), 'Endereços divergiram');
+
+const mixedLevelServices = [
+  { code: 'r', name: 'Projeto de Combate a Incêndio', included: true, levelApplicable: true, levelCode: 'bronze', level: { code: 'bronze', label: 'BRONZE', subtitle: 'Essencial' } },
+  { code: 'o', name: 'Vistoria Técnica', included: true, levelApplicable: true, levelCode: 'ouro', level: { code: 'ouro', label: 'OURO', subtitle: 'Completo' } },
+];
+const mixedLevelContractWord = await fixture([
+  `CONTRATANTE: Cliente de Teste, com endereço em ${partyAddress}.`,
+  'CLÁUSULA 1ª – DO OBJETO',
+  'RESUMO COMERCIAL VINCULADO',
+  'Valor total dos honorários: R$ 1.000,00.',
+  'Nível de prestação: BRONZE — Essencial.',
+]);
+const mixedLevelContract = await xmlOf(await api.enhanceContractDocument(mixedLevelContractWord, propertyAddress, mixedLevelServices, '', ''));
+assert.ok(mixedLevelContract.includes('Nível desta atividade: BRONZE — Essencial.'), 'Nível Bronze da primeira atividade não foi preservado');
+assert.ok(mixedLevelContract.includes('Nível desta atividade: OURO — Completo.'), 'Nível Ouro da segunda atividade não foi preservado');
+assert.ok(mixedLevelContract.includes('Níveis de prestação: definidos individualmente por atividade no escopo técnico vinculado.'), 'Resumo do contrato não reconheceu níveis mistos');
+assert.ok(!mixedLevelContract.includes('Nível de prestação: BRONZE — Essencial.'), 'Primeiro nível vazou para o resumo de toda a contratação');
+
 const coreGenerator = readFileSync(resolve(root,'supabase/functions/generate-commercial-document/index.ts'),'utf8');
-assert.ok(coreGenerator.includes('às atividades elegíveis incluídas nesta proposta'), 'Orçamento ainda restringe nível a projetos');
+assert.ok(coreGenerator.includes('2. NÍVEIS DE PRESTAÇÃO POR ATIVIDADE'), 'Orçamento não apresenta níveis por atividade');
+assert.ok(coreGenerator.includes('Nível desta atividade:'), 'Bloco individual do serviço não informa o próprio nível');
+assert.ok(coreGenerator.includes('definidos individualmente por atividade no escopo técnico vinculado'), 'Contrato não possui resumo seguro para níveis mistos');
+assert.ok(!coreGenerator.includes('levelFromServices('), 'Gerador voltou a usar o primeiro nível como nível global');
 assert.ok(coreGenerator.includes("||'conforme Anexo I'"), 'Orçamento ainda presume PDF sem formato');
-console.log('PASS: históricos preservados; consultoria avulsa com pacote; sem prazos e revisões presumidos; escopo, endereços e Word válidos.');
+console.log('PASS: históricos preservados; níveis por atividade isolados; consultoria avulsa com pacote; sem prazos e revisões presumidos; escopo, endereços e Word válidos.');
