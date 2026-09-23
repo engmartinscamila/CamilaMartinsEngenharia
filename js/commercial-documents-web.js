@@ -80,26 +80,36 @@
       .filter(Boolean)
       .join(' / ');
 
-    box.innerHTML = servicesCatalog.map(([code, name]) => {
-      const meta = serviceCatalogMeta.find(item => item.code === code) || {};
-      const detail = meta.description
-        ? `<small class="doc-service-description">${esc(meta.description)}</small>`
-        : '';
-      const level = meta.level_applicable
-        ? `<small class="doc-service-level">Compatível com ${esc(levelNames || 'os níveis cadastrados')}</small>`
-        : '<small class="doc-service-level muted">Consulte o nível no catálogo atualizado</small>';
+    box.innerHTML = `
+      <details class="doc-service-picker" open>
+        <summary><span>Selecionar atividades</span><strong id="commercialServiceCount">0 selecionadas</strong></summary>
+        <div class="doc-services-grid">${servicesCatalog.map(([code, name]) => {
+          const meta = serviceCatalogMeta.find(item => item.code === code) || {};
+          const detail = meta.description
+            ? `<small class="doc-service-description">${esc(meta.description)}</small>`
+            : '';
+          const level = meta.level_applicable
+            ? `<small class="doc-service-level">Compatível com ${esc(levelNames || 'os níveis cadastrados')}</small>`
+            : '<small class="doc-service-level muted">Consulte o nível no catálogo atualizado</small>';
+          return `
+            <label class="doc-service doc-service-smart">
+              <input type="checkbox" data-service="${code}">
+              <span>
+                <strong>(${code}) ${esc(name)}</strong>
+                ${detail}
+                ${level}
+              </span>
+            </label>
+          `;
+        }).join('')}</div>
+      </details>`;
+    updateServiceSummary();
+  }
 
-      return `
-        <label class="doc-service doc-service-smart">
-          <input type="checkbox" data-service="${code}">
-          <span>
-            <strong>(${code}) ${esc(name)}</strong>
-            ${detail}
-            ${level}
-          </span>
-        </label>
-      `;
-    }).join('');
+  function updateServiceSummary() {
+    const count = document.querySelectorAll('#commercialServices [data-service]:checked').length;
+    const target = $('commercialServiceCount');
+    if (target) target.textContent = `${count} selecionada${count === 1 ? '' : 's'}`;
   }
 
   function ensureLevelInfo() {
@@ -877,11 +887,15 @@
     $('lookupCnpj')?.addEventListener('click', () => lookup('cnpj'));
     $('lookupCep')?.addEventListener('click', () => lookup('cep'));
     $('createCommercial')?.addEventListener('click', create);
+    $('commercialServices')?.addEventListener('change', event => {
+      if (event.target.matches('[data-service]')) updateServiceSummary();
+    });
     $('customService')?.addEventListener('input', event => {
       if (String(event.target.value || '').trim()) {
         const other = document.querySelector('[data-service="p"]');
         if (other) other.checked = true;
       }
+      updateServiceSummary();
     });
 
     $('commercialList')?.addEventListener('click', event => {
