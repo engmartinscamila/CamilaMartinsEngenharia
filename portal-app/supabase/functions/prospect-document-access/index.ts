@@ -26,7 +26,18 @@ Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (request.method !== 'POST') return json({ error: 'Método não permitido.' }, 405);
   try {
-    const body = await request.json();
+    const declaredLength = Number(request.headers.get('content-length') || 0);
+    if (Number.isFinite(declaredLength) && declaredLength > 4096) {
+      return json({ error: 'Solicitação inválida.' }, 413);
+    }
+    const rawBody = await request.text();
+    if (rawBody.length > 4096) return json({ error: 'Solicitação inválida.' }, 413);
+    let body: any;
+    try {
+      body = rawBody ? JSON.parse(rawBody) : {};
+    } catch {
+      return json({ error: 'Solicitação inválida.' }, 400);
+    }
     const token = cleanText(body.token, 48).toLowerCase();
     const documentId = cleanText(body.documentId, 36);
     if (!/^[a-f0-9]{48}$/.test(token)) return json({ error: 'Acesso inválido ou expirado.' }, 404);
