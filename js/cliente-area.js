@@ -672,7 +672,7 @@ CAMILA MARTINS ENGENHARIA
         }
         catch (error) {
             console.error(`Erro ao carregar ${area}:`, error);
-            mostrarErro(error.message || "Tente novamente em alguns instantes.");
+            mostrarErro("Tente novamente em alguns instantes.");
         }
     }
 
