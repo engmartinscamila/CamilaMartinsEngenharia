@@ -395,6 +395,7 @@ Deno.serve(async(req)=>{
   const firstRead=await service.from('commercial_records').select('*').eq('id',recordId).maybeSingle();if(firstRead.error)throw firstRead.error;if(!firstRead.data)return json({error:'Registro comercial não encontrado.'},404);
   if(firstRead.data.status==='convertido'&&kind==='contrato')return json({error:'O registro já foi convertido. O contrato histórico não pode ser substituído.'},409);
   if(kind==='contrato'){const assigned=await caller.rpc('admin_assign_commercial_contract_number',{p_record_id:recordId});if(assigned.error)throw assigned.error;}
+  const preparedScope=await service.rpc('admin_prepare_commercial_scope_for_generation',{p_record_id:recordId});if(preparedScope.error)throw preparedScope.error;
   const refreshed=await service.from('commercial_records').select('*').eq('id',recordId).single();if(refreshed.error)throw refreshed.error;const record=refreshed.data as CommercialRecord;
   const professionalProfile=await loadProfessionalIdentity(service,kind);
   const missingProfile=missingProfessionalFields(professionalProfile,kind);
