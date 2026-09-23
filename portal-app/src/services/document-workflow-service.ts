@@ -78,15 +78,6 @@ export interface ProjectApprovalItem {
   dueAt: string | null;
 }
 
-export const CONTRACT_SCOPE_PRESETS = [
-  ['a', 'Estudo Preliminar'], ['b', 'Anteprojeto'], ['c', 'Projeto Legal'], ['d', 'Projeto Executivo / detalhamento'],
-  ['e', 'Projeto Estrutural'], ['f', 'Projeto Elétrico'], ['g', 'Projeto Hidrossanitário'], ['h', 'Projeto de Interiores'],
-  ['i', 'Paisagismo'], ['j', 'Render 3D / Maquete eletrônica'], ['k', 'Legalização / Aprovação junto à Prefeitura'],
-  ['l', 'Obtenção de Alvará de Construção'], ['m', 'Obtenção de Habite-se'], ['n', 'Acompanhamento técnico de obra'],
-  ['o', 'Laudo técnico / avaliação / vistoria'], ['p', 'Outro'],
-  ['q', 'Consultoria Técnica'], ['r', 'Projeto de Combate a Incêndio'],
-] as const;
-
 export const CONTRACT_DOCUMENT_OPTIONS: { kind: Exclude<ContractDocumentKind, 'notificacao_formal' | 'termo_aceite'>; title: string; description: string }[] = [
   { kind: 'anexo_i', title: 'Anexo I', description: 'Escopo, proposta comercial, valores e cronograma somente dos serviços contratados.' },
   { kind: 'estudo_preliminar', title: 'Estudo Preliminar', description: 'Documento auxiliar opcional. Se não estiver contratado no item (a), sua geração não altera o escopo do Anexo I.' },
