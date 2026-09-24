@@ -54,6 +54,7 @@ const additional = await xml('servico_adicional', {
   },
 });
 assert.ok(additional.includes('Aceito o serviço adicional'), 'Serviço Adicional não oferece manifestação do cliente');
+assert.ok(additional.includes('não cria contrato paralelo'), 'Serviço Adicional deve permanecer vinculado ao contrato original');
 assert.equal((additional.match(/<w14:checked w14:val="1"\/?>/g) ?? []).length, 2, 'Somente a origem e o critério comercial selecionados pelo admin devem vir marcados; as três decisões do cliente permanecem vazias');
 
 const imageAuthorization = await xml('autorizacao_imagem', {
@@ -82,5 +83,7 @@ for (const label of ['Esgoto / ventilação sanitária','Alvenarias e vedações
   assert.ok(survey.toLocaleLowerCase('pt-BR').includes(label.toLocaleLowerCase('pt-BR')), `Vistoria não contém: ${label}`);
 }
 assert.ok((survey.match(/<w14:checkbox>/g) ?? []).length >= 20, 'Vistoria não oferece checkboxes suficientes');
+assert.ok(survey.includes('REGISTROS E FOTOS') && survey.includes('Espaço para fotografias e legendas'), 'Vistoria precisa preservar espaço explícito para registro fotográfico');
+assert.ok(survey.includes('Data e horário da vistoria') && survey.includes('Responsável pelo acompanhamento no local'), 'Vistoria precisa registrar data/hora e acompanhante');
 
 console.log('DOCX OOXML de finalização: OK');
