@@ -11,6 +11,15 @@ has(sections, "title: 'Contratos gerais'", 'Contratos Gerais não é o ponto de 
 lacks(sections, "key: 'document-preparation'", 'Preparação documental concorrente voltou ao menu.');
 has(sections, "key: 'construction-schedule-test'", 'Cronograma de teste não está disponível na navegação.');
 
+const adminNavigation = read('portal-app/src/lib/admin-navigation.ts');
+has(adminNavigation, "'document-preparation': '/orcamentos-contratos.html'", 'Rota legada de preparação documental não redireciona para Contratos Gerais.');
+const modernAdminBlock = adminNavigation.match(/modernWebsiteAdminSections = new Set\(\[([\s\S]*?)\]\)/)?.[1] ?? '';
+lacks(modernAdminBlock, "'document-preparation'", 'Preparação documental legada voltou a ser tratada como ferramenta moderna.');
+
+const uiCore = read('js/ui-core.js');
+lacks(uiCore, '["portal/admin/document-preparation"', 'Preparação documental duplicada voltou ao menu canônico.');
+lacks(uiCore, '["document-preparation"', 'Preparação documental duplicada voltou às ações rápidas.');
+
 const generated = read('portal-app/src/app/admin/contract-documents.tsx');
 has(generated, 'Histórico de emissões', 'Documentos Gerados perdeu responsabilidade de histórico.');
 has(generated, 'Abrir Contratos Gerais', 'Documentos Gerados não encaminha criação ao fluxo canônico.');
