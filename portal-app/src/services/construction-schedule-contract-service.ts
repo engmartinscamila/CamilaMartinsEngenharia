@@ -11,7 +11,7 @@ export interface CommercialScheduleDocument {
   linkedProjectId: string | null;
   linkedClientId: string | null;
   linkedContractId: string | null;
-  services: Array<{ code: string; name?: string; included: boolean; value?: number | null; level?: { code?: string } }>;
+  services: { code: string; name?: string; included: boolean; value?: number | null; level?: { code?: string } }[];
   totalValue: number | null;
 }
 export interface CommercialScheduleLink { quoteRecordId: string; contractRecordId: string }
