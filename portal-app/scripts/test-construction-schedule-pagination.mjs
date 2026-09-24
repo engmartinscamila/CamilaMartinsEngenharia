@@ -53,6 +53,7 @@ function projectQuery(table) {
 }
 const projectService = loadService('../src/services/construction-schedule-service.ts', {
   '@/lib/download-generated-file': mockDownload,
+  '@/lib/errors': { toUserMessage: (_error, fallback) => fallback },
   '@/lib/supabase': { supabase: { from: projectQuery } },
 });
 const projects = await projectService.listConstructionScheduleProjects();
@@ -78,8 +79,20 @@ const links = Array.from({ length: 1050 }, (_, i) => ({
   quote_record_id: `quote-${String(i).padStart(5, '0')}`,
   contract_record_id: `contract-${String(i).padStart(5, '0')}`,
 }));
+const authorizations = [{
+  document_id: 'additional-001',
+  project_id: 'project-00001',
+  contract_id: null,
+  document_version: '1.0',
+  accepted_at: '2026-09-23T20:00:00Z',
+  service_code: 's',
+  service_name: 'Cronograma completo',
+  service_level: 'ouro',
+}];
 const documentRanges = [];
 const linkRanges = [];
+const rpcCalls = [];
+let missingAuthorizationRpc = false;
 let failSecondDocumentPage = false;
 function commercialQuery(table) {
   return {
@@ -102,16 +115,34 @@ function commercialQuery(table) {
 }
 const commercialService = loadService('../src/services/construction-schedule-contract-service.ts', {
   '@/lib/download-generated-file': mockDownload,
-  '@/lib/supabase': { supabase: { from: commercialQuery } },
+  '@/lib/supabase': { supabase: {
+    from: commercialQuery,
+    rpc: async (name) => {
+      rpcCalls.push(name);
+      if (name === 'admin_list_full_schedule_additional_authorizations') {
+        if (missingAuthorizationRpc) return { data: null, error: { code: 'PGRST202', message: 'Could not find the function admin_list_full_schedule_additional_authorizations' } };
+        return { data: authorizations, error: null };
+      }
+      return { data: null, error: { message: `RPC inesperada: ${name}` } };
+    },
+  } },
   '@/services/construction-schedule-service': { listConstructionScheduleProjects: async () => ({ data: projects.data, error: null }) },
 });
 const result = await commercialService.loadScheduleCommercialOptions();
 ok(result.error === null && result.data !== null, 'opções carregam sem erro');
 ok(result.data.quotes.length + result.data.contracts.length === 450, 'orçamentos/contratos completos');
 ok(result.data.links.length === 1050, 'vínculos além do antigo limite 1000 recuperados');
+ok(result.data.additionalAuthorizations.length === 1 && result.data.additionalAuthorizations[0].serviceCode === 's', 'Serviço Adicional aceito entra como autorização alternativa do cronograma');
+ok(rpcCalls.includes('admin_list_full_schedule_additional_authorizations'), 'autorizações adicionais são carregadas pelo RPC protegido');
 ok(new Set(result.data.quotes.concat(result.data.contracts).map((item) => item.id)).size === 450, 'sem duplicar documentos');
 ok(documentRanges.length === 3 && documentRanges[2][0] === 400, 'paginação de documentos usa intervalo correto');
 ok(linkRanges.length === 6 && linkRanges[5][0] === 1000, 'paginação de vínculos usa intervalo correto');
+
+missingAuthorizationRpc = true;
+const rolloutCompatible = await commercialService.loadScheduleCommercialOptions();
+ok(rolloutCompatible.error === null && rolloutCompatible.data?.additionalAuthorizations.length === 0,
+  'ausência temporária do novo RPC não quebra o caminho antigo de orçamento e contrato');
+missingAuthorizationRpc = false;
 
 failSecondDocumentPage = true;
 const failed = await commercialService.loadScheduleCommercialOptions();

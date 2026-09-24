@@ -56,6 +56,7 @@ jobs:
           node scripts/security/construction-schedule-revision-request-regression.mjs
           node scripts/security/construction-schedule-budget-regression.mjs
           node scripts/security/construction-schedule-contract-regression.mjs
+          node scripts/security/construction-schedule-additional-service-regression.mjs
           node scripts/security/construction-schedule-template-regression.mjs
           node scripts/security/construction-schedule-approval-regression.mjs
           node scripts/security/construction-schedule-measurement-regression.mjs
@@ -157,6 +158,7 @@ jobs:
           EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_-unXLR2NSSACLs01Sr60GA_uCFnJ74f
           EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF: hghtwlopqztfcosfxafd
           EXPO_PUBLIC_APP_ENV: production
+          EXPO_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
         run: npm run check:production:cloudflare && npm run export:web && npm run verify:web-export
 
       - name: Integrar portal ao domínio

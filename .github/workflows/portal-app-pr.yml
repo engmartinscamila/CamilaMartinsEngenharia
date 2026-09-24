@@ -90,12 +90,20 @@ jobs:
       - name: Auditoria completa de dependências
         run: npm run security:audit
 
+      - name: Verificar CAPTCHA real de produção
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: https://hghtwlopqztfcosfxafd.supabase.co
+          EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_-unXLR2NSSACLs01Sr60GA_uCFnJ74f
+          EXPO_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
+        run: node scripts/verify-live-captcha.mjs
+
       - name: Exportação web de produção
         env:
           EXPO_PUBLIC_SUPABASE_URL: https://hghtwlopqztfcosfxafd.supabase.co
           EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_-unXLR2NSSACLs01Sr60GA_uCFnJ74f
           EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF: hghtwlopqztfcosfxafd
           EXPO_PUBLIC_APP_ENV: production
+          EXPO_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
         run: npm run check:production:cloudflare && npm run export:web
 
       - name: Validar exportação web

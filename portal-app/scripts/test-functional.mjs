@@ -5,6 +5,10 @@ import ts from 'typescript';
 let checks = 0;
 const eq=(a,b,message)=>{assert.deepEqual(JSON.parse(JSON.stringify(a)),JSON.parse(JSON.stringify(b)),message);checks++;};
 function load(path,deps={}) { const exports={}; vm.runInNewContext(ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,URL,console,require:name=>{if(!(name in deps))throw Error(`Unexpected dependency ${name}`);return deps[name];}},{filename:path});return exports; }
+const errors=load('src/lib/errors.ts');
+eq(errors.toUserMessage({message:'Gere o contrato Word oficial antes de preparar o Anexo I'},'fallback'),'Gere o contrato Word oficial antes de preparar o Anexo I','safe Supabase operational error remains actionable');
+eq(errors.toUserMessage({message:'Cronograma completo não contratado ou não inicializado. Selecione orçamento e contrato vinculados.'},'fallback'),'Cronograma completo não contratado ou não inicializado. Selecione orçamento e contrato vinculados.','schedule prerequisite remains actionable');
+eq(errors.toUserMessage({message:'relation internal_secret does not exist'},'fallback'),'fallback','technical database detail remains hidden');
 const format=load('src/lib/format.ts');
 for(const [value,status] of [['Concluído','concluido'],['Em andamento','em_andamento'],['em_andamento','em_andamento'],['Pendente','pendente']])eq(format.normalizeStatus(value),status,`schedule ${value}`);
 const {notificationRoute:route}=load('src/lib/notification-route.ts');
@@ -25,6 +29,55 @@ const record='<STMTTRN><TRNAMT>100.00<DTPOSTED>20260909<FITID>fixture-1<TRNTYPE>
 const asset={file:{text:async()=>record+record}};
 eq(await operations.importOfxTransactions('account-a',asset),{imported:1,reconciled:0,error:null},'duplicate OFX rows counted once');eq(inserted.length,1,'duplicate rows submitted once');eq(invoked.name,'reconcile_imported_ofx','reconciliation is atomic RPC');
 rpcResult={error:{message:'offline'},data:null};const partial=await operations.importOfxTransactions('account-a',asset);eq(partial.imported,1,'import success retained when reconciliation fails');eq(typeof partial.error,'string','partial result explained');
+
+
+let authCredentials;
+const authService=load('src/services/auth-service.ts',{
+  '@/lib/errors':{toUserMessage:(error)=>error?.message??'erro'},
+  '@/lib/supabase':{supabase:{
+    auth:{signInWithPassword:async(credentials)=>{authCredentials=credentials;return {error:null};}},
+  }},
+});
+eq(await authService.signInWithPassword('CLIENTE@EXEMPLO.COM','Senha-forte-123!','captcha-token-fixture'),null,'login accepts a verified CAPTCHA token');
+eq(authCredentials.email,'cliente@exemplo.com','login still normalizes email');
+eq(authCredentials.options?.captchaToken,'captcha-token-fixture','CAPTCHA token reaches Supabase signInWithPassword');
+
+const loginSource=fs.readFileSync('src/app/login.tsx','utf8');
+const captchaSource=fs.readFileSync('src/components/turnstile-captcha.tsx','utf8');
+const captchaPageSource=fs.readFileSync('src/app/captcha.tsx','utf8');
+const captchaHelperSource=fs.readFileSync('src/lib/captcha.ts','utf8');
+const envSource=fs.readFileSync('src/lib/env.ts','utf8');
+const productionEnvCheck=fs.readFileSync('scripts/verify-production-env.mjs','utf8');
+const productionWorkflow=fs.readFileSync('../.github/workflows/pages.yml','utf8');
+eq(loginSource.includes('TurnstileCaptcha')&&loginSource.includes('captchaRequired')&&loginSource.includes('captchaConfigurationMissing'),true,'web login renders CAPTCHA and blocks unsafe production fallback');
+eq(loginSource.includes('captchaRequired && !token'),true,'login cannot reach Supabase without a CAPTCHA token');
+eq(loginSource.includes('requestNativeCaptchaToken'),true,'native app obtains a CAPTCHA token through the secure web challenge');
+eq(captchaHelperSource.includes("camilamartinsengenharia://captcha-complete")&&captchaHelperSource.includes('https://camilamartinsengenharia.com.br/portal/captcha.html'),true,'native CAPTCHA is constrained to the official app scheme and website');
+eq(captchaPageSource.includes('isAllowedCaptchaReturnUrl')&&captchaPageSource.includes('globalThis.location?.replace'),true,'hosted CAPTCHA validates the return target before returning its token');
+eq(captchaSource.includes('https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'),true,'portal loads the official Cloudflare Turnstile challenge');
+eq(envSource.includes('EXPO_PUBLIC_TURNSTILE_SITE_KEY')&&productionEnvCheck.includes('Site key pública do Cloudflare Turnstile ausente.'),true,'production build requires a Turnstile site key');
+eq(productionEnvCheck.includes("GITHUB_EVENT_NAME === 'pull_request'"),true,'only pull-request CI may compile without the real Turnstile site key');
+eq(productionWorkflow.includes('EXPO_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}'),true,'real production deploy requires the configured Turnstile repository variable');
+eq(productionWorkflow.includes('1x00000000000000000000AA'),false,'Cloudflare dummy test key can never reach the production deployment workflow');
+
+const documentPreparation=fs.readFileSync('src/app/admin/document-preparation.tsx','utf8');
+eq(documentPreparation.includes('checkAnnexIPrerequisite'),true,'Anexo I checks the official contract prerequisite before preview/preparation');
+eq(documentPreparation.includes('Para acrescentar um serviço depois da contratação')&&documentPreparation.includes('Serviço Adicional'),true,'Anexo I UI distinguishes later scope changes from the original annex');
+eq(documentPreparation.includes('listCommercialServiceCatalog')&&documentPreparation.includes('getCommercialServiceLevelScope'),true,'additional service reuses the central catalog and approved service-level matrix');
+eq(documentPreparation.includes('additional_service_code')&&documentPreparation.includes('additional_service_level')&&documentPreparation.includes('payment_method'),true,'additional service captures activity level and payment as structured fields');
+const nativeAdditional=fs.readFileSync('supabase/functions/generate-contract-document-final/native-options-docx.ts','utf8');
+eq(nativeAdditional.includes('additional_service_name')&&nativeAdditional.includes('new_contract_total')&&nativeAdditional.includes('payment_terms'),true,'additional-service Word renders structured commercial fields');
+const finalGenerator=fs.readFileSync('supabase/functions/generate-contract-document-final/index.ts','utf8');
+eq(finalGenerator.includes("if(!text(o.additional_service_code))")&&finalGenerator.includes("if(!text(o.payment_method))")&&finalGenerator.includes("if(!text(o.additional_value))"),true,'additional-service backend requires structured activity value and payment before final Word');
+const scheduleScreen=fs.readFileSync('src/app/admin/construction-schedule.tsx','utf8');
+eq(scheduleScreen.includes("router.push('/admin/construction-schedule-new')"),true,'schedule consultation points new contracted schedules to the commercial creation flow');
+const scheduleNew=fs.readFileSync('src/app/admin/construction-schedule-new.tsx','utf8');
+eq(scheduleNew.includes('previewScheduleTemplateFromAdditionalService')&&scheduleNew.includes('saveVerifiedScheduleFromAdditionalService'),true,'full schedule supports an accepted additional-service authorization without replacing the base contract');
+eq(scheduleNew.includes('Contratação posterior por Serviço Adicional aceito'),true,'schedule UI exposes the explicit post-contract authorization path');
+const additionalScheduleMigration=fs.readFileSync('supabase/migrations/20260924012000_schedule_from_accepted_additional_service.sql','utf8');
+eq(additionalScheduleMigration.includes("document_kind='servico_adicional'")&&additionalScheduleMigration.includes("v_code<>'s'"),true,'additional schedule authorization is restricted to the schedule service');
+eq(additionalScheduleMigration.includes("decision in ('accepted','accepted_with_notes')")&&additionalScheduleMigration.includes('snapshot_frozen_at is null'),true,'additional schedule authorization requires the accepted frozen document version');
+eq(additionalScheduleMigration.includes('source_scope_snapshot')&&additionalScheduleMigration.includes('quote_record_id,contract_record_id'),true,'schedule stores the additional-service authorization snapshot while preserving nullable legacy commercial ids');
 
 const deletionSource=fs.readFileSync('supabase/functions/admin-delete-client/index.ts','utf8');
 const purgeCall=deletionSource.indexOf("caller.rpc('admin_purge_client_database'");

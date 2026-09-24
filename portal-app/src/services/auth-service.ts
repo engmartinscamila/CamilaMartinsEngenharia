@@ -52,15 +52,19 @@ export async function resolveIdentity(user: User): Promise<{
   return { role: 'unassigned', client: null };
 }
 
-export async function signInWithPassword(email: string, password: string) {
+export async function signInWithPassword(email: string, password: string, captchaToken?: string) {
   const normalizedEmail = email.trim().toLowerCase();
   if (!normalizedEmail || normalizedEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail) || !password || password.length > 256) {
     return 'E-mail ou senha incorretos.';
   }
+
+  const normalizedCaptchaToken = captchaToken?.trim() || undefined;
+
   try {
     const { error } = await supabase.auth.signInWithPassword({
       email: normalizedEmail,
       password,
+      ...(normalizedCaptchaToken ? { options: { captchaToken: normalizedCaptchaToken } } : {}),
     });
     return error ? toUserMessage(error) : null;
   } catch (error) {

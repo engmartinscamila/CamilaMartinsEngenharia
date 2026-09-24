@@ -7,7 +7,9 @@ import { analyzeConstructionCriticalPath } from '@/lib/construction-schedule-cri
 import { isValidIsoDate } from '@/lib/format';
 import { planConstructionSchedule, type WorkCalendar } from '@/lib/construction-schedule-engine';
 import {
-  approveVerifiedSchedule, exportApprovedScheduleXlsx, loadScheduleCommercialOptions, previewScheduleTemplate, saveVerifiedSchedule,
+  approveVerifiedSchedule, exportApprovedScheduleXlsx, loadScheduleCommercialOptions,
+  previewScheduleTemplate, previewScheduleTemplateFromAdditionalService,
+  saveVerifiedSchedule, saveVerifiedScheduleFromAdditionalService,
   type ScheduleCommercialOptions, type ScheduleTemplateItem, type ScheduleTemplatePreview,
 } from '@/services/construction-schedule-contract-service';
 
@@ -29,6 +31,7 @@ export default function NewConstructionScheduleScreen() {
   const [projectId, setProjectId] = useState('');
   const [quoteId, setQuoteId] = useState('');
   const [contractId, setContractId] = useState('');
+  const [additionalAuthorizationId, setAdditionalAuthorizationId] = useState('');
   const [templateCode, setTemplateCode] = useState('');
   const [template, setTemplate] = useState<ScheduleTemplatePreview | null>(null);
   const [rows, setRows] = useState<DraftRow[]>([]);
@@ -57,6 +60,10 @@ export default function NewConstructionScheduleScreen() {
 
   const project = options?.projects.find((item) => item.id === projectId);
   const quote = options?.quotes.find((item) => item.id === quoteId);
+  const additionalAuthorization = options?.additionalAuthorizations.find((item) => item.documentId === additionalAuthorizationId);
+  const additionalAuthorizations = options?.additionalAuthorizations.filter((item) =>
+    project && item.projectId === project.id && item.contractId === project.contractId && item.serviceCode === 's',
+  ) ?? [];
   const quotes = options?.quotes.filter((item) =>
     project && (item.linkedProjectId === project.id || item.linkedClientId === project.clientId) &&
     item.services.some((service) => service.code === 's' && service.included),
@@ -66,7 +73,9 @@ export default function NewConstructionScheduleScreen() {
     item.linkedContractId === project?.contractId &&
     options.links.some((link) => link.quoteRecordId === quoteId && link.contractRecordId === item.id),
   ) ?? [];
-  const allowedCodes = quote?.services.filter((service) => service.included).map((service) => service.code) ?? [];
+  const allowedCodes = additionalAuthorization
+    ? ['s']
+    : quote?.services.filter((service) => service.included).map((service) => service.code) ?? [];
   const selected = rows.filter((row) => row.selected);
 
   // Cálculo puro: datas, custos e peso financeiro não dependem da regra física.
@@ -80,7 +89,7 @@ export default function NewConstructionScheduleScreen() {
       }
       if (selected.some((row) => !row.confirmed)) throw new Error('Revise e confirme individualmente cada atividade selecionada.');
       if (selected.some((row) => !allowedCodes.includes(row.sourceCode.trim()))) {
-        throw new Error('Cada atividade precisa corresponder a um código de serviço do orçamento contratado.');
+        throw new Error('Cada atividade precisa corresponder a um código de serviço da contratação selecionada.');
       }
       const activities = selected.map((row) => ({
         code: row.code, activity: row.activity.trim(), predecessorCode: row.predecessor.trim() || null,
@@ -155,9 +164,11 @@ export default function NewConstructionScheduleScreen() {
     setSaveConfirmed(false); setPhysicalWeightsApproved(false);
   };
   const loadTemplate = async () => {
-    if (!projectId || !quoteId || !contractId || !templateCode || busy) return;
+    if (!projectId || !templateCode || busy || (!additionalAuthorizationId && (!quoteId || !contractId))) return;
     setBusy(true); setError(null); setSuccess(null); setSaveConfirmed(false);
-    const result = await previewScheduleTemplate(projectId, quoteId, contractId, templateCode);
+    const result = additionalAuthorizationId
+      ? await previewScheduleTemplateFromAdditionalService(projectId, additionalAuthorizationId, templateCode)
+      : await previewScheduleTemplate(projectId, quoteId, contractId, templateCode);
     setBusy(false);
     if (result.error || !result.data) {
       setTemplate(null); setRows([]); setError(result.error ?? 'Prévia não disponível.'); return;
@@ -171,9 +182,11 @@ export default function NewConstructionScheduleScreen() {
     setPhysicalWeightsApproved(false);
   };
   const save = async () => {
-    if (!calculated.data || !projectId || !quoteId || !contractId || !saveConfirmed || busy) return;
+    if (!calculated.data || !projectId || !saveConfirmed || busy || (!additionalAuthorizationId && (!quoteId || !contractId))) return;
     setBusy(true); setError(null); setSuccess(null);
-    const result = await saveVerifiedSchedule(projectId, quoteId, contractId, calculated.data);
+    const result = additionalAuthorizationId
+      ? await saveVerifiedScheduleFromAdditionalService(projectId, additionalAuthorizationId, calculated.data)
+      : await saveVerifiedSchedule(projectId, quoteId, contractId, calculated.data);
     setBusy(false);
     if (result.error || !result.scheduleId) { setError(result.error ?? 'Não foi possível salvar.'); return; }
     setScheduleId(result.scheduleId);
@@ -207,27 +220,33 @@ export default function NewConstructionScheduleScreen() {
       {options && !scheduleId ? <>
         <Card>
           <Text>1. Projeto / cliente</Text>
-          {options.projects.map((item) => <Button key={item.id} title={`${item.clientName} — ${item.name}${projectId === item.id ? ' ✓' : ''}`} variant={projectId === item.id ? 'primary' : 'secondary'} onPress={() => { setProjectId(item.id); setQuoteId(''); setContractId(''); clearPlan(); }} />)}
+          {options.projects.map((item) => <Button key={item.id} title={`${item.clientName} — ${item.name}${projectId === item.id ? ' ✓' : ''}`} variant={projectId === item.id ? 'primary' : 'secondary'} onPress={() => { setProjectId(item.id); setQuoteId(''); setContractId(''); setAdditionalAuthorizationId(''); clearPlan(); }} />)}
           {options.projects.length === 0 ? <Notice tone="warning">Nenhum projeto foi encontrado.</Notice> : null}
         </Card>
         {project ? <Card>
-          <Text>2. Orçamento com contratação expressa de cronograma completo</Text>
-          {quotes.map((item) => <Button key={item.id} title={`${item.number} — ${item.status}${quoteId === item.id ? ' ✓' : ''}`} variant={quoteId === item.id ? 'primary' : 'secondary'} onPress={() => { setQuoteId(item.id); setContractId(''); clearPlan(); }} />)}
-          {quotes.length === 0 ? <Notice tone="warning">Nenhum orçamento adequado encontrado. Abrir a tela não constitui contratação.</Notice> : null}
+          <Text>2A. Contratação original por orçamento + contrato</Text>
+          {quotes.map((item) => <Button key={item.id} title={`${item.number} — ${item.status}${quoteId === item.id ? ' ✓' : ''}`} variant={quoteId === item.id ? 'primary' : 'secondary'} onPress={() => { setQuoteId(item.id); setContractId(''); setAdditionalAuthorizationId(''); clearPlan(); }} />)}
+          {quotes.length === 0 ? <Notice tone="info">Nenhum orçamento original com cronograma completo foi localizado para este projeto.</Notice> : null}
+        </Card> : null}
+        {project ? <Card>
+          <Text>2B. Contratação posterior por Serviço Adicional aceito</Text>
+          <Notice tone="info">Use esta opção quando o cronograma completo foi contratado depois do contrato original. Só aparecem termos da versão vigente, congelados e já aceitos pelo cliente.</Notice>
+          {additionalAuthorizations.map((item) => <Button key={item.documentId} title={`${item.serviceName} • v${item.documentVersion}${item.serviceLevel ? ` • ${item.serviceLevel.toUpperCase()}` : ''}${additionalAuthorizationId === item.documentId ? ' ✓' : ''}`} variant={additionalAuthorizationId === item.documentId ? 'primary' : 'secondary'} onPress={() => { setAdditionalAuthorizationId(item.documentId); setQuoteId(''); setContractId(''); clearPlan(); }} />)}
+          {additionalAuthorizations.length === 0 ? <Notice tone="warning">Nenhum Serviço Adicional de cronograma completo aceito foi encontrado. Prepare o adicional, envie ao cliente e aguarde o aceite da versão antes de criar o cronograma.</Notice> : null}
         </Card> : null}
         {quote ? <Card>
           <Text>3. Contrato formalmente vinculado ao orçamento</Text>
           {contracts.map((item) => <Button key={item.id} title={`${item.number} — ${item.status}${contractId === item.id ? ' ✓' : ''}`} variant={contractId === item.id ? 'primary' : 'secondary'} onPress={() => { setContractId(item.id); clearPlan(); }} />)}
           {contracts.length === 0 ? <Notice tone="warning">Nenhum contrato compatível encontrado. Confira titularidade, vínculo e escopo.</Notice> : null}
         </Card> : null}
-        {contractId ? <Card>
+        {(contractId || additionalAuthorizationId) ? <Card>
           <Text>4. Modelo versionado (apenas referência)</Text>
           {templates.map((item) => <Button key={item.code} title={`${item.title}${templateCode === item.code ? ' ✓' : ''}`} variant={templateCode === item.code ? 'primary' : 'secondary'} onPress={() => { setTemplateCode(item.code); setTemplate(null); setRows([]); setPhysicalWeightsApproved(false); setSaveConfirmed(false); }} />)}
-          <Button title="Conferir contrato e carregar modelo" loading={busy} disabled={!templateCode || busy} onPress={() => void loadTemplate()} />
+          <Button title="Conferir contratação e carregar modelo" loading={busy} disabled={!templateCode || busy} onPress={() => void loadTemplate()} />
         </Card> : null}
         {template ? <>
           <Notice tone="warning">Modelo {template.template_code} v{template.template_version}: selecione só atividades contratadas. Pesos, durações e custos de referência não descrevem automaticamente sua obra.</Notice>
-          <Text>Códigos permitidos: {quote?.services.filter((service) => service.included).map((service) => `${service.code} (${service.name ?? 'serviço'})`).join('; ')}</Text>
+          <Text>Códigos permitidos: {additionalAuthorization ? `s (${additionalAuthorization.serviceName})` : quote?.services.filter((service) => service.included).map((service) => `${service.code} (${service.name ?? 'serviço'})`).join('; ')}</Text>
           {rows.length === 0 ? <Notice tone="info">Modelo sem atividades predefinidas. Cadastre apenas as previstas no escopo.</Notice> : null}
           <Button title="Adicionar atividade específica do contrato" variant="secondary" onPress={addManualRow} />
           <Button title={advancedMode?'Ocultar opções avançadas':'Mostrar opções avançadas'} variant="ghost" onPress={()=>setAdvancedMode(current=>!current)} />
@@ -237,7 +256,7 @@ export default function NewConstructionScheduleScreen() {
             <Button title={row.selected ? 'Retirar atividade' : 'Selecionar atividade contratada'} variant="secondary" onPress={() => updateRow(row.code, { selected: !row.selected })} />
             {row.selected ? <>
               <Field label="Atividade revisada" value={row.activity} onChangeText={(activity) => updateRow(row.code, { activity })} />
-              <Field label="Código de serviço correspondente no orçamento" value={row.sourceCode} onChangeText={(sourceCode) => updateRow(row.code, { sourceCode })} />
+              <Field label="Código de serviço correspondente à contratação" value={row.sourceCode} onChangeText={(sourceCode) => updateRow(row.code, { sourceCode })} />
               <Field label="Duração prevista (dias)" value={row.duration} keyboardType="numeric" onChangeText={(duration) => updateRow(row.code, { duration })} />
               <Field label="Custo da execução (R$, sem honorários)" value={row.cost} keyboardType="decimal-pad" onChangeText={(cost) => updateRow(row.code, { cost })} />
               {advancedMode?<>

@@ -8,11 +8,24 @@ const safeOperationalPatterns = [
   /^este rascunho é anterior à governança documental atual\./i,
   /^complete a identificação profissional sigilosa em configurações antes de gerar este documento\./i,
   /^o documento já foi enviado\/aceito e não pode ser sobrescrito\./i,
+  /^gere o contrato word oficial antes de preparar o anexo i\.?$/i,
+  /^o contrato precisa estar gerado e possuir snapshot congelável antes do anexo i\.?$/i,
+  /^contrato emitido não possui snapshot estruturado de serviços/i,
+  /^contrato emitido não possui serviços incluídos para compor o anexo i\.?$/i,
+  /^cronograma completo não contratado ou não inicializado\./i,
+  /^projeto já possui cronograma aprovado vigente;/i,
+  /^projeto já possui cronograma incompatível;/i,
   /^muitas (?:tentativas|operações)\./i,
 ];
 
 export function toUserMessage(error: unknown, fallback = 'Não foi possível concluir esta ação. Tente novamente.') {
-  const raw = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+  const raw = error instanceof Error
+    ? error.message
+    : typeof error === 'string'
+      ? error
+      : error && typeof error === 'object' && 'message' in error && typeof (error as { message?: unknown }).message === 'string'
+        ? (error as { message: string }).message
+        : '';
   const normalized = raw.toLowerCase();
 
   if (connectionPatterns.some((pattern) => normalized.includes(pattern))) {

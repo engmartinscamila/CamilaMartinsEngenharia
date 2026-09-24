@@ -172,6 +172,52 @@ export async function previewContractDocument(input: { projectId: string; kind: 
   }, error: null };
 }
 
+export async function checkAnnexIPrerequisite(projectId: string): Promise<ServiceResult<{ ready: boolean; reason: string | null }>> {
+  const project = await supabase.from('projetos').select('contract_id').eq('id', projectId).maybeSingle();
+  if (project.error) return { data: { ready: false, reason: null }, error: 'Não foi possível conferir o contrato deste projeto.' };
+  if (!project.data?.contract_id) return { data: { ready: false, reason: 'Vincule um contrato ao projeto antes de preparar o Anexo I.' }, error: null };
+
+  const commercial = await supabase
+    .from('commercial_records')
+    .select('contract_document_id,status')
+    .eq('linked_contract_id', project.data.contract_id)
+    .eq('record_kind', 'contrato')
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (commercial.error) return { data: { ready: false, reason: null }, error: 'Não foi possível conferir a emissão oficial do contrato.' };
+  if (!commercial.data?.contract_document_id) {
+    return {
+      data: {
+        ready: false,
+        reason: 'Este contrato é anterior ao fluxo documental atual ou ainda não possui Word oficial registrado. Para acrescentar um serviço após a contratação, use “Serviço Adicional”. O Anexo I deve acompanhar um contrato emitido pelo fluxo comercial.',
+      },
+      error: null,
+    };
+  }
+
+  const document = await supabase
+    .from('documentos')
+    .select('workflow_status,generated_data')
+    .eq('id', commercial.data.contract_document_id)
+    .maybeSingle();
+  if (document.error) return { data: { ready: false, reason: null }, error: 'Não foi possível conferir o Word oficial do contrato.' };
+  if (!document.data || !['gerado', 'enviado', 'aceito'].includes(String(document.data.workflow_status ?? '')) || !document.data.generated_data) {
+    return { data: { ready: false, reason: 'Gere o contrato Word oficial antes de preparar o Anexo I.' }, error: null };
+  }
+  const generated = document.data.generated_data as Record<string, unknown>;
+  if (!Array.isArray(generated.services)) {
+    return {
+      data: {
+        ready: false,
+        reason: 'O contrato emitido é anterior ao snapshot estruturado de serviços. Preserve esse histórico e use “Serviço Adicional” para mudanças posteriores de escopo.',
+      },
+      error: null,
+    };
+  }
+  return { data: { ready: true, reason: null }, error: null };
+}
+
 export async function prepareContractDocument(input: { projectId: string; kind: Exclude<ContractDocumentKind, 'notificacao_formal'>; approvalId?: string | null; extraData?: Record<string, unknown> }) {
   const result = await supabase.rpc('admin_prepare_contract_document', { p_project_id: input.projectId, p_document_kind: input.kind, p_approval_id: input.approvalId ?? null, p_extra_data: input.extraData ?? {} });
   return result.error || !result.data ? { documentId: null, error: toUserMessage(result.error, 'Não foi possível preparar o documento. Tente novamente.') } : { documentId: result.data as string, error: null };

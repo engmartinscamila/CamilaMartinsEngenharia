@@ -70,6 +70,9 @@ jobs:
       - name: Testar vínculo e bloqueio de cronogramas com contratos sintéticos
         run: node scripts/security/construction-schedule-contract-regression.mjs
 
+      - name: Testar cronograma contratado depois por Serviço Adicional aceito
+        run: node scripts/security/construction-schedule-additional-service-regression.mjs
+
       - name: Testar biblioteca versionada e prévia de cronogramas
         run: node scripts/security/construction-schedule-template-regression.mjs
 

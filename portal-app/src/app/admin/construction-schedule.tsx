@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
@@ -38,6 +39,7 @@ function plannedPercent(item: ConstructionScheduleItem, referenceDate: string) {
 }
 
 export default function ConstructionScheduleScreen() {
+  const router = useRouter();
   const styles = useThemeStyles(styleDefinitions);
   const [projects, setProjects] = useState<ConstructionProjectOption[]>([]);
   const [project, setProject] = useState<ConstructionProjectOption | null>(null);
@@ -62,7 +64,11 @@ export default function ConstructionScheduleScreen() {
   const openProject = async (selected: ConstructionProjectOption) => {
     setLoading(true); setError(null); setSuccess(null); setEditItem(null);
     const initialized = await initializeConstructionSchedule(selected.id);
-    if (initialized.error) { setLoading(false); setError(initialized.error); return; }
+    if (initialized.error) {
+      setLoading(false);
+      setError(initialized.error);
+      return;
+    }
     const result = await loadConstructionSchedule(selected.id);
     setProject(selected); setHeader(result.header); setItems(result.items); setError(result.error); setLoading(false);
   };
@@ -141,6 +147,8 @@ export default function ConstructionScheduleScreen() {
     <Screen>
       <AdminPageHeader title="Cronograma de obra completo" description="Planejamento físico-financeiro com dados do cliente preenchidos automaticamente, pesos padrão editáveis, dependências, planejado × realizado, Gantt, Curva S e exportação Excel." />
       <Notice tone="info">O cronograma simples continua separado. Use esta área quando o cliente contratar o serviço completo de cronograma de obra.</Notice>
+      <Button title="Criar novo cronograma contratado" variant="secondary" onPress={() => router.push('/admin/construction-schedule-new')} />
+      <Notice tone="info">Para criar um cronograma novo, o sistema exige orçamento e contrato vinculados com o serviço de cronograma completo. A lista abaixo serve para consultar cronogramas já existentes.</Notice>
       {error ? <Notice tone="danger">{error}</Notice> : null}
       {success ? <Notice tone="success">{success}</Notice> : null}
 

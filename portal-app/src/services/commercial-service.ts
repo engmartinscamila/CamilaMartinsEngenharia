@@ -23,6 +23,14 @@ export interface CommercialServiceSelection {
   level?: { code?: string; label?: string; subtitle?: string } | null;
 }
 
+export interface CommercialServiceLevelScope {
+  serviceCode: string;
+  levelCode: CommercialServiceLevelCode;
+  contractScope: string;
+  annexScope: string;
+  budgetDescription: string;
+}
+
 export interface CommercialCatalogService {
   code: string;
   name: string;
@@ -178,6 +186,29 @@ export async function listCommercialServiceCatalog(): Promise<ServiceResult<Comm
       synonyms: Array.isArray(row.synonyms) ? row.synonyms.map(String) : [],
       keywords: Array.isArray(row.keywords) ? row.keywords.map(String) : [],
     })).filter((row) => row.code && row.name),
+    error: null,
+  };
+}
+
+export async function getCommercialServiceLevelScope(serviceCode: string, levelCode: CommercialServiceLevelCode): Promise<ServiceResult<CommercialServiceLevelScope | null>> {
+  const result = await supabase
+    .from('service_level_scope_catalog')
+    .select('service_code,level_code,contract_scope,annex_scope,budget_description')
+    .eq('service_code', serviceCode)
+    .eq('level_code', levelCode)
+    .eq('active', true)
+    .eq('review_status', 'approved')
+    .maybeSingle();
+  if (result.error) return { data: null, error: 'Não foi possível carregar o texto aprovado para esta atividade e nível.' };
+  if (!result.data) return { data: null, error: 'Esta combinação de atividade e nível ainda não possui texto aprovado.' };
+  return {
+    data: {
+      serviceCode: String(result.data.service_code),
+      levelCode: result.data.level_code as CommercialServiceLevelCode,
+      contractScope: String(result.data.contract_scope ?? ''),
+      annexScope: String(result.data.annex_scope ?? ''),
+      budgetDescription: String(result.data.budget_description ?? ''),
+    },
     error: null,
   };
 }
