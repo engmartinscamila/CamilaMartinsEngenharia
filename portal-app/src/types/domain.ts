@@ -109,6 +109,9 @@ export interface ApprovalSummary {
   type: string;
   title: string;
   description: string | null;
+  approvalObject?: string | null;
+  relatedDocumentId?: string | null;
+  dueAt?: string | null;
   status: string;
   comment: string | null;
   createdAt: string;
