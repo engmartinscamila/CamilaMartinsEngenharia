@@ -12,6 +12,7 @@ const dispatcherMirror=fs.readFileSync('portal-app/supabase/functions/dispatch-d
 const dispatchMigration=fs.readFileSync('supabase/migrations/20260924124500_dispatch_scheduled_document_notifications.sql','utf8');
 const phraseBuilder=fs.readFileSync('scripts/build-frases-do-dia-v7.mjs','utf8');
 const phraseUi=fs.readFileSync('js/frase-do-dia.js','utf8');
+const clientNotifications=fs.readFileSync('portal-app/src/app/(client)/notifications.tsx','utf8');
 
 assert.ok(html.includes('id="experienceLevelField"')&&html.includes('doc-hidden'),'Nível do orçamento precisa começar oculto e aparecer após a seleção de atividades.');
 assert.ok(!/<label>Nível de prestação<\/label><select id="experienceLevel">/.test(html),'Nível voltou a aparecer no grid antes dos serviços.');
@@ -58,6 +59,8 @@ assert.ok(dispatcher.includes("delivery_status','scheduled")&&dispatcher.include
 assert.ok(dispatcher.includes("superseded_by")&&dispatcher.includes("delivery_status:'cancelled'"),'Dispatcher precisa cancelar o envio se a versão tiver sido substituída antes do horário programado.');
 assert.ok(dispatchMigration.includes("cme-document-notification-dispatch")&&dispatchMigration.includes("vault.decrypted_secrets"),'Agendamento automático precisa usar Cron + Vault.');
 assert.ok(generator.includes("client_released_at")&&generator.includes("sendClientDocumentEmail"),'Envio imediato precisa liberar documento e disparar e-mail.');
+assert.ok(generator.includes("Escolha uma data e horário futuros para o agendamento."),'Servidor precisa rejeitar data passada/inválida em vez de convertê-la em envio imediato.');
+assert.ok(clientNotifications.includes("markNotificationRead")&&clientNotifications.includes("openNotification"),'Portal do Cliente precisa registrar leitura antes de abrir a atividade vinculada.');
 
 assert.ok(phraseBuilder.includes('build-frases-do-dia-fixed.mjs'),'Build voltou a substituir o banco multi-autores por conteúdo editorial único.');
 assert.ok(phraseBuilder.includes('autores.size < 8'),'Build precisa falhar se perder diversidade de autores.');
