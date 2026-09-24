@@ -40,6 +40,7 @@ for (const filter of ['serviceFilter', 'categoryFilter', 'levelFilter']) has(ser
 
 const adminApprovals = read('portal-app/src/app/admin/approvals.tsx');
 for (const label of ['Projeto / contrato', 'O que o cliente deverá aprovar?', 'Objeto específico', 'Documento relacionado', 'Prazo para manifestação']) has(adminApprovals, label, `Aprovações guiadas perderam “${label}”.`);
+for (const label of ["['Material', 'Material']", "['Acabamento', 'Acabamento']"]) has(adminApprovals, label, `Aprovações guiadas perderam a opção ${label}.`);
 
 const diary = read('portal-app/src/app/admin/work-diary.tsx');
 has(diary, 'teamBreakdown', 'Diário não possui equipe estruturada.');
