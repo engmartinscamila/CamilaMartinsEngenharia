@@ -132,6 +132,31 @@ const supabaseMock = `
     documentos:[{id:"d1", cliente_id:"c1", projeto_id:"p1", nome:"Documento Teste", titulo:"Documento Teste", tipo:"projeto", nome_original:"teste.pdf", arquivo:"c1/p1/teste.pdf", autoral:true}],
     fotos:[{id:"f1", cliente_id:"c1", projeto_id:"p1", nome:"Foto Teste", arquivo:"teste.webp"}],
     biblioteca:[{id:"b1", cliente_id:"c1", projeto_id:"p1", nome:"Arquivo Teste", tipo:"guia_estilos", arquivo:"c1/p1/guia.pdf", autoral:true}],
+    service_catalog:[
+      {
+        code:"a", name:"Estudo Preliminar", category:"projeto", level_applicable:true,
+        description:"Estudo preliminar conforme escopo contratado.", deliverables:["Estudo preliminar"],
+        exclusions:[], client_inputs:[], default_revisions:1, delivery_formats:["PDF"],
+        planning_reference:null, version:1, aliases:[], synonyms:[], keywords:["estudo","preliminar"]
+      },
+      {
+        code:"b", name:"Anteprojeto", category:"projeto", level_applicable:true,
+        description:"Anteprojeto conforme escopo contratado.", deliverables:["Anteprojeto"],
+        exclusions:[], client_inputs:[], default_revisions:1, delivery_formats:["PDF"],
+        planning_reference:null, version:1, aliases:[], synonyms:[], keywords:["anteprojeto"]
+      },
+      {
+        code:"p", name:"Outro", category:"outros", level_applicable:false,
+        description:"Atividade específica descrita pelo usuário.", deliverables:[],
+        exclusions:[], client_inputs:[], default_revisions:0, delivery_formats:["PDF"],
+        planning_reference:null, version:1, aliases:[], synonyms:[], keywords:["outro"]
+      }
+    ],
+    service_level_catalog:[
+      {code:"bronze",label:"BRONZE",subtitle:"Essencial",description:"Nível Bronze",features:[],exclusions:[],version:2,active:true},
+      {code:"prata",label:"PRATA",subtitle:"Intermediário",description:"Nível Prata",features:[],exclusions:[],version:3,active:true},
+      {code:"ouro",label:"OURO",subtitle:"Completo",description:"Nível Ouro",features:[],exclusions:[],version:3,active:true}
+    ],
     agenda:[], cronograma:[], solicitacoes:[], financeiro:[], configuracoes:[]
   };
 
