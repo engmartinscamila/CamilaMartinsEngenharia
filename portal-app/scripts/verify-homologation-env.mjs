@@ -7,6 +7,7 @@ const key = (
   || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
 )?.trim();
 const appEnvironment = process.env.EXPO_PUBLIC_APP_ENV?.trim().toLowerCase();
+const turnstileSiteKey = process.env.EXPO_PUBLIC_TURNSTILE_SITE_KEY?.trim();
 
 assert.equal(appEnvironment, 'homologation', 'EXPO_PUBLIC_APP_ENV deve ser homologation.');
 assert.ok(expectedRef, 'Referência esperada do projeto ausente.');
@@ -14,6 +15,7 @@ assert.ok(url, 'URL do Supabase ausente.');
 assert.ok(key, 'Chave pública do Supabase ausente.');
 assert.ok(!key.startsWith('sb_secret_'), 'Chave Secret bloqueada: use a chave Publishable.');
 assert.ok(!key.toLowerCase().includes('service_role'), 'Chave service_role bloqueada.');
+assert.ok(turnstileSiteKey && turnstileSiteKey.length >= 10, 'Site key pública do Cloudflare Turnstile ausente.');
 
 const actualRef = url.match(/^https:\/\/([a-z0-9-]+)\.supabase\.co\/?$/i)?.[1]?.toLowerCase();
 assert.ok(actualRef, 'URL do Supabase inválida.');
