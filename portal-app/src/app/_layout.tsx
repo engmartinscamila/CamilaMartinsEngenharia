@@ -43,7 +43,7 @@ function SynchronizedApplication({ backgroundColor, statusBarStyle }: { backgrou
       <PushNotificationBridge />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor } }}>
         <Stack.Screen name="index" />
-        <Stack.Screen name="login" />
+        <Stack.Screen name="login" />\n        <Stack.Screen name="captcha" />
         <Stack.Screen name="forgot-password" />
         <Stack.Screen name="first-access" />
         <Stack.Screen name="reset-password" />
