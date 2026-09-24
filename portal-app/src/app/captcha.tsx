@@ -1,6 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import * as Linking from 'expo-linking';\nimport { Platform } from 'react-native';
+import * as Linking from 'expo-linking';
+import { Platform } from 'react-native';
 
 import { AuthShell } from '@/components/auth-shell';
 import { TurnstileCaptcha } from '@/components/turnstile-captcha';
