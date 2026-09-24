@@ -1,4 +1,4 @@
-import DateTimePicker from '@expo/ui/community/datetime-picker';
+import NativeDateTimePicker from '@expo/ui/community/datetime-picker';
 import React, { useMemo, useState } from 'react';
 import { Platform, Pressable, Text, TextInput, View } from 'react-native';
 
@@ -67,7 +67,7 @@ export function DateField({
         </Pressable>
       ) : null}
       {open ? (
-        <DateTimePicker
+        <NativeDateTimePicker
           mode="date"
           presentation="dialog"
           value={selected}
