@@ -1048,8 +1048,44 @@
         hint.className = 'doc-help';
         event.target.insertAdjacentElement('afterend', hint);
       }
-      hint.textContent = suggestion ? `Reconhecido como: ${suggestion.name}. A grafia canônica será usada no documento.` : (typed ? 'Se a atividade já existir no catálogo, o sistema tentará reconhecer pequenos erros de digitação antes da emissão.' : '');
+      let apply = $('customServiceSuggestionApply');
+      if (!apply) {
+        apply = document.createElement('button');
+        apply.id = 'customServiceSuggestionApply';
+        apply.type = 'button';
+        apply.className = 'doc-btn secondary doc-hidden';
+        hint.insertAdjacentElement('afterend', apply);
+      }
+      if (suggestion) {
+        hint.textContent = `Sugestão do catálogo: ${suggestion.name}. Confirme para substituir “Outro” pela atividade canônica.`;
+        apply.textContent = `Confirmar: ${suggestion.name}`;
+        apply.dataset.serviceCode = suggestion.code;
+        apply.classList.remove('doc-hidden');
+      } else {
+        hint.textContent = typed ? 'Se a atividade já existir no catálogo, o sistema mostrará uma sugestão para confirmação; nenhuma atividade canônica é selecionada automaticamente.' : '';
+        apply.dataset.serviceCode = '';
+        apply.classList.add('doc-hidden');
+      }
       updateServiceSummary();
+    });
+
+    document.addEventListener('click', event => {
+      const apply = event.target.closest('#customServiceSuggestionApply');
+      if (!apply) return;
+      const code = String(apply.dataset.serviceCode || '');
+      const canonical = serviceCatalogMeta.find(item => String(item.code) === code);
+      const input = code ? document.querySelector(`[data-service="${CSS.escape(code)}"]`) : null;
+      if (!canonical || !input) return;
+      input.checked = true;
+      const other = document.querySelector('[data-service="p"]');
+      if (code !== 'p' && other) other.checked = false;
+      if ($('customService')) $('customService').value = '';
+      const hint = $('customServiceSuggestion');
+      if (hint) hint.textContent = `Atividade confirmada: ${canonical.name}.`;
+      apply.dataset.serviceCode = '';
+      apply.classList.add('doc-hidden');
+      updateServiceSummary();
+      msg(`${canonical.name} selecionado no catálogo. Escolha o nível de prestação quando aplicável.`, 'success');
     });
 
     $('commercialList')?.addEventListener('click', event => {
