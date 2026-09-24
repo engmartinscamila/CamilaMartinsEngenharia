@@ -92,6 +92,7 @@ const authorizations = [{
 const documentRanges = [];
 const linkRanges = [];
 const rpcCalls = [];
+let missingAuthorizationRpc = false;
 let failSecondDocumentPage = false;
 function commercialQuery(table) {
   return {
@@ -118,7 +119,10 @@ const commercialService = loadService('../src/services/construction-schedule-con
     from: commercialQuery,
     rpc: async (name) => {
       rpcCalls.push(name);
-      if (name === 'admin_list_full_schedule_additional_authorizations') return { data: authorizations, error: null };
+      if (name === 'admin_list_full_schedule_additional_authorizations') {
+        if (missingAuthorizationRpc) return { data: null, error: { code: 'PGRST202', message: 'Could not find the function admin_list_full_schedule_additional_authorizations' } };
+        return { data: authorizations, error: null };
+      }
       return { data: null, error: { message: `RPC inesperada: ${name}` } };
     },
   } },
@@ -133,6 +137,12 @@ ok(rpcCalls.includes('admin_list_full_schedule_additional_authorizations'), 'aut
 ok(new Set(result.data.quotes.concat(result.data.contracts).map((item) => item.id)).size === 450, 'sem duplicar documentos');
 ok(documentRanges.length === 3 && documentRanges[2][0] === 400, 'paginação de documentos usa intervalo correto');
 ok(linkRanges.length === 6 && linkRanges[5][0] === 1000, 'paginação de vínculos usa intervalo correto');
+
+missingAuthorizationRpc = true;
+const rolloutCompatible = await commercialService.loadScheduleCommercialOptions();
+ok(rolloutCompatible.error === null && rolloutCompatible.data?.additionalAuthorizations.length === 0,
+  'ausência temporária do novo RPC não quebra o caminho antigo de orçamento e contrato');
+missingAuthorizationRpc = false;
 
 failSecondDocumentPage = true;
 const failed = await commercialService.loadScheduleCommercialOptions();
