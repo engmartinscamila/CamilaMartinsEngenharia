@@ -46,10 +46,14 @@ const loginSource=fs.readFileSync('src/app/login.tsx','utf8');
 const captchaSource=fs.readFileSync('src/components/turnstile-captcha.tsx','utf8');
 const envSource=fs.readFileSync('src/lib/env.ts','utf8');
 const productionEnvCheck=fs.readFileSync('scripts/verify-production-env.mjs','utf8');
+const productionWorkflow=fs.readFileSync('../.github/workflows/pages.yml','utf8');
 eq(loginSource.includes('TurnstileCaptcha')&&loginSource.includes('captchaRequired')&&loginSource.includes('captchaConfigurationMissing'),true,'web login renders CAPTCHA and blocks unsafe production fallback');
 eq(loginSource.includes('captchaRequired && !captchaToken'),true,'web login cannot submit before CAPTCHA completion');
 eq(captchaSource.includes('https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'),true,'portal loads the official Cloudflare Turnstile challenge');
 eq(envSource.includes('EXPO_PUBLIC_TURNSTILE_SITE_KEY')&&productionEnvCheck.includes('Site key pública do Cloudflare Turnstile ausente.'),true,'production build requires a Turnstile site key');
+eq(productionEnvCheck.includes("GITHUB_EVENT_NAME === 'pull_request'"),true,'only pull-request CI may compile without the real Turnstile site key');
+eq(productionWorkflow.includes('EXPO_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}'),true,'real production deploy requires the configured Turnstile repository variable');
+eq(productionWorkflow.includes('1x00000000000000000000AA'),false,'Cloudflare dummy test key can never reach the production deployment workflow');
 
 const documentPreparation=fs.readFileSync('src/app/admin/document-preparation.tsx','utf8');
 eq(documentPreparation.includes('checkAnnexIPrerequisite'),true,'Anexo I checks the official contract prerequisite before preview/preparation');
