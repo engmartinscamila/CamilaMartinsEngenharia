@@ -44,7 +44,12 @@ has(acceptanceMigration, 'v_client_id', 'Aceite não está vinculado à identida
 const serviceLevels = read('portal-app/src/app/admin/service-level-governance.tsx');
 has(serviceLevels, 'expandedServices', 'Serviços não são recolhíveis.');
 has(serviceLevels, 'expandedLevels', 'Níveis não são recolhíveis individualmente.');
+has(serviceLevels, 'listAllServiceLevelScopeReviews', 'Governança de níveis voltou a truncar combinações sem paginação interna.');
 for (const filter of ['serviceFilter', 'categoryFilter', 'levelFilter']) has(serviceLevels, filter, `Filtro ${filter} ausente.`);
+
+const governanceService = read('portal-app/src/services/document-governance-service.ts');
+has(governanceService, 'for (let offset = 0; offset < maxItems; offset += pageSize)', 'Serviço de governança não percorre todas as páginas.');
+has(governanceService, 'if (page.data.length < pageSize)', 'Paginação interna da governança não possui condição segura de término.');
 
 const adminApprovals = read('portal-app/src/app/admin/approvals.tsx');
 for (const label of ['Projeto / contrato', 'O que o cliente deverá aprovar?', 'Objeto específico', 'Documento relacionado', 'Prazo para manifestação']) has(adminApprovals, label, `Aprovações guiadas perderam “${label}”.`);
