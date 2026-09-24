@@ -60,7 +60,7 @@ function buildPureCommercialModule(){
 
 function buildCommercialFinalModule(){
   const source=read('portal-app/supabase/functions/generate-commercial-document-final/index.ts');
-  const start=source.search(/const\\s+text\\s*=/);
+  const start=source.search(/const\s+text\s*=/);
   const end=source.indexOf('Deno.serve');
   if(start<0||end<0)throw new Error('Não foi possível extrair o pós-processamento comercial final.');
   const target=path.join(TMP,'commercial-final.ts');
