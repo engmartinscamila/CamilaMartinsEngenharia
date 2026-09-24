@@ -20,7 +20,7 @@ interface AuthContextValue {
   client: ClientProfile | null;
   loading: boolean;
   configured: boolean;
-  signIn: (email: string, password: string) => Promise<string | null>;
+  signIn: (email: string, password: string, captchaToken?: string) => Promise<string | null>;
   signOut: () => Promise<void>;
   requestAccessLink: (email: string) => Promise<string | null>;
   changePassword: (password: string) => Promise<string | null>;
