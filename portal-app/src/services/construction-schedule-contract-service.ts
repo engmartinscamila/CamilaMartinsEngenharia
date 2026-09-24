@@ -229,3 +229,44 @@ export async function exportApprovedScheduleXlsx(scheduleId: string): Promise<st
     return error instanceof Error ? error.message : 'Excel gerado, mas não foi possível abrir o download.';
   }
 }
+
+
+export interface TestScheduleExportItem {
+  code: string;
+  activity: string;
+  predecessorCode: string | null;
+  plannedStart: string;
+  plannedFinish: string;
+  durationDays: number;
+  plannedCost: number;
+  weightPercent: number;
+  quantity: number | null;
+  unit: string | null;
+  unitCost: number | null;
+  actualProgress: number;
+}
+
+export async function exportTestScheduleXlsx(input: {
+  revision: number;
+  startDate: string;
+  finishDate: string;
+  calendar: WorkCalendar;
+  notes?: string;
+  items: TestScheduleExportItem[];
+}): Promise<string | null> {
+  if (!input.items.length || input.items.length > 200) return 'O teste precisa ter entre 1 e 200 atividades.';
+  const result = await supabase.functions.invoke('generate-construction-schedule-test-xlsx', {
+    body: { testMode: true, ...input },
+  });
+  if (result.error || result.data?.generated !== true || typeof result.data?.contentBase64 !== 'string') {
+    return typeof result.data?.error === 'string'
+      ? result.data.error
+      : result.error?.message ?? 'Não foi possível gerar o Excel do cronograma de teste.';
+  }
+  try {
+    await downloadBase64File(result.data.contentBase64, String(result.data.fileName ?? 'Cronograma-TESTE-NAO-CONTRATUAL.xlsx'));
+    return null;
+  } catch (error) {
+    return error instanceof Error ? error.message : 'Excel de teste gerado, mas o download não pôde ser aberto.';
+  }
+}
