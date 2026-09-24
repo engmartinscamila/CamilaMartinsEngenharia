@@ -112,6 +112,11 @@ const datePt=(raw:unknown,fallback='Não informado')=>{
  const date=new Date(raw);
  return Number.isNaN(date.getTime())?raw:new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric'}).format(date);
 };
+const dateTimePt=(raw:unknown,fallback='Não informado')=>{
+ if(typeof raw!=='string'||!raw)return fallback;
+ const date=new Date(raw);
+ return Number.isNaN(date.getTime())?raw:new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(date);
+};
 const generatedDatePt=(value:Date)=>new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric'}).format(value);
 const generatedDateIso=(value:Date)=>{
  const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(value);
@@ -306,59 +311,60 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
    const matched=scopeMatch(d);
    const deliverables=matched?arrStrings(matched.deliverables):[];
    const revisions=matched?.revisions;
+   const acceptanceTypes:Record<string,string>={stage_delivery:'ENTREGA DE ETAPA',document_delivery:'ENTREGA DE DOCUMENTO',image_authorization:'AUTORIZAÇÃO DE USO DE IMAGEM',service_completion:'CONCLUSÃO / FINALIZAÇÃO DO SERVIÇO',other:'MANIFESTAÇÃO CONTRATUAL'};
+   const acceptanceType=String(d.acceptance_type??'').trim();
+   const acceptanceLabel=acceptanceTypes[acceptanceType]||String(d.approval_type??'').trim().toUpperCase()||'ENTREGA / ETAPA';
    return doc([
-     ...t('TERMO DE ACEITE DE ETAPA','Validação de entrega prevista no fluxo contratual'),
+     ...t(`TERMO DE ACEITE — ${acceptanceLabel}`,'Manifestação a ser registrada pelo(a) CONTRATANTE no Portal do Cliente'),
      ...identity(d,profile,generatedAt),
-     h('2. ETAPA ENTREGUE'),
-     p(`Etapa: ${value(d,'approval_title')}`,true,GOLD),
+     h('2. OBJETO DO ACEITE'),
+     p(`Referência: ${value(d,'approval_title')}`,true,GOLD),
+     ...(d.acceptance_subject?[p(`Objeto específico informado para este termo: ${String(d.acceptance_subject)}`)]:[]),
      ...(matched?[p(serviceDescription(matched)),small(`Serviço relacionado: (${String(matched.code??'')}) ${serviceName(matched)}`)]:[]),
      ...(d.approval_description?[p(`Descrição registrada da entrega: ${String(d.approval_description)}`)]:[]),
-     ...(deliverables.length?[sub('Entregáveis padrão relacionados à etapa'),...deliverables.map(bullet)]:[]),
-     h('3. DADOS AUTOMÁTICOS DA ENTREGA'),
+     ...(deliverables.length?[sub('Entregáveis relacionados'),...deliverables.map(bullet)]:[]),
+     h('3. DADOS DA ENTREGA'),
      p(`Data do envio/entrega: ${datePt(d.delivered_at)}`),
      p(`Prazo de manifestação: até ${datePt(d.approval_due_at)}`),
      ...(matched?[p(`Revisões previstas para este serviço: ${typeof revisions==='number'?revisions:'conforme Anexo I'}.`)]:[]),
-     h('4. MANIFESTAÇÃO DO(A) CONTRATANTE'),
-     p(smartRule(d,'acceptance_rule','O(A) CONTRATANTE poderá apontar por escrito eventuais inconsistências dentro do prazo contratual de manifestação. O aceite desta etapa não amplia o escopo originalmente contratado e não impede a correção de vícios técnicos.')),
-     p('☐ Aceito sem ressalvas.'),
-     p('☐ Aceito com ressalvas descritas abaixo:'),
-     p('_______________________________________________________________________________'),
-     p('_______________________________________________________________________________'),
+     h('4. COMO O ACEITE É REGISTRADO'),
+     p(smartRule(d,'acceptance_rule','O(A) CONTRATANTE deverá registrar sua manifestação no Portal do Cliente, podendo aceitar, aceitar com ressalvas ou recusar a versão disponibilizada. A manifestação ficará vinculada à versão exata do documento e ao respectivo snapshot.')),
+     gridTable(['Manifestação','Registro'],[['Aceite sem ressalvas','Registrado eletronicamente no Portal do Cliente'],['Aceite com ressalvas','Registrado no Portal com as observações do cliente'],['Recusa','Registrada no Portal com a justificativa informada']]),
+     ...(d.acceptance_admin_notes?[p(`Observação da emissão: ${String(d.acceptance_admin_notes)}`)]:[]),
      h('5. CONTINUIDADE DO PROJETO'),
-     p('Após a validação, o fluxo segue para a próxima etapa efetivamente prevista no Anexo I e no cronograma aplicável.'),
-     h('6. ASSINATURAS'),
+     p('Após a manifestação, o status é atualizado no histórico do contrato. A continuidade considera somente as etapas efetivamente previstas no Anexo I e no cronograma aplicável.'),
+     h('6. IDENTIFICAÇÃO'),
      ...sig(profile,generatedAt,d)
    ],profile,code);
  }
 
  if(kind==='servico_adicional'){
    const base=contractedScopeLines(d);
+   const reasons=arrStrings(d.reasons);
+   const reasonLabels:Record<string,string>={extra_revisions:'Revisão além das rodadas incluídas',scope_change:'Alteração de escopo, premissas, programa, metragem ou layout',level_upgrade:'Migração para nível de prestação superior',survey:'Vistoria ou levantamento não incluído',editable_file:'Arquivo editável ou formato não previsto',other:'Outro motivo'};
+   const pricingLabels:Record<string,string>={hour:'Hora técnica',percentage:'Percentual sobre etapa afetada',fixed:'Valor fechado para esta atividade'};
    return doc([
-     ...t('TERMO DE APROVAÇÃO DE SERVIÇO ADICIONAL','Alteração de escopo • aprovação prévia antes do início'),
+     ...t('TERMO DE SERVIÇO ADICIONAL','Aditivo de escopo vinculado ao contrato vigente • sujeito ao aceite do cliente'),
      ...identity(d,profile,generatedAt),
-     h('2. ESCOPO ORIGINAL DE REFERÊNCIA'),
-     p('O escopo vigente permanece sendo o previsto no Contrato e no Anexo I. Este termo não substitui nem reescreve os itens originalmente contratados.'),
+     h('2. VÍNCULO COM O CONTRATO VIGENTE'),
+     p('Este documento integra o histórico do contrato identificado acima. Não cria um contrato paralelo e não apaga, substitui ou reescreve o escopo originalmente contratado.'),
      ...(base.length?base.map(bullet):[p('Nenhum item de escopo foi localizado no snapshot contratual; revisar antes da emissão.')]),
      h('3. ORIGEM DA NOVA SOLICITAÇÃO'),
-     p('☐ Revisão além das rodadas incluídas.'),
-     p('☐ Alteração de escopo, premissas, programa, metragem ou layout já aprovado.'),
-     p('☐ Migração para nível de prestação superior ao contratado.'),
-     p('☐ Vistoria ou levantamento não incluído no escopo original.'),
-     p('☐ Arquivo editável ou formato não previsto.'),
-     p('☐ Outro: _______________________________________________'),
-     h('4. ATIVIDADE E DESCRIÇÃO DO SERVIÇO ADICIONAL'),
+     ...(reasons.length?reasons.map(reason=>bullet(reasonLabels[reason]||reason)):[p('Origem não informada.')]),
+     ...(value(d,'other_reason','')?[p(`Detalhamento adicional: ${value(d,'other_reason')}`)]:[]),
+     h('4. NOVA ATIVIDADE CONTRATADA'),
      p(`Atividade: ${value(d,'additional_service_code','—')} • ${value(d,'additional_service_name','Serviço adicional')}${value(d,'additional_service_level','')?` • nível ${value(d,'additional_service_level_label',value(d,'additional_service_level'))}`:''}.`,true,GOLD),
-     p(value(d,'additional_service_description',value(d,'service_description','Descrever somente a nova solicitação; o escopo original já está registrado acima.'))),
+     p(value(d,'additional_service_description',value(d,'service_description','Descrição não informada.'))),
      h('5. IMPACTO COMERCIAL E DE PRAZO'),
-     p(`Critério aplicável: ${value(d,'additional_level',value(d,'experience_level','conforme orçamento específico'))}.`),
-     p(`Valor adicional aprovado: ${value(d,'additional_value',money(d.contract_value))}.`),
-     p(`Forma de pagamento: ${value(d,'additional_payment_method',value(d,'payment_method','conforme orçamento específico'))}.`),
-     p(`Condição de pagamento: ${value(d,'payment_terms','não informada')}.`),
-     ...(value(d,'new_contract_total','')?[p(`Novo total contratual informado: ${value(d,'new_contract_total')}.`)]:[]),
+     p(`Critério comercial: ${pricingLabels[String(d.pricing??'')]||value(d,'pricing','conforme negociação registrada')}.`),
+     p(`Valor adicional: ${value(d,'additional_value','não informado')}.`,true,GOLD),
+     p(`Forma de pagamento: ${value(d,'payment_method','não informada')}.`),
+     ...(value(d,'new_total_value','')?[p(`Novo total contratual de referência após este adicional: ${money(d.new_total_value)}.`,true,GOLD)]:[]),
      p(`Impacto no cronograma: ${value(d,'schedule_impact','sem impacto adicional informado')}.`),
-     p(smartRule(d,'additional_service_rule','O serviço adicional somente será iniciado após aprovação por escrito. Valores, horas ou percentuais devem respeitar o Contrato e o orçamento específico aprovado para esta alteração.')),
-     h('6. APROVAÇÃO'),
-     p('☐ Aprovo a alteração acima e autorizo o início do serviço adicional nos limites deste termo.'),
+     p(smartRule(d,'additional_service_rule','O serviço adicional somente poderá ser iniciado depois da manifestação do(a) CONTRATANTE. O aceite desta versão vincula a nova atividade, seu valor e suas condições ao contrato vigente, preservando integralmente o histórico anterior.')),
+     h('6. ACEITE DO CLIENTE'),
+     p('A aprovação desta contratação adicional será registrada pelo(a) CONTRATANTE no Portal do Cliente. O sistema vinculará a manifestação à versão exata deste documento.'),
+     h('7. IDENTIFICAÇÃO'),
      ...sig(profile,generatedAt,d)
    ],profile,code);
  }
@@ -427,29 +433,32 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
 
  if(kind==='levantamento_tecnico'){
    const inputs=unique(includedScope(d).flatMap(item=>arrStrings(item.clientInputs)));
+   const observed=arrStrings(d.observed);
+   const conditions=arrStrings(d.conditions);
+   const observedLabels:Record<string,string>={electrical:'Instalações / pontos elétricos',hydraulic:'Instalações / pontos hidráulicos',sanitary:'Esgoto / ventilação sanitária',structure:'Estrutura aparente',masonry:'Alvenarias e vedações',frames:'Esquadrias',finishes:'Pisos / revestimentos / pinturas',roof:'Cobertura / telhado',waterproofing:'Impermeabilização',drainage:'Drenagem / águas pluviais',facade:'Fachadas',stairs:'Escadas / guarda-corpos',accessibility:'Acessibilidade',fire_safety:'Elementos de segurança contra incêndio',dimensions:'Dimensões / níveis / pé-direito',equipment:'Equipamentos / instalações existentes',access:'Acessos e circulação',other:'Outros'};
+   const conditionLabels:Record<string,string>={cracks:'Fissuras / trincas',moisture:'Umidade / infiltração',levels:'Desníveis / deformações',corrosion:'Corrosão aparente',detachment:'Desplacamentos / destacamentos',leaks:'Vazamentos',wear:'Desgaste / deterioração',document_mismatch:'Divergência entre realidade e documentos',restricted_access:'Acesso restrito',safety_risk:'Condição aparente que requer avaliação de segurança',no_anomaly:'Sem anomalia aparente'};
+   const responsible=value(d,'technical_responsible',profileValue(profile,'full_name')||'Responsável técnico não informado');
    return doc([
-     ...t('FICHA DE LEVANTAMENTO TÉCNICO / VISTORIA','Registro padronizado das condições verificadas no local'),
+     ...t('FICHA DE LEVANTAMENTO TÉCNICO / VISTORIA','Registro editável das condições verificadas no local'),
      ...identity(d,profile,generatedAt),
-     p(`Data e horário da vistoria: ${value(d,'survey_datetime',value(d,'visit_datetime','a preencher'))}`),
-     p(`Responsável pelo acompanhamento no local: ${value(d,'site_companion',value(d,'accompanying_person','a preencher'))}`),
-     p(`Responsável técnico pelo registro: ${value(d,'technical_responsible','a preencher')}`),
+     p(`Data e horário da vistoria: ${dateTimePt(d.survey_datetime??d.visit_datetime)}`),
+     p(`Responsável pelo acompanhamento no local: ${value(d,'site_companion',value(d,'accompanying_person','Não informado'))}`),
+     p(`Responsável técnico pelo registro: ${responsible}`),
      h('2. DADOS DO IMÓVEL'),
-     p(`Tipo: ${value(d,'project_type')} • Área do terreno: ${String(d.area_terreno_m2??'não informada')} m² • Área construída: ${String(d.area_construida_m2??'não informada')} m²`),
+     p(`Tipo cadastrado do imóvel/projeto: ${value(d,'project_type')} • Área do terreno: ${String(d.area_terreno_m2??'não informada')} m² • Área construída: ${String(d.area_construida_m2??'não informada')} m²`),
      p(`Endereço: ${value(d,'property_address')}`),
      h('3. INFORMAÇÕES E DOCUMENTOS RELEVANTES AO ESCOPO'),
-     ...(inputs.length?inputs.map(item=>p(`☐ ${item}`)):[p('☐ Documentação e informações necessárias ao escopo contratado.')]),
+     gridTable(['Insumo / documento','Situação','Observações'],(inputs.length?inputs:['Documentação e informações necessárias ao escopo contratado']).map(item=>[item,'',''])),
      h('4. MEDIDAS E AMBIENTES'),
      gridTable(['Ambiente / setor','Comprimento','Largura','Pé-direito','Observações'],Array.from({length:10},()=>['','','','',''])),
-     h('5. INSTALAÇÕES E ELEMENTOS OBSERVÁVEIS'),
-     p('☐ Pontos elétricos   ☐ Pontos hidráulicos   ☐ Estrutura aparente   ☐ Esquadrias'),
-     p('☐ Revestimentos   ☐ Cobertura   ☐ Drenagem   ☐ Acessos   ☐ Outros'),
-     h('6. CONDIÇÕES E DIVERGÊNCIAS OBSERVADAS'),
-     p('☐ Fissuras/trincas   ☐ Umidade/infiltração   ☐ Desníveis   ☐ Corrosão aparente'),
-     p('☐ Divergência entre realidade e documentos fornecidos   ☐ Acesso restrito a algum elemento'),
-     p('Descrição: _____________________________________________________________________'),
-     h('7. REGISTRO FOTOGRÁFICO E RASTREABILIDADE'),
-     p('As fotografias correspondentes devem ser vinculadas ao projeto no portal, preservando data e contexto da vistoria quando possível.'),
-     gridTable(['Arquivo / referência','Data','Descrição'],Array.from({length:4},()=>['','',''])),
+     h('5. ELEMENTOS REGISTRADOS NA VISTORIA'),
+     gridTable(['Elemento selecionado','Condição / situação','Observações'],(observed.length?observed:['Outros elementos a registrar']).map(item=>[observedLabels[item]||item,'',''])),
+     h('6. CONDIÇÕES E DIVERGÊNCIAS'),
+     gridTable(['Condição selecionada','Local / item relacionado','Observações'],(conditions.length?conditions:['Condições a registrar']).map(item=>[conditionLabels[item]||item,'',''])),
+     ...(value(d,'conditions_description','')?[p(`Descrição registrada no portal: ${value(d,'conditions_description')}`)]:[]),
+     h('7. REGISTRO FOTOGRÁFICO'),
+     p('O registro fotográfico poderá ser inserido manualmente neste Word após a vistoria. O documento não depende de fotos previamente cadastradas no Portal.'),
+     gridTable(['Fotografia / referência','Data','Descrição'],Array.from({length:6},()=>['','',''])),
      h('8. LIMITES DA VISTORIA'),
      p(smartRule(d,'survey_limit','O registro limita-se às condições acessíveis e observáveis no momento da visita e não substitui ensaios, investigações destrutivas ou serviços especializados não contratados.')),
      h('9. ASSINATURAS / CIÊNCIA'),
@@ -465,25 +474,23 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
    return doc([
      ...t('ESTUDO PRELIMINAR',outside?'Documento auxiliar • não altera automaticamente o escopo contratado':'Etapa prevista no escopo contratual'),
      ...identity(d,profile,generatedAt),
-     ...(outside?[p('ATENÇÃO: este Estudo Preliminar foi preparado como documento auxiliar. Sua emissão não inclui automaticamente o serviço no Anexo I nem altera o valor do contrato.',true,GOLD)]:[]),
+     ...(outside?[p('ATENÇÃO: o Estudo Preliminar não é obrigatório por padrão. Se for contratado pelo cliente, deverá ser remunerado e registrado no orçamento/Serviço Adicional e no Anexo I. Esta versão foi preparada apenas como documento auxiliar e, sozinha, não altera o valor nem o escopo do contrato.',true,GOLD)]:[]),
      compactH('2. OBJETIVO DA ETAPA'),
      p(study?serviceDescription(study):'Consolidar necessidades, condicionantes e diretrizes iniciais para orientar o desenvolvimento do projeto.'),
      ...(d.project_description?[p(`Descrição cadastrada do projeto: ${String(d.project_description)}`)]:[]),
      compactH('3. INSUMOS NECESSÁRIOS'),
-     ...(inputs.length?inputs.map(item=>p(`☐ ${item}`)):[p('☐ Briefing e informações do cliente   ☐ Medidas/documentos disponíveis do imóvel')]),
+     gridTable(['Insumo necessário','Recebido / pendente','Observações'],(inputs.length?inputs:['Briefing e informações do cliente','Medidas / documentos disponíveis do imóvel']).map(item=>[item,'',''])),
      compactH('4. PROGRAMA DE NECESSIDADES'),
      gridTable(['Ambiente / setor','Quantidade','Prioridade','Observações'],Array.from({length:4},()=>['','','',''])),
      compactH('5. CONDICIONANTES E PREMISSAS'),
-     p('Restrições legais/condominiais conhecidas: ________________________________________'),
-     p('Premissas funcionais e de uso: ____________________________________________________'),
-     p('Premissas de orçamento e padrão construtivo: ______________________________________'),
+     gridTable(['Condicionante / premissa','Registro editável'],[['Restrições legais / condominiais conhecidas',''],['Premissas funcionais e de uso',''],['Premissas de orçamento e padrão construtivo','']]),
      compactH('6. DIRETRIZES DE PARTIDO E ORGANIZAÇÃO ESPACIAL'),
      p('Registrar implantação, setorização, fluxos, orientação solar/ventilação, relações entre ambientes e diretrizes estéticas validadas para esta etapa.'),
      p('_______________________________________________________________________________'),
      compactH('7. QUADRO PRELIMINAR DE ÁREAS'),
      p(`Área do terreno cadastrada: ${String(d.area_terreno_m2??'não informada')} m².`),
      p(`Área construída prevista cadastrada: ${String(d.area_construida_m2??'não informada')} m².`),
-     p('Distribuição por pavimento / setor: _______________________________________________'),
+     gridTable(['Pavimento / setor','Área / observação'],Array.from({length:5},()=>['',''])),
      compactH('8. ENTREGÁVEIS PADRÃO DESTA ETAPA'),
      ...(deliverables.length?deliverables.map(bullet):[bullet('Síntese de necessidades e premissas'),bullet('Representações compatíveis com o nível preliminar')]),
      ...levelSection(d,'9. NÍVEL DE PRESTAÇÃO DE SERVIÇO',compactH),
