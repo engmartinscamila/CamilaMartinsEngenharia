@@ -724,10 +724,10 @@
       "origem": "citação"
     },
     {
-      "texto": "Eu creio que ouvira tudo claramente, mas confessal-o seria perder a esperança do silencio e da reconciliação; por isso negou a audiencia e confirmou unicamente a vista.",
+      "texto": "A organização moral da viuva era forte, mas a resistencia fora prolongada, e a vontade gastou-se nesse esforço de todos os dias.",
       "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
+      "categoria": "Persistência",
+      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
       "origem": "citação"
     },
     {
@@ -738,10 +738,10 @@
       "origem": "autoral"
     },
     {
-      "texto": "A organização moral da viuva era forte, mas a resistencia fora prolongada, e a vontade gastou-se nesse esforço de todos os dias.",
+      "texto": "Estava em casa aborrecido, a pensar... bem sabes em que... --Nella? interrompeu Luiz Alves. --Agora e sempre.",
       "autor": "Machado de Assis",
-      "categoria": "Persistência",
-      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
       "origem": "citação"
     },
     {
@@ -1431,13 +1431,6 @@
       "origem": "autoral"
     },
     {
-      "texto": "Estava em casa aborrecido, a pensar... bem sabes em que... --Nella? interrompeu Luiz Alves. --Agora e sempre.",
-      "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
-      "origem": "citação"
-    },
-    {
       "texto": "Ouço ás vezes uma voz que me fala; penso que é alguem e reconheço que a voz é a da minha propria imaginação.",
       "autor": "Machado de Assis",
       "categoria": "Criatividade",
@@ -1452,6 +1445,13 @@
       "origem": "citação"
     },
     {
+      "texto": "Não de todo se foi da nossa vida; Parte ficou para sentir teus males.",
+      "autor": "Machado de Assis",
+      "categoria": "Criatividade",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
+      "origem": "citação"
+    },
+    {
       "texto": "Coragem é seguir adiante com consciência, porque consistência transforma intenção em resultado.",
       "autor": "Camila Martins",
       "categoria": "Coragem",
@@ -1459,10 +1459,10 @@
       "origem": "autoral"
     },
     {
-      "texto": "Não de todo se foi da nossa vida; Parte ficou para sentir teus males.",
+      "texto": "Superficial, amigo de novidades, amando no direito o vocabulario e as formulas.» Quiz reler, e não pôde; essas poucas linhas davam-lhe a sensação de um espelho.",
       "autor": "Machado de Assis",
-      "categoria": "Criatividade",
-      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
+      "categoria": "Reflexão",
+      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
       "origem": "citação"
     },
     {
@@ -1781,24 +1781,24 @@
       "origem": "citação"
     },
     {
-      "texto": "Contou-me a vida na Europa, os estudos, particularmente os de archeologia, que era a sua paixão.",
-      "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
-      "origem": "citação"
-    },
-    {
-      "texto": "Superficial, amigo de novidades, amando no direito o vocabulario e as formulas.» Quiz reler, e não pôde; essas poucas linhas davam-lhe a sensação de um espelho.",
-      "autor": "Machado de Assis",
-      "categoria": "Reflexão",
-      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
-      "origem": "citação"
-    },
-    {
       "texto": "Verdade é que não tinha tempo de acreditar em nada; todo era pouco para ser alegre.",
       "autor": "Machado de Assis",
       "categoria": "Paciência",
       "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
+      "origem": "citação"
+    },
+    {
+      "texto": "A felicidade de Guiomar fazia-a completamente feliz; nem iras, nem resentimentos, como annunciara Mrs.",
+      "autor": "Machado de Assis",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
+      "origem": "citação"
+    },
+    {
+      "texto": "MUNDO INTERIOR Ouço que a natureza é uma lauda eterna De pompa, de fulgor, de movimento e lida, Uma escala de luz, uma escala de vida De sol á infima luzerna.",
+      "autor": "Machado de Assis",
+      "categoria": "Reflexão",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
     {
@@ -1809,10 +1809,10 @@
       "origem": "autoral"
     },
     {
-      "texto": "A felicidade de Guiomar fazia-a completamente feliz; nem iras, nem resentimentos, como annunciara Mrs.",
+      "texto": "De noite, não havia trabalho para Luiz Garcia; a noite, como o dia seguinte, era toda consagrada á creança.",
       "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
+      "categoria": "Persistência",
+      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
       "origem": "citação"
     },
     {
@@ -2320,34 +2320,6 @@
       "origem": "citação"
     },
     {
-      "texto": "MUNDO INTERIOR Ouço que a natureza é uma lauda eterna De pompa, de fulgor, de movimento e lida, Uma escala de luz, uma escala de vida De sol á infima luzerna.",
-      "autor": "Machado de Assis",
-      "categoria": "Reflexão",
-      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
-      "origem": "citação"
-    },
-    {
-      "texto": "De noite, não havia trabalho para Luiz Garcia; a noite, como o dia seguinte, era toda consagrada á creança.",
-      "autor": "Machado de Assis",
-      "categoria": "Persistência",
-      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
-      "origem": "citação"
-    },
-    {
-      "texto": "A simplicidade é sinal de compreensão profunda, porque pequenas escolhas coerentes constroem trajetórias duradouras.",
-      "autor": "Camila Martins",
-      "categoria": "Planejamento",
-      "fonte": "Autoral",
-      "origem": "autoral"
-    },
-    {
-      "texto": "Era Capitú, que nos espreitara desde algum tempo, por dentro da veneziana, e agora abrira inteiramente a janella, e apparecera.",
-      "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
-      "origem": "citação"
-    },
-    {
       "texto": "Demais, a amiga tinha o dom de fascinar, virtude de Bonaparte, e não lhe deu tempo de reflectir.",
       "autor": "Machado de Assis",
       "categoria": "Criatividade",
@@ -2362,18 +2334,18 @@
       "origem": "citação"
     },
     {
+      "texto": "A simplicidade é sinal de compreensão profunda, porque pequenas escolhas coerentes constroem trajetórias duradouras.",
+      "autor": "Camila Martins",
+      "categoria": "Planejamento",
+      "fonte": "Autoral",
+      "origem": "autoral"
+    },
+    {
       "texto": "Sahia ás vezes, e a maior parte dellas por instancias do proprio consorte; mas só estava commodamente em casa.",
       "autor": "Machado de Assis",
       "categoria": "Criatividade",
       "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
       "origem": "citação"
-    },
-    {
-      "texto": "A simplicidade é sinal de compreensão profunda, quando conhecimento, método e presença caminham juntos.",
-      "autor": "Camila Martins",
-      "categoria": "Conhecimento",
-      "fonte": "Autoral",
-      "origem": "autoral"
     },
     {
       "texto": "Viam meus olhos ondular as aguas, Mas no alheado pensamento os ecos Sussurravam da infancia.",
@@ -2387,6 +2359,34 @@
       "autor": "Machado de Assis",
       "categoria": "Excelência",
       "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Judith Walter, distincta viajante que dizem conhecer profundamente a lingua chineza, e que os traduziu em simples e corrente prosa.] [Footnote 5: É do Sr.",
+      "autor": "Machado de Assis",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
+      "origem": "citação"
+    },
+    {
+      "texto": "A simplicidade é sinal de compreensão profunda, quando conhecimento, método e presença caminham juntos.",
+      "autor": "Camila Martins",
+      "categoria": "Conhecimento",
+      "fonte": "Autoral",
+      "origem": "autoral"
+    },
+    {
+      "texto": "Frouxo Ia o sol transmontando; lenta a vaga Melancholicamente ali gemia, E todo o ar parecia arfar de morte.",
+      "autor": "Machado de Assis",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Os que se vão calados, raramente é por orgulho; na maior parte dos casos ou não têm tempo, ou não sabem escrever.",
+      "autor": "Machado de Assis",
+      "categoria": "Criatividade",
+      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
       "origem": "citação"
     },
     {
@@ -3076,34 +3076,6 @@
       "origem": "citação"
     },
     {
-      "texto": "Judith Walter, distincta viajante que dizem conhecer profundamente a lingua chineza, e que os traduziu em simples e corrente prosa.] [Footnote 5: É do Sr.",
-      "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
-      "origem": "citação"
-    },
-    {
-      "texto": "Frouxo Ia o sol transmontando; lenta a vaga Melancholicamente ali gemia, E todo o ar parecia arfar de morte.",
-      "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
-      "origem": "citação"
-    },
-    {
-      "texto": "O tempo revela o valor daquilo que foi bem construído, quando cada passo tem propósito.",
-      "autor": "Camila Martins",
-      "categoria": "Paciência",
-      "fonte": "Autoral",
-      "origem": "autoral"
-    },
-    {
-      "texto": "Os que se vão calados, raramente é por orgulho; na maior parte dos casos ou não têm tempo, ou não sabem escrever.",
-      "autor": "Machado de Assis",
-      "categoria": "Criatividade",
-      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
-      "origem": "citação"
-    },
-    {
       "texto": "Penetrando a barra e descortinando a cidade natal, Jorge comparava os tempos, as angustias e as esperanças da partida com a gloria e o abatimento do regresso.",
       "autor": "Machado de Assis",
       "categoria": "Paciência",
@@ -3118,14 +3090,7 @@
       "origem": "citação"
     },
     {
-      "texto": "Eil-o aqui, deante de mim, com egual riso e maior respeito; total, o mesmo obsequio e a mesma graça.",
-      "autor": "Machado de Assis",
-      "categoria": "Reflexão",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
-      "origem": "citação"
-    },
-    {
-      "texto": "O tempo revela o valor daquilo que foi bem construído, porque pequenas escolhas coerentes constroem trajetórias duradouras.",
+      "texto": "O tempo revela o valor daquilo que foi bem construído, quando cada passo tem propósito.",
       "autor": "Camila Martins",
       "categoria": "Paciência",
       "fonte": "Autoral",
@@ -3139,25 +3104,11 @@
       "origem": "citação"
     },
     {
-      "texto": "Trez ou quatro vezes, quizera interrogar o meu companheiro, sem ousar abrir a bocca; mas agora, já nem tinha tal desejo.",
-      "autor": "Machado de Assis",
-      "categoria": "Reflexão",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
-      "origem": "citação"
-    },
-    {
       "texto": "XLVIII Ao romper da manhã, co'o sol ardente, Briza fresca, entre as folhas sussurrando, O não-dormido vate acorda, e a mente Lhe foi dos vagos sonhos arrancando.",
       "autor": "Machado de Assis",
       "categoria": "Conhecimento",
       "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
-    },
-    {
-      "texto": "O tempo revela o valor daquilo que foi bem construído, quando conhecimento, método e presença caminham juntos.",
-      "autor": "Camila Martins",
-      "categoria": "Conhecimento",
-      "fonte": "Autoral",
-      "origem": "autoral"
     },
     {
       "texto": "Da agitação esteril em que as forças Consumiram da vida, raro apenas Um eco chega aos seculos remotos, E o mesmo tempo o apaga.",
@@ -3174,10 +3125,59 @@
       "origem": "citação"
     },
     {
-      "texto": "A ausencia temporaria não atalhou o mal, e toda a arte fina de Capitú para fazel-o attenuar, ao menos, foi como se não fosse; eu sentia-me cada vez peor.",
+      "texto": "O tempo revela o valor daquilo que foi bem construído, porque pequenas escolhas coerentes constroem trajetórias duradouras.",
+      "autor": "Camila Martins",
+      "categoria": "Paciência",
+      "fonte": "Autoral",
+      "origem": "autoral"
+    },
+    {
+      "texto": "O respeito que tinha á madrasta, e um pouco de ciume retrospectivo que a mordia, ao pensar naquella paixão tão violenta e tão desenganada, empeciam á moça qualquer outra manifestação.",
       "autor": "Machado de Assis",
-      "categoria": "Criatividade",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Persuado-me de que todo o meu esforço em recalcar este affecto é vão; por mais que eu sinceramente deseje esquecel-a, não o alcançarei nunca; não alcançarei mais que uma afflição nova.",
+      "autor": "Machado de Assis",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quanto á inveja, prégou friamente que era a virtude principal, origem de prosperidades infinitas; virtude preciosa, que chegava a supprir todas as outras, e ao proprio talento.",
+      "autor": "Machado de Assis",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
+      "origem": "citação"
+    },
+    {
+      "texto": "O tempo revela o valor daquilo que foi bem construído, quando conhecimento, método e presença caminham juntos.",
+      "autor": "Camila Martins",
+      "categoria": "Conhecimento",
+      "fonte": "Autoral",
+      "origem": "autoral"
+    },
+    {
+      "texto": "Se a todo o transe queres Obter a casta flôr dos celicos prazeres, Deixa a alegre Corintho e todo o luxo seu; Outro porto acharás: procura o gyneceo.",
+      "autor": "Machado de Assis",
+      "categoria": "Reflexão",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Captiva ou morta, Antevia a celeste recompensa Que aos humildes reserva a mão do Eterno.",
+      "autor": "Machado de Assis",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
+      "origem": "citação"
+    },
+    {
+      "texto": "De um lance, espavorida, Minha alma vôa ás sombras do futuro, E eu penso então: «Ventura que se acaba Um sonho vale apenas.» LAGRIMAS DE CÊRA Passou; viu a porta aberta.",
+      "autor": "Machado de Assis",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
     {
@@ -4049,24 +4049,24 @@
       "origem": "citação"
     },
     {
-      "texto": "Capitú limitou-se a arregalar muito os olhos, e acabou por dizer: --Padre é bom, não ha duvida; melhor que padre só conego, por causa das meias roxas.",
+      "texto": "No emtanto, a natureza alegre e viva, Ostenta o mesmo rosto.",
       "autor": "Machado de Assis",
-      "categoria": "Excelência",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
+      "categoria": "Reflexão",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
     {
-      "texto": "O respeito que tinha á madrasta, e um pouco de ciume retrospectivo que a mordia, ao pensar naquella paixão tão violenta e tão desenganada, empeciam á moça qualquer outra manifestação.",
+      "texto": "Oswald dava-lhe sempre esperanças de exilo feliz e proximo, as coleras da moça não lh'as contava nunca.",
       "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
+      "categoria": "Reflexão",
+      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Valeria lutou ainda muito tempo; empregou a brandura e a intimação, mas a moça não cedeu mais nada. --Bem, disse a viuva; faça-se a tua vontade.",
+      "autor": "Machado de Assis",
+      "categoria": "Paciência",
       "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
-      "origem": "citação"
-    },
-    {
-      "texto": "Um dos erros da Providencia foi deixar ao homem unicamente os braços e os dentes, como armas de ataque, e as pernas como armas de fuga ou de defesa.",
-      "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
       "origem": "citação"
     },
     {
@@ -4077,24 +4077,24 @@
       "origem": "autoral"
     },
     {
-      "texto": "Persuado-me de que todo o meu esforço em recalcar este affecto é vão; por mais que eu sinceramente deseje esquecel-a, não o alcançarei nunca; não alcançarei mais que uma afflição nova.",
+      "texto": "Era deserto o logar, e naturalmente seria longo o tempo de que poderia dispôr para lhe dizer tudo.",
       "autor": "Machado de Assis",
       "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Sim, não tens nenhuma esperança. --Mas.... como sabes? --Não me interrogues; eu não poderia dizer-te tudo o que ha.",
+      "autor": "Machado de Assis",
+      "categoria": "Reflexão",
       "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
       "origem": "citação"
     },
     {
-      "texto": "Era isto mesmo; deviamos dissimular para matar qualquer suspeita, e ao mesmo tempo gosar toda a liberdade anterior, e construir tranquillos o nosso futuro.",
-      "autor": "Machado de Assis",
-      "categoria": "Paciência",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
-      "origem": "citação"
-    },
-    {
-      "texto": "Quanto á inveja, prégou friamente que era a virtude principal, origem de prosperidades infinitas; virtude preciosa, que chegava a supprir todas as outras, e ao proprio talento.",
+      "texto": "Provavelmente não escreverei nada; é duro dizer a um homem que todas as suas esperanças são vans. --A paz do meu espirito não valerá esse sacrificio? --Vale mais; posso fazel-o.",
       "autor": "Machado de Assis",
       "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
+      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
       "origem": "citação"
     },
     {
@@ -4105,31 +4105,31 @@
       "origem": "autoral"
     },
     {
-      "texto": "Não, vamos ver; fui andando, ouvi vozes alegres, conversavam cuidadosamente.",
-      "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
-      "origem": "citação"
-    },
-    {
-      "texto": "Se a todo o transe queres Obter a casta flôr dos celicos prazeres, Deixa a alegre Corintho e todo o luxo seu; Outro porto acharás: procura o gyneceo.",
+      "texto": "Seu porte, entre os irmãos, semelha á vista Jequitibá robusto; mais que todos, Terror inspira e universal respeito.",
       "autor": "Machado de Assis",
       "categoria": "Reflexão",
       "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
     {
-      "texto": "Captiva ou morta, Antevia a celeste recompensa Que aos humildes reserva a mão do Eterno.",
+      "texto": "Não cobria a cabeça de um advogado indo gravemente para o escriptorio, mas a de um homem que espairecia ou matava o tempo.",
       "autor": "Machado de Assis",
       "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Ah! quão melhor te fôra No meio d'essas aguas Que a regia nau cortava, conduzindo Os destinos de um rei, achar a morte: A mesma onda os dous envolveria.",
+      "autor": "Machado de Assis",
+      "categoria": "Excelência",
       "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
     {
-      "texto": "Physiologia, anatomia, pathologia, não são allopathicas nem homeopathicas, mas é melhor apprender logo tudo de uma vez, por livros e por lingua de homens cultores da verdade...",
+      "texto": "Almoçado, descia a passo lento até á repartição, onde, se tinha algum tempo, folheava rapidamente as gazetas do dia.",
       "autor": "Machado de Assis",
-      "categoria": "Clareza",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
       "origem": "citação"
     },
     {
@@ -4140,24 +4140,24 @@
       "origem": "autoral"
     },
     {
-      "texto": "Tal foi o que me mordeu, ao repetir commigo as palavras de José Dias: « Algum peralta da visinhança.» Em verdade, nunca pensara em tal desastre.",
+      "texto": "De um jubilo divino os cantos entoava A natureza mãe, e tudo palpitava, A flôr aberta e fresca, a pedra bronca e rude, De uma vida melhor e nova juventude.",
       "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
-      "origem": "citação"
-    },
-    {
-      "texto": "De um lance, espavorida, Minha alma vôa ás sombras do futuro, E eu penso então: «Ventura que se acaba Um sonho vale apenas.» LAGRIMAS DE CÊRA Passou; viu a porta aberta.",
-      "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
+      "categoria": "Excelência",
       "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
     {
-      "texto": "No emtanto, a natureza alegre e viva, Ostenta o mesmo rosto.",
+      "texto": "A misanthropia póde tomar aspecto de caridade; deixar a vida aos outros, para um misanthropo, é realmente aborrecel-os... --Rhetorico e subtil! exclamou o Senhor.",
       "autor": "Machado de Assis",
-      "categoria": "Reflexão",
-      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quanto á razão em si, não a pôde descobrir.",
+      "autor": "Machado de Assis",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
       "origem": "citação"
     },
     {
@@ -4168,23 +4168,23 @@
       "origem": "autoral"
     },
     {
-      "texto": "Oswald dava-lhe sempre esperanças de exilo feliz e proximo, as coleras da moça não lh'as contava nunca.",
+      "texto": "Ao trabalhado espirito, revolto De mil sinistros pensamentos, volve Benigna calma.",
       "autor": "Machado de Assis",
-      "categoria": "Reflexão",
-      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
     {
-      "texto": "Assim a senti sempre na corrente da vida ordinaria.",
+      "texto": "Viuva da razão, nem já te cabe A illusão da esperança.",
       "autor": "Machado de Assis",
-      "categoria": "Reflexão",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
     {
-      "texto": "Valeria lutou ainda muito tempo; empregou a brandura e a intimação, mas a moça não cedeu mais nada. --Bem, disse a viuva; faça-se a tua vontade.",
+      "texto": "Pensou em pedil-o directamente a Jorge; mas rejeitou desde logo a ideia, aliás incompativel com sua indole; depois, pensou em dizer tudo ao marido.",
       "autor": "Machado de Assis",
-      "categoria": "Paciência",
+      "categoria": "Conhecimento",
       "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
       "origem": "citação"
     },
@@ -4840,17 +4840,17 @@
       "origem": "citação"
     },
     {
-      "texto": "Era deserto o logar, e naturalmente seria longo o tempo de que poderia dispôr para lhe dizer tudo.",
+      "texto": "Andrade deu-lhe tres mil réis, e, como o visse excepcionalmente risonho, perguntou-lhe se tinha visto passarinho verde.",
       "autor": "Machado de Assis",
       "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
+      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
       "origem": "citação"
     },
     {
-      "texto": "Sim, não tens nenhuma esperança. --Mas.... como sabes? --Não me interrogues; eu não poderia dizer-te tudo o que ha.",
+      "texto": "Não cria nas caras alegres da gente que ia pela rua: preoccupações, desejos, odios, tristezas, outras cousas, iam dissimuladas por umas tres quartas partes dellas.",
       "autor": "Machado de Assis",
-      "categoria": "Reflexão",
-      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
+      "categoria": "Criatividade",
+      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
       "origem": "citação"
     },
     {
@@ -4861,31 +4861,31 @@
       "origem": "autoral"
     },
     {
-      "texto": "Provavelmente não escreverei nada; é duro dizer a um homem que todas as suas esperanças são vans. --A paz do meu espirito não valerá esse sacrificio? --Vale mais; posso fazel-o.",
+      "texto": "O filho ficou são e salvo de seus amores, com um posto e honras de sobra. --É verdade, murmurou Estella, que o escutara com a attenção dispersa e impaciente.",
       "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
+      "categoria": "Paciência",
       "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
       "origem": "citação"
     },
     {
-      "texto": "Seu porte, entre os irmãos, semelha á vista Jequitibá robusto; mais que todos, Terror inspira e universal respeito.",
+      "texto": "Goza por em quanto a vida; mas os dias passam, e a ociosidade faz-se natureza com o tempo.",
       "autor": "Machado de Assis",
-      "categoria": "Reflexão",
-      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
+      "categoria": "Paciência",
+      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
       "origem": "citação"
     },
     {
-      "texto": "Não cobria a cabeça de um advogado indo gravemente para o escriptorio, mas a de um homem que espairecia ou matava o tempo.",
+      "texto": "Jorge pela sua parte não deixou de ficar um tanto abalado, em parte commoção, em parte constrangimento, sendo porém o constrangimento maior do que a commoção.",
       "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
+      "categoria": "Criatividade",
+      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
       "origem": "citação"
     },
     {
-      "texto": "Ah! quão melhor te fôra No meio d'essas aguas Que a regia nau cortava, conduzindo Os destinos de um rei, achar a morte: A mesma onda os dous envolveria.",
+      "texto": "Havia nella impaciencia e anciedade de acabar, de sair dalli; era, sem duvida, o receio de que a ausência se prolongasse de maneira que inspirasse suspeitas.",
       "autor": "Machado de Assis",
-      "categoria": "Excelência",
-      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
+      "categoria": "Paciência",
+      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
       "origem": "citação"
     },
     {
@@ -4896,24 +4896,24 @@
       "origem": "autoral"
     },
     {
-      "texto": "Almoçado, descia a passo lento até á repartição, onde, se tinha algum tempo, folheava rapidamente as gazetas do dia.",
+      "texto": "Para os varões maduros, nunca a mocidade folga como no tempo delles, o que é natural dizer, porque cada homem vê as cousas com os olhos da sua edade.",
+      "autor": "Machado de Assis",
+      "categoria": "Paciência",
+      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
+      "origem": "citação"
+    },
+    {
+      "texto": "A afilhada não advertia que o officio do buço é virar bigode, ou, se pensou n'isso, fel-o tão vagamente, que não vale a pena de o pôr aqui.",
+      "autor": "Machado de Assis",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Sentada na beira da cama, com os pés juntos, as mãos fechadas entre os joelhos, os olhos cravados no espelho que lhe ficava defronte, Yayá trabalhava mentalmente na sua descoberta.",
       "autor": "Machado de Assis",
       "categoria": "Conhecimento",
       "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
-      "origem": "citação"
-    },
-    {
-      "texto": "De um jubilo divino os cantos entoava A natureza mãe, e tudo palpitava, A flôr aberta e fresca, a pedra bronca e rude, De uma vida melhor e nova juventude.",
-      "autor": "Machado de Assis",
-      "categoria": "Excelência",
-      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
-      "origem": "citação"
-    },
-    {
-      "texto": "Naturalmente a mim sobravam mil cousas que distrahiam, o estudo, os recreios, a familia, e a propria saude, que me chamava a outros exercicios.",
-      "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
       "origem": "citação"
     },
     {
@@ -4924,24 +4924,24 @@
       "origem": "autoral"
     },
     {
-      "texto": "A misanthropia póde tomar aspecto de caridade; deixar a vida aos outros, para um misanthropo, é realmente aborrecel-os... --Rhetorico e subtil! exclamou o Senhor.",
+      "texto": "A experiencia dera-lhe o terror de ser empulhado.",
       "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
+      "categoria": "Reflexão",
       "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
       "origem": "citação"
     },
     {
-      "texto": "Quanto á razão em si, não a pôde descobrir.",
+      "texto": "Estevão referira ao amigo, desde tempos, toda a historia do amor, agora mallogrado, suas esperanças, desalentos e glorias, e, emfim, o inesperado desfecho.",
       "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
+      "categoria": "Paciência",
       "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
       "origem": "citação"
     },
     {
-      "texto": "Ao trabalhado espirito, revolto De mil sinistros pensamentos, volve Benigna calma.",
+      "texto": "Procopio Dias narrava-lhe a viagem e os primeiros passos, e dizia ter toda a esperança de se demorar pouco tempo.",
       "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
+      "categoria": "Paciência",
+      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
       "origem": "citação"
     },
     {
@@ -5309,24 +5309,24 @@
       "origem": "citação"
     },
     {
-      "texto": "Viuva da razão, nem já te cabe A illusão da esperança.",
+      "texto": "Guiomar não tinha difficuldade nenhuma em reter o que a mãe lhe ensinava, e com tal affinco lidava por aprender, que a viuva,--ao menos nessa parte,--sentia-se venturosa.",
       "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
+      "categoria": "Criatividade",
+      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
       "origem": "citação"
     },
     {
-      "texto": "Pensou em pedil-o directamente a Jorge; mas rejeitou desde logo a ideia, aliás incompativel com sua indole; depois, pensou em dizer tudo ao marido.",
+      "texto": "Viuvo desde a primeira invasão da febre amarella, recusou contrahir segundas nupcias, com grande magoa de tres ou quatro damas, que nutriram essa esperança durante algum tempo.",
       "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
-      "origem": "citação"
-    },
-    {
-      "texto": "Andrade deu-lhe tres mil réis, e, como o visse excepcionalmente risonho, perguntou-lhe se tinha visto passarinho verde.",
-      "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
+      "categoria": "Paciência",
       "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Tenras flôres, que outro tempo Costumavam de nascer, Nascem; vivem de egual vida; Morrem do mesmo morrer.",
+      "autor": "Machado de Assis",
+      "categoria": "Paciência",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
     {
@@ -5337,24 +5337,24 @@
       "origem": "autoral"
     },
     {
-      "texto": "Não cria nas caras alegres da gente que ia pela rua: preoccupações, desejos, odios, tristezas, outras cousas, iam dissimuladas por umas tres quartas partes dellas.",
+      "texto": "Dissipada a illusão, o pensamento Novo quadro a seus olhos patenteia, Não lhe basta aos desejos de sua alma A enseada da vida estreita e calma.",
       "autor": "Machado de Assis",
-      "categoria": "Criatividade",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não sómente se lhe iam embora esperanças muito menos modestas, como lhe repugnava o caracter do genro.",
+      "autor": "Machado de Assis",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Em musicas! justamente esta palavra do medico deu ao mestre um pensamento.",
+      "autor": "Machado de Assis",
+      "categoria": "Conhecimento",
       "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
-      "origem": "citação"
-    },
-    {
-      "texto": "O filho ficou são e salvo de seus amores, com um posto e honras de sobra. --É verdade, murmurou Estella, que o escutara com a attenção dispersa e impaciente.",
-      "autor": "Machado de Assis",
-      "categoria": "Paciência",
-      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
-      "origem": "citação"
-    },
-    {
-      "texto": "Goza por em quanto a vida; mas os dias passam, e a ociosidade faz-se natureza com o tempo.",
-      "autor": "Machado de Assis",
-      "categoria": "Paciência",
-      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
       "origem": "citação"
     },
     {
@@ -5365,31 +5365,31 @@
       "origem": "autoral"
     },
     {
-      "texto": "Jorge pela sua parte não deixou de ficar um tanto abalado, em parte commoção, em parte constrangimento, sendo porém o constrangimento maior do que a commoção.",
-      "autor": "Machado de Assis",
-      "categoria": "Criatividade",
-      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
-      "origem": "citação"
-    },
-    {
-      "texto": "Havia nella impaciencia e anciedade de acabar, de sair dalli; era, sem duvida, o receio de que a ausência se prolongasse de maneira que inspirasse suspeitas.",
-      "autor": "Machado de Assis",
-      "categoria": "Paciência",
-      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
-      "origem": "citação"
-    },
-    {
-      "texto": "Para os varões maduros, nunca a mocidade folga como no tempo delles, o que é natural dizer, porque cada homem vê as cousas com os olhos da sua edade.",
-      "autor": "Machado de Assis",
-      "categoria": "Paciência",
-      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
-      "origem": "citação"
-    },
-    {
-      "texto": "Reduz-se a isto que cada pessoa nasce com certo numero delles e dellas, alliados por matrimonio para se compensarem na vida.",
+      "texto": "O desejo de servir a baroneza e levar uma ideia ao fim tapou-lhe os olhos de razão.",
       "autor": "Machado de Assis",
       "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
+      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
+      "origem": "citação"
+    },
+    {
+      "texto": "A verdade é que tinham vivido demasiadamente reclusos; não era justo nem bonito.",
+      "autor": "Machado de Assis",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Em todo caso, depois de cogitar algum tempo, disse-me que definitivamente ia arranjar-lhe uma casa e pôl-a ao abrigo da miseria.",
+      "autor": "Machado de Assis",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
+      "origem": "citação"
+    },
+    {
+      "texto": "O sentimento que me acaba de revellar inteiro, ninguem o recebe ou nutre de vontade; a natureza o infunde ou nega.",
+      "autor": "Machado de Assis",
+      "categoria": "Reflexão",
+      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
       "origem": "citação"
     },
     {
@@ -5400,24 +5400,24 @@
       "origem": "autoral"
     },
     {
-      "texto": "Ao cabo, póde ser que tudo fosse um sonho; nada mais natural a um ex-seminarista que ouvir por toda a parte latim e Escriptura.",
+      "texto": "Cheio de amor, vazio de esperança, Dei para ti os meus primeiros passos; Minha illusão fez-me, talvez, criança; E eu pretendi dormir aos teus abraços, Cheio de amor, vazio de esperança.",
       "autor": "Machado de Assis",
       "categoria": "Criatividade",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
     {
-      "texto": "A afilhada não advertia que o officio do buço é virar bigode, ou, se pensou n'isso, fel-o tão vagamente, que não vale a pena de o pôr aqui.",
+      "texto": "Á voz do seu senhor accorre humilde; Não a assusta o labor; nem dos perigos Conhece os medos.",
       "autor": "Machado de Assis",
       "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
     {
-      "texto": "Sentada na beira da cama, com os pés juntos, as mãos fechadas entre os joelhos, os olhos cravados no espelho que lhe ficava defronte, Yayá trabalhava mentalmente na sua descoberta.",
+      "texto": "Habita juntamente os valles e as montanhas; E no mar, que se rasga, á maneira de abysmo, Espreguiça-se toda em convulsões extranhas.",
       "autor": "Machado de Assis",
       "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
     {
@@ -5428,31 +5428,31 @@
       "origem": "autoral"
     },
     {
-      "texto": "Teve seus minutos de aborrecimento, é verdade; a principio doeu-me que Ezequiel não fosse realmente meu filho, que me não completasse e continuasse.",
-      "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
-      "origem": "citação"
-    },
-    {
-      "texto": "A experiencia dera-lhe o terror de ser empulhado.",
+      "texto": "Não era só a dor de a perder; era tambem o remorso, a duvida, ao menos, da consciencia, em presença de um possivel desastre, que parecia justificar a moça.",
       "autor": "Machado de Assis",
       "categoria": "Reflexão",
       "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
       "origem": "citação"
     },
     {
-      "texto": "Estevão referira ao amigo, desde tempos, toda a historia do amor, agora mallogrado, suas esperanças, desalentos e glorias, e, emfim, o inesperado desfecho.",
+      "texto": "Se havia de ser infeliz, melhor é que a chore morta, com a esperança de a ir encontrar no ceu.",
       "autor": "Machado de Assis",
-      "categoria": "Paciência",
+      "categoria": "Excelência",
       "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
       "origem": "citação"
     },
     {
-      "texto": "Hoje, pensando melhor, acho que não só servi de allivio, mas até lhe dei felicidade.",
+      "texto": "Deixa de partes... --A que horas volta José Diogo? --Não volta hoje. --Não? --Não volta; está lá para os lados de Guaratiba com a caixa; deve voltar sexta-feira ou sabbado...",
       "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
+      "categoria": "Criatividade",
+      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
+      "origem": "citação"
+    },
+    {
+      "texto": "XVII Entrou a tempo o chá, e foi servil-o, Sem responder, a moça interrogada, C'um ar tão soberano e tão tranquillo Que o velho emmudeceu.",
+      "autor": "Machado de Assis",
+      "categoria": "Paciência",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
     {
@@ -5463,21 +5463,21 @@
       "origem": "autoral"
     },
     {
-      "texto": "Procopio Dias narrava-lhe a viagem e os primeiros passos, e dizia ter toda a esperança de se demorar pouco tempo.",
+      "texto": "Posto não andasse alegre nos ultimos tempos, estava naquelle dia singularmente preoccupada.",
       "autor": "Machado de Assis",
-      "categoria": "Paciência",
+      "categoria": "Conhecimento",
       "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
       "origem": "citação"
     },
     {
-      "texto": "Guiomar não tinha difficuldade nenhuma em reter o que a mãe lhe ensinava, e com tal affinco lidava por aprender, que a viuva,--ao menos nessa parte,--sentia-se venturosa.",
+      "texto": "Seu carater melhor foi sempre o ser constante.",
       "autor": "Machado de Assis",
-      "categoria": "Criatividade",
-      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
+      "categoria": "Excelência",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
     {
-      "texto": "Viuvo desde a primeira invasão da febre amarella, recusou contrahir segundas nupcias, com grande magoa de tres ou quatro damas, que nutriram essa esperança durante algum tempo.",
+      "texto": "Creia que durante esse tempo não escorreguei, mas tambem não corria nunca.",
       "autor": "Machado de Assis",
       "categoria": "Paciência",
       "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
@@ -5848,17 +5848,17 @@
       "origem": "citação"
     },
     {
-      "texto": "Tenras flôres, que outro tempo Costumavam de nascer, Nascem; vivem de egual vida; Morrem do mesmo morrer.",
+      "texto": "Jorge pela sua parte estava dispóto a estender o collo ao sacrificio; e, bem examinadas as cousas, talvez amasse sinceramente a moça.",
       "autor": "Machado de Assis",
-      "categoria": "Paciência",
-      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
+      "categoria": "Criatividade",
+      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
       "origem": "citação"
     },
     {
-      "texto": "Dissipada a illusão, o pensamento Novo quadro a seus olhos patenteia, Não lhe basta aos desejos de sua alma A enseada da vida estreita e calma.",
+      "texto": "Em todo o caso, deixa-me dizer-te que nenhuma razão tens de censura... --Censuro eu alguém? --Ha no amor um germen de odio que póde vir a desenvolver-se depois.",
       "autor": "Machado de Assis",
       "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
+      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
       "origem": "citação"
     },
     {
@@ -5869,31 +5869,31 @@
       "origem": "autoral"
     },
     {
-      "texto": "Não sómente se lhe iam embora esperanças muito menos modestas, como lhe repugnava o caracter do genro.",
+      "texto": "Em cada axilla vi entrar um braço, A tempo que iam esticando á fera Os dous pés que eram de tamanho escasso.",
       "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
+      "categoria": "Paciência",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
     {
-      "texto": "Quando não era com palavras, era com o gesto de approvação que dava a cada uma das assersões da outra, e certamente com a felicidade que devia illuminar-me a cara.",
-      "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
-      "origem": "citação"
-    },
-    {
-      "texto": "Em musicas! justamente esta palavra do medico deu ao mestre um pensamento.",
+      "texto": "Maria Olympia pensou naturalmente na primeira noite do Cassino; e a tia, vendo-lhe o desejo, quiz comprar a joia, mas era tarde, estava vendida.",
       "autor": "Machado de Assis",
       "categoria": "Conhecimento",
       "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
       "origem": "citação"
     },
     {
-      "texto": "Capitú devia ter voltado hoje para acabar um trabalho commigo; certamente a amiga pediu-lhe que dormisse lá. --Talvez ficassem namorando, insinuou prima Justina.",
+      "texto": "Angela conserva o baptismo da alma, e entrega o corpo ao supplicio como se fosse verdadeiramente judeu.",
       "autor": "Machado de Assis",
       "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
+      "origem": "citação"
+    },
+    {
+      "texto": "As ideias orçavam pelo modo de as exprimir; eram chochas por dentro, mas traziam uma codea de gravidade pesadona, que dava vontade de ir espairecer o ouvido em cousas leves e folgazãs.",
+      "autor": "Machado de Assis",
+      "categoria": "Reflexão",
+      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
       "origem": "citação"
     },
     {
@@ -5904,23 +5904,23 @@
       "origem": "autoral"
     },
     {
-      "texto": "O desejo de servir a baroneza e levar uma ideia ao fim tapou-lhe os olhos de razão.",
-      "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
-      "origem": "citação"
-    },
-    {
-      "texto": "A verdade é que tinham vivido demasiadamente reclusos; não era justo nem bonito.",
+      "texto": "Preparou-se galhardamente, e o efeito correspondeu ao esforço.",
       "autor": "Machado de Assis",
       "categoria": "Conhecimento",
       "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
       "origem": "citação"
     },
     {
-      "texto": "Em todo caso, depois de cogitar algum tempo, disse-me que definitivamente ia arranjar-lhe uma casa e pôl-a ao abrigo da miseria.",
+      "texto": "Uma noite não é bastante para decidir de todo o resto da vida.",
       "autor": "Machado de Assis",
-      "categoria": "Conhecimento",
+      "categoria": "Reflexão",
+      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Póde ser que entrasse a duvidar da carta anonyma; póde ser tambem que os dous chales lhe pesassem na consciencia.",
+      "autor": "Machado de Assis",
+      "categoria": "Reflexão",
       "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
       "origem": "citação"
     },
@@ -5932,30 +5932,30 @@
       "origem": "autoral"
     },
     {
-      "texto": "O sentimento que me acaba de revellar inteiro, ninguem o recebe ou nutre de vontade; a natureza o infunde ou nega.",
+      "texto": "A cruz É a ancora da vida, A esperança, a força, a luz.",
       "autor": "Machado de Assis",
       "categoria": "Reflexão",
-      "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
-      "origem": "citação"
-    },
-    {
-      "texto": "Cheio de amor, vazio de esperança, Dei para ti os meus primeiros passos; Minha illusão fez-me, talvez, criança; E eu pretendi dormir aos teus abraços, Cheio de amor, vazio de esperança.",
-      "autor": "Machado de Assis",
-      "categoria": "Criatividade",
       "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
     {
-      "texto": "Á voz do seu senhor accorre humilde; Não a assusta o labor; nem dos perigos Conhece os medos.",
+      "texto": "Foi a propria Yayá quem veiu abrir-lhe a porta do jardim dizendo, alegremente:--Entre, Sr. doutor, que já se fazia esperado.",
       "autor": "Machado de Assis",
       "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
+      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
       "origem": "citação"
     },
     {
-      "texto": "Habita juntamente os valles e as montanhas; E no mar, que se rasga, á maneira de abysmo, Espreguiça-se toda em convulsões extranhas.",
+      "texto": "De repente, pensou na douta academia; podia consultal-a, não claramente, mas por hypothese.",
       "autor": "Machado de Assis",
       "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Sabina viu correr tecidos de ouro Aqueles dias unicos na vida Toda enlevo e paixão, sincera e ardente Nesse primeiro amor d'alma que nasce E os olhos abre ao sol.",
+      "autor": "Machado de Assis",
+      "categoria": "Reflexão",
       "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
@@ -5967,24 +5967,24 @@
       "origem": "autoral"
     },
     {
-      "texto": "Não era só a dor de a perder; era tambem o remorso, a duvida, ao menos, da consciencia, em presença de um possivel desastre, que parecia justificar a moça.",
+      "texto": "Minha vida é sua; todo o meu destino está nas suas mãos...",
       "autor": "Machado de Assis",
       "categoria": "Reflexão",
-      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
-      "origem": "citação"
-    },
-    {
-      "texto": "Dez minutos depois, estaria eu outra vez na sala, ao piano ou á janella, continuando a licção interrompida: --Marte está a distancia de...",
-      "autor": "Machado de Assis",
-      "categoria": "Criatividade",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
-      "origem": "citação"
-    },
-    {
-      "texto": "Se havia de ser infeliz, melhor é que a chore morta, com a esperança de a ir encontrar no ceu.",
-      "autor": "Machado de Assis",
-      "categoria": "Excelência",
       "fonte": "Project Gutenberg — A Mão e a Luva (eBook #53101)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Talvez... quem sabe... --Não é isso que a senhora pensa, interrompeu Yayá seccamente.",
+      "autor": "Machado de Assis",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Alva neblina que espalhara a noite Frouxamente nos ares se dissolve, Como de uns olhos tristes Foge co'o tempo a já ligeira sombra De consoladas maguas.",
+      "autor": "Machado de Assis",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
     {
@@ -5995,31 +5995,31 @@
       "origem": "autoral"
     },
     {
-      "texto": "Deixa de partes... --A que horas volta José Diogo? --Não volta hoje. --Não? --Não volta; está lá para os lados de Guaratiba com a caixa; deve voltar sexta-feira ou sabbado...",
+      "texto": "Em todo caso, só perdemos algum tempo e nada mais.» Venceu este parecer; deputaram o sapateiro, o alfaiate e o cabelleireiro para entenderem-se com o Dr.",
       "autor": "Machado de Assis",
-      "categoria": "Criatividade",
+      "categoria": "Paciência",
       "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
       "origem": "citação"
     },
     {
-      "texto": "XVII Entrou a tempo o chá, e foi servil-o, Sem responder, a moça interrogada, C'um ar tão soberano e tão tranquillo Que o velho emmudeceu.",
+      "texto": "No atordoamento moral em que esta hypothese a lançou, Yayá achou-se entre dous desejos, mal definidos, mas inteiramente oppostos um ao outro.",
       "autor": "Machado de Assis",
-      "categoria": "Paciência",
+      "categoria": "Conhecimento",
+      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Mas o destino, alçando a mão sombria, Já traçára nas paginas da historia O terrivel mysterio.",
+      "autor": "Machado de Assis",
+      "categoria": "Reflexão",
       "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     },
     {
-      "texto": "Não lhe lembrava o nosso passado, nem as lutas havidas, nem alegria alguma; falava-lhe só de Escobar e da necessidade de morrer.",
-      "autor": "Machado de Assis",
-      "categoria": "Reflexão",
-      "fonte": "Project Gutenberg — Dom Casmurro (eBook #55752)",
-      "origem": "citação"
-    },
-    {
-      "texto": "Posto não andasse alegre nos ultimos tempos, estava naquelle dia singularmente preoccupada.",
+      "texto": "Viçoso teve um estremeção de prazer, e sorriu, e protestou que não; depois, com os olhos em Marianna, disse que provavelmente não casaria nunca...",
       "autor": "Machado de Assis",
       "categoria": "Conhecimento",
-      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
+      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
       "origem": "citação"
     },
     {
@@ -6387,17 +6387,17 @@
       "origem": "citação"
     },
     {
-      "texto": "Seu carater melhor foi sempre o ser constante.",
+      "texto": "Eu creio que é chegado o momento de fazerem todas as mães um grande esforço e darem exemplos de valor, que não serão perdidos.",
       "autor": "Machado de Assis",
-      "categoria": "Excelência",
-      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
+      "categoria": "Persistência",
+      "fonte": "Project Gutenberg — Yayá Garcia (eBook #67780)",
       "origem": "citação"
     },
     {
-      "texto": "Creia que durante esse tempo não escorreguei, mas tambem não corria nunca.",
+      "texto": "Ai, Lysias, é verdade, Amo-a como não amo a vida e a mocidade; De que modo nasceu esta affeição que encerra Todo o meu ser, ignoro.",
       "autor": "Machado de Assis",
-      "categoria": "Paciência",
-      "fonte": "Project Gutenberg — Historias Sem Data (eBook #33056)",
+      "categoria": "Clareza",
+      "fonte": "Project Gutenberg — Poesias Completas (eBook #61653)",
       "origem": "citação"
     }
   ]
