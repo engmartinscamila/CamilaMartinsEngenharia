@@ -3,6 +3,7 @@ const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY?
 const legacyAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim() ?? '';
 const supabaseAnonKey = supabasePublishableKey || legacyAnonKey;
 const expectedProjectRef = process.env.EXPO_PUBLIC_EXPECTED_SUPABASE_PROJECT_REF?.trim().toLowerCase() ?? '';
+const turnstileSiteKey = process.env.EXPO_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? '';
 const requestedEnvironment = process.env.EXPO_PUBLIC_APP_ENV?.trim().toLowerCase() ?? 'development';
 const appEnvironment = ['development', 'homologation', 'production'].includes(requestedEnvironment)
   ? (requestedEnvironment as 'development' | 'homologation' | 'production')
@@ -15,6 +16,7 @@ const keyLooksPublic = supabaseAnonKey.length > 20
   && !supabaseAnonKey.toLowerCase().includes('service_role');
 const projectMatches = !expectedProjectRef || projectRef === expectedProjectRef;
 const isSupabaseConfigured = urlIsValid && keyLooksPublic && projectMatches;
+const isTurnstileConfigured = turnstileSiteKey.length >= 10;
 
 function configurationIssue() {
   if (!supabaseUrl || !supabaseAnonKey) return 'Informe a URL do serviço e a chave pública do ambiente.';
@@ -30,6 +32,8 @@ export const env = {
   supabaseAnonKey,
   projectRef,
   expectedProjectRef,
+  turnstileSiteKey,
+  isTurnstileConfigured,
   isHomologation: appEnvironment === 'homologation',
   isSupabaseConfigured,
   configurationIssue: configurationIssue(),
