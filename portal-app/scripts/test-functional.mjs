@@ -30,6 +30,27 @@ const asset={file:{text:async()=>record+record}};
 eq(await operations.importOfxTransactions('account-a',asset),{imported:1,reconciled:0,error:null},'duplicate OFX rows counted once');eq(inserted.length,1,'duplicate rows submitted once');eq(invoked.name,'reconcile_imported_ofx','reconciliation is atomic RPC');
 rpcResult={error:{message:'offline'},data:null};const partial=await operations.importOfxTransactions('account-a',asset);eq(partial.imported,1,'import success retained when reconciliation fails');eq(typeof partial.error,'string','partial result explained');
 
+
+let authCredentials;
+const authService=load('src/services/auth-service.ts',{
+  '@/lib/errors':{toUserMessage:(error)=>error?.message??'erro'},
+  '@/lib/supabase':{supabase:{
+    auth:{signInWithPassword:async(credentials)=>{authCredentials=credentials;return {error:null};}},
+  }},
+});
+eq(await authService.signInWithPassword('CLIENTE@EXEMPLO.COM','Senha-forte-123!','captcha-token-fixture'),null,'login accepts a verified CAPTCHA token');
+eq(authCredentials.email,'cliente@exemplo.com','login still normalizes email');
+eq(authCredentials.options?.captchaToken,'captcha-token-fixture','CAPTCHA token reaches Supabase signInWithPassword');
+
+const loginSource=fs.readFileSync('src/app/login.tsx','utf8');
+const captchaSource=fs.readFileSync('src/components/turnstile-captcha.tsx','utf8');
+const envSource=fs.readFileSync('src/lib/env.ts','utf8');
+const productionEnvCheck=fs.readFileSync('scripts/verify-production-env.mjs','utf8');
+eq(loginSource.includes('TurnstileCaptcha')&&loginSource.includes('captchaRequired')&&loginSource.includes('captchaConfigurationMissing'),true,'web login renders CAPTCHA and blocks unsafe production fallback');
+eq(loginSource.includes('captchaRequired && !captchaToken'),true,'web login cannot submit before CAPTCHA completion');
+eq(captchaSource.includes('https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'),true,'portal loads the official Cloudflare Turnstile challenge');
+eq(envSource.includes('EXPO_PUBLIC_TURNSTILE_SITE_KEY')&&productionEnvCheck.includes('Site key pública do Cloudflare Turnstile ausente.'),true,'production build requires a Turnstile site key');
+
 const documentPreparation=fs.readFileSync('src/app/admin/document-preparation.tsx','utf8');
 eq(documentPreparation.includes('checkAnnexIPrerequisite'),true,'Anexo I checks the official contract prerequisite before preview/preparation');
 eq(documentPreparation.includes('Para acrescentar um serviço depois da contratação')&&documentPreparation.includes('Serviço Adicional'),true,'Anexo I UI distinguishes later scope changes from the original annex');
