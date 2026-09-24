@@ -20,6 +20,8 @@ assert.ok(commercial.includes('Um único nível será aplicado a todas as ativid
 assert.ok(commercial.includes("if (isContract && !sources.length)"),'Contrato precisa exigir orçamento de origem.');
 assert.ok(commercial.includes('Os orçamentos selecionados possuem níveis de prestação diferentes'),'Contrato precisa bloquear mistura de níveis no mesmo pacote.');
 assert.ok(commercial.includes("aliases,synonyms,keywords"),'Reconhecimento de pequenos erros precisa consultar metadados canônicos do catálogo.');
+assert.ok(commercial.includes("customServiceSuggestionApply")&&commercial.includes("Confirme para substituir"),'Sugestão do catálogo precisa exigir confirmação explícita.');
+assert.ok(!commercial.includes("A grafia canônica será usada no documento."),'Reconhecimento não pode afirmar seleção canônica automática.');
 assert.ok(commercial.includes('id="existingClientPicker"'),'Cliente existente precisa ficar em seletor compacto.');
 assert.ok(commercial.includes("['pix', 'Pix']")&&commercial.includes("cartao_parcelado")&&commercial.includes("transferencia"),'Formas de pagamento compactas incompletas.');
 
