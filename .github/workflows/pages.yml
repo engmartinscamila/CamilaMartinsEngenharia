@@ -56,6 +56,7 @@ jobs:
           node scripts/security/construction-schedule-revision-request-regression.mjs
           node scripts/security/construction-schedule-budget-regression.mjs
           node scripts/security/construction-schedule-contract-regression.mjs
+          node scripts/security/construction-schedule-additional-service-regression.mjs
           node scripts/security/construction-schedule-template-regression.mjs
           node scripts/security/construction-schedule-approval-regression.mjs
           node scripts/security/construction-schedule-measurement-regression.mjs
