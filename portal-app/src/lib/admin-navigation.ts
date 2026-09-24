@@ -40,6 +40,7 @@ export const modernWebsiteAdminSections = new Set([
   'portal-control',
   'construction-schedule',
   'construction-schedule-new',
+  'construction-schedule-test',
   'construction-schedule-revision',
   'construction-schedule-budget',
   'construction-schedule-measurements',
