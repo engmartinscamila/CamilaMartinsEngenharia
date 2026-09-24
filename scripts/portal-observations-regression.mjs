@@ -55,6 +55,7 @@ assert.ok(!generator.includes("Base documental: Contrato Mestre v"),'Metadado in
 
 assert.equal(dispatcherMirror,dispatcher,'Dispatcher do portal-app divergiu do canônico.');
 assert.ok(dispatcher.includes("delivery_status','scheduled")&&dispatcher.includes("RESEND_API_KEY"),'Dispatcher precisa processar agendados e enviar e-mail.');
+assert.ok(dispatcher.includes("superseded_by")&&dispatcher.includes("delivery_status:'cancelled'"),'Dispatcher precisa cancelar o envio se a versão tiver sido substituída antes do horário programado.');
 assert.ok(dispatchMigration.includes("cme-document-notification-dispatch")&&dispatchMigration.includes("vault.decrypted_secrets"),'Agendamento automático precisa usar Cron + Vault.');
 assert.ok(generator.includes("client_released_at")&&generator.includes("sendClientDocumentEmail"),'Envio imediato precisa liberar documento e disparar e-mail.');
 
