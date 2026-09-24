@@ -120,6 +120,45 @@ async function prepare(kind,approvalId=null){
   }catch(error){msg(safeError(error,'Não foi possível preparar o documento. Tente novamente.'),'error')}
 }
 async function generateAndDeliver(id,archive,expectedDocumentKind){const expected=supportedDocumentKinds.has(expectedDocumentKind)?expectedDocumentKind:null;const selected=docs.find(d=>d.id===id);if(!expected||(selected&&selected.document_kind!==expected)){msg('O documento selecionado não corresponde ao tipo aberto. A lista foi atualizada para evitar o download incorreto.','error');if(project)await chooseProject(project.id);return}msg(`Gerando ${documentKindLabels[expected]||'documento'}...`);const gen=await client().functions.invoke('generate-contract-document',{body:{documentId:id,action:'generate',expectedDocumentKind:expected}});if(gen.error||!gen.data?.generated||gen.data?.documentKind!==expected){msg(safeError(gen.data?.error||gen.error,'Não foi possível gerar o Word correto. Tente novamente.'),'error');return}const out=await client().functions.invoke('deliver-generated-document',{body:{documentId:id,archive,expectedDocumentKind:expected}});if(out.error||!out.data?.delivered||out.data?.documentKind!==expected){msg(safeError(out.data?.error||out.error,'O Word foi gerado, mas o tipo retornado não corresponde ao solicitado.'),'error');return}download(out.data.contentBase64,out.data.fileName);msg(archive?'Word baixado e arquivado.':'Word baixado; o arquivo temporário foi removido e o extrato foi preservado.','success');await chooseProject(project.id)}
-async function send(id,expectedDocumentKind){const expected=supportedDocumentKinds.has(expectedDocumentKind)?expectedDocumentKind:null;if(!expected){msg('Tipo de documento inválido.','error');return}const scheduledInput=window.prompt('Agendar envio? Informe data/hora ISO (opcional) ou deixe em branco para enviar agora.','');const scheduledFor=scheduledInput&&/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}/.test(scheduledInput)?new Date(scheduledInput).toISOString():null;const out=await client().functions.invoke('generate-contract-document',{body:{documentId:id,action:'send',expectedDocumentKind:expected,scheduledFor}});if(out.error||!out.data?.sent||out.data?.documentKind!==expected){msg(safeError(out.data?.error||out.error,'Não foi possível disponibilizar o documento correto ao cliente.'),'error');return}msg(out.data?.scheduled?'Envio agendado.':'Documento disponibilizado ao cliente.','success');await chooseProject(project.id)}
-async function notice(approvalId){msg('Preparando Notificação Formal...');const p=await client().rpc('admin_prepare_formal_notice',{p_approval_id:approvalId});if(p.error||!p.data){msg(safeError(p.error,'Não foi possível preparar a notificação.'),'error');return}await generateAndDeliver(p.data,false,'notificacao_formal')}
+function askSendSchedule(){
+  return new Promise(resolve=>{
+    const overlay=document.createElement('div');overlay.className='doc-options-modal';
+    overlay.innerHTML=`<div class="doc-options-dialog doc-send-dialog"><button type="button" class="doc-options-close" data-close aria-label="Fechar">×</button><h3>Enviar documento ao cliente</h3><p>Envie agora ou escolha uma data e horário. O agendamento será processado automaticamente pelo sistema.</p><div class="doc-field"><label>Data e horário para envio</label><input type="datetime-local" data-send-at></div><div class="doc-actions"><button type="button" class="doc-btn ghost" data-close>Cancelar</button><button type="button" class="doc-btn secondary" data-schedule>Agendar envio</button><button type="button" class="doc-btn" data-now>Enviar agora</button></div></div>`;
+    document.body.appendChild(overlay);
+    const done=value=>{overlay.remove();resolve(value)};
+    overlay.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>done(null)));
+    overlay.addEventListener('click',event=>{if(event.target===overlay)done(null)});
+    overlay.querySelector('[data-now]')?.addEventListener('click',()=>done({scheduledFor:null}));
+    overlay.querySelector('[data-schedule]')?.addEventListener('click',()=>{
+      const value=overlay.querySelector('[data-send-at]')?.value||'';
+      if(!value){alert('Escolha a data e o horário do envio.');return}
+      const date=new Date(value);
+      if(Number.isNaN(date.getTime())||date.getTime()<=Date.now()){alert('Escolha uma data e horário futuros.');return}
+      done({scheduledFor:date.toISOString()})
+    });
+  })
+}
+async function send(id,expectedDocumentKind){
+ const expected=supportedDocumentKinds.has(expectedDocumentKind)?expectedDocumentKind:null;
+ if(!expected){msg('Tipo de documento inválido.','error');return}
+ const choice=await askSendSchedule();if(!choice)return;
+ const out=await client().functions.invoke('generate-contract-document',{body:{documentId:id,action:'send',expectedDocumentKind:expected,scheduledFor:choice.scheduledFor}});
+ if(out.error||!out.data?.sent||out.data?.documentKind!==expected){msg(safeError(out.data?.error||out.error,'Não foi possível disponibilizar o documento correto ao cliente.'),'error');return}
+ if(out.data?.scheduled)msg(`Envio agendado para ${new Date(out.data.scheduledFor).toLocaleString('pt-BR')}. O sistema fará o disparo automaticamente.`,'success');
+ else if(out.data?.emailWarning)msg(`Documento liberado no Portal, mas o e-mail não foi enviado: ${out.data.emailWarning}`,'error');
+ else msg(out.data?.emailSent?'Documento disponibilizado no Portal e aviso enviado por e-mail.':'Documento disponibilizado ao cliente.','success');
+ await chooseProject(project.id)
+}
+async function notice(approvalId){
+ msg('Preparando Notificação Formal...');
+ const p=await client().rpc('admin_prepare_formal_notice',{p_approval_id:approvalId});
+ if(p.error||!p.data){msg(safeError(p.error,'Não foi possível preparar a notificação.'),'error');return}
+ const existing=docs.find(item=>item.id===p.data);
+ if(existing?.workflow_status==='gerado'||existing?.workflow_status==='enviado'){
+   msg('Notificação Formal já preparada. Use a lista abaixo para baixar, enviar agora ou agendar.','success');
+   await chooseProject(project.id);return
+ }
+ await generateAndDeliver(p.data,false,'notificacao_formal');
+ msg('Notificação Formal gerada. Agora use “Enviar ao cliente” para enviar imediatamente ou agendar o disparo.','success');
+}
 function bind(){$('contractProject')?.addEventListener('change',e=>chooseProject(e.target.value));$('contractGenerators')?.addEventListener('click',e=>{const b=e.target.closest('[data-prepare]');if(b)prepare(b.dataset.prepare)});$('approvalList')?.addEventListener('click',e=>{const b=e.target.closest('[data-approval]');if(b)prepare('termo_aceite',b.dataset.approval)});$('preparedDocuments')?.addEventListener('click',e=>{const b=e.target.closest('[data-download],[data-archive],[data-send]');if(!b)return;const expected=b.dataset.kind||activeDocumentKind;if(b.dataset.download)generateAndDeliver(b.dataset.download,false,expected);if(b.dataset.archive)generateAndDeliver(b.dataset.archive,true,expected);if(b.dataset.send)send(b.dataset.send,expected)});$('contractAttention')?.addEventListener('click',e=>{const b=e.target.closest('[data-notice]');if(b)notice(b.dataset.notice)});window.addEventListener('cme:document-mode',e=>{const kind=e.detail?.kind;activeDocumentKind=supportedDocumentKinds.has(kind)?kind:null;renderDocs()});setTimeout(async()=>{await loadCatalog();await loadProjects()},300)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();})();
