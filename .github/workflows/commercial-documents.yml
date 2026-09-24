@@ -9,6 +9,7 @@ on:
       - 'supabase/functions/generate-commercial-document-final/**'
       - 'supabase/functions/generate-contract-document/**'
       - 'portal-app/supabase/functions/generate-contract-document/**'
+      - 'portal-app/supabase/functions/generate-contract-document-final/**'
       - 'portal-app/src/services/commercial-service.ts'
       - 'portal-app/src/services/document-workflow-service.ts'
       - 'portal-app/src/app/admin/commercial-documents.tsx'
@@ -20,6 +21,8 @@ on:
       - 'supabase/migrations/**document_chain**.sql'
       - 'js/document-function-routing-web.js'
       - 'scripts/commercial-word-regression.mjs'
+      - 'scripts/finalization-word-regression.mjs'
+      - 'scripts/finalization-regression.mjs'
       - 'scripts/commercial-generator-preflight-regression.mjs'
       - 'scripts/commercial-custom-scope-regression.mjs'
       - '.github/workflows/commercial-documents.yml'
@@ -31,6 +34,7 @@ on:
       - 'supabase/functions/generate-commercial-document-final/**'
       - 'supabase/functions/generate-contract-document/**'
       - 'portal-app/supabase/functions/generate-contract-document/**'
+      - 'portal-app/supabase/functions/generate-contract-document-final/**'
       - 'portal-app/src/services/commercial-service.ts'
       - 'portal-app/src/services/document-workflow-service.ts'
       - 'portal-app/src/app/admin/commercial-documents.tsx'
@@ -42,6 +46,8 @@ on:
       - 'supabase/migrations/**document_chain**.sql'
       - 'js/document-function-routing-web.js'
       - 'scripts/commercial-word-regression.mjs'
+      - 'scripts/finalization-word-regression.mjs'
+      - 'scripts/finalization-regression.mjs'
       - 'scripts/commercial-generator-preflight-regression.mjs'
       - 'scripts/commercial-custom-scope-regression.mjs'
       - '.github/workflows/commercial-documents.yml'
@@ -71,3 +77,7 @@ jobs:
         run: npm install --no-save --prefix portal-app docx@9.5.1 jszip@3.10.1
       - name: Gerar DOCX de teste e validar ZIP, XML, escopo e endereços
         run: node --experimental-strip-types scripts/commercial-word-regression.mjs
+      - name: Validar checkboxes OOXML e aceite exclusivo do cliente
+        run: node --experimental-strip-types scripts/finalization-word-regression.mjs
+      - name: Regressão estática da finalização
+        run: node scripts/finalization-regression.mjs
