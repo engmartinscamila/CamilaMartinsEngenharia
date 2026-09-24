@@ -54,7 +54,7 @@ export default function AdminApprovalsScreen() {
   useLiveRefresh(load);
 
   useEffect(() => {
-    if (!projectId) { setDocuments([]); setRelatedDocumentId(null); return; }
+    if (!projectId) return;
     let mounted = true;
     void listProjectContractDocuments(projectId).then((result) => {
       if (!mounted) return;
@@ -102,7 +102,7 @@ export default function AdminApprovalsScreen() {
         <Text style={styles.sectionTitle}>1. Projeto / contrato</Text>
         <View style={styles.projectList}>
           {projects.map((project) => (
-            <Pressable key={project.id} onPress={() => setProjectId(project.id)} style={[styles.projectChip, projectId === project.id && styles.selected]}>
+            <Pressable key={project.id} onPress={() => { setProjectId(project.id); setDocuments([]); setRelatedDocumentId(null); }} style={[styles.projectChip, projectId === project.id && styles.selected]}>
               <Text style={[styles.projectText, projectId === project.id && styles.selectedText]}>{project.contractNumber} • {project.name}</Text>
             </Pressable>
           ))}
