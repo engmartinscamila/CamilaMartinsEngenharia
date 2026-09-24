@@ -706,7 +706,7 @@ export async function updateAdminContractValue(contractId: string, value: number
 }
 
 export async function listAdminAudit(): Promise<ServiceResult<AuditEntrySummary[]>> {
-  const result = await supabase.from('audit_log').select('id, action, entity_type, entity_id, details, created_at').order('created_at', { ascending: false }).limit(200);
+  const result = await supabase.from('audit_log').select('id, action, entity_type, entity_id, user_id, details, created_at').order('created_at', { ascending: false }).limit(200);
   if (result.error) return { data: [], error: 'Não foi possível carregar a auditoria.' };
-  return { data: (result.data ?? []).map((row) => ({ id: row.id, action: row.action, entityType: row.entity_type, entityId: row.entity_id, details: row.details as Record<string, unknown> | null, createdAt: row.created_at })), error: null };
+  return { data: (result.data ?? []).map((row) => ({ id: row.id, action: row.action, entityType: row.entity_type, entityId: row.entity_id, userId: row.user_id, details: row.details as Record<string, unknown> | null, createdAt: row.created_at })), error: null };
 }
