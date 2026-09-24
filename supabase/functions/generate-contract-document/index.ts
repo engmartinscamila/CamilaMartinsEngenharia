@@ -564,6 +564,20 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
  throw new Error('Tipo de documento ainda não suportado por este gerador.');
 }
 
+async function sendClientDocumentEmail(service:any,row:any){
+ const apiKey=Deno.env.get('RESEND_API_KEY');
+ if(!apiKey)return {emailSent:false,emailReason:'Resend não configurado'};
+ const {data:customer,error}=await service.from('clientes').select('nome,email').eq('id',row.cliente_id).maybeSingle();
+ if(error)throw error;
+ const email=String(customer?.email??'').trim();
+ if(!email)return {emailSent:false,emailReason:'Cliente sem e-mail cadastrado'};
+ const from=Deno.env.get('RESEND_FROM')||'Camila Martins Engenharia <onboarding@resend.dev>';
+ const portalUrl='https://camilamartinsengenharia.com.br/documentos-cliente.html';
+ const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'},body:JSON.stringify({from,to:[email],subject:`${row.nome} disponível — Camila Martins Engenharia`,html:`<p>Olá, ${String(customer?.nome??'cliente')}.</p><p>Um novo documento vinculado ao seu contrato foi disponibilizado no Portal do Cliente.</p><p><a href="${portalUrl}">Acessar documentos do projeto</a></p><p>Camila Martins Engenharia</p>`})});
+ if(!response.ok){const body=await response.text();return {emailSent:false,emailReason:`Falha no provedor de e-mail (${response.status}): ${body.slice(0,120)}`}}
+ return {emailSent:true,emailReason:null};
+}
+
 const names:Record<string,string>={notificacao_formal:'notificacao-formal',anexo_i:'anexo-i',termo_aceite:'termo-aceite',estudo_preliminar:'estudo-preliminar',levantamento_tecnico:'levantamento-tecnico',servico_adicional:'servico-adicional',autorizacao_imagem:'autorizacao-uso-imagem',quitacao_encerramento:'quitacao-encerramento'};
 
 Deno.serve(async(req)=>{
@@ -593,24 +607,50 @@ Deno.serve(async(req)=>{
   if(action==='send'){
    if(!row.arquivo||row.workflow_status==='rascunho')return json({error:'Gere o Word antes de enviá-lo ao cliente.'},400);
    if(row.workflow_status==='enviado')return json({sent:true,alreadySent:true,documentKind:row.document_kind});
-   const updated=await service.from('documentos').update({workflow_status:'enviado'})
+   const existing=await service.from('notificacoes').select('id,delivery_status,scheduled_for,sent_at')
+    .eq('referencia_tipo','documento').eq('referencia_id',row.id).eq('tipo','documento_contratual').order('created_at',{ascending:false}).limit(1).maybeSingle();
+   if(existing.error)throw existing.error;
+
+   if(isScheduled){
+    if(existing.data?.id){
+     const scheduled=await service.from('notificacoes').update({delivery_status:'scheduled',scheduled_for:scheduledFor.toISOString(),sent_at:null,lida:false})
+      .eq('id',existing.data.id);
+     if(scheduled.error)throw scheduled.error;
+    }else{
+     const notification=await service.from('notificacoes').insert({
+      cliente_id:row.cliente_id,projeto_id:row.projeto_id,titulo:`${row.nome} disponível`,
+      mensagem:'Um novo documento vinculado ao seu contrato será disponibilizado na data agendada.',
+      tipo:'documento_contratual',destinatario:'cliente',referencia_tipo:'documento',
+      referencia_id:row.id,link_path:'/documentos-cliente.html',lida:false,delivery_status:'scheduled',
+      scheduled_for:scheduledFor.toISOString(),sent_at:null
+     });
+     if(notification.error)throw notification.error;
+    }
+    await service.from('audit_log').insert({user_id:user.id,action:'schedule_contract_document',entity_type:'documentos',entity_id:row.id,details:{document_kind:row.document_kind,scheduled_for:scheduledFor.toISOString()}});
+    return json({sent:true,scheduled:true,scheduledFor:scheduledFor.toISOString(),documentKind:row.document_kind});
+   }
+
+   const updated=await service.from('documentos').update({workflow_status:'enviado',client_visible:true,exibir_cliente:true,client_released_at:new Date().toISOString(),client_released_by:user.id})
     .eq('id',row.id).eq('workflow_status','gerado').select('id').maybeSingle();
    if(updated.error)throw updated.error;
    if(!updated.data)return json({error:'O documento não está pronto para envio ou já foi enviado.'},409);
-   const existing=await service.from('notificacoes').select('id')
-    .eq('referencia_tipo','documento').eq('referencia_id',row.id).eq('tipo','documento_contratual').limit(1);
-   if(existing.error)throw existing.error;
-   if(!existing.data?.length){
+
+   let notificationId=existing.data?.id||null;
+   if(notificationId){
+    const notification=await service.from('notificacoes').update({titulo:`${row.nome} disponível`,mensagem:'Um novo documento vinculado ao seu contrato foi disponibilizado em Documentos.',link_path:'/documentos-cliente.html',lida:false,delivery_status:'sent',scheduled_for:null,sent_at:new Date().toISOString()}).eq('id',notificationId);
+    if(notification.error)throw notification.error;
+   }else{
     const notification=await service.from('notificacoes').insert({
      cliente_id:row.cliente_id,projeto_id:row.projeto_id,titulo:`${row.nome} disponível`,
      mensagem:'Um novo documento vinculado ao seu contrato foi disponibilizado em Documentos.',
      tipo:'documento_contratual',destinatario:'cliente',referencia_tipo:'documento',
-     referencia_id:row.id,link_path:'/(client)/documents',lida:false,delivery_status:isScheduled?'scheduled':'sent',scheduled_for:isScheduled?scheduledFor.toISOString():null,sent_at:isScheduled?null:new Date().toISOString()
-    });
-    if(notification.error)throw notification.error;
+     referencia_id:row.id,link_path:'/documentos-cliente.html',lida:false,delivery_status:'sent',scheduled_for:null,sent_at:new Date().toISOString()
+    }).select('id').single();
+    if(notification.error)throw notification.error;notificationId=notification.data?.id||null;
    }
-   await service.from('audit_log').insert({user_id:user.id,action:'send_contract_document',entity_type:'documentos',entity_id:row.id,details:{document_kind:row.document_kind}});
-   return json({sent:true,scheduled:Boolean(isScheduled),scheduledFor:isScheduled?scheduledFor.toISOString():null,documentKind:row.document_kind});
+   const email=await sendClientDocumentEmail(service,row);
+   await service.from('audit_log').insert({user_id:user.id,action:'send_contract_document',entity_type:'documentos',entity_id:row.id,details:{document_kind:row.document_kind,email_sent:email.emailSent}});
+   return json({sent:true,scheduled:false,documentKind:row.document_kind,emailSent:email.emailSent,emailWarning:email.emailReason,notificationId});
   }
 
   if(row.workflow_status==='enviado'||row.workflow_status==='assinado'||row.workflow_status==='aceito'){
