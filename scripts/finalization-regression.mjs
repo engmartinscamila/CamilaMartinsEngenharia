@@ -78,6 +78,13 @@ has(scheduleTest, 'analyzeConstructionCriticalPath', 'Sandbox não testa caminho
 has(scheduleTest, 'Curva S TESTE', 'Sandbox não testa Curva S.');
 has(scheduleTest, 'Gerar Excel TESTE', 'Sandbox não oferece Excel isolado.');
 
+const contractQuoteGuard = read('supabase/migrations/20260924161500_require_quote_for_contract.sql');
+has(contractQuoteGuard, 'Selecione o orçamento aprovado que dará origem ao contrato', 'Backend ainda permite contrato totalmente manual sem orçamento.');
+has(contractQuoteGuard, 'Contrato sem orçamento de origem. Vincule um ORC aprovado antes de prosseguir', 'Consistência comercial ainda aceita contrato sem origem.');
+has(contractQuoteGuard, "'legacy_project_quote',true", 'Contrato legado com número de orçamento perdeu o caminho válido.');
+const classicCommercialF20 = read('js/commercial-documents-web.js');
+notHas(classicCommercialF20, 'Contrato criado sem vínculo de orçamento.', 'UI ainda anuncia contrato sem orçamento, proibido pelo Plano Mestre.');
+
 const additionalScheduleConstraintFix = read('supabase/migrations/20260924160500_allow_additional_service_schedule_constraint.sql');
 has(additionalScheduleConstraintFix, "authorization_type'='servico_adicional_aceito", 'Constraint não reconhece cronograma autorizado por Serviço Adicional.');
 has(additionalScheduleConstraintFix, 'quote_record_id is not null', 'Constraint perdeu a exigência ORC + CON no fluxo original.');
