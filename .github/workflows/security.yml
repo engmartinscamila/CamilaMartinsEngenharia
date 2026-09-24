@@ -67,6 +67,9 @@ jobs:
       - name: Testar isolamento real das policies em PostgreSQL
         run: node scripts/security/rls-regression.mjs
 
+      - name: Testar conciliação OFX atômica e isolada
+        run: node scripts/security/ofx-regression.mjs
+
       - name: Testar vínculo e bloqueio de cronogramas com contratos sintéticos
         run: node scripts/security/construction-schedule-contract-regression.mjs
 

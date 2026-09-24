@@ -16,11 +16,11 @@ ok(screenSource.includes('listCommercialServiceCatalog'), 'tela comercial carreg
 ok(screenSource.includes('catalogServices.map'), 'seleção de serviços é renderizada pelo catálogo central');
 ok(!screenSource.includes('CONTRACT_SCOPE_PRESETS'), 'tela comercial não usa lista fixa paralela');
 ok(screenSource.includes('disabled={catalogServices.length===0}'), 'criação é bloqueada se o catálogo falhar, evitando escopo desatualizado');
-ok(contractScreenSource.includes('listCommercialServiceCatalog'), 'tela de escopo contratual também usa o catálogo central');
+ok(!contractScreenSource.includes('listCommercialServiceCatalog'), 'Documentos Gerados não deve manter editor concorrente de escopo/catálogo');
 ok(!contractScreenSource.includes('CONTRACT_SCOPE_PRESETS'), 'tela contratual não usa catálogo estático paralelo');
 ok(!documentWorkflowSource.includes('CONTRACT_SCOPE_PRESETS'), 'serviço documental não mantém fonte paralela de serviços');
 ok(documentWorkflowSource.includes('getCommercialContractScopeGuard'), 'escopo moderno verifica origem comercial estruturada');
 ok(documentWorkflowSource.includes('Altere o escopo pelo orçamento/contrato ou por aditivo'), 'edição manual de escopo moderno é bloqueada');
-ok(contractScreenSource.includes('commercialScopeManaged || savingKey'), 'checkbox de contrato moderno fica somente leitura');
+ok(!contractScreenSource.includes('setContractScopeItem'), 'Documentos Gerados não deve alterar escopo; mudanças pertencem ao fluxo comercial/aditivo');
 
 console.log(`CATÁLOGO COMERCIAL CENTRAL: ${checks} verificações passaram.`);

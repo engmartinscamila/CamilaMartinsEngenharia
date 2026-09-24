@@ -116,6 +116,10 @@ eq(await count('select count(*) n from documentos'),3,'own manual, released and 
 eq(await count(`select count(*) n from documentos where arquivo='a/draft.pdf'`),0,'draft metadata denied');
 eq(await count('select count(*) n from storage.objects'),2,'only own unprotected released/manual originals');
 eq(await count(`select count(*) n from storage.objects where name in ('a/authored.pdf','a/photo.jpg','a/draft.pdf','a/orphan.pdf','b/manual.pdf')`),0,'protected, draft, orphan and foreign originals denied');
+await denied(
+  `insert into storage.objects(id,bucket_id,name) values ('70000000-0000-4000-8000-000000000001','documentos','a/client-direct-upload.pdf')`,
+  'client cannot upload directly to protected storage'
+);
 await as('postgres');
 await sql(`update project_portal_settings set show_documents=false where project_id='${pa}'`);
 await as('authenticated',a);
@@ -133,6 +137,8 @@ await as('authenticated',admin);
 eq((await db.query('select is_portal_admin() value')).rows[0].value,true,'administrator verified on server');
 eq(await count('select count(*) n from documentos'),5,'admin still sees every document');
 eq(await count('select count(*) n from storage.objects'),7,'admin original access preserved');
+await sql(`insert into storage.objects(id,bucket_id,name) values ('70000000-0000-4000-8000-000000000002','documentos','admin/security-upload-check.pdf')`);
+eq(await count(`select count(*) n from storage.objects where name='admin/security-upload-check.pdf'`),1,'admin upload allowed by server-validated storage policy');
 await as('postgres');
 await sql(`update clientes set status='ativo' where id='${ca}';
 update documentos set autoral=true where arquivo='a/manual.pdf';

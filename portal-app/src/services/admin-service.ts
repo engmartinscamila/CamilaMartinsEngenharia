@@ -429,13 +429,54 @@ export async function updateAdminScheduleStage(id: string, status: string, progr
 }
 
 export async function listAdminApprovals(): Promise<ServiceResult<ApprovalSummary[]>> {
-  const result = await supabase.from('aprovacoes').select('id, projeto_id, tipo, titulo, descricao, status, comentario, created_at, respondido_at').order('created_at', { ascending: false }).limit(200);
+  const result = await supabase
+    .from('aprovacoes')
+    .select('id, projeto_id, tipo, titulo, descricao, approval_object, related_document_id, approval_due_at, status, comentario, created_at, respondido_at')
+    .order('created_at', { ascending: false })
+    .limit(200);
   if (result.error) return { data: [], error: 'Não foi possível carregar as aprovações.' };
-  return { data: (result.data ?? []).map((row) => ({ id: row.id, projectId: row.projeto_id, type: row.tipo, title: row.titulo, description: row.descricao, status: row.status ?? 'aguardando', comment: row.comentario, createdAt: row.created_at, respondedAt: row.respondido_at })), error: null };
+  return {
+    data: (result.data ?? []).map((row) => ({
+      id: row.id,
+      projectId: row.projeto_id,
+      type: row.tipo,
+      title: row.titulo,
+      description: row.descricao,
+      approvalObject: row.approval_object,
+      relatedDocumentId: row.related_document_id,
+      dueAt: row.approval_due_at,
+      status: row.status ?? 'aguardando',
+      comment: row.comentario,
+      createdAt: row.created_at,
+      respondedAt: row.respondido_at,
+    })),
+    error: null,
+  };
 }
 
-export async function createAdminApproval(input: { project: AdminProjectSummary; type: string; title: string; description?: string }) {
-  const result = await supabase.from('aprovacoes').insert({ cliente_id: input.project.clientId, projeto_id: input.project.id, tipo: input.type.trim(), titulo: input.title.trim(), descricao: input.description?.trim() || null, status: 'aguardando' });
+export async function createAdminApproval(input: {
+  project: AdminProjectSummary;
+  type: string;
+  approvalObject: string;
+  description?: string;
+  relatedDocumentId?: string | null;
+  dueDate?: string | null;
+}) {
+  const approvalObject = input.approvalObject.trim();
+  if (approvalObject.length < 3) return 'Informe o objeto específico que o cliente deverá avaliar.';
+  if (input.dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(input.dueDate)) return 'Informe um prazo de manifestação válido.';
+  const result = await supabase.from('aprovacoes').insert({
+    cliente_id: input.project.clientId,
+    projeto_id: input.project.id,
+    tipo: input.type.trim(),
+    titulo: approvalObject,
+    approval_object: approvalObject,
+    descricao: input.description?.trim() || null,
+    related_document_id: input.relatedDocumentId || null,
+    delivered_at: new Date().toISOString(),
+    approval_due_at: input.dueDate ? `${input.dueDate}T23:59:59-03:00` : null,
+    status: 'aguardando',
+  });
   if (result.error) return 'Não foi possível criar a aprovação.';
   void dispatchPendingPushNotifications();
   return null;
@@ -665,7 +706,7 @@ export async function updateAdminContractValue(contractId: string, value: number
 }
 
 export async function listAdminAudit(): Promise<ServiceResult<AuditEntrySummary[]>> {
-  const result = await supabase.from('audit_log').select('id, action, entity_type, entity_id, details, created_at').order('created_at', { ascending: false }).limit(200);
+  const result = await supabase.from('audit_log').select('id, action, entity_type, entity_id, user_id, details, created_at').order('created_at', { ascending: false }).limit(200);
   if (result.error) return { data: [], error: 'Não foi possível carregar a auditoria.' };
-  return { data: (result.data ?? []).map((row) => ({ id: row.id, action: row.action, entityType: row.entity_type, entityId: row.entity_id, details: row.details as Record<string, unknown> | null, createdAt: row.created_at })), error: null };
+  return { data: (result.data ?? []).map((row) => ({ id: row.id, action: row.action, entityType: row.entity_type, entityId: row.entity_id, userId: row.user_id, details: row.details as Record<string, unknown> | null, createdAt: row.created_at })), error: null };
 }

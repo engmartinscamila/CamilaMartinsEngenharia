@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
+import { DateField } from '@/components/date-field';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
 import { formatCurrency, formatDate, isValidIsoDate, parseBrazilianCurrency } from '@/lib/format';
 import { useThemeStyles } from '@/providers/theme-provider';
@@ -14,7 +15,7 @@ import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 import type { AdminProjectSummary, PurchaseQuoteSummary, SupplierSummary } from '@/types/domain';
 
 const SUPPLIER_CATEGORIES = ['Material de construção','Elétrica','Hidráulica','Estrutura','Acabamento','Pintura','Esquadrias','Equipamentos','Serviços terceirizados','Outros'];
-const MEASURE_UNITS = ['un','m','m linear','m²','m³','kg','t','L','h','diária','pacote'];
+const MEASURE_UNITS = ['un','m','m linear','m²','m³','kg','t','L','h','diária','pacote','Outra'];
 const PAYMENT_OPTIONS = ['Pix','Dinheiro','Transferência','Cartão à vista','Cartão parcelado','Boleto','Faturado','Outro'];
 
 export default function AdminProcurementScreen() {
@@ -25,6 +26,7 @@ export default function AdminProcurementScreen() {
   const [quotes, setQuotes] = useState<PurchaseQuoteSummary[]>([]);
   const [supplierName, setSupplierName] = useState('');
   const [supplierCategory, setSupplierCategory] = useState('');
+  const [customSupplierCategory, setCustomSupplierCategory] = useState('');
   const [supplierPhone, setSupplierPhone] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -32,11 +34,13 @@ export default function AdminProcurementScreen() {
   const [itemDescription, setItemDescription] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [unit, setUnit] = useState('un');
+  const [customUnit, setCustomUnit] = useState('');
   const [quoteId, setQuoteId] = useState<string | null>(null);
   const [supplierId, setSupplierId] = useState<string | null>(null);
   const [bidAmount, setBidAmount] = useState('');
   const [leadTime, setLeadTime] = useState('');
   const [paymentTerms, setPaymentTerms] = useState('');
+  const [customPaymentTerms, setCustomPaymentTerms] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -56,23 +60,29 @@ export default function AdminProcurementScreen() {
   useEffect(() => { const task = setTimeout(() => void loadQuotes(), 0); return () => clearTimeout(task); }, [loadQuotes]);
 
   const saveSupplier = async () => {
+    const finalCategory = supplierCategory === 'Outros' ? customSupplierCategory.trim() : supplierCategory;
     if (supplierName.trim().length < 2) { setError('Informe o nome do fornecedor.'); return; }
-    const actionError = await createSupplier({ name: supplierName, category: supplierCategory, phone: supplierPhone });
-    if (actionError) setError(actionError); else { setSupplierName(''); setSupplierCategory(''); setSupplierPhone(''); setSuccess('Fornecedor cadastrado.'); await loadBase(); }
+    if (supplierCategory === 'Outros' && finalCategory.length < 2) { setError('Especifique a categoria do fornecedor.'); return; }
+    const actionError = await createSupplier({ name: supplierName, category: finalCategory, phone: supplierPhone });
+    if (actionError) setError(actionError); else { setSupplierName(''); setSupplierCategory(''); setCustomSupplierCategory(''); setSupplierPhone(''); setSuccess('Fornecedor cadastrado.'); await loadBase(); }
   };
   const saveQuote = async () => {
     const parsedQuantity = Number(quantity.replace(',', '.'));
+    const finalUnit = unit === 'Outra' ? customUnit.trim() : unit;
     if (!projectId || title.trim().length < 3 || itemDescription.trim().length < 2 || !Number.isFinite(parsedQuantity) || parsedQuantity <= 0) { setError('Preencha projeto, título, item e quantidade válida.'); return; }
-    if (dueDate && !isValidIsoDate(dueDate)) { setError('A data limite deve usar AAAA-MM-DD.'); return; }
-    const actionError = await createPurchaseQuote({ projectId, title, description, dueDate, itemDescription, quantity: parsedQuantity, unit });
-    if (actionError) setError(actionError); else { setTitle(''); setDescription(''); setDueDate(''); setItemDescription(''); setQuantity('1'); setSuccess('Cotação aberta para comparação de fornecedores.'); await loadQuotes(); }
+    if (dueDate && !isValidIsoDate(dueDate)) { setError('Selecione uma data limite válida.'); return; }
+    if (!finalUnit) { setError('Selecione ou especifique a unidade de medida.'); return; }
+    const actionError = await createPurchaseQuote({ projectId, title, description, dueDate, itemDescription, quantity: parsedQuantity, unit: finalUnit });
+    if (actionError) setError(actionError); else { setTitle(''); setDescription(''); setDueDate(''); setItemDescription(''); setQuantity('1'); setUnit('un'); setCustomUnit(''); setSuccess('Cotação aberta para comparação de fornecedores.'); await loadQuotes(); }
   };
   const saveBid = async () => {
     const amount = parseBrazilianCurrency(bidAmount);
     const days = leadTime ? Number(leadTime) : null;
     if (!quoteId || !supplierId || amount === null || amount < 0 || (days !== null && (!Number.isInteger(days) || days < 0))) { setError('Selecione cotação e fornecedor; informe valor e prazo válidos.'); return; }
-    const actionError = await addSupplierBid({ quoteId, supplierId, totalAmount: amount, leadTimeDays: days, paymentTerms });
-    if (actionError) setError(actionError); else { setBidAmount(''); setLeadTime(''); setPaymentTerms(''); setSuccess('Proposta registrada e ranking atualizado.'); await loadQuotes(); }
+    const finalPayment = paymentTerms === 'Outro' ? customPaymentTerms.trim() : paymentTerms;
+    if (!finalPayment) { setError('Selecione ou especifique a condição de pagamento.'); return; }
+    const actionError = await addSupplierBid({ quoteId, supplierId, totalAmount: amount, leadTimeDays: days, paymentTerms: finalPayment });
+    if (actionError) setError(actionError); else { setBidAmount(''); setLeadTime(''); setPaymentTerms(''); setCustomPaymentTerms(''); setSuccess('Proposta registrada e ranking atualizado.'); await loadQuotes(); }
   };
   const chooseBid = async (quote: PurchaseQuoteSummary, supplier: string) => {
     const actionError = await selectSupplierBid(quote.id, supplier);
@@ -85,8 +95,8 @@ export default function AdminProcurementScreen() {
       {error ? <Notice tone="danger">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}
       <Card><Text style={styles.sectionTitle}>Projeto</Text><View style={styles.chips}>{projects.map((project) => <Pressable key={project.id} onPress={() => setProjectId(project.id)} style={[styles.chip, projectId === project.id && styles.selected]}><Text style={styles.chipText}>{project.contractNumber} • {project.name}</Text></Pressable>)}</View></Card>
       <View style={styles.columns}>
-        <Card style={styles.column}><Text style={styles.sectionTitle}>Novo fornecedor</Text><Field label="Nome *" onChangeText={setSupplierName} value={supplierName} /><Text style={styles.label}>Categoria predefinida</Text><View style={styles.chips}>{SUPPLIER_CATEGORIES.map((item) => <Pressable key={item} onPress={() => setSupplierCategory(item)} style={[styles.chip, supplierCategory === item && styles.selected]}><Text style={styles.chipText}>{item}</Text></Pressable>)}</View><Field label="Telefone / WhatsApp" onChangeText={setSupplierPhone} value={supplierPhone} /><Button onPress={() => void saveSupplier()} title="Cadastrar fornecedor" /></Card>
-        <Card style={styles.column}><Text style={styles.sectionTitle}>Abrir cotação</Text><Field label="Título do pedido *" onChangeText={setTitle} value={title} /><Field label="Descrição" multiline onChangeText={setDescription} value={description} /><Field label="Prazo para receber propostas (AAAA-MM-DD)" placeholder="Use o calendário do dispositivo" onChangeText={setDueDate} value={dueDate} /><Field label="Item ou material cotado *" onChangeText={setItemDescription} value={itemDescription} /><View style={styles.row}><Field keyboardType="decimal-pad" label="Quantidade" onChangeText={setQuantity} value={quantity} /></View><Text style={styles.label}>Unidade de medida</Text><View style={styles.chips}>{MEASURE_UNITS.map((item) => <Pressable key={item} onPress={() => setUnit(item)} style={[styles.chip, unit === item && styles.selected]}><Text style={styles.chipText}>{item}</Text></Pressable>)}</View><Button onPress={() => void saveQuote()} title="Abrir cotação" /></Card>
+        <Card style={styles.column}><Text style={styles.sectionTitle}>Novo fornecedor</Text><Field label="Nome *" onChangeText={setSupplierName} value={supplierName} /><Text style={styles.label}>Categoria predefinida</Text><View style={styles.chips}>{SUPPLIER_CATEGORIES.map((item) => <Pressable key={item} onPress={() => setSupplierCategory(item)} style={[styles.chip, supplierCategory === item && styles.selected]}><Text style={styles.chipText}>{item}</Text></Pressable>)}</View>{supplierCategory === 'Outros' ? <Field label="Especifique a categoria" onChangeText={setCustomSupplierCategory} value={customSupplierCategory} /> : null}<Field label="Telefone / WhatsApp" onChangeText={setSupplierPhone} value={supplierPhone} /><Button onPress={() => void saveSupplier()} title="Cadastrar fornecedor" /></Card>
+        <Card style={styles.column}><Text style={styles.sectionTitle}>Abrir cotação</Text><Field label="Título do pedido *" onChangeText={setTitle} value={title} /><Field label="Descrição" multiline onChangeText={setDescription} value={description} /><DateField label="Prazo para receber propostas" optional onChange={setDueDate} value={dueDate} /><Field label="Item ou material cotado *" onChangeText={setItemDescription} value={itemDescription} /><View style={styles.row}><Field keyboardType="decimal-pad" label="Quantidade" onChangeText={setQuantity} value={quantity} /></View><Text style={styles.label}>Unidade de medida</Text><View style={styles.chips}>{MEASURE_UNITS.map((item) => <Pressable key={item} onPress={() => setUnit(item)} style={[styles.chip, unit === item && styles.selected]}><Text style={styles.chipText}>{item}</Text></Pressable>)}</View>{unit === 'Outra' ? <Field label="Outra unidade" onChangeText={setCustomUnit} value={customUnit} placeholder="Ex.: caixa, rolo, conjunto" /> : null}<Button onPress={() => void saveQuote()} title="Abrir cotação" /></Card>
       </View>
       <Card>
         <Text style={styles.sectionTitle}>Registrar proposta recebida</Text>
@@ -94,6 +104,7 @@ export default function AdminProcurementScreen() {
         <Text style={styles.label}>Fornecedor</Text><View style={styles.chips}>{suppliers.map((supplier) => <Pressable key={supplier.id} onPress={() => setSupplierId(supplier.id)} style={[styles.chip, supplierId === supplier.id && styles.selected]}><Text style={styles.chipText}>{supplier.name}</Text></Pressable>)}</View>
         <View style={styles.row}><Field keyboardType="decimal-pad" label="Valor total (R$)" onChangeText={setBidAmount} value={bidAmount} /><Field keyboardType="number-pad" label="Prazo (dias)" onChangeText={setLeadTime} value={leadTime} /></View>
         <Text style={styles.label}>Condição de pagamento</Text><View style={styles.chips}>{PAYMENT_OPTIONS.map((item) => <Pressable key={item} onPress={() => setPaymentTerms(item)} style={[styles.chip, paymentTerms === item && styles.selected]}><Text style={styles.chipText}>{item}</Text></Pressable>)}</View>
+        {paymentTerms === 'Outro' ? <Field label="Outra condição de pagamento" onChangeText={setCustomPaymentTerms} value={customPaymentTerms} /> : null}
         <Button onPress={() => void saveBid()} title="Registrar proposta" />
       </Card>
       <Card>

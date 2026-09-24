@@ -213,6 +213,7 @@ export default function NewConstructionScheduleScreen() {
     <Screen>
       <AdminPageHeader title="Novo cronograma físico-financeiro" description="Modo guiado por padrão: selecione a contratação, confirme atividades e custos; detalhes técnicos ficam sob demanda." />
       <Button title="Voltar aos cronogramas" variant="ghost" onPress={() => router.replace('/admin/construction-schedule')} />
+      <Button title="Abrir Cronograma de TESTE / NÃO CONTRATUAL" variant="secondary" onPress={() => router.push('/admin/construction-schedule-test')} />
       <Notice tone="info">A contratação do cronograma não implica execução, fiscalização ou atualizações ilimitadas. O cronograma simples e os registros antigos serão preservados.</Notice>
       {error ? <Notice tone="danger">{error}</Notice> : null}
       {success ? <Notice tone="success">{success}</Notice> : null}

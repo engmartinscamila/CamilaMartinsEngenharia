@@ -8,7 +8,7 @@ export type ScheduleBaselineArchive = {
   approvedAt: string | null;
   contractNumber: string | null;
   holidays: string[];
-  activities: Array<{code: string; activity: string; start: string | null; finish: string | null}>;
+  activities: {code: string; activity: string; start: string | null; finish: string | null}[];
 };
 
 /** Somente administrador: a RLS e os GRANTs nunca expõem snapshots internos aos clientes. */
@@ -26,7 +26,7 @@ export async function listConstructionScheduleBaselines(page: number): Promise<{
   if (response.error) return {data: [], total: 0, error: 'Não foi possível consultar o histórico das linhas de base. Confira a implantação e as permissões.'};
   const items: ScheduleBaselineArchive[] = [];
   for (const row of response.data ?? []) {
-    const snapshot = row.baseline_snapshot as {scope?: {contract_number?: string}; activities?: Array<Record<string, unknown>>} | null;
+    const snapshot = row.baseline_snapshot as {scope?: {contract_number?: string}; activities?: Record<string, unknown>[]} | null;
     if (!snapshot || !Array.isArray(snapshot.activities) || !snapshot.activities.length || !Array.isArray(row.holiday_dates)) {
       return {data: [], total: 0, error: 'Uma versão arquivada está incompleta; interrompida a visualização para revisão.'};
     }

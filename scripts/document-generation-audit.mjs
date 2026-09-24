@@ -32,7 +32,7 @@ for(const kind of ['anexo_i','estudo_preliminar','levantamento_tecnico','servico
 }
 
 expect(preparation.includes("approvalId:kind==='termo_aceite'?approvalId:null"),'Preparação do Termo de Aceite não encaminha explicitamente a aprovação selecionada.');
-expect(contractScreen.includes("prepare('termo_aceite', approval.id)"),'Termo de Aceite não está ligado explicitamente à aprovação selecionada.');
+expect(!contractScreen.includes('prepareContractDocument'),'Documentos Gerados voltou a preparar documentos por um fluxo concorrente.');
 expect(contractScreen.includes('generateContractDocument(item.id, item.kind, archive)'),'Download contratual não usa o document_kind do registro selecionado.');
 expect(contractScreen.includes('sendContractDocument(item.id, item.kind)'),'Envio contratual não usa o document_kind do registro selecionado.');
 expect(workflow.includes("generate-contract-document-final"),'Serviço contratual não usa o gerador final governado.');

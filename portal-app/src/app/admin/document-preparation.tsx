@@ -1,10 +1,11 @@
 import { useNotificationProject } from '@/hooks/use-notification-project';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
+import { openWebsiteAdminSection } from '@/lib/admin-navigation';
 import { suggestCommercialServices } from '@/lib/commercial-service-match';
 import { listAdminProjects } from '@/services/admin-service';
 import {
@@ -52,18 +53,25 @@ const optionGroups:Partial<Record<PrepareKind,Group[]>>={
     {key:'reasons',label:'Origem',mode:'multi',items:[['extra_revisions','Revisão extra'],['scope_change','Alteração de escopo'],['level_upgrade','Mudança de nível'],['survey','Vistoria não incluída'],['editable_file','Arquivo/formato não previsto'],['other','Outro']]},
     {key:'pricing',label:'Critério comercial',mode:'single',items:[['hour','Hora técnica'],['percentage','Percentual'],['fixed','Valor fechado']]},
     {key:'payment_method',label:'Forma de pagamento',mode:'single',items:[['pix','Pix'],['bank_transfer','Transferência bancária'],['card_cash','Cartão à vista'],['card_installments','Cartão parcelado'],['cash','Dinheiro'],['other','Outro']]},
-    {key:'approval',label:'Aprovação',mode:'multi',items:[['approved','Aprovo o início do serviço adicional']]},
   ],
   quitacao_encerramento:[
     {key:'closing_reason',label:'Motivo do encerramento',mode:'single',items:[['completed','Conclusão integral'],['client_termination','Rescisão pelo contratante'],['contractor_termination','Rescisão pelo contratado'],['mutual','Mútuo acordo'],['other','Outro']]},
     {key:'financial',label:'Situação financeira',mode:'single',items:[['paid','Quitação integral'],['balance','Existe saldo pendente']]},
   ],
   levantamento_tecnico:[
-    {key:'observed',label:'Elementos a registrar',mode:'multi',items:[['electrical','Elétrica'],['hydraulic','Hidráulica'],['structure','Estrutura'],['frames','Esquadrias'],['finishes','Revestimentos'],['roof','Cobertura'],['drainage','Drenagem'],['access','Acessos'],['other','Outros']]},
-    {key:'conditions',label:'Condições/divergências',mode:'multi',items:[['cracks','Fissuras/trincas'],['moisture','Umidade/infiltração'],['levels','Desníveis'],['corrosion','Corrosão'],['document_mismatch','Divergência documental'],['restricted_access','Acesso restrito']]},
-  ],
-  termo_aceite:[
-    {key:'acceptance',label:'Manifestação',mode:'single',items:[['accepted','Aceito sem ressalvas'],['accepted_with_notes','Aceito com ressalvas']]},
+    {key:'observed',label:'Elementos a registrar',mode:'multi',items:[
+      ['electrical','Elétrica'],['hydraulic','Hidráulica'],['sanitary','Sanitário'],['structure','Estrutura'],
+      ['masonry','Alvenaria'],['frames','Esquadrias'],['finishes','Revestimentos'],['roof','Cobertura'],
+      ['waterproofing','Impermeabilização'],['drainage','Drenagem'],['facade','Fachadas'],
+      ['stairs','Escadas / guarda-corpos'],['accessibility','Acessibilidade'],['fire_safety','Segurança contra incêndio'],
+      ['dimensions','Dimensões / níveis / pé-direito'],['equipment','Equipamentos / instalações'],['access','Acessos / circulação'],['other','Outros']
+    ]},
+    {key:'conditions',label:'Condições/divergências',mode:'multi',items:[
+      ['cracks','Fissuras / trincas'],['moisture','Umidade / infiltração'],['levels','Deformações / desníveis'],
+      ['corrosion','Corrosão'],['detachment','Desplacamentos'],['leaks','Vazamentos'],['wear','Desgaste / deterioração'],
+      ['document_mismatch','Divergência documental'],['restricted_access','Acesso restrito'],
+      ['safety_risk','Condição aparente que exige avaliação de segurança'],['no_anomaly','Ausência de anomalia aparente']
+    ]},
   ],
 };
 
@@ -91,10 +99,11 @@ const textFields:Partial<Record<PrepareKind,{key:string;label:string;placeholder
   levantamento_tecnico:[
     {key:'inspection_datetime',label:'Data e horário da vistoria',placeholder:'DD/MM/AAAA HH:mm'},
     {key:'site_contact',label:'Responsável pelo acompanhamento no local'},
-    {key:'conditions_description',label:'Descrição das condições/divergências',multiline:true},
-  ],
-  termo_aceite:[
-    {key:'acceptance_notes',label:'Ressalvas',multiline:true},
+    {key:'technical_responsible',label:'Responsável técnico'},
+    {key:'measurements',label:'Medidas / níveis / pé-direito',multiline:true},
+    {key:'conditions_description',label:'Descrição detalhada das condições/divergências',multiline:true},
+    {key:'records',label:'Registros / referências / identificação de fotos',multiline:true},
+    {key:'notes',label:'Observações',multiline:true},
   ],
 };
 
@@ -102,6 +111,9 @@ function money(value:number|null){return value===null?'Não informado':value.toL
 
 export default function AdminDocumentPreparationScreen(){
   const router=useRouter();
+  useEffect(()=>{
+    if(Platform.OS==='web') openWebsiteAdminSection('commercial-documents');
+  },[]);
   const styles=useThemeStyles(styleDefinitions);
   const [projects,setProjects]=useState<AdminProjectSummary[]>([]);
   const [projectId,setProjectId]=useState<string|null>(null);
@@ -192,8 +204,6 @@ export default function AdminDocumentPreparationScreen(){
   const validateOptions=()=>{
     if(kind==='termo_aceite'){
       if(!approvalId)return'Selecione a etapa/aprovação correspondente.';
-      if(!choices.acceptance)return'Selecione a forma de aceite.';
-      if(choices.acceptance==='accepted_with_notes'&&!texts.acceptance_notes?.trim())return'Descreva as ressalvas.';
     }
     if(kind==='autorizacao_imagem'){
       if(!Array.isArray(choices.materials)||choices.materials.length===0)return'Selecione ao menos um material autorizado.';
@@ -248,15 +258,16 @@ export default function AdminDocumentPreparationScreen(){
   };
 
   return <Screen>
-    <AdminPageHeader title="Preparar documento do projeto" description="Confira os dados e escolha as opções antes de gerar o documento." />
+    <AdminPageHeader title="Preparar documento do projeto" description="Fluxo auxiliar do app nativo. No portal web, a criação é centralizada em Contratos Gerais." />
     {error?<Notice tone="danger">{error}</Notice>:null}{success?<><Notice tone="success">{success}</Notice><Button onPress={()=>router.push('/admin/contract-documents')} title="Ver documentos gerados" variant="secondary" /></>:null}
     <Card><Text style={styles.sectionTitle}>Projeto</Text><View style={styles.chips}>{projects.map(project=><Pressable key={project.id} onPress={()=>setProjectId(project.id)} style={[styles.chip,project.id===projectId&&styles.selected]}><Text style={[styles.chipText,project.id===projectId&&styles.selectedText]}>{project.contractNumber} • {project.name}</Text></Pressable>)}</View></Card>
     <Card><Text style={styles.sectionTitle}>Tipo de documento</Text><View style={styles.chips}>{documentOptions.map(option=><Pressable key={option.kind} onPress={()=>setKind(option.kind)} style={[styles.chip,option.kind===kind&&styles.selected]}><Text style={[styles.chipText,option.kind===kind&&styles.selectedText]}>{option.title}</Text></Pressable>)}</View></Card>
     {kind==='anexo_i'?<Notice tone="info">O Anexo I registra o escopo que acompanha o contrato original. Para acrescentar um serviço depois da contratação, use “Serviço Adicional”. O Anexo I só pode ser preparado depois que o contrato Word oficial correspondente estiver emitido e registrado no sistema.</Notice>:null}
     {kind==='servico_adicional'?<Notice tone="info">Use “Serviço Adicional” para novo serviço, revisão extra, mudança de escopo ou outra contratação feita depois do contrato original. Isso preserva o contrato já emitido e cria o registro complementar correto.</Notice>:null}
+    {kind==='servico_adicional'?<Notice tone="info">A administradora define escopo, nível, valor e pagamento; a manifestação final é do cliente. O documento será preparado sem aceite pré-marcado.</Notice>:null}
     {kind==='servico_adicional'?<Card><Text style={styles.sectionTitle}>Atividade adicional</Text><Text style={styles.meta}>Use o mesmo catálogo central do orçamento. O texto aprovado para a atividade e o nível será carregado como padrão e poderá ser ajustado somente para as particularidades deste adicional.</Text><Field label="Pesquisar atividade" value={serviceQuery} onChangeText={value=>{setServiceQuery(value);setPreview(null);}} placeholder="Digite nome ou código do serviço" />{additionalSuggestions.map(item=><View key={item.code} style={styles.suggestionRow}><View style={{flex:1}}><Text style={styles.strong}>({item.code}) {item.name}</Text><Text style={styles.meta}>{item.exact?'Correspondência exata':'Sugestão aproximada — confirme antes de selecionar'}</Text></View><Button title="Selecionar" variant="secondary" onPress={()=>chooseAdditionalService(item.code)} /></View>)}{additionalService?<><Notice tone="success">Atividade selecionada: ({additionalService.code}) {additionalService.name}</Notice>{additionalService.levelApplicable?<><Text style={styles.label}>Nível da atividade adicional</Text><View style={styles.chips}>{SERVICE_LEVELS.map(level=><Pressable key={level.code} accessibilityRole="radio" accessibilityState={{selected:additionalLevel===level.code}} onPress={()=>void chooseAdditionalLevel(level.code)} style={[styles.chip,additionalLevel===level.code&&styles.selected]}><Text style={[styles.chipText,additionalLevel===level.code&&styles.selectedText]}>{level.label}</Text></Pressable>)}</View></>:<Notice tone="info">Esta atividade não exige nível Bronze, Prata ou Ouro.</Notice>}</>:null}</Card>:null}
-    {kind==='termo_aceite'?<Card><Text style={styles.sectionTitle}>Etapa / aprovação</Text>{approvals.length===0?<StateView title="Nenhuma etapa disponível" description="Crie ou entregue uma aprovação de etapa antes de preparar o Termo de Aceite." icon="checkmark-done-outline"/>:<View style={styles.chips}>{approvals.map(item=><Pressable key={item.id} onPress={()=>{setApprovalId(item.id);setPreview(null);}} style={[styles.chip,item.id===approvalId&&styles.selected]}><Text style={[styles.chipText,item.id===approvalId&&styles.selectedText]}>{item.title} • {item.status}</Text></Pressable>)}</View>}</Card>:null}
-    {(groups.length||fields.length)?<Card><Text style={styles.sectionTitle}>Opções que sairão no Word</Text>{groups.map(group=><View key={group.key} style={styles.group}><Text style={styles.label}>{group.label}{group.mode==='single'?' • escolha uma opção':''}</Text><View style={styles.chips}>{group.items.map(([optionValue,label])=>{const current=choices[group.key];const selected=group.mode==='single'?current===optionValue:Array.isArray(current)&&current.includes(optionValue);return <Pressable key={optionValue} onPress={()=>toggle(group,optionValue)} style={[styles.option,selected&&styles.optionSelected]}><Text style={styles.optionMark}>{selected?'☒':'☐'}</Text><Text style={styles.optionText}>{label}</Text></Pressable>;})}</View></View>)}{fields.map(field=><Field key={field.key} label={field.label} multiline={field.multiline} onChangeText={value=>setText(field.key,value)} placeholder={field.placeholder} value={texts[field.key]??''}/>)}</Card>:null}
+    {kind==='termo_aceite'?<Card><Text style={styles.sectionTitle}>Etapa / aprovação</Text><Notice tone="info">O admin apenas prepara o Termo. A decisão será registrada pelo cliente como aceitar, aceitar com ressalvas ou recusar; nenhuma opção é pré-marcada aqui.</Notice>{approvals.length===0?<StateView title="Nenhuma etapa disponível" description="Crie ou entregue uma aprovação de etapa antes de preparar o Termo de Aceite." icon="checkmark-done-outline"/>:<View style={styles.chips}>{approvals.map(item=><Pressable key={item.id} onPress={()=>{setApprovalId(item.id);setPreview(null);}} style={[styles.chip,item.id===approvalId&&styles.selected]}><Text style={[styles.chipText,item.id===approvalId&&styles.selectedText]}>{item.title} • {item.status}</Text></Pressable>)}</View>}</Card>:null}
+    {(groups.length||fields.length)?<Card><Text style={styles.sectionTitle}>Opções que sairão no Word</Text>{groups.map(group=><View key={group.key} style={styles.group}><Text style={styles.label}>{group.label}{group.mode==='single'?' • escolha uma opção':''}</Text><View style={styles.chips}>{group.items.map(([optionValue,label])=>{const current=choices[group.key];const selected=group.mode==='single'?current===optionValue:Array.isArray(current)&&current.includes(optionValue);return <Pressable key={optionValue} onPress={()=>toggle(group,optionValue)} style={[styles.option,selected&&styles.optionSelected]}><Text style={styles.optionMark}>{selected?'☒':'☐'}</Text><Text style={styles.optionText}>{label}</Text></Pressable>;})}</View></View>)}{kind==='levantamento_tecnico'?<Button title="Usar agora" variant="secondary" onPress={()=>{const now=new Date();setText('inspection_datetime',new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short'}).format(now));}} />:null}{fields.map(field=><Field key={field.key} label={field.label} multiline={field.multiline} onChangeText={value=>setText(field.key,value)} placeholder={field.placeholder} value={texts[field.key]??''}/>)}</Card>:null}
     <Card><Text style={styles.sectionTitle}>Revisão do documento</Text><Notice tone="info">Na primeira emissão, mantenha “Ajuste simples”. Se já existir um documento emitido, escolha o tipo de revisão e informe o motivo; a versão anterior será preservada.</Notice><View style={styles.chips}><Pressable onPress={()=>{setVersionBump('minor');setPreview(null);}} style={[styles.chip,versionBump==='minor'&&styles.selected]}><Text style={[styles.chipText,versionBump==='minor'&&styles.selectedText]}>Ajuste simples</Text></Pressable><Pressable onPress={()=>{setVersionBump('major');setPreview(null);}} style={[styles.chip,versionBump==='major'&&styles.selected]}><Text style={[styles.chipText,versionBump==='major'&&styles.selectedText]}>Mudança relevante / nova versão</Text></Pressable></View><Field label="Motivo da revisão" onChangeText={value=>{setVersionReason(value);setPreview(null);}} placeholder="Obrigatório somente quando já existe versão emitida" value={versionReason}/><Button loading={loading} onPress={()=>void review()} title="Conferir dados antes de preparar" variant="secondary" /></Card>
     {preview?<Card><View style={styles.previewHead}><Text style={styles.sectionTitle}>Prévia confirmável</Text><StatusPill label={`v${preview.nextVersion}`} tone="warning" /></View><Text style={styles.meta}>Contrato: {preview.contractNumber??'—'}</Text><Text style={styles.meta}>Cliente: {preview.clientName??'—'}</Text><Text style={styles.meta}>Projeto: {preview.projectName??'—'}</Text><Text style={styles.strong}>Endereço da obra: {preview.propertyAddress??'Não informado'}</Text><Text style={styles.meta}>Endereço cadastral: {preview.clientAddress??'Não informado'}</Text><Text style={styles.meta}>Valor contratual: {money(preview.contractValue)}</Text><Text style={styles.meta}>Escopo: {preview.scopeItems.length?preview.scopeItems.map(item=>`(${item.code}) ${item.name}`).join(' • '):'Nenhum item localizado'}</Text>{preview.revisionOf&&!versionReason.trim()?<Notice tone="warning">Já existe emissão anterior. Informe o motivo da revisão e gere a prévia novamente.</Notice>:null}<Button disabled={Boolean(preview.revisionOf&&!versionReason.trim())} loading={loading} onPress={()=>void prepare()} title="Confirmar e preparar documento" /></Card>:null}
   </Screen>;

@@ -392,7 +392,7 @@ export async function listApprovals(projectId: string): Promise<ServiceResult<Ap
   };
 }
 
-export async function respondToApproval(approvalId: string, status: 'aprovado' | 'rejeitado', comment: string) {
+export async function respondToApproval(approvalId: string, status: 'aprovado' | 'aprovado_com_ressalvas' | 'rejeitado', comment: string) {
   const rpc = await supabase.rpc('respond_to_own_approval', {
     p_aprovacao_id: approvalId,
     p_status: status,

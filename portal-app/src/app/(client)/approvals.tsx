@@ -11,10 +11,11 @@ import { listApprovals, respondToApproval } from '@/services/portal-service';
 import { spacing, ThemeColors, typography } from '@/theme/tokens';
 import type { ApprovalSummary } from '@/types/domain';
 
-type Decision = 'aprovado' | 'rejeitado';
+type Decision = 'aprovado' | 'aprovado_com_ressalvas' | 'rejeitado';
 
 function tone(status: string): 'neutral' | 'success' | 'warning' | 'danger' {
   if (status === 'aprovado') return 'success';
+  if (status === 'aprovado_com_ressalvas') return 'warning';
   if (status === 'rejeitado') return 'danger';
   if (status === 'aguardando') return 'warning';
   return 'neutral';
@@ -53,8 +54,10 @@ export default function ApprovalsScreen() {
 
   const confirm = async (item: ApprovalSummary, decision: Decision) => {
     const comment = comments[item.id]?.trim() ?? '';
-    if (decision === 'rejeitado' && comment.length < 3) {
-      setError('Explique brevemente o motivo antes de solicitar uma alteração.');
+    if (['aprovado_com_ressalvas', 'rejeitado'].includes(decision) && comment.length < 3) {
+      setError(decision === 'aprovado_com_ressalvas'
+        ? 'Descreva brevemente as ressalvas antes de confirmar o aceite.'
+        : 'Explique brevemente o motivo da recusa antes de confirmar.');
       setConfirmation(null);
       return;
     }
@@ -68,7 +71,13 @@ export default function ApprovalsScreen() {
       setError(responseError);
       return;
     }
-    setSuccess(decision === 'aprovado' ? 'Aprovação registrada com sucesso.' : 'Solicitação de alteração registrada com sucesso.');
+    setSuccess(
+      decision === 'aprovado'
+        ? 'Aceite registrado com sucesso.'
+        : decision === 'aprovado_com_ressalvas'
+          ? 'Aceite com ressalvas registrado com sucesso.'
+          : 'Recusa registrada com sucesso.',
+    );
     await load();
   };
 
@@ -99,7 +108,7 @@ export default function ApprovalsScreen() {
             {pending && role === 'client' ? (
               <>
                 <Field
-                  label="Comentário (obrigatório ao solicitar alteração)"
+                  label="Comentário / ressalvas (obrigatório para aceite com ressalvas ou recusa)"
                   multiline
                   onChangeText={(value) => setComments((current) => ({ ...current, [item.id]: value }))}
                   placeholder="Escreva uma observação clara para a equipe"
@@ -108,12 +117,17 @@ export default function ApprovalsScreen() {
                 />
                 {!activeConfirmation ? (
                   <View style={styles.actions}>
-                    <View style={styles.action}><Button icon="checkmark-outline" onPress={() => setConfirmation({ id: item.id, decision: 'aprovado' })} title="Aprovar" /></View>
-                    <View style={styles.action}><Button icon="create-outline" onPress={() => setConfirmation({ id: item.id, decision: 'rejeitado' })} title="Solicitar alteração" variant="secondary" /></View>
+                    <View style={styles.action}><Button icon="checkmark-outline" onPress={() => setConfirmation({ id: item.id, decision: 'aprovado' })} title="Aceitar" /></View>
+                    <View style={styles.action}><Button icon="create-outline" onPress={() => setConfirmation({ id: item.id, decision: 'aprovado_com_ressalvas' })} title="Aceitar com ressalvas" variant="secondary" /></View>
+                    <View style={styles.action}><Button icon="close-outline" onPress={() => setConfirmation({ id: item.id, decision: 'rejeitado' })} title="Recusar" variant="ghost" /></View>
                   </View>
                 ) : (
-                  <Notice tone={activeConfirmation === 'aprovado' ? 'success' : 'warning'}>
-                    {activeConfirmation === 'aprovado' ? 'Confirme para registrar a aprovação definitiva deste item.' : 'Confirme para devolver o item à equipe com seu comentário.'}
+                  <Notice tone={activeConfirmation === 'aprovado' ? 'success' : activeConfirmation === 'rejeitado' ? 'danger' : 'warning'}>
+                    {activeConfirmation === 'aprovado'
+                      ? 'Confirme para registrar o aceite deste item.'
+                      : activeConfirmation === 'aprovado_com_ressalvas'
+                        ? 'Confirme o aceite com as ressalvas descritas no comentário.'
+                        : 'Confirme para recusar este item com o motivo descrito no comentário.'}
                   </Notice>
                 )}
                 {activeConfirmation ? (

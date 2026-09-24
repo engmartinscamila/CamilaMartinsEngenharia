@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 
 import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
+import { DateField } from '@/components/date-field';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
 import { formatCurrency, formatDate, isValidIsoDate, parseBrazilianCurrency } from '@/lib/format';
 import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
@@ -20,11 +21,13 @@ import {
   createFinancialAccount,
   createFiscalDocument,
   createTimesheet,
+  getAdminFinancialPreferences,
   listFinancialAccounts,
   listFiscalDocuments,
   listProjectFinancialSummaries,
   listTimesheets,
   importOfxTransactions,
+  updateAdminFinancialPreferences,
 } from '@/services/operations-service';
 import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 import type {
@@ -71,6 +74,9 @@ export default function AdminFinancialScreen() {
   const [openingBalance, setOpeningBalance] = useState('0');
   const [timeHours, setTimeHours] = useState('');
   const [hourlyCost, setHourlyCost] = useState('');
+  const [defaultHourlyRate, setDefaultHourlyRate] = useState('');
+  const [hourlyRateEffectiveFrom, setHourlyRateEffectiveFrom] = useState('');
+  const [hourlyRateReference, setHourlyRateReference] = useState('');
   const [timeDescription, setTimeDescription] = useState('');
   const [fiscalDescription, setFiscalDescription] = useState('');
   const [fiscalAmount, setFiscalAmount] = useState('');
@@ -87,9 +93,9 @@ export default function AdminFinancialScreen() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [contractResult, projectResult, entryResult, archiveResult, summaryResult, accountResult, timeResult, fiscalResult] = await Promise.all([
+    const [contractResult, projectResult, entryResult, archiveResult, summaryResult, accountResult, timeResult, fiscalResult, preferenceResult] = await Promise.all([
       listAdminContracts(), listAdminProjects(), listAdminFinancialEntries(), listFinancialArchive(),
-      listProjectFinancialSummaries(), listFinancialAccounts(), listTimesheets(), listFiscalDocuments(),
+      listProjectFinancialSummaries(), listFinancialAccounts(), listTimesheets(), listFiscalDocuments(), getAdminFinancialPreferences(),
     ]);
     setContracts(contractResult.data);
     setProjects(projectResult.data);
@@ -99,10 +105,15 @@ export default function AdminFinancialScreen() {
     setAccounts(accountResult.data);
     setTimesheets(timeResult.data);
     setFiscalDocuments(fiscalResult.data);
+    const configuredRate = preferenceResult.data.defaultHourlyRate;
+    setDefaultHourlyRate(configuredRate === null ? '' : String(configuredRate).replace('.', ','));
+    setHourlyRateEffectiveFrom(preferenceResult.data.effectiveFrom ?? '');
+    setHourlyRateReference(preferenceResult.data.referenceNote ?? '');
+    setHourlyCost((current) => current || (configuredRate === null ? '' : String(configuredRate).replace('.', ',')));
     setSelectedProjectId((current) => current ?? projectResult.data[0]?.id ?? null);
     setSelectedContractId((current) => current ?? contractResult.data[0]?.id ?? null);
     setAccountId((current) => current ?? accountResult.data[0]?.id ?? null);
-    setError(contractResult.error ?? projectResult.error ?? entryResult.error ?? archiveResult.error ?? summaryResult.error ?? accountResult.error ?? timeResult.error ?? fiscalResult.error);
+    setError(contractResult.error ?? projectResult.error ?? entryResult.error ?? archiveResult.error ?? summaryResult.error ?? accountResult.error ?? timeResult.error ?? fiscalResult.error ?? preferenceResult.error);
     setLoading(false);
   }, []);
 
@@ -138,6 +149,25 @@ export default function AdminFinancialScreen() {
     if (accountName.trim().length < 2 || balance === null) { setError('Informe o nome e o saldo inicial da conta.'); return; }
     const actionError = await createFinancialAccount(accountName, accountType, balance);
     if (actionError) setError(actionError); else { setAccountName(''); setOpeningBalance('0'); setSuccess('Conta financeira cadastrada.'); await load(); }
+  };
+
+  const saveDefaultHourlyRate = async () => {
+    const parsed = defaultHourlyRate.trim() ? parseBrazilianCurrency(defaultHourlyRate) : null;
+    if (defaultHourlyRate.trim() && (parsed === null || parsed < 0)) { setError('Informe uma taxa horária padrão válida ou deixe o campo em branco.'); return; }
+    if (hourlyRateEffectiveFrom && !isValidIsoDate(hourlyRateEffectiveFrom)) { setError('Informe uma data de vigência válida.'); return; }
+    setSaving(true); setError(null); setSuccess(null);
+    const actionError = await updateAdminFinancialPreferences({
+      defaultHourlyRate: parsed,
+      effectiveFrom: hourlyRateEffectiveFrom || null,
+      referenceNote: hourlyRateReference,
+    });
+    setSaving(false);
+    if (actionError) setError(actionError);
+    else {
+      if (parsed !== null) setHourlyCost((current) => current || String(parsed).replace('.', ','));
+      setSuccess('Referência de custo por hora salva. Novos apontamentos passam a sugerir esse valor, sem impedir ajuste manual.');
+      await load();
+    }
   };
 
   const saveTime = async () => {
@@ -215,7 +245,7 @@ export default function AdminFinancialScreen() {
         <Field label="Descrição" onChangeText={setDescription} placeholder="Ex.: Parcela 2 do contrato" value={description} />
         <Text style={styles.label}>Categoria / centro de custo</Text><View style={styles.selector}>{FINANCIAL_CATEGORIES.map((item) => <Pressable key={item} onPress={() => setCategory(item)} style={[styles.choice, category === item && styles.choiceSelected]}><Text style={[styles.choiceText, category === item && styles.choiceTextSelected]}>{item}</Text></Pressable>)}</View>
         <Field keyboardType="decimal-pad" label="Valor (R$)" onChangeText={setAmount} placeholder="Ex.: 2.500,00" value={amount} />
-        <View style={styles.rowFields}><Field label="Data (AAAA-MM-DD)" onChangeText={setDate} value={date} /><Field label="Vencimento (AAAA-MM-DD)" onChangeText={setDueDate} value={dueDate} /></View>
+        <View style={styles.rowFields}><DateField label="Data" onChange={setDate} value={date} /><DateField label="Vencimento" optional onChange={setDueDate} value={dueDate} /></View>
         {accounts.length ? <><Text style={styles.label}>Conta</Text><View style={styles.selector}>{accounts.map((account) => <Pressable key={account.id} onPress={() => setAccountId(account.id)} style={[styles.choice, accountId === account.id && styles.choiceSelected]}><Text style={[styles.choiceText, accountId === account.id && styles.choiceTextSelected]}>{account.name} • {account.accountType}</Text></Pressable>)}</View></> : <Notice tone="warning">Cadastre uma conta para conciliar os lançamentos.</Notice>}
         <Field label="Observações (opcional)" multiline onChangeText={setNotes} value={notes} />
         <Button loading={saving} onPress={() => void saveEntry()} title="Registrar no extrato administrativo" />
@@ -233,8 +263,14 @@ export default function AdminFinancialScreen() {
         </Card>
         <Card style={styles.column}>
           <Text style={styles.sectionTitle}>Horas por projeto</Text>
+          <Notice tone="info">A taxa padrão é uma referência administrativa configurada por você. O sistema não calcula nem inventa valor profissional.</Notice>
+          <Field keyboardType="decimal-pad" label="Taxa horária padrão (R$)" placeholder="Ex.: 180,00" onChangeText={setDefaultHourlyRate} value={defaultHourlyRate} />
+          <DateField label="Vigência da referência" optional onChange={setHourlyRateEffectiveFrom} value={hourlyRateEffectiveFrom} />
+          <Field label="Referência / observação" multiline placeholder="Ex.: tabela interna 2026 ou critério adotado pelo escritório" onChangeText={setHourlyRateReference} value={hourlyRateReference} />
+          <Button loading={saving} onPress={() => void saveDefaultHourlyRate()} title="Salvar taxa padrão" variant="secondary" />
           <Field keyboardType="decimal-pad" label="Horas trabalhadas" onChangeText={setTimeHours} value={timeHours} />
-          <Field keyboardType="decimal-pad" label="Custo por hora (R$)" placeholder="Configure sua taxa padrão" onChangeText={setHourlyCost} value={hourlyCost} /><Text style={styles.meta}>A taxa é editável e deve seguir a referência profissional adotada no escritório.</Text>
+          <Field keyboardType="decimal-pad" label="Custo por hora deste lançamento (R$)" placeholder="Sugestão carregada da taxa padrão" onChangeText={setHourlyCost} value={hourlyCost} />
+          <Text style={styles.meta}>O valor deste lançamento continua editável sem alterar a referência padrão.</Text>
           <Field label="Atividade" onChangeText={setTimeDescription} value={timeDescription} />
           <Button onPress={() => void saveTime()} title="Registrar horas" variant="secondary" />
           <Text style={styles.meta}>{timesheets.length} apontamento(s) • {timesheets.reduce((sum, item) => sum + item.hours, 0).toLocaleString('pt-BR')} h registradas</Text>
