@@ -16,7 +16,7 @@ const directSections = modernSections.filter(section => !menuSections.includes(s
 assert.ok(menuSections.includes('service-level-governance'), 'Governança Serviço × Nível precisa continuar visível no menu');
 assert.deepEqual(
   directSections.sort(),
-  ['construction-schedule-baselines','construction-schedule-budget','construction-schedule-measurements','construction-schedule-new','construction-schedule-revision'].sort(),
+  ['construction-schedule-baselines','construction-schedule-budget','construction-schedule-measurements','construction-schedule-new','construction-schedule-revision','construction-schedule-test'].sort(),
   'Somente os subfluxos internos do cronograma podem ficar fora do menu principal',
 );
 const config = readFileSync('.github/workflows/pages.yml', 'utf8');
