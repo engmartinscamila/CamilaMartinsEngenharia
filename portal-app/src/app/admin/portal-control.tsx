@@ -24,6 +24,8 @@ export default function AdminPortalControlScreen() {
   const [projectId, setProjectId] = useState<string | null>(null);
   const [settings, setSettings] = useState<ProjectPortalSettings | null>(null);
   const [counts, setCounts] = useState<Record<string, number | null>>({});
+  const [previewData, setPreviewData] = useState<Record<string, { primary: string; secondary?: string }[]>>({});
+  const [showClientPreview, setShowClientPreview] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -35,7 +37,7 @@ export default function AdminPortalControlScreen() {
   const loadProject = useCallback(async () => {
     const project = projects.find((item) => item.id === projectId);
     if (!project) return;
-    setLoading(true); setSettings(null); setCounts({});
+    setLoading(true); setSettings(null); setCounts({}); setPreviewData({});
     const [config, documents, photos, library, agenda, schedule, approvals, requests, tasks, diary] = await Promise.all([
       getProjectPortalSettings(project.id), listDocuments(project.id), listPhotos(project.id),
       listLibraryItems(project.id, project.clientId), listAgenda(project.id, project.clientId),
@@ -48,6 +50,19 @@ export default function AdminPortalControlScreen() {
       showAgenda: agenda.error ? null : agenda.data.length, showSchedule: schedule.error ? null : schedule.data.length, showApprovals: approvals.error ? null : approvals.data.length,
       showRequests: requests.error ? null : requests.data.length, showTasks: tasks.error ? null : tasks.data.filter((item) => item.clientVisible).length,
       showWorkDiary: diary.error ? null : diary.data.filter((item) => item.clientVisible).length,
+    });
+    const clientTasks = tasks.data.filter((item) => item.clientVisible);
+    const clientDiary = diary.data.filter((item) => item.clientVisible);
+    setPreviewData({
+      showDocuments: documents.data.slice(0, 6).map((item: any) => ({ primary: item.title || 'Documento', secondary: item.version ? `Versão ${item.version}` : undefined })),
+      showPhotos: photos.data.slice(0, 6).map((item: any) => ({ primary: item.caption || item.title || 'Registro fotográfico', secondary: item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR') : undefined })),
+      showLibrary: library.data.slice(0, 6).map((item: any) => ({ primary: item.title || item.name || 'Material da biblioteca', secondary: item.category || undefined })),
+      showAgenda: agenda.data.slice(0, 6).map((item: any) => ({ primary: item.title || 'Compromisso', secondary: item.startAt ? new Date(item.startAt).toLocaleString('pt-BR') : undefined })),
+      showSchedule: schedule.data.slice(0, 8).map((item: any) => ({ primary: item.title || 'Etapa', secondary: item.status || undefined })),
+      showApprovals: approvals.data.slice(0, 8).map((item: any) => ({ primary: item.title || 'Aprovação', secondary: item.status || undefined })),
+      showRequests: requests.data.slice(0, 8).map((item: any) => ({ primary: item.title || 'Solicitação', secondary: item.status || undefined })),
+      showTasks: clientTasks.slice(0, 8).map((item: any) => ({ primary: item.title || 'Tarefa', secondary: item.status || undefined })),
+      showWorkDiary: clientDiary.slice(0, 6).map((item: any) => ({ primary: item.entryDate || 'Diário de obra', secondary: item.activities ? String(item.activities).slice(0, 100) : undefined })),
     });
     setError(config.error ?? documents.error ?? photos.error ?? library.error ?? agenda.error ?? schedule.error ?? approvals.error ?? requests.error ?? tasks.error ?? diary.error);
     setLoading(false);
@@ -78,9 +93,37 @@ export default function AdminPortalControlScreen() {
           <Button loading={loading} onPress={() => void save()} title="Salvar visibilidade" />
         </Card>
         <Card>
-          <View style={styles.header}><View><Text style={styles.sectionTitle}>Prévia da tela do cliente</Text><Text style={styles.meta}>{project.contractNumber} • {project.name}</Text></View><StatusPill label="prévia do cliente" tone="success" /></View>
-          <View style={styles.preview}>{labels.filter((item) => settings[item.key]).map((item) => <View key={item.key} style={styles.previewCard}><Text style={styles.title}>{item.label}</Text><Text style={styles.previewValue}>{counts[item.key] ?? 'Indisponível'}</Text><Text style={styles.meta}>visível ao cliente • {counts[item.key] ?? "Indisponível"} registro(s)</Text></View>)}</View>
-          {labels.every((item) => !settings[item.key]) ? <Notice tone="warning">Nenhum módulo está liberado para este projeto.</Notice> : null}
+          <View style={styles.header}>
+            <View style={{ flex: 1 }}><Text style={styles.sectionTitle}>Prévia real do portal</Text><Text style={styles.meta}>{project.contractNumber} • {project.name}</Text></View>
+            <StatusPill label="admin • somente leitura" tone="success" />
+          </View>
+          <Notice tone="info">A prévia usa o projeto selecionado, as permissões salvas e os mesmos dados que podem ser consultados pelo portal. Nenhuma sessão de cliente é criada e nenhuma ação do cliente pode ser executada daqui.</Notice>
+          <Button onPress={() => setShowClientPreview((current) => !current)} title={showClientPreview ? 'Fechar visualização do cliente' : 'Visualizar como este cliente'} variant="secondary" />
+          {showClientPreview ? (
+            <View style={styles.clientShell}>
+              <View style={styles.clientHeader}>
+                <Text style={styles.clientBrand}>Camila Martins</Text>
+                <Text style={styles.meta}>Engenharia Civil • Portal do Cliente</Text>
+                <Text style={styles.title}>{project.name}</Text>
+              </View>
+              {labels.filter((item) => settings[item.key]).map((item) => {
+                const rows = previewData[item.key] ?? [];
+                return (
+                  <View key={item.key} style={styles.clientModule}>
+                    <View style={styles.header}><Text style={styles.title}>{item.label}</Text><Text style={styles.meta}>{counts[item.key] ?? '—'} registro(s)</Text></View>
+                    {rows.length ? rows.map((row, index) => (
+                      <View key={`${item.key}-${index}`} style={styles.previewRow}>
+                        <Text style={styles.previewPrimary}>{row.primary}</Text>
+                        {row.secondary ? <Text style={styles.meta}>{row.secondary}</Text> : null}
+                      </View>
+                    )) : <Text style={styles.meta}>Nenhum conteúdo visível neste módulo.</Text>}
+                    {(counts[item.key] ?? 0) > rows.length ? <Text style={styles.meta}>+ {(counts[item.key] ?? 0) - rows.length} item(ns) adicionais</Text> : null}
+                  </View>
+                );
+              })}
+              {labels.every((item) => !settings[item.key]) ? <Notice tone="warning">Nenhum módulo está liberado para este projeto.</Notice> : null}
+            </View>
+          ) : null}
         </Card>
       </>}
       <Button loading={loading} onPress={() => void loadProject()} title="Atualizar resumo" variant="secondary" />
@@ -101,7 +144,10 @@ const styleDefinitions = (colors: ThemeColors) => ({
   moduleEnabled: { borderColor: colors.gold500, backgroundColor: colors.warningSoft },
   mark: { color: colors.gold600, fontSize: 18, fontFamily: typography.family },
   header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing.sm },
-  preview: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  previewCard: { flexGrow: 1, flexBasis: 150, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, padding: spacing.sm },
-  previewValue: { color: colors.gold600, fontSize: 24, fontWeight: '700', fontFamily: typography.family },
+  clientShell: { gap: spacing.sm, borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg, padding: spacing.md, backgroundColor: colors.surfaceRaised },
+  clientHeader: { gap: spacing.xs, borderBottomWidth: 1, borderBottomColor: colors.line, paddingBottom: spacing.sm },
+  clientBrand: { color: colors.gold600, fontSize: 24, fontWeight: '700' as const, fontFamily: typography.family },
+  clientModule: { gap: spacing.xs, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, padding: spacing.sm, backgroundColor: colors.surface },
+  previewRow: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.xs },
+  previewPrimary: { color: colors.ink, fontSize: 12, fontWeight: '600' as const, fontFamily: typography.family },
 });
