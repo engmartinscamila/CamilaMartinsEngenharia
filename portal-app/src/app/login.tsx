@@ -5,7 +5,7 @@ import { Platform, Pressable, Text, View } from 'react-native';
 import { AuthShell } from '@/components/auth-shell';
 import { TurnstileCaptcha } from '@/components/turnstile-captcha';
 import { Button, Field, Notice } from '@/components/ui';
-import { env } from '@/lib/env';
+import { requestNativeCaptchaToken } from '@/lib/captcha';\nimport { env } from '@/lib/env';
 import { safeAdminReturnPath } from '@/lib/auth-return-path';
 import { useAuth } from '@/providers/auth-provider';
 import { useThemeStyles } from '@/providers/theme-provider';
@@ -41,17 +41,24 @@ export default function LoginScreen() {
       setError('A verificação de segurança do portal não está configurada. O login web permanece bloqueado por segurança.');
       return;
     }
-    if (captchaRequired && !captchaToken) {
+    let token = captchaToken;
+    if (captchaRequired && Platform.OS !== 'web') {
+      setLoading(true);
+      const nativeCaptcha = await requestNativeCaptchaToken();
+      if (nativeCaptcha.error || !nativeCaptcha.token) {
+        setLoading(false);
+        setError(nativeCaptcha.error ?? 'Conclua a verificação de segurança antes de entrar.');
+        return;
+      }
+      token = nativeCaptcha.token;
+    }
+    if (captchaRequired && !token) {
       setError('Conclua a verificação de segurança antes de entrar.');
       return;
     }
 
     setLoading(true);
-    const signInError = await signIn(
-      email,
-      password,
-      Platform.OS === 'web' ? captchaToken ?? undefined : undefined,
-    );
+    const signInError = await signIn(email, password, token ?? undefined);
     setError(signInError);
     setLoading(false);
 
@@ -112,13 +119,13 @@ export default function LoginScreen() {
       ) : null}
       {captchaConfigurationMissing ? (
         <Notice tone="danger">
-          Proteção anti-robô indisponível. O login web foi bloqueado até que o CAPTCHA seja configurado.
+          Proteção anti-robô indisponível. O login foi bloqueado até que o CAPTCHA seja configurado.
         </Notice>
       ) : null}
       {captchaError ? <Notice tone="danger">{captchaError}</Notice> : null}
       {error ? <Notice tone="danger">{error}</Notice> : null}
       <Button
-        disabled={!configured || captchaConfigurationMissing || (captchaRequired && !captchaToken)}
+        disabled={!configured || captchaConfigurationMissing || (Platform.OS === 'web' && captchaRequired && !captchaToken)}
         loading={loading}
         onPress={submit}
         title="Entrar"
