@@ -60,11 +60,11 @@ function buildPureCommercialModule(){
 
 function buildCommercialFinalModule(){
   const source=read('portal-app/supabase/functions/generate-commercial-document-final/index.ts');
-  const start=source.indexOf('const text=');
+  const start=source.search(/const\\s+text\\s*=/);
   const end=source.indexOf('Deno.serve');
   if(start<0||end<0)throw new Error('Não foi possível extrair o pós-processamento comercial final.');
   const target=path.join(TMP,'commercial-final.ts');
-  fs.writeFileSync(target,`import JSZip from 'jszip';\n${source.slice(start,end)}\nexport { replaceContractAddress };\n`);
+  fs.writeFileSync(target,`import JSZip from 'jszip';\n${source.slice(start,end)}\nexport { enhanceContractDocument, enhanceQuoteDocument };\n`);
   return target;
 }
 
@@ -134,8 +134,25 @@ try{
   await validateDocx('01-orcamento-comercial',quoteBytes,['PROPOSTA COMERCIAL — ORC-2026-09-QA01','Cliente Arquivo QA','Rua da Obra QA, 999','R$ 25.000,00']);
 
   const coreContractBytes=await Packer.toBuffer(commercial.contractDocument(commercialRecord,profile,'CLÁUSULA 1 – OBJETO\nO objeto deste contrato é a prestação dos serviços descritos no Anexo I.\nCLÁUSULA 2 – PRAZOS\nOs prazos seguem o cronograma aprovado.',generatedAt));
-  const finalContractBytes=await commercialFinal.replaceContractAddress(new Uint8Array(coreContractBytes),commercialRecord.address,commercialRecord.property_address);
-  await validateDocx('02-contrato-comercial-final',finalContractBytes,['CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE ENGENHARIA — CON-2026-09-QA01','Cliente Arquivo QA','com endereço do imóvel/obra em Rua da Obra QA, 999','CLÁUSULA 1 – OBJETO'],['com endereço em Rua Particular QA, 123']);
+  const finalContractBytes=await commercialFinal.enhanceContractDocument(
+    new Uint8Array(coreContractBytes),
+    commercialRecord.property_address,
+    commercialRecord.services,
+    commercialRecord.custom_service,
+    commercialRecord.experience_level,
+  );
+  await validateDocx(
+    '02-contrato-comercial-final',
+    finalContractBytes,
+    [
+      'CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE ENGENHARIA — CON-2026-09-QA01',
+      'Cliente Arquivo QA',
+      'Rua Particular QA, 123',
+      'Local do serviço / endereço do imóvel ou obra: Rua da Obra QA, 999.',
+      'ESCOPO TÉCNICO CONTRATADO',
+      'CLÁUSULA 1 – OBJETO',
+    ],
+  );
 
   const coreKinds:[string,string,string][]=[
     ['anexo_i','03-anexo-i','ANEXO I'],
