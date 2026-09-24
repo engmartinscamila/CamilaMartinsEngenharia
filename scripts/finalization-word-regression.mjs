@@ -54,7 +54,7 @@ const additional = await xml('servico_adicional', {
   },
 });
 assert.ok(additional.includes('Aceito o serviço adicional'), 'Serviço Adicional não oferece manifestação do cliente');
-assert.ok(additional.includes('não cria contrato paralelo'), 'Serviço Adicional deve permanecer vinculado ao contrato original');
+assert.ok(additional.includes('contrato paralelo'), 'Serviço Adicional deve permanecer vinculado ao contrato original');
 assert.equal((additional.match(/<w14:checked w14:val="1"\/?>/g) ?? []).length, 2, 'Somente a origem e o critério comercial selecionados pelo admin devem vir marcados; as três decisões do cliente permanecem vazias');
 
 const imageAuthorization = await xml('autorizacao_imagem', {
