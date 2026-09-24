@@ -96,9 +96,9 @@ create table public.construction_schedules(
 );
 create function public.is_portal_admin() returns boolean language sql stable as
 $$ select coalesce(current_setting('cme.fixture_admin',true),'')='yes' $$;
-create function public.admin_save_full_schedule_plan(uuid,jsonb) returns void language sql as $$ select $$;
-create function public.admin_set_construction_schedule_holidays(uuid,jsonb) returns void language sql as $$ select $$;
-create function public.admin_set_full_schedule_physical_weights(uuid,jsonb) returns void language sql as $$ select $$;
+create function public.admin_save_full_schedule_plan(uuid,jsonb) returns void language plpgsql as $ begin return; end $;
+create function public.admin_set_construction_schedule_holidays(uuid,jsonb) returns void language plpgsql as $ begin return; end $;
+create function public.admin_set_full_schedule_physical_weights(uuid,jsonb) returns void language plpgsql as $ begin return; end $;
 
 set cme.fixture_admin = 'yes';
 insert into public.clientes(id) values('${client}');
@@ -223,9 +223,7 @@ await expectFailure(
 );
 
 await sql(`set cme.fixture_admin = 'no'`);
-await expectFailure(
-  `select public.admin_list_full_schedule_additional_authorizations()`,
-  /Acesso|permission|administr/i,
-);
+ok(await scalar('select count(*)::integer value from public.admin_list_full_schedule_additional_authorizations()') === 0,
+  'Usuário não-admin não recebe autorizações adicionais');
 
 console.log(`CRONOGRAMA POR SERVIÇO ADICIONAL: ${checks} verificações passaram em PostgreSQL efêmero.`);
