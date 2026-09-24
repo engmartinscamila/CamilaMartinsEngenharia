@@ -56,6 +56,13 @@ jobs:
           node --check js/cliente-area.js
           node --check scripts/mobile-admin-smoke.mjs
 
+      - name: Validar CAPTCHA no login clássico publicado
+        env:
+          TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+        run: |
+          bash scripts/prepare-site-public.sh
+          node scripts/site-public-audit.mjs
+
       - name: Instalar Chromium de teste
         run: |
           npm install --no-save playwright@1.55.0
