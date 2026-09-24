@@ -105,7 +105,7 @@ export async function getCommercialContractScopeGuard(contractId: string): Promi
   if (result.error) return { data: { managed: false, serviceCodes: [] }, error: 'Não foi possível conferir a origem comercial do escopo.' };
   if (!result.data) return { data: { managed: false, serviceCodes: [] }, error: null };
 
-  const services = Array.isArray(result.data.services) ? result.data.services as Array<Record<string, unknown>> : [];
+  const services = Array.isArray(result.data.services) ? result.data.services as Record<string, unknown>[] : [];
   const serviceCodes = services
     .filter(item => item?.included !== false)
     .map(item => String(item?.code ?? '').trim())
