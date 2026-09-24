@@ -78,6 +78,12 @@ has(scheduleTest, 'analyzeConstructionCriticalPath', 'Sandbox não testa caminho
 has(scheduleTest, 'Curva S TESTE', 'Sandbox não testa Curva S.');
 has(scheduleTest, 'Gerar Excel TESTE', 'Sandbox não oferece Excel isolado.');
 
+const additionalScheduleGuardFix = read('supabase/migrations/20260924160000_fix_additional_service_schedule_guard.sql');
+has(additionalScheduleGuardFix, "authorization_type'='servico_adicional_aceito", 'Guard do cronograma não reconhece autorização por Serviço Adicional aceito.');
+has(additionalScheduleGuardFix, 'assert_full_schedule_additional_service', 'Guard não revalida o Serviço Adicional aceito.');
+has(additionalScheduleGuardFix, 'assert_full_schedule_commercial_link', 'Guard perdeu a validação ORC + CON do fluxo original.');
+has(additionalScheduleGuardFix, 'quote_record_id is not null', 'Guard não protege os IDs comerciais nulos no fluxo posterior.');
+
 const additionalScheduleFix = read('supabase/migrations/20260924155500_fix_additional_service_schedule_save.sql');
 has(additionalScheduleFix, "authorization_type'='servico_adicional_aceito", 'Cronograma posterior não reconhece autorização por Serviço Adicional aceito.');
 has(additionalScheduleFix, 'assert_full_schedule_additional_service', 'Cronograma posterior não revalida o Serviço Adicional aceito.');
