@@ -53,6 +53,7 @@ function projectQuery(table) {
 }
 const projectService = loadService('../src/services/construction-schedule-service.ts', {
   '@/lib/download-generated-file': mockDownload,
+  '@/lib/errors': { toUserMessage: (_error, fallback) => fallback },
   '@/lib/supabase': { supabase: { from: projectQuery } },
 });
 const projects = await projectService.listConstructionScheduleProjects();
