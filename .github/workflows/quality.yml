@@ -45,6 +45,7 @@ jobs:
           node scripts/commercial-custom-scope-regression.mjs
           node scripts/governance-review-preview-regression.mjs
           node scripts/portal-observations-regression.mjs
+          node scripts/finalization-regression.mjs
 
       - name: Validar JavaScript novo
         run: |
