@@ -39,6 +39,13 @@ const nativeAdditional=fs.readFileSync('supabase/functions/generate-contract-doc
 eq(nativeAdditional.includes('additional_service_name')&&nativeAdditional.includes('new_contract_total')&&nativeAdditional.includes('payment_terms'),true,'additional-service Word renders structured commercial fields');
 const scheduleScreen=fs.readFileSync('src/app/admin/construction-schedule.tsx','utf8');
 eq(scheduleScreen.includes("router.push('/admin/construction-schedule-new')"),true,'schedule consultation points new contracted schedules to the commercial creation flow');
+const scheduleNew=fs.readFileSync('src/app/admin/construction-schedule-new.tsx','utf8');
+eq(scheduleNew.includes('previewScheduleTemplateFromAdditionalService')&&scheduleNew.includes('saveVerifiedScheduleFromAdditionalService'),true,'full schedule supports an accepted additional-service authorization without replacing the base contract');
+eq(scheduleNew.includes('Contratação posterior por Serviço Adicional aceito'),true,'schedule UI exposes the explicit post-contract authorization path');
+const additionalScheduleMigration=fs.readFileSync('supabase/migrations/20260924012000_schedule_from_accepted_additional_service.sql','utf8');
+eq(additionalScheduleMigration.includes("document_kind='servico_adicional'")&&additionalScheduleMigration.includes("v_code<>'s'"),true,'additional schedule authorization is restricted to the schedule service');
+eq(additionalScheduleMigration.includes("decision in ('accepted','accepted_with_notes')")&&additionalScheduleMigration.includes('snapshot_frozen_at is null'),true,'additional schedule authorization requires the accepted frozen document version');
+eq(additionalScheduleMigration.includes('source_scope_snapshot')&&additionalScheduleMigration.includes('quote_record_id,contract_record_id'),true,'schedule stores the additional-service authorization snapshot while preserving nullable legacy commercial ids');
 
 const deletionSource=fs.readFileSync('supabase/functions/admin-delete-client/index.ts','utf8');
 const purgeCall=deletionSource.indexOf("caller.rpc('admin_purge_client_database'");
