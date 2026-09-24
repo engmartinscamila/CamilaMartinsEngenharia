@@ -149,7 +149,7 @@ async function applyInteractiveCheckboxes(bytes:Uint8Array){
   xml=xml.replace('<w:document ', '<w:document xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" ');
  }
  let controlId=700000;
- const pattern=/<w:r\b[^>]*>[\s\S]*?<w:t(?:\s[^>]*)?>\[\[CME-(CHECKED|UNCHECKED)\]\]([^<]*)<\/w:t>[\s\S]*?<\/w:r>/g;
+ const pattern=/<w:r\b[^>]*>(?:(?!<\/w:r>)[\s\S])*?<w:t(?:\s[^>]*)?>\[\[CME-(CHECKED|UNCHECKED)\]\]([^<]*)<\/w:t>(?:(?!<\/w:r>)[\s\S])*?<\/w:r>/g;
  xml=xml.replace(pattern,(_match,state,label)=>{
   controlId+=1;
   const checked=state==='CHECKED';
