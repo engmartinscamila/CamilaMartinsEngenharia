@@ -37,6 +37,8 @@ eq(documentPreparation.includes('listCommercialServiceCatalog')&&documentPrepara
 eq(documentPreparation.includes('additional_service_code')&&documentPreparation.includes('additional_service_level')&&documentPreparation.includes('payment_method'),true,'additional service captures activity level and payment as structured fields');
 const nativeAdditional=fs.readFileSync('supabase/functions/generate-contract-document-final/native-options-docx.ts','utf8');
 eq(nativeAdditional.includes('additional_service_name')&&nativeAdditional.includes('new_contract_total')&&nativeAdditional.includes('payment_terms'),true,'additional-service Word renders structured commercial fields');
+const finalGenerator=fs.readFileSync('supabase/functions/generate-contract-document-final/index.ts','utf8');
+eq(finalGenerator.includes("if(!text(o.additional_service_code))")&&finalGenerator.includes("if(!text(o.payment_method))")&&finalGenerator.includes("if(!text(o.additional_value))"),true,'additional-service backend requires structured activity value and payment before final Word');
 const scheduleScreen=fs.readFileSync('src/app/admin/construction-schedule.tsx','utf8');
 eq(scheduleScreen.includes("router.push('/admin/construction-schedule-new')"),true,'schedule consultation points new contracted schedules to the commercial creation flow');
 const scheduleNew=fs.readFileSync('src/app/admin/construction-schedule-new.tsx','utf8');
