@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
 import { Button, Card, Notice, Screen, StateView, StatusPill } from '@/components/ui';
@@ -10,9 +10,12 @@ import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
 import { listAdminProjects } from '@/services/admin-service';
 import {
   generateContractDocument,
+  generateFormalNotice,
   listAdminDocumentAttention,
   listProjectContractDocuments,
+  prepareFormalNotice,
   sendContractDocument,
+  sendFormalNotice,
   type ContractDocumentSummary,
   type DocumentAttentionItem,
 } from '@/services/document-workflow-service';
@@ -84,6 +87,36 @@ export default function AdminContractDocumentsScreen() {
     else setSuccess('Documento disponibilizado ao cliente; governança e eventual aceite permaneceram vinculados à versão correta.');
     setSavingKey(null);
     await Promise.all([loadProjectData(), loadBase()]);
+  };
+
+  const actOnNativeFormalNotice = async (
+    item: DocumentAttentionItem,
+    mode: 'prepare' | 'download' | 'archive' | 'send',
+  ) => {
+    if (Platform.OS === 'web') return;
+    setSavingKey(`notice-${mode}-${item.approvalId}`);
+    setError(null);
+    setSuccess(null);
+    let actionError: string | null = null;
+
+    if (mode === 'prepare') {
+      const result = await prepareFormalNotice(item.approvalId);
+      actionError = result.error;
+      if (!actionError) setSuccess('Notificação Formal preparada. Revise o Word antes de disponibilizar ao cliente.');
+    } else if (item.formalNoticeDocumentId && mode === 'download') {
+      actionError = await generateFormalNotice(item.formalNoticeDocumentId, false);
+      if (!actionError) setSuccess('Notificação Formal gerada para download.');
+    } else if (item.formalNoticeDocumentId && mode === 'archive') {
+      actionError = await generateFormalNotice(item.formalNoticeDocumentId, true);
+      if (!actionError) setSuccess('Notificação Formal gerada, baixada e arquivada.');
+    } else if (item.formalNoticeDocumentId && mode === 'send') {
+      actionError = await sendFormalNotice(item.formalNoticeDocumentId);
+      if (!actionError) setSuccess('Notificação Formal disponibilizada ao cliente.');
+    }
+
+    setSavingKey(null);
+    if (actionError) setError(actionError);
+    else await Promise.all([loadBase(), loadProjectData()]);
   };
 
   return (
@@ -161,6 +194,46 @@ export default function AdminContractDocumentsScreen() {
               <StatusPill label={item.attentionLevel === 'overdue' ? 'Prazo vencido' : 'Prazo próximo'} tone={item.attentionLevel === 'overdue' ? 'danger' : 'warning'} />
             </View>
             <Text style={styles.help}>A Notificação Formal só é enviada por uma ação explícita de envio imediato ou por um agendamento confirmado; preparar o documento não o envia.</Text>
+            {Platform.OS !== 'web' ? (() => {
+              const noticeDocument = item.formalNoticeDocumentId
+                ? documents.find((document) => document.id === item.formalNoticeDocumentId)
+                : null;
+              if (!item.formalNoticeDocumentId) {
+                return (
+                  <Button
+                    loading={savingKey === `notice-prepare-${item.approvalId}`}
+                    onPress={() => void actOnNativeFormalNotice(item, 'prepare')}
+                    title="Preparar Notificação Formal"
+                    variant="secondary"
+                  />
+                );
+              }
+              return (
+                <View style={styles.actions}>
+                  <Button
+                    disabled={item.formalNoticeStatus === 'enviado'}
+                    loading={savingKey === `notice-download-${item.approvalId}`}
+                    onPress={() => void actOnNativeFormalNotice(item, 'download')}
+                    title="Baixar Word"
+                    variant="secondary"
+                  />
+                  <Button
+                    disabled={item.formalNoticeStatus === 'enviado'}
+                    loading={savingKey === `notice-archive-${item.approvalId}`}
+                    onPress={() => void actOnNativeFormalNotice(item, 'archive')}
+                    title="Baixar + arquivar"
+                    variant="ghost"
+                  />
+                  {noticeDocument?.archived && item.formalNoticeStatus === 'gerado' ? (
+                    <Button
+                      loading={savingKey === `notice-send-${item.approvalId}`}
+                      onPress={() => void actOnNativeFormalNotice(item, 'send')}
+                      title="Disponibilizar Notificação"
+                    />
+                  ) : null}
+                </View>
+              );
+            })() : null}
           </View>
         ))}
       </Card>
