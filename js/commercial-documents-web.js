@@ -132,7 +132,7 @@
       <div id="commercialServiceModal" class="doc-service-modal doc-hidden" role="dialog" aria-modal="true" aria-labelledby="commercialServiceModalTitle">
         <div class="doc-service-modal-panel">
           <div class="doc-service-modal-head">
-            <div><span class="doc-section-eyebrow">Escopo do orçamento</span><h3 id="commercialServiceModalTitle">Selecionar atividades</h3><p>Marque todas as atividades deste pacote. O nível Bronze, Prata ou Ouro será escolhido uma única vez depois.</p></div>
+            <div><span class="doc-section-eyebrow">Escopo do orçamento</span><h3 id="commercialServiceModalTitle">Selecionar atividades</h3><p>Marque todas as atividades deste pacote. O nível de prestação será escolhido uma única vez depois, entre as opções ativas do catálogo.</p></div>
             <button type="button" class="doc-service-modal-close" id="cancelCommercialServices" aria-label="Cancelar seleção">×</button>
           </div>
           <div class="doc-field"><label for="commercialServiceSearch">Pesquisar atividade</label><input id="commercialServiceSearch" type="search" placeholder="Ex.: projeto elétrico, vistoria, cronograma..."></div>
@@ -171,7 +171,7 @@
     const help = $('experienceLevelHelp');
     if (label) label.textContent = isPackage ? 'Nível de prestação do pacote' : 'Nível de prestação da atividade';
     if (help) help.textContent = isPackage
-      ? 'Um único nível será aplicado a todas as atividades elegíveis deste pacote. Não é possível misturar Bronze, Prata e Ouro dentro do mesmo pacote.'
+      ? 'Um único nível será aplicado a todas as atividades elegíveis deste pacote. Não é possível misturar níveis de prestação diferentes dentro do mesmo pacote.'
       : 'Escolha o nível desta atividade avulsa.';
     if (!eligible) select.value = '';
     const lockedByQuote = mode() === 'contrato' && selectedQuoteKeys().length > 0;
@@ -633,7 +633,7 @@
         summary.textContent = 'Os orçamentos selecionados possuem níveis de prestação diferentes. Um mesmo pacote contratual deve manter um único nível.';
         summary.className = 'doc-status error';
       }
-      msg('Não é possível combinar Bronze/Prata/Ouro diferentes no mesmo pacote contratual.', 'error');
+      msg('Não é possível combinar níveis de prestação diferentes no mesmo pacote contratual.', 'error');
       return;
     }
     if ($('experienceLevel')) $('experienceLevel').value = levels.length === 1 ? levels[0] : '';
