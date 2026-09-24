@@ -59,7 +59,7 @@ export async function loadClientConstructionSchedulePublication(projectId: strin
     deadline:typeof rawSummary.deadline==='string'?rawSummary.deadline:null,
     revisionNumber:Number(rawSummary.revision_number??1),
   }:null;
-  const curve:Array<ClientConstructionCurvePoint>=Array.isArray(snapshot.curve)?snapshot.curve.map((item:Record<string,unknown>)=>({
+  const curve:ClientConstructionCurvePoint[]=Array.isArray(snapshot.curve)?snapshot.curve.map((item:Record<string,unknown>)=>({
     date:String(item.date??''),
     plannedPercent:Number(item.planned_percent??0),
     actualPercent:item.actual_percent===null||item.actual_percent===undefined?null:Number(item.actual_percent),
