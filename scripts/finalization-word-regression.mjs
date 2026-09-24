@@ -60,8 +60,8 @@ const imageAuthorization = await xml('autorizacao_imagem', {
   ...base,
   document_options: {
     materials: ['renders'],
-    channels: ['website'],
-    restrictions: ['no_people'],
+    channels: ['portfolio'],
+    privacy: ['no_people'],
   },
 });
 assert.ok((imageAuthorization.match(/<w14:checkbox>/g) ?? []).length >= 8, 'Autorização de Imagem não recebeu controles Word reais');
