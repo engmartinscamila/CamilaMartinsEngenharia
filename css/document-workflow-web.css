@@ -42,3 +42,36 @@ html.doc-modal-open,body.doc-modal-open{overflow:hidden;overscroll-behavior:none
 /* Campos de serviço adicional */
 .doc-additional-fields{display:grid;gap:12px;margin-top:12px;padding:12px;border:1px solid rgba(184,154,99,.2);border-radius:10px;background:rgba(184,154,99,.045)}
 .doc-additional-fields textarea{min-height:96px}
+
+
+/* Revisão 2026-09-24 — seleção comercial compacta e sem poluição visual */
+html.doc-service-modal-open,body.doc-service-modal-open{overflow:hidden;overscroll-behavior:none}
+.doc-service-selection-shell{display:grid;gap:10px}
+.doc-service-open{width:100%;display:flex;align-items:center;justify-content:space-between;gap:18px;text-align:left;padding:15px 16px;border:1px solid rgba(184,154,99,.44);border-radius:12px;background:rgba(184,154,99,.055);color:var(--text-primary,#fff);cursor:pointer;font:inherit}
+.doc-service-open:hover:not(:disabled),.doc-service-open:focus-visible{border-color:#b89a63;background:rgba(184,154,99,.1);outline:none}
+.doc-service-open:disabled{opacity:.7;cursor:not-allowed}
+.doc-service-open span:first-child{display:grid;gap:4px}.doc-service-open small{color:var(--text-secondary,#aeb8c6);font-size:.73rem;font-weight:400}
+.doc-service-count{white-space:nowrap;color:#b89a63;font-size:.78rem;font-weight:800}
+.doc-service-selected-summary{padding:9px 12px;border-left:2px solid rgba(184,154,99,.5);color:var(--text-secondary,#c4ccd6);font-size:.78rem;line-height:1.5}
+.doc-service-modal{position:fixed;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;padding:clamp(10px,2.5vw,28px);background:rgba(1,7,15,.88);backdrop-filter:blur(5px)}
+.doc-service-modal-panel{width:min(1040px,100%);max-height:calc(100dvh - 28px);display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:14px;padding:20px;background:#0b1726;border:1px solid rgba(184,154,99,.55);border-radius:15px;box-shadow:0 30px 90px rgba(0,0,0,.55);overflow:hidden}
+.doc-service-modal-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}.doc-service-modal-head h3{margin:0 0 5px}.doc-service-modal-head p{margin:0;color:var(--text-secondary,#aeb8c6);font-size:.82rem;line-height:1.45}
+.doc-service-modal-close{flex:0 0 42px;width:42px;height:42px;border:1px solid rgba(184,154,99,.4);border-radius:10px;background:transparent;color:#b89a63;font-size:1.35rem;cursor:pointer}
+.doc-services-modal-grid{overflow:auto;align-content:start;padding:2px 3px 10px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.doc-services-modal-grid .doc-service{min-height:86px;background:rgba(255,255,255,.018)}
+.doc-services-modal-grid .doc-service:has(input:checked){border-color:#b89a63;background:rgba(184,154,99,.1)}
+.doc-service-modal-actions{display:flex;justify-content:flex-end;gap:8px;border-top:1px solid rgba(184,154,99,.18);padding-top:13px}
+.doc-service-level-step{margin-top:13px;padding:13px 14px;border:1px solid rgba(184,154,99,.3);border-radius:11px;background:rgba(184,154,99,.045)}
+.doc-commercial-context{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(220px,.55fr);gap:12px;margin:0 0 14px}
+.doc-context-picker{border:1px solid rgba(184,154,99,.28);border-radius:11px;background:rgba(255,255,255,.018)}
+.doc-context-picker summary{min-height:48px;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 13px;cursor:pointer;list-style:none}
+.doc-context-picker summary::-webkit-details-marker{display:none}.doc-context-picker summary>span:first-child{display:grid;gap:2px}.doc-context-picker summary small{color:var(--text-secondary,#aeb8c6);font-size:.7rem;font-weight:400}
+.doc-context-picker summary>span:last-child{color:#b89a63;font-size:.75rem;text-align:right}
+.doc-context-picker-body{padding:0 13px 13px}.doc-payment-compact{align-self:start}
+.doc-help{color:var(--text-secondary,#aeb8c6);font-size:.72rem;line-height:1.45}
+.doc-readonly-scope{display:grid;gap:8px}.doc-readonly-scope .doc-service{cursor:default}
+.doc-flow-explainer{padding:11px 13px;border-left:3px solid #b89a63;background:rgba(184,154,99,.06);font-size:.78rem;line-height:1.5;color:var(--text-secondary,#c2cad4)}
+@media(max-width:760px){
+ .doc-services-modal-grid{grid-template-columns:1fr}.doc-service-modal-panel{padding:14px;max-height:calc(100dvh - 12px)}.doc-service-modal{padding:6px;align-items:flex-start}
+ .doc-service-modal-actions{display:grid;grid-template-columns:1fr}.doc-commercial-context{grid-template-columns:1fr}.doc-service-open{align-items:flex-start}.doc-service-count{white-space:normal;text-align:right}
+}
