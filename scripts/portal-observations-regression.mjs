@@ -26,6 +26,9 @@ assert.ok(commercial.includes("['pix', 'Pix']")&&commercial.includes("cartao_par
 assert.ok(!contractual.includes('data-scope="'),'Anexo I não pode expor nova seleção manual de escopo.');
 assert.ok(contractual.includes('Somente leitura')||html.includes('Somente leitura'),'Escopo derivado precisa ser explicado como somente leitura.');
 assert.ok(contractual.includes("document_acceptances")&&contractual.includes('Aceito pelo cliente'),'Admin precisa refletir manifestação do cliente.');
+assert.ok(contractual.includes('id="newApprovalRequest"')&&contractual.includes("from('aprovacoes').insert"),'Termo de Aceite precisa poder ser criado sem etapa prévia.');
+assert.ok(options.includes('window.CMEPrepareContractDocument=prepare'),'Fluxo de aceite precisa abrir a preparação estruturada depois da criação.');
+
 assert.ok(contractual.includes('askSendSchedule')&&contractual.includes('Agendar envio'),'Envio agendado precisa ter interface própria, não prompt ISO.');
 assert.ok(contractual.includes('Visualizado no portal'),'Admin precisa exibir leitura do documento/notificação.');
 
