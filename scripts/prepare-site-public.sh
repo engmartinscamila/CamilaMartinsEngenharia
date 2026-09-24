@@ -16,6 +16,10 @@ cp -R js site-public/js
 touch site-public/.nojekyll
 printf '%s\n' "$BUILD_VERSION" > site-public/build-version.txt
 
+# Injeta a Site Key pública do Cloudflare Turnstile no login clássico.
+# O segredo nunca é enviado ao frontend.
+node scripts/inject-turnstile-site-key.mjs
+
 for file in CNAME robots.txt sitemap.xml manifest.webmanifest camila-martins.vcf firebase-messaging-sw.js _headers; do
   if [[ -f "$file" ]]; then
     cp "$file" site-public/

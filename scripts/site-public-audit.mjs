@@ -11,6 +11,20 @@ must(fs.existsSync(path.join(root, 'manifest.webmanifest')))('Manifesto PWA ause
 must(fs.existsSync(path.join(root, 'firebase-messaging-sw.js')))('Service worker ausente no pacote publicado.');
 must(fs.existsSync(path.join(root, 'js/pwa-client.js')))('Registro PWA ausente no pacote publicado.');
 
+const loginPath = path.join(root, 'login.html');
+must(fs.existsSync(loginPath))('Login clássico ausente no pacote publicado.');
+if (fs.existsSync(loginPath)) {
+  const loginHtml = fs.readFileSync(loginPath, 'utf8');
+  const turnstileKey = loginHtml.match(/name=["']cme-turnstile-site-key["']\s+content=["']([^"']+)["']/i)?.[1]?.trim() ?? '';
+  must(turnstileKey.length >= 10)('Login clássico publicado sem Site Key do Turnstile.');
+  must(loginHtml.includes('turnstileContainer'))('Container do Turnstile ausente do login clássico.');
+}
+const publishedAuthPath = path.join(root, 'js/auth.js');
+if (fs.existsSync(publishedAuthPath)) {
+  const publishedAuth = fs.readFileSync(publishedAuthPath, 'utf8');
+  must(publishedAuth.includes('challenges.cloudflare.com/turnstile/'))('Login clássico publicado sem carregamento do Cloudflare Turnstile.');
+}
+
 if (fs.existsSync(path.join(root, 'manifest.webmanifest'))) {
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.webmanifest'), 'utf8'));
   must(manifest.start_url === '/portal.html')('Manifesto PWA não inicia no portal do cliente.');

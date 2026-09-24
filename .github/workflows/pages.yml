@@ -66,6 +66,8 @@ jobs:
           node scripts/security/construction-schedule-publication-regression.mjs
 
       - name: Preparar versão pública protegida
+        env:
+          TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
         run: bash scripts/prepare-site-public.sh
 
       - name: Auditar pacote final de publicação
@@ -117,6 +119,8 @@ jobs:
         run: node scripts/build-frases-do-dia-v7.mjs
 
       - name: Prepare protected classic website
+        env:
+          TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
         run: bash scripts/prepare-site-public.sh
 
       - name: Instalar portal integrado
