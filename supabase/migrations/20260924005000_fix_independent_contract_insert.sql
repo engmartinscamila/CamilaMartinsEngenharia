@@ -4,8 +4,8 @@
 
 create or replace function public.admin_create_independent_contract(
   p_data jsonb,
-  p_quote_ids uuid[] default '{}'::uuid[],
-  p_source_project_id uuid default null
+  p_quote_ids uuid[],
+  p_source_project_id uuid
 )
 returns uuid
 language plpgsql
