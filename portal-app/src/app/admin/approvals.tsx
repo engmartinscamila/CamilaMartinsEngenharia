@@ -175,10 +175,10 @@ export default function AdminApprovalsScreen() {
                 {item.relatedDocumentId ? ' • documento vinculado' : ''}
               </Text>
             </View>
-            <StatusPill label={humanizeStatus(item.status)} tone={item.status === 'aprovado' ? 'success' : item.status === 'rejeitado' ? 'danger' : 'warning'} />
+            <StatusPill label={humanizeStatus(item.status)} tone={item.status === 'aprovado' ? 'success' : item.status === 'aprovado_com_ressalvas' ? 'warning' : item.status === 'rejeitado' ? 'danger' : 'warning'} />
           </View>
           {item.description ? <Text style={styles.description}>{item.description}</Text> : null}
-          {item.status !== 'aguardando' ? <Notice tone={item.status === 'aprovado' ? 'success' : 'warning'}>{item.comment || 'Resposta registrada sem comentário.'}</Notice> : null}
+          {item.status !== 'aguardando' ? <Notice tone={item.status === 'aprovado' ? 'success' : item.status === 'rejeitado' ? 'danger' : 'warning'}>{item.comment || 'Resposta registrada sem comentário.'}</Notice> : null}
         </Card>
       ))}
     </Screen>
