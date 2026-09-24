@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2.112.3';
 
 const corsHeaders={
   'Access-Control-Allow-Origin':'https://camilamartinsengenharia.com.br',
@@ -10,16 +10,31 @@ function json(body:unknown,status=200){
   return new Response(JSON.stringify(body),{status,headers:{...corsHeaders,'Content-Type':'application/json; charset=utf-8'}});
 }
 
-async function sendEmail(apiKey:string,from:string,to:string,name:string,documentName:string){
+const htmlEsc=(value:unknown)=>String(value??'').replace(/[&<>"']/g,char=>({
+  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+}[char]||char));
+
+async function sendEmail(
+  apiKey:string,
+  from:string,
+  to:string,
+  name:string,
+  documentName:string,
+  idempotencyKey:string
+){
   const portalUrl='https://camilamartinsengenharia.com.br/documentos-cliente.html';
   const response=await fetch('https://api.resend.com/emails',{
     method:'POST',
-    headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'},
+    headers:{
+      Authorization:`Bearer ${apiKey}`,
+      'Content-Type':'application/json',
+      'Idempotency-Key':idempotencyKey
+    },
     body:JSON.stringify({
       from,
       to:[to],
       subject:`${documentName} disponível — Camila Martins Engenharia`,
-      html:`<p>Olá, ${name||'cliente'}.</p><p>Um novo documento vinculado ao seu contrato foi disponibilizado no Portal do Cliente.</p><p><a href="${portalUrl}">Acessar documentos do projeto</a></p><p>Camila Martins Engenharia</p>`
+      html:`<p>Olá, ${htmlEsc(name||'cliente')}.</p><p>Um novo documento vinculado ao seu contrato foi disponibilizado no Portal do Cliente.</p><p><a href="${portalUrl}">Acessar documentos do projeto</a></p><p>Camila Martins Engenharia</p>`
     })
   });
   if(!response.ok)throw new Error(`Resend respondeu HTTP ${response.status}`);
@@ -64,8 +79,6 @@ Deno.serve(async(req)=>{
       const email=String(clientRes.data?.email||'').trim();
       if(!email)throw new Error('Cliente sem e-mail cadastrado');
 
-      await sendEmail(resendKey,resendFrom,email,String(clientRes.data?.nome||''),String(docRes.data.nome||'Documento'));
-
       const now=new Date().toISOString();
       const docUpdate=await service.from('documentos').update({
         workflow_status:'enviado',
@@ -74,6 +87,16 @@ Deno.serve(async(req)=>{
         client_released_at:now
       }).eq('id',documentId).in('workflow_status',['gerado','enviado']);
       if(docUpdate.error)throw docUpdate.error;
+
+      // A chave estável evita e-mail duplicado quando houver retry ou execução concorrente.
+      await sendEmail(
+        resendKey,
+        resendFrom,
+        email,
+        String(clientRes.data?.nome||''),
+        String(docRes.data.nome||'Documento'),
+        `document-notification/${notification.id}`
+      );
 
       const notificationUpdate=await service.from('notificacoes').update({
         delivery_status:'sent',
