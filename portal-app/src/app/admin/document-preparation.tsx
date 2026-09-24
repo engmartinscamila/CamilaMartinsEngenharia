@@ -1,10 +1,11 @@
 import { useNotificationProject } from '@/hooks/use-notification-project';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
+import { openWebsiteAdminSection } from '@/lib/admin-navigation';
 import { suggestCommercialServices } from '@/lib/commercial-service-match';
 import { listAdminProjects } from '@/services/admin-service';
 import {
@@ -102,6 +103,9 @@ function money(value:number|null){return value===null?'Não informado':value.toL
 
 export default function AdminDocumentPreparationScreen(){
   const router=useRouter();
+  useEffect(()=>{
+    if(Platform.OS==='web') openWebsiteAdminSection('commercial-documents');
+  },[]);
   const styles=useThemeStyles(styleDefinitions);
   const [projects,setProjects]=useState<AdminProjectSummary[]>([]);
   const [projectId,setProjectId]=useState<string|null>(null);
@@ -248,7 +252,7 @@ export default function AdminDocumentPreparationScreen(){
   };
 
   return <Screen>
-    <AdminPageHeader title="Preparar documento do projeto" description="Confira os dados e escolha as opções antes de gerar o documento." />
+    <AdminPageHeader title="Preparar documento do projeto" description="Fluxo auxiliar do app nativo. No portal web, a criação é centralizada em Contratos Gerais." />
     {error?<Notice tone="danger">{error}</Notice>:null}{success?<><Notice tone="success">{success}</Notice><Button onPress={()=>router.push('/admin/contract-documents')} title="Ver documentos gerados" variant="secondary" /></>:null}
     <Card><Text style={styles.sectionTitle}>Projeto</Text><View style={styles.chips}>{projects.map(project=><Pressable key={project.id} onPress={()=>setProjectId(project.id)} style={[styles.chip,project.id===projectId&&styles.selected]}><Text style={[styles.chipText,project.id===projectId&&styles.selectedText]}>{project.contractNumber} • {project.name}</Text></Pressable>)}</View></Card>
     <Card><Text style={styles.sectionTitle}>Tipo de documento</Text><View style={styles.chips}>{documentOptions.map(option=><Pressable key={option.kind} onPress={()=>setKind(option.kind)} style={[styles.chip,option.kind===kind&&styles.selected]}><Text style={[styles.chipText,option.kind===kind&&styles.selectedText]}>{option.title}</Text></Pressable>)}</View></Card>
