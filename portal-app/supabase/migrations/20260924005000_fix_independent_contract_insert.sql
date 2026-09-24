@@ -4,8 +4,8 @@
 
 create or replace function public.admin_create_independent_contract(
   p_data jsonb,
-  p_quote_ids uuid[],
-  p_source_project_id uuid
+  p_quote_ids uuid[] default '{}'::uuid[],
+  p_source_project_id uuid default null
 )
 returns uuid
 language plpgsql
@@ -184,16 +184,6 @@ begin
 end
 $function$;
 
--- Mantém compatibilidade com a assinatura anterior de dois parâmetros.
-create or replace function public.admin_create_independent_contract(
-  p_data jsonb,
-  p_quote_ids uuid[] default '{}'::uuid[]
-)
-returns uuid
-language plpgsql
-set search_path to 'public'
-as $function$
-begin
-  return public.admin_create_independent_contract(p_data,p_quote_ids,null);
-end
-$function$;
+-- A função de 3 parâmetros já aceita a omissão de p_source_project_id.
+-- Remove apenas o overload redundante que poderia tornar a resolução RPC ambígua.
+drop function if exists public.admin_create_independent_contract(jsonb,uuid[]);
