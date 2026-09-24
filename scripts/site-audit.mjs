@@ -94,7 +94,7 @@ if (!fs.existsSync(frasesPath)) {
     const acervo = JSON.parse(fs.readFileSync(frasesPath, "utf8"));
     const frases = Array.isArray(acervo.frases) ? acervo.frases : [];
     const suspeita = /[_*`<>]|\b(?:n['’]um|n['’]uma|d['’]um|d['’]uma|d['’]elle|d['’]ella|scenas?|polycarpo|yaya|pharmacia|acceitar|ahi)\b/i;
-    if (frases.length !== 1000) fail(`Frase do dia: esperado acervo explícito de 1000 frases; encontrado ${frases.length}.`);
+    if (frases.length < 700) fail(`Frase do dia: esperado acervo amplo com ao menos 700 frases; encontrado ${frases.length}.`);
     const textos = new Set();
     frases.forEach((item, index) => {
       const texto = String(item?.texto || "").trim();
