@@ -30,6 +30,12 @@ const asset={file:{text:async()=>record+record}};
 eq(await operations.importOfxTransactions('account-a',asset),{imported:1,reconciled:0,error:null},'duplicate OFX rows counted once');eq(inserted.length,1,'duplicate rows submitted once');eq(invoked.name,'reconcile_imported_ofx','reconciliation is atomic RPC');
 rpcResult={error:{message:'offline'},data:null};const partial=await operations.importOfxTransactions('account-a',asset);eq(partial.imported,1,'import success retained when reconciliation fails');eq(typeof partial.error,'string','partial result explained');
 
+const documentPreparation=fs.readFileSync('src/app/admin/document-preparation.tsx','utf8');
+eq(documentPreparation.includes('checkAnnexIPrerequisite'),true,'Anexo I checks the official contract prerequisite before preview/preparation');
+eq(documentPreparation.includes('Para acrescentar um serviço depois da contratação')&&documentPreparation.includes('Serviço Adicional'),true,'Anexo I UI distinguishes later scope changes from the original annex');
+const scheduleScreen=fs.readFileSync('src/app/admin/construction-schedule.tsx','utf8');
+eq(scheduleScreen.includes("router.push('/admin/construction-schedule-new')"),true,'schedule consultation points new contracted schedules to the commercial creation flow');
+
 const deletionSource=fs.readFileSync('supabase/functions/admin-delete-client/index.ts','utf8');
 const purgeCall=deletionSource.indexOf("caller.rpc('admin_purge_client_database'");
 const storageCleanup=deletionSource.indexOf('const storageCleanup = await deleteStorageObjects(service, objects)');
