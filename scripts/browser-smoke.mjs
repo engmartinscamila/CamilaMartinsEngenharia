@@ -517,6 +517,11 @@ for (const [file,container] of [
     assert(/um ou mais orçamentos/i.test(label), `orcamentos-contratos.html: rótulo do vínculo múltiplo inesperado: ${label}`);
   }
 
+  const documentModal = page.locator("#documentModal");
+  assert(await documentModal.isVisible(), "orcamentos-contratos.html: formulário de contrato não abriu no modal");
+  await page.locator("#closeDocumentModal").click();
+  assert(await documentModal.isHidden(), "orcamentos-contratos.html: modal de contrato não fechou antes da troca de documento");
+
   await page.locator('[data-doc-tab="orcamento"]').click();
   await page.waitForTimeout(120);
   const serviceOpen = page.locator("#openCommercialServices");
