@@ -65,16 +65,26 @@ Deno.serve(async(req)=>{
     .limit(50);
   if(due.error)throw due.error;
 
-  let sent=0,failed=0;
+  let sent=0,failed=0,cancelled=0;
   for(const notification of due.data||[]){
     try{
       const documentId=String(notification.referencia_id||'');
       if(!/^[0-9a-f-]{36}$/i.test(documentId))throw new Error('Referência de documento inválida');
       const [docRes,clientRes]=await Promise.all([
-        service.from('documentos').select('id,nome,workflow_status,arquivo').eq('id',documentId).maybeSingle(),
+        service.from('documentos').select('id,nome,workflow_status,arquivo,superseded_by').eq('id',documentId).maybeSingle(),
         service.from('clientes').select('nome,email').eq('id',notification.cliente_id).maybeSingle()
       ]);
       if(docRes.error||clientRes.error)throw docRes.error||clientRes.error;
+      if(docRes.data?.superseded_by){
+        const cancelledUpdate=await service.from('notificacoes').update({
+          delivery_status:'cancelled',
+          scheduled_for:null,
+          mensagem:'Envio cancelado porque esta versão do documento foi substituída antes da data programada.'
+        }).eq('id',notification.id).eq('delivery_status','scheduled');
+        if(cancelledUpdate.error)throw cancelledUpdate.error;
+        cancelled+=1;
+        continue;
+      }
       if(!docRes.data?.arquivo)throw new Error('Documento ainda não foi gerado');
       const email=String(clientRes.data?.email||'').trim();
       if(!email)throw new Error('Cliente sem e-mail cadastrado');
@@ -112,5 +122,5 @@ Deno.serve(async(req)=>{
       console.error('Falha ao processar notificação agendada',notification.id,error instanceof Error?error.message:'erro desconhecido');
     }
   }
-  return json({ok:true,checked:(due.data||[]).length,sent,failed});
+  return json({ok:true,checked:(due.data||[]).length,sent,failed,cancelled});
 });
