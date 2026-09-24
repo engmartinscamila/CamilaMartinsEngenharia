@@ -53,7 +53,7 @@ eq(loginSource.includes('TurnstileCaptcha')&&loginSource.includes('captchaRequir
 eq(loginSource.includes('captchaRequired && !token'),true,'login cannot reach Supabase without a CAPTCHA token');
 eq(loginSource.includes('requestNativeCaptchaToken'),true,'native app obtains a CAPTCHA token through the secure web challenge');
 eq(captchaHelperSource.includes("camilamartinsengenharia://captcha-complete")&&captchaHelperSource.includes('https://camilamartinsengenharia.com.br/portal/captcha.html'),true,'native CAPTCHA is constrained to the official app scheme and website');
-eq(captchaPageSource.includes('isAllowedCaptchaReturnUrl')&&captchaPageSource.includes('Linking.openURL'),true,'hosted CAPTCHA validates the return target before returning its token');
+eq(captchaPageSource.includes('isAllowedCaptchaReturnUrl')&&captchaPageSource.includes('globalThis.location?.replace'),true,'hosted CAPTCHA validates the return target before returning its token');
 eq(captchaSource.includes('https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'),true,'portal loads the official Cloudflare Turnstile challenge');
 eq(envSource.includes('EXPO_PUBLIC_TURNSTILE_SITE_KEY')&&productionEnvCheck.includes('Site key pública do Cloudflare Turnstile ausente.'),true,'production build requires a Turnstile site key');
 eq(productionEnvCheck.includes("GITHUB_EVENT_NAME === 'pull_request'"),true,'only pull-request CI may compile without the real Turnstile site key');
