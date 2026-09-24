@@ -225,6 +225,20 @@ async function installMocks(page) {
     })
   );
 
+  await page.route("https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit", route =>
+    route.fulfill({
+      status:200,
+      contentType:"application/javascript",
+      body:`window.turnstile={
+        render:function(_el,options){
+          setTimeout(function(){ options&&options.callback&&options.callback("qa-turnstile-token"); },0);
+          return "qa-turnstile-widget";
+        },
+        reset:function(){}
+      };`
+    })
+  );
+
   page.__workerCalls = [];
   await page.route("https://cme-public-media.eng-martins-camila.workers.dev/**", async route => {
     const request = route.request();
@@ -1308,6 +1322,7 @@ for (const [button,email] of [["#firstAccess","cliente.qa@example.com"],["#forgo
   await page.waitForFunction(() => Boolean(window.__PASSWORD_LINK_CALL__));
   const requested = await page.evaluate(() => window.__PASSWORD_LINK_CALL__);
   assert(requested.email === email, "Link de senha deve usar o e-mail informado");
+  assert(requested.captchaToken === "qa-turnstile-token", "Link de senha deve enviar o token do Turnstile");
   assert(!await page.evaluate(() => window.__SIGNUP_CALL__), "Cadastro público não pode ser chamado");
   const message = await page.locator("#formMessage").textContent();
   assert(/se este e-mail estiver autorizado/i.test(message), "Resposta deve evitar revelar existência da conta");
