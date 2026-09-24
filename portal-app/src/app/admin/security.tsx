@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
-import { Button, Card, Notice, Screen, StateView, StatusPill } from '@/components/ui';
+import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
 import { formatBytes, formatDate } from '@/lib/format';
 import { env } from '@/lib/env';
 import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
@@ -17,6 +17,13 @@ export default function AdminSecurityScreen() {
   const [overview, setOverview] = useState(emptyOverview);
   const [orphans, setOrphans] = useState(emptyOrphans);
   const [audit, setAudit] = useState<AuditEntrySummary[]>([]);
+  const [showProjectUsage, setShowProjectUsage] = useState(false);
+  const [showAudit, setShowAudit] = useState(false);
+  const [auditAction, setAuditAction] = useState('');
+  const [auditType, setAuditType] = useState('');
+  const [auditUser, setAuditUser] = useState('');
+  const [auditProject, setAuditProject] = useState('');
+  const [auditPeriodDays, setAuditPeriodDays] = useState('');
   const [loading, setLoading] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
   const [auditError, setAuditError] = useState<string | null>(null);
@@ -43,6 +50,28 @@ export default function AdminSecurityScreen() {
   }, []);
 
   useEffect(() => { const task = setTimeout(() => void load(), 0); return () => clearTimeout(task); }, [load]);
+
+  const filteredAudit = useMemo(() => {
+    const action = auditAction.trim().toLocaleLowerCase('pt-BR');
+    const type = auditType.trim().toLocaleLowerCase('pt-BR');
+    const user = auditUser.trim().toLocaleLowerCase('pt-BR');
+    const project = auditProject.trim().toLocaleLowerCase('pt-BR');
+    const days = Number(auditPeriodDays);
+    const cutoff = Number.isFinite(days) && days > 0 ? Date.now() - days * 86_400_000 : null;
+    return audit.filter((entry) => {
+      if (action && !entry.action.toLocaleLowerCase('pt-BR').includes(action)) return false;
+      if (type && !(entry.entityType ?? '').toLocaleLowerCase('pt-BR').includes(type)) return false;
+      if (user && !(entry.userId ?? '').toLocaleLowerCase('pt-BR').includes(user)) return false;
+      if (cutoff && new Date(entry.createdAt).getTime() < cutoff) return false;
+      if (project) {
+        const haystack = `${entry.entityId ?? ''} ${JSON.stringify(entry.details ?? {})}`.toLocaleLowerCase('pt-BR');
+        if (!haystack.includes(project)) return false;
+      }
+      return true;
+    });
+  }, [audit, auditAction, auditPeriodDays, auditProject, auditType, auditUser]);
+
+
 
   return (
     <Screen>
@@ -76,8 +105,15 @@ export default function AdminSecurityScreen() {
       {orphans.orphanObjects.map((item) => <Card key={`${item.bucket}-${item.path}`}><View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.title}>{item.path}</Text><Text style={styles.meta}>{item.bucket} • {formatBytes(item.size)} • {formatDate(item.createdAt)}</Text></View><StatusPill label="Revisar" tone="warning" /></View></Card>)}
 
       {overview.buckets.map((bucket) => <Card key={bucket.bucketId}><View style={styles.header}><Text style={styles.title}>{bucket.bucketId}</Text><StatusPill label={`${bucket.objectCount} objetos`} /></View><Text style={styles.meta}>{formatBytes(bucket.bytes)}</Text></Card>)}
-      {overview.projects.length ? <Text style={styles.sectionTitle}>Uso por cliente, contrato e projeto</Text> : null}
-      {overview.projects.map((project) => <Card key={project.projectId}><View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.title}>{project.projectName}</Text><Text style={styles.meta}>{project.clientName} • Contrato {project.contractNumber}</Text></View><StatusPill label={formatBytes(project.bytes) ?? 'Indisponível'} /></View><Text style={styles.meta}>{project.objectCount} arquivos vinculados</Text></Card>)}
+      {overview.projects.length ? (
+        <Card>
+          <Pressable accessibilityRole="button" accessibilityState={{ expanded: showProjectUsage }} onPress={() => setShowProjectUsage((current) => !current)} style={styles.accordionHeader}>
+            <View style={{ flex: 1 }}><Text style={styles.sectionTitle}>Uso por cliente, contrato e projeto</Text><Text style={styles.meta}>{overview.projects.length} projeto(s) • clique para {showProjectUsage ? 'recolher' : 'detalhar'}</Text></View>
+            <Text style={styles.chevron}>{showProjectUsage ? '−' : '+'}</Text>
+          </Pressable>
+          {showProjectUsage ? <View style={styles.accordionBody}>{overview.projects.map((project) => <View key={project.projectId} style={styles.usageRow}><View style={{ flex: 1 }}><Text style={styles.title}>{project.projectName}</Text><Text style={styles.meta}>{project.clientName} • Contrato {project.contractNumber}</Text><Text style={styles.meta}>{project.objectCount} arquivos vinculados</Text></View><StatusPill label={formatBytes(project.bytes) ?? 'Indisponível'} /></View>)}</View> : null}
+        </Card>
+      ) : null}
 
       <Card>
         <Text style={styles.sectionTitle}>Controles de segurança</Text>
@@ -85,9 +121,24 @@ export default function AdminSecurityScreen() {
         <Notice tone="info">As permissões são verificadas novamente no banco e nas funções protegidas. Esta tela apresenta o resultado e não substitui esses controles.</Notice>
       </Card>
 
-      <Text style={styles.sectionTitle}>Auditoria recente</Text>
-      {!loading && audit.length === 0 ? <StateView description="Nenhuma ação administrativa auditável foi registrada neste ambiente até agora." icon="receipt-outline" title="Sem eventos de auditoria" /> : null}
-      {audit.map((entry) => <Card key={entry.id}><View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.title}>{entry.action}</Text><Text style={styles.meta}>{entry.entityType ?? 'sistema'} • {formatDate(entry.createdAt)}</Text></View><StatusPill label="Auditado" /></View>{entry.details ? <Text numberOfLines={4} style={styles.code}>{JSON.stringify(entry.details)}</Text> : null}</Card>)}
+      <Card>
+        <Pressable accessibilityRole="button" accessibilityState={{ expanded: showAudit }} onPress={() => setShowAudit((current) => !current)} style={styles.accordionHeader}>
+          <View style={{ flex: 1 }}><Text style={styles.sectionTitle}>Auditoria recente</Text><Text style={styles.meta}>{audit.length} evento(s) carregado(s) • {filteredAudit.length} no filtro atual</Text></View>
+          <Text style={styles.chevron}>{showAudit ? '−' : '+'}</Text>
+        </Pressable>
+        {showAudit ? <View style={styles.accordionBody}>
+          <View style={styles.filterGrid}>
+            <Field label="Período (últimos N dias)" keyboardType="number-pad" value={auditPeriodDays} onChangeText={setAuditPeriodDays} placeholder="Ex.: 30" />
+            <Field label="Ação" value={auditAction} onChangeText={setAuditAction} placeholder="Ex.: generate" />
+            <Field label="Usuário / ID" value={auditUser} onChangeText={setAuditUser} placeholder="ID do usuário" />
+            <Field label="Projeto / ID / termo" value={auditProject} onChangeText={setAuditProject} />
+            <Field label="Tipo de entidade" value={auditType} onChangeText={setAuditType} placeholder="Ex.: documentos" />
+          </View>
+          {!loading && audit.length === 0 ? <StateView description="Nenhuma ação administrativa auditável foi registrada neste ambiente até agora." icon="receipt-outline" title="Sem eventos de auditoria" /> : null}
+          {!loading && audit.length > 0 && filteredAudit.length === 0 ? <StateView description="Nenhum evento atende aos filtros informados." icon="search-outline" title="Filtro sem resultados" /> : null}
+          {filteredAudit.map((entry) => <View key={entry.id} style={styles.auditRow}><View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.title}>{entry.action}</Text><Text style={styles.meta}>{entry.entityType ?? 'sistema'} • {formatDate(entry.createdAt)} • usuário {entry.userId ?? 'não registrado'}</Text></View><StatusPill label="Auditado" /></View>{entry.details ? <Text numberOfLines={4} style={styles.code}>{JSON.stringify(entry.details)}</Text> : null}</View>)}
+        </View> : null}
+      </Card>
       <Button loading={loading} onPress={() => void load()} title="Atualizar métricas" variant="secondary" />
     </Screen>
   );
@@ -105,6 +156,12 @@ const styleDefinitions = (colors: ThemeColors) => ({
   body: { color: colors.slate, fontSize: 13, lineHeight: 20, fontFamily: typography.family },
   strong: { color: colors.ink, fontWeight: '700' },
   code: { color: colors.slate, fontSize: 11, lineHeight: 17, fontFamily: typography.family },
+  accordionHeader: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: spacing.sm },
+  accordionBody: { gap: spacing.sm, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.sm },
+  usageRow: { flexDirection: 'row' as const, alignItems: 'flex-start' as const, gap: spacing.sm, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.sm },
+  auditRow: { gap: spacing.xs, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.sm },
+  filterGrid: { gap: spacing.sm },
+  chevron: { color: colors.gold600, fontSize: 24, fontWeight: '700' as const },
 });
 
 function isKnownHomologationFixture(item: StorageOrphanDetails['orphanMetadata'][number]) {
