@@ -182,6 +182,7 @@ export default function AdminDocumentPreparationScreen(){
       additional_service_code:additionalService.code,
       additional_service_name:additionalService.name,
       additional_service_level:additionalLevel??'',
+      additional_level:additionalLevel??'',
       additional_service_level_label:additionalLevel?SERVICE_LEVELS.find(item=>item.code===additionalLevel)?.label??additionalLevel:'',
     }:{};
     const options={...choices,...structuredAdditional,...Object.fromEntries(Object.entries(texts).filter(([,v])=>v.trim()).map(([k,v])=>[k,v.trim()]))};
