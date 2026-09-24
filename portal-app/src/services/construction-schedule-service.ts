@@ -60,7 +60,7 @@ const workAddress = (row: Record<string, unknown>) => [row.endereco_obra, row.nu
 const PAGE_SIZE = 200;
 const MAX_PROJECTS = 20000;
 export async function listConstructionScheduleProjects() {
-  const projects: Array<Record<string, unknown>> = [];
+  const projects: Record<string, unknown>[] = [];
   for (let offset = 0; ; offset += PAGE_SIZE) {
     if (offset >= MAX_PROJECTS) return { data: [] as ConstructionProjectOption[], error: 'Há muitos projetos para carregar de uma só vez. Utilize uma seleção por cliente antes de continuar.' };
     const page = await supabase.from('projetos')
