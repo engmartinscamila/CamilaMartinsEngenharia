@@ -66,15 +66,16 @@ function renderGenerators(){
 }
 function renderApprovals(){
   const labels={aguardando:'Aguardando cliente',pendente:'Pendente',aceito:'Aceito',aprovado:'Aceito',recusado:'Recusado',rejeitado:'Recusado'};
-  const types={etapa:'Etapa do projeto',entrega:'Entrega para validação',documento:'Documento para aprovação'};
-  $('approvalList').innerHTML=approvals.length?approvals.map(a=>{
+  const types={etapa:'Etapa do projeto',entrega:'Entrega para validação',documento:'Documento para aprovação',aceite:'Solicitação de aceite'};
+  const rows=approvals.map(a=>{
     const status=String(a.status||'aguardando').toLowerCase();
     const label=labels[status]||String(a.status||'Aguardando');
     const action=status==='aceito'||status==='aprovado'?'Ver termo':'Preparar termo';
     const due=a.approval_due_at?` • responder até ${new Date(a.approval_due_at).toLocaleDateString('pt-BR')}`:'';
     const description=a.descricao?`<div class="doc-meta">O cliente deverá avaliar: ${esc(a.descricao)}</div>`:'<div class="doc-meta">O cliente deverá avaliar a entrega registrada nesta etapa.</div>';
-    return `<div class="doc-row"><div class="doc-row-head"><div><strong>${esc(a.titulo)}</strong><div class="doc-meta">${esc(types[String(a.tipo||'').toLowerCase()]||a.tipo||'Entrega')} • <span class="doc-badge">${esc(label)}</span>${a.delivered_at?` • entregue em ${new Date(a.delivered_at).toLocaleDateString('pt-BR')}`:''}${due}</div>${description}</div><button class="doc-btn secondary" data-approval="${a.id}">${action}</button></div></div>`;
-  }).join(''):'<p>Nenhuma etapa/aprovação disponível.</p>'
+    return `<div class="doc-row"><div class="doc-row-head"><div><strong>${esc(a.titulo)}</strong><div class="doc-meta">${esc(types[String(a.tipo||'').toLowerCase()]||a.tipo||'Entrega')} • <span class="doc-badge">${esc(label)}</span>${a.delivered_at?` • liberado em ${new Date(a.delivered_at).toLocaleDateString('pt-BR')}`:''}${due}</div>${description}</div><button class="doc-btn secondary" data-approval="${a.id}">${action}</button></div></div>`;
+  }).join('');
+  $('approvalList').innerHTML=`<div class="doc-actions" style="margin-bottom:12px"><button type="button" class="doc-btn" id="newApprovalRequest">Criar solicitação de aceite</button></div>${rows||'<p>Nenhuma solicitação de aceite criada ainda.</p>'}`;
 }
 function documentDeliveryStatus(documentId){
   const n=documentNotifications.find(item=>String(item.referencia_id||'')===String(documentId));
@@ -161,4 +162,30 @@ async function notice(approvalId){
  await generateAndDeliver(p.data,false,'notificacao_formal');
  msg('Notificação Formal gerada. Agora use “Enviar ao cliente” para enviar imediatamente ou agendar o disparo.','success');
 }
-function bind(){$('contractProject')?.addEventListener('change',e=>chooseProject(e.target.value));$('contractGenerators')?.addEventListener('click',e=>{const b=e.target.closest('[data-prepare]');if(b)prepare(b.dataset.prepare)});$('approvalList')?.addEventListener('click',e=>{const b=e.target.closest('[data-approval]');if(b)prepare('termo_aceite',b.dataset.approval)});$('preparedDocuments')?.addEventListener('click',e=>{const b=e.target.closest('[data-download],[data-archive],[data-send]');if(!b)return;const expected=b.dataset.kind||activeDocumentKind;if(b.dataset.download)generateAndDeliver(b.dataset.download,false,expected);if(b.dataset.archive)generateAndDeliver(b.dataset.archive,true,expected);if(b.dataset.send)send(b.dataset.send,expected)});$('contractAttention')?.addEventListener('click',e=>{const b=e.target.closest('[data-notice]');if(b)notice(b.dataset.notice)});window.addEventListener('cme:document-mode',e=>{const kind=e.detail?.kind;activeDocumentKind=supportedDocumentKinds.has(kind)?kind:null;renderDocs()});setTimeout(async()=>{await loadCatalog();await loadProjects()},300)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();})();
+function createApprovalRequest(){
+  if(!project){msg('Selecione primeiro o contrato / projeto.','error');return}
+  return new Promise(resolve=>{
+    const overlay=document.createElement('div');overlay.className='doc-options-modal';
+    overlay.innerHTML=`<div class="doc-options-dialog"><button type="button" class="doc-options-close" data-close aria-label="Fechar">×</button><h3>Nova solicitação de aceite</h3><p>Crie o objeto que será submetido ao cliente. O tipo exato do Termo será escolhido na etapa seguinte.</p><div class="doc-field"><label>Objeto / título *</label><input data-title placeholder="Ex.: Aceite da entrega do Projeto Executivo"></div><div class="doc-field"><label>Descrição do que deve ser avaliado</label><textarea data-description rows="5"></textarea></div><div class="doc-field"><label>Prazo para manifestação</label><input data-due type="date"></div><div class="doc-actions"><button type="button" class="doc-btn ghost" data-close>Cancelar</button><button type="button" class="doc-btn" data-create>Criar e preparar Termo</button></div></div>`;
+    document.body.appendChild(overlay);
+    const done=value=>{overlay.remove();resolve(value)};
+    overlay.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>done(null)));
+    overlay.addEventListener('click',event=>{if(event.target===overlay)done(null)});
+    overlay.querySelector('[data-create]')?.addEventListener('click',async()=>{
+      const titulo=String(overlay.querySelector('[data-title]')?.value||'').trim();
+      const descricao=String(overlay.querySelector('[data-description]')?.value||'').trim();
+      const due=String(overlay.querySelector('[data-due]')?.value||'').trim();
+      if(!titulo){alert('Informe o objeto / título do aceite.');return}
+      const payload={cliente_id:project.cliente_id,projeto_id:project.id,tipo:'aceite',titulo,descricao:descricao||null,status:'aguardando',delivered_at:new Date().toISOString(),approval_due_at:due?new Date(`${due}T23:59:59`).toISOString():null};
+      const result=await client().from('aprovacoes').insert(payload).select('id').single();
+      if(result.error){alert(safeError(result.error,'Não foi possível criar a solicitação de aceite.'));return}
+      done(result.data?.id||null)
+    });
+  }).then(async id=>{
+    if(!id)return;
+    await chooseProject(project.id);
+    if(typeof window.CMEPrepareContractDocument==='function')await window.CMEPrepareContractDocument('termo_aceite',id);
+    else msg('Solicitação criada. Clique em “Preparar termo” para continuar.','success');
+  })
+}
+function bind(){$('contractProject')?.addEventListener('change',e=>chooseProject(e.target.value));$('contractGenerators')?.addEventListener('click',e=>{const b=e.target.closest('[data-prepare]');if(b)prepare(b.dataset.prepare)});$('approvalList')?.addEventListener('click',e=>{if(e.target.closest('#newApprovalRequest')){createApprovalRequest();return}const b=e.target.closest('[data-approval]');if(b)prepare('termo_aceite',b.dataset.approval)});$('preparedDocuments')?.addEventListener('click',e=>{const b=e.target.closest('[data-download],[data-archive],[data-send]');if(!b)return;const expected=b.dataset.kind||activeDocumentKind;if(b.dataset.download)generateAndDeliver(b.dataset.download,false,expected);if(b.dataset.archive)generateAndDeliver(b.dataset.archive,true,expected);if(b.dataset.send)send(b.dataset.send,expected)});$('contractAttention')?.addEventListener('click',e=>{const b=e.target.closest('[data-notice]');if(b)notice(b.dataset.notice)});window.addEventListener('cme:document-mode',e=>{const kind=e.detail?.kind;activeDocumentKind=supportedDocumentKinds.has(kind)?kind:null;renderDocs()});setTimeout(async()=>{await loadCatalog();await loadProjects()},300)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();})();
