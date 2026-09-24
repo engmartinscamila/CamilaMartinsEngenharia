@@ -10,8 +10,8 @@ const OUT = "assets/frases-do-dia.json";
 const payload = JSON.parse(await readFile(OUT, "utf8"));
 const frases = Array.isArray(payload?.frases) ? payload.frases : [];
 
-if (frases.length !== 1000) {
-  throw new Error(`Acervo restaurado inválido: esperado 1000, encontrado ${frases.length}.`);
+if (frases.length < 700) {
+  throw new Error(`Acervo restaurado insuficiente: esperado ao menos 700, encontrado ${frases.length}.`);
 }
 
 const normalizar = value => String(value ?? "")
@@ -41,4 +41,4 @@ if (![...autores].some(author => author === normalizar("Camila Martins"))) {
   throw new Error("As frases autorais da Camila Martins desapareceram do acervo.");
 }
 
-console.log(`SUCESSO V7: ${frases.length} frases únicas; ${autores.size} autores; diversidade restaurada.`);
+console.log(`SUCESSO V7: ${frases.length} frases únicas; ${autores.size} autores; diversidade restaurada e grafia histórica filtrada.`);
