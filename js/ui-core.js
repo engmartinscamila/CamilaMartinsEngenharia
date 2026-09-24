@@ -23,7 +23,6 @@ const MENU_ADMIN_CANONICO=[
   ["orcamentos-contratos.html","fa-file-signature","Orçamentos e contratos"],
   ["portal/admin/crm","fa-filter","Oportunidades comerciais"],
   ["portal/admin/contract-documents","fa-file-contract","Documentos gerados e aceites"],
-  ["portal/admin/document-preparation","fa-file-pen","Preparar documento do projeto"],
   ["portal/admin/document-governance","fa-list-check","Versões e pendências dos documentos"],
   ["portal/admin/service-level-governance","fa-layer-group","Revisar serviços × Bronze/Prata/Ouro"],
   ["portal/admin/document-archive","fa-box-archive","Arquivos antigos e restauração"],
@@ -50,7 +49,6 @@ const MENU_ADMIN_CANONICO=[
 const ferramentasAdministrativas=[
   ["crm","fa-filter","Oportunidades comerciais"],
   ["contract-documents","fa-file-contract","Documentos gerados e aceites"],
-  ["document-preparation","fa-file-pen","Preparar documento do projeto"],
   ["document-governance","fa-list-check","Versões e pendências dos documentos"],
   ["service-level-governance","fa-layer-group","Revisar serviços × Bronze/Prata/Ouro"],
   ["document-archive","fa-box-archive","Arquivos antigos e restauração"],
