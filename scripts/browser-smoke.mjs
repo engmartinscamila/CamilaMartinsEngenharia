@@ -132,6 +132,31 @@ const supabaseMock = `
     documentos:[{id:"d1", cliente_id:"c1", projeto_id:"p1", nome:"Documento Teste", titulo:"Documento Teste", tipo:"projeto", nome_original:"teste.pdf", arquivo:"c1/p1/teste.pdf", autoral:true}],
     fotos:[{id:"f1", cliente_id:"c1", projeto_id:"p1", nome:"Foto Teste", arquivo:"teste.webp"}],
     biblioteca:[{id:"b1", cliente_id:"c1", projeto_id:"p1", nome:"Arquivo Teste", tipo:"guia_estilos", arquivo:"c1/p1/guia.pdf", autoral:true}],
+    service_catalog:[
+      {
+        code:"a", name:"Estudo Preliminar", category:"projeto", level_applicable:true,
+        description:"Estudo preliminar conforme escopo contratado.", deliverables:["Estudo preliminar"],
+        exclusions:[], client_inputs:[], default_revisions:1, delivery_formats:["PDF"],
+        planning_reference:null, version:1, aliases:[], synonyms:[], keywords:["estudo","preliminar"]
+      },
+      {
+        code:"b", name:"Anteprojeto", category:"projeto", level_applicable:true,
+        description:"Anteprojeto conforme escopo contratado.", deliverables:["Anteprojeto"],
+        exclusions:[], client_inputs:[], default_revisions:1, delivery_formats:["PDF"],
+        planning_reference:null, version:1, aliases:[], synonyms:[], keywords:["anteprojeto"]
+      },
+      {
+        code:"p", name:"Outro", category:"outros", level_applicable:false,
+        description:"Atividade específica descrita pelo usuário.", deliverables:[],
+        exclusions:[], client_inputs:[], default_revisions:0, delivery_formats:["PDF"],
+        planning_reference:null, version:1, aliases:[], synonyms:[], keywords:["outro"]
+      }
+    ],
+    service_level_catalog:[
+      {code:"bronze",label:"BRONZE",subtitle:"Essencial",description:"Nível Bronze",features:[],exclusions:[],version:2,active:true},
+      {code:"prata",label:"PRATA",subtitle:"Intermediário",description:"Nível Prata",features:[],exclusions:[],version:3,active:true},
+      {code:"ouro",label:"OURO",subtitle:"Completo",description:"Nível Ouro",features:[],exclusions:[],version:3,active:true}
+    ],
     agenda:[], cronograma:[], solicitacoes:[], financeiro:[], configuracoes:[]
   };
 
@@ -517,11 +542,35 @@ for (const [file,container] of [
     assert(/um ou mais orçamentos/i.test(label), `orcamentos-contratos.html: rótulo do vínculo múltiplo inesperado: ${label}`);
   }
 
+  const documentModal = page.locator("#documentModal");
+  assert(await documentModal.isVisible(), "orcamentos-contratos.html: formulário de contrato não abriu no modal");
+  await page.locator("#closeDocumentModal").click();
+  assert(await documentModal.isHidden(), "orcamentos-contratos.html: modal de contrato não fechou antes da troca de documento");
+
+  await page.locator('[data-doc-tab="orcamento"]').click();
+  await page.waitForTimeout(120);
+  const serviceOpen = page.locator("#openCommercialServices");
+  assert(await serviceOpen.count() === 1, "orcamentos-contratos.html: botão compacto de serviços ausente");
+  assert(await page.locator("#commercialServiceModal").isHidden(), "orcamentos-contratos.html: lista extensa de serviços abriu sozinha");
+  await serviceOpen.click();
+  assert(await page.locator("#commercialServiceModal").isVisible(), "orcamentos-contratos.html: botão não abriu a seleção de atividades");
+  const serviceBoxes = page.locator("#commercialServiceModal [data-service]");
+  if (await serviceBoxes.count() >= 2) {
+    await serviceBoxes.nth(0).check();
+    await serviceBoxes.nth(1).check();
+    await page.locator("#confirmCommercialServices").click();
+    assert(await page.locator("#commercialServiceModal").isHidden(), "orcamentos-contratos.html: concluir não fechou a seleção");
+    assert(await page.locator("#experienceLevelField").isVisible(), "orcamentos-contratos.html: nível não apareceu depois da seleção");
+    const levelLabel = (await page.locator("#experienceLevelLabel").textContent() || "").trim();
+    assert(/nível de prestação do pacote/i.test(levelLabel), `orcamentos-contratos.html: várias atividades não usam nível único do pacote: ${levelLabel}`);
+  }
+  assert(await page.locator("#existingClientPicker").count() === 1, "orcamentos-contratos.html: seletor compacto de cliente existente ausente");
+
   await responsive(page, "orcamentos-contratos.html com múltiplos ORCs");
   await page.close();
 }
 
-// Frase do dia: somente português atual e conteúdo editorial revisado.
+// Frase do dia: conteúdo válido e acervo multi-autores preservado.
 {
   const page = await loadPage(context, "admin.html");
   await page.waitForTimeout(250);
@@ -529,12 +578,16 @@ for (const [file,container] of [
   const autor = (await page.locator("#cmeFraseAutor").textContent().catch(() => "")) || "";
 
   assert(Boolean(frase.trim()), "admin.html: Frase do dia não foi carregada");
+  assert(Boolean(autor.trim()), "admin.html: autor da Frase do dia não foi carregado");
   assert(!/[_*`<>]/.test(frase), `admin.html: Frase do dia contém marcação indevida: ${frase}`);
   assert(
     !/\b(?:n['’]um|n['’]uma|d['’]um|d['’]uma|d['’]elle|d['’]ella|scenas?|polycarpo|yaya|pharmacia|acceitar|ahi)\b/i.test(frase),
     `admin.html: Frase do dia contém grafia antiga: ${frase}`
   );
-  assert(/Editorial Camila Martins Engenharia/i.test(autor), `admin.html: autoria editorial inesperada: ${autor}`);
+  const corpus = JSON.parse(fs.readFileSync(path.join(ROOT, "assets/frases-do-dia.json"), "utf8"));
+  const authors = new Set((corpus.frases || []).map(item => String(item.autor || "").trim()).filter(Boolean));
+  assert(authors.size >= 8, `admin.html: acervo perdeu diversidade de autores; encontrou ${authors.size}`);
+  assert(authors.has("Camila Martins"), "admin.html: acervo perdeu as frases autorais da Camila Martins");
   await page.close();
 }
 

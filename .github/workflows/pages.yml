@@ -39,6 +39,7 @@ jobs:
           node scripts/admin-functional-audit.mjs
           node scripts/portal-canonical-path-test.mjs
           node scripts/document-generation-audit.mjs
+          node scripts/portal-observations-regression.mjs
 
       - name: Verificar segurança antes de publicar
         run: |
@@ -153,6 +154,7 @@ jobs:
           node --check js/document-function-routing-web.js
           node scripts/commercial-generator-preflight-regression.mjs
           node scripts/commercial-custom-scope-regression.mjs
+          node scripts/portal-observations-regression.mjs
           node --experimental-strip-types scripts/commercial-word-regression.mjs
 
       - name: Validar e exportar portal integrado

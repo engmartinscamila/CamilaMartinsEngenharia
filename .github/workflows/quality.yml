@@ -44,11 +44,13 @@ jobs:
           node scripts/document-governance-audit.mjs
           node scripts/commercial-custom-scope-regression.mjs
           node scripts/governance-review-preview-regression.mjs
+          node scripts/portal-observations-regression.mjs
 
       - name: Validar JavaScript novo
         run: |
           node --check js/commercial-documents-web.js
           node --check js/contract-documents-web.js
+          node --check js/document-options-web.js
           node --check js/document-archive-web.js
           node --check js/configuracoes.js
           node --check js/ui-core.js

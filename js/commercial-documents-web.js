@@ -72,44 +72,139 @@
     setTimeout(() => URL.revokeObjectURL(url), 1500);
   }
 
+  function normalizeSearch(value) {
+    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  }
+
+  function editDistance(a, b) {
+    const left = normalizeSearch(a), right = normalizeSearch(b);
+    if (!left) return right.length;
+    if (!right) return left.length;
+    const row = Array.from({ length: right.length + 1 }, (_, index) => index);
+    for (let i = 1; i <= left.length; i += 1) {
+      let previous = row[0];
+      row[0] = i;
+      for (let j = 1; j <= right.length; j += 1) {
+        const before = row[j];
+        row[j] = Math.min(row[j] + 1, row[j - 1] + 1, previous + (left[i - 1] === right[j - 1] ? 0 : 1));
+        previous = before;
+      }
+    }
+    return row[right.length];
+  }
+
+  function serviceSearchTerms(item) {
+    return [item.name, ...(Array.isArray(item.aliases) ? item.aliases : []), ...(Array.isArray(item.synonyms) ? item.synonyms : []), ...(Array.isArray(item.keywords) ? item.keywords : [])]
+      .map(normalizeSearch)
+      .filter(Boolean);
+  }
+
+  function suggestCatalogService(value) {
+    const needle = normalizeSearch(value);
+    if (!needle || needle.length < 4) return null;
+    let best = null;
+    for (const item of serviceCatalogMeta) {
+      if (String(item.code || '').toLowerCase() === 'p') continue;
+      for (const term of serviceSearchTerms(item)) {
+        const contains = term.includes(needle) || needle.includes(term);
+        const distance = editDistance(needle, term);
+        const limit = Math.max(2, Math.floor(Math.min(needle.length, term.length) * 0.22));
+        if (contains || distance <= limit) {
+          const score = contains ? 0 : distance;
+          if (!best || score < best.score) best = { item, score };
+        }
+      }
+    }
+    return best?.item || null;
+  }
+
   function renderServices() {
     const box = $('commercialServices');
     if (!box) return;
-    const levelNames = levelCatalog
-      .map(item => String(item.label || item.code || '').trim())
-      .filter(Boolean)
-      .join(' / ');
-
     box.innerHTML = `
-      <details class="doc-service-picker" open>
-        <summary><span>Selecionar atividades</span><strong id="commercialServiceCount">0 selecionadas</strong></summary>
-        <div class="doc-services-grid">${servicesCatalog.map(([code, name]) => {
-          const meta = serviceCatalogMeta.find(item => item.code === code) || {};
-          const detail = meta.description
-            ? `<small class="doc-service-description">${esc(meta.description)}</small>`
-            : '';
-          const level = meta.level_applicable
-            ? `<small class="doc-service-level">Compatível com ${esc(levelNames || 'os níveis cadastrados')}</small>`
-            : '<small class="doc-service-level muted">Consulte o nível no catálogo atualizado</small>';
-          return `
-            <label class="doc-service doc-service-smart">
-              <input type="checkbox" data-service="${code}">
-              <span>
-                <strong>(${code}) ${esc(name)}</strong>
-                ${detail}
-                ${level}
-              </span>
-            </label>
-          `;
-        }).join('')}</div>
-      </details>`;
+      <div class="doc-service-selection-shell">
+        <button type="button" class="doc-service-open" id="openCommercialServices" aria-haspopup="dialog">
+          <span><strong>Selecionar atividades</strong><small>Abra a lista, marque os serviços e conclua a seleção.</small></span>
+          <span class="doc-service-count" id="commercialServiceCount">0 selecionadas</span>
+        </button>
+        <div id="commercialServiceSelectedSummary" class="doc-service-selected-summary">Nenhuma atividade selecionada.</div>
+      </div>
+      <div id="commercialServiceModal" class="doc-service-modal doc-hidden" role="dialog" aria-modal="true" aria-labelledby="commercialServiceModalTitle">
+        <div class="doc-service-modal-panel">
+          <div class="doc-service-modal-head">
+            <div><span class="doc-section-eyebrow">Escopo do orçamento</span><h3 id="commercialServiceModalTitle">Selecionar atividades</h3><p>Marque todas as atividades deste pacote. O nível de prestação será escolhido uma única vez depois, entre as opções ativas do catálogo.</p></div>
+            <button type="button" class="doc-service-modal-close" id="cancelCommercialServices" aria-label="Cancelar seleção">×</button>
+          </div>
+          <div class="doc-field"><label for="commercialServiceSearch">Pesquisar atividade</label><input id="commercialServiceSearch" type="search" placeholder="Ex.: projeto elétrico, vistoria, cronograma..."></div>
+          <div class="doc-services-grid doc-services-modal-grid">${servicesCatalog.map(([code, name]) => {
+            const meta = serviceCatalogMeta.find(item => item.code === code) || {};
+            const detail = meta.description ? `<small class="doc-service-description">${esc(meta.description)}</small>` : '';
+            const search = esc(serviceSearchTerms(meta).join(' ') || normalizeSearch(name));
+            return `<label class="doc-service doc-service-smart" data-service-card data-search="${search}">
+              <input type="checkbox" data-service="${esc(code)}">
+              <span><strong>(${esc(code)}) ${esc(name)}</strong>${detail}</span>
+            </label>`;
+          }).join('')}</div>
+          <div class="doc-service-modal-actions">
+            <button type="button" class="doc-btn ghost" id="clearCommercialServices">Limpar seleção</button>
+            <button type="button" class="doc-btn secondary" id="cancelCommercialServicesBottom">Cancelar</button>
+            <button type="button" class="doc-btn" id="confirmCommercialServices">Concluir seleção</button>
+          </div>
+        </div>
+      </div>`;
     updateServiceSummary();
   }
 
+  function selectedServiceCodes() {
+    return Array.from(document.querySelectorAll('#commercialServices [data-service]:checked')).map(input => input.dataset.service).filter(Boolean);
+  }
+
+  function syncExperienceLevelStep() {
+    const field = $('experienceLevelField');
+    const select = $('experienceLevel');
+    if (!field || !select) return;
+    const codes = selectedServiceCodes();
+    const eligible = codes.some(code => serviceCatalogMeta.find(item => item.code === code)?.level_applicable === true);
+    field.classList.toggle('doc-hidden', !eligible);
+    const isPackage = codes.length > 1;
+    const label = $('experienceLevelLabel');
+    const help = $('experienceLevelHelp');
+    if (label) label.textContent = isPackage ? 'Nível de prestação do pacote' : 'Nível de prestação da atividade';
+    if (help) help.textContent = isPackage
+      ? 'Um único nível será aplicado a todas as atividades elegíveis deste pacote. Não é possível misturar níveis de prestação diferentes dentro do mesmo pacote.'
+      : 'Escolha o nível desta atividade avulsa.';
+    if (!eligible) select.value = '';
+    const lockedByQuote = mode() === 'contrato' && selectedQuoteKeys().length > 0;
+    select.disabled = lockedByQuote;
+  }
+
   function updateServiceSummary() {
-    const count = document.querySelectorAll('#commercialServices [data-service]:checked').length;
+    const codes = selectedServiceCodes();
     const target = $('commercialServiceCount');
-    if (target) target.textContent = `${count} selecionada${count === 1 ? '' : 's'}`;
+    if (target) target.textContent = `${codes.length} selecionada${codes.length === 1 ? '' : 's'}`;
+    const names = codes.map(code => servicesCatalog.find(item => item[0] === code)?.[1] || code);
+    const summary = $('commercialServiceSelectedSummary');
+    if (summary) summary.textContent = names.length ? names.join(' • ') : 'Nenhuma atividade selecionada.';
+    syncExperienceLevelStep();
+  }
+
+  let serviceSelectionSnapshot = [];
+  function openServicePicker() {
+    serviceSelectionSnapshot = selectedServiceCodes();
+    $('commercialServiceModal')?.classList.remove('doc-hidden');
+    document.documentElement.classList.add('doc-service-modal-open');
+    document.body.classList.add('doc-service-modal-open');
+    setTimeout(() => $('commercialServiceSearch')?.focus(), 0);
+  }
+  function closeServicePicker(commit = false) {
+    if (!commit) {
+      const snapshot = new Set(serviceSelectionSnapshot);
+      document.querySelectorAll('#commercialServices [data-service]').forEach(input => { input.checked = snapshot.has(input.dataset.service); });
+    }
+    $('commercialServiceModal')?.classList.add('doc-hidden');
+    document.documentElement.classList.remove('doc-service-modal-open');
+    document.body.classList.remove('doc-service-modal-open');
+    updateServiceSummary();
   }
 
   function ensureLevelInfo() {
@@ -197,20 +292,23 @@
     if (!panel || !grid) return;
     const box = document.createElement('div');
     box.id = 'commercialContextFields';
-    box.className = 'doc-grid doc-context-grid';
+    box.className = 'doc-commercial-context';
     box.innerHTML = `
-      <div class="doc-field">
-        <label for="linkedClientId">Cliente cadastrado</label>
-        <select id="linkedClientId"><option value="">Novo cliente / prospect</option></select>
-        <small class="doc-help">Selecione um cliente já cadastrado para reutilizar seus dados, sem duplicar cadastro.</small>
-      </div>
-      <div class="doc-field">
+      <details class="doc-context-picker" id="existingClientPicker">
+        <summary><span><strong>Usar cliente já cadastrado</strong><small>Reutilize o cadastro sem duplicar dados.</small></span><span id="linkedClientSummary">Novo cliente / prospect</span></summary>
+        <div class="doc-context-picker-body">
+          <div class="doc-field"><label for="linkedClientId">Cliente cadastrado</label><select id="linkedClientId"><option value="">Novo cliente / prospect</option></select></div>
+        </div>
+      </details>
+      <div class="doc-field doc-payment-compact">
         <label for="paymentMethod">Forma de pagamento</label>
         <select id="paymentMethod"><option value="">Selecione</option>${paymentOptions.map(([value,label]) => `<option value="${value}">${label}</option>`).join('')}</select>
-      </div>
-    `;
+      </div>`;
     panel.insertBefore(box, grid);
     $('linkedClientId')?.addEventListener('change', event => {
+      const selected = clientCatalog.find(item => String(item.id) === String(event.target.value));
+      const summary = $('linkedClientSummary');
+      if (summary) summary.textContent = selected?.nome || 'Novo cliente / prospect';
       if (event.target.value) applyClient(event.target.value);
     });
   }
@@ -339,6 +437,13 @@
 
     renderQuoteChoices();
     renderList();
+    const sourceLocked = isContract && selectedQuoteKeys().length > 0;
+    const openPicker = $('openCommercialServices');
+    if (openPicker) {
+      openPicker.disabled = sourceLocked;
+      openPicker.title = sourceLocked ? 'Os serviços deste contrato vêm do orçamento selecionado.' : '';
+    }
+    syncExperienceLevelStep();
   }
 
   function selectedQuoteKeys() {
@@ -522,8 +627,18 @@
     setField('notes', notes.join('\n'));
 
     const levels = [...new Set(selected.map(item => String(item.experience_level || '').trim()).filter(Boolean))];
+    if (levels.length > 1) {
+      clearForm(false);
+      if (summary) {
+        summary.textContent = 'Os orçamentos selecionados possuem níveis de prestação diferentes. Um mesmo pacote contratual deve manter um único nível.';
+        summary.className = 'doc-status error';
+      }
+      msg('Não é possível combinar níveis de prestação diferentes no mesmo pacote contratual.', 'error');
+      return;
+    }
     if ($('experienceLevel')) $('experienceLevel').value = levels.length === 1 ? levels[0] : '';
     applyServices(combinedServices(selected));
+    updateServiceSummary();
 
     const numbers = selected.map(item => item.quote_number).filter(Boolean);
     if (summary) {
@@ -535,6 +650,15 @@
   }
 
   async function create() {
+    const typedCustom = $('customService')?.value.trim() || '';
+    const canonical = suggestCatalogService(typedCustom);
+    if (typedCustom && canonical) {
+      const canonicalInput = document.querySelector(`[data-service="${CSS.escape(String(canonical.code))}"]`);
+      if (canonicalInput) canonicalInput.checked = true;
+      $('customService').value = '';
+      updateServiceSummary();
+      msg(`Atividade reconhecida e corrigida para "${canonical.name}" antes da emissão.`, 'success');
+    }
     const payload = form();
     const isContract = mode() === 'contrato';
 
@@ -571,6 +695,11 @@
     const sources = selectedQuoteKeys()
       .map(key => quoteSources.find(item => item.key === key))
       .filter(Boolean);
+
+    if (isContract && !sources.length) {
+      msg('Selecione o orçamento aprovado que dará origem ao contrato. O contrato não permite redigitar o escopo manualmente.', 'error');
+      return;
+    }
 
     if (!sameQuoteOwner(sources)) {
       msg('Selecione somente orçamentos do mesmo cliente ou prospect.', 'error');
@@ -809,7 +938,7 @@
         .order('created_at', { ascending: false })
         .limit(200),
       client().from('service_catalog')
-        .select('code,name,category,level_applicable,description,deliverables,exclusions,client_inputs,default_revisions,delivery_formats,planning_reference,version')
+        .select('code,name,category,level_applicable,description,deliverables,exclusions,client_inputs,default_revisions,delivery_formats,planning_reference,version,aliases,synonyms,keywords')
         .eq('active', true)
         .order('code'),
       client().from('service_level_catalog')
@@ -890,11 +1019,36 @@
     $('commercialServices')?.addEventListener('change', event => {
       if (event.target.matches('[data-service]')) updateServiceSummary();
     });
+    $('commercialServices')?.addEventListener('click', event => {
+      if (event.target.closest('#openCommercialServices')) openServicePicker();
+      if (event.target.closest('#confirmCommercialServices')) closeServicePicker(true);
+      if (event.target.closest('#cancelCommercialServices,#cancelCommercialServicesBottom')) closeServicePicker(false);
+      if (event.target.closest('#clearCommercialServices')) {
+        document.querySelectorAll('#commercialServices [data-service]').forEach(input => { input.checked = false; });
+        updateServiceSummary();
+      }
+    });
+    $('commercialServiceSearch')?.addEventListener('input', event => {
+      const needle = normalizeSearch(event.target.value);
+      document.querySelectorAll('#commercialServices [data-service-card]').forEach(card => {
+        card.classList.toggle('doc-hidden', Boolean(needle) && !String(card.dataset.search || '').includes(needle) && !normalizeSearch(card.textContent).includes(needle));
+      });
+    });
     $('customService')?.addEventListener('input', event => {
       if (String(event.target.value || '').trim()) {
         const other = document.querySelector('[data-service="p"]');
         if (other) other.checked = true;
       }
+      const typed = String(event.target.value || '').trim();
+      const suggestion = suggestCatalogService(typed);
+      let hint = $('customServiceSuggestion');
+      if (!hint) {
+        hint = document.createElement('small');
+        hint.id = 'customServiceSuggestion';
+        hint.className = 'doc-help';
+        event.target.insertAdjacentElement('afterend', hint);
+      }
+      hint.textContent = suggestion ? `Reconhecido como: ${suggestion.name}. A grafia canônica será usada no documento.` : (typed ? 'Se a atividade já existir no catálogo, o sistema tentará reconhecer pequenos erros de digitação antes da emissão.' : '');
       updateServiceSummary();
     });
 
