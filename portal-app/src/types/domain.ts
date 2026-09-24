@@ -344,12 +344,18 @@ export interface TaskTemplateSummary {
   itemCount: number;
 }
 
+export interface WorkDiaryTeamItem {
+  role: string;
+  quantity: number;
+}
+
 export interface WorkDiarySummary {
   id: string;
   projectId: string;
   entryDate: string;
   weather: string | null;
   teamCount: number | null;
+  teamBreakdown: WorkDiaryTeamItem[];
   activities: string;
   occurrences: string | null;
   materials: string | null;
@@ -412,6 +418,13 @@ export interface FinancialAccountSummary {
   accountType: 'bank' | 'cash' | 'credit';
   openingBalance: number;
   active: boolean;
+}
+
+export interface AdminFinancialPreferences {
+  defaultHourlyRate: number | null;
+  effectiveFrom: string | null;
+  referenceNote: string | null;
+  updatedAt: string | null;
 }
 
 export interface TimesheetSummary {
