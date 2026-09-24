@@ -83,7 +83,7 @@ has(contractQuoteGuard, 'Selecione o orçamento aprovado que dará origem ao con
 has(contractQuoteGuard, 'Contrato sem orçamento de origem. Vincule um ORC aprovado antes de prosseguir', 'Consistência comercial ainda aceita contrato sem origem.');
 has(contractQuoteGuard, "'legacy_project_quote',true", 'Contrato legado com número de orçamento perdeu o caminho válido.');
 const classicCommercialF20 = read('js/commercial-documents-web.js');
-notHas(classicCommercialF20, 'Contrato criado sem vínculo de orçamento.', 'UI ainda anuncia contrato sem orçamento, proibido pelo Plano Mestre.');
+lacks(classicCommercialF20, 'Contrato criado sem vínculo de orçamento.', 'UI ainda anuncia contrato sem orçamento, proibido pelo Plano Mestre.');
 
 const additionalScheduleConstraintFix = read('supabase/migrations/20260924160500_allow_additional_service_schedule_constraint.sql');
 has(additionalScheduleConstraintFix, "authorization_type'='servico_adicional_aceito", 'Constraint não reconhece cronograma autorizado por Serviço Adicional.');
