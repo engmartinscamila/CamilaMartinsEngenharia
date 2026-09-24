@@ -1,4 +1,5 @@
 import { downloadBase64File } from '@/lib/download-generated-file';
+import { toUserMessage } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 
 export interface ConstructionProjectOption {
@@ -102,7 +103,7 @@ export async function listConstructionScheduleProjects() {
 
 export async function initializeConstructionSchedule(projectId: string) {
   const result = await supabase.rpc('admin_initialize_construction_schedule', { p_project_id: projectId });
-  return result.error || !result.data ? { scheduleId: null, error: result.error?.message ?? 'Não foi possível preparar o cronograma da obra.' } : { scheduleId: String(result.data), error: null };
+  return result.error || !result.data ? { scheduleId: null, error: toUserMessage(result.error, 'Este projeto ainda não possui cronograma completo ativo. Crie-o pelo fluxo de orçamento e contrato vinculados.') } : { scheduleId: String(result.data), error: null };
 }
 
 export async function loadConstructionSchedule(projectId: string) {
