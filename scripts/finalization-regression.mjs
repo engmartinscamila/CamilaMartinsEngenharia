@@ -15,6 +15,10 @@ const generated = read('portal-app/src/app/admin/contract-documents.tsx');
 has(generated, 'Histórico de emissões', 'Documentos Gerados perdeu responsabilidade de histórico.');
 has(generated, 'Abrir Contratos Gerais', 'Documentos Gerados não encaminha criação ao fluxo canônico.');
 lacks(generated, 'prepareContractDocument', 'Documentos Gerados voltou a criar documentos por regra concorrente.');
+has(generated, "Platform.OS !== 'web'", 'Fallback nativo da Notificação Formal foi removido.');
+has(generated, 'prepareFormalNotice', 'App nativo perdeu a preparação da Notificação Formal.');
+has(generated, 'generateFormalNotice', 'App nativo perdeu a geração da Notificação Formal.');
+has(generated, 'sendFormalNotice', 'App nativo perdeu o envio da Notificação Formal.');
 
 const prep = read('portal-app/src/app/admin/document-preparation.tsx');
 has(prep, "openWebsiteAdminSection('commercial-documents')", 'Rota legada web não redireciona ao fluxo canônico.');
