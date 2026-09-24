@@ -8,6 +8,7 @@ import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/co
 import { listAdminProjects } from '@/services/admin-service';
 import {
   CONTRACT_DOCUMENT_OPTIONS,
+  checkAnnexIPrerequisite,
   listProjectApprovals,
   prepareContractDocument,
   previewContractDocument,
@@ -160,6 +161,14 @@ export default function AdminDocumentPreparationScreen(){
     if(!selectedProject){setError('Selecione um projeto para preparar o documento.');return;}
     const validation=validateOptions();if(validation){setError(validation);return;}
     setLoading(true);setError(null);setSuccess(null);
+    if(kind==='anexo_i'){
+      const prerequisite=await checkAnnexIPrerequisite(selectedProject.id);
+      if(prerequisite.error||!prerequisite.data.ready){
+        setLoading(false);
+        setError(prerequisite.error??prerequisite.data.reason??'O Anexo I ainda não pode ser preparado para este contrato.');
+        return;
+      }
+    }
     const result=await previewContractDocument({projectId:selectedProject.id,kind,approvalId:kind==='termo_aceite'?approvalId:null,extraData:extraData()});
     setLoading(false);
     if(result.error||!result.data){setError(result.error??'Prévia indisponível.');return;}
