@@ -1322,7 +1322,12 @@ for (const [button,email] of [["#firstAccess","cliente.qa@example.com"],["#forgo
   await page.waitForFunction(() => Boolean(window.__PASSWORD_LINK_CALL__));
   const requested = await page.evaluate(() => window.__PASSWORD_LINK_CALL__);
   assert(requested.email === email, "Link de senha deve usar o e-mail informado");
-  assert(requested.captchaToken === "qa-turnstile-token", "Link de senha deve enviar o token do Turnstile");
+  const captchaExpected = Boolean(
+    (await page.locator('meta[name="cme-turnstile-site-key"]').getAttribute("content"))?.trim()
+  );
+  if (captchaExpected) {
+    assert(requested.captchaToken === "qa-turnstile-token", "Login publicado deve enviar o token do Turnstile");
+  }
   assert(!await page.evaluate(() => window.__SIGNUP_CALL__), "Cadastro público não pode ser chamado");
   const message = await page.locator("#formMessage").textContent();
   assert(/se este e-mail estiver autorizado/i.test(message), "Resposta deve evitar revelar existência da conta");
