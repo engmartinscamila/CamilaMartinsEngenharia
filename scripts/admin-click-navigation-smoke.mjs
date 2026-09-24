@@ -14,7 +14,6 @@ const menuTargets = [
   ['Orçamentos e contratos', '/orcamentos-contratos.html'],
   ['Oportunidades comerciais', '/portal/admin/crm/'],
   ['Documentos gerados e aceites', '/portal/admin/contract-documents/'],
-  ['Preparar documento do projeto', '/portal/admin/document-preparation/'],
   ['Versões e pendências dos documentos', '/portal/admin/document-governance/'],
   ['Revisar serviços × Bronze/Prata/Ouro', '/portal/admin/service-level-governance/'],
   ['Arquivos antigos e restauração', '/portal/admin/document-archive/'],
@@ -42,7 +41,6 @@ const menuTargets = [
 const quickTargets = [
   ['crm', '/portal/admin/crm/'],
   ['contract-documents', '/portal/admin/contract-documents/'],
-  ['document-preparation', '/portal/admin/document-preparation/'],
   ['document-governance', '/portal/admin/document-governance/'],
   ['service-level-governance', '/portal/admin/service-level-governance/'],
   ['document-archive', '/portal/admin/document-archive/'],
@@ -145,6 +143,25 @@ for (const [slug, expectedPath] of quickTargets) {
     selector: `#abrirFerramenta-${slug}`,
     expectedPath,
   });
+}
+
+// A preparação documental foi consolidada em Contratos Gerais.
+// A rota antiga permanece apenas como compatibilidade interna e não deve voltar ao menu.
+{
+  const page = await newAdminPage();
+  assert(
+    await page.locator('a.menu-item').filter({ hasText: 'Preparar documento do projeto' }).count() === 0,
+    'Menu: preparação documental legada reapareceu',
+  );
+  assert(
+    await page.locator('#abrirFerramenta-document-preparation').count() === 0,
+    'Ações rápidas: preparação documental legada reapareceu',
+  );
+  assert(
+    await page.locator('a.menu-item').filter({ hasText: 'Orçamentos e contratos' }).count() === 1,
+    'Menu: Contratos Gerais deve permanecer como único ponto canônico documental',
+  );
+  await page.close();
 }
 
 {
