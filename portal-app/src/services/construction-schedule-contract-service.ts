@@ -108,7 +108,7 @@ export async function loadScheduleCommercialOptions(): Promise<{ data: ScheduleC
   if (authorizations.error) {
     return { data: null, error: authorizations.error.message ?? 'Não foi possível carregar os Serviços Adicionais aceitos para cronograma.' };
   }
-  const additionalAuthorizations: AdditionalScheduleAuthorization[] = (Array.isArray(authorizations.data) ? authorizations.data : []).map((row: any) => ({
+  const additionalAuthorizations: AdditionalScheduleAuthorization[] = (Array.isArray(authorizations.data) ? authorizations.data : []).map((row) => ({
     documentId: String(row.document_id),
     projectId: String(row.project_id),
     contractId: row.contract_id ? String(row.contract_id) : null,
