@@ -15,6 +15,7 @@ export function openWebsiteAdminHome() {
 // Áreas que continuam no Admin clássico e saem do portal React para páginas HTML legadas.
 const classicWebsiteAdminRoutes: Record<string, string> = {
   'commercial-documents': '/orcamentos-contratos.html',
+  'document-preparation': '/orcamentos-contratos.html',
   clients: '/clientes.html',
   projects: '/projetos.html',
   documents: '/documentos.html',
@@ -29,7 +30,6 @@ const classicWebsiteAdminRoutes: Record<string, string> = {
 export const modernWebsiteAdminSections = new Set([
   'crm',
   'contract-documents',
-  'document-preparation',
   'document-governance',
   'service-level-governance',
   'document-archive',
