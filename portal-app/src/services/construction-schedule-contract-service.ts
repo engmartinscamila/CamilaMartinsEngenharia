@@ -1,4 +1,5 @@
 import { downloadBase64File } from '@/lib/download-generated-file';
+import type { WorkCalendar } from '@/lib/construction-schedule-engine';
 import { supabase } from '@/lib/supabase';
 import { listConstructionScheduleProjects, type ConstructionProjectOption } from '@/services/construction-schedule-service';
 
