@@ -198,6 +198,24 @@ export async function listServiceLevelScopeReviews(status: ServiceLevelReviewSta
   };
 }
 
+export async function listAllServiceLevelScopeReviews(status: ServiceLevelReviewStatus | 'all' = 'pending') {
+  const pageSize = 200;
+  const maxItems = 5000;
+  const rows: AdminServiceLevelScopeReview[] = [];
+
+  for (let offset = 0; offset < maxItems; offset += pageSize) {
+    const page = await listServiceLevelScopeReviews(status, pageSize, offset);
+    if (page.error) return { data: [], error: page.error };
+    rows.push(...page.data);
+    if (page.data.length < pageSize) return { data: rows, error: null };
+  }
+
+  return {
+    data: [],
+    error: 'A revisão de serviços ultrapassou o limite de segurança de 5.000 combinações. Refine a consulta antes de continuar.',
+  };
+}
+
 export async function reviewServiceLevelScope(input: {
   serviceCode: string;
   levelCode: 'bronze' | 'prata' | 'ouro';
