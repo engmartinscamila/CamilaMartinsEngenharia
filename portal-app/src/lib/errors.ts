@@ -19,7 +19,13 @@ const safeOperationalPatterns = [
 ];
 
 export function toUserMessage(error: unknown, fallback = 'Não foi possível concluir esta ação. Tente novamente.') {
-  const raw = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+  const raw = error instanceof Error
+    ? error.message
+    : typeof error === 'string'
+      ? error
+      : error && typeof error === 'object' && 'message' in error && typeof (error as { message?: unknown }).message === 'string'
+        ? (error as { message: string }).message
+        : '';
   const normalized = raw.toLowerCase();
 
   if (connectionPatterns.some((pattern) => normalized.includes(pattern))) {
