@@ -78,6 +78,11 @@ has(scheduleTest, 'analyzeConstructionCriticalPath', 'Sandbox não testa caminho
 has(scheduleTest, 'Curva S TESTE', 'Sandbox não testa Curva S.');
 has(scheduleTest, 'Gerar Excel TESTE', 'Sandbox não oferece Excel isolado.');
 
+const additionalScheduleFix = read('supabase/migrations/20260924155500_fix_additional_service_schedule_save.sql');
+has(additionalScheduleFix, "authorization_type'='servico_adicional_aceito", 'Cronograma posterior não reconhece autorização por Serviço Adicional aceito.');
+has(additionalScheduleFix, 'assert_full_schedule_additional_service', 'Cronograma posterior não revalida o Serviço Adicional aceito.');
+has(additionalScheduleFix, 'assert_full_schedule_commercial_link', 'Cronograma original perdeu a validação ORC + CON.');
+
 const scheduleFunction = read('portal-app/supabase/functions/generate-construction-schedule-test-xlsx/index.ts');
 has(scheduleFunction, 'persisted:false', 'Gerador sandbox não declara ausência de persistência.');
 lacks(scheduleFunction, ".from('", 'Gerador sandbox não deve gravar tabelas do projeto.');
