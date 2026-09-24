@@ -740,9 +740,7 @@
     clearForm();
     msg(
       isContract
-        ? (sources.length
-            ? `Contrato criado e vinculado a ${sources.length} orçamento${sources.length === 1 ? '' : 's'}: ${sources.map(item => item.quote_number).join(', ')}.`
-            : 'Contrato criado sem vínculo de orçamento.')
+        ? `Contrato criado e vinculado a ${sources.length} orçamento${sources.length === 1 ? '' : 's'}: ${sources.map(item => item.quote_number).join(', ')}.`
         : 'Orçamento criado com numeração ORC independente.',
       'success'
     );
