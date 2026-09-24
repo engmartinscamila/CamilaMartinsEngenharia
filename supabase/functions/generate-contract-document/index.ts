@@ -589,8 +589,12 @@ Deno.serve(async(req)=>{
   const documentId=typeof body.documentId==='string'?body.documentId:'';
   const action=body.action==='send'?'send':'generate';
   const expectedDocumentKind=typeof body.expectedDocumentKind==='string'?body.expectedDocumentKind:'';
-  const scheduledFor=typeof body.scheduledFor==='string'&&body.scheduledFor?new Date(body.scheduledFor):null;
-  const isScheduled=scheduledFor&&!Number.isNaN(scheduledFor.getTime())&&scheduledFor.getTime()>Date.now();
+  const scheduledForRaw=typeof body.scheduledFor==='string'?body.scheduledFor.trim():'';
+  const scheduledFor=scheduledForRaw?new Date(scheduledForRaw):null;
+  if(scheduledForRaw&&(!scheduledFor||Number.isNaN(scheduledFor.getTime())||scheduledFor.getTime()<=Date.now())){
+   return json({error:'Escolha uma data e horário futuros para o agendamento.'},400);
+  }
+  const isScheduled=scheduledFor!==null;
   if(!/^[0-9a-f-]{36}$/i.test(documentId))return json({error:'Documento inválido.'},400);
   const {error:rateError}=await caller.rpc('consume_admin_rate_limit',{p_action:`contract-document-${action}`});
   if(rateError)return json({error:'Muitas tentativas. Aguarde antes de repetir a operação.'},429);
