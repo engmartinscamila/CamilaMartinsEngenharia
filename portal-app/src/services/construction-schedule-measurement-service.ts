@@ -76,7 +76,7 @@ export async function loadScheduleMeasurementOverview(scheduleId: string, refere
   if (eventResponse.data.length >= 2000) return {data: null, error: 'O histórico supera 2.000 eventos. A paginação integral é necessária antes de calcular indicadores.'};
   if (holidayResponse.data.length > 366) return {data: null, error: 'Calendário de feriados incompleto: revisar os dados antes de calcular.'};
   const header = scheduleResponse.data;
-  const baseline = header.baseline_snapshot as {activities?: Array<Record<string, unknown>>; calendar?: string} | null;
+  const baseline = header.baseline_snapshot as {activities?: Record<string, unknown>[]; calendar?: string} | null;
   if (header.activation_status !== 'approved' || Number(header.baseline_version) < 1 || !Array.isArray(baseline?.activities)) {
     return {data: null, error: 'Este cronograma ainda não possui uma linha de base aprovada.'};
   }
