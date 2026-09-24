@@ -4,6 +4,7 @@ import type { DocumentPickerAsset } from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Platform } from 'react-native';
 import type {
+  AdminFinancialPreferences,
   AutomationRunSummary,
   FinancialAccountSummary,
   FiscalDocumentSummary,
@@ -191,6 +192,11 @@ export async function listWorkDiary(projectId: string): Promise<ServiceResult<Wo
       entryDate: row.entry_date,
       weather: row.weather,
       teamCount: row.team_count,
+      teamBreakdown: Array.isArray(row.team_breakdown)
+        ? row.team_breakdown
+            .map((item: any) => ({ role: String(item?.role ?? '').trim(), quantity: Number(item?.quantity ?? 0) }))
+            .filter((item: { role: string; quantity: number }) => item.role && Number.isInteger(item.quantity) && item.quantity > 0)
+        : [],
       activities: row.activities,
       occurrences: row.occurrences,
       materials: row.materials,
@@ -208,6 +214,7 @@ export async function createWorkDiaryEntry(input: {
   entryDate: string;
   weather?: string;
   teamCount?: number | null;
+  teamBreakdown?: { role: string; quantity: number }[];
   activities: string;
   occurrences?: string;
   materials?: string;
@@ -220,6 +227,9 @@ export async function createWorkDiaryEntry(input: {
     entry_date: input.entryDate,
     weather: input.weather?.trim() || null,
     team_count: input.teamCount ?? null,
+    team_breakdown: (input.teamBreakdown ?? [])
+      .filter((item) => item.role.trim() && Number.isInteger(item.quantity) && item.quantity > 0)
+      .map((item) => ({ role: item.role.trim(), quantity: item.quantity })),
     activities: input.activities.trim(),
     occurrences: input.occurrences?.trim() || null,
     materials: input.materials?.trim() || null,
@@ -339,6 +349,50 @@ export async function listProjectFinancialSummaries(): Promise<ServiceResult<Pro
     })),
     error: null,
   };
+}
+
+export async function getAdminFinancialPreferences(): Promise<ServiceResult<AdminFinancialPreferences>> {
+  const result = await supabase
+    .from('admin_financial_preferences')
+    .select('default_hourly_rate,effective_from,reference_note,updated_at')
+    .eq('singleton_id', 1)
+    .maybeSingle();
+  if (result.error) {
+    return {
+      data: { defaultHourlyRate: null, effectiveFrom: null, referenceNote: null, updatedAt: null },
+      error: 'Não foi possível carregar a taxa horária padrão.',
+    };
+  }
+  return {
+    data: {
+      defaultHourlyRate: result.data?.default_hourly_rate === null || result.data?.default_hourly_rate === undefined
+        ? null
+        : Number(result.data.default_hourly_rate),
+      effectiveFrom: result.data?.effective_from ?? null,
+      referenceNote: result.data?.reference_note ?? null,
+      updatedAt: result.data?.updated_at ?? null,
+    },
+    error: null,
+  };
+}
+
+export async function updateAdminFinancialPreferences(input: {
+  defaultHourlyRate: number | null;
+  effectiveFrom?: string | null;
+  referenceNote?: string | null;
+}) {
+  if (input.defaultHourlyRate !== null && (!Number.isFinite(input.defaultHourlyRate) || input.defaultHourlyRate < 0)) {
+    return 'Informe uma taxa horária válida ou deixe o valor em branco.';
+  }
+  if (input.effectiveFrom && !isValidIsoDate(input.effectiveFrom)) return 'Informe uma data de vigência válida.';
+  const result = await supabase.from('admin_financial_preferences').upsert({
+    singleton_id: 1,
+    default_hourly_rate: input.defaultHourlyRate,
+    effective_from: input.effectiveFrom || null,
+    reference_note: input.referenceNote?.trim() || null,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'singleton_id' });
+  return result.error ? 'Não foi possível salvar a taxa horária padrão.' : null;
 }
 
 export async function listFinancialAccounts(): Promise<ServiceResult<FinancialAccountSummary[]>> {
