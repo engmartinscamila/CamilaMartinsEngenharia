@@ -27,6 +27,22 @@ const clientArea = read('js/cliente-area.js');
 assert.match(clientArea, /function escapar\(/, 'Área do cliente deve manter função de escape');
 assert.doesNotMatch(clientArea, /mostrarErro\(error\.message/, 'Erro técnico não pode ser exibido ao cliente');
 
+const browserFiles = [
+  ...fs.readdirSync(new URL('js/', root), { recursive: true })
+    .filter(path => /\.(?:js|mjs|cjs)$/i.test(String(path)))
+    .map(path => `js/${String(path).replaceAll('\\\\','/')}`),
+  ...fs.readdirSync(new URL('portal-app/src/', root), { recursive: true })
+    .filter(path => /\.(?:js|jsx|ts|tsx)$/i.test(String(path)))
+    .map(path => `portal-app/src/${String(path).replaceAll('\\\\','/')}`),
+  ...fs.readdirSync(root)
+    .filter(path => /\.html$/i.test(String(path)))
+    .map(path => String(path)),
+];
+for (const path of browserFiles) {
+  const source = read(path);
+  assert.doesNotMatch(source, /SUPABASE_(?:SERVICE_ROLE|SECRET)_KEY|\bsb_secret_[A-Za-z0-9_-]+/i, path + ': segredo/service role não pode existir no código cliente');
+}
+
 const acceptance = read('js/document-acceptance-client.js');
 assert.match(acceptance, /const esc=v=>String/, 'Aceite documental deve manter escape explícito');
 assert.doesNotMatch(acceptance, /alert\(error\.message/, 'Erro de RPC não pode ser exibido diretamente ao cliente');
