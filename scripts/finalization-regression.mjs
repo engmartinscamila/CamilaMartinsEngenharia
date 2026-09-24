@@ -29,6 +29,10 @@ has(approvals, 'title="Recusar"', 'Portal não oferece recusa explícita.');
 const approvalService = read('portal-app/src/services/portal-service.ts');
 has(approvalService, "'aprovado_com_ressalvas'", 'Serviço do portal não aceita ressalvas.');
 
+const notificationUuidFix = read('supabase/migrations/20260924154500_fix_notification_reference_uuid.sql');
+has(notificationUuidFix, "'document_acceptance',v_id", 'Aceite documental voltou a gravar referencia_id como texto.');
+has(notificationUuidFix, "'cliente','documento',d.id", 'Liberação documental voltou a gravar referencia_id como texto.');
+
 const acceptanceMigration = read('supabase/migrations/20260924153000_acceptance_three_states.sql');
 has(acceptanceMigration, "'aprovado_com_ressalvas'", 'Migration não protege os três estados de aceite.');
 has(acceptanceMigration, 'v_client_id', 'Aceite não está vinculado à identidade do cliente.');
