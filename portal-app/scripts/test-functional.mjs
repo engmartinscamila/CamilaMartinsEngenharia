@@ -44,11 +44,16 @@ eq(authCredentials.options?.captchaToken,'captcha-token-fixture','CAPTCHA token 
 
 const loginSource=fs.readFileSync('src/app/login.tsx','utf8');
 const captchaSource=fs.readFileSync('src/components/turnstile-captcha.tsx','utf8');
+const captchaPageSource=fs.readFileSync('src/app/captcha.tsx','utf8');
+const captchaHelperSource=fs.readFileSync('src/lib/captcha.ts','utf8');
 const envSource=fs.readFileSync('src/lib/env.ts','utf8');
 const productionEnvCheck=fs.readFileSync('scripts/verify-production-env.mjs','utf8');
 const productionWorkflow=fs.readFileSync('../.github/workflows/pages.yml','utf8');
 eq(loginSource.includes('TurnstileCaptcha')&&loginSource.includes('captchaRequired')&&loginSource.includes('captchaConfigurationMissing'),true,'web login renders CAPTCHA and blocks unsafe production fallback');
-eq(loginSource.includes('captchaRequired && !captchaToken'),true,'web login cannot submit before CAPTCHA completion');
+eq(loginSource.includes('captchaRequired && !token'),true,'login cannot reach Supabase without a CAPTCHA token');
+eq(loginSource.includes('requestNativeCaptchaToken'),true,'native app obtains a CAPTCHA token through the secure web challenge');
+eq(captchaHelperSource.includes("camilamartinsengenharia://captcha-complete")&&captchaHelperSource.includes('https://camilamartinsengenharia.com.br/portal/captcha.html'),true,'native CAPTCHA is constrained to the official app scheme and website');
+eq(captchaPageSource.includes('isAllowedCaptchaReturnUrl')&&captchaPageSource.includes('Linking.openURL'),true,'hosted CAPTCHA validates the return target before returning its token');
 eq(captchaSource.includes('https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'),true,'portal loads the official Cloudflare Turnstile challenge');
 eq(envSource.includes('EXPO_PUBLIC_TURNSTILE_SITE_KEY')&&productionEnvCheck.includes('Site key pública do Cloudflare Turnstile ausente.'),true,'production build requires a Turnstile site key');
 eq(productionEnvCheck.includes("GITHUB_EVENT_NAME === 'pull_request'"),true,'only pull-request CI may compile without the real Turnstile site key');
