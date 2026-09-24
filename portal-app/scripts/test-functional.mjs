@@ -5,6 +5,10 @@ import ts from 'typescript';
 let checks = 0;
 const eq=(a,b,message)=>{assert.deepEqual(JSON.parse(JSON.stringify(a)),JSON.parse(JSON.stringify(b)),message);checks++;};
 function load(path,deps={}) { const exports={}; vm.runInNewContext(ts.transpileModule(fs.readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,URL,console,require:name=>{if(!(name in deps))throw Error(`Unexpected dependency ${name}`);return deps[name];}},{filename:path});return exports; }
+const errors=load('src/lib/errors.ts');
+eq(errors.toUserMessage({message:'Gere o contrato Word oficial antes de preparar o Anexo I'},'fallback'),'Gere o contrato Word oficial antes de preparar o Anexo I','safe Supabase operational error remains actionable');
+eq(errors.toUserMessage({message:'Cronograma completo não contratado ou não inicializado. Selecione orçamento e contrato vinculados.'},'fallback'),'Cronograma completo não contratado ou não inicializado. Selecione orçamento e contrato vinculados.','schedule prerequisite remains actionable');
+eq(errors.toUserMessage({message:'relation internal_secret does not exist'},'fallback'),'fallback','technical database detail remains hidden');
 const format=load('src/lib/format.ts');
 for(const [value,status] of [['Concluído','concluido'],['Em andamento','em_andamento'],['em_andamento','em_andamento'],['Pendente','pendente']])eq(format.normalizeStatus(value),status,`schedule ${value}`);
 const {notificationRoute:route}=load('src/lib/notification-route.ts');
