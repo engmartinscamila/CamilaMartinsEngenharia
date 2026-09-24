@@ -24,6 +24,7 @@ export default function AdminSecurityScreen() {
   const [auditUser, setAuditUser] = useState('');
   const [auditProject, setAuditProject] = useState('');
   const [auditPeriodDays, setAuditPeriodDays] = useState('');
+  const [auditNow, setAuditNow] = useState(() => Date.now());
   const [loading, setLoading] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
   const [auditError, setAuditError] = useState<string | null>(null);
@@ -44,6 +45,7 @@ export default function AdminSecurityScreen() {
     setOverview(storageResult.data);
     setOrphans(orphanResult.data);
     setAudit(auditResult.data);
+    setAuditNow(Date.now());
     setStorageError(storageResult.error ?? orphanResult.error);
     setAuditError(auditResult.error);
     setLoading(false);
@@ -57,7 +59,7 @@ export default function AdminSecurityScreen() {
     const user = auditUser.trim().toLocaleLowerCase('pt-BR');
     const project = auditProject.trim().toLocaleLowerCase('pt-BR');
     const days = Number(auditPeriodDays);
-    const cutoff = Number.isFinite(days) && days > 0 ? Date.now() - days * 86_400_000 : null;
+    const cutoff = Number.isFinite(days) && days > 0 ? auditNow - days * 86_400_000 : null;
     return audit.filter((entry) => {
       if (action && !entry.action.toLocaleLowerCase('pt-BR').includes(action)) return false;
       if (type && !(entry.entityType ?? '').toLocaleLowerCase('pt-BR').includes(type)) return false;
@@ -69,7 +71,7 @@ export default function AdminSecurityScreen() {
       }
       return true;
     });
-  }, [audit, auditAction, auditPeriodDays, auditProject, auditType, auditUser]);
+  }, [audit, auditAction, auditNow, auditPeriodDays, auditProject, auditType, auditUser]);
 
 
 
