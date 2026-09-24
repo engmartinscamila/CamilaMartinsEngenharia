@@ -14,11 +14,22 @@ export interface CommercialScheduleDocument {
   totalValue: number | null;
 }
 export interface CommercialScheduleLink { quoteRecordId: string; contractRecordId: string }
+export interface AdditionalScheduleAuthorization {
+  documentId: string;
+  projectId: string;
+  contractId: string | null;
+  documentVersion: string;
+  acceptedAt: string;
+  serviceCode: string;
+  serviceName: string;
+  serviceLevel: string | null;
+}
 export interface ScheduleCommercialOptions {
   projects: ConstructionProjectOption[];
   quotes: CommercialScheduleDocument[];
   contracts: CommercialScheduleDocument[];
   links: CommercialScheduleLink[];
+  additionalAuthorizations: AdditionalScheduleAuthorization[];
 }
 export interface ScheduleTemplateItem {
   code: string;
@@ -93,11 +104,27 @@ export async function loadScheduleCommercialOptions(): Promise<{ data: ScheduleC
     if (rows.length < PAGE_SIZE) break;
   }
 
+  const authorizations = await supabase.rpc('admin_list_full_schedule_additional_authorizations');
+  if (authorizations.error) {
+    return { data: null, error: authorizations.error.message ?? 'Não foi possível carregar os Serviços Adicionais aceitos para cronograma.' };
+  }
+  const additionalAuthorizations: AdditionalScheduleAuthorization[] = (Array.isArray(authorizations.data) ? authorizations.data : []).map((row: any) => ({
+    documentId: String(row.document_id),
+    projectId: String(row.project_id),
+    contractId: row.contract_id ? String(row.contract_id) : null,
+    documentVersion: String(row.document_version ?? '1.0'),
+    acceptedAt: String(row.accepted_at ?? ''),
+    serviceCode: String(row.service_code ?? ''),
+    serviceName: String(row.service_name ?? 'Cronograma completo de acompanhamento de obra'),
+    serviceLevel: row.service_level ? String(row.service_level) : null,
+  }));
+
   return { data: {
     projects: projects.data,
     quotes: documents.filter((doc) => doc.recordKind === 'orcamento'),
     contracts: documents.filter((doc) => doc.recordKind === 'contrato'),
     links,
+    additionalAuthorizations,
   }, error: null };
 }
 
@@ -129,6 +156,32 @@ export async function previewScheduleTemplate(projectId: string, quoteId: string
   if (!preview.requires_scope_confirmation || !Array.isArray(preview.items)) return { data: null, error: 'Modelo inválido: falta revisão individual das atividades.' };
   return { data: preview, error: null };
 }
+export async function previewScheduleTemplateFromAdditionalService(projectId: string, documentId: string, templateCode: string): Promise<{ data: ScheduleTemplatePreview | null; error: string | null }> {
+  const result = await supabase.rpc('admin_preview_full_schedule_template_from_additional_service', {
+    p_project_id: projectId,
+    p_document_id: documentId,
+    p_template_code: templateCode,
+  });
+  if (result.error || !result.data) return { data: null, error: result.error?.message ?? 'O Serviço Adicional aceito não pôde ser validado para o cronograma.' };
+  const preview = result.data as ScheduleTemplatePreview;
+  if (!preview.requires_scope_confirmation || !Array.isArray(preview.items)) return { data: null, error: 'Modelo inválido: falta revisão individual das atividades.' };
+  return { data: preview, error: null };
+}
+
+export async function saveVerifiedScheduleFromAdditionalService(
+  projectId: string,
+  documentId: string,
+  plan: Record<string, unknown>,
+): Promise<{ scheduleId: string | null; error: string | null }> {
+  const result = await supabase.rpc('admin_initialize_and_save_full_schedule_from_additional_service', {
+    p_project_id: projectId,
+    p_document_id: documentId,
+    p_plan: plan,
+  });
+  if (result.error || !result.data) return { scheduleId: null, error: result.error?.message ?? 'Cronograma não foi criado: confira o Serviço Adicional aceito e o planejamento.' };
+  return { scheduleId: String(result.data), error: null };
+}
+
 export async function saveVerifiedSchedule(
   projectId: string,
   quoteId: string,
