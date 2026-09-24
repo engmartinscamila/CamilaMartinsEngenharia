@@ -105,10 +105,16 @@ export async function loadScheduleCommercialOptions(): Promise<{ data: ScheduleC
   }
 
   const authorizations = await supabase.rpc('admin_list_full_schedule_additional_authorizations');
-  if (authorizations.error) {
-    return { data: null, error: authorizations.error.message ?? 'Não foi possível carregar os Serviços Adicionais aceitos para cronograma.' };
+  const authorizationMessage = authorizations.error?.message ?? '';
+  const authorizationRpcUnavailable = authorizations.error && (
+    authorizations.error.code === 'PGRST202' ||
+    authorizations.error.code === '42883' ||
+    /admin_list_full_schedule_additional_authorizations/i.test(authorizationMessage) && /not found|could not find|does not exist/i.test(authorizationMessage)
+  );
+  if (authorizations.error && !authorizationRpcUnavailable) {
+    return { data: null, error: authorizationMessage || 'Não foi possível carregar os Serviços Adicionais aceitos para cronograma.' };
   }
-  const additionalAuthorizations: AdditionalScheduleAuthorization[] = (Array.isArray(authorizations.data) ? authorizations.data : []).map((row) => ({
+  const additionalAuthorizations: AdditionalScheduleAuthorization[] = (Array.isArray(authorizations.data) && !authorizationRpcUnavailable ? authorizations.data : []).map((row) => ({
     documentId: String(row.document_id),
     projectId: String(row.project_id),
     contractId: row.contract_id ? String(row.contract_id) : null,
