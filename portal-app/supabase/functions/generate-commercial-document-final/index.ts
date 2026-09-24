@@ -1,51 +1,357 @@
 import { createClient } from 'supabase';
 import JSZip from 'jszip';
 
-const corsHeaders={
- 'Access-Control-Allow-Origin':Deno.env.get('ALLOWED_ORIGIN')??'*',
- 'Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type',
- 'Access-Control-Allow-Methods':'POST, OPTIONS',
+const corsHeaders = {
+  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
-const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{...corsHeaders,'Content-Type':'application/json; charset=utf-8'}});
-type Obj=Record<string,unknown>;
-function env(){const url=Deno.env.get('SUPABASE_URL'),anonKey=Deno.env.get('SUPABASE_ANON_KEY'),serviceKey=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');if(!url||!anonKey||!serviceKey)throw new Error('Configuração segura ausente.');return {url,anonKey,serviceKey};}
-async function requireAdmin(req:Request){const authorization=req.headers.get('Authorization');if(!authorization?.startsWith('Bearer '))throw new Error('Sessão administrativa ausente.');const {url,anonKey,serviceKey}=env();const caller=createClient(url,anonKey,{global:{headers:{Authorization:authorization}},auth:{persistSession:false,autoRefreshToken:false}});const {data:userData,error:userError}=await caller.auth.getUser();if(userError||!userData.user)throw new Error('Sessão administrativa inválida.');const {data:isAdmin,error:adminError}=await caller.rpc('is_portal_admin');if(adminError||isAdmin!==true)throw new Error('Acesso administrativo necessário.');return {authorization,url,anonKey,service:createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}}),user:userData.user};}
-const text=(v:unknown)=>String(v??'').trim();
-const xmlEsc=(v:unknown)=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
-async function proxyCore(url:string,anonKey:string,authorization:string,body:unknown){const response=await fetch(`${url}/functions/v1/generate-commercial-document`,{method:'POST',headers:{Authorization:authorization,apikey:anonKey,'Content-Type':'application/json'},body:JSON.stringify(body)});let data:Obj={};try{data=await response.json()}catch{data={error:'Resposta inválida do gerador comercial principal.'}}return {response,data};}
-async function replaceContractAddress(bytes:Uint8Array,address:string|null,propertyAddress:string){const zip=await JSZip.loadAsync(bytes);const file=zip.file('word/document.xml');if(!file)return bytes;let xml=await file.async('string');const oldAddress=address?.trim()||'Não informado';const oldPhrase=`com endereço em ${xmlEsc(oldAddress)}`;const newPhrase=`com endereço do imóvel/obra em ${xmlEsc(propertyAddress)}`;if(xml.includes(oldPhrase))xml=xml.replace(oldPhrase,newPhrase);else if(xml.includes(xmlEsc(oldAddress)))xml=xml.replace(xmlEsc(oldAddress),xmlEsc(propertyAddress));zip.file('word/document.xml',xml);return await zip.generateAsync({type:'uint8array',compression:'DEFLATE'});}
-async function sha256(value:unknown){const raw=new TextEncoder().encode(JSON.stringify(value));const digest=await crypto.subtle.digest('SHA-256',raw);return Array.from(new Uint8Array(digest)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json; charset=utf-8' } });
+type Obj = Record<string, unknown>;
+const text = (value: unknown) => String(value ?? '').trim();
+const isOther = (item: Obj) => ['p', 'outro', 'outros'].includes(text(item.code).toLowerCase());
+// A elegibilidade vem do snapshot versionado; serviços avulsos também podem ter pacote.
+// Não recalcular contratos históricos usando códigos fixos.
+const isProjectTierEligible = (item: Obj) => item.levelApplicable === true;
+const serviceLevelObject = (item: Obj) => item.level && typeof item.level === 'object' ? item.level as Obj : null;
+const serviceLevelCode = (item: Obj) => text(serviceLevelObject(item)?.code ?? item.levelCode).toLowerCase();
+const serviceLevelLabel = (item: Obj) => {
+  const level = serviceLevelObject(item);
+  const label = text(level?.label);
+  return label || serviceLevelCode(item).toUpperCase();
+};
+const xmlEsc = (value: unknown) => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+function env() {
+  const url = Deno.env.get('SUPABASE_URL');
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!url || !anonKey || !serviceKey) throw new Error('Configuração segura ausente.');
+  return { url, anonKey, serviceKey };
+}
+async function requireAdmin(req: Request) {
+  const authorization = req.headers.get('Authorization');
+  if (!authorization?.startsWith('Bearer ')) throw new Error('Sessão administrativa ausente.');
+  const { url, anonKey, serviceKey } = env();
+  const caller = createClient(url, anonKey, { global: { headers: { Authorization: authorization } }, auth: { persistSession: false, autoRefreshToken: false } });
+  const { data: userData, error: userError } = await caller.auth.getUser();
+  if (userError || !userData.user) throw new Error('Sessão administrativa inválida.');
+  const { data: isAdmin, error: adminError } = await caller.rpc('is_portal_admin');
+  if (adminError || isAdmin !== true) throw new Error('Acesso administrativo necessário.');
+  return { authorization, url, anonKey, service: createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } }), user: userData.user };
+}
+async function proxyCore(url: string, anonKey: string, authorization: string, body: unknown) {
+  const response = await fetch(`${url}/functions/v1/generate-commercial-document`, {
+    method: 'POST', headers: { Authorization: authorization, apikey: anonKey, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  });
+  let data: Obj = {};
+  try { data = await response.json(); } catch { data = { error: 'Resposta inválida do gerador comercial principal.' }; }
+  return { response, data };
+}
+const wordParagraph = (value: string, bold = false) => `<w:p><w:pPr><w:spacing w:after="120" w:line="300" w:lineRule="auto"/></w:pPr><w:r><w:rPr>${bold ? '<w:b/>' : ''}<w:rFonts w:ascii="Century Gothic" w:hAnsi="Century Gothic"/></w:rPr><w:t xml:space="preserve">${xmlEsc(value)}</w:t></w:r></w:p>`;
+const customScopeDescription = (specification: string) => `Atividade específica solicitada: ${specification}. A prestação abrange exclusivamente esta atividade e os resultados expressamente descritos e aprovados no orçamento e no Anexo I. Quantidades, formato de entrega, visitas, revisões, prazo e etapas somente serão considerados incluídos quando definidos expressamente; acréscimos exigem aprovação e contratação prévias.`;
+function selectedServices(services: unknown) {
+  return Array.isArray(services) ? services.filter(item => item && typeof item === 'object' && (item as Obj).included !== false) as Obj[] : [];
+}
+function paragraphText(paragraph: string) {
+  return [...paragraph.matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g)].map(match => match[1]).join('');
+}
+function contractScopeXml(services: unknown, customService: unknown, experienceLevel: unknown, propertyAddress: string) {
+  const selected = selectedServices(services);
+  if (!selected.length && !text(customService)) return '';
+  const perItemLevels = selected.filter(item => isProjectTierEligible(item) && serviceLevelCode(item));
+  const distinctLevels = [...new Set(perItemLevels.map(serviceLevelCode))];
+  const parts = [
+    wordParagraph('ESCOPO TÉCNICO CONTRATADO', true),
+    wordParagraph(`Local do serviço / endereço do imóvel ou obra: ${propertyAddress}.`),
+  ];
+  if (!perItemLevels.length && text(experienceLevel) && selected.some(isProjectTierEligible)) {
+    parts.push(wordParagraph(`Nível de prestação: ${text(experienceLevel).toUpperCase()}, aplicável exclusivamente às atividades elegíveis expressamente contratadas. Não acrescenta serviços, visitas, aprovações, execução, taxas, fornecimentos ou entregáveis de outra categoria.`));
+  } else if (distinctLevels.length > 1) {
+    parts.push(wordParagraph('Os níveis de prestação são definidos individualmente por atividade e não ampliam automaticamente o escopo de outras atividades.'));
+  }
+  const otherSelected = selected.some(isOther);
+  selected.forEach((item, index) => {
+    const other = isOther(item);
+    const name = other ? 'Serviço técnico personalizado' : text(item.name) || `Serviço ${index + 1}`;
+    const description = other && text(customService)
+      ? customScopeDescription(text(customService))
+      : text(item.contractScope) || text(item.description) || 'Serviço técnico conforme o escopo expressamente contratado e detalhado no Anexo I.';
+    parts.push(wordParagraph(`${index + 1}. ${name}`, true));
+    if (isProjectTierEligible(item) && serviceLevelCode(item)) {
+      parts.push(wordParagraph(`Nível desta atividade: ${serviceLevelLabel(item)}.`));
+    }
+    parts.push(wordParagraph(description));
+  });
+  if (text(customService) && !otherSelected) {
+    parts.push(wordParagraph('Serviço adicional / especificação complementar', true));
+    parts.push(wordParagraph(text(customService)));
+    parts.push(wordParagraph('Este item fica restrito às atividades, entregáveis, premissas e condições expressamente descritas no orçamento e no Anexo I. Qualquer ampliação depende de aprovação e contratação prévias.'));
+  }
+  return parts.join('');
+}
+function insertionBeforeParagraph(xml: string, marker: string) {
+  const markerIndex = xml.indexOf(marker);
+  if (markerIndex < 0) throw new Error('Marcador do resumo contratual não encontrado no Word.');
+  const paragraphs = [...xml.slice(0, markerIndex).matchAll(/<w:p(?=[\s>])/g)];
+  const start = paragraphs.at(-1)?.index;
+  if (start === undefined) throw new Error('Não foi possível localizar um parágrafo válido para o escopo do contrato.');
+  return start;
+}
+async function enhanceContractDocument(bytes: Uint8Array, propertyAddress: string, services: unknown, customService: unknown, experienceLevel: unknown) {
+  const zip = await JSZip.loadAsync(bytes);
+  const file = zip.file('word/document.xml');
+  if (!file) throw new Error('O contrato gerado não contém o documento Word esperado.');
+  let xml = await file.async('string');
+  const selected = selectedServices(services);
+  const selectedLevelCodes = [...new Set(selected.filter(isProjectTierEligible).map(serviceLevelCode).filter(Boolean))];
+  if (selected.length > 0 && selected.every(item => !isProjectTierEligible(item))) {
+    // Snapshot histórico sem nível aplicável: não atribuir pacote retroativamente.
+    xml = xml.replace(/<w:p(?=[\s>])[\s\S]*?<\/w:p>/g, paragraph =>
+      /^Nível de (experiência|prestação):/.test(paragraphText(paragraph))
+        ? wordParagraph('Níveis Bronze/Prata/Ouro: não aplicáveis às atividades desta contratação; prevalece o escopo aprovado no Anexo I.')
+        : paragraph);
+  } else if (selectedLevelCodes.length > 1) {
+    xml = xml.replace(/<w:p(?=[\s>])[\s\S]*?<\/w:p>/g, paragraph =>
+      /^Nível de (experiência|prestação):/.test(paragraphText(paragraph))
+        ? wordParagraph('Níveis de prestação: definidos individualmente por atividade no escopo técnico vinculado.')
+        : paragraph);
+  }
+  // Não substitui endereço cadastral do contratante no preâmbulo.
+  const scopeXml = contractScopeXml(services, customService, experienceLevel, propertyAddress);
+  if (scopeXml) {
+    const insertion = insertionBeforeParagraph(xml, 'RESUMO COMERCIAL VINCULADO');
+    xml = xml.slice(0, insertion) + scopeXml + xml.slice(insertion);
+  }
+  zip.file('word/document.xml', xml);
+  return await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+}
 
-Deno.serve(async(req)=>{
- if(req.method==='OPTIONS')return new Response('ok',{headers:corsHeaders});
- if(req.method!=='POST')return json({error:'Método não permitido.'},405);
- let createdRevisionId:string|null=null;let previousDocumentId:string|null=null;let pointerField='';
- try{
-  const {authorization,url,anonKey,service,user}=await requireAdmin(req);const body=await req.json() as Obj;const recordId=text(body.recordId);const kind=body.kind==='contrato'?'contrato':'orcamento';if(!/^[0-9a-f-]{36}$/i.test(recordId))return json({error:'Registro comercial inválido.'},400);
-  const source=await service.from('commercial_records').select('*').eq('id',recordId).maybeSingle();if(source.error)throw source.error;if(!source.data)return json({error:'Registro comercial não encontrado.'},404);
-  if(kind==='contrato'&&!text(source.data.property_address))return json({error:'Informe o endereço do imóvel / obra antes de gerar o contrato.'},422);
-  pointerField=kind==='contrato'?'contract_document_id':'quote_document_id';previousDocumentId=text(source.data[pointerField])||null;
-  if(previousDocumentId){
-   const frozen=await service.from('document_emission_snapshots').select('id').eq('document_id',previousDocumentId).maybeSingle();if(frozen.error)throw frozen.error;
-   if(frozen.data){
-    const reason=text(body.versionReason);if(!reason)return json({error:'Informe o motivo da nova versão antes de gerar novamente.'},422);
-    const old=await service.from('documentos').select('*').eq('id',previousDocumentId).single();if(old.error)throw old.error;
-    const oldData=(old.data.generated_data&&typeof old.data.generated_data==='object'?old.data.generated_data:{}) as Obj;
-    const inserted=await service.from('documentos').insert({cliente_id:old.data.cliente_id,projeto_id:old.data.projeto_id,contract_id:old.data.contract_id,approval_id:old.data.approval_id,nome:old.data.nome,tipo:old.data.tipo,categoria:old.data.categoria||'Comercial',versao:'1.0',storage_bucket:old.data.storage_bucket||'documentos',permitir_download:old.data.permitir_download!==false,protection_mode:old.data.protection_mode||'administrative',autoral:old.data.autoral===true,document_kind:kind,workflow_status:'rascunho',optional_document:old.data.optional_document===true,generated_data:{...oldData,commercial_document_kind:kind,commercial_record_id:recordId,version_bump:body.versionBump==='major'?'major':'minor',version_reason:reason}}).select('id,versao').single();if(inserted.error)throw inserted.error;createdRevisionId=inserted.data.id;
-    const linked=await service.from('commercial_records').update({[pointerField]:createdRevisionId}).eq('id',recordId);if(linked.error)throw linked.error;
-   }
+/** Corrige apenas parágrafos conhecidos e preserva outros conteúdos e estilos do Word. */
+async function enhanceQuoteDocument(bytes: Uint8Array, services: unknown, customService: unknown) {
+  const selected = selectedServices(services);
+  const specification = text(customService);
+  const otherSelected = selected.some(isOther);
+  const onlyNonProject = selected.length > 0 && selected.every(item => !isProjectTierEligible(item));
+  const onlyStandaloneService = selected.length > 0 && selected.every(item => ['j', 'k', 'l', 'm', 'n', 'o', 'p', 'q'].includes(text(item.code).toLowerCase()));
+  const legacyConsultancy = selected.some(item => text(item.code).toLowerCase() === 'q');
+  if ((!otherSelected || !specification) && !onlyNonProject && !onlyStandaloneService && !legacyConsultancy && selected.every(isProjectTierEligible)) return bytes;
+  const zip = await JSZip.loadAsync(bytes);
+  const word = zip.file('word/document.xml');
+  if (!word) throw new Error('O orçamento gerado não contém o documento Word esperado.');
+  const xml = await word.async('string');
+  const paragraphPattern = /<w:p(?=[\s>])[\s\S]*?<\/w:p>/g;
+  const paragraphs = [...xml.matchAll(paragraphPattern)];
+  const values = paragraphs.map(match => paragraphText(match[0]));
+  const replacement = new Map<number, string>();
+  if (otherSelected && specification) {
+    const otherHeadingIndex = values.findIndex(value => /^\d+\. (Outro|Serviço técnico personalizado)$/.test(value));
+    if (otherHeadingIndex < 0) throw new Error('O serviço personalizado não foi identificado no orçamento gerado.');
+    const descriptionIndex = otherHeadingIndex + 1;
+    if (descriptionIndex >= values.length) throw new Error('Descrição personalizada ausente no orçamento gerado.');
+    replacement.set(descriptionIndex, wordParagraph(customScopeDescription(specification)));
+    for (let index = descriptionIndex + 1; index < values.length && index < descriptionIndex + 12; index += 1) {
+      if (values[index].startsWith('Revisões incluídas:')) {
+        replacement.set(index, wordParagraph('Revisões, formato de entrega e prazo desta atividade: somente os que forem discriminados no escopo específico e no Anexo I; nenhum pacote adicional é presumido.'));
+        break;
+      }
+      if (/^\d+\. /.test(values[index]) || values[index].includes('LIMITES E EXCLUSÕES')) break;
+    }
+    const duplicateIndex = values.findIndex(value => value === 'Serviço adicional descrito no orçamento');
+    if (duplicateIndex >= 0) {
+      if (!values[duplicateIndex + 2]?.startsWith('Este item somente integra o escopo')) {
+        throw new Error('Bloco personalizado duplicado em formato inesperado; emissão interrompida para evitar conteúdo incorreto.');
+      }
+      replacement.set(duplicateIndex, '');
+      replacement.set(duplicateIndex + 1, '');
+      replacement.set(duplicateIndex + 2, '');
+    }
   }
-  const core=await proxyCore(url,anonKey,authorization,{recordId,kind});
-  if(!core.response.ok){if(createdRevisionId&&previousDocumentId){await service.from('commercial_records').update({[pointerField]:previousDocumentId}).eq('id',recordId);await service.from('documentos').delete().eq('id',createdRevisionId)}return json(core.data,core.response.status)};
-  const documentId=text(core.data.documentId);if(!/^[0-9a-f-]{36}$/i.test(documentId))throw new Error('Documento comercial gerado sem vínculo documental válido.');
-  const doc=await service.from('documentos').select('id,arquivo,storage_bucket,generated_data,versao,version_reason,document_kind').eq('id',documentId).single();if(doc.error)throw doc.error;if(!doc.data.arquivo)throw new Error('O documento foi preparado sem arquivo Word.');const bucket=doc.data.storage_bucket||'documentos';
-  if(kind==='contrato'){
-   const downloaded=await service.storage.from(bucket).download(doc.data.arquivo);if(downloaded.error||!downloaded.data)throw downloaded.error??new Error('Não foi possível abrir o contrato recém-gerado.');let bytes=new Uint8Array(await downloaded.data.arrayBuffer());bytes=await replaceContractAddress(bytes,source.data.address,source.data.property_address);const upload=await service.storage.from(bucket).upload(doc.data.arquivo,bytes,{contentType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',upsert:true});if(upload.error)throw upload.error;
+  if (legacyConsultancy) {
+    values.forEach((value, index) => {
+      if (!/^\d+\. Consultoria Técnica$/.test(value)) return;
+      for (let next = index + 1; next < values.length && next < index + 12; next += 1) {
+        if (values[next].startsWith('Revisões incluídas:')) {
+          replacement.set(next, wordParagraph('Revisões, formato de entrega e prazo da consultoria: somente conforme condições expressas no orçamento e no Anexo I.'));
+          break;
+        }
+        if (/^\d+\. /.test(values[next]) || values[next].includes('LIMITES E EXCLUSÕES')) break;
+      }
+    });
   }
-  const generatedData=(doc.data.generated_data&&typeof doc.data.generated_data==='object'?doc.data.generated_data:{}) as Obj;const finalData={...generatedData,commercial_record_snapshot:source.data,property_address:source.data.property_address,party_address:source.data.address,address_used_in_contract:kind==='contrato'?'property_address':undefined,version_reason:doc.data.version_reason||text(body.versionReason)||null};
-  const updated=await service.from('documentos').update({generated_data:finalData,snapshot_frozen_at:new Date().toISOString()}).eq('id',documentId);if(updated.error)throw updated.error;
-  const snapshot={...finalData,document_id:documentId,document_kind:kind,version:doc.data.versao};const snap=await service.from('document_emission_snapshots').insert({document_id:documentId,document_kind:kind,version:doc.data.versao||'1.0',version_reason:doc.data.version_reason||text(body.versionReason)||null,snapshot,snapshot_hash:await sha256(snapshot),emitted_at:new Date().toISOString(),created_by:user.id});if(snap.error&&!String(snap.error.message||'').toLowerCase().includes('duplicate'))throw snap.error;
-  await service.from('audit_log').insert({user_id:user.id,action:'finalize_commercial_document_version',entity_type:'commercial_records',entity_id:recordId,details:{document_id:documentId,document_kind:kind,version:doc.data.versao,version_reason:doc.data.version_reason||text(body.versionReason)||null,used_property_address:kind==='contrato',same_as_party_address:text(source.data.address)===text(source.data.property_address)}});
-  return json({...core.data,documentId,version:doc.data.versao,addressUsed:kind==='contrato'?'property_address':null,snapshotFrozen:true},200);
- }catch(error){const message=error instanceof Error?error.message:'Não foi possível finalizar o documento comercial.';return json({error:message},message.includes('Acesso')?403:message.includes('Sessão')?401:500);}
+  if (onlyNonProject) {
+    // Elimina recursos, descrições e selo de Bronze/Prata/Ouro impressos pelo
+    // gerador principal na seção 2 mesmo em documentos só de consultoria.
+    const levelStart = values.findIndex(value => value === '2. NÍVEL DE PRESTAÇÃO DE SERVIÇO');
+    const scopeStart = values.findIndex((value, index) => index > levelStart && value === '3. ESCOPO INTELIGENTE DE SERVIÇOS');
+    if (levelStart >= 0 && scopeStart > levelStart + 1) {
+      replacement.set(levelStart + 1, wordParagraph('O registro anterior não contém pacote válido no snapshot; prevalecem as condições específicas aprovadas no orçamento e no Anexo I, sem atribuição retroativa de nível.'));
+      for (let index = levelStart + 2; index < scopeStart; index += 1) replacement.set(index, '');
+    }
+    values.forEach((value, index) => {
+      if (value.startsWith('Na ausência de indicação específica no Anexo I, aplicam-se até 2')) {
+        replacement.set(index, wordParagraph('Para os serviços selecionados, o regime de revisões e as condições de aceite devem ser definidos por atividade no Anexo I. Não se presumem rodadas de alterações de escopo para consultorias, vistorias ou atividades personalizadas; correções técnicas seguem o contrato.'));
+      }
+      if (value.startsWith('O prazo geral de referência é de 45')) {
+        replacement.set(index, wordParagraph('O prazo técnico de cada serviço será definido no cronograma aprovado no Anexo I, conforme sua natureza e os insumos necessários. Prazos de análise de órgãos públicos ou terceiros não são prazos de elaboração técnica.'));
+      }
+    });
+  } else if (selected.some(isProjectTierEligible) && selected.some(item => !isProjectTierEligible(item))) {
+    // Proposta mista: elimina a indicação indevida de consultoria/serviços
+    // administrativos como elegíveis, sem remover nível dos projetos.
+    const eligible = selected.filter(isProjectTierEligible).map(item => text(item.name) || text(item.code));
+    values.forEach((value, index) => {
+      if (value.startsWith('O nível selecionado aplica-se somente aos serviços de projeto elegíveis nesta proposta:')) {
+        replacement.set(index, wordParagraph(`O nível selecionado aplica-se exclusivamente aos serviços de projeto elegíveis desta proposta: ${eligible.join(', ')}.`));
+      }
+    });
+  }
+  if (onlyStandaloneService && !onlyNonProject) {
+    // A contratação avulsa pode ter pacote, mas não herda prazos/revisões de projeto.
+    values.forEach((value, index) => {
+      if (value.startsWith('Na ausência de indicação específica no Anexo I, aplicam-se até 2')) {
+        replacement.set(index, wordParagraph('Revisões e condições de aceite deste serviço avulso são as expressamente aprovadas para a atividade no Anexo I; erros técnicos continuam sujeitos a correção.'));
+      }
+      if (value.startsWith('O prazo geral de referência é de 45')) {
+        replacement.set(index, wordParagraph('O prazo do serviço avulso é o cronograma específico aprovado no Anexo I, sem aplicação automática de prazo de projeto ou de análise de terceiros.'));
+      }
+    });
+  }
+  if (!replacement.size) return bytes;
+  let output = '';
+  let cursor = 0;
+  paragraphs.forEach((match, index) => {
+    const start = match.index ?? 0;
+    output += xml.slice(cursor, start);
+    output += replacement.has(index) ? replacement.get(index) : match[0];
+    cursor = start + match[0].length;
+  });
+  output += xml.slice(cursor);
+  if (otherSelected && specification && output.includes('Serviço adicional descrito no orçamento')) {
+    throw new Error('Orçamento contém bloco personalizado duplicado após revisão.');
+  }
+  zip.file('word/document.xml', output);
+  return await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+}
+
+async function sha256(value: unknown) {
+  const raw = new TextEncoder().encode(JSON.stringify(value));
+  const digest = await crypto.subtle.digest('SHA-256', raw);
+  return Array.from(new Uint8Array(digest)).map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+Deno.serve(async req => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST') return json({ error: 'Método não permitido.' }, 405);
+  let createdRevisionId: string | null = null;
+  let previousDocumentId: string | null = null;
+  let pointerField = '';
+  try {
+    const { authorization, url, anonKey, service, user } = await requireAdmin(req);
+    const body = await req.json() as Obj;
+    const recordId = text(body.recordId);
+    const kind = body.kind === 'contrato' ? 'contrato' : 'orcamento';
+    if (!/^[0-9a-f-]{36}$/i.test(recordId)) return json({ error: 'Registro comercial inválido.' }, 400);
+    const preparedScope = await service.rpc('admin_prepare_commercial_scope_for_generation', { p_record_id: recordId });
+    if (preparedScope.error) throw preparedScope.error;
+    const source = await service.from('commercial_records').select('*').eq('id', recordId).maybeSingle();
+    if (source.error) throw source.error;
+    if (!source.data) return json({ error: 'Registro comercial não encontrado.' }, 404);
+    if (kind === 'contrato' && !text(source.data.property_address)) return json({ error: 'Informe o endereço do imóvel / obra antes de gerar o contrato.' }, 422);
+    const selected = selectedServices(source.data.services);
+    if (!selected.length && !text(source.data.custom_service)) return json({ error: 'Nenhuma atividade foi selecionada para este documento.' }, 422);
+    if (selected.some(isOther) && text(source.data.custom_service).length < 12) {
+      return json({ error: 'Descreva a atividade Outros com pelo menos 12 caracteres antes de gerar o documento.' }, 422);
+    }
+    pointerField = kind === 'contrato' ? 'contract_document_id' : 'quote_document_id';
+    previousDocumentId = text(source.data[pointerField]) || null;
+    if (previousDocumentId) {
+      const frozen = await service.from('document_emission_snapshots').select('id').eq('document_id', previousDocumentId).maybeSingle();
+      if (frozen.error) throw frozen.error;
+      if (frozen.data) {
+        const reason = text(body.versionReason);
+        if (!reason) return json({ error: 'Informe o motivo da nova versão antes de gerar novamente.' }, 422);
+        const old = await service.from('documentos').select('*').eq('id', previousDocumentId).single();
+        if (old.error) throw old.error;
+        const oldPath = text(old.data.arquivo);
+        // Download sem arquivamento remove o arquivo; arquivo arquivado usa caminho próprio.
+        const number = kind === 'orcamento' ? text(source.data.quote_number) : text(source.data.contract_number) || 'contrato';
+        const overwrittenPath = `comercial/${recordId}/${kind}-${number}-v1.0.docx`;
+        if (oldPath && oldPath === overwrittenPath) {
+          const oldBucket = text(old.data.storage_bucket) || 'documentos';
+          const oldDownload = await service.storage.from(oldBucket).download(oldPath);
+          if (oldDownload.error || !oldDownload.data) throw oldDownload.error ?? new Error('Não foi possível preservar o Word anterior.');
+          const backupPath = `comercial/${recordId}/historico/${previousDocumentId}-${kind}.docx`;
+          const backupUpload = await service.storage.from(oldBucket).upload(backupPath, new Uint8Array(await oldDownload.data.arrayBuffer()), {
+            contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', upsert: false,
+          });
+          if (backupUpload.error) throw backupUpload.error;
+          const preserved = await service.from('documentos').update({ arquivo: backupPath }).eq('id', previousDocumentId);
+          if (preserved.error) throw preserved.error;
+        }
+        const oldData = old.data.generated_data && typeof old.data.generated_data === 'object' ? old.data.generated_data as Obj : {};
+        const inserted = await service.from('documentos').insert({
+          cliente_id: old.data.cliente_id, projeto_id: old.data.projeto_id, contract_id: old.data.contract_id,
+          approval_id: old.data.approval_id, nome: old.data.nome, tipo: old.data.tipo, categoria: old.data.categoria || 'Comercial',
+          versao: '1.0', storage_bucket: old.data.storage_bucket || 'documentos', permitir_download: old.data.permitir_download !== false,
+          protection_mode: old.data.protection_mode || 'administrative', autoral: old.data.autoral === true,
+          document_kind: kind, workflow_status: 'rascunho', optional_document: old.data.optional_document === true,
+          generated_data: { ...oldData, commercial_document_kind: kind, commercial_record_id: recordId,
+            version_bump: body.versionBump === 'major' ? 'major' : 'minor', version_reason: reason },
+        }).select('id,versao').single();
+        if (inserted.error) throw inserted.error;
+        createdRevisionId = inserted.data.id;
+        const linked = await service.from('commercial_records').update({ [pointerField]: createdRevisionId }).eq('id', recordId);
+        if (linked.error) throw linked.error;
+      }
+    }
+    const core = await proxyCore(url, anonKey, authorization, { recordId, kind });
+    if (!core.response.ok) {
+      if (createdRevisionId && previousDocumentId) {
+        await service.from('commercial_records').update({ [pointerField]: previousDocumentId }).eq('id', recordId);
+        await service.from('documentos').delete().eq('id', createdRevisionId);
+      }
+      return json(core.data, core.response.status);
+    }
+    const documentId = text(core.data.documentId);
+    if (!/^[0-9a-f-]{36}$/i.test(documentId)) throw new Error('Documento comercial gerado sem vínculo documental válido.');
+    const doc = await service.from('documentos').select('id,arquivo,storage_bucket,generated_data,versao,version_reason,document_kind').eq('id', documentId).single();
+    if (doc.error) throw doc.error;
+    if (!doc.data.arquivo) throw new Error('O documento foi preparado sem arquivo Word.');
+    const bucket = doc.data.storage_bucket || 'documentos';
+    const downloaded = await service.storage.from(bucket).download(doc.data.arquivo);
+    if (downloaded.error || !downloaded.data) throw downloaded.error ?? new Error('Não foi possível abrir o documento recém-gerado.');
+    const originalBytes = new Uint8Array(await downloaded.data.arrayBuffer());
+    const finalBytes = kind === 'contrato'
+      ? await enhanceContractDocument(originalBytes, source.data.property_address, source.data.services, source.data.custom_service, source.data.experience_level)
+      : await enhanceQuoteDocument(originalBytes, source.data.services, source.data.custom_service);
+    if (finalBytes !== originalBytes) {
+      const uploaded = await service.storage.from(bucket).upload(doc.data.arquivo, finalBytes, {
+        contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', upsert: true,
+      });
+      if (uploaded.error) throw uploaded.error;
+    }
+    const generatedData = doc.data.generated_data && typeof doc.data.generated_data === 'object' ? doc.data.generated_data as Obj : {};
+    const finalData = { ...generatedData, commercial_record_snapshot: source.data, property_address: source.data.property_address,
+      party_address: source.data.address, address_used_in_contract: kind === 'contrato' ? 'party_and_property_separate' : undefined,
+      contract_scope_texts_injected: kind === 'contrato', quote_custom_scope_reconciled: kind === 'orcamento' && selected.some(isOther),
+      version_reason: doc.data.version_reason || text(body.versionReason) || null };
+    const updated = await service.from('documentos').update({ generated_data: finalData, snapshot_frozen_at: new Date().toISOString() }).eq('id', documentId);
+    if (updated.error) throw updated.error;
+    const snapshot = { ...finalData, document_id: documentId, document_kind: kind, version: doc.data.versao };
+    const snap = await service.from('document_emission_snapshots').insert({ document_id: documentId, document_kind: kind,
+      version: doc.data.versao || '1.0', version_reason: doc.data.version_reason || text(body.versionReason) || null,
+      snapshot, snapshot_hash: await sha256(snapshot), emitted_at: new Date().toISOString(), created_by: user.id });
+    if (snap.error && !String(snap.error.message || '').toLowerCase().includes('duplicate')) throw snap.error;
+    await service.from('audit_log').insert({ user_id: user.id, action: 'finalize_commercial_document_version', entity_type: 'commercial_records', entity_id: recordId,
+      details: { document_id: documentId, document_kind: kind, version: doc.data.versao,
+        version_reason: doc.data.version_reason || text(body.versionReason) || null,
+        used_property_address: kind === 'contrato', contract_scope_texts_injected: kind === 'contrato',
+        same_as_party_address: text(source.data.address) === text(source.data.property_address) } });
+    return json({ ...core.data, documentId, version: doc.data.versao,
+      addressUsed: kind === 'contrato' ? 'party_and_property_separate' : null,
+      scopeTextsInjected: kind === 'contrato', quoteScopeReconciled: kind === 'orcamento' && selected.some(isOther), snapshotFrozen: true }, 200);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Não foi possível finalizar o documento comercial.';
+    return json({ error: message }, message.includes('Acesso') ? 403 : message.includes('Sessão') ? 401 : 500);
+  }
 });
