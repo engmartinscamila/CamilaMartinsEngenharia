@@ -315,6 +315,7 @@ export interface AuditEntrySummary {
   action: string;
   entityType: string | null;
   entityId: string | null;
+  userId: string | null;
   details: Record<string, unknown> | null;
   createdAt: string;
 }
