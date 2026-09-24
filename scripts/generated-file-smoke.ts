@@ -148,7 +148,7 @@ try{
       'CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE ENGENHARIA — CON-2026-09-QA01',
       'Cliente Arquivo QA',
       'Rua Particular QA, 123',
-      'Local do serviço / endereço do imóvel ou obra: Rua da Obra QA, 999.',
+      'Local do serviço / endereço do imóvel ou obra: Rua da Obra QA, 999 - Rio de Janeiro/RJ.',
       'ESCOPO TÉCNICO CONTRATADO',
       'CLÁUSULA 1 – OBJETO',
     ],
@@ -165,8 +165,8 @@ try{
   }
 
   const nativeCases:any[]=[
-    ['termo_aceite','06-termo-aceite','TERMO DE ACEITE DE ETAPA',{acceptance:'accepted_with_notes',acceptance_notes:'Ressalva QA registrada.'},['Aceito com ressalvas','Ressalva QA registrada.']],
-    ['levantamento_tecnico','07-levantamento-tecnico','FICHA DE LEVANTAMENTO TÉCNICO / VISTORIA',{inspection_datetime:'11/09/2026 10:00',site_contact:'Responsável QA',observed:['electrical','structure'],conditions:['cracks'],conditions_description:'Fissura superficial QA.'},['Pontos elétricos','Fissura superficial QA.']],
+    ['termo_aceite','06-termo-aceite','TERMO DE ACEITE DE ETAPA',{acceptance:'accepted_with_notes',acceptance_notes:'Ressalva QA registrada.'},['Aceito com ressalvas','Ressalvas / motivo da recusa:']],
+    ['levantamento_tecnico','07-levantamento-tecnico','FICHA DE LEVANTAMENTO TÉCNICO / VISTORIA',{inspection_datetime:'11/09/2026 10:00',site_contact:'Responsável QA',observed:['electrical','structure'],conditions:['cracks'],conditions_description:'Fissura superficial QA.'},['Instalações / pontos elétricos','Fissura superficial QA.']],
     ['servico_adicional','08-servico-adicional','TERMO DE APROVAÇÃO DE SERVIÇO ADICIONAL',{reasons:['scope_change'],pricing:'fixed',additional_service_description:'Alteração de layout QA.',additional_value:'R$ 2.500,00',schedule_impact:'5 dias úteis',approval:['approved']},['Alteração de layout QA.','R$ 2.500,00']],
     ['autorizacao_imagem','09-autorizacao-imagem','AUTORIZAÇÃO DE USO DE IMAGEM E DIVULGAÇÃO',{materials:['facade','interiors'],channels:['portfolio','social'],privacy:['hide_address'],wait_months:'6'},['Fotografias externas / fachada','Aguardar 6 meses']],
     ['quitacao_encerramento','10-quitacao-encerramento','TERMO DE QUITAÇÃO E ENCERRAMENTO',{closing_reason:'completed',financial:'paid',delivered_files:'Projetos finais QA',open_items:'Nenhuma',public_processes:'Nenhum'},['Conclusão integral do escopo contratado','Quitação integral']]
