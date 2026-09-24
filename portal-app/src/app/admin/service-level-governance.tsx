@@ -4,7 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 import { AdminPageHeader } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
 import {
-  listServiceLevelScopeReviews,
+  listAllServiceLevelScopeReviews,
   reviewServiceLevelScope,
   type AdminServiceLevelScopeReview,
   type ServiceLevelReviewStatus,
@@ -26,7 +26,6 @@ type ServiceGroup = {
   items: AdminServiceLevelScopeReview[];
 };
 
-const FETCH_LIMIT = 200;
 const keyOf = (item: AdminServiceLevelScopeReview) => `${item.serviceCode}:${item.levelCode}`;
 
 export default function ServiceLevelGovernanceScreen() {
@@ -46,7 +45,7 @@ export default function ServiceLevelGovernanceScreen() {
 
   const load = useCallback(async () => {
     setLoading(true); setError(null);
-    const result = await listServiceLevelScopeReviews(status, FETCH_LIMIT, 0);
+    const result = await listAllServiceLevelScopeReviews(status);
     setItems(result.data);
     setDrafts(Object.fromEntries(result.data.map((item: AdminServiceLevelScopeReview) => [keyOf(item), {
       budgetDescription: item.budgetDescription,
