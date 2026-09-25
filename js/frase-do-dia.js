@@ -57,11 +57,7 @@
 
     function normalizarFrase(item) {
         const texto=limparTexto(item?.texto);
-        const fonte=limparTexto(item?.fonte);
-        const autor=limparTexto(item?.autor);
-        const grafiaAntiga=/\b(?:n['’]um|n['’]uma|d['’]um|d['’]uma|d['’]elle|d['’]ella|scenas?|polycarpo|yaya|pharmacia|acceitar|ahi)\b/i;
-        const fonteHistorica=/project gutenberg/i;
-        if (!texto || autor === "Desconhecido" || fonteHistorica.test(fonte) || grafiaAntiga.test(texto)) return null;
+        if (!texto) return null;
         return {
             texto,
             autor:limparTexto(item?.autor || FALLBACK.autor),
@@ -69,7 +65,6 @@
             fonte:item?.fonte ? limparTexto(item.fonte) : ""
         };
     }
-
     function montarAcervo(acervo) {
         if (Array.isArray(acervo?.frases)) return acervo.frases.map(normalizarFrase).filter(Boolean);
         const finais = Array.isArray(acervo?.finais) ? acervo.finais : [];
