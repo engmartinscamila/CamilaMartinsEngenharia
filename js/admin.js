@@ -22,7 +22,7 @@ function versaoDoScriptAdmin() {
 function carregarFraseDoDiaAdmin() {
   if (window.__CME_FRASE_DO_DIA__ || document.getElementById('cmeFraseDoDiaScript')) return;
   const script = document.createElement('script');
-  const versao = versaoDoScriptAdmin() || '20260925-1';
+  const versao = versaoDoScriptAdmin() || '20260925-3';
   script.id = 'cmeFraseDoDiaScript';
   script.src = `js/frase-do-dia.js?v=${encodeURIComponent(versao)}`;
   script.defer = true;
