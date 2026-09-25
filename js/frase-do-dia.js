@@ -57,8 +57,11 @@
 
     function normalizarFrase(item) {
         const texto=limparTexto(item?.texto);
+        const fonte=limparTexto(item?.fonte);
+        const autor=limparTexto(item?.autor);
         const grafiaAntiga=/\b(?:n['’]um|n['’]uma|d['’]um|d['’]uma|d['’]elle|d['’]ella|scenas?|polycarpo|yaya|pharmacia|acceitar|ahi)\b/i;
-        if (!texto || grafiaAntiga.test(texto)) return null;
+        const fonteHistorica=/project gutenberg/i;
+        if (!texto || autor === "Desconhecido" || fonteHistorica.test(fonte) || grafiaAntiga.test(texto)) return null;
         return {
             texto,
             autor:limparTexto(item?.autor || FALLBACK.autor),
