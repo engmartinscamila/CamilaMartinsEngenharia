@@ -75,3 +75,51 @@ html.doc-service-modal-open,body.doc-service-modal-open{overflow:hidden;overscro
  .doc-services-modal-grid{grid-template-columns:1fr}.doc-service-modal-panel{padding:14px;max-height:calc(100dvh - 12px)}.doc-service-modal{padding:6px;align-items:flex-start}
  .doc-service-modal-actions{display:grid;grid-template-columns:1fr}.doc-commercial-context{grid-template-columns:1fr}.doc-service-open{align-items:flex-start}.doc-service-count{white-space:normal;text-align:right}
 }
+
+
+/* Correção 2026-09-24 — cards de atividades com texto longo sem sobreposição. */
+.doc-services-modal-grid{
+  min-height:0;
+  align-content:start;
+  align-items:start;
+  grid-auto-rows:max-content;
+}
+.doc-services-modal-grid .doc-service{
+  min-height:0;
+  height:auto;
+  box-sizing:border-box;
+  overflow:visible;
+  align-items:flex-start;
+}
+.doc-services-modal-grid .doc-service-smart{
+  gap:10px;
+}
+.doc-services-modal-grid .doc-service-smart > span{
+  flex:1 1 auto;
+  min-width:0;
+  display:grid;
+  gap:6px;
+  line-height:1.4;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+.doc-services-modal-grid .doc-service-smart > span > strong{
+  display:block;
+  margin:0;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+.doc-services-modal-grid .doc-service-description{
+  display:block;
+  margin:0;
+  line-height:1.45;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+@media(max-width:720px){
+  .doc-services-modal-grid .doc-service{
+    min-height:0;
+  }
+}
