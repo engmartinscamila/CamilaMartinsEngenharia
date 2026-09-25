@@ -95,7 +95,12 @@
     function escolherFrase(acervo, data) {
         const historico = lerHistorico();
         const existente = historico.find(item => item.data === data);
-        if (existente) return acervo[existente.indice] || FALLBACK;
+        if (existente) {
+            const porTexto = acervo.find(item => item.texto === existente.texto);
+            const porIndice = acervo[existente.indice];
+            if (porTexto) return porTexto;
+            if (porIndice && porIndice.texto === existente.texto) return porIndice;
+        }
 
         const indiceBase = indiceDoDia(data, acervo.length);
         const textosRecentes = new Set(historico.slice(-LIMITE_HISTORICO).map(item => item.texto));
