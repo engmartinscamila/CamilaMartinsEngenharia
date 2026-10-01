@@ -34,6 +34,45 @@ async function requireAdmin(request: Request) {
   return { caller, service, user: userData.user };
 }
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function emailConfiguration() {
+  const apiKey = (Deno.env.get('RESEND_API_KEY') || '').trim();
+  const from = (Deno.env.get('NOTIFICATION_FROM_EMAIL') || Deno.env.get('RESEND_FROM') || '').trim();
+  if (!apiKey || !from) throw new Error('Canal de e-mail não configurado.');
+  if (/\s/.test(apiKey)) throw new Error('A chave RESEND_API_KEY contém espaços ou quebras de linha. Corrija o segredo no Supabase.');
+  const senderAddress = from.includes('<') ? from.match(/^[^<>\r\n]*<([^<>]+)>$/)?.[1] : from;
+  if (!senderAddress || /[\r\n]/.test(from) || !emailPattern.test(senderAddress)) {
+    throw new Error('Remetente de e-mail inválido. Corrija NOTIFICATION_FROM_EMAIL no Supabase: use um e-mail do domínio verificado no Resend.');
+  }
+  return { apiKey, from };
+}
+function providerFailure(status: number, delivery: any, apiKey: string) {
+  const rawMessage = typeof delivery?.message === 'string' ? delivery.message : '';
+  const reason = rawMessage.toLowerCase();
+  // Log only the response error, never the request, access link, or credentials.
+  const safeMessage = rawMessage.split(apiKey).join('[chave removida]')
+    .replace(/Bearer\s+\S+/gi, 'Bearer [removido]')
+    .replace(/(?:re_|github_pat_|ghp_)[a-zA-Z0-9_-]+/g, '[chave removida]')
+    .replace(/https?:\/\/[^\s"<>]+/gi, '[URL removida]')
+    .replace(/[^\s<>"']+@[^\s<>"']+/g, '[e-mail removido]')
+    .replace(/[\r\n]/g, ' ').slice(0, 500);
+  const code = typeof delivery?.name === 'string' && /^[a-z_]{1,80}$/.test(delivery.name) ? delivery.name : 'provider_error';
+  console.error('admin-invite-client: provedor recusou envio', JSON.stringify({ status, code, message: safeMessage }));
+  if (/api.?key/.test(reason) && /invalid|not active|suspend|missing/.test(reason)) {
+    return 'A chave do Resend está inválida ou inativa. Atualize RESEND_API_KEY nos segredos do Supabase.';
+  }
+  if (/testing emails|own email address/.test(reason)) {
+    return 'O Resend está limitado a e-mails de teste. Verifique o domínio no Resend e configure NOTIFICATION_FROM_EMAIL com esse domínio.';
+  }
+  if (/domain/.test(reason) && /not verified|verify/.test(reason)) {
+    return 'O domínio do remetente não está verificado no Resend. Verifique o domínio e confira NOTIFICATION_FROM_EMAIL no Supabase.';
+  }
+  if (/from/.test(reason) && /invalid|format|missing|required/.test(reason)) {
+    return 'O Resend recusou o remetente. Corrija NOTIFICATION_FROM_EMAIL no Supabase usando um e-mail válido do domínio verificado.';
+  }
+  if (/quota|limit.*reached/.test(reason)) return 'A cota de envio do Resend foi atingida. Confira os limites da conta antes de reenviar.';
+  if (status === 429) return 'O Resend limitou temporariamente os envios. Aguarde alguns minutos antes de reenviar.';
+  return `O Resend recusou o envio (HTTP ${status}; ${code}). O motivo detalhado foi registrado nos logs de admin-invite-client no Supabase.`;
+}
 async function findAuthUserByEmail(service: any, email: string) {
   for (let page = 1; page <= 100; page += 1) {
     const { data, error } = await service.auth.admin.listUsers({ page, perPage: 1000 });
@@ -94,9 +133,7 @@ Deno.serve(async (request) => {
     if (existingClient && existingClient.status !== 'ativo') {
       return json({ error: 'Ative o cliente antes de enviar o acesso.' }, 409);
     }
-    const apiKey = Deno.env.get('RESEND_API_KEY');
-    const from = Deno.env.get('NOTIFICATION_FROM_EMAIL') || Deno.env.get('RESEND_FROM');
-    if (!apiKey || !from) throw new Error('Canal de e-mail não configurado.');
+    const { apiKey, from } = emailConfiguration();
     // Production website links must not inherit the mobile app deep-link setting.
     const production = new URL(Deno.env.get('SUPABASE_URL')!).hostname.startsWith('hghtwlopqztfcosfxafd.');
     const redirectTo = production
@@ -165,8 +202,8 @@ Deno.serve(async (request) => {
     });
     const delivery = await emailResponse.json().catch(() => ({}));
     if (!emailResponse.ok || !delivery.id) {
-      console.error('admin-invite-client: provedor recusou envio', emailResponse.status);
-      return json({ clientId: client.id, invitationSent: false, error: 'O cliente foi salvo, mas o provedor não aceitou o e-mail. Tente reenviar o acesso.' }, 502);
+      const reason = providerFailure(emailResponse.status, delivery, apiKey);
+      return json({ clientId: client.id, invitationSent: false, providerStatus: emailResponse.status, error: `O cadastro foi preservado. ${reason}` }, 502);
     }
     const sent = true;
 
