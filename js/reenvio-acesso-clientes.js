@@ -6,7 +6,7 @@
   async function enviarConvite(cliente, botao) {
     const original = botao.innerHTML;
     try {
-      if (!cliente?.email) {
+      if (!cliente || !cliente.email) {
         alert("Este cliente não possui e-mail cadastrado.");
         return;
       }
@@ -20,11 +20,11 @@
       );
 
       if (error) throw error;
-      if (data?.ok === false) throw new Error(data.message || "Falha no envio");
+      if (data && data.ok === false) throw new Error(data.message || "Falha no envio");
 
       alert("Link de acesso enviado para " + cliente.email + ".");
     } catch (error) {
-      console.error(error);
+      console.error("Erro ao enviar acesso:", error);
       alert("Não foi possível enviar o acesso.");
     } finally {
       botao.disabled = false;
@@ -32,21 +32,33 @@
     }
   }
 
-  async function iniciar() {
+  async function aplicarBotoes() {
     const lista = document.querySelector(LISTA);
     if (!lista || !window.supabaseClient) return;
 
-    const { data: clientes } = await window.supabaseClient
-      .from("clientes")
-      .select("id,nome,email")
-      .order("nome");
+    let clientes = [];
+    try {
+      const resultado = await window.supabaseClient
+        .from("clientes")
+        .select("id,nome,email")
+        .order("nome");
+
+      if (resultado.error) throw resultado.error;
+      clientes = resultado.data || [];
+    } catch (error) {
+      console.error("Erro ao buscar clientes:", error);
+      return;
+    }
 
     Array.from(lista.children).forEach((card) => {
+      if (card.querySelector(".btn-reenviar-acesso")) return;
+
       const texto = (card.textContent || "").toLowerCase();
-      const cliente = (clientes || []).find(c =>
-        c.email && texto.includes(c.email.toLowerCase())
+      const cliente = clientes.find((c) =>
+        c.email && texto.includes(String(c.email).toLowerCase())
       );
-      if (!cliente || card.querySelector(".btn-reenviar-acesso")) return;
+
+      if (!cliente) return;
 
       const botao = document.createElement("button");
       botao.type = "button";
@@ -57,7 +69,19 @@
     });
   }
 
-  document.readyState === "loading"
-    ? document.addEventListener("DOMContentLoaded", iniciar)
-    : iniciar();
+  function iniciar() {
+    aplicarBotoes();
+
+    const lista = document.querySelector(LISTA);
+    if (!lista) return;
+
+    new MutationObserver(() => aplicarBotoes())
+      .observe(lista, { childList: true, subtree: true });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", iniciar);
+  } else {
+    iniciar();
+  }
 })();
