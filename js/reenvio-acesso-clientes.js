@@ -95,7 +95,11 @@
     const lista = document.querySelector(LISTA);
     if (!lista || !window.supabaseClient) return;
 
-    const cards = Array.from(lista.querySelectorAll(".item-cliente"));
+    const cards = Array.from(lista.querySelectorAll(".item-cliente")).length
+      ? Array.from(lista.querySelectorAll(".item-cliente"))
+      : Array.from(lista.children).filter(function (elemento) {
+          return (elemento.textContent || "").trim().length > 0;
+        });
     if (!cards.length) return;
 
     let clientes;
