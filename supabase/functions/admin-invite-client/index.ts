@@ -97,10 +97,13 @@ Deno.serve(async (request) => {
     const apiKey = Deno.env.get('RESEND_API_KEY');
     const from = Deno.env.get('NOTIFICATION_FROM_EMAIL') || Deno.env.get('RESEND_FROM');
     if (!apiKey || !from) throw new Error('Canal de e-mail não configurado.');
-    const redirectTo = Deno.env.get('APP_REDIRECT_URL') ||
-      'https://camilamartinsengenharia.com.br/redefinir-senha.html';
+    // Production website links must not inherit the mobile app deep-link setting.
+    const production = new URL(Deno.env.get('SUPABASE_URL')!).hostname.startsWith('hghtwlopqztfcosfxafd.');
+    const redirectTo = production
+      ? 'https://camilamartinsengenharia.com.br/redefinir-senha.html'
+      : (Deno.env.get('APP_REDIRECT_URL') || Deno.env.get('SITE_URL') + '/redefinir-senha.html');
     const destination = new URL(redirectTo);
-    if (destination.protocol !== 'https:') throw new Error('URL de acesso inválida.');
+    if (destination.protocol !== 'https:' && !(destination.protocol === 'camilamartinsengenharia:' && !production)) throw new Error('URL de acesso inválida.');
 
     // Resolve the actual Auth account by email, including legacy clients without auth_id.
     let authUser = await findAuthUserByEmail(service, email);
