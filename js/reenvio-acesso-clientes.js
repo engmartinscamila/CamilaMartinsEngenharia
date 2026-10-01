@@ -1,82 +1,50 @@
 (function () {
   "use strict";
 
-  const LISTA = "#listaClientes";
-
-  async function enviarConvite(cliente, botao) {
-    const original = botao.innerHTML;
+  async function enviarConvite(clientId, botao) {
+    if (botao.disabled) return;
+    const original = botao.textContent;
+    botao.disabled = true;
+    botao.textContent = "Enviando...";
     try {
-      if (!cliente || !cliente.email) {
-        alert("Este cliente não possui e-mail cadastrado.");
-        return;
-      }
-
-      botao.disabled = true;
-      botao.innerHTML = "Enviando...";
-
       const { data, error } = await window.supabaseClient.functions.invoke(
-        "client-password-link",
-        { body: { email: cliente.email } }
+        "admin-invite-client", { body: { clientId } }
       );
-
-      if (error) throw error;
-      if (data && data.ok === false) throw new Error(data.message || "Falha no envio");
-
-      alert("Link de acesso enviado para " + cliente.email + ".");
+      if (error) {
+        let detalhe;
+        try { detalhe = await error.context?.json(); } catch (_) { /* Sem corpo JSON. */ }
+        throw new Error(detalhe?.error || error.message || "Falha ao enviar o acesso.");
+      }
+      if (data?.invitationSent !== true) {
+        throw new Error(data?.error || data?.message || "O envio não foi confirmado.");
+      }
+      alert("E-mail de acesso enviado. Verifique também a caixa de spam.");
     } catch (error) {
       console.error("Erro ao enviar acesso:", error);
-      alert("Não foi possível enviar o acesso.");
+      alert(error.message || "Não foi possível enviar o acesso. Tente novamente.");
     } finally {
       botao.disabled = false;
-      botao.innerHTML = original;
+      botao.textContent = original;
     }
-  }
-
-  async function aplicarBotoes() {
-    const lista = document.querySelector(LISTA);
-    if (!lista || !window.supabaseClient) return;
-
-    let clientes = [];
-    try {
-      const resultado = await window.supabaseClient
-        .from("clientes")
-        .select("id,nome,email")
-        .order("nome");
-
-      if (resultado.error) throw resultado.error;
-      clientes = resultado.data || [];
-    } catch (error) {
-      console.error("Erro ao buscar clientes:", error);
-      return;
-    }
-
-    Array.from(lista.children).forEach((card) => {
-      if (card.querySelector(".btn-reenviar-acesso")) return;
-
-      const texto = (card.textContent || "").toLowerCase();
-      const cliente = clientes.find((c) =>
-        c.email && texto.includes(String(c.email).toLowerCase())
-      );
-
-      if (!cliente) return;
-
-      const botao = document.createElement("button");
-      botao.type = "button";
-      botao.className = "btn-reenviar-acesso";
-      botao.innerHTML = "✉ Reenviar acesso";
-      botao.onclick = () => enviarConvite(cliente, botao);
-      card.appendChild(botao);
-    });
   }
 
   function iniciar() {
-    aplicarBotoes();
-
-    const lista = document.querySelector(LISTA);
+    const lista = document.querySelector("#listaClientes");
     if (!lista) return;
-
-    new MutationObserver(() => aplicarBotoes())
-      .observe(lista, { childList: true, subtree: true });
+    function aplicarBotoes() {
+      // Cards already identify the client by UUID; no extra query or email matching.
+      lista.querySelectorAll("article[data-cliente-id]").forEach((card) => {
+        if (card.querySelector(".btn-reenviar-acesso")) return;
+        const botao = document.createElement("button");
+        botao.type = "button";
+        botao.className = "btn-reenviar-acesso btn-secundario";
+        botao.textContent = "✉ Reenviar e-mail de acesso";
+        botao.addEventListener("click", () => enviarConvite(card.dataset.clienteId, botao));
+        (card.querySelector(".item-acoes") || card).appendChild(botao);
+      });
+    }
+    aplicarBotoes();
+    new MutationObserver(aplicarBotoes).observe(lista, { childList: true, subtree: true });
   }
 
   if (document.readyState === "loading") {

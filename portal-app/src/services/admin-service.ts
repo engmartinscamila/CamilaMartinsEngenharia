@@ -93,9 +93,20 @@ export async function listAdminClients(search = ''): Promise<ServiceResult<Admin
   };
 }
 
+async function sendClientAccess(input: { clientId?: string; name?: string; email?: string; phone?: string }) {
+  const { data, error } = await supabase.functions.invoke('admin-invite-client', { body: input });
+  if (error) {
+    try {
+      const details = await error.context?.json();
+      if (details?.error) return String(details.error);
+    } catch { /* No structured response available. */ }
+    return 'Não foi possível enviar o e-mail de acesso. Tente novamente.';
+  }
+  return data?.invitationSent === true ? null : String(data?.error || data?.message || 'O envio não foi confirmado.');
+}
+
 export async function inviteAdminClient(input: { name: string; email: string; phone?: string }) {
-  const result = await supabase.functions.invoke('admin-invite-client', { body: input });
-  return result.error ? 'O convite seguro não está disponível neste ambiente. Verifique a função administrativa de convite.' : null;
+  return sendClientAccess(input);
 }
 
 export async function updateAdminClientStatus(clientId: string, status: 'ativo' | 'arquivado' | 'acesso_revogado') {
@@ -108,18 +119,12 @@ export async function updateAdminClientProfile(clientId: string, input: { name: 
   return result.error || !result.data ? 'Não foi possível atualizar o cadastro do cliente.' : null;
 }
 
-export async function resendAdminClientInvite(email: string) {
-  const result = await supabase.auth.resend({
-    type: 'signup',
-    email,
-    options: { emailRedirectTo: Linking.createURL('/reset-password') },
-  });
-  return result.error ? 'O convite só pode ser reenviado enquanto o primeiro acesso estiver pendente.' : null;
+export async function resendAdminClientInvite(clientId: string) {
+  return sendClientAccess({ clientId });
 }
 
-export async function sendAdminClientRecovery(email: string) {
-  const result = await supabase.auth.resetPasswordForEmail(email, { redirectTo: Linking.createURL('/reset-password') });
-  return result.error ? 'Não foi possível enviar a recuperação de senha.' : null;
+export async function sendAdminClientRecovery(clientId: string) {
+  return sendClientAccess({ clientId });
 }
 
 export async function previewPermanentClientDeletion(clientId: string): Promise<ServiceResult<ClientDeletionPreview | null>> {

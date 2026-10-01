@@ -114,7 +114,7 @@ export default function AdminClientsScreen() {
   const sendAccessEmail = async (client: AdminClientSummary, kind: 'invite' | 'recovery') => {
     if (!client.email) { setError('Este cliente não possui e-mail cadastrado.'); return; }
     setSaving(true); setError(null); setSuccess(null);
-    const result = kind === 'invite' ? await resendAdminClientInvite(client.email) : await sendAdminClientRecovery(client.email);
+    const result = kind === 'invite' ? await resendAdminClientInvite(client.id) : await sendAdminClientRecovery(client.id);
     setSaving(false);
     if (result) setError(result); else setSuccess(kind === 'invite' ? 'Convite reenviado.' : 'Recuperação de senha enviada.');
   };
@@ -148,7 +148,7 @@ export default function AdminClientsScreen() {
             onChange={(status) => void changeStatus(client, status)}
             value={client.status as ClientStatus}
           />
-          <View style={styles.actions}><View style={styles.action}><Button onPress={() => { setEditTarget(client); setEditName(client.name); setEditPhone(client.phone ?? ''); }} title="Editar cadastro" variant="secondary" /></View><View style={styles.action}><Button disabled={!client.email} onPress={() => void sendAccessEmail(client, 'invite')} title="Reenviar convite" variant="ghost" /></View><View style={styles.action}><Button disabled={!client.email} onPress={() => void sendAccessEmail(client, 'recovery')} title="Enviar recuperação" variant="ghost" /></View></View>
+          <View style={styles.actions}><View style={styles.action}><Button onPress={() => { setEditTarget(client); setEditName(client.name); setEditPhone(client.phone ?? ''); }} title="Editar cadastro" variant="secondary" /></View><View style={styles.action}><Button disabled={saving || !client.email} onPress={() => void sendAccessEmail(client, 'invite')} title="Reenviar convite" variant="ghost" /></View><View style={styles.action}><Button disabled={saving || !client.email} onPress={() => void sendAccessEmail(client, 'recovery')} title="Enviar recuperação" variant="ghost" /></View></View>
           <Button onPress={() => void openDeletionPreview(client)} title="Revisar exclusão definitiva" variant="danger" />
         </Card>
       ))}

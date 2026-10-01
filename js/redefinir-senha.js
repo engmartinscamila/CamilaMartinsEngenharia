@@ -47,10 +47,10 @@ async function ativarRecuperacao() {
     const tokenHash = parametros.get("token_hash");
     const tipo = parametros.get("type");
 
-    if (tokenHash && tipo === "recovery") {
+    if (tokenHash && ["recovery", "invite"].includes(tipo)) {
         const { data, error } = await window.supabaseClient.auth.verifyOtp({
             token_hash: tokenHash,
-            type: "recovery"
+            type: tipo
         });
 
         if (error || !data?.session) {
