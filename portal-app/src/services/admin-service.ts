@@ -3,7 +3,6 @@ import { decode } from 'base64-arraybuffer';
 import type { DocumentPickerAsset } from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { randomUUID } from 'expo-crypto';
-import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
 
 import { isMissingRelationError, toUserMessage } from '@/lib/errors';
