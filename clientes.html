@@ -237,6 +237,11 @@ Gerenciamento de clientes cadastrados
 <div class="acoes-topo">
 
 
+<button id="enviarConviteCliente" type="button" title="Enviar ou reenviar acesso do cliente">
+<i class="fa-solid fa-envelope"></i>
+Enviar acesso
+</button>
+
 <button id="novoCliente">
 
 
@@ -869,6 +874,59 @@ Carregando...
 
 
 <script src="js/clientes.js?v=20260725-14"></script>
+
+<script>
+(function () {
+  "use strict";
+  const btn = document.getElementById("enviarConviteCliente");
+  if (!btn || !window.supabaseClient) return;
+
+  btn.addEventListener("click", async function () {
+    const email = window.prompt(
+      "Digite o e-mail do cliente que deve receber o convite:",
+      "line_alencar@yahoo.com.br"
+    );
+    if (!email) return;
+
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+
+    try {
+      const { data: cliente, error: buscaError } = await window.supabaseClient
+        .from("clientes")
+        .select("id,nome,email,auth_id")
+        .ilike("email", email.trim())
+        .maybeSingle();
+
+      if (buscaError) throw buscaError;
+      if (!cliente) throw new Error("Não encontrei um cliente com esse e-mail.");
+
+      const { data, error } = await window.supabaseClient.functions.invoke(
+        "admin-invite-client",
+        { body: { clientId: cliente.id } }
+      );
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data?.alreadyLinked) {
+        alert("Este cliente já possui acesso vinculado. Não foi enviado um novo convite.");
+      } else if (data?.invitationSent) {
+        alert("Convite enviado com sucesso para " + cliente.email + ".");
+      } else {
+        alert(data?.message || "O convite não foi enviado.");
+      }
+    } catch (err) {
+      console.error("Erro ao enviar convite:", err);
+      alert("Não foi possível enviar o convite. " + (err?.message || ""));
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = original;
+    }
+  });
+})();
+</script>
 
 </body>
 
