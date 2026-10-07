@@ -1,4 +1,17 @@
 import { createClient } from 'supabase';
+
+function resolveProductionEmailSender(configured: string | undefined) {
+  const sender = (configured || '').trim();
+  const address = (sender.match(/<([^<>]+)>$/)?.[1] || sender).trim();
+  const productionUrl = Deno.env.get('SUPABASE_URL') || '';
+  // The production sending domain is verified in Resend. The resend.dev
+  // sandbox sender cannot deliver invitations or updates to customers.
+  if (productionUrl === 'https://hghtwlopqztfcosfxafd.supabase.co' &&
+      (!sender || /@resend\.dev$/i.test(address))) {
+    return 'Camila Martins Engenharia <nao-responda@auth.camilamartinsengenharia.com.br>';
+  }
+  return sender;
+}
 import { AlignmentType, BorderStyle, Document, Footer, Header, HeadingLevel, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, VerticalAlign } from 'docx';
 
 const corsHeaders = {
@@ -571,7 +584,7 @@ async function sendClientDocumentEmail(service:any,row:any){
  if(error)throw error;
  const email=String(customer?.email??'').trim();
  if(!email)return {emailSent:false,emailReason:'Cliente sem e-mail cadastrado'};
- const from=Deno.env.get('RESEND_FROM')||'Camila Martins Engenharia <onboarding@resend.dev>';
+ const from=resolveProductionEmailSender(Deno.env.get('RESEND_FROM') || Deno.env.get('NOTIFICATION_FROM_EMAIL'));
  const portalUrl='https://camilamartinsengenharia.com.br/documentos-cliente.html';
  const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'},body:JSON.stringify({from,to:[email],subject:`${row.nome} disponível — Camila Martins Engenharia`,html:`<p>Olá, ${String(customer?.nome??'cliente')}.</p><p>Um novo documento vinculado ao seu contrato foi disponibilizado no Portal do Cliente.</p><p><a href="${portalUrl}">Acessar documentos do projeto</a></p><p>Camila Martins Engenharia</p>`})});
  if(!response.ok){const body=await response.text();return {emailSent:false,emailReason:`Falha no provedor de e-mail (${response.status}): ${body.slice(0,120)}`}}

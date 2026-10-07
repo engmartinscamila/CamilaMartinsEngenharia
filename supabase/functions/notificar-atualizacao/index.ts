@@ -1,4 +1,17 @@
 // CAMILA MARTINS ENGENHARIA — NOTIFICAÇÕES V10
+
+function resolveProductionEmailSender(configured: string | undefined) {
+  const sender = (configured || '').trim();
+  const address = (sender.match(/<([^<>]+)>$/)?.[1] || sender).trim();
+  const productionUrl = Deno.env.get('SUPABASE_URL') || '';
+  // The production sending domain is verified in Resend. The resend.dev
+  // sandbox sender cannot deliver invitations or updates to customers.
+  if (productionUrl === 'https://hghtwlopqztfcosfxafd.supabase.co' &&
+      (!sender || /@resend\.dev$/i.test(address))) {
+    return 'Camila Martins Engenharia <nao-responda@auth.camilamartinsengenharia.com.br>';
+  }
+  return sender;
+}
 // E-mail (Resend) + Push gratuito (Firebase Cloud Messaging).
 // Cliente recebe notificações somente para reunião agendada e nova solicitação.
 // Reuniões incluem convite .ics e adição universal à agenda, sem Google Cloud API.
@@ -255,7 +268,7 @@ async function enviarEmail(params: {
   calendario?: CalendarioEmail | null;
 }) {
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
-  const fromEmail = Deno.env.get("NOTIFICATION_FROM_EMAIL");
+  const fromEmail = resolveProductionEmailSender(Deno.env.get("NOTIFICATION_FROM_EMAIL"));
 
   if (!resendApiKey || !fromEmail) {
     return { enviado: false, status: "nao_configurado", motivo: "Canal de e-mail ainda não configurado.", id: null };
@@ -687,7 +700,7 @@ async function enviarConviteAgendaProprietaria(params: {
   universalCalendarUrl?: string;
 }) {
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
-  const fromEmail = Deno.env.get("NOTIFICATION_FROM_EMAIL");
+  const fromEmail = resolveProductionEmailSender(Deno.env.get("NOTIFICATION_FROM_EMAIL"));
 
   if (!resendApiKey || !fromEmail) {
     return {

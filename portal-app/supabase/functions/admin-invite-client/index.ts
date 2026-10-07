@@ -1,5 +1,18 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
 
+function resolveProductionEmailSender(configured: string | undefined) {
+  const sender = (configured || '').trim();
+  const address = (sender.match(/<([^<>]+)>$/)?.[1] || sender).trim();
+  const productionUrl = Deno.env.get('SUPABASE_URL') || '';
+  // The production sending domain is verified in Resend. The resend.dev
+  // sandbox sender cannot deliver invitations or updates to customers.
+  if (productionUrl === 'https://hghtwlopqztfcosfxafd.supabase.co' &&
+      (!sender || /@resend\.dev$/i.test(address))) {
+    return 'Camila Martins Engenharia <nao-responda@auth.camilamartinsengenharia.com.br>';
+  }
+  return sender;
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -36,7 +49,7 @@ async function requireAdmin(request: Request) {
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function emailConfiguration() {
   const apiKey = (Deno.env.get('RESEND_API_KEY') || '').trim();
-  const from = (Deno.env.get('NOTIFICATION_FROM_EMAIL') || Deno.env.get('RESEND_FROM') || '').trim();
+  const from = resolveProductionEmailSender(Deno.env.get('NOTIFICATION_FROM_EMAIL') || Deno.env.get('RESEND_FROM'));
   if (!apiKey || !from) throw new Error('Canal de e-mail não configurado.');
   if (/\s/.test(apiKey)) throw new Error('A chave RESEND_API_KEY contém espaços ou quebras de linha. Corrija o segredo no Supabase.');
   const senderAddress = from.includes('<') ? from.match(/^[^<>\r\n]*<([^<>]+)>$/)?.[1] : from;

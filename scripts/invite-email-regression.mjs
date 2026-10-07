@@ -45,6 +45,15 @@ assert.equal(r.sent[0].headers.Authorization, 'Bearer re_test');
 assert.equal(r.sent[0].body.from, 'Equipe <portal@example.com>');
 assert.match(r.sent[0].body.html, /https:\/\/camilamartinsengenharia.com.br\/redefinir-senha.html\?token_hash=private-token&amp;type=recovery/);
 
+// A sandbox sender must never restrict invitations to the account owner's inbox.
+for (const from of ['', 'onboarding@resend.dev', 'Camila Martins Engenharia <onboarding@resend.dev>']) {
+  r = await run({ from });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.invitationSent, true);
+  assert.equal(r.sent[0].body.from, 'Camila Martins Engenharia <nao-responda@auth.camilamartinsengenharia.com.br>');
+  assert.equal(r.sent[0].body.to[0], 'client@example.com');
+}
+
 for (const options of [{ from: 'Equipe sem e-mail' }, { from: 'Equipe <portal@example.com>\r\nBcc: other@example.com' }, { apiKey: 're_ bad' }]) {
   r = await run(options);
   assert.equal(r.status, 500);

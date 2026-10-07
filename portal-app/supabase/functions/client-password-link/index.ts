@@ -1,5 +1,18 @@
 import { withSupabase } from "npm:@supabase/server@1.5.3";
 
+function resolveProductionEmailSender(configured: string | undefined) {
+  const sender = (configured || '').trim();
+  const address = (sender.match(/<([^<>]+)>$/)?.[1] || sender).trim();
+  const productionUrl = Deno.env.get('SUPABASE_URL') || '';
+  // The production sending domain is verified in Resend. The resend.dev
+  // sandbox sender cannot deliver invitations or updates to customers.
+  if (productionUrl === 'https://hghtwlopqztfcosfxafd.supabase.co' &&
+      (!sender || /@resend\.dev$/i.test(address))) {
+    return 'Camila Martins Engenharia <nao-responda@auth.camilamartinsengenharia.com.br>';
+  }
+  return sender;
+}
+
 const PRODUCTION_SITE_URL = "https://camilamartinsengenharia.com.br";
 const projectRef = new URL(Deno.env.get("SUPABASE_URL") ?? "https://unconfigured.invalid").hostname.split(".")[0];
 const production = projectRef === "hghtwlopqztfcosfxafd";
@@ -107,7 +120,7 @@ async function consumeNetworkRateLimit(admin: any, request: Request) {
 
 async function sendEmail(email: string, name: string, secureLink: string) {
   const apiKey = Deno.env.get("RESEND_API_KEY");
-  const from = Deno.env.get("NOTIFICATION_FROM_EMAIL");
+  const from = resolveProductionEmailSender(Deno.env.get("NOTIFICATION_FROM_EMAIL"));
   if (!apiKey || !from) throw new Error("Canal de e-mail indisponível.");
 
   const response = await fetch("https://api.resend.com/emails", {

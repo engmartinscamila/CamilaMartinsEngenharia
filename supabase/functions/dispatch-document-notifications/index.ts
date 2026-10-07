@@ -1,5 +1,18 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.112.3';
 
+function resolveProductionEmailSender(configured: string | undefined) {
+  const sender = (configured || '').trim();
+  const address = (sender.match(/<([^<>]+)>$/)?.[1] || sender).trim();
+  const productionUrl = Deno.env.get('SUPABASE_URL') || '';
+  // The production sending domain is verified in Resend. The resend.dev
+  // sandbox sender cannot deliver invitations or updates to customers.
+  if (productionUrl === 'https://hghtwlopqztfcosfxafd.supabase.co' &&
+      (!sender || /@resend\.dev$/i.test(address))) {
+    return 'Camila Martins Engenharia <nao-responda@auth.camilamartinsengenharia.com.br>';
+  }
+  return sender;
+}
+
 const corsHeaders={
   'Access-Control-Allow-Origin':'https://camilamartinsengenharia.com.br',
   'Access-Control-Allow-Headers':'content-type,x-document-dispatch-token',
@@ -47,7 +60,7 @@ Deno.serve(async(req)=>{
   const url=Deno.env.get('SUPABASE_URL');
   const serviceKey=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   const resendKey=Deno.env.get('RESEND_API_KEY');
-  const resendFrom=Deno.env.get('RESEND_FROM')||'Camila Martins Engenharia <onboarding@resend.dev>';
+  const resendFrom=resolveProductionEmailSender(Deno.env.get('RESEND_FROM') || Deno.env.get('NOTIFICATION_FROM_EMAIL'));
   if(!url||!serviceKey||!resendKey)return json({error:'Configuração segura do servidor ausente.'},500);
 
   const service=createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});
