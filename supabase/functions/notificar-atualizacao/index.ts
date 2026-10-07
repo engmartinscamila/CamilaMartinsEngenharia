@@ -1,3 +1,4 @@
+import { deliverClientEmail, failClientEmail } from '../_shared/client-email.ts';
 // CAMILA MARTINS ENGENHARIA — NOTIFICAÇÕES V10
 
 function resolveProductionEmailSender(configured: string | undefined) {
@@ -266,6 +267,7 @@ async function enviarEmail(params: {
   mensagem: string;
   destinoPortal: string;
   calendario?: CalendarioEmail | null;
+  queue?: { service: any; clientId: string; projectId: string | null; sourceTable: string; sourceId: string | null };
 }) {
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
   const fromEmail = resolveProductionEmailSender(Deno.env.get("NOTIFICATION_FROM_EMAIL"));
@@ -279,13 +281,7 @@ async function enviarEmail(params: {
   }
 
   try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const prepared = {
         from: fromEmail,
         to: [params.destinatario],
         subject: params.assunto,
@@ -361,7 +357,32 @@ async function enviarEmail(params: {
             </div>
           </div>
         `,
-      }),
+      };
+    if (params.queue) {
+      const q = params.queue;
+      const { data: jobId, error: prepareError } = await q.service.rpc('prepare_client_update_email', {
+        p_client_id: q.clientId, p_project_id: q.projectId,
+        p_source_table: q.sourceTable, p_source_id: q.sourceId, p_email: prepared,
+      });
+      if (prepareError) return { enviado: false, status: 'falhou', motivo: 'O evento permanece na fila automática.', id: null };
+      const { data: jobs, error: claimError } = await q.service.rpc('claim_client_email_jobs', { p_limit: 1, p_job_id: jobId });
+      if (claimError) return { enviado: false, status: 'falhou', motivo: 'O evento permanece na fila automática.', id: null };
+      if (!jobs?.length) {
+        const { data: state } = await q.service.from('client_email_queue').select('status,provider_id').eq('id', jobId).maybeSingle();
+        return { enviado: state?.status === 'sent', status: state?.status === 'sent' ? 'enviado' : 'agendado', motivo: '', id: state?.provider_id || null };
+      }
+      try {
+        const delivery = await deliverClientEmail(q.service, jobs[0]);
+        return { enviado: true, status: 'enviado', motivo: '', id: delivery.providerId };
+      } catch (error) {
+        await failClientEmail(q.service, jobs[0], error);
+        return { enviado: false, status: 'falhou', motivo: 'Envio adiado; nova tentativa automática.', id: null };
+      }
+    }
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify(prepared),
     });
 
     const data = await response.json().catch(() => ({}));
@@ -1030,6 +1051,11 @@ Deno.serve(async (request) => {
       mensagem: mensagemProtegida,
       destinoPortal: destinoEmail,
       calendario,
+      queue: callerIsAdmin ? {
+        service: admin, clientId: cliente.id, projectId: body.projeto_id ?? null,
+        sourceTable: body.tipo === 'agenda_criada' ? 'agenda' : 'solicitacoes',
+        sourceId: body.tipo === 'agenda_criada' ? agendaIdEfetivo : null,
+      } : undefined,
     })
     : {
       enviado: false,
