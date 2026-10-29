@@ -17,6 +17,10 @@
   }
 
   function playVideo(video) {
+    if (video.closest('.featured-project-card')?.classList.contains('is-model-ready')) {
+      video.pause();
+      return;
+    }
     ensureLoaded(video);
     if (video.readyState >= 2) {
       const attempt = video.play();
