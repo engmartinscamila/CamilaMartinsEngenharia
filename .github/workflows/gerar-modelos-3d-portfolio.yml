@@ -1,0 +1,57 @@
+name: Reconstruir modelos 3D do portfolio
+on:
+  push:
+    paths:
+      - .github/workflows/gerar-modelos-3d-portfolio.yml
+      - scripts/gerar-modelos-3d-portfolio.py
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Preparar gerador GLB
+        run: python -m pip install --quiet "trimesh>=4.8,<5" "numpy>=1.26,<3" "pillow>=10"
+      - name: Reconstruir as tres geometrias
+        run: python scripts/gerar-modelos-3d-portfolio.py
+      - name: Testar formatos e tamanhos
+        run: |
+          python - <<'PY'
+          import trimesh
+          from pathlib import Path
+          files=[
+          "assets/projetos/tiny-house-signature/modelo-3d-aproximado.glb",
+          "assets/projetos/empreendimento-vitalle/modelo-3d-aproximado.glb",
+          "assets/projetos/casa-urban/modelo-3d-aproximado.glb"]
+          for p in files:
+              path=Path(p)
+              assert path.exists() and path.stat().st_size>1000
+              scene=trimesh.load(str(path),force="scene")
+              print(p,"geometries",len(scene.geometry),"bytes",path.stat().st_size)
+              assert len(scene.geometry)>2
+          PY
+      - name: Disponibilizar modelos 3D
+        uses: actions/upload-artifact@v4
+        with:
+          name: modelos-3d-aproximados
+          path: |
+            assets/projetos/tiny-house-signature/modelo-3d-aproximado.glb
+            assets/projetos/empreendimento-vitalle/modelo-3d-aproximado.glb
+            assets/projetos/casa-urban/modelo-3d-aproximado.glb
+      - name: Salvar no GitHub
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/projetos/tiny-house-signature/modelo-3d-aproximado.glb
+          git add assets/projetos/empreendimento-vitalle/modelo-3d-aproximado.glb
+          git add assets/projetos/casa-urban/modelo-3d-aproximado.glb
+          if ! git diff --cached --quiet; then
+            git commit -m "assets: geometrias GLB aproximadas para portfólio [skip ci]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
