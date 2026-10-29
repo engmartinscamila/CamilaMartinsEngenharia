@@ -102,3 +102,25 @@ html[data-admin-theme="claro"] #limparFiltrosFinanceiros:hover {
 html[data-admin-theme="claro"] .cme-admin-group-toggle { color:#243448; }
 html[data-admin-theme="claro"] .cme-admin-group-toggle:hover,html[data-admin-theme="claro"] .cme-current-group > summary { color:#765a28; }
 @media (prefers-reduced-motion:reduce) { .cme-group-chevron { transition:none; } }
+
+/* Controls grow with their labels, including long contracts and mobile text. */
+.layout :is(button,.btn,.btn-primary,.btn-secondary,.menu-item,summary) { box-sizing:border-box; height:auto; min-height:44px; max-width:100%; white-space:normal; overflow-wrap:anywhere; word-break:normal; line-height:1.45; flex-shrink:1; }
+.layout button:not(.btn-icon):not(.cme-admin-mobile-menu-button),.layout :is(.btn,.btn-primary,.btn-secondary) { display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:11px 16px; border-radius:10px; font:inherit; font-size:14px; font-weight:600; text-align:center; }
+.layout :is(button,.btn,.menu-item) > :is(span,strong) { min-width:0; max-width:100%; white-space:normal; overflow-wrap:anywhere; }
+.layout :is(button,.menu-item,summary) > i { flex-shrink:0; }
+.layout :is(.card,.card-grande,.card-lateral,.item-info,.item-lista,.card-header,.acoes-topo) { min-width:0; overflow-wrap:anywhere; }
+.layout :is(.item-lista,.card-header,.acoes-topo) { gap:12px; }
+.layout .item-info { display:flex; flex-direction:column; gap:5px; }
+.layout .cme-admin-group-toggle { display:flex; align-items:center; gap:10px; min-height:48px; padding:12px; white-space:normal; list-style:none; }
+.layout .cme-admin-group-toggle::marker { content:''; }
+.layout .cme-admin-group-toggle::-webkit-details-marker { display:none; }
+.layout .cme-admin-group-toggle > span { flex:1; min-width:0; }
+.layout .cme-admin-group-toggle > i:last-child { margin-left:auto; }
+.layout .cme-admin-menu-group { border:1px solid rgba(184,154,99,.22); border-radius:10px; margin-bottom:7px; }
+.layout .cme-admin-submenu { gap:6px; padding:6px 8px 10px; margin-left:10px; }
+.layout .cme-admin-submenu .menu-item { display:flex; align-items:center; gap:10px; line-height:1.5; }
+.layout .cme-admin-submenu button { height:auto; min-height:44px; }
+html:not([data-admin-theme="claro"]) .layout :is(.cme-admin-group-toggle,.cme-admin-submenu .menu-item) { color:#e6eaf0; }
+html:not([data-admin-theme="claro"]) .layout .menu-item.ativo { background:#b89a63; color:#081522; }
+html[data-admin-theme="claro"] .layout :is(.cme-admin-group-toggle,.cme-admin-submenu .menu-item) { color:#243448; }
+@media(max-width:600px) { .layout :is(.card-header,.acoes-topo,.item-lista) { flex-wrap:wrap; } .layout :is(.item-info,.item-acoes) { min-width:0; max-width:100%; } }

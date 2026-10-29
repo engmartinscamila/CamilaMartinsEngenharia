@@ -321,3 +321,7 @@
   .cme-mobile-menu-toggle, .cme-mobile-menu-backdrop,
   body:has(.layout .sidebar) .sidebar { transition: none !important; }
 }
+
+/* Shared public controls: retain each theme's colors and adapt to text size. */
+:where(button,input[type="button"],input[type="submit"],a.btn,a.button,a.cta-button) { box-sizing:border-box; max-width:100%; min-height:44px; height:auto; white-space:normal; overflow-wrap:anywhere; line-height:1.45; }
+:where(button,a.btn,a.button,a.cta-button) > :where(span,strong) { min-width:0; white-space:normal; overflow-wrap:anywhere; }

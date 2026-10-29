@@ -280,7 +280,7 @@ const styleDefinitions = (colors: ThemeColors) => ({
     gap: spacing.sm,
     ...(shadow as object),
   },
-  button: {
+  button: { maxWidth:'100%', flexShrink:1, height:'auto',
     minHeight: layout.minTouchTarget,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
@@ -297,7 +297,7 @@ const styleDefinitions = (colors: ThemeColors) => ({
   button_ghost: { backgroundColor: 'transparent', borderColor: 'transparent' },
   buttonPressed: { opacity: 0.78 },
   buttonDisabled: { opacity: 0.5 },
-  buttonText: { fontWeight: '700', fontSize: typography.size.body, fontFamily: typography.family },
+  buttonText: { flexShrink:1, minWidth:0, textAlign:'center', fontWeight: '700', fontSize: typography.size.body, fontFamily: typography.family },
   buttonText_primary: { color: colors.navy950 },
   buttonText_secondary: { color: colors.gold600 },
   buttonText_danger: { color: colors.danger },
