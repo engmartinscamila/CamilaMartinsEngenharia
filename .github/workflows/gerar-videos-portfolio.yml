@@ -1,0 +1,43 @@
+name: Gerar videos cinematograficos de projetos
+on:
+  push:
+    paths:
+      - .github/workflows/gerar-videos-portfolio.yml
+      - scripts/gerar-videos-portfolio.sh
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Baixar repositorio
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Garantir FFmpeg
+        run: |
+          command -v ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+      - name: Gerar tres videos em 720p
+        run: bash scripts/gerar-videos-portfolio.sh
+      - name: Salvar videos como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: videos-cinematograficos-portfolio
+          path: |
+            assets/projetos/tiny-house-signature/videos/tiny-house-cinematic.mp4
+            assets/projetos/empreendimento-vitalle/videos/vitalle-cinematic.mp4
+            assets/projetos/casa-urban/videos/casa-urben-cinematic.mp4
+          retention-days: 30
+      - name: Publicar videos no repositorio
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/projetos/tiny-house-signature/videos/tiny-house-cinematic.mp4
+          git add assets/projetos/empreendimento-vitalle/videos/vitalle-cinematic.mp4
+          git add assets/projetos/casa-urban/videos/casa-urben-cinematic.mp4
+          if ! git diff --cached --quiet; then
+            git commit -m "assets: trailers cinematograficos para portfolio [skip ci]"
+            git push
+          fi
