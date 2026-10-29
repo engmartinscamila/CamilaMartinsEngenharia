@@ -44,6 +44,7 @@ jobs:
           node scripts/client-email-notification-regression.mjs
           node scripts/password-link-outbox-regression.mjs
           node scripts/project-files-receipts-regression.mjs
+          node scripts/admin-priority-regression.mjs
 
       - name: Verificar segurança antes de publicar
         run: |

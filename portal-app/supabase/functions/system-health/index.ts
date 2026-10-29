@@ -33,13 +33,15 @@ Deno.serve(async(req)=>{
     if(dbError)throw dbError;
     const service=createClient(url,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});
 
-    const [bucketResult,deletionProbe,contractProbe,commercialProbe,deliveryProbe,scheduleProbe]=await Promise.all([
+    const [bucketResult,deletionProbe,contractProbe,commercialProbe,deliveryProbe,scheduleProbe,verifiedScheduleProbe,backupResult]=await Promise.all([
       service.storage.listBuckets(),
       fetch(`${url}/functions/v1/admin-delete-client`,{method:'POST',headers:{Authorization:auth,apikey:anon,'Content-Type':'application/json'},body:JSON.stringify({action:'health'})}).then(async response=>{let data:Record<string,unknown>={};try{data=await response.json()}catch{}return {ok:response.ok&&data.ok===true&&data.function==='admin-delete-client',status:response.status};}).catch(()=>({ok:false,status:0})),
       probe(url,anon,auth,'generate-contract-document-final',{documentId:'invalid',action:'generate',expectedDocumentKind:'anexo_i'},[400]),
       probe(url,anon,auth,'generate-commercial-document-final',{recordId:'invalid',kind:'orcamento'},[400]),
       probe(url,anon,auth,'deliver-generated-document',{documentId:'invalid',archive:false,expectedDocumentKind:'anexo_i'},[400]),
       probe(url,anon,auth,'generate-construction-schedule-xlsx',{projectId:'invalid'},[400]),
+      probe(url,anon,auth,'generate-verified-construction-schedule-xlsx',{scheduleId:'invalid'},[400]),
+      caller.rpc('admin_export_application_backup'),
     ]);
     const probes={
       adminDeleteClient:deletionProbe,
@@ -47,12 +49,16 @@ Deno.serve(async(req)=>{
       commercialDocument:commercialProbe,
       documentDelivery:deliveryProbe,
       constructionScheduleExcel:scheduleProbe,
+      verifiedConstructionScheduleExcel:verifiedScheduleProbe,
+      applicationBackup:{ok:!backupResult.error&&backupResult.data?.version===3&&Array.isArray(backupResult.data?.tables?.payment_receipts),status:backupResult.error?500:200},
     };
     const edgeOk=Object.values(probes).every(item=>item.ok);
     const criticalIssues=Number((db as Record<string,unknown>)?.critical_issues??0);
     return json({
       ok:true,
       checkedAt:new Date().toISOString(),
+      coverage:['database','storage','document-generation','schedule-export','application-backup','receipts-read'],
+      limitations:['Não confirma entrega de e-mail na caixa de entrada nem executa emissão de recibos ou exclusões.'],
       database:{...(db as Record<string,unknown>),ok:criticalIssues===0},
       storage:{ok:!bucketResult.error,buckets:(bucketResult.data??[]).length},
       edge:{ok:edgeOk,function:'system-health',probes},

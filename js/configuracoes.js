@@ -38,6 +38,7 @@ CONFIGURAÇÕES — VERSÃO ESTÁVEL E TESTÁVEL
 
         document.getElementById("gerarBackup")
             ?.addEventListener("click", gerarBackup);
+        document.getElementById("gerarBackupArquivos")?.addEventListener("click", gerarBackup);
 
         document.getElementById("limparCache")
             ?.addEventListener("click", limparCache);
@@ -875,57 +876,19 @@ const clausulas = inicios.filter(inicio => refs.includes(inicio.numero)).map(ini
         }
     }
 
-    async function gerarBackup() {
-        const botao = document.getElementById("gerarBackup");
-        const texto = botao?.textContent || "Gerar Backup";
-
+    async function gerarBackup(evento) {
+        const incluirArquivos = evento?.currentTarget?.id === "gerarBackupArquivos";
+        const botoes = ["gerarBackup", "gerarBackupArquivos"].map(id => document.getElementById(id)).filter(Boolean);
+        if (botoes.some(botao => botao.disabled)) return;
+        botoes.forEach(botao => { botao.disabled = true; });
         try {
-            alternarBotao(botao, true, "Gerando backup...");
-
-            const [
-                clientes, projetos, documentos, fotos, financeiro,
-                agenda, biblioteca, cronograma, solicitacoes, configuracoes
-            ] = await Promise.all([
-                dbBuscarClientes().catch(() => []),
-                dbBuscarProjetos().catch(() => []),
-                dbBuscarDocumentos().catch(() => []),
-                dbBuscarFotos().catch(() => []),
-                dbBuscarFinanceiro().catch(() => []),
-                dbBuscarAgenda().catch(() => []),
-                dbBuscarBiblioteca().catch(() => []),
-                dbBuscarCronograma().catch(() => []),
-                dbBuscarSolicitacoes().catch(() => []),
-                dbBuscarConfiguracoes().catch(() => null)
-            ]);
-
-            const backup = {
-                versao: 2,
-                gerado_em: new Date().toISOString(),
-                clientes, projetos, documentos, fotos, financeiro,
-                agenda, biblioteca, cronograma, solicitacoes, configuracoes
-            };
-
-            const blob = new Blob(
-                [JSON.stringify(backup, null, 2)],
-                { type: "application/json;charset=utf-8" }
-            );
-
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = "backup-camila-martins-" +
-                new Date().toISOString().slice(0, 10) + ".json";
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            URL.revokeObjectURL(url);
-
-            mostrarStatus("Backup gerado com sucesso.", "sucesso");
+            const manifesto = await window.CMEAdminBackup.run(incluirArquivos, texto => mostrarStatus(texto, "info"));
+            const tabelas = Object.keys(manifesto.tables).length;
+            mostrarStatus(`${incluirArquivos ? "ZIP com dados e arquivos verificados" : "JSON com dados administrativos"} preparado para download: ${tabelas} tabelas${incluirArquivos ? ` e ${manifesto.files.length} arquivos` : ""}. Confira o arquivo salvo no seu computador.`, "sucesso");
         } catch (erro) {
-            console.error("Erro ao gerar backup:", erro);
-            mostrarStatus("Não foi possível gerar o backup.", "erro");
+            mostrarStatus(erro?.message || "Não foi possível preparar a exportação. Nenhum pacote parcial foi gerado.", "erro");
         } finally {
-            alternarBotao(botao, false, texto);
+            botoes.forEach(botao => { botao.disabled = false; });
         }
     }
 

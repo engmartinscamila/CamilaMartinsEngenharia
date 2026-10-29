@@ -218,7 +218,13 @@ const supabaseMock = `
       return {data:{url:"https://example.invalid/protected-copy",protectedCopy:true},error:null};
     } },
     from: table => chain(table),
-    rpc: async name => ({data:name === "is_portal_admin" ? isAdmin : name==="uso_armazenamento_portal"?{bytes_utilizados:1048576,quantidade_arquivos:3}:[],error:null}),
+    rpc: async name => {
+      if(name==='admin_export_application_backup') {
+        const tables=Object.fromEntries(['clientes','contratos','projetos','documentos','fotos','financeiro','payment_receipts'].map(table=>[table,sample[table]||[]]));
+        return {data:{version:3,created_at:'2026-10-28T12:00:00Z',tables,counts:Object.fromEntries(Object.entries(tables).map(([table,rows])=>[table,rows.length])),storage_objects:[],limitations:['Auth e Vault excluídos']},error:null};
+      }
+      return {data:name === "is_portal_admin" ? isAdmin : name==="uso_armazenamento_portal"?{bytes_utilizados:1048576,quantidade_arquivos:3}:[],error:null};
+    },
     storage:{
       from: ()=>({
         upload:async()=>({data:{path:"mock/path"},error:null}),

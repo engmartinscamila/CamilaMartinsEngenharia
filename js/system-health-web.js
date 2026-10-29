@@ -2,8 +2,8 @@
 const $=id=>document.getElementById(id);const fmt=v=>v?new Date(v).toLocaleString('pt-BR'):'Sem registro';
 function state(id,label,ok){const el=$(id);if(!el)return;el.textContent=label;el.className=`health-state ${ok?'ok':'bad'}`}
 function message(text,tone='info'){const el=$('healthMessage');if(!el)return;el.textContent=text;el.className=`doc-status ${tone==='danger'?'error':tone==='success'?'success':''}`}
-function probeSummary(probes){const labels={adminDeleteClient:'exclusão segura',contractDocument:'documentos contratuais',commercialDocument:'orçamento/contrato',documentDelivery:'entrega de Word',constructionScheduleExcel:'Excel do cronograma'};return Object.entries(probes||{}).map(([key,value])=>`${labels[key]||key}: ${value?.ok?'OK':`falha HTTP ${value?.status??0}`}`).join(' • ')}
-async function load(){const button=$('refreshHealth');if(button)button.disabled=true;message('Executando diagnóstico completo...');
+function probeSummary(probes){const labels={adminDeleteClient:'exclusão segura',contractDocument:'documentos contratuais',commercialDocument:'orçamento/contrato',documentDelivery:'entrega de Word',constructionScheduleExcel:'Excel do cronograma',verifiedConstructionScheduleExcel:'Excel do cronograma contratado',applicationBackup:'exportação de dados e leitura de recibos'};return Object.entries(probes||{}).map(([key,value])=>`${labels[key]||key}: ${value?.ok?'OK':`falha HTTP ${value?.status??0}`}`).join(' • ')}
+async function load(){const button=$('refreshHealth');if(button)button.disabled=true;message('Verificando os serviços administrativos...');
  try{
   const client=window.supabaseClient;if(!client)throw new Error('Cliente seguro do portal indisponível.');
   const [healthResult,buildResult]=await Promise.all([
@@ -22,7 +22,7 @@ async function load(){const button=$('refreshHealth');if(button)button.disabled=
   const warnings=Number(db.construction_schedule_weight_warnings??0);if(warnings>0)$('edgeMeta').textContent+=` • cronogramas com pesos diferentes de 100%: ${warnings}`;
   const allOk=siteOk&&dbOk&&hashOk&&Number(db.documents_missing_snapshot??0)===0&&storageOk&&edgeOk;
   state('checkState',allOk?'Concluída':'Revisar',allOk);$('checkMeta').textContent=fmt(health.checkedAt);
-  message(allOk?'Verificação completa concluída sem inconsistências críticas e sem alterar dados do sistema.':'O diagnóstico encontrou uma ou mais pendências. Revise os cartões marcados em vermelho. ',allOk?'success':'danger');
+  message(allOk?'Serviços verificados operacionais. O diagnóstico não confirma entrega de e-mails e não executa emissões ou exclusões.':'O diagnóstico encontrou uma ou mais pendências. Revise os cartões marcados em vermelho. ',allOk?'success':'danger');
  }catch(error){state('checkState','Falha',false);$('checkMeta').textContent=fmt(new Date().toISOString());message(error instanceof Error?error.message:'Falha na verificação.','danger');}
  finally{if(button)button.disabled=false;window.ocultarCarregamentoPagina?.();}}
 $('refreshHealth')?.addEventListener('click',()=>void load());if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>void load(),{once:true});else void load();

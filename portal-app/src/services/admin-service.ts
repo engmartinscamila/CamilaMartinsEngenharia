@@ -382,6 +382,11 @@ export async function deleteAdminContent(item: AdminContentSummary) {
   const metadata = await supabase.from(contentTable(item.kind)).delete().eq('id', item.id).select('id').maybeSingle();
   if (metadata.error || !metadata.data) return 'A exclusão foi interrompida porque o registro não pôde ser removido com segurança.';
   if (item.storagePath) {
+    for (const table of ['documentos', 'fotos', 'biblioteca']) {
+      const references = await supabase.from(table).select('storage_bucket').eq('arquivo', item.storagePath);
+      if (references.error) return 'Cadastro removido. A limpeza física ficou pendente porque os vínculos do arquivo não puderam ser conferidos.';
+      if ((references.data ?? []).some((row) => (row.storage_bucket || table) === item.storageBucket)) return null;
+    }
     const storage = await supabase.storage.from(item.storageBucket).remove([item.storagePath]);
     if (storage.error) return 'O registro foi excluído, mas o arquivo físico ficou pendente para a limpeza de órfãos do Storage.';
   }

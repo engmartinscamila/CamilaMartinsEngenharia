@@ -1005,7 +1005,7 @@ id="gerarBackup">
 <i class="fa-solid fa-database"></i>
 
 
-Gerar Backup
+Exportar dados (JSON)
 
 
 </button>
@@ -1014,6 +1014,9 @@ Gerar Backup
 
 
 
+
+<button type="button" id="gerarBackupArquivos"><i class="fa-solid fa-file-zipper"></i>Exportar dados e arquivos (ZIP)</button>
+<p>Inclui contratos, recibos, documentos e os demais módulos administrativos. O ZIP copia os arquivos do Supabase e verifica sua integridade (até 256 MB). Senhas, sessões, Vault e integrações externas exigem recuperação própria. Guarde a exportação em local privado.</p>
 
 <button
 type="button"
@@ -1122,6 +1125,7 @@ Carregando...
 <script src="js/auth.js?v=20260829-9"></script>
 
 
+<script src="js/admin-backup.js"></script>
 <script src="js/configuracoes.js?v=20260924-1"></script>
 
 </body>
