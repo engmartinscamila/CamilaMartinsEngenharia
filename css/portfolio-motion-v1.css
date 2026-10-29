@@ -1,0 +1,41 @@
+/* Capas com videos de arquitetura: fallback sempre na imagem original. */
+.featured-project-card .featured-project-video{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  z-index:0;
+  opacity:0;
+  background:#000711;
+  pointer-events:none;
+  filter:saturate(.9) contrast(1.04);
+  transition:opacity .65s ease,transform .75s ease,filter .45s ease;
+}
+.featured-project-card.is-video-ready .featured-project-video{opacity:1}
+.featured-project-card:hover .featured-project-video,
+.featured-project-card:focus-visible .featured-project-video{
+  transform:scale(1.035);
+  filter:saturate(1) contrast(1.04);
+}
+.featured-project-card .featured-motion-label{
+  position:absolute;
+  top:18px;
+  right:18px;
+  z-index:2;
+  padding:7px 10px;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  border:1px solid rgba(184,154,99,.5);
+  background:rgba(1,9,20,.76);
+  color:var(--gold);
+  font-size:.59rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  pointer-events:none;
+}
+@media(prefers-reduced-motion:reduce){
+  .featured-project-card .featured-project-video{display:none!important}
+  .featured-project-card .featured-motion-label{display:none!important}
+}
