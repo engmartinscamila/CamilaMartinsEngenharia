@@ -206,3 +206,29 @@ html.doc-service-modal-open,body.doc-service-modal-open{overflow:hidden;overscro
  .doc-grid { grid-template-columns:minmax(0,1fr); }
  .doc-picker { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
+
+/* Contrato: seletor de origem e reaproveitamento de orcamento */
+.doc-contract-source{display:grid;gap:12px;margin:0 0 20px;padding:17px;border:1px solid rgba(184,154,99,.5);border-left:4px solid #b89a63;background:rgba(184,154,99,.065);border-radius:12px;min-width:0}
+.doc-contract-source.doc-hidden{display:none!important}
+.doc-contract-origin-title{display:grid;gap:4px}
+.doc-contract-origin-title strong{font-size:.98rem;color:#f2e5c5}
+.doc-contract-origin-title small{font-size:.79rem;color:#c2ccda}
+.doc-contract-origin-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.doc-contract-origin-options label{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid rgba(184,154,99,.33);border-radius:10px;background:#132239;cursor:pointer;min-width:0}
+.doc-contract-origin-options label:has(input:checked){border-color:#d4b575;background:rgba(184,154,99,.14)}
+.doc-contract-origin-options label input{accent-color:#c6a46b;flex:0 0 auto;margin-top:4px}
+.doc-contract-origin-options label span{display:grid;gap:4px;min-width:0}
+.doc-contract-origin-options label strong{font-weight:700;color:#f5f7fb;font-size:.84rem}
+.doc-contract-origin-options label small{font-weight:400;line-height:1.4;color:#bfc8d6;font-size:.72rem}
+.doc-contract-source #contractSourceQuoteFields{display:grid;gap:12px;min-width:0}
+.doc-contract-source #contractSourceQuoteFields.doc-hidden,.doc-contract-source #contractSourceManualHelp.doc-hidden{display:none!important}
+.doc-contract-source #contractQuoteSearch,.doc-contract-source #contractQuoteSelect{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;margin:7px 0;border:1px solid rgba(184,154,99,.43);border-radius:9px;background:#142338;color:#f5f7fa;padding:11px 12px;font:inherit}
+.doc-contract-source #contractQuoteSelect{min-height:46px;cursor:pointer;white-space:normal}
+.doc-contract-source #contractQuoteSelect option,.doc-contract-source #contractQuoteSelect optgroup{background:#142338;color:#f5f7fa}
+.doc-contract-more{border:1px solid rgba(184,154,99,.26);border-radius:9px;padding:10px 12px}
+.doc-contract-more summary{cursor:pointer;color:#dec99b;font-size:.82rem;font-weight:650}
+.doc-contract-extra-list{display:grid;gap:6px;max-height:185px;overflow:auto;margin-top:10px}
+.doc-contract-extra-row{display:flex;align-items:flex-start;gap:9px;padding:8px;border-bottom:1px solid rgba(184,154,99,.12);color:#e9eef7;font-size:.78rem;cursor:pointer}
+.doc-contract-extra-row input{accent-color:#b89a63;flex:none}
+.doc-contract-source .doc-status{margin:0;overflow-wrap:anywhere}
+@media(max-width:700px){.doc-contract-source{padding:12px}.doc-contract-origin-options{grid-template-columns:1fr}.doc-contract-source #contractQuoteSearch,.doc-contract-source #contractQuoteSelect{font-size:16px}}
