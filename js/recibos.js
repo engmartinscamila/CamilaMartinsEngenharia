@@ -61,6 +61,7 @@
     if (!user?.user) { location.replace('login.html'); return; }
     const admin = await supabaseClient.rpc('is_portal_admin');
     if (admin.error || admin.data !== true) { location.replace('portal.html'); return; }
+    $('logoutButton')?.addEventListener('click', async () => { await supabaseClient.auth.signOut(); location.replace('login.html'); });
     try {
       [clients, projects] = await Promise.all([dbBuscarClientes(), dbBuscarProjetos()]);
       options('receiptClient',clients,'Selecione o cliente');

@@ -10,7 +10,7 @@
   async function load() {
     const host = document.getElementById('emailDeliveryHistory');
     if (!host) return;
-    const { data, error } = await window.supabaseClient.rpc('admin_client_email_status');
+    const [{ data, error }, clients] = await Promise.all([window.supabaseClient.rpc('admin_client_email_status'), window.dbBuscarClientes().catch(() => [])]);
     if (error) { host.textContent = 'Não foi possível consultar os envios. Atualize o histórico para tentar novamente.'; return; }
     host.replaceChildren();
     const note = document.createElement('p');
@@ -19,7 +19,7 @@
     if (!data?.length) { host.append('Nenhum envio registrado.'); return; }
     for (const row of data.slice(0, 30)) {
       const entry = document.createElement('p');
-      entry.textContent = `${new Date(row.created_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} · ${row.kind === 'invite' ? 'Acesso' : 'Atualização'} · ${labels[row.status] || row.status} · ${row.attempts} tentativa(s)${row.last_error ? ' · ' + row.last_error : ''}`;
+      entry.textContent = `${clients.find(client => String(client.id) === row.client_id)?.nome || 'Cliente'} · ${new Date(row.created_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} · ${row.kind === 'invite' ? 'Acesso' : 'Atualização'} · ${labels[row.status] || row.status} · ${row.attempts} tentativa(s)${row.last_error ? ' · ' + row.last_error : ''}`;
       host.append(entry);
     }
   }
