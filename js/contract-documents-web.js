@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id), client=()=>window.supabaseClient; const
 let scopePresets=[['a','Estudo Preliminar'],['b','Anteprojeto'],['c','Projeto Legal'],['d','Projeto Executivo / detalhamento'],['e','Projeto Estrutural'],['f','Projeto Elétrico'],['g','Projeto Hidrossanitário'],['h','Projeto de Interiores'],['i','Paisagismo'],['j','Render 3D / Maquete eletrônica'],['k','Legalização / Aprovação Prefeitura'],['l','Alvará de Construção'],['m','Habite-se'],['n','Acompanhamento técnico de obra'],['o','Laudo técnico / avaliação / vistoria'],['p','Outro']];
 let serviceCatalogMeta=[];
 const generators=[['anexo_i','Anexo I','Gerado a partir do escopo já contratado; não há nova seleção manual de atividades.'],['estudo_preliminar','Estudo Preliminar','Se contratado, integra o Anexo I e é remunerado conforme a proposta. Se for apenas auxiliar, não altera o escopo.'],['levantamento_tecnico','Ficha de Levantamento / Vistoria','Registre data/hora, acompanhante, responsável técnico, elementos e condições observadas.'],['servico_adicional','Serviço Adicional','Aditivo documental vinculado ao contrato vigente, enviado ao cliente para aceite. Não cria contrato paralelo.'],['autorizacao_imagem','Autorização de Uso de Imagem','Documento específico de consentimento do cliente para uso de imagens.'],['quitacao_encerramento','Quitação e Encerramento','Formalização do encerramento e situação financeira do contrato.']];
-let projects=[],project=null,scope=[],approvals=[],docs=[],attention=[],documentNotifications=[],documentAcceptances=[];
+let projects=[],unlinkedContracts=[],pendingContract=null,project=null,scope=[],approvals=[],docs=[],attention=[],documentNotifications=[],documentAcceptances=[];
 const supportedDocumentKinds=new Set(['anexo_i','termo_aceite','estudo_preliminar','levantamento_tecnico','servico_adicional','autorizacao_imagem','quitacao_encerramento','notificacao_formal']);
 const documentKindLabels={anexo_i:'Anexo I',termo_aceite:'Termo de Aceite',estudo_preliminar:'Estudo Preliminar',levantamento_tecnico:'Levantamento / Vistoria',servico_adicional:'Serviço Adicional',autorizacao_imagem:'Autorização de Imagem',quitacao_encerramento:'Quitação / Encerramento',notificacao_formal:'Notificação Formal'};
 let activeDocumentKind=supportedDocumentKinds.has((location.hash||'').slice(1))?(location.hash||'').slice(1):null;
@@ -21,8 +21,100 @@ function msg(text,t=''){const e=$('contractMessage');if(!e)return;e.textContent=
 function safeError(error,fallback){const raw=String(error?.message||error||'').trim(),normalized=raw.toLowerCase();if(['network request failed','failed to fetch','networkerror','timeout'].some(pattern=>normalized.includes(pattern)))return 'Sem conexão com o serviço. Verifique sua internet e tente novamente.';if([/^acesso administrativo necessário\.?$/i,/^projeto\/contrato não encontrado\.?$/i,/^tipo de documento não suportado\.?$/i,/^selecione uma aprovação para gerar o termo de aceite\.?$/i,/^aprovação não encontrada(?: para este projeto)?\.?$/i,/^este rascunho é anterior à governança documental atual\./i,/^complete a identificação profissional sigilosa em configurações antes de gerar este documento\./i,/^muitas (?:tentativas|operações)\./i].some(pattern=>pattern.test(raw)))return raw;return fallback}
 function b64blob(base64){const bin=atob(base64),bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'})}
 function download(base64,name){const u=URL.createObjectURL(b64blob(base64)),a=document.createElement('a');a.href=u;a.download=name||'documento.docx';a.click();setTimeout(()=>URL.revokeObjectURL(u),1200)}
-async function loadProjects(){const {data,error}=await client().from('projetos').select('id,nome,tipo,cliente_id,contract_id,numero_contrato,status,area_construida_m2,area_terreno_m2,endereco_obra,numero_obra,complemento_obra,bairro_obra,cidade_obra,estado_obra').order('created_at',{ascending:false}).limit(150);if(error){msg('Não foi possível carregar os projetos.','error');return}projects=data||[];$('contractProject').innerHTML='<option value="">Selecione o contrato / projeto...</option>'+projects.filter(p=>p.contract_id).map(p=>`<option value="${p.id}">${esc(p.numero_contrato||'Contrato')} • ${esc(p.nome)}${p.tipo?' • '+esc(p.tipo):''}</option>`).join('');const requested=new URLSearchParams(location.search).get('projectId');const contextual=projects.find(p=>p.id===requested&&p.contract_id);if(contextual){$('contractProject').value=contextual.id;await chooseProject(contextual.id)}else if(!requested&&!project&&projects.find(p=>p.contract_id)){$('contractProject').value=projects.find(p=>p.contract_id).id;await chooseProject($('contractProject').value)}}
+
+function ensurePendingContractActions(){
+  const selector=$('contractProject');
+  const host=$('panelContractProject');
+  if(!selector||!host||$('pendingContractAction'))return;
+  const info=document.createElement('div');
+  info.id='pendingContractAction';
+  info.className='doc-contract-pending doc-hidden';
+  info.innerHTML='<div><strong>Contrato gerado, ainda sem projeto vinculado</strong><p id="pendingContractExplanation">Este contrato existe na Central, mas os documentos vinculados precisam de um projeto associado. O vínculo aproveita os dados e o escopo já registrados, sem recadastrá-los.</p></div><button class="doc-btn" id="activatePendingContract" type="button">Vincular contrato e habilitar Anexo I</button>';
+  selector.closest('.doc-field')?.insertAdjacentElement('afterend',info);
+  $('activatePendingContract')?.addEventListener('click',activatePendingContract);
+}
+function showPendingContract(record){
+  pendingContract=record;
+  project=null;
+  scope=(Array.isArray(record.services)?record.services:[])
+    .filter(item=>item?.included===true)
+    .map((item,index)=>({
+      service_code:String(item.code||''),
+      service_name:String(item.name||item.code||'Serviço'),
+      included:true,
+      acceptance_required:item.acceptanceRequired!==false,
+      display_order:Number(item.displayOrder)||index+1,
+      notes:item.notes||''
+    }));
+  approvals=[];docs=[];attention=[];documentNotifications=[];documentAcceptances=[];
+  ensurePendingContractActions();
+  $('pendingContractAction')?.classList.remove('doc-hidden');
+  if($('pendingContractExplanation')){
+    $('pendingContractExplanation').textContent=record.source_mode==='orcamento'
+      ? 'Os serviços e dados do contrato serão aproveitados. A emissão do Anexo I também exige que o orçamento de origem esteja emitido e validado.'
+      : 'O vínculo cria ou reutiliza os cadastros de cliente, contrato e projeto. Nenhum dado do contrato precisa ser preenchido novamente.';
+  }
+  renderAll();
+  msg('Contrato '+(record.contract_number||'')+' localizado. Use o botão de vinculação acima para habilitar os documentos relacionados.','success');
+}
+async function activatePendingContract(){
+  const record=pendingContract;
+  if(!record)return;
+  if(!confirm('Vincular o contrato '+(record.contract_number||'')+' aos cadastros de cliente e projeto para habilitar o Anexo I? O contrato e o escopo existentes serão aproveitados.'))return;
+  const button=$('activatePendingContract');
+  if(button){button.disabled=true;button.textContent='Vinculando...';}
+  msg('Vinculando cliente, contrato e projeto...');
+  try{
+    const {data,error}=await client().rpc('admin_convert_commercial_record',{p_record_id:record.id});
+    if(error||!data?.project_id)throw error||new Error('Não foi possível obter o projeto vinculado.');
+    await loadProjects(data.project_id);
+    if($('contractProject')?.value!==String(data.project_id))throw new Error('O projeto foi vinculado, mas não pôde ser selecionado na lista.');
+    msg('Contrato '+record.contract_number+' vinculado ao cliente e projeto. O Anexo I já pode utilizar o escopo deste contrato.','success');
+  }catch(error){
+    msg(error?.message||'Não foi possível vincular o contrato. Tente novamente.','error');
+  }finally{
+    if(button){button.disabled=false;button.textContent='Vincular contrato e habilitar Anexo I';}
+  }
+}
+async function loadProjects(preferredId=null){
+  const previous=$('contractProject')?.value||'';
+  const [res,commercial]=await Promise.all([
+    client().from('projetos')
+      .select('id,nome,tipo,cliente_id,contract_id,numero_contrato,status,area_construida_m2,area_terreno_m2,endereco_obra,numero_obra,complemento_obra,bairro_obra,cidade_obra,estado_obra')
+      .order('created_at',{ascending:false}).limit(150),
+    client().from('commercial_records')
+      .select('id,contract_number,prospect_name,property_type,services,source_mode,status,linked_project_id,created_at')
+      .eq('record_kind','contrato').is('linked_project_id',null)
+      .order('created_at',{ascending:false}).limit(150)
+  ]);
+  if(res.error){msg('Não foi possível carregar os projetos.','error');return}
+  if(commercial.error){msg('Os projetos foram carregados, mas não foi possível consultar os contratos recentes: '+commercial.error.message,'error');return}
+  projects=res.data||[];
+  unlinkedContracts=commercial.data||[];
+  const selector=$('contractProject');
+  if(!selector)return;
+  selector.innerHTML='<option value="">Selecione o contrato / projeto...</option>'
+    +(unlinkedContracts.length?'<optgroup label="Contratos recém-criados — vincular ao projeto">'
+       +unlinkedContracts.map(r=>`<option value="commercial:${esc(r.id)}">${esc(r.contract_number||'Contrato')} • ${esc(r.prospect_name||'Contratante')} • ainda sem projeto</option>`).join('')
+       +'</optgroup>':'')
+    +'<optgroup label="Contratos vinculados a projetos">'
+    +projects.filter(p=>p.contract_id).map(p=>`<option value="${esc(p.id)}">${esc(p.numero_contrato||'Contrato')} • ${esc(p.nome)}${p.tipo?' • '+esc(p.tipo):''}</option>`).join('')
+    +'</optgroup>';
+  ensurePendingContractActions();
+  const requested=new URLSearchParams(location.search).get('projectId');
+  const activeSelection=[preferredId,previous,requested].find(id=>id&&selector.querySelector('option[value="'+CSS.escape(String(id))+'"]'));
+  const fallback=unlinkedContracts[0]?'commercial:'+unlinkedContracts[0].id:projects.find(p=>p.contract_id)?.id||'';
+  const selected=activeSelection||fallback;
+  selector.value=selected;
+  await chooseProject(selected);
+}
 async function chooseProject(id){
+  if(typeof id==='string'&&id.startsWith('commercial:')){
+    const record=unlinkedContracts.find(item=>String(item.id)===id.slice('commercial:'.length));
+    if(record){showPendingContract(record);return}
+  }
+  pendingContract=null;
+  $('pendingContractAction')?.classList.add('doc-hidden');
   project=projects.find(p=>p.id===id)||null;
   if(!project){scope=[];approvals=[];docs=[];attention=[];documentNotifications=[];documentAcceptances=[];renderAll();return}
   msg('Carregando fluxo contratual...');
@@ -58,7 +150,7 @@ function renderGenerators(){
     <div class="doc-row" data-generator-kind="${kind}">
       <div class="doc-row-head">
         <div><strong>${esc(title)}</strong><div class="doc-meta">${esc(desc)}</div></div>
-        <button class="doc-btn secondary" data-prepare="${kind}">Preparar</button>
+        <button class="doc-btn secondary" data-prepare="${kind}" ${pendingContract?'disabled title="Vincule o contrato a um projeto para preparar o documento."':''}>Preparar</button>
       </div>
       ${kind==='estudo_preliminar'&&!included('a')?'<div class="doc-flow-explainer">Estudo Preliminar não consta no escopo vigente. Se for apenas apoio interno, será auxiliar; se o cliente o contratar, primeiro registre-o por orçamento/Serviço Adicional para que seja remunerado e passe a constar no Anexo I.</div>':''}
       ${kind==='servico_adicional'?'<div class="doc-flow-explainer">O serviço adicional ficará vinculado ao contrato selecionado acima. A versão aceita pelo cliente integra o histórico do contrato sem apagar ou substituir os documentos anteriores.</div>':''}
@@ -188,4 +280,4 @@ function createApprovalRequest(){
     else msg('Solicitação criada. Clique em “Preparar termo” para continuar.','success');
   })
 }
-function bind(){$('contractProject')?.addEventListener('change',e=>chooseProject(e.target.value));$('contractGenerators')?.addEventListener('click',e=>{const b=e.target.closest('[data-prepare]');if(b)prepare(b.dataset.prepare)});$('approvalList')?.addEventListener('click',e=>{if(e.target.closest('#newApprovalRequest')){createApprovalRequest();return}const b=e.target.closest('[data-approval]');if(b)prepare('termo_aceite',b.dataset.approval)});$('preparedDocuments')?.addEventListener('click',e=>{const b=e.target.closest('[data-download],[data-archive],[data-send]');if(!b)return;const expected=b.dataset.kind||activeDocumentKind;if(b.dataset.download)generateAndDeliver(b.dataset.download,false,expected);if(b.dataset.archive)generateAndDeliver(b.dataset.archive,true,expected);if(b.dataset.send)send(b.dataset.send,expected)});$('contractAttention')?.addEventListener('click',e=>{const b=e.target.closest('[data-notice]');if(b)notice(b.dataset.notice)});window.addEventListener('cme:document-mode',e=>{const kind=e.detail?.kind;activeDocumentKind=supportedDocumentKinds.has(kind)?kind:null;renderDocs()});setTimeout(async()=>{await loadCatalog();await loadProjects()},300)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();})();
+function bind(){$('contractProject')?.addEventListener('change',e=>chooseProject(e.target.value));$('contractGenerators')?.addEventListener('click',e=>{const b=e.target.closest('[data-prepare]');if(b)prepare(b.dataset.prepare)});$('approvalList')?.addEventListener('click',e=>{if(e.target.closest('#newApprovalRequest')){createApprovalRequest();return}const b=e.target.closest('[data-approval]');if(b)prepare('termo_aceite',b.dataset.approval)});$('preparedDocuments')?.addEventListener('click',e=>{const b=e.target.closest('[data-download],[data-archive],[data-send]');if(!b)return;const expected=b.dataset.kind||activeDocumentKind;if(b.dataset.download)generateAndDeliver(b.dataset.download,false,expected);if(b.dataset.archive)generateAndDeliver(b.dataset.archive,true,expected);if(b.dataset.send)send(b.dataset.send,expected)});$('contractAttention')?.addEventListener('click',e=>{const b=e.target.closest('[data-notice]');if(b)notice(b.dataset.notice)});window.addEventListener('cme:document-mode',e=>{const kind=e.detail?.kind;activeDocumentKind=supportedDocumentKinds.has(kind)?kind:null;renderDocs()});window.addEventListener('cme:commercial-records-updated',()=>loadProjects());setTimeout(async()=>{await loadCatalog();await loadProjects()},300)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();})();
