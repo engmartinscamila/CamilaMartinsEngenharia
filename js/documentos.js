@@ -193,13 +193,15 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
         alternarSalvamento(botaoSalvar, true);
         let novoCaminho = anterior?.arquivo || null;
 
+        let persistido = false;
         try {
             if (arquivo) {
                 novoCaminho = `${dados.cliente_id}/${dados.projeto_id}/${Date.now()}-${normalizarNome(arquivo.name)}`;
-                await dbUploadArquivo(BUCKETS.DOCUMENTOS, novoCaminho, arquivo);
+                await dbUploadArquivo(window.CMEProjectFiles.bucket(arquivo), novoCaminho, arquivo);
             }
 
             dados.arquivo = novoCaminho;
+            dados.storage_bucket = arquivo ? window.CMEProjectFiles.bucket(arquivo) : anterior?.storage_bucket || BUCKETS.DOCUMENTOS;
 
             const editando = Boolean(documentoSelecionadoId);
 
@@ -210,8 +212,9 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
                 await dbCriarDocumento(dados);
             }
 
+            persistido = true;
             if (arquivo && anterior?.arquivo && anterior.arquivo !== novoCaminho) {
-                await dbExcluirArquivoStorage(BUCKETS.DOCUMENTOS, anterior.arquivo).catch(() => {});
+                await dbExcluirArquivoStorage(anterior.storage_bucket || BUCKETS.DOCUMENTOS, anterior.arquivo).catch(() => {});
             }
 
             const notificacao = await dbNotificarAtualizacao({
@@ -231,8 +234,8 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
             );
         }
         catch (error) {
-            if (arquivo && novoCaminho && novoCaminho !== anterior?.arquivo) {
-                await dbExcluirArquivoStorage(BUCKETS.DOCUMENTOS, novoCaminho).catch(() => {});
+            if (!persistido && arquivo && novoCaminho && novoCaminho !== anterior?.arquivo) {
+                await dbExcluirArquivoStorage(window.CMEProjectFiles.bucket(arquivo), novoCaminho).catch(() => {});
             }
             tratarErro("Não foi possível salvar o documento.", error);
         }
@@ -257,6 +260,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
             <p>${escapar(documento.descricao || "Sem descrição.")}</p>
             ${documento.url
                 ? `${visualizacao}
+                    ${window.CMEProjectFiles.image(documento.arquivo) ? `<p><a href="fotos.html?foto=${encodeURIComponent(documento.id)}">Ver no álbum do projeto</a></p>` : ''}
                     <p class="arquivo-links">
                         <a href="${escapar(documento.url)}" target="_blank" rel="noopener">
                             Abrir em nova guia
@@ -312,6 +316,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
 
     function abrirDocumentoDaUrl() {
         const parametros = new URLSearchParams(window.location.search);
+        if (parametros.get("novo") === "1") { novoDocumento(); return; }
         const id = parametros.get("documento");
         const acao = parametros.get("acao");
 
@@ -330,13 +335,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
         window.history.replaceState({}, "", window.location.pathname);
     }
 
-    function avisoNotificacao(resultado) {
-        if (resultado?.enviado) {
-            return "\nO cliente também recebeu um aviso por e-mail.";
-        }
-
-        return "\nO registro foi salvo, mas o aviso por e-mail ainda não está configurado.";
-    }
+    function avisoNotificacao(resultado) { return window.CMEEmailNotice(resultado); }
 
     async function excluirDocumento(id) {
         const documento = localizar(id);
@@ -345,7 +344,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
         try {
             await dbExcluirDocumento(documento.id);
             if (documento.arquivo) {
-                await dbExcluirArquivoStorage(BUCKETS.DOCUMENTOS, documento.arquivo).catch(() => {});
+                await dbExcluirArquivoStorage(documento.storage_bucket || BUCKETS.DOCUMENTOS, documento.arquivo).catch(() => {});
             }
             limparDetalhes();
             await recarregar();

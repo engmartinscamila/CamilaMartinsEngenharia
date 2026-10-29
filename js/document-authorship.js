@@ -21,6 +21,11 @@
 
     async function autoriaExistente(tabela, id) {
         if (!tabela || !id || !window.supabaseClient) return false;
+        if (String(id).startsWith('foto:')) {
+            const { data, error } = await window.supabaseClient.from('fotos').select('protection_mode').eq('id', String(id).slice(5)).maybeSingle();
+            if (error) throw error;
+            return data?.protection_mode === 'authored_photo';
+        }
         const { data, error } = await window.supabaseClient
             .from(tabela)
             .select("autoral")

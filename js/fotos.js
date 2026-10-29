@@ -32,6 +32,9 @@ FOTOS.JS — ÁLBUNS + VISUALIZADOR DE IMAGENS
             preencherSelect("fotoCliente", clientes);
             preencherProjetos();
             renderizarAlbuns();
+            const photoId = new URLSearchParams(location.search).get('foto');
+            const photo = localizar(photoId);
+            if (photo) { abrirAlbum(chaveAlbum(photo)); abrirVisualizador(photo.id); }
         } catch (error) {
             tratarErro("Não foi possível carregar as fotos.", error);
         } finally {
@@ -402,27 +405,8 @@ FOTOS.JS — ÁLBUNS + VISUALIZADOR DE IMAGENS
         if (event.key === "ArrowRight") navegarVisualizador(1);
     }
 
-    function novaFoto() {
-        fotoSelecionadaId = null;
-        document.getElementById("formFoto")?.reset();
-        preencherProjetos();
-        atualizarModal("Adicionar Foto", "Salvar Foto", true);
-        abrirModal();
-    }
-
-    function editarFoto(id) {
-        const foto = localizar(id);
-        if (!foto) return;
-
-        fecharVisualizador();
-        fotoSelecionadaId = foto.id;
-        preencher("fotoCliente", foto.cliente_id);
-        preencherProjetos(foto.projeto_id);
-        preencher("fotoTitulo", foto.nome);
-        preencher("fotoDescricao", foto.descricao);
-        atualizarModal("Editar Foto", "Salvar Alterações", false);
-        abrirModal();
-    }
+    function novaFoto() { location.href = 'documentos.html?novo=1'; }
+    function editarFoto(id) { location.href = 'documentos.html?documento=' + encodeURIComponent(id) + '&acao=editar'; }
 
     async function salvarFoto(event) {
         event.preventDefault();
@@ -495,9 +479,7 @@ FOTOS.JS — ÁLBUNS + VISUALIZADOR DE IMAGENS
 
             alert(
                 (editando ? "Foto atualizada" : "Foto cadastrada") + " com sucesso." +
-                (notificacao.enviado
-                    ? "\nO cliente também recebeu um aviso por e-mail."
-                    : "\nO registro foi salvo, mas o aviso por e-mail ainda não está configurado.")
+                window.CMEEmailNotice(notificacao)
             );
         } catch (error) {
             if (arquivo && novoCaminho && novoCaminho !== anterior?.arquivo) {
@@ -510,26 +492,7 @@ FOTOS.JS — ÁLBUNS + VISUALIZADOR DE IMAGENS
         }
     }
 
-    async function excluirFoto(id) {
-        const foto = localizar(id);
-        if (!foto || !confirm('Excluir a foto "' + (foto.nome || "Sem título") + '"?')) return;
-
-        const albumAnterior = chaveAlbum(foto);
-
-        try {
-            fecharVisualizador();
-            await dbExcluirFoto(foto.id);
-
-            if (foto.arquivo) {
-                await dbExcluirArquivoStorage(BUCKETS.FOTOS, foto.arquivo).catch(() => {});
-            }
-
-            await recarregar(albumAnterior);
-            alert("Foto excluída com sucesso.");
-        } catch (error) {
-            tratarErro("Não foi possível excluir a foto.", error);
-        }
-    }
+    function excluirFoto(id) { location.href = 'documentos.html?documento=' + encodeURIComponent(id); }
 
     async function recarregar(preferirAlbum = albumAtualKey) {
         fotos = await dbBuscarFotos();

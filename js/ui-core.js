@@ -33,6 +33,7 @@ const MENU_ADMIN_CANONICO=[
   ["portal/admin/procurement","fa-cart-shopping","Fornecedores e cotações"],
   ["biblioteca.html","fa-book-open","Biblioteca"],
   ["financeiro.html","fa-chart-line","Financeiro"],
+  ["recibos.html","fa-receipt","Emissão de recibos"],
   ["portal/admin/financial","fa-building-columns","Contas bancárias e conciliação OFX"],
   ["portal/admin/portal-control","fa-eye","Módulos do portal do cliente"],
   ["agenda.html","fa-calendar-days","Agenda"],

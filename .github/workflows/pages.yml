@@ -40,6 +40,10 @@ jobs:
           node scripts/portal-canonical-path-test.mjs
           node scripts/document-generation-audit.mjs
           node scripts/portal-observations-regression.mjs
+          node scripts/invite-email-regression.mjs
+          node scripts/client-email-notification-regression.mjs
+          node scripts/password-link-outbox-regression.mjs
+          node scripts/project-files-receipts-regression.mjs
 
       - name: Verificar segurança antes de publicar
         run: |
@@ -92,6 +96,7 @@ jobs:
         run: |
           node scripts/browser-smoke.mjs
           node scripts/mobile-admin-smoke.mjs
+          node scripts/receipts-browser-regression.mjs
 
       - name: Log do servidor em caso de falha
         if: failure()

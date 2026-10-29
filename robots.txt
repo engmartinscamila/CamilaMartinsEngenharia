@@ -23,3 +23,5 @@ Disallow: /cronograma-cliente.html
 Disallow: /solicitacoes-cliente.html
 
 Sitemap: https://www.camilamartinsengenharia.com.br/sitemap.xml
+
+Disallow: /recibos.html

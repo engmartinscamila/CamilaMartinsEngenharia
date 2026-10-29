@@ -1,17 +1,5 @@
+import { deliverClientEmail, failClientEmail } from '../_shared/client-email.ts';
 import { withSupabase } from "npm:@supabase/server@1.5.3";
-
-function resolveProductionEmailSender(configured: string | undefined) {
-  const sender = (configured || '').trim();
-  const address = (sender.match(/<([^<>]+)>$/)?.[1] || sender).trim();
-  const productionUrl = Deno.env.get('SUPABASE_URL') || '';
-  // The production sending domain is verified in Resend. The resend.dev
-  // sandbox sender cannot deliver invitations or updates to customers.
-  if (productionUrl === 'https://hghtwlopqztfcosfxafd.supabase.co' &&
-      (!sender || /@resend\.dev$/i.test(address))) {
-    return 'Camila Martins Engenharia <nao-responda@auth.camilamartinsengenharia.com.br>';
-  }
-  return sender;
-}
 
 const PRODUCTION_SITE_URL = "https://camilamartinsengenharia.com.br";
 const projectRef = new URL(Deno.env.get("SUPABASE_URL") ?? "https://unconfigured.invalid").hostname.split(".")[0];
@@ -55,15 +43,6 @@ function json(request: Request, body: unknown, status = 200) {
 
 function normalizeEmail(value: unknown) {
   return typeof value === "string" ? value.trim().toLowerCase().slice(0, 254) : "";
-}
-
-function escapeHtml(value: unknown) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }
 
 function normalizeCaptchaToken(value: unknown) {
@@ -118,24 +97,6 @@ async function consumeNetworkRateLimit(admin: any, request: Request) {
   return data === true;
 }
 
-async function sendEmail(email: string, name: string, secureLink: string) {
-  const apiKey = Deno.env.get("RESEND_API_KEY");
-  const from = resolveProductionEmailSender(Deno.env.get("NOTIFICATION_FROM_EMAIL"));
-  if (!apiKey || !from) throw new Error("Canal de e-mail indisponível.");
-
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from,
-      to: [email],
-      subject: "Acesso ao Portal do Cliente - Camila Martins Engenharia",
-      html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#11283f"><h2>Acesso ao Portal do Cliente</h2><p>Olá, ${escapeHtml(name || "cliente")}.</p><p>Use o botão abaixo para criar ou redefinir sua senha. O link é pessoal e temporário.</p><p><a href="${escapeHtml(secureLink)}" style="display:inline-block;padding:13px 20px;background:#0b2b4c;color:#fff;text-decoration:none">Criar ou redefinir minha senha</a></p><p style="font-size:12px;color:#64748b">Se você não solicitou este acesso, ignore esta mensagem. Sua senha atual não será alterada.</p></div>`,
-    }),
-  });
-  if (!response.ok) throw new Error(`Falha no provedor de e-mail (${response.status}).`);
-}
-
 const handler = withSupabase({ auth: "publishable" }, async (request: Request, ctx: any) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(request) });
   if (request.method !== "POST") return json(request, { ok: false }, 405);
@@ -177,21 +138,21 @@ const handler = withSupabase({ auth: "publishable" }, async (request: Request, c
       .eq("status", "ativo")
       .maybeSingle();
     if (clientError) throw clientError;
-    if (!client?.auth_id) return json(request, { ok: true, message: GENERIC_MESSAGE });
+    if (!client) return json(request, { ok: true, message: GENERIC_MESSAGE });
 
     if (!(await consumeEmailRateLimit(admin, email))) return json(request, { ok: true, message: GENERIC_MESSAGE });
 
-    const { data: userData, error: userError } = await admin.auth.admin.getUserById(client.auth_id);
-    const user = !userError ? userData?.user : null;
-    if (!user?.email || user.email.toLowerCase() !== email) return json(request, { ok: true, message: GENERIC_MESSAGE });
-
-    const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({ type: "recovery", email: user.email });
-    if (linkError || !linkData?.properties?.hashed_token) throw linkError ?? new Error("Token não gerado.");
-
-    const link = new URL(`${SITE_URL}/redefinir-senha.html`);
-    link.searchParams.set("token_hash", linkData.properties.hashed_token);
-    link.searchParams.set("type", "recovery");
-    await sendEmail(user.email, client.nome ?? "cliente", link.toString());
+    // Reuse the reliable invitation outbox even when the initial Auth link has
+    // not yet been created. Never silently abandon an authorized registration.
+    const { data: jobId, error: queueError } = await admin.rpc('enqueue_client_invitation', { p_client_id: client.id });
+    if (queueError || !jobId) throw new Error('Não foi possível registrar o acesso.');
+    const { data: jobs, error: claimError } = await admin.rpc('claim_client_email_jobs', { p_limit: 1, p_job_id: jobId });
+    if (claimError) throw new Error('Não foi possível iniciar o envio.');
+    const job = jobs?.[0];
+    if (job) {
+      try { await deliverClientEmail(admin, job); }
+      catch (error) { await failClientEmail(admin, job, error); throw new Error('Envio adiado para nova tentativa automática.'); }
+    }
 
     return json(request, { ok: true, message: GENERIC_MESSAGE });
   } catch (error) {

@@ -239,6 +239,7 @@ async function installMocks(page) {
   await page.route("**/js/supabase.js*", route =>
     route.fulfill({ status:200, contentType:"application/javascript", body:supabaseMock })
   );
+  await page.route("**/js/project-files.js*", route => route.fulfill({status:200,contentType:'application/javascript',body:'window.CMEProjectFiles={image:p=>/\\.(jpg|png|webp)$/i.test(p||""),bucket:f=>/\\.(jpg|png|webp)$/i.test(f?.name||"")?"fotos":"documentos"};'}));
   await page.route("**/js/database.js*", route =>
     route.fulfill({ status:200, contentType:"application/javascript", body:databaseMock })
   );
@@ -597,7 +598,6 @@ const modalTests = [
   ["projetos.html","novoProjeto","modalProjeto"],
   ["documentos.html","novoDocumento","modalDocumento"],
   ["biblioteca.html","novoArquivo","modalArquivo"],
-  ["fotos.html","novaFoto","modalFoto"],
   ["financeiro.html","novoLancamento","modalFinanceiro"],
   ["agenda.html","novoEvento","modalEvento"],
   ["solicitacoes.html","novaSolicitacao","modalSolicitacao"]
@@ -679,10 +679,6 @@ const formTests = [
   {
     file:"biblioteca.html", open:"novoArquivo", form:"formArquivo", expected:"dbSalvarArquivoBiblioteca",
     fields:{arquivoNome:"Guia de Estilos QA",arquivoCliente:"c1",arquivoProjeto:"p1",arquivoAutoral:true,arquivoUpload:["Guia_Estilos_QA.pdf"]}
-  },
-  {
-    file:"fotos.html", open:"novaFoto", form:"formFoto", expected:"dbCriarFoto",
-    fields:{fotoCliente:"c1",fotoProjeto:"p1",fotoTitulo:"Foto QA",arquivoFoto:["foto-qa.webp"]}
   },
   {
     file:"financeiro.html", open:"novoLancamento", form:"formFinanceiro", expected:"dbCriarLancamentoFinanceiro",
@@ -1082,31 +1078,18 @@ async function selecionarPrimeiraOpcaoValida(page, id) {
   await page.close();
 }
 
-// Upload múltiplo de fotos.
+// The album uses the central Documents upload, including multiple images.
 {
   const page = await loadPage(context, "fotos.html");
   await page.locator("#novaFoto").click();
-  await preencherCampo(page, "fotoCliente", "c1");
-  await page.waitForTimeout(50);
-
-  const projetoOk = await selecionarPrimeiraOpcaoValida(page, "fotoProjeto");
-  assert(projetoOk, "fotos.html: projetos não foram carregados depois da seleção do cliente");
-
-  await preencherCampo(page, "arquivoFoto", ["fachada-qa.webp","interior-qa.webp"]);
-  await page.locator("#formFoto").evaluate(el => el.requestSubmit());
-
-  await page.waitForFunction(
-    () => (window.__DB_CALLS__ || []).filter(call => call.name === "dbCriarFoto").length >= 2,
-    null,
-    {timeout:5000}
-  ).catch(()=>{});
-
-  const calls = await page.evaluate(() =>
-    (window.__DB_CALLS__ || []).filter(call => call.name === "dbCriarFoto")
-  );
-
-  assert(calls.length >= 2, `fotos.html: upload múltiplo gravou ${calls.length} de 2 fotos`);
-  await responsive(page, "fotos.html após lote");
+  await page.waitForURL(/documentos\.html\?novo=1/);
+  assert(await page.locator('#modalDocumento').isVisible(), 'Álbum precisa abrir o cadastro central de arquivos');
+  await preencherCampo(page, 'documentoCliente', 'c1');
+  await selecionarPrimeiraOpcaoValida(page, 'documentoProjeto');
+  await preencherCampo(page, 'documentoArquivo', ['fachada-qa.webp','interior-qa.webp']);
+  await page.locator('#formDocumento').evaluate(el => el.requestSubmit());
+  await page.waitForFunction(() => (window.__DB_CALLS__ || []).filter(call => call.name === 'dbCriarDocumento').length >= 2, null, {timeout:5000});
+  assert((await page.evaluate(() => window.__DB_CALLS__)).filter(call => call.name === 'dbCriarDocumento').length === 2, 'Um único cadastro por imagem no gerenciador central');
   await page.close();
 }
 

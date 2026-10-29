@@ -269,7 +269,7 @@
                     botaoSalvar.textContent = 'Enviando ' + (indice + 1) + ' de ' + arquivos.length;
 
                     const caminho = clienteId + '/' + projetoId + '/' + Date.now() + '-' + indice + '-' + nomeSeguro(item.name);
-                    await dbUploadArquivo(BUCKETS.DOCUMENTOS, caminho, item);
+                    await dbUploadArquivo(window.CMEProjectFiles.bucket(item), caminho, item);
 
                     try {
                         await dbCriarDocumento({
@@ -278,12 +278,13 @@
                             cliente_id: clienteId,
                             projeto_id: projetoId,
                             descricao: descricao,
+                            storage_bucket: window.CMEProjectFiles.bucket(item),
                             arquivo: caminho,
                             nome_original: item.name,
                             autoral: Boolean(window.CMEArquivoAutoralSelecionado?.())
                         });
                     } catch (erroRegistro) {
-                        await dbExcluirArquivoStorage(BUCKETS.DOCUMENTOS, caminho).catch(function () {});
+                        await dbExcluirArquivoStorage(window.CMEProjectFiles.bucket(item), caminho).catch(function () {});
                         throw erroRegistro;
                     }
 

@@ -18,7 +18,7 @@
       if (data?.invitationSent !== true) {
         throw new Error(data?.error || data?.message || "O envio não foi confirmado.");
       }
-      alert("E-mail de acesso enviado. Verifique também a caixa de spam.");
+      alert("O provedor aceitou o e-mail de acesso. Verifique também a caixa de spam.");
     } catch (error) {
       console.error("Erro ao enviar acesso:", error);
       alert(error.message || "Não foi possível enviar o acesso. Tente novamente.");
