@@ -21,7 +21,9 @@ let calls=0,release,fail=false;
 const admin={listAdminContracts:()=>ok([{id:'contract',contractNumber:'CON-1',clientName:'Cliente',contractValue:500}]),listAdminProjects:()=>ok([project]),listAdminFinancialEntries:()=>ok(entries),listFinancialArchive:()=>ok([]),
  createAdminFinancialEntry:async input=>{calls++;await new Promise(resolve=>{release=resolve;});if(fail)return 'Falha simulada';entries=[...entries,{...entries[0],id:'new',description:input.description,amount:input.amount}];return null;},updateAdminFinancialEntry:async()=>null,deleteAdminFinancialEntry:async()=>null,updateAdminContractValue:async()=>null};
 const operations={listFinancialAccounts:()=>ok([{id:'account',name:'Conta de teste',openingBalance:1000,openingBalanceDate:'2020-01-01',accountType:'bank'}]),listTimesheets:()=>ok([]),listFiscalDocuments:()=>ok([]),getAdminFinancialPreferences:()=>ok({defaultHourlyRate:null}),createFinancialAccount:async()=>null,updateAdminFinancialPreferences:async()=>null,createTimesheet:async()=>null,createFiscalDocument:async()=>null,importOfxTransactions:async()=>({imported:0,reconciled:0,error:null})};
+const moduleContext=load('src/providers/admin-module-context.tsx',{react:React});
 const component=load('src/app/admin/financial.tsx',{
+ '@/providers/admin-module-context':moduleContext,
  react:React,'react-native':{View:'div',Text:'span',Pressable:props=>e('button',{onPress:props.onPress},props.children),ActivityIndicator:()=>null,Platform:{OS:'web'},Linking:{}},
  'expo-document-picker':{},'expo-crypto':{randomUUID:()=> '00000000-0000-4000-8000-000000000001'},
  '@/hooks/use-unsaved-form':{useUnsavedForm(){}},
