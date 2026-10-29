@@ -9,9 +9,10 @@ function assert(condition, message) {
 
 const menuTargets = [
   ['Dashboard', '/admin.html'],
+  ['Central de gestão', '/portal/admin/workspace/'],
   ['Clientes', '/clientes.html'],
   ['Projetos', '/projetos.html'],
-  ['Orçamentos e contratos', '/orcamentos-contratos.html'],
+  ['Contratos gerais', '/orcamentos-contratos.html'],
   ['Oportunidades comerciais', '/portal/admin/crm/'],
   ['Documentos gerados e aceites', '/portal/admin/contract-documents/'],
   ['Versões e pendências dos documentos', '/portal/admin/document-governance/'],
@@ -22,9 +23,9 @@ const menuTargets = [
   ['Tarefas do projeto', '/portal/admin/tasks/'],
   ['Diário de obra', '/portal/admin/work-diary/'],
   ['Fornecedores e cotações', '/portal/admin/procurement/'],
-  ['Biblioteca', '/biblioteca.html'],
-  ['Financeiro', '/financeiro.html'],
-  ['Contas bancárias e conciliação OFX', '/portal/admin/financial/'],
+  ['Biblioteca', '/documentos.html'],
+  ['Financeiro', '/portal/admin/financial/'],
+  ['Emissão de recibos', '/recibos.html'],
   ['Módulos do portal do cliente', '/portal/admin/portal-control/'],
   ['Agenda', '/agenda.html'],
   ['Cronograma (simples)', '/cronograma.html'],
@@ -39,6 +40,7 @@ const menuTargets = [
 ];
 
 const quickTargets = [
+  ['workspace', '/portal/admin/workspace/'],
   ['crm', '/portal/admin/crm/'],
   ['contract-documents', '/portal/admin/contract-documents/'],
   ['document-governance', '/portal/admin/document-governance/'],
@@ -66,7 +68,7 @@ async function newAdminPage(viewport) {
     const request = route.request();
     const url = request.url();
 
-    if (!new URL(page.url()).pathname.startsWith('/portal/') && request.resourceType() === 'script' && !/\/js\/ui-core\.js(?:\?|$)/i.test(url)) {
+    if (!new URL(page.url()).pathname.startsWith('/portal/') && request.resourceType() === 'script' && !/\/js\/(?:ui-core|library-route|financial-route)\.js(?:\?|$)/i.test(url)) {
       return route.fulfill({ status: 200, contentType: 'application/javascript', body: '' });
     }
 
@@ -110,7 +112,8 @@ async function clickAndAssert({ label, selector, expectedPath, viewport }) {
         target.click({ timeout: 5000 }),
       ]);
 
-      const current = new URL(response?.url() || page.url());
+      if(label.includes('Biblioteca'))await page.waitForURL(url=>url.pathname===expectedPath,{timeout:10000});
+      const current = new URL(label.includes('Biblioteca')?page.url():(response?.url() || page.url()));
       assert(current.pathname === expectedPath, `${label}: clique abriu ${current.pathname}, esperado ${expectedPath}`);
       assert(Boolean(response) && response.status() < 400, `${label}: destino respondeu HTTP ${response?.status() ?? 'sem resposta'}`);
 
@@ -158,7 +161,7 @@ for (const [slug, expectedPath] of quickTargets) {
     'Ações rápidas: preparação documental legada reapareceu',
   );
   assert(
-    await page.locator('a.menu-item').filter({ hasText: 'Orçamentos e contratos' }).count() === 1,
+    await page.locator('a.menu-item').filter({ hasText: 'Contratos gerais' }).count() === 1,
     'Menu: Contratos Gerais deve permanecer como único ponto canônico documental',
   );
   await page.close();
@@ -178,7 +181,8 @@ for (const [slug, expectedPath] of quickTargets) {
         page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
         target.click({ timeout: 5000 }),
       ]);
-      const current = new URL(response?.url() || page.url());
+      if(label.includes('Biblioteca'))await page.waitForURL(url=>url.pathname===expectedPath,{timeout:10000});
+      const current = new URL(label.includes('Biblioteca')?page.url():(response?.url() || page.url()));
       assert(current.pathname === '/portal/admin/construction-schedule/', `Mobile: clique no Cronograma completo abriu ${current.pathname}`);
       assert(Boolean(response) && response.status() < 400, `Mobile: Cronograma completo respondeu HTTP ${response?.status() ?? 'sem resposta'}`);
     } catch (error) {

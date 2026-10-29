@@ -293,6 +293,8 @@ export interface FinancialEntrySummary {
   dueDate: string | null;
   paidAt: string | null;
   accountId: string | null;
+  bankTransactionId?: string | null;
+  paymentMethod?: string | null;
 }
 
 export interface FinancialArchiveSummary {
@@ -421,6 +423,7 @@ export interface FinancialAccountSummary {
   name: string;
   accountType: 'bank' | 'cash' | 'credit';
   openingBalance: number;
+  openingBalanceDate?: string | null;
   active: boolean;
 }
 

@@ -239,13 +239,14 @@ const supabaseMock = `
 `;
 
 async function installMocks(page) {
+  await page.route('**/portal/admin/financial/**',route=>route.fulfill({contentType:'text/html',body:'<h1>Financeiro (destino da fixture)</h1>'}));
   await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route =>
     route.fulfill({ status:200, contentType:"application/javascript", body:"window.supabase={createClient:()=>window.supabaseClient};" })
   );
   await page.route("**/js/supabase.js*", route =>
     route.fulfill({ status:200, contentType:"application/javascript", body:supabaseMock })
   );
-  await page.route("**/js/project-files.js*", route => route.fulfill({status:200,contentType:'application/javascript',body:'window.CMEProjectFiles={image:p=>/\\.(jpg|png|webp)$/i.test(p||""),bucket:f=>/\\.(jpg|png|webp)$/i.test(f?.name||"")?"fotos":"documentos"};'}));
+  await page.route("**/js/project-files.js*", route => route.fulfill({status:200,contentType:'application/javascript',body:'window.CMEProjectFiles={validate(){},image:p=>/\\.(jpg|png|webp)$/i.test(p||""),bucket:f=>/\\.(jpg|png|webp)$/i.test(f?.name||"")?"fotos":"documentos"};'}));
   await page.route("**/js/database.js*", route =>
     route.fulfill({ status:200, contentType:"application/javascript", body:databaseMock })
   );
@@ -391,9 +392,16 @@ const browser = await chromium.launch({headless:true});
 const context = await browser.newContext();
 
 const adminPages = [
-  "admin.html","clientes.html","projetos.html","documentos.html","biblioteca.html",
-  "fotos.html","financeiro.html","agenda.html","cronograma.html","solicitacoes.html","configuracoes.html",
-  "protecao-pdf-admin.html"
+"admin.html",
+"clientes.html",
+"projetos.html",
+"documentos.html",
+"fotos.html",
+"agenda.html",
+"cronograma.html",
+"solicitacoes.html",
+"configuracoes.html",
+"protecao-pdf-admin.html"
 ];
 
 for (const file of adminPages) {
@@ -599,14 +607,12 @@ for (const [file,container] of [
 }
 
 const modalTests = [
-  ["admin.html","novoCliente","modalCliente"],
-  ["clientes.html","novoCliente","modalCliente"],
-  ["projetos.html","novoProjeto","modalProjeto"],
-  ["documentos.html","novoDocumento","modalDocumento"],
-  ["biblioteca.html","novoArquivo","modalArquivo"],
-  ["financeiro.html","novoLancamento","modalFinanceiro"],
-  ["agenda.html","novoEvento","modalEvento"],
-  ["solicitacoes.html","novaSolicitacao","modalSolicitacao"]
+["admin.html","novoCliente","modalCliente"],
+["clientes.html","novoCliente","modalCliente"],
+["projetos.html","novoProjeto","modalProjeto"],
+["documentos.html","novoDocumento","modalDocumento"],
+["agenda.html","novoEvento","modalEvento"],
+["solicitacoes.html","novaSolicitacao","modalSolicitacao"]
 ];
 
 for (const [file, buttonId, modalId] of modalTests) {
@@ -670,31 +676,23 @@ async function preencherCampo(page, id, valor) {
 }
 
 const formTests = [
-  {
+{
     file:"clientes.html", open:"novoCliente", form:"formCliente", expected:"dbCriarCliente",
     fields:{clienteNome:"Cliente QA",clienteEmail:"cliente.qa@example.com",clienteParceria:true}
   },
-  {
+{
     file:"projetos.html", open:"novoProjeto", form:"formProjeto", expected:"dbCriarProjeto",
     fields:{projetoNome:"Projeto QA",projetoCliente:"c1",projetoParceria:true}
   },
-  {
+{
     file:"documentos.html", open:"novoDocumento", form:"formDocumento", expected:"dbCriarDocumento",
     fields:{documentoNome:"Projeto Executivo QA",documentoCliente:"c1",documentoProjeto:"p1",documentoAutoral:true,documentoArquivo:["Projeto_Executivo_QA.pdf"]}
   },
-  {
-    file:"biblioteca.html", open:"novoArquivo", form:"formArquivo", expected:"dbSalvarArquivoBiblioteca",
-    fields:{arquivoNome:"Guia de Estilos QA",arquivoCliente:"c1",arquivoProjeto:"p1",arquivoAutoral:true,arquivoUpload:["Guia_Estilos_QA.pdf"]}
-  },
-  {
-    file:"financeiro.html", open:"novoLancamento", form:"formFinanceiro", expected:"dbCriarLancamentoFinanceiro",
-    fields:{financeiroDescricao:"Lançamento QA",financeiroValor:"100",financeiroData:"2026-08-29",financeiroStatus:"pago",financeiroCategoria:"honorarios",financeiroVencimento:"2026-08-29",financeiroFormaPagamento:"pix"}
-  },
-  {
+{
     file:"agenda.html", open:"novoEvento", form:"formEvento", expected:"dbCriarEventoAgenda",
     fields:{eventoTitulo:"Evento QA",eventoData:"2026-08-29"}
   },
-  {
+{
     file:"solicitacoes.html", open:"novaSolicitacao", form:"formSolicitacao", expected:"dbCriarSolicitacao",
     fields:{tituloSolicitacao:"Solicitação QA",clienteSolicitacao:"c1",mensagemSolicitacao:"Teste automatizado"}
   }
@@ -782,49 +780,8 @@ for (const teste of formTests) {
 
   await page.close();
 }
+// Retired duplicate editor: covered by the central catalogue and financial tests.
 
-// Biblioteca Admin: acervo consolidado e somente categorias com conteúdo.
-{
-  const page = await loadPage(context,"biblioteca.html");
-  await page.waitForTimeout(850);
-
-  const pastasCliente = page.locator("#listaBiblioteca > details.cme-pasta-cliente");
-  assert(
-    await pastasCliente.count() === 2,
-    `biblioteca.html: esperado 2 pastas de clientes, encontrado ${await pastasCliente.count()}`
-  );
-
-  const categorias = await page.locator("#listaBiblioteca .cm-category-folder")
-    .evaluateAll(items => items.map(item => item.dataset.categoria));
-
-  for (const esperada of ["projeto","art","guia_estilos","imagens"]) {
-    assert(
-      categorias.includes(esperada),
-      `biblioteca.html: categoria existente "${esperada}" não apareceu. Renderizadas: ${categorias.join(", ")}`
-    );
-  }
-
-  for (const vazia of ["contrato","orcamento","guia_obras","laudo","memorial","norma","modelo","outros"]) {
-    assert(
-      !categorias.includes(vazia),
-      `biblioteca.html: categoria vazia "${vazia}" apareceu indevidamente`
-    );
-  }
-
-  const categoriasSemItens = await page.locator("#listaBiblioteca .cm-category-folder").evaluateAll(items =>
-    items.filter(item => item.querySelectorAll(".cm-file-card").length === 0)
-      .map(item => item.dataset.categoria)
-  );
-  assert(
-    categoriasSemItens.length === 0,
-    `biblioteca.html: existem pastas vazias: ${categoriasSemItens.join(", ")}`
-  );
-
-  const totalCards = await page.locator("#listaBiblioteca .cm-file-card").count();
-  assert(totalCards === 5, `biblioteca.html: acervo consolidado deveria ter 5 itens, exibiu ${totalCards}`);
-
-  await page.close();
-}
 
 // Configurações: carregar, aplicar, salvar/confirmar, backup, notificações e cache.
 {
@@ -977,29 +934,8 @@ async function selecionarPrimeiraOpcaoValida(page, id) {
 
   await page.close();
 }
+// Retired duplicate editor: covered by the central catalogue and financial tests.
 
-{
-  const page = await loadPage(context,"biblioteca.html");
-
-  const resultado = await page.evaluate(() => ({
-    obra: window.CMEClassificarBiblioteca?.(
-      "CM_Guia_13_Impermeabilizacao_Banheiros_Varandas_Lajes.pdf",
-      "outros"
-    ),
-    estilos: window.CMEClassificarBiblioteca?.(
-      "15_Guia_Complementar_de_Tecidos_Camila_Martins.pdf",
-      "outros"
-    )
-  }));
-
-  assert(resultado.obra === "guia_obras", `Biblioteca: legado técnico deveria ser guia_obras, retornou ${resultado.obra}`);
-  assert(resultado.estilos === "guia_estilos", `Biblioteca: legado de tecidos deveria ser guia_estilos, retornou ${resultado.estilos}`);
-
-  const imagensOption = await page.locator('#arquivoCategoria option[value="imagens"]').count();
-  assert(imagensOption === 1, "biblioteca.html: opção manual Imagens não está disponível");
-
-  await page.close();
-}
 
 // Upload múltiplo + classificação automática de documentos.
 {
@@ -1046,49 +982,14 @@ async function selecionarPrimeiraOpcaoValida(page, id) {
   await responsive(page, "documentos.html após lote");
   await page.close();
 }
+// Retired duplicate editor: covered by the central catalogue and financial tests.
 
-// Upload múltiplo da Biblioteca com pastas/categorias por arquivo.
-{
-  const page = await loadPage(context, "biblioteca.html");
-  await page.locator("#novoArquivo").click();
-  await preencherCampo(page, "arquivoCliente", "c1");
-  await page.waitForTimeout(50);
-  await preencherCampo(page, "arquivoProjeto", "p1");
-
-  const categoria = page.locator("#arquivoCategoria");
-  if (await categoria.count()) {
-    const automatico = await categoria.locator('option[value="automatico"]').count();
-    if (automatico) await categoria.selectOption("automatico");
-  }
-
-  await preencherCampo(page, "arquivoUpload", [
-    "Guia_Obras_QA.pdf",
-    "ART_Responsabilidade_QA.pdf",
-    "Memorial_Descritivo_QA.pdf"
-  ]);
-
-  await page.locator("#formArquivo").evaluate(el => el.requestSubmit());
-
-  await page.waitForFunction(
-    () => (window.__DB_CALLS__ || []).filter(call => call.name === "dbSalvarArquivoBiblioteca").length >= 3,
-    null,
-    {timeout:5000}
-  ).catch(()=>{});
-
-  const calls = await page.evaluate(() =>
-    (window.__DB_CALLS__ || []).filter(call => call.name === "dbSalvarArquivoBiblioteca")
-  );
-
-  assert(calls.length >= 3, `biblioteca.html: upload múltiplo gravou ${calls.length} de 3 arquivos`);
-  await responsive(page, "biblioteca.html após lote");
-  await page.close();
-}
 
 // The album uses the central Documents upload, including multiple images.
 {
   const page = await loadPage(context, "fotos.html");
   await page.locator("#novaFoto").click();
-  await page.waitForURL(/documentos\.html\?novo=1/);
+  await page.waitForURL(url=>url.pathname.endsWith('/documentos.html')&&url.searchParams.get('novo')==='1');
   await page.locator('#modalDocumento').waitFor({state:'visible',timeout:10000});
   assert(await page.locator('#modalDocumento').isVisible(), 'Álbum precisa abrir o cadastro central de arquivos');
   await preencherCampo(page, 'documentoCliente', 'c1');
@@ -1120,7 +1021,7 @@ async function selecionarPrimeiraOpcaoValida(page, id) {
 
 const adminNav = [
   ["abrirClientes","clientes.html"],["abrirProjetos","projetos.html"],["abrirDocumentos","documentos.html"],
-  ["abrirBiblioteca","biblioteca.html"],["abrirFotos","fotos.html"],["abrirFinanceiro","financeiro.html"],
+  ["abrirBiblioteca","documentos.html"],["abrirFotos","fotos.html"],["abrirFinanceiro","portal/admin/financial/"],
   ["abrirAgenda","agenda.html"],["abrirConfiguracoes","configuracoes.html"]
 ];
 
@@ -1426,33 +1327,10 @@ for (const [button,email] of [["#firstAccess","cliente.qa@example.com"],["#forgo
   assert(await page.locator("#projetoParceriaHerdada").isVisible(), "projetos.html: aviso de parceria herdada não apareceu");
   await page.close();
 }
+// Retired duplicate editor: covered by the central catalogue and financial tests.
 
-// Financeiro: indicadores dinâmicos, visão por projeto e novos campos.
-{
-  const page = await loadPage(context, "financeiro.html");
-  await page.waitForTimeout(700);
-  const indicadores = await page.locator(".financeiro-indicadores article").count();
-  assert(indicadores === 4, `financeiro.html: esperado 4 indicadores, encontrado ${indicadores}`);
-  const resumo = (await page.locator("#financeiroResumoProjetos").textContent() || "");
-  assert(/Projeto Alpha/i.test(resumo), `financeiro.html: visão por projeto não foi montada: ${resumo}`);
-  assert(await page.locator("#financeiroStatus").count() === 1, "financeiro.html: campo Situação ausente");
-  assert(await page.locator("#financeiroVencimento").count() === 1, "financeiro.html: campo Vencimento ausente");
-  await page.close();
-}
+// Retired duplicate editor: covered by the central catalogue and financial tests.
 
-// Tema claro: componentes dinâmicos do Admin não podem manter fundo escuro.
-{
-  const page = await loadPage(context, "biblioteca.html");
-  await page.evaluate(() => { document.documentElement.dataset.adminTheme = "claro"; });
-  await page.waitForTimeout(100);
-  const aparencia = await page.locator("#listaBiblioteca .cm-file-card").first().evaluate(el => ({
-    background: getComputedStyle(el).backgroundColor,
-    color: getComputedStyle(el).color
-  }));
-  assert(aparencia.background === "rgb(255, 255, 255)", `biblioteca.html: card permaneceu escuro no tema claro (${aparencia.background})`);
-  assert(["rgb(27, 36, 48)", "rgb(17, 24, 39)"].includes(aparencia.color), `biblioteca.html: texto sem contraste no tema claro (${aparencia.color})`);
-  await page.close();
-}
 
 // Portal do cliente: seletor de tema e identificação de conteúdo autoral.
 {
@@ -1468,6 +1346,19 @@ for (const [button,email] of [["#firstAccess","cliente.qa@example.com"],["#forgo
   await page.close();
 }
 
+// Compatibility URLs preserve the project and use the single editor.
+{
+ const page=await context.newPage();await installMocks(page);
+ await page.goto(BASE+'/financeiro.html?projectId=p1');await page.waitForURL(url=>url.pathname==='/portal/admin/financial/');
+ assert(new URL(page.url()).searchParams.get('projectId')==='p1','Financeiro perdeu o contexto');await page.close();
+}
+
+{
+ const page=await loadPage(context,'biblioteca.html?projectId=p1');
+ await page.waitForURL(url=>url.pathname==='/documentos.html');
+ assert(new URL(page.url()).searchParams.get('visao')==='biblioteca','Biblioteca não usa o catálogo central');
+ await page.locator('#novoDocumento').click();assert(await page.locator('#documentoDestino').inputValue()==='biblioteca','Biblioteca perdeu coleção do cadastro');await page.close();
+}
 await browser.close();
 
 if (failures.length) {

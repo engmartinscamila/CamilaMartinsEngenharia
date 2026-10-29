@@ -1,3 +1,4 @@
+import { useNotificationProject } from '@/hooks/use-notification-project';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, Text, View } from 'react-native';
@@ -28,6 +29,7 @@ export default function AdminContractDocumentsScreen() {
   const styles = useThemeStyles(styleDefinitions);
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
   const [projectId, setProjectId] = useState<string | null>(null);
+  useNotificationProject(projects,setProjectId);
   const [attention, setAttention] = useState<DocumentAttentionItem[]>([]);
   const [documents, setDocuments] = useState<ContractDocumentSummary[]>([]);
   const [loading, setLoading] = useState(false);

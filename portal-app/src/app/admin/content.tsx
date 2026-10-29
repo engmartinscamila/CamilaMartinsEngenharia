@@ -1,8 +1,9 @@
+import { useUnsavedForm } from '@/hooks/use-unsaved-form';
 import { useNotificationProject } from '@/hooks/use-notification-project';
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
 import * as DocumentPicker from 'expo-document-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
@@ -83,16 +84,24 @@ function AdminContentForm() {
   const [deleteTarget, setDeleteTarget] = useState<AdminContentSummary | null>(null);
   const { colors } = useAppTheme();
   const styles = useThemeStyles(styleDefinitions);
-  const visibleItems = items.filter((item) => item.kind === kind);
+  useUnsavedForm(Boolean(title||category||assets.length));
+  const [query,setQuery]=useState('');
+  const [filterProject,setFilterProject]=useState<string|null>(null);
+  const [page,setPage]=useState(0);
+  const lock=useRef(false);
+  const image=(path:string|null)=>/\.(jpe?g|png|webp|gif|avif|bmp|heic|heif)$/i.test(path??'');
+  const filtered=items.filter(item=>(kind==='document'||(kind==='photo'?image(item.storagePath):item.kind==='library'))&&(!filterProject||item.projectId===filterProject)&&[item.title,item.category,item.clientName,item.projectName,projects.find(p=>p.id===item.projectId)?.contractNumber].join(' ').toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR')));
+  const visibleItems=filtered.slice(page*50,page*50+50);
 
-  useNotificationProject(projects, setSelectedProjectId);
+  const selectContext=useCallback((id:string)=>{setSelectedProjectId(id);setFilterProject(id);setPage(0);},[]);
+  useNotificationProject(projects, selectContext);
 
   const load = useCallback(async () => {
     setLoading(true);
     const [projectResult, contentResult] = await Promise.all([listAdminProjects(), listAdminContent()]);
     setProjects(projectResult.data);
     setItems(contentResult.data);
-    setSelectedProjectId((current) => current ?? projectResult.data[0]?.id ?? null);
+    setSelectedProjectId((current) => current ?? null);
     setError(projectResult.error ?? contentResult.error);
     setLoading(false);
   }, []);
@@ -109,6 +118,7 @@ function AdminContentForm() {
   };
 
   const upload = async () => {
+    if(lock.current)return;
     const project = projects.find((item) => item.id === selectedProjectId);
     if (!project || assets.length === 0 || (assets.length === 1 && title.trim().length < 2)) {
       setError('Selecione projeto e arquivo, e informe um título.');
@@ -126,7 +136,8 @@ function AdminContentForm() {
     const resolvedCategory = selectedClassification
       ? `${selectedClassification.category}${complementaryCategory ? ` — ${complementaryCategory}` : ''}`
       : complementaryCategory;
-    setSaving(true); setError(null); setSuccess(null);
+    lock.current=true;setSaving(true); setError(null); setSuccess(null);
+    try {
     const failed: DocumentPicker.DocumentPickerAsset[] = [];
     let result: string | null = null;
     for (const asset of assets) {
@@ -145,9 +156,11 @@ function AdminContentForm() {
           ? 'Arquivo publicado. Somente o cliente vinculado ao projeto poderá visualizá-lo e baixá-lo.'
           : 'Arquivo autoral publicado. O original permanece privado; o cliente recebe apenas a cópia identificada.'
         : 'Arquivo enviado e vinculado ao projeto.');
-      setTitle(''); setCategory(''); setVersion('1.0'); setAssets([]); setDocumentClassification(null);
+      setTitle(''); setCategory(''); setVersion('1.0'); setAssets([]); setDocumentClassification(null); setProtectionMode(kind === 'photo' ? 'authored_photo' : 'administrative');
       await load();
     }
+    } catch {setError('O envio não pôde ser concluído. Confira o catálogo antes de repetir; os campos foram preservados.');}
+    finally {lock.current=false;setSaving(false);}
   };
 
   const open = async (item: AdminContentSummary) => {
@@ -157,12 +170,14 @@ function AdminContentForm() {
   };
 
   const remove = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget || lock.current) return;
+    lock.current=true;
     setSaving(true); setError(null);
-    const result = await deleteAdminContent(deleteTarget);
-    setSaving(false); setDeleteTarget(null);
+    try {const result = await deleteAdminContent(deleteTarget);
     if (result) setError(result);
-    else { setSuccess('Arquivo e metadados excluídos.'); await load(); }
+    else { setDeleteTarget(null);setSuccess('Cadastro removido; arquivos ainda compartilhados foram preservados.'); await load(); }}
+    catch{setError('Não foi possível confirmar a exclusão. Atualize antes de repetir.');}
+    finally{setSaving(false);lock.current=false;}
   };
 
   return (
@@ -206,6 +221,7 @@ function AdminContentForm() {
         <Button disabled={assets.length === 0 || (kind === 'document' && !documentClassification)} loading={saving} onPress={() => void upload()} title="Enviar e publicar" />
         <Notice tone="info">A classificação escolhida pelo administrador fica gravada nos metadados. ART/RRT, contratos, orçamentos e documentos administrativos são baixáveis apenas pelo cliente vinculado ao projeto. PDFs técnicos e fotos autorais mantêm o original privado, entregam cópia identificada e registram o acesso. Capturas de tela não podem ser impedidas completamente.</Notice>
       </Card>
+      <Card><Text style={styles.sectionTitle}>Catálogo central — {filtered.length} arquivo(s)</Text><Field label="Pesquisar título, cliente, contrato ou categoria" value={query} onChangeText={value=>{setQuery(value);setPage(0);}} /><SelectionChips items={[{value:'',label:'Todos os projetos'},...projects.map(p=>({value:p.id,label:p.contractNumber+' • '+p.name}))]} label="Filtrar projeto" value={filterProject??''} onChange={value=>{setFilterProject(value||null);setPage(0);}} /><Notice tone="info">Documentos reúne todos os arquivos. Álbum filtra imagens e Biblioteca filtra materiais de referência. Cada registro mantém sua proteção e seu vínculo original.</Notice></Card>
       {loading ? <ActivityIndicator color={colors.gold600} /> : null}
       {!loading && visibleItems.length === 0 ? <StateView description={`Nenhum conteúdo da categoria ${kindLabels[kind].toLowerCase()} foi publicado.`} icon="folder-open-outline" title={`${sectionTitles[kind]} sem conteúdo`} /> : null}
       {visibleItems.map((item) => (
@@ -214,6 +230,7 @@ function AdminContentForm() {
           <View style={styles.actions}><View style={styles.grow}><Button onPress={() => void open(item)} title="Abrir com link seguro" variant="secondary" /></View><View style={styles.grow}><Button onPress={() => setDeleteTarget(item)} title="Excluir" variant="danger" /></View></View>
         </Card>
       ))}
+      <View style={styles.actions}><Button disabled={page===0} onPress={()=>setPage(value=>value-1)} title="Página anterior" variant="ghost" /><Text style={styles.meta}>Página {page+1} • {filtered.length} registro(s)</Text><Button disabled={(page+1)*50>=filtered.length} onPress={()=>setPage(value=>value+1)} title="Próxima página" variant="ghost" /></View>
       {deleteTarget ? <Card><Notice tone="danger">Confirme a exclusão de “{deleteTarget.title}”. O arquivo será removido do Storage e da lista.</Notice><View style={styles.actions}><View style={styles.grow}><Button loading={saving} onPress={() => void remove()} title="Confirmar exclusão" variant="danger" /></View><View style={styles.grow}><Button onPress={() => setDeleteTarget(null)} title="Cancelar" variant="ghost" /></View></View></Card> : null}
     </Screen>
   );

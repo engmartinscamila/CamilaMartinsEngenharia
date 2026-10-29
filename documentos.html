@@ -225,7 +225,7 @@ Documentos
 
 <p>
 
-Gerenciamento de documentos dos projetos
+Cadastro central de arquivos. Álbum e Biblioteca usam os mesmos registros.
 
 </p>
 
@@ -380,6 +380,8 @@ id="fecharModalDocumento">
 
 <form
 id="formDocumento">
+<div class="form-grupo"><label for="documentoDestino">Organizar em</label><select id="documentoDestino"><option value="automatico">Documentos / Álbum (imagens)</option><option value="biblioteca">Biblioteca do projeto</option></select></div>
+
 
 
 
@@ -849,6 +851,7 @@ Carregando...
     <script src="js/documentos-lote.js?v=20260829-3"></script>
 
 <script src="js/email-status.js?v=20261029"></script>
+<script src="js/admin-form-guard.js"></script>
 </body>
 
 

@@ -1,4 +1,6 @@
-import { normalizeStatus } from '@/lib/format';
+import { readAllRows } from '@/lib/paginated-query';
+import { financialCategory, financialStatus, financialToday } from '@/lib/financial-model';
+import { normalizeStatus, isValidIsoDate } from '@/lib/format';
 import { decode } from 'base64-arraybuffer';
 import type { DocumentPickerAsset } from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -75,8 +77,9 @@ function contentBucket(kind: AdminContentKind, protectionMode?: string) {
 
 export async function listAdminClients(search = ''): Promise<ServiceResult<AdminClientSummary[]>> {
   let query = supabase.from('clientes').select('id, nome, email, telefone, status, auth_id, created_at').order('nome');
-  if (search.trim()) query = query.or(`nome.ilike.%${search.trim()}%,email.ilike.%${search.trim()}%`);
-  const result = await query.limit(200);
+  const term=search.trim().replace(/[(),.%_]/g,' ');
+  if (term) query = query.or(`nome.ilike.%${term}%,email.ilike.%${term}%`);
+  const result = await readAllRows(query);
   if (result.error) return { data: [], error: 'Não foi possível carregar os clientes.' };
   return {
     data: (result.data ?? []).map((row) => ({
@@ -154,11 +157,11 @@ export async function requestPermanentClientDeletion(clientId: string, confirmat
 }
 
 export async function listAdminProjects(): Promise<ServiceResult<AdminProjectSummary[]>> {
-  const modern = await supabase
+  const modern = await readAllRows(supabase
     .from('projetos')
     .select('id, cliente_id, contract_id, nome, tipo, status, progress_percent, cidade_obra, estado_obra, clientes(nome), contratos!contract_id(id, contract_number, cliente_id, service_type, status, contract_value, currency)')
     .order('created_at', { ascending: false })
-    .limit(200);
+    );
 
   if (!modern.error) {
     return {
@@ -187,11 +190,11 @@ export async function listAdminProjects(): Promise<ServiceResult<AdminProjectSum
   }
 
   if (!compatibilityError(modern.error)) return { data: [], error: 'Não foi possível carregar os projetos.' };
-  const legacy = await supabase
+  const legacy = await readAllRows(supabase
     .from('projetos')
     .select('id, cliente_id, nome, tipo, status, cidade_obra, estado_obra, numero_contrato, clientes(nome)')
     .order('created_at', { ascending: false })
-    .limit(200);
+    );
   if (legacy.error) return { data: [], error: 'Não foi possível carregar os projetos.' };
   return {
     data: (legacy.data ?? []).map((row: any) => ({
@@ -213,11 +216,11 @@ export async function listAdminProjects(): Promise<ServiceResult<AdminProjectSum
 }
 
 export async function listAdminContracts(): Promise<ServiceResult<AdminContractSummary[]>> {
-  const result = await supabase
+  const result = await readAllRows(supabase
     .from('contratos')
     .select('id, cliente_id, contract_number, service_type, status, contract_value, currency, clientes(nome)')
     .order('contract_number')
-    .limit(300);
+    );
   if (result.error) return { data: [], error: 'Não foi possível carregar os contratos.' };
   return {
     data: (result.data ?? []).map((row: any) => ({
@@ -277,19 +280,29 @@ export async function updateAdminProject(input: { projectId: string; status: str
 }
 
 export async function listAdminContent(): Promise<ServiceResult<AdminContentSummary[]>> {
+  async function allContent(table: string, columns: string) {
+    const data: any[] = [];
+    for (let offset=0;;offset+=500) {
+      const page=await supabase.from(table).select(columns).order('created_at',{ascending:false}).order('id').range(offset,offset+499);
+      if(page.error)return {data:[],error:page.error};
+      data.push(...(page.data??[]));
+      if((page.data??[]).length<500)return {data,error:null};
+      if(data.length>=100000)return {data:[],error:{message:'Catálogo excede o limite seguro.'}};
+    }
+  }
   const [documents, photos, library] = await Promise.all([
-    supabase.from('documentos').select('id, cliente_id, projeto_id, nome, tipo, categoria, versao, created_at, storage_bucket, arquivo, permitir_download, protection_mode, clientes(nome), projetos(nome)').order('created_at', { ascending: false }).limit(150),
-    supabase.from('fotos').select('id, cliente_id, projeto_id, nome, categoria, created_at, storage_bucket, arquivo, protection_mode, clientes(nome), projetos(nome)').order('created_at', { ascending: false }).limit(150),
-    supabase.from('biblioteca').select('id, cliente_id, projeto_id, nome, categoria, created_at, storage_bucket, arquivo, clientes(nome), projetos(nome)').order('created_at', { ascending: false }).limit(150),
+    allContent('documentos','id, cliente_id, projeto_id, nome, tipo, categoria, versao, created_at, storage_bucket, arquivo, permitir_download, protection_mode, autoral, clientes(nome), projetos(nome)'),
+    allContent('fotos','id, cliente_id, projeto_id, nome, categoria, created_at, storage_bucket, arquivo, protection_mode, clientes(nome), projetos(nome)'),
+    allContent('biblioteca','id, cliente_id, projeto_id, nome, categoria, created_at, storage_bucket, arquivo, autoral, clientes(nome), projetos(nome)'),
   ]);
-  const failed = [documents, photos, library].filter((result) => result.error && !compatibilityError(result.error));
+  const failed = [documents, photos, library].filter((result) => result.error);
   const rows: AdminContentSummary[] = [];
   const append = (kind: AdminContentKind, data: any[] | null, fallbackBucket: string) => {
     for (const row of data ?? []) {
       const client = Array.isArray(row.clientes) ? row.clientes[0] : row.clientes;
       const project = Array.isArray(row.projetos) ? row.projetos[0] : row.projetos;
       rows.push({
-        id: row.id,
+        id: String(row.id),
         kind,
         title: row.nome ?? 'Arquivo',
         category: row.categoria ?? row.tipo ?? (kind === 'photo' ? 'Foto' : kind === 'library' ? 'Biblioteca' : 'Documento'),
@@ -303,7 +316,7 @@ export async function listAdminContent(): Promise<ServiceResult<AdminContentSumm
         storagePath: row.arquivo,
         allowDownload: kind === 'document' ? row.permitir_download !== false : kind === 'library',
         protectionMode: kind === 'document'
-          ? (row.protection_mode === 'authored_pdf' ? 'authored_pdf' : 'administrative')
+          ? (row.protection_mode === 'authored_pdf' || row.autoral === true ? 'authored_pdf' : 'administrative')
           : kind === 'photo'
             ? (row.protection_mode === 'administrative' ? 'administrative' : 'authored_photo')
             : 'administrative',
@@ -350,14 +363,15 @@ export async function uploadAdminContent(input: {
 
     const common = { cliente_id: input.clientId, projeto_id: input.projectId, nome: input.title.trim(), arquivo: path, storage_bucket: bucket };
     const payload = input.kind === 'document'
-      ? { ...common, categoria: input.category.trim() || 'Documento', tipo: input.asset.mimeType ?? 'Arquivo', versao: input.version?.trim() || '1.0', protection_mode: input.protectionMode, permitir_download: input.protectionMode === 'administrative' }
+      ? { ...common, categoria: input.category.trim() || 'Documento', tipo: input.asset.mimeType ?? 'Arquivo', versao: input.version?.trim() || '1.0', autoral: input.protectionMode !== 'administrative', protection_mode: input.protectionMode, permitir_download: input.protectionMode === 'administrative' }
       : input.kind === 'photo'
         ? { ...common, categoria: input.category.trim() || 'Registro da obra', protection_mode: input.protectionMode }
-        : { ...common, categoria: input.category.trim() || 'Material', tipo: input.asset.mimeType ?? 'Arquivo', tamanho: input.asset.size ?? null };
-    const insert = await supabase.from(contentTable(input.kind)).insert(payload as any);
-    if (insert.error) {
-      await supabase.storage.from(bucket).remove([path]);
-      return 'O arquivo foi revertido porque os metadados não puderam ser registrados.';
+        : { ...common, categoria: input.category.trim() || 'Material', tipo: input.asset.mimeType ?? 'Arquivo', tamanho: input.asset.size == null ? null : String(input.asset.size), autoral: false };
+    const insert = await supabase.from(contentTable(input.kind)).insert(payload as any).select('id').single();
+    if (insert.error || !insert.data) {
+      const check=await supabase.from(contentTable(input.kind)).select('id').eq('arquivo',path).eq('storage_bucket',bucket).maybeSingle();
+      if(check.error)return 'Não foi possível confirmar o cadastro. O arquivo físico foi preservado; confira o catálogo antes de repetir.';
+      if(!check.data){await supabase.storage.from(bucket).remove([path]);return 'O arquivo foi revertido porque os metadados não puderam ser registrados.';}
     }
     void dispatchPendingPushNotifications();
     return null;
@@ -394,7 +408,7 @@ export async function deleteAdminContent(item: AdminContentSummary) {
 }
 
 export async function listAdminAgenda(): Promise<ServiceResult<AgendaSummary[]>> {
-  const result = await supabase.from('agenda').select('id, projeto_id, titulo, descricao, data, horario, horario_fim, tipo, status_convite, google_meet_url, cancelado').order('data', { ascending: true }).limit(200);
+  const result = await readAllRows(supabase.from('agenda').select('id, projeto_id, titulo, descricao, data, horario, horario_fim, tipo, status_convite, google_meet_url, cancelado').order('data', { ascending: true }));
   if (result.error) return { data: [], error: 'Não foi possível carregar a agenda.' };
   return { data: (result.data ?? []).map((row) => ({ id: row.id, projectId: row.projeto_id, title: row.titulo, description: row.descricao, date: row.data, startTime: row.horario, endTime: row.horario_fim, eventType: row.tipo, invitationStatus: row.status_convite ?? 'needsAction', meetingUrl: row.google_meet_url, cancelled: row.cancelado === true })), error: null };
 }
@@ -416,7 +430,7 @@ export async function cancelAdminAgenda(id: string) {
 export async function listAdminSchedule(projectId?: string): Promise<ServiceResult<ScheduleStageSummary[]>> {
   let query = supabase.from('cronograma').select('id, projeto_id, nome, descricao, data_inicio, data_fim, status, peso_percentual, percentual_conclusao, ordem').order('ordem');
   if (projectId) query = query.eq('projeto_id', projectId);
-  const result = await query.limit(300);
+  const result = await readAllRows(query);
   if (result.error) return { data: [], error: 'Não foi possível carregar o cronograma.' };
   return { data: (result.data ?? []).map((row) => ({ id: row.id, projectId: row.projeto_id, title: row.nome, description: row.descricao, startDate: row.data_inicio, endDate: row.data_fim, status: normalizeStatus(row.status) || 'pendente', progress: numberOrNull(row.percentual_conclusao), weight: numberOrNull(row.peso_percentual), order: Number(row.ordem ?? 0) })), error: null };
 }
@@ -438,11 +452,11 @@ export async function updateAdminScheduleStage(id: string, status: string, progr
 }
 
 export async function listAdminApprovals(): Promise<ServiceResult<ApprovalSummary[]>> {
-  const result = await supabase
+  const result = await readAllRows(supabase
     .from('aprovacoes')
     .select('id, projeto_id, tipo, titulo, descricao, approval_object, related_document_id, approval_due_at, status, comentario, created_at, respondido_at')
     .order('created_at', { ascending: false })
-    .limit(200);
+    );
   if (result.error) return { data: [], error: 'Não foi possível carregar as aprovações.' };
   return {
     data: (result.data ?? []).map((row) => ({
@@ -492,9 +506,9 @@ export async function createAdminApproval(input: {
 }
 
 export async function listAdminRequests(): Promise<ServiceResult<AdminRequestSummary[]>> {
-  const modern = await supabase.from('solicitacoes').select('id, projeto_id, categoria, titulo, mensagem, status, origem, created_at, updated_at, clientes(nome), projetos(nome)').order('updated_at', { ascending: false }).limit(200);
+  const modern = await readAllRows(supabase.from('solicitacoes').select('id, projeto_id, categoria, titulo, mensagem, status, origem, created_at, updated_at, clientes(nome), projetos(nome)').order('updated_at', { ascending: false }));
   const result = modern.error?.code === '42703' || modern.error?.code === 'PGRST204'
-    ? await supabase.from('solicitacoes').select('id, projeto_id, titulo, mensagem, status, created_at, updated_at, clientes(nome), projetos(nome)').order('updated_at', { ascending: false }).limit(200)
+    ? await readAllRows(supabase.from('solicitacoes').select('id, projeto_id, titulo, mensagem, status, created_at, updated_at, clientes(nome), projetos(nome)').order('updated_at', { ascending: false }))
     : modern;
   if (result.error) return { data: [], error: 'Não foi possível carregar as solicitações.' };
   return { data: (result.data ?? []).map((row: any) => ({ id: row.id, projectId: row.projeto_id, category: row.categoria ?? 'outros', title: row.titulo, message: row.mensagem, status: row.status, origin: row.origem ?? 'cliente', createdAt: row.created_at, updatedAt: row.updated_at, clientName: (Array.isArray(row.clientes) ? row.clientes[0] : row.clientes)?.nome ?? 'Cliente', projectName: (Array.isArray(row.projetos) ? row.projetos[0] : row.projetos)?.nome ?? 'Projeto' })), error: null };
@@ -530,12 +544,12 @@ export async function updateAdminRequest(id: string, status: string, reply?: str
 }
 
 export async function listAdminNotifications(): Promise<ServiceResult<AdminNotificationSummary[]>> {
-  const result = await supabase
+  const result = await readAllRows(supabase
     .from('notificacoes')
     .select('id, titulo, mensagem, tipo, lida, created_at, projeto_id, link_path, clientes(nome), projetos(nome)')
     .eq('destinatario', 'cliente')
     .order('created_at', { ascending: false })
-    .limit(200);
+    );
   if (result.error) return { data: [], error: 'Não foi possível carregar as notificações.' };
   return {
     data: (result.data ?? []).map((row: any) => ({
@@ -555,12 +569,12 @@ export async function listAdminNotifications(): Promise<ServiceResult<AdminNotif
 }
 
 export async function listAdminActivityNotifications(): Promise<ServiceResult<AdminNotificationSummary[]>> {
-  const result = await supabase
+  const result = await readAllRows(supabase
     .from('notificacoes')
     .select('id, titulo, mensagem, tipo, lida, created_at, projeto_id, link_path, clientes(nome), projetos(nome)')
     .eq('destinatario', 'admin')
     .order('created_at', { ascending: false })
-    .limit(100);
+    );
   if (result.error) return { data: [], error: 'Não foi possível carregar as novidades administrativas.' };
   return {
     data: (result.data ?? []).map((row: any) => ({
@@ -632,12 +646,17 @@ export async function getAdminStorageOrphanDetails(): Promise<ServiceResult<Stor
 }
 
 export async function listAdminFinancialEntries(): Promise<ServiceResult<FinancialEntrySummary[]>> {
-  const result = await supabase
-    .from('financeiro')
-    .select('*, projetos(id,nome,numero_contrato,contract_id,clientes(nome),contratos!contract_id(contract_number))')
-    .order('data', { ascending: false })
-    .limit(500);
-  if (result.error) return { data: [], error: 'Não foi possível carregar os lançamentos financeiros atuais.' };
+  const rows: any[] = [];
+  for (let offset=0; ; offset+=500) {
+    const result=await supabase.from('financeiro')
+      .select('*, projetos(id,nome,numero_contrato,contract_id,clientes(nome),contratos!contract_id(contract_number))')
+      .order('data',{ascending:false}).order('id').range(offset,offset+499);
+    if(result.error)return {data:[],error:'Não foi possível carregar todos os lançamentos financeiros atuais.'};
+    rows.push(...(result.data??[]));
+    if((result.data??[]).length<500)break;
+    if(rows.length>=100000)return {data:[],error:'Há mais de 100 mil lançamentos; refine a consulta administrativa antes de calcular totais.'};
+  }
+  const result={data:rows};
   return {
     data: (result.data ?? []).map((row: any) => {
       const project = Array.isArray(row.projetos) ? row.projetos[0] : row.projetos;
@@ -654,11 +673,13 @@ export async function listAdminFinancialEntries(): Promise<ServiceResult<Financi
         amount: Number(row.valor ?? 0),
         date: row.data ?? null,
         notes: row.observacoes ?? null,
-        category: row.categoria ?? 'outros',
-        status: normalizeStatus(row.status) || 'pendente',
+        category: financialCategory(row.categoria ?? 'outros'),
+        status: financialStatus(row.status ?? 'pendente'),
         dueDate: row.data_vencimento ?? null,
         paidAt: row.data_pagamento ?? null,
         accountId: row.account_id ?? null,
+        bankTransactionId: row.bank_transaction_id ?? null,
+        paymentMethod: row.forma_pagamento ?? null,
       } satisfies FinancialEntrySummary;
     }),
     error: null,
@@ -666,12 +687,15 @@ export async function listAdminFinancialEntries(): Promise<ServiceResult<Financi
 }
 
 export async function listFinancialArchive(): Promise<ServiceResult<FinancialArchiveSummary[]>> {
-  const result = await supabase
-    .from('client_financial_archive')
-    .select('id, source_table, client_name_snapshot, contract_number_snapshot, service_type_snapshot, contract_value_snapshot, transaction_type, description, amount, occurred_on, archived_at, archived_reason')
-    .order('archived_at', { ascending: false })
-    .limit(500);
-  if (result.error) return { data: [], error: 'O histórico financeiro preservado não está disponível neste ambiente.' };
+  const rows:any[]=[];
+  for(let offset=0;;offset+=500){
+    const page=await supabase.from('client_financial_archive').select('id, source_table, client_name_snapshot, contract_number_snapshot, service_type_snapshot, contract_value_snapshot, transaction_type, description, amount, occurred_on, archived_at, archived_reason')
+      .order('archived_at',{ascending:false}).order('id').range(offset,offset+499);
+    if(page.error)return {data:[],error:'Não foi possível carregar todo o histórico financeiro preservado.'};
+    rows.push(...(page.data??[]));if((page.data??[]).length<500)break;
+    if(rows.length>=100000)return {data:[],error:'O histórico excede 100 mil registros. Use a exportação administrativa para consulta completa.'};
+  }
+  const result={data:rows};
   return {
     data: (result.data ?? []).map((row: any) => ({
       id: row.id,
@@ -691,22 +715,41 @@ export async function listFinancialArchive(): Promise<ServiceResult<FinancialArc
   };
 }
 
-export async function createAdminFinancialEntry(input: { projectId: string; description: string; type: 'entrada' | 'saida'; amount: number; date: string; notes?: string; category?: string; status?: string; dueDate?: string; accountId?: string | null }) {
-  if (!Number.isFinite(input.amount) || input.amount <= 0) return 'Informe um valor maior que zero.';
-  const result = await supabase.from('financeiro').insert({
-    projeto_id: input.projectId,
-    descricao: input.description.trim(),
-    tipo: input.type,
-    valor: input.amount,
-    data: input.date || null,
-    observacoes: input.notes?.trim() || null,
-    categoria: input.category?.trim() || 'outros',
-    status: input.status ?? 'pendente',
-    data_vencimento: input.dueDate || input.date || null,
-    data_pagamento: input.status === 'pago' || input.status === 'recebido' ? input.date || null : null,
-    account_id: input.accountId ?? null,
-  });
-  return result.error ? 'Não foi possível registrar o lançamento.' : null;
+export type FinancialEntryInput={projectId:string;description:string;type:'entrada'|'saida';amount:number;date:string;notes?:string;category?:string;status?:string;dueDate?:string;accountId?:string|null;paidAt?:string;paymentMethod?:string;requestId?:string};
+export async function createAdminFinancialEntry(input: FinancialEntryInput) {
+  const payload=financialEntryPayload(input);
+  if(typeof payload==='string')return payload;
+  const result=await supabase.from('financeiro').insert({...payload,...(input.requestId?{client_request_id:input.requestId}:{})}).select('id').single();
+  if(result.error?.code==='23505' && input.requestId){
+    const prior=await supabase.from('financeiro').select('*').eq('client_request_id',input.requestId).maybeSingle();
+    if(!prior.error && prior.data && Object.entries(payload).every(([key,value])=>key==='valor'?Number(prior.data[key])===value:(prior.data[key]??null)===(value??null)))return null;
+    return 'Esta tentativa já foi registrada com outros dados. Atualize o extrato antes de tentar novamente.';
+  }
+  return result.error || !result.data ? 'Não foi possível confirmar o lançamento. Tente novamente sem alterar os dados.' : null;
+}
+export function financialEntryPayload(input:FinancialEntryInput) {
+  if(!input.projectId || input.description.trim().length<2 || !Number.isFinite(input.amount) || input.amount<=0)return 'Informe projeto, descrição e um valor maior que zero.';
+  if(!['entrada','saida'].includes(input.type) || !isValidIsoDate(input.date) || (input.dueDate && !isValidIsoDate(input.dueDate)) || (input.paidAt && !isValidIsoDate(input.paidAt)))return 'Informe datas e natureza válidas.';
+  const status=financialStatus(input.status??'pendente');
+  const paid=status==='pago' ? input.paidAt || input.date : null;
+  if(paid && paid>financialToday())return 'A data de recebimento/pagamento não pode estar no futuro.';
+  return {projeto_id:input.projectId,descricao:input.description.trim(),tipo:input.type,valor:input.amount,data:input.date,
+    observacoes:input.notes?.trim()||null,categoria:financialCategory(input.category??'outros'),status,
+    data_vencimento:input.dueDate||input.date||null,data_pagamento:paid,account_id:input.accountId??null,forma_pagamento:input.paymentMethod?.trim()||null};
+}
+export async function updateAdminFinancialEntry(id:string,input:FinancialEntryInput) {
+  const payload=financialEntryPayload(input);if(typeof payload==='string')return payload;
+  const linked=await supabase.from('bank_transactions').select('id').eq('matched_financial_id',id).limit(1);
+  if(linked.error)return 'Não foi possível verificar a conciliação do lançamento.';
+  if(linked.data?.length)return 'Este lançamento está conciliado. Preserve o vínculo bancário; registre um ajuste separado.';
+  const result=await supabase.from('financeiro').update(payload).eq('id',id).is('bank_transaction_id',null).select('id').maybeSingle();
+  return result.error || !result.data ? 'Não foi possível atualizar. O lançamento pode ter sido conciliado ou removido.' : null;
+}
+export async function deleteAdminFinancialEntry(id:string) {
+  const linked=await supabase.from('bank_transactions').select('id').eq('matched_financial_id',id).limit(1);
+  if(linked.error || linked.data?.length)return 'A exclusão foi bloqueada: conciliação existente ou não confirmada.';
+  const result=await supabase.from('financeiro').delete().eq('id',id).is('bank_transaction_id',null).select('id').maybeSingle();
+  return result.error || !result.data ? 'Não foi possível excluir com segurança. O histórico foi preservado.' : null;
 }
 
 export async function updateAdminContractValue(contractId: string, value: number) {
@@ -715,7 +758,7 @@ export async function updateAdminContractValue(contractId: string, value: number
 }
 
 export async function listAdminAudit(): Promise<ServiceResult<AuditEntrySummary[]>> {
-  const result = await supabase.from('audit_log').select('id, action, entity_type, entity_id, user_id, details, created_at').order('created_at', { ascending: false }).limit(200);
+  const result = await readAllRows(supabase.from('audit_log').select('id, action, entity_type, entity_id, user_id, details, created_at').order('created_at', { ascending: false }));
   if (result.error) return { data: [], error: 'Não foi possível carregar a auditoria.' };
   return { data: (result.data ?? []).map((row) => ({ id: row.id, action: row.action, entityType: row.entity_type, entityId: row.entity_id, userId: row.user_id, details: row.details as Record<string, unknown> | null, createdAt: row.created_at })), error: null };
 }

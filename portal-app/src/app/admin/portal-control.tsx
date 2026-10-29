@@ -1,3 +1,4 @@
+import { useNotificationProject } from '@/hooks/use-notification-project';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -22,6 +23,8 @@ export default function AdminPortalControlScreen() {
   const styles = useThemeStyles(styleDefinitions);
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
   const [projectId, setProjectId] = useState<string | null>(null);
+  useNotificationProject(projects, setProjectId);
+  const [savedSettings,setSavedSettings]=useState<ProjectPortalSettings|null>(null);
   const [settings, setSettings] = useState<ProjectPortalSettings | null>(null);
   const [counts, setCounts] = useState<Record<string, number | null>>({});
   const [previewData, setPreviewData] = useState<Record<string, { primary: string; secondary?: string }[]>>({});
@@ -39,12 +42,12 @@ export default function AdminPortalControlScreen() {
     if (!project) return;
     setLoading(true); setSettings(null); setCounts({}); setPreviewData({});
     const [config, documents, photos, library, agenda, schedule, approvals, requests, tasks, diary] = await Promise.all([
-      getProjectPortalSettings(project.id), listDocuments(project.id), listPhotos(project.id),
+      getProjectPortalSettings(project.id), listDocuments(project.id,true), listPhotos(project.id),
       listLibraryItems(project.id, project.clientId), listAgenda(project.id, project.clientId),
       listSchedule(project.id), listApprovals(project.id), listRequests(project.id),
       listProjectTasks(project.id), listWorkDiary(project.id),
     ]);
-    setSettings(config.data);
+    setSettings(config.data);setSavedSettings(config.data);
     setCounts({
       showDocuments: documents.error ? null : documents.data.length, showPhotos: photos.error ? null : photos.data.length, showLibrary: library.error ? null : library.data.length,
       showAgenda: agenda.error ? null : agenda.data.length, showSchedule: schedule.error ? null : schedule.data.length, showApprovals: approvals.error ? null : approvals.data.length,
@@ -89,7 +92,7 @@ export default function AdminPortalControlScreen() {
         <Card>
           <Text style={styles.sectionTitle}>Módulos liberados</Text>
           <Text style={styles.meta}>Desativar um módulo não apaga dados; somente retira sua exposição no portal deste projeto.</Text>
-          <View style={styles.modules}>{labels.map((item) => <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: settings[item.key] }} key={item.key} onPress={() => toggle(item.key)} style={[styles.module, settings[item.key] && styles.moduleEnabled]}><Text style={styles.mark}>{settings[item.key] ? '☒' : '☐'}</Text><View style={{ flex: 1 }}><Text style={styles.title}>{item.label}</Text><Text style={styles.meta}>{counts[item.key] ?? 'Indisponível'} registro(s) cadastrados</Text></View></Pressable>)}</View>
+          <View style={styles.modules}>{labels.map((item) => <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: settings[item.key] }} key={item.key} onPress={() => toggle(item.key)} style={[styles.module, settings[item.key] && styles.moduleEnabled]}><Text style={styles.mark}>{settings[item.key] ? '☒' : '☐'}</Text><View style={{ flex: 1 }}><Text style={styles.title}>{item.label}</Text><Text style={styles.meta}>{counts[item.key] ?? 'Indisponível'} item(ns) carregado(s)</Text></View></Pressable>)}</View>
           <Button loading={loading} onPress={() => void save()} title="Salvar visibilidade" />
         </Card>
         <Card>
@@ -97,7 +100,7 @@ export default function AdminPortalControlScreen() {
             <View style={{ flex: 1 }}><Text style={styles.sectionTitle}>Prévia real do portal</Text><Text style={styles.meta}>{project.contractNumber} • {project.name}</Text></View>
             <StatusPill label="admin • somente leitura" tone="success" />
           </View>
-          <Notice tone="info">A prévia usa o projeto selecionado, as permissões salvas e os mesmos dados que podem ser consultados pelo portal. Nenhuma sessão de cliente é criada e nenhuma ação do cliente pode ser executada daqui.</Notice>
+          <Notice tone="info">A prévia usa o projeto selecionado, as permissões salvas e os mesmos dados que podem ser consultados pelo portal. Salve as alterações de visibilidade para atualizar esta prévia. Nenhuma sessão de cliente é criada e nenhuma ação do cliente pode ser executada daqui.</Notice>
           <Button onPress={() => setShowClientPreview((current) => !current)} title={showClientPreview ? 'Fechar visualização do cliente' : 'Visualizar como este cliente'} variant="secondary" />
           {showClientPreview ? (
             <View style={styles.clientShell}>
@@ -106,11 +109,11 @@ export default function AdminPortalControlScreen() {
                 <Text style={styles.meta}>Engenharia Civil • Portal do Cliente</Text>
                 <Text style={styles.title}>{project.name}</Text>
               </View>
-              {labels.filter((item) => settings[item.key]).map((item) => {
+              {labels.filter((item) => savedSettings?.[item.key]).map((item) => {
                 const rows = previewData[item.key] ?? [];
                 return (
                   <View key={item.key} style={styles.clientModule}>
-                    <View style={styles.header}><Text style={styles.title}>{item.label}</Text><Text style={styles.meta}>{counts[item.key] ?? '—'} registro(s)</Text></View>
+                    <View style={styles.header}><Text style={styles.title}>{item.label}</Text><Text style={styles.meta}>{counts[item.key] ?? '—'} item(ns) carregado(s)</Text></View>
                     {rows.length ? rows.map((row, index) => (
                       <View key={`${item.key}-${index}`} style={styles.previewRow}>
                         <Text style={styles.previewPrimary}>{row.primary}</Text>
@@ -121,7 +124,7 @@ export default function AdminPortalControlScreen() {
                   </View>
                 );
               })}
-              {labels.every((item) => !settings[item.key]) ? <Notice tone="warning">Nenhum módulo está liberado para este projeto.</Notice> : null}
+              {labels.every((item) => !savedSettings?.[item.key]) ? <Notice tone="warning">Nenhum módulo está liberado para este projeto.</Notice> : null}
             </View>
           ) : null}
         </Card>

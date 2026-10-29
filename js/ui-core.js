@@ -18,9 +18,10 @@ function criarLinkMenu(href,icon,titulo){const link=document.createElement("a");
 // Os hrefs modernos usam a mesma rota canônica no clique, nova aba e copiar link.
 const MENU_ADMIN_CANONICO=[
   ["admin.html","fa-house","Dashboard"],
+  ["portal/admin/workspace","fa-magnifying-glass","Central de gestão"],
   ["clientes.html","fa-users","Clientes"],
   ["projetos.html","fa-compass-drafting","Projetos"],
-  ["orcamentos-contratos.html","fa-file-signature","Orçamentos e contratos"],
+  ["orcamentos-contratos.html","fa-file-signature","Contratos gerais"],
   ["portal/admin/crm","fa-filter","Oportunidades comerciais"],
   ["portal/admin/contract-documents","fa-file-contract","Documentos gerados e aceites"],
   ["portal/admin/document-governance","fa-list-check","Versões e pendências dos documentos"],
@@ -32,9 +33,8 @@ const MENU_ADMIN_CANONICO=[
   ["portal/admin/work-diary","fa-book","Diário de obra"],
   ["portal/admin/procurement","fa-cart-shopping","Fornecedores e cotações"],
   ["biblioteca.html","fa-book-open","Biblioteca"],
-  ["financeiro.html","fa-chart-line","Financeiro"],
+  ["portal/admin/financial","fa-chart-line","Financeiro"],
   ["recibos.html","fa-receipt","Emissão de recibos"],
-  ["portal/admin/financial","fa-building-columns","Contas bancárias e conciliação OFX"],
   ["portal/admin/portal-control","fa-eye","Módulos do portal do cliente"],
   ["agenda.html","fa-calendar-days","Agenda"],
   ["cronograma.html","fa-list-check","Cronograma (simples)"],
@@ -48,6 +48,7 @@ const MENU_ADMIN_CANONICO=[
   ["integridade-sistema.html","fa-heart-pulse","Verificar funcionamento"],
 ];
 const ferramentasAdministrativas=[
+  ["workspace","fa-magnifying-glass","Central de gestão"],
   ["crm","fa-filter","Oportunidades comerciais"],
   ["contract-documents","fa-file-contract","Documentos gerados e aceites"],
   ["document-governance","fa-list-check","Versões e pendências dos documentos"],
@@ -56,7 +57,7 @@ const ferramentasAdministrativas=[
   ["tasks","fa-check-square","Tarefas do projeto"],
   ["work-diary","fa-book","Diário de obra"],
   ["procurement","fa-cart-shopping","Fornecedores e cotações"],
-  ["financial","fa-building-columns","Contas bancárias e conciliação OFX"],
+  ["financial","fa-building-columns","Financeiro"],
   ["portal-control","fa-eye","Módulos do portal do cliente"],
   ["construction-schedule","fa-chart-column","Cronograma de obra completo"],
   ["approvals","fa-check-double","Aprovações"],

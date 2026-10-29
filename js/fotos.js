@@ -29,6 +29,8 @@ FOTOS.JS — ÁLBUNS + VISUALIZADOR DE IMAGENS
                 dbBuscarProjetos()
             ]);
 
+            const projectId=new URLSearchParams(location.search).get('projectId');
+            if(projectId)fotos=fotos.filter(row=>String(row.projeto_id)===projectId);
             preencherSelect("fotoCliente", clientes);
             preencherProjetos();
             renderizarAlbuns();
@@ -46,8 +48,8 @@ FOTOS.JS — ÁLBUNS + VISUALIZADOR DE IMAGENS
         document.getElementById("novaFoto")?.addEventListener("click", novaFoto);
         document.getElementById("fecharModalFoto")?.addEventListener("click", fecharModal);
         document.getElementById("cancelarFoto")?.addEventListener("click", fecharModal);
-        document.getElementById("formFoto")?.addEventListener("submit", salvarFoto);
-        document.getElementById("fotoCliente")?.addEventListener("change", preencherProjetos);
+
+
         document.getElementById("pesquisaFoto")?.addEventListener("input", pesquisar);
         document.getElementById("btnPesquisarFoto")?.addEventListener("click", pesquisar);
 
@@ -405,92 +407,8 @@ FOTOS.JS — ÁLBUNS + VISUALIZADOR DE IMAGENS
         if (event.key === "ArrowRight") navegarVisualizador(1);
     }
 
-    function novaFoto() { location.href = 'documentos.html?novo=1'; }
+    function novaFoto() { const params=new URLSearchParams(location.search);params.delete('foto');params.set('novo','1');params.set('visao','fotos');location.href='documentos.html?'+params; }
     function editarFoto(id) { location.href = 'documentos.html?documento=' + encodeURIComponent(id) + '&acao=editar'; }
-
-    async function salvarFoto(event) {
-        event.preventDefault();
-
-        const dados = {
-            nome: valor("fotoTitulo"),
-            descricao: valor("fotoDescricao"),
-            cliente_id: valor("fotoCliente") || null,
-            projeto_id: valor("fotoProjeto") || null
-        };
-
-        const arquivo = document.getElementById("arquivoFoto")?.files?.[0];
-        const anterior = localizar(fotoSelecionadaId);
-
-        if (!dados.nome || !dados.cliente_id || !dados.projeto_id) {
-            alert("Informe o título, o cliente e o projeto.");
-            return;
-        }
-
-        if (!fotoSelecionadaId && !arquivo) {
-            alert("Selecione uma imagem.");
-            return;
-        }
-
-        if (!projetoPertenceAoCliente(dados.projeto_id, dados.cliente_id)) {
-            alert("O projeto selecionado não pertence a esse cliente.");
-            return;
-        }
-
-        const botaoSalvar = document.getElementById("salvarFoto");
-        alternarSalvamento(botaoSalvar, true);
-        let novoCaminho = anterior?.arquivo || null;
-
-        try {
-            if (arquivo) {
-                novoCaminho =
-                    dados.cliente_id + "/" +
-                    dados.projeto_id + "/" +
-                    Date.now() + "-" +
-                    normalizarNome(arquivo.name);
-
-                await dbUploadArquivo(BUCKETS.FOTOS, novoCaminho, arquivo);
-            }
-
-            dados.arquivo = novoCaminho;
-            const editando = Boolean(fotoSelecionadaId);
-
-            if (editando) {
-                await dbEditarFoto(fotoSelecionadaId, dados);
-            } else {
-                await dbCriarFoto(dados);
-            }
-
-            if (arquivo && anterior?.arquivo && anterior.arquivo !== novoCaminho) {
-                await dbExcluirArquivoStorage(BUCKETS.FOTOS, anterior.arquivo).catch(() => {});
-            }
-
-            const notificacao = await dbNotificarAtualizacao({
-                tipo: editando ? "foto_atualizada" : "foto_publicada",
-                cliente_id: dados.cliente_id,
-                projeto_id: dados.projeto_id,
-                titulo: dados.nome,
-                mensagem: editando
-                    ? "Uma foto do acompanhamento do seu projeto foi atualizada."
-                    : "Uma nova foto do acompanhamento foi publicada no portal."
-            });
-
-            fecharModal();
-            await recarregar();
-
-            alert(
-                (editando ? "Foto atualizada" : "Foto cadastrada") + " com sucesso." +
-                window.CMEEmailNotice(notificacao)
-            );
-        } catch (error) {
-            if (arquivo && novoCaminho && novoCaminho !== anterior?.arquivo) {
-                await dbExcluirArquivoStorage(BUCKETS.FOTOS, novoCaminho).catch(() => {});
-            }
-
-            tratarErro("Não foi possível salvar a foto.", error);
-        } finally {
-            alternarSalvamento(botaoSalvar, false);
-        }
-    }
 
     function excluirFoto(id) { location.href = 'documentos.html?documento=' + encodeURIComponent(id); }
 
@@ -623,7 +541,7 @@ FOTOS.JS — ÁLBUNS + VISUALIZADOR DE IMAGENS
     }
 
     function localizar(id) {
-        return fotos.find(foto => String(foto.id) === String(id));
+        return fotos.find(foto => String(foto.id) === String(id)) || fotos.find(foto => String(foto.id) === 'foto:'+id);
     }
 
     function chaveAlbum(foto) {

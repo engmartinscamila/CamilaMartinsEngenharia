@@ -109,17 +109,17 @@ export async function listProjectContexts(clientId?: string): Promise<ServiceRes
   };
 }
 
-export async function listDocuments(projectId: string): Promise<ServiceResult<DocumentSummary[]>> {
+export async function listDocuments(projectId: string, clientPreview=false): Promise<ServiceResult<DocumentSummary[]>> {
   const modern = await supabase
     .from('documentos')
-    .select('id, projeto_id, nome, categoria, versao, created_at, storage_bucket, arquivo, permitir_download, protection_mode')
+    .select('id, projeto_id, nome, categoria, versao, created_at, storage_bucket, arquivo, permitir_download, protection_mode, document_kind, generated_at, client_visible, exibir_cliente, client_released_at')
     .eq('projeto_id', projectId)
     .order('created_at', { ascending: false })
     .limit(50);
 
   if (!modern.error) {
     return {
-      data: (modern.data ?? []).map((row: any) => ({
+      data: (modern.data ?? []).filter((row:any)=>!clientPreview || (row.document_kind==null&&row.generated_at==null) || ((row.client_visible===true||row.exibir_cliente===true)&&row.client_released_at!=null)).map((row: any) => ({
         id: row.id,
         projectId: row.projeto_id,
         title: row.nome ?? 'Documento',
@@ -135,6 +135,7 @@ export async function listDocuments(projectId: string): Promise<ServiceResult<Do
     };
   }
 
+  if(clientPreview)return {data:[],error:'Não foi possível conferir a liberação dos documentos para o cliente.'};
   if (modern.error.code !== '42703' && modern.error.code !== 'PGRST204') {
     return { data: [], error: 'Não foi possível carregar os documentos.' };
   }

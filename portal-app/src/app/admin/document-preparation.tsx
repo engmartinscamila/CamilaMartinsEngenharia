@@ -113,7 +113,8 @@ export default function AdminDocumentPreparationScreen(){
   const router=useRouter();
   useEffect(()=>{
     if(Platform.OS==='web') openWebsiteAdminSection('commercial-documents');
-  },[]);
+    else router.replace('/admin/commercial-documents');
+  },[router]);
   const styles=useThemeStyles(styleDefinitions);
   const [projects,setProjects]=useState<AdminProjectSummary[]>([]);
   const [projectId,setProjectId]=useState<string|null>(null);

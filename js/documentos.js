@@ -12,6 +12,13 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
     let clientes = [];
     let projetos = [];
     let documentoSelecionadoId = null;
+    let salvando = false;
+    const concluidos = new WeakSet();
+    const contexto = new URLSearchParams(location.search);
+    const visao = contexto.get('visao') || '';
+    const projetoContexto = contexto.get('projectId') || contexto.get('projeto') || '';
+    const clienteContexto = contexto.get('clientId') || '';
+    const contextoValido = row => (!projetoContexto || String(row.projeto_id) === projetoContexto) && (!clienteContexto || String(row.cliente_id) === clienteContexto) && (visao !== 'biblioteca' || row.source === 'biblioteca') && (visao !== 'fotos' || window.CMEProjectFiles.image(row.arquivo));
 
     document.addEventListener("DOMContentLoaded", iniciar);
 
@@ -55,6 +62,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
     }
 
     function renderizar(lista = documentos, abrirPastas = false) {
+        lista = lista.filter(contextoValido);
         const container = document.getElementById("listaDocumentos");
         const recentes = document.getElementById("arquivosDocumento");
         if (!container) return;
@@ -142,6 +150,9 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
         documentoSelecionadoId = null;
         document.getElementById("formDocumento")?.reset();
         preencherProjetos();
+        preencher('documentoDestino', visao === 'biblioteca' ? 'biblioteca' : 'automatico');
+        document.getElementById('documentoDestino').disabled = false;
+        if (projetoContexto) { const p=projetos.find(item=>String(item.id)===projetoContexto); if(p){preencher('documentoCliente',p.cliente_id);preencherProjetos(p.id);} }
         atualizarModal("Cadastrar Documento", "Salvar Documento", true);
         abrirModal();
     }
@@ -151,10 +162,16 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
         if (!documento) return;
 
         documentoSelecionadoId = documento.id;
+        const autoria = document.getElementById('documentoAutoral');
+        if (autoria) { autoria.checked = documento.autoral === true; autoria.dataset.touched = 'false'; }
+        preencher('documentoDestino', documento.source === 'biblioteca' ? 'biblioteca' : 'automatico');
+        document.getElementById('documentoDestino').disabled = true;
         preencher("documentoNome", documento.nome);
         preencher("documentoCliente", documento.cliente_id);
         preencherProjetos(documento.projeto_id);
-        preencher("documentoCategoria", categoriaExibida(documento, true));
+        const categoriaAtual=categoriaExibida(documento,true), selectCategoria=document.getElementById('documentoCategoria');
+        if(categoriaAtual && !Array.from(selectCategoria.options).some(option=>option.value===categoriaAtual))selectCategoria.add(new Option(categoriaAtual,categoriaAtual));
+        preencher("documentoCategoria", categoriaAtual);
         preencher("documentoDescricao", documento.descricao);
         atualizarModal("Editar Documento", "Salvar Alterações", false);
         abrirModal();
@@ -162,86 +179,47 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
 
     async function salvarDocumento(event) {
         event.preventDefault();
-
-        const dados = {
-            nome: valor("documentoNome"),
-            tipo: valor("documentoCategoria"),
-            cliente_id: valor("documentoCliente") || null,
-            projeto_id: valor("documentoProjeto") || null,
-            descricao: valor("documentoDescricao")
-        };
-
-        const arquivo = document.getElementById("documentoArquivo")?.files?.[0];
+        if (salvando) return;
         const anterior = localizar(documentoSelecionadoId);
-
-        if (!dados.nome || !dados.cliente_id || !dados.projeto_id) {
-            alert("Informe o nome, o cliente e o contrato.");
-            return;
-        }
-
-        if (!documentoSelecionadoId && !arquivo) {
-            alert("Selecione o arquivo do documento.");
-            return;
-        }
-
-        if (!projetoPertenceAoCliente(dados.projeto_id, dados.cliente_id)) {
-            alert("O projeto selecionado não pertence a esse cliente.");
-            return;
-        }
-
-        const botaoSalvar = document.getElementById("salvarDocumento");
-        alternarSalvamento(botaoSalvar, true);
-        let novoCaminho = anterior?.arquivo || null;
-
-        let persistido = false;
+        const dados = {nome:valor('documentoNome'),tipo:valor('documentoCategoria'),cliente_id:valor('documentoCliente'),projeto_id:valor('documentoProjeto'),descricao:valor('documentoDescricao'),source:anterior?.source || (valor('documentoDestino')==='biblioteca'?'biblioteca':undefined),autoral:Boolean(document.getElementById('documentoAutoral')?.checked)};
+        const arquivos = Array.from(document.getElementById('documentoArquivo')?.files || []);
+        if (!dados.nome || !projetoPertenceAoCliente(dados.projeto_id,dados.cliente_id)) {alert('Informe nome, cliente e um projeto vinculado.');return;}
+        if (!anterior && !arquivos.length) {alert('Selecione um arquivo.');return;}
+        if (anterior && arquivos.length>1) {alert('Edite apenas um arquivo por vez.');return;}
+        try {for(const arquivo of arquivos) window.CMEProjectFiles.validate(arquivo,dados.autoral);}catch(error){alert(error.message);return;}
+        salvando=true;
+        const botaoSalvar=document.getElementById('salvarDocumento');alternarSalvamento(botaoSalvar,true);
+        let publicados=0;
         try {
-            if (arquivo) {
-                novoCaminho = `${dados.cliente_id}/${dados.projeto_id}/${Date.now()}-${normalizarNome(arquivo.name)}`;
-                await dbUploadArquivo(window.CMEProjectFiles.bucket(arquivo), novoCaminho, arquivo);
+            for(const [indice,arquivo] of (arquivos.length?arquivos:[null]).entries()){
+                if(arquivo && concluidos.has(arquivo))continue;
+                const nomeLote=document.querySelectorAll('.documento-nome-lote')[indice]?.value?.trim();
+                const tipoLote=document.querySelectorAll('.documento-categoria-lote')[indice]?.value;
+                const item={...dados,nome:arquivos.length>1?(nomeLote||arquivo.name):dados.nome,tipo:tipoLote||dados.tipo};
+                const bucket=arquivo?window.CMEProjectFiles.bucket(arquivo):anterior.storage_bucket;
+                const caminho=arquivo?`${dados.cliente_id}/${dados.projeto_id}/${crypto.randomUUID()}-${normalizarNome(arquivo.name)}`:anterior.arquivo;
+                let persistido=false;
+                try{
+                    if(arquivo)await dbUploadArquivo(bucket,caminho,arquivo);
+                    item.arquivo=caminho;item.storage_bucket=bucket;
+                    if(anterior)await dbEditarDocumento(anterior.id,item);else await dbCriarDocumento(item);
+                    persistido=true;publicados++;
+                    if(arquivo)concluidos.add(arquivo);
+                }catch(error){
+                    if(!persistido && arquivo)await dbExcluirArquivoStorage(bucket,caminho).catch(()=>{});
+                    throw error;
+                }
+                if(arquivo&&anterior?.arquivo&&anterior.arquivo!==caminho){
+                    try{await dbExcluirArquivoStorage(anterior.storage_bucket,anterior.arquivo);}catch{alert('Arquivo salvo. A limpeza do arquivo anterior ficou pendente em Armazenamento e auditoria.');}
+                }
             }
-
-            dados.arquivo = novoCaminho;
-            dados.storage_bucket = arquivo ? window.CMEProjectFiles.bucket(arquivo) : anterior?.storage_bucket || BUCKETS.DOCUMENTOS;
-
-            const editando = Boolean(documentoSelecionadoId);
-
-            if (editando) {
-                await dbEditarDocumento(documentoSelecionadoId, dados);
-            }
-            else {
-                await dbCriarDocumento(dados);
-            }
-
-            persistido = true;
-            if (arquivo && anterior?.arquivo && anterior.arquivo !== novoCaminho) {
-                await dbExcluirArquivoStorage(anterior.storage_bucket || BUCKETS.DOCUMENTOS, anterior.arquivo).catch(() => {});
-            }
-
-            const notificacao = await dbNotificarAtualizacao({
-                tipo: editando ? "documento_atualizado" : "documento_publicado",
-                cliente_id: dados.cliente_id,
-                projeto_id: dados.projeto_id,
-                titulo: dados.nome,
-                mensagem: editando
-                    ? "Um documento do seu projeto foi atualizado."
-                    : "Um novo documento foi disponibilizado no seu portal."
-            });
-            fecharModal();
-            await recarregar();
-            alert(
-                `${editando ? "Documento atualizado" : "Documento cadastrado"} com sucesso.` +
-                avisoNotificacao(notificacao)
-            );
-        }
-        catch (error) {
-            if (!persistido && arquivo && novoCaminho && novoCaminho !== anterior?.arquivo) {
-                await dbExcluirArquivoStorage(window.CMEProjectFiles.bucket(arquivo), novoCaminho).catch(() => {});
-            }
-            tratarErro("Não foi possível salvar o documento.", error);
-        }
-        finally {
-            alternarSalvamento(botaoSalvar, false);
-        }
+            let notificacao;
+            try{notificacao=await dbNotificarAtualizacao({tipo:dados.source==='biblioteca'?'biblioteca_atualizada':anterior?'documento_atualizado':'documento_publicado',cliente_id:dados.cliente_id,projeto_id:dados.projeto_id,titulo:dados.nome,mensagem:anterior?'Um arquivo do seu projeto foi atualizado.':'Novos arquivos foram disponibilizados no seu portal.'});}catch{notificacao={enviado:false,motivo:'Falha na solicitação de notificação.'};}
+            salvando=false;fecharModal();
+            try{await recarregar();}catch{alert('Os arquivos foram salvos. Não foi possível atualizar a lista; recarregue a página.');}
+            alert('Arquivo(s) confirmado(s).'+avisoNotificacao(notificacao));
+        } catch(error){tratarErro(`${publicados} arquivo(s) confirmado(s) nesta tentativa. O formulário foi preservado; repetir o envio ignora os arquivos já confirmados.`,error);}
+        finally{salvando=false;alternarSalvamento(botaoSalvar,false);}
     }
 
     function mostrarDetalhes(id) {
@@ -257,6 +235,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
             <p><strong>Cliente:</strong> ${escapar(nomeCliente(documento.cliente_id))}</p>
             <p><strong>Projeto:</strong> ${escapar(nomeProjeto(documento.projeto_id))}</p>
             <p><strong>Categoria:</strong> ${escapar(documento.tipo || "-")}</p>
+            <p><strong>Origem:</strong> ${escapar(documento.source)}${documento.references?.length>1?' · arquivo compartilhado por '+documento.references.length+' cadastros':''}</p>
             <p>${escapar(documento.descricao || "Sem descrição.")}</p>
             ${documento.url
                 ? `${visualizacao}
@@ -320,7 +299,8 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
         const id = parametros.get("documento");
         const acao = parametros.get("acao");
 
-        if (!id || !localizar(id)) return;
+        if (!id) return;
+        if (!localizar(id)) { alert('O arquivo do link não foi encontrado ou seu acesso não foi autorizado.'); return; }
 
         if (acao === "editar") {
             editarDocumento(id);
@@ -332,23 +312,23 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
                 ?.scrollIntoView({ behavior: "smooth", block: "start" });
         }
 
-        window.history.replaceState({}, "", window.location.pathname);
+        parametros.delete('documento');parametros.delete('acao');window.history.replaceState({}, '', window.location.pathname + (parametros.size?'?'+parametros:''));
     }
 
     function avisoNotificacao(resultado) { return window.CMEEmailNotice(resultado); }
 
     async function excluirDocumento(id) {
         const documento = localizar(id);
-        if (!documento || !confirm(`Excluir o documento "${documento.nome}"?`)) return;
+        if (!documento || !confirm(`Excluir o cadastro "${documento.nome}"?${documento.references?.length>1?" Este arquivo possui outros vínculos. Eles e o arquivo compartilhado serão preservados.":""}`)) return;
 
         try {
             await dbExcluirDocumento(documento.id);
             if (documento.arquivo) {
-                await dbExcluirArquivoStorage(documento.storage_bucket || BUCKETS.DOCUMENTOS, documento.arquivo).catch(() => {});
+                try{await dbExcluirArquivoStorage(documento.storage_bucket || BUCKETS.DOCUMENTOS, documento.arquivo);}catch{alert('Cadastro removido. A limpeza física ficou pendente em Armazenamento e auditoria.');}
             }
             limparDetalhes();
             await recarregar();
-            alert("Documento excluído com sucesso.");
+            alert("Cadastro removido. Arquivos ainda compartilhados foram preservados.");
         }
         catch (error) {
             tratarErro("Não foi possível excluir o documento.", error);
@@ -402,6 +382,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
     }
 
     function fecharModal() {
+        if(salvando && !confirm('Há um envio em andamento. Aguarde sua confirmação antes de fechar.'))return;
         const modal = document.getElementById("modalDocumento");
         modal?.classList.remove("show");
         if (modal) modal.style.display = "none";
@@ -440,7 +421,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
     }
 
     function localizar(id) {
-        return documentos.find(documento => String(documento.id) === String(id));
+        return documentos.find(documento => String(documento.id) === String(id)) || documentos.find(documento => ['foto:'+id,'biblioteca:'+id].includes(String(documento.id)));
     }
 
     function categoriaExibida(documento, valorSelect = false) {

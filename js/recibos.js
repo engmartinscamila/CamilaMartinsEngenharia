@@ -1,6 +1,8 @@
 (function () {
   'use strict';
   let clients = [], projects = [], history = [], offset = 0, requestId = null, busy = false, selectedReceipt = null;
+  const financialId = new URLSearchParams(location.search).get('financialId');
+  let linkedPayment = null;
   const $ = id => document.getElementById(id);
   const value = id => $(id).value.trim();
   const escape = val => String(val ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -49,11 +51,14 @@
     if (!confirm(`Emitir recibo para ${c.nome}?\n${money(amount)} recebidos em ${date(value('receiptDate'))}.\n\nConfira os dados: a emissão preserva este registro e recebe um número único.`)) return;
     busy = true; $('issueReceipt').disabled = true; message('Emitindo recibo...');
     requestId ||= crypto.randomUUID();
-    const { data, error } = await supabaseClient.rpc('admin_issue_payment_receipt', { p_data: { request_id: requestId, client_id: c.id, project_id: value('receiptProject'), amount, paid_on: value('receiptDate'), payment_method: value('receiptMethod'), description: value('receiptDescription'), city: value('receiptCity') } });
+    const request = { p_data: { request_id: requestId, client_id: c.id, project_id: value('receiptProject'), amount, paid_on: value('receiptDate'), payment_method: value('receiptMethod'), description: value('receiptDescription'), city: value('receiptCity') } };
+    let response;
+    try { response = financialId ? await supabaseClient.rpc('admin_issue_receipt_for_payment', {p_financial_id:financialId,p_request_id:requestId,p_city:value('receiptCity')}) : await supabaseClient.rpc('admin_issue_payment_receipt',request); } catch {response={error:{message:'Não foi possível confirmar a emissão. Os campos foram preservados.'}};}
+    const {data,error}=response;
     busy = false; $('issueReceipt').disabled = false;
     if (error || !data?.id) { message(error?.message || 'Não foi possível confirmar a emissão. Tente novamente sem alterar os dados.',true); return; }
     showReceipt(data); message('Recibo emitido e preservado no histórico. Você já pode imprimir ou salvar em PDF.');
-    requestId = null; $('receiptConfirmed').checked = false; offset = 0; await loadHistory();
+    requestId = null; $('receiptConfirmed').checked = false; $('receiptForm').dispatchEvent(new Event('cme:form-saved',{bubbles:true})); offset = 0; await loadHistory();
   }
   document.addEventListener('DOMContentLoaded', async () => {
     $('issueReceipt').disabled = true;
@@ -78,6 +83,20 @@
       $('printReceipt').addEventListener('click',() => window.print()); $('refreshReceipts').addEventListener('click',() => void loadHistory());
       $('receiptPrevious').addEventListener('click',()=>{offset=Math.max(0,offset-50);void loadHistory();}); $('receiptNext').addEventListener('click',()=>{offset+=50;void loadHistory();});
       $('receiptForm').addEventListener('input',()=>{if (!busy) requestId=null;});
+      if(financialId){
+        const payment=await supabaseClient.from('financeiro').select('id,projeto_id,descricao,valor,tipo,status,data,data_pagamento,forma_pagamento').eq('id',financialId).maybeSingle();
+        linkedPayment=payment.data;
+        if(payment.error||!linkedPayment||linkedPayment.tipo!=='entrada'||!['pago','recebido','quitado'].includes(linkedPayment.status)){message('Recebimento não encontrado ou ainda não quitado. Abra um lançamento recebido no Financeiro.',true);return;}
+        const project=projects.find(p=>String(p.id)===linkedPayment.projeto_id);
+        if(!project){message('O recebimento não possui projeto acessível.',true);return;}
+        $('receiptClient').value=project.cliente_id;selectProject();$('receiptProject').value=project.id;
+        $('receiptAmount').value=Number(linkedPayment.valor).toFixed(2).replace('.',',');$('receiptDate').value=linkedPayment.data_pagamento||linkedPayment.data;
+        $('receiptDescription').value=linkedPayment.descricao;
+        const method=Array.from($('receiptMethod').options).find(o=>o.value.toLocaleLowerCase('pt-BR')===String(linkedPayment.forma_pagamento||'').toLocaleLowerCase('pt-BR'));
+        $('receiptMethod').value=method?.value||'Outro';
+        for(const id of ['receiptClient','receiptProject','receiptAmount','receiptDate','receiptDescription','receiptMethod'])$(id).disabled=true;
+        message('Recibo vinculado ao recebimento. Se já houve emissão, será aberto o mesmo recibo, sem gerar outro número.');
+      }
       $('issueReceipt').disabled = false; await loadHistory();
     } catch { message('Não foi possível carregar os cadastros. Atualize a página para tentar novamente.',true); }
   });

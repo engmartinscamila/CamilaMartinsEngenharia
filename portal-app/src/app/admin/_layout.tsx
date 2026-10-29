@@ -31,6 +31,10 @@ export default function AdminLayout() {
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
       <Stack.Screen name="index" />
+      <Stack.Screen name="workspace" />
+      <Stack.Screen name="receipts" />
+      <Stack.Screen name="settings" />
+      <Stack.Screen name="website-content" />
       <Stack.Screen name="clients" />
       <Stack.Screen name="projects" />
       <Stack.Screen name="content" />

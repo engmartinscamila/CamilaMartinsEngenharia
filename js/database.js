@@ -13,11 +13,11 @@ async function dbNotificarAtualizacao(payload) {
       motivo: body?.error || body?.message || error?.message || '', data: body };
   }
   const source = tipo.startsWith('documento') ? 'documentos' : tipo.startsWith('foto') ? 'fotos'
-    : tipo.startsWith('projeto') ? 'projetos' : tipo.startsWith('cliente') ? 'clientes' : tipo.startsWith('biblioteca') ? 'biblioteca' : null;
+    : tipo.startsWith('projeto') ? 'projetos' : tipo.startsWith('cliente') ? 'clientes' : tipo.startsWith('biblioteca') ? 'biblioteca' : tipo.startsWith('cronograma') ? 'cronograma' : null;
   if (source && clienteId) {
     const { data, error } = await supabaseClient.rpc('admin_client_email_status', { p_client_id: clienteId });
     if (error) return { enviado: false, motivo: 'Registro salvo. Não foi possível consultar o histórico de e-mails.' };
-    const job = (data || []).find(row => (row.source_table === source || source === 'documentos' && row.source_table === 'fotos') && Date.now() - Date.parse(row.created_at) < 120000);
+    const job = (data || []).find(row => (row.source_table === source || source === 'documentos' && row.source_table === 'fotos' || source === 'cronograma' && row.source_table === 'construction_schedule_publications') && Date.now() - Date.parse(row.created_at) < 120000);
     if (job) return { enviado: job.status === 'sent', agendado: ['pending','processing'].includes(job.status), motivo: job.last_error || '', data: job };
     return { enviado: false, motivo: 'Registro salvo. Não há aviso recente na fila; confira as preferências e a visibilidade do módulo do cliente.' };
   }

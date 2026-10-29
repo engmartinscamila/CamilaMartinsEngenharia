@@ -26,6 +26,7 @@
             if (error) throw error;
             return data?.protection_mode === 'authored_photo';
         }
+        if(String(id).startsWith('biblioteca:')){tabela='biblioteca';id=String(id).slice(11);}
         const { data, error } = await window.supabaseClient
             .from(tabela)
             .select("autoral")
@@ -41,7 +42,7 @@
 
         const wrapper = async function (...args) {
             const payload = args[indicePayload];
-            if (payload && typeof payload === "object") {
+            if (payload && typeof payload === "object" && typeof payload.autoral !== "boolean") {
                 const input = checkboxAtual();
                 const editarSemAlterarMarcacao = indiceId >= 0
                     && input?.dataset.touched !== "true";

@@ -103,13 +103,14 @@ export function Button({ title, onPress, loading, disabled, variant = 'primary',
   const { colors } = useAppTheme();
   const styles = useThemeStyles(styleDefinitions);
   const blocked = disabled || loading;
+  const lastPress=React.useRef(0);
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={title}
       accessibilityState={{ disabled: blocked, busy: loading }}
       disabled={blocked}
-      onPress={onPress}
+      onPress={()=>{const now=Date.now();if(blocked||now-lastPress.current<500)return;lastPress.current=now;onPress();}}
       style={({ pressed }) => [
         styles.button,
         styles[`button_${variant}`],

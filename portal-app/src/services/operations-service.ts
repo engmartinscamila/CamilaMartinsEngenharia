@@ -400,13 +400,13 @@ export async function listFinancialAccounts(): Promise<ServiceResult<FinancialAc
   if (result.error) return failure([], 'Não foi possível carregar as contas financeiras.');
   return { data: (result.data ?? []).map((row) => ({
     id: row.id, name: row.name, accountType: row.account_type,
-    openingBalance: Number(row.opening_balance ?? 0), active: row.active,
+    openingBalance: Number(row.opening_balance ?? 0), openingBalanceDate: row.opening_balance_date ?? null, active: row.active,
   })), error: null };
 }
 
-export async function createFinancialAccount(name: string, accountType: 'bank' | 'cash' | 'credit', openingBalance: number) {
+export async function createFinancialAccount(name: string, accountType: 'bank' | 'cash' | 'credit', openingBalance: number, openingBalanceDate?: string) {
   const result = await supabase.from('financial_accounts').insert({
-    name: name.trim(), account_type: accountType, opening_balance: openingBalance,
+    name: name.trim(), account_type: accountType, opening_balance: openingBalance, opening_balance_date: openingBalanceDate || null,
   });
   return result.error ? 'Não foi possível cadastrar a conta financeira.' : null;
 }
@@ -462,10 +462,16 @@ export async function importOfxTransactions(accountId: string, asset: DocumentPi
 }
 
 export async function listTimesheets(projectId?: string): Promise<ServiceResult<TimesheetSummary[]>> {
-  let query = supabase.from('timesheets').select('*').order('work_date', { ascending: false });
-  if (projectId) query = query.eq('project_id', projectId);
-  const result = await query.limit(300);
-  if (result.error) return failure([], 'Não foi possível carregar as horas.');
+  const rows:any[]=[];
+  for(let offset=0;;offset+=500){
+    let query=supabase.from('timesheets').select('*').order('work_date',{ascending:false}).order('id');
+    if(projectId)query=query.eq('project_id',projectId);
+    const page=await query.range(offset,offset+499);
+    if(page.error)return failure([],'Não foi possível carregar todos os apontamentos de horas.');
+    rows.push(...(page.data??[]));if((page.data??[]).length<500)break;
+    if(rows.length>=100000)return failure([],'Há mais de 100 mil apontamentos. Refine a consulta.');
+  }
+  const result={data:rows};
   return { data: (result.data ?? []).map((row) => ({
     id: row.id, projectId: row.project_id, workDate: row.work_date,
     hours: Number(row.hours), hourlyCost: Number(row.hourly_cost),

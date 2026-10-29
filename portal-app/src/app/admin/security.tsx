@@ -1,3 +1,4 @@
+import { useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
@@ -22,7 +23,8 @@ export default function AdminSecurityScreen() {
   const [auditAction, setAuditAction] = useState('');
   const [auditType, setAuditType] = useState('');
   const [auditUser, setAuditUser] = useState('');
-  const [auditProject, setAuditProject] = useState('');
+  const {projectId}=useLocalSearchParams<{projectId?:string}>();
+  const [auditProject, setAuditProject] = useState(projectId??'');
   const [auditPeriodDays, setAuditPeriodDays] = useState('');
   const [auditNow, setAuditNow] = useState(() => Date.now());
   const [loading, setLoading] = useState(false);

@@ -1,3 +1,4 @@
+import { useNotificationProject } from '@/hooks/use-notification-project';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
@@ -18,6 +19,7 @@ export default function AdminDocumentGovernanceScreen() {
   const styles = useThemeStyles(styleDefinitions);
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
   const [projectId, setProjectId] = useState<string | null>(null);
+  useNotificationProject(projects, setProjectId);
   const [map, setMap] = useState<AdminDocumentMapItem[]>([]);
   const [alerts, setAlerts] = useState<AdminDocumentAlertItem[]>([]);
   const [loading, setLoading] = useState(false);

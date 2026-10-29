@@ -16,6 +16,9 @@ export function openWebsiteAdminHome() {
 const classicWebsiteAdminRoutes: Record<string, string> = {
   'commercial-documents': '/orcamentos-contratos.html',
   'document-preparation': '/orcamentos-contratos.html',
+  receipts: '/recibos.html',
+  settings: '/configuracoes.html',
+  'website-content': '/protecao-pdf-admin.html',
   clients: '/clientes.html',
   projects: '/projetos.html',
   documents: '/documentos.html',
@@ -48,6 +51,7 @@ export const modernWebsiteAdminSections = new Set([
   'approvals',
   'notifications',
   'security',
+  'workspace',
 ]);
 
 export function isModernWebsiteAdminSection(key: string) {
@@ -66,17 +70,19 @@ export function websiteAdminBridgeUrl(key: string) {
   return websiteAdminSectionUrl(key);
 }
 
-export function openWebsiteAdminSection(key: string) {
+export function openWebsiteAdminSection(key: string, params: Record<string,string> = {}) {
+  const query = new URLSearchParams(params);
+  const suffix = query.size ? `?${query}` : '';
   if (!usesWebsiteAdminHome()) return false;
 
   const classicRoute = classicWebsiteAdminRoutes[key];
   if (classicRoute) {
-    window.location.assign(classicRoute);
+    window.location.assign(classicRoute + suffix);
     return true;
   }
 
   if (isModernWebsiteAdminSection(key)) {
-    window.location.assign(websiteAdminSectionUrl(key));
+    window.location.assign(websiteAdminSectionUrl(key) + suffix);
     return true;
   }
 

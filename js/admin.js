@@ -115,7 +115,7 @@ function configurarEventosAdmin() {
     abrirDocumentos: 'documentos.html',
     abrirBiblioteca: 'biblioteca.html',
     abrirFotos: 'fotos.html',
-    abrirFinanceiro: 'financeiro.html',
+    abrirFinanceiro: '/portal/admin/financial/',
     abrirAgenda: 'agenda.html',
     abrirConfiguracoes: 'configuracoes.html',
     abrirCentralDocumentos: 'orcamentos-contratos.html',

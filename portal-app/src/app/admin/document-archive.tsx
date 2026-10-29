@@ -1,3 +1,5 @@
+import { useLocalSearchParams } from 'expo-router';
+import { listAdminProjects } from '@/services/admin-service';
 import * as DocumentPicker from 'expo-document-picker';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Linking, Text, View } from 'react-native';
@@ -35,6 +37,8 @@ export default function DocumentArchiveScreen() {
   const [days, setDays] = useState('180');
   const [clientName, setClientName] = useState('');
   const [projectName, setProjectName] = useState('');
+  const {projectId}=useLocalSearchParams<{projectId?:string}>();
+  useEffect(()=>{if(!projectId)return;let active=true;void listAdminProjects().then(result=>{const project=result.data.find(p=>p.id===projectId);if(active&&project)setProjectName(project.name);});return()=>{active=false;};},[projectId]);
   const [kind, setKind] = useState('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
