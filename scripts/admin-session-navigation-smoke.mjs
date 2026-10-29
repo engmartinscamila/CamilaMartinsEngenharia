@@ -81,7 +81,8 @@ try {
       assert.deepEqual(errors, [], `${section}: JavaScript`);
       console.log(`OK ${viewport.width}px Configurações -> ${section}: sessão preservada e ferramenta montada`);
       if(section==='workspace'){
-        await page.getByRole('button',{name:'Outras áreas',exact:true}).click();
+        if(viewport.width<=820)await page.getByRole('button',{name:'Outras áreas',exact:true}).click();
+        else assert.equal(await page.locator('#cmePortalAdminSidebar').count(),1,'Menu lateral persistente no portal');
         for(const title of ['Início','Clientes e contratos','Documentos e arquivos','Gestão de obras','Financeiro e recibos','Agenda e comunicação','Configurações'])assert.equal(await page.getByRole('button',{name:title,exact:true}).count(),1,`Grupo ${title} disponível no portal`);
         await page.getByRole('button',{name:'Financeiro e recibos',exact:true}).click();
         await page.getByRole('button').filter({has:page.getByText('Financeiro',{exact:true})}).click();

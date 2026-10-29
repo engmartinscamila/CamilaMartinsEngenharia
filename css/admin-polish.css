@@ -124,3 +124,10 @@ html:not([data-admin-theme="claro"]) .layout :is(.cme-admin-group-toggle,.cme-ad
 html:not([data-admin-theme="claro"]) .layout .menu-item.ativo { background:#b89a63; color:#081522; }
 html[data-admin-theme="claro"] .layout :is(.cme-admin-group-toggle,.cme-admin-submenu .menu-item) { color:#243448; }
 @media(max-width:600px) { .layout :is(.card-header,.acoes-topo,.item-lista) { flex-wrap:wrap; } .layout :is(.item-info,.item-acoes) { min-width:0; max-width:100%; } }
+
+/* Text actions must never inherit the fixed width intended for icon buttons. */
+.layout .item-lista { align-items:center; flex-wrap:wrap; }
+.layout .item-lista > .item-info { flex:1 1 220px; }
+.layout .item-acoes { display:flex; flex:0 1 auto; align-items:center; align-self:center; justify-content:flex-end; flex-wrap:wrap; gap:10px; max-width:100%; }
+.layout .item-acoes :is(button,a.btn,.btn-icon) { width:auto; min-width:44px; max-width:100%; height:auto; min-height:44px; align-self:center; flex:0 1 auto; display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 14px; border-radius:10px; white-space:normal; word-break:normal; overflow-wrap:break-word; line-height:1.45; text-align:center; }
+.layout .item-acoes :is(button,a.btn,.btn-icon) > :is(span,strong) { overflow-wrap:break-word; word-break:normal; }

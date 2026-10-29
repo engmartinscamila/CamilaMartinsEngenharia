@@ -4,7 +4,7 @@ import { openWebsiteAdminHome, openWebsiteAdminSection } from '@/lib/admin-navig
 import { adminSections } from '@/lib/admin-sections';
 import adminMenuGroups from '@/lib/admin-menu-groups.json';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, Text, View, useWindowDimensions } from 'react-native';
 
 import { Button, PageHeader } from '@/components/ui';
 import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
@@ -17,12 +17,14 @@ export function AdminPageHeader({ title, description }: { title: string; descrip
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const {width}=useWindowDimensions();
+  const sidebarVisible=Platform.OS==='web'&&width>820;
   return (
     <View style={styles.pageTop}>
       <View style={styles.headerActions}>
         <Button icon="home-outline" onPress={() => { if (!openWebsiteAdminHome()) router.replace('/admin'); }} title="Início da administração" variant="ghost" />
         <View style={styles.headerRightActions}>
-          <Button icon="menu-outline" onPress={() => setMenuOpen((open) => !open)} title={menuOpen ? 'Fechar menu' : 'Outras áreas'} variant="ghost" />
+          {!sidebarVisible ? <Button icon="menu-outline" onPress={() => setMenuOpen((open) => !open)} title={menuOpen ? 'Fechar menu' : 'Outras áreas'} variant="ghost" /> : null}
           {pathname !== '/admin/notifications' ? <AdminNotificationBell /> : null}
         </View>
       </View>

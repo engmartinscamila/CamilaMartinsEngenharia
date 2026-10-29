@@ -1,13 +1,16 @@
 import { Redirect, Stack, useLocalSearchParams, usePathname } from 'expo-router';
 import React from 'react';
+import {Platform,ScrollView,View,useWindowDimensions} from 'react-native';
+import {AdminGroupedMenu} from '@/components/admin-ui';
 
-import { FullScreenLoader, Screen, StateView } from '@/components/ui';
+import { BrandMark, FullScreenLoader, Screen, StateView } from '@/components/ui';
 import { useAuth } from '@/providers/auth-provider';
 import { useAppTheme } from '@/providers/theme-provider';
 import { safeAdminReturnPath } from '@/lib/auth-return-path';
 
 export default function AdminLayout() {
   const { colors } = useAppTheme();
+  const {width}=useWindowDimensions();
   const { loading, role, session } = useAuth();
   const pathname = usePathname();
   const params = useLocalSearchParams<{ projectId?: string; tipo?: string; section?: string }>();
@@ -28,7 +31,7 @@ export default function AdminLayout() {
     );
   }
 
-  return (
+  const content = (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="workspace" />
@@ -66,4 +69,11 @@ export default function AdminLayout() {
       <Stack.Screen name="system-health" />
     </Stack>
   );
+  if(Platform.OS!=='web'||width<=820)return content;
+  return <View style={{flex:1,flexDirection:'row',backgroundColor:colors.background}}>
+    <View nativeID="cmePortalAdminSidebar" style={{width:280,flexShrink:0,borderRightWidth:1,borderRightColor:colors.line,backgroundColor:colors.background}}>
+      <ScrollView contentContainerStyle={{padding:16,gap:20}}><BrandMark /><AdminGroupedMenu key={pathname+':'+(params.tipo??'')} /></ScrollView>
+    </View>
+    <View style={{flex:1,minWidth:0}}>{content}</View>
+  </View>;
 }

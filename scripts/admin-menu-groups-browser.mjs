@@ -25,6 +25,9 @@ try{for(const width of [360,390,1440]){
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2),false);
  await page.waitForFunction(()=>!Array.from(document.querySelectorAll('#loading,#loader,#carregando')).some(node=>getComputedStyle(node).display!=='none'));
  await page.waitForTimeout(350);
+ await page.evaluate(()=>{const row=document.createElement('div');row.className='item-lista';row.id='qa-action-sizing';row.innerHTML='<div class="item-info"><h3>Cliente sintético</h3></div><div class="item-acoes"><button aria-label="Visualizar">◉</button><button aria-label="Editar">✎</button><button aria-label="Excluir">×</button><button>Reenviar e-mail de acesso</button></div>';document.querySelector('main').prepend(row);});
+ const actionSizes=await page.locator('#qa-action-sizing button').evaluateAll(nodes=>nodes.map(node=>({width:node.getBoundingClientRect().width,height:node.getBoundingClientRect().height,scroll:node.scrollWidth,client:node.clientWidth})));
+ assert(actionSizes.every(size=>size.height<=90&&size.scroll<=size.client+2),'Actions must not stretch or clip their labels');assert(actionSizes[3].width>120,'Text action must not inherit 42px icon width');
  if(width===1440)await page.screenshot({path:'/tmp/cme-menu-groups-desktop.png'});
  if(width===390)await page.screenshot({path:'/tmp/cme-menu-groups-mobile.png'});
  await page.close();console.log(`PASS: menu ${width}px — sete áreas, teclado, expansão única, destaque e contexto após navegação.`);
