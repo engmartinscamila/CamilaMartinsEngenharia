@@ -153,6 +153,7 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/schedule-xlsx-test" --no-save --package-lock=false --ignore-scripts exceljs@4.4.0 pngjs@7.0.0
           node scripts/test-construction-schedule-xlsx-runtime.mjs
           node scripts/test-financial-model.mjs
+          node scripts/test-admin-navigation-context.mjs
           npm install --prefix "$RUNNER_TEMP/financial-ui-test" --no-save --package-lock=false --ignore-scripts react@19.2.3 react-test-renderer@19.2.3
           CME_FINANCIAL_TEST_ROOT="$RUNNER_TEMP/financial-ui-test" node scripts/test-financial-ui.mjs
           npm run lint

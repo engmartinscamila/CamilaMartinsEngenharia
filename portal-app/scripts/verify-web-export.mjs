@@ -6,7 +6,7 @@ import { extname, join, relative, resolve } from 'node:path';
 const outputRoot = resolve('dist');
 const requiredFiles = [
   'index.html','login.html','first-access.html','forgot-password.html','reset-password.html','legal-acceptance.html','terms-of-use.html','privacy-policy.html',
-  'admin/index.html','admin/crm.html','admin/construction-schedule.html','admin/contract-documents.html','admin/document-preparation.html','admin/document-governance.html','admin/document-archive.html','admin/tasks.html','admin/work-diary.html','admin/procurement.html','admin/financial.html','admin/portal-control.html','admin/approvals.html','admin/notifications.html','admin/security.html','admin/system-health.html',
+  'admin/index.html','admin/workspace.html','admin/receipts.html','admin/settings.html','admin/website-content.html','admin/crm.html','admin/construction-schedule.html','admin/contract-documents.html','admin/document-preparation.html','admin/document-governance.html','admin/document-archive.html','admin/tasks.html','admin/work-diary.html','admin/procurement.html','admin/financial.html','admin/portal-control.html','admin/approvals.html','admin/notifications.html','admin/security.html','admin/system-health.html',
   'home.html','documents.html','requests.html','_headers','robots.txt',
 ];
 assert.ok(existsSync(outputRoot), 'A pasta dist não foi gerada.');
@@ -61,7 +61,7 @@ for (const key of modernKeys) {
   assert.ok(layoutSource.includes(`<Stack.Screen name="${key}" />`), `Área moderna ${key} não está registrada no Stack administrativo.`);
 }
 assert.ok(navigationSource.includes('websiteAdminSectionUrl'), 'Helper de URL estática das áreas modernas ausente.');
-assert.ok(navigationSource.includes('window.location.assign(websiteAdminSectionUrl(key))'), 'Navegação web das áreas modernas não abre o HTML estático publicado.');
+assert.ok(navigationSource.includes('window.location.assign(websiteAdminSectionUrl(key) + suffix)'), 'Navegação web das áreas modernas não abre o HTML estático publicado.');
 assert.ok(dashboardSource.includes('isModernWebsiteAdminSection(requestedSection)'), 'Entrada legada não valida a área solicitada.');
 assert.ok(dashboardSource.includes('openWebsiteAdminSection(requestedSection)'), 'Entrada legada não redireciona para o HTML estático real da área.');
 

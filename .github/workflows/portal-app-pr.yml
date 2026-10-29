@@ -81,6 +81,9 @@ jobs:
       - name: Gerar e reabrir arquivo XLSX real com dados sintéticos
         run: node scripts/test-construction-schedule-xlsx-runtime.mjs
 
+      - name: Testar navegação com projeto e aliases
+        run: node scripts/test-admin-navigation-context.mjs
+
       - name: ESLint
         run: npm run lint
 
