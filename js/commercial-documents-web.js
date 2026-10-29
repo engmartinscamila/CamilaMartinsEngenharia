@@ -175,7 +175,8 @@
       ? 'Um único nível será aplicado a todas as atividades elegíveis deste pacote. Não é possível misturar níveis de prestação diferentes dentro do mesmo pacote.'
       : 'Escolha o nível desta atividade avulsa.';
     if (!eligible) select.value = '';
-    const lockedByQuote = mode() === 'contrato' && selectedQuoteKeys().length > 0;
+    const selectedSources = selectedQuoteKeys().map(key => quoteSources.find(item => item.key === key)).filter(Boolean);
+    const lockedByQuote = mode() === 'contrato' && selectedSources.length > 0 && selectedSources.every(item => item.sourceType === 'commercial');
     select.disabled = lockedByQuote;
   }
 
@@ -449,7 +450,8 @@
   }
 
   function updateSourceLocks() {
-    const locked = mode() === 'contrato' && selectedQuoteKeys().length > 0;
+    const selectedSources = selectedQuoteKeys().map(key => quoteSources.find(item => item.key === key)).filter(Boolean);
+    const locked = mode() === 'contrato' && selectedSources.length > 0 && selectedSources.every(item => item.sourceType === 'commercial');
     const openPicker = $('openCommercialServices');
     if (openPicker) {
       openPicker.disabled = locked;
@@ -757,7 +759,9 @@
     const sources = isContract ? selectedQuoteKeys()
       .map(key => quoteSources.find(item => item.key === key))
       .filter(Boolean) : [];
-    if (isContract && sources.length) payload.services = combinedServices(sources);
+    if (isContract && sources.length && sources.every(item => item.sourceType === 'commercial')) {
+      payload.services = combinedServices(sources);
+    }
     if (isContract && sourceMode() === 'quote' && !sources.length) {
       msg('Selecione um orçamento existente ou marque Contrato direto para criar sem orçamento.', 'error');
       return;
