@@ -917,7 +917,8 @@
            <button class="doc-btn" data-action="convert" data-id="${record.id}" ${record.status === 'convertido' ? 'disabled' : ''}>
              ${record.status === 'convertido' ? 'Cliente/projeto vinculados' : 'Formalizar cliente + projeto'}
            </button>`
-        : `<button class="doc-btn secondary" data-action="quote" data-id="${record.id}">Baixar orçamento</button>
+        : `<button class="doc-btn" data-action="use-quote" data-id="${record.id}">Criar contrato deste orçamento</button>
+           <button class="doc-btn secondary" data-action="quote" data-id="${record.id}">Baixar orçamento</button>
            <button class="doc-btn ghost" data-action="quote-archive" data-id="${record.id}">Baixar + arquivar</button>`;
 
       return `
@@ -930,7 +931,7 @@
                 ${new Date(record.created_at).toLocaleDateString('pt-BR')}${origin}
               </div>
             </div>
-            <span class="doc-badge">${esc(String(record.status || '').replaceAll('_', ' '))}</span>
+            <span class="doc-badge">${esc(kind === 'contrato' && record.status === 'rascunho_orcamento' ? 'Rascunho de contrato' : String(record.status || '').replaceAll('_', ' '))}</span>
           </div>
           <div class="doc-actions">${actions}</div>
         </div>
@@ -1196,6 +1197,20 @@
       const action = button.dataset.action;
       const id = button.dataset.id;
 
+      if (action === 'use-quote') {
+        const chosen = quoteSources.find(item => item.sourceType === 'commercial' && String(item.sourceId) === String(id));
+        if (!chosen) { msg('Orçamento não encontrado na lista disponível.', 'error'); return; }
+        document.querySelector('[data-doc-tab="contrato"]')?.click();
+        setTimeout(() => {
+          if ($('contractSourceQuote')) $('contractSourceQuote').checked = true;
+          if ($('contractQuoteSearch')) $('contractQuoteSearch').value = '';
+          if ($('contractQuoteSelect')) $('contractQuoteSelect').value = chosen.key;
+          document.querySelectorAll('[data-quote-extra]').forEach(input => { input.checked = false; });
+          renderQuoteChoices();
+          updateContractSourceUi();
+          applyQuotesToContract([chosen.key]);
+        }, 0);
+      }
       if (action === 'quote') generate(id, 'orcamento', false);
       if (action === 'quote-archive') generate(id, 'orcamento', true);
       if (action === 'contract') generate(id, 'contrato', false);
@@ -1204,6 +1219,7 @@
     });
 
     window.addEventListener('hashchange', renderMode);
+    window.addEventListener('cme:document-mode', renderMode);
     document.querySelectorAll('[data-doc-tab]').forEach(button => {
       button.addEventListener('click', () => setTimeout(renderMode, 0));
     });
