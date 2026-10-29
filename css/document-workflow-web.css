@@ -232,3 +232,24 @@ html.doc-service-modal-open,body.doc-service-modal-open{overflow:hidden;overscro
 .doc-contract-extra-row input{accent-color:#b89a63;flex:none}
 .doc-contract-source .doc-status{margin:0;overflow-wrap:anywhere}
 @media(max-width:700px){.doc-contract-source{padding:12px}.doc-contract-origin-options{grid-template-columns:1fr}.doc-contract-source #contractQuoteSearch,.doc-contract-source #contractQuoteSelect{font-size:16px}}
+
+
+/* Fluxo de contratos: aviso de projetos pendentes e regularização sem recadastro */
+.doc-contract-pending,
+.doc-contract-reminder{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:14px;min-width:0;margin-top:12px;padding:13px 15px;
+  border:1px solid rgba(196,165,104,.5);border-radius:11px;
+  background:rgba(184,154,99,.1);color:#f3f5f8;
+}
+.doc-contract-pending>div{flex:1;min-width:0}
+.doc-contract-pending strong{display:block;color:#e9cc91;font-size:.88rem}
+.doc-contract-pending p{font-size:.78rem;line-height:1.48;margin:5px 0 0;color:#d3dbe6}
+.doc-contract-pending .doc-btn,.doc-contract-reminder .doc-btn{flex:0 0 auto;min-height:40px}
+.doc-contract-reminder{background:rgba(202,143,69,.09)}
+.doc-contract-reminder span{flex:1;min-width:0;font-size:.81rem;font-weight:600;line-height:1.45;color:#e7d5b2}
+.doc-contract-reminder .doc-btn.secondary{border-color:rgba(217,186,125,.65);color:#f0d6a5}
+@media(max-width:720px){
+  .doc-contract-pending,.doc-contract-reminder{flex-direction:column;align-items:stretch;padding:12px}
+  .doc-contract-pending .doc-btn,.doc-contract-reminder .doc-btn{width:100%}
+}
