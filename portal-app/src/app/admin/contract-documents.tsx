@@ -128,7 +128,7 @@ export function AdminContractDocumentsScreen({embedded=false,onProjectChange}:{e
         description="Histórico, download, arquivamento e disponibilização ao cliente. A criação de novos documentos permanece centralizada em Contratos Gerais."
       /> : null}
       <Notice tone="info">
-        Esta tela não altera escopo, não cria aceite e não prepara um segundo documento concorrente. Use Contratos Gerais para criar; use Versões e pendências para governança; use Aprovações somente quando o cliente realmente precisar decidir algo.
+        Consulte as emissões e os aceites deste projeto. Para criar um documento, use Contratos Gerais. As visões Aprovações e Versões e liberações reúnem as decisões do cliente e o acompanhamento documental.
       </Notice>
       {error ? <Notice tone="danger">{error}</Notice> : null}
       {success ? <Notice tone="success">{success}</Notice> : null}
@@ -136,7 +136,7 @@ export function AdminContractDocumentsScreen({embedded=false,onProjectChange}:{e
 
       <Card>
         <View style={styles.header}>
-          <View style={{ flex: 1 }}>
+          <View style={{ flexGrow: 1, flexBasis: 240, minWidth: 0 }}>
             <Text style={styles.sectionTitle}>Contrato / projeto</Text>
             <Text style={styles.help}>Selecione o projeto para consultar somente as emissões relacionadas a ele.</Text>
           </View>
@@ -160,7 +160,7 @@ export function AdminContractDocumentsScreen({embedded=false,onProjectChange}:{e
           ) : documents.map((item) => (
             <View key={item.id} style={styles.documentRow}>
               <View style={styles.header}>
-                <View style={{ flex: 1 }}>
+                <View style={{ flexGrow: 1, flexBasis: 240, minWidth: 0 }}>
                   <Text style={styles.title}>{item.title}</Text>
                   <Text style={styles.meta}>
                     {item.optional ? 'Complementar' : 'Vinculado ao fluxo'} • {item.archived ? 'Word arquivado' : 'sem arquivo persistido'} • criado em {formatDate(item.createdAt)}
@@ -183,13 +183,13 @@ export function AdminContractDocumentsScreen({embedded=false,onProjectChange}:{e
 
       <Card>
         <Text style={styles.sectionTitle}>Pendências de manifestação do cliente</Text>
-        <Text style={styles.help}>Este é apenas um resumo operacional. Decisões e prazos são tratados em Aprovações/Termo de Aceite e a validade das versões em Versões e pendências.</Text>
+        <Text style={styles.help}>Acompanhe abaixo as manifestações pendentes. Consulte decisões e prazos em Aprovações e o histórico em Versões e liberações.</Text>
         {relevantAttention.length === 0 ? (
           <StateView icon="checkmark-circle-outline" title="Nenhuma pendência crítica" description="Não há prazo próximo ou vencido para o projeto selecionado." />
         ) : relevantAttention.map((item) => (
           <View key={item.approvalId} style={styles.documentRow}>
             <View style={styles.header}>
-              <View style={{ flex: 1 }}>
+              <View style={{ flexGrow: 1, flexBasis: 240, minWidth: 0 }}>
                 <Text style={styles.title}>{item.approvalTitle}</Text>
                 <Text style={styles.meta}>{item.clientName} • {item.contractNumber} • limite {formatDate(item.dueAt)}</Text>
               </View>
