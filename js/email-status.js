@@ -10,7 +10,7 @@
   async function load() {
     const host = document.getElementById('emailDeliveryHistory');
     if (!host) return;
-    const [{ data, error }, clients] = await Promise.all([window.supabaseClient.rpc('admin_client_email_status'), window.dbBuscarClientes().catch(() => [])]);
+    const [{ data, error }, clients] = await Promise.all([window.supabaseClient.rpc('admin_client_email_status'), (typeof window.dbBuscarClientes === 'function' ? window.dbBuscarClientes().catch(() => []) : Promise.resolve([]))]);
     if (error) { host.textContent = 'Não foi possível consultar os envios. Atualize o histórico para tentar novamente.'; return; }
     host.replaceChildren();
     const note = document.createElement('p');
