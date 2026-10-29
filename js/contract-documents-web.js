@@ -31,7 +31,18 @@ function ensurePendingContractActions(){
   info.className='doc-contract-pending doc-hidden';
   info.innerHTML='<div><strong>Contrato gerado, ainda sem projeto vinculado</strong><p id="pendingContractExplanation">Este contrato existe na Central, mas os documentos vinculados precisam de um projeto associado. O vínculo aproveita os dados e o escopo já registrados, sem recadastrá-los.</p></div><button class="doc-btn" id="activatePendingContract" type="button">Vincular contrato e habilitar Anexo I</button>';
   selector.closest('.doc-field')?.insertAdjacentElement('afterend',info);
+  const reminder=document.createElement('div');
+  reminder.id='pendingContractReminder';
+  reminder.className='doc-contract-reminder doc-hidden';
+  reminder.innerHTML='<span id="pendingContractReminderText"></span><button type="button" class="doc-btn secondary" id="selectPendingContract">Ver contrato pendente</button>';
+  info.insertAdjacentElement('afterend',reminder);
   $('activatePendingContract')?.addEventListener('click',activatePendingContract);
+  $('selectPendingContract')?.addEventListener('click',()=>{
+    const first=unlinkedContracts.find(item=>item.status==='contrato_gerado')||unlinkedContracts[0];
+    if(!first)return;
+    $('contractProject').value='commercial:'+first.id;
+    chooseProject($('contractProject').value);
+  });
 }
 function showPendingContract(record){
   pendingContract=record;
@@ -69,7 +80,7 @@ async function activatePendingContract(){
     if(error||!data?.project_id)throw error||new Error('Não foi possível obter o projeto vinculado.');
     await loadProjects(data.project_id);
     if($('contractProject')?.value!==String(data.project_id))throw new Error('O projeto foi vinculado, mas não pôde ser selecionado na lista.');
-    msg('Contrato '+record.contract_number+' vinculado ao cliente e projeto. O Anexo I já pode utilizar o escopo deste contrato.','success');
+    msg('Contrato '+record.contract_number+' vinculado ao cliente e projeto. Ele já está disponível no seletor do Anexo I; a emissão seguirá as verificações documentais.','success');
   }catch(error){
     msg(error?.message||'Não foi possível vincular o contrato. Tente novamente.','error');
   }finally{
@@ -101,6 +112,15 @@ async function loadProjects(preferredId=null){
     +projects.filter(p=>p.contract_id).map(p=>`<option value="${esc(p.id)}">${esc(p.numero_contrato||'Contrato')} • ${esc(p.nome)}${p.tipo?' • '+esc(p.tipo):''}</option>`).join('')
     +'</optgroup>';
   ensurePendingContractActions();
+  const generatedPending=unlinkedContracts.filter(item=>item.status==='contrato_gerado');
+  const reminder=$('pendingContractReminder');
+  if(reminder){
+    reminder.classList.toggle('doc-hidden',!unlinkedContracts.length);
+    const label=$('pendingContractReminderText');
+    if(label)label.textContent=generatedPending.length
+      ? generatedPending.length+' contrato(s) já emitido(s) ainda sem projeto. Crie/vincule o projeto para usar o Anexo I.'
+      : unlinkedContracts.length+' contrato(s) em preparação sem projeto. Ao gerar o Word, o vínculo será automático.';
+  }
   const requested=new URLSearchParams(location.search).get('projectId');
   const activeSelection=[preferredId,previous,requested].find(id=>id&&selector.querySelector('option[value="'+CSS.escape(String(id))+'"]'));
   const fallback=unlinkedContracts[0]?'commercial:'+unlinkedContracts[0].id:projects.find(p=>p.contract_id)?.id||'';
@@ -280,4 +300,4 @@ function createApprovalRequest(){
     else msg('Solicitação criada. Clique em “Preparar termo” para continuar.','success');
   })
 }
-function bind(){$('contractProject')?.addEventListener('change',e=>chooseProject(e.target.value));$('contractGenerators')?.addEventListener('click',e=>{const b=e.target.closest('[data-prepare]');if(b)prepare(b.dataset.prepare)});$('approvalList')?.addEventListener('click',e=>{if(e.target.closest('#newApprovalRequest')){createApprovalRequest();return}const b=e.target.closest('[data-approval]');if(b)prepare('termo_aceite',b.dataset.approval)});$('preparedDocuments')?.addEventListener('click',e=>{const b=e.target.closest('[data-download],[data-archive],[data-send]');if(!b)return;const expected=b.dataset.kind||activeDocumentKind;if(b.dataset.download)generateAndDeliver(b.dataset.download,false,expected);if(b.dataset.archive)generateAndDeliver(b.dataset.archive,true,expected);if(b.dataset.send)send(b.dataset.send,expected)});$('contractAttention')?.addEventListener('click',e=>{const b=e.target.closest('[data-notice]');if(b)notice(b.dataset.notice)});window.addEventListener('cme:document-mode',e=>{const kind=e.detail?.kind;activeDocumentKind=supportedDocumentKinds.has(kind)?kind:null;renderDocs()});window.addEventListener('cme:commercial-records-updated',()=>loadProjects());setTimeout(async()=>{await loadCatalog();await loadProjects()},300)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();})();
+function bind(){$('contractProject')?.addEventListener('change',e=>chooseProject(e.target.value));$('contractGenerators')?.addEventListener('click',e=>{const b=e.target.closest('[data-prepare]');if(b)prepare(b.dataset.prepare)});$('approvalList')?.addEventListener('click',e=>{if(e.target.closest('#newApprovalRequest')){createApprovalRequest();return}const b=e.target.closest('[data-approval]');if(b)prepare('termo_aceite',b.dataset.approval)});$('preparedDocuments')?.addEventListener('click',e=>{const b=e.target.closest('[data-download],[data-archive],[data-send]');if(!b)return;const expected=b.dataset.kind||activeDocumentKind;if(b.dataset.download)generateAndDeliver(b.dataset.download,false,expected);if(b.dataset.archive)generateAndDeliver(b.dataset.archive,true,expected);if(b.dataset.send)send(b.dataset.send,expected)});$('contractAttention')?.addEventListener('click',e=>{const b=e.target.closest('[data-notice]');if(b)notice(b.dataset.notice)});window.addEventListener('cme:document-mode',e=>{const kind=e.detail?.kind;activeDocumentKind=supportedDocumentKinds.has(kind)?kind:null;renderDocs()});window.addEventListener('cme:commercial-records-updated',event=>loadProjects(event.detail?.projectId||null));setTimeout(async()=>{await loadCatalog();await loadProjects()},300)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();})();
