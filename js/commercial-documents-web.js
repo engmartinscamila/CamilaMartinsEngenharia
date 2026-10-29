@@ -761,6 +761,13 @@
       .filter(Boolean) : [];
     if (isContract && sources.length && sources.every(item => item.sourceType === 'commercial')) {
       payload.services = combinedServices(sources);
+      // Não descartar parcelas, condições ou observações financeiras do(s) orçamento(s).
+      const originalTerms = sources.flatMap(item => Array.isArray(item.payment_terms) ? item.payment_terms : []);
+      const originalMethod = originalTerms.find(item => item && item.method)?.method || '';
+      const chosenMethod = $('paymentMethod')?.value || '';
+      if (originalTerms.length && (!chosenMethod || chosenMethod === originalMethod)) {
+        payload.payment_terms = originalTerms.map(term => ({ ...term }));
+      }
     }
     if (isContract && sourceMode() === 'quote' && !sources.length) {
       msg('Selecione um orçamento existente ou marque Contrato direto para criar sem orçamento.', 'error');
