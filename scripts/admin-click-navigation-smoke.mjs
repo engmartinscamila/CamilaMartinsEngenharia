@@ -209,7 +209,7 @@ for (const [slug, expectedPath] of quickTargets) {
     await mobileButton.click();
     assert(await page.locator('.sidebar.open').count() === 1, 'Mobile: clique no botão não abriu a sidebar');
 
-    const target = page.locator('a.menu-item').filter({ hasText: 'Cronograma de obra completo' }).first();
+    const target = page.locator('a.menu-item').filter({ hasText: 'Gestão da obra' }).first();
     try {
       await revealMenuTarget(target);
       const [response] = await Promise.all([
@@ -217,10 +217,10 @@ for (const [slug, expectedPath] of quickTargets) {
         target.click({ timeout: 5000 }),
       ]);
       const current = new URL(response?.url() || page.url());
-      assert(current.pathname === '/portal/admin/construction-schedule/', `Mobile: clique no Cronograma completo abriu ${current.pathname}`);
-      assert(Boolean(response) && response.status() < 400, `Mobile: Cronograma completo respondeu HTTP ${response?.status() ?? 'sem resposta'}`);
+      assert(current.pathname === '/portal/admin/works-center/', `Mobile: clique em Gestão da obra abriu ${current.pathname}`);
+      assert(Boolean(response) && response.status() < 400, `Mobile: Gestão da obra respondeu HTTP ${response?.status() ?? 'sem resposta'}`);
     } catch (error) {
-      failures.push(`Mobile: clique no Cronograma completo falhou: ${error.message}`);
+      failures.push(`Mobile: clique em Gestão da obra falhou: ${error.message}`);
     }
   }
   await page.close();
