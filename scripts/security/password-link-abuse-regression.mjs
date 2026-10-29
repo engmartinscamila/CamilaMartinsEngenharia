@@ -18,11 +18,12 @@ assert.ok(
   webFn.indexOf('consumeNetworkRateLimit(admin, request)') < webFn.indexOf('.from("clientes")'),
   'O limite por rede precisa acontecer antes da consulta de cliente'
 );
-assert.equal(
-  (webFn.match(/fetch\("https:\/\/api\.resend\.com\/emails"/g) || []).length,
-  1,
-  'Recuperação deve manter o provedor de e-mail fixo'
-);
+const sharedSender = read('supabase/functions/_shared/client-email.ts');
+assert.equal(sharedSender, read('portal-app/supabase/functions/_shared/client-email.ts'), 'O remetente compartilhado divergiu entre site e app');
+assert.match(webFn, /import \{ deliverClientEmail, failClientEmail \} from '\.\.\/_shared\/client-email\.ts'/, 'A recuperação precisa usar o remetente central protegido');
+assert.match(webFn, /await deliverClientEmail\(admin, job\)/, 'A fila precisa enviar pelo remetente central');
+assert.equal((sharedSender.match(/fetch\('https:\/\/api\.resend\.com\/emails'/g) || []).length, 1, 'O remetente central deve manter o endpoint fixo do provedor');
+assert.doesNotMatch(sharedSender, /fetch\(\s*(?:body|payload|params|input|url)\b/, 'Entrada do usuário não pode controlar destino HTTP');
 assert.equal(
   (webFn.match(/fetch\("https:\/\/challenges\.cloudflare\.com\/turnstile\/v0\/siteverify"/g) || []).length,
   1,

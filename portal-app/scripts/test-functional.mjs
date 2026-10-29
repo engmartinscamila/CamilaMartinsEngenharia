@@ -112,7 +112,11 @@ const passwordLink=fs.readFileSync('supabase/functions/client-password-link/inde
 eq(passwordLink.includes('GENERIC_MESSAGE'),true,'password recovery keeps account-existence responses generic');
 eq(passwordLink.includes('service_consume_password_link_rate_limit'),true,'password recovery retains server-side rate limiting');
 eq(passwordLink.includes(".eq(\"status\", \"ativo\")"),true,'password recovery is restricted to active clients');
-eq(passwordLink.includes('admin.auth.admin.generateLink({ type: "recovery"'),true,'password recovery emits a scoped recovery link instead of a password');
+const passwordSender=fs.readFileSync('supabase/functions/_shared/client-email.ts','utf8');
+eq(passwordLink.includes('await deliverClientEmail(admin, job)'),true,'password recovery uses the reliable server outbox');
+eq(passwordSender.includes("const mode = authUser ? 'recovery' : 'invite'"),true,'existing accounts receive scoped recovery links and unlinked registrations receive invitations');
+eq(passwordSender.includes('service.auth.admin.generateLink({ type: mode, email'),true,'shared sender emits scoped links instead of passwords');
+eq(passwordSender.includes("link.searchParams.set('token_hash', payload.token_hash)"),true,'access tokens remain scoped to the password setup URL');
 
 const protectedPdf=fs.readFileSync('supabase/functions/proteger-pdf/index.ts','utf8');
 eq(protectedPdf.includes('RATE_MAX_REQUESTS = 8'),true,'protected PDF issuance keeps a server-side emission rate limit');
