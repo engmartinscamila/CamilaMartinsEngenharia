@@ -547,9 +547,15 @@
     if ($('paymentMethod')) $('paymentMethod').value = '';
     document.querySelectorAll('[data-service]').forEach(input => { input.checked = false; });
 
-    if (clearSource && $('contractQuoteSelect')) {
-      Array.from($('contractQuoteSelect').options).forEach(option => { option.selected = false; });
+    if (clearSource) {
+      if ($('contractQuoteSelect')) $('contractQuoteSelect').value = '';
+      document.querySelectorAll('[data-quote-extra]').forEach(input => { input.checked = false; });
+      if ($('contractQuoteSearch')) $('contractQuoteSearch').value = '';
     }
+    const context = $('linkedClientSummary');
+    if (context) context.textContent = 'Novo cliente / prospect';
+    updateSourceLocks();
+    updateServiceSummary();
 
     const summary = $('contractQuoteSummary');
     if (summary) {
@@ -600,17 +606,35 @@
   }
 
   function combinedServices(items) {
-    const included = new Set();
-    items.forEach(item => (Array.isArray(item.services) ? item.services : []).forEach(service => {
-      if (service?.included === true) included.add(String(service.code || ''));
-    }));
-    return servicesCatalog.map(([code, name], index) => ({
-      code,
-      name,
-      included: included.has(code),
-      acceptanceRequired: true,
-      displayOrder: index + 1
-    }));
+    // Mantém o snapshot integral de cada orçamento: valores por atividade,
+    // níveis, entregáveis, revisões, exclusões e textos aprovados.
+    const firstSeen = new Map();
+    const included = new Map();
+    (Array.isArray(items) ? items : []).forEach(item => {
+      (Array.isArray(item.services) ? item.services : []).forEach(service => {
+        const code = String(service?.code || '');
+        if (!code) return;
+        if (!firstSeen.has(code)) firstSeen.set(code, { ...service });
+        if (service.included === true && !included.has(code)) included.set(code, { ...service });
+      });
+    });
+    const seen = new Set();
+    const result = servicesCatalog.map(([code, name], index) => {
+      seen.add(code);
+      const original = included.get(code) || firstSeen.get(code) || {};
+      return {
+        ...original,
+        code,
+        name: original.name || name,
+        included: included.has(code),
+        acceptanceRequired: original.acceptanceRequired !== false,
+        displayOrder: index + 1
+      };
+    });
+    included.forEach((service, code) => {
+      if (!seen.has(code)) result.push({ ...service, code, included: true });
+    });
+    return result;
   }
 
   function parseMoney(value) {
@@ -629,7 +653,8 @@
 
     if (!selected.length) {
       clearForm(false);
-      msg('Sem orçamento selecionado: o contrato poderá ser preenchido manualmente.');
+      updateSourceLocks();
+      msg('Selecione um orçamento acima ou escolha a opção Contrato direto.');
       return;
     }
 
@@ -654,6 +679,11 @@
       return;
     }
 
+    const linkedClient = firstFilled(selected, 'linked_client_id')
+      || clientCatalog.find(item => digits(item.cpf_cnpj) && digits(item.cpf_cnpj) === digits(firstFilled(selected, 'cpf_cnpj')))?.id
+      || '';
+    if ($('linkedClientId')) $('linkedClientId').value = clientCatalog.some(item => String(item.id) === String(linkedClient)) ? linkedClient : '';
+    if ($('linkedClientSummary')) $('linkedClientSummary').textContent = clientCatalog.find(item => String(item.id) === String(linkedClient))?.nome || firstFilled(selected, 'prospect_name') || 'Novo cliente / prospect';
     setField('prospectName', firstFilled(selected, 'prospect_name'));
     setField('cpfCnpj', firstFilled(selected, 'cpf_cnpj'));
     setField('email', firstFilled(selected, 'email'));
@@ -673,6 +703,11 @@
 
     const values = selected.map(item => parseMoney(item.total_value)).filter(value => value !== null);
     setField('totalValue', values.length ? moneyValue(values.reduce((sum, value) => sum + value, 0)) : '');
+    const paymentMethods = selected.flatMap(item => Array.isArray(item.payment_terms) ? item.payment_terms : []);
+    const payment = paymentMethods.find(item => item && item.method)?.method || '';
+    if ($('paymentMethod')) {
+      $('paymentMethod').value = paymentOptions.some(option => option[0] === payment) ? payment : '';
+    }
 
     const notes = selected
       .map(item => item.notes ? `${item.quote_number}: ${String(item.notes).trim()}` : '')
@@ -692,19 +727,24 @@
     if ($('experienceLevel')) $('experienceLevel').value = levels.length === 1 ? levels[0] : '';
     applyServices(combinedServices(selected));
     updateServiceSummary();
+    updateSourceLocks();
+    renderLevelInfo();
 
     const numbers = selected.map(item => item.quote_number).filter(Boolean);
+    const draft = selected.filter(item => item.sourceType === 'commercial' && !item.quote_document_id);
     if (summary) {
-      summary.textContent = `${numbers.join(', ')} selecionado${numbers.length === 1 ? '' : 's'}. Serviços e valores foram combinados; todos os campos continuam editáveis e devem ser revisados antes da criação do contrato.`;
-      summary.className = 'doc-status success';
+      summary.textContent = draft.length
+        ? `Dados de ${numbers.join(', ')} recuperados. Atenção: ${draft.length} orçamento(s) ainda precisam ter o documento emitido antes da geração do contrato.`
+        : `Dados de ${numbers.join(', ')} importados: cliente, endereços, serviços, níveis, valor e condições. Revise apenas o necessário.`;
+      summary.className = draft.length ? 'doc-status error' : 'doc-status success';
     }
-
-    msg(`${numbers.length} orçamento${numbers.length === 1 ? '' : 's'} vinculado${numbers.length === 1 ? '' : 's'} ao contrato.`, 'success');
+    msg(`${numbers.length} orçamento(s) importado(s). Confira os dados abaixo.`, 'success');
   }
 
   async function create() {
-    const typedCustom = $('customService')?.value.trim() || '';
-    const canonical = suggestCatalogService(typedCustom);
+    const fromExistingQuote = mode() === 'contrato' && selectedQuoteKeys().length > 0;
+    const typedCustom = fromExistingQuote ? '' : ($('customService')?.value.trim() || '');
+    const canonical = fromExistingQuote ? null : suggestCatalogService(typedCustom);
     if (typedCustom && canonical) {
       const canonicalInput = document.querySelector(`[data-service="${CSS.escape(String(canonical.code))}"]`);
       if (canonicalInput) canonicalInput.checked = true;
@@ -714,6 +754,14 @@
     }
     const payload = form();
     const isContract = mode() === 'contrato';
+    const sources = isContract ? selectedQuoteKeys()
+      .map(key => quoteSources.find(item => item.key === key))
+      .filter(Boolean) : [];
+    if (isContract && sources.length) payload.services = combinedServices(sources);
+    if (isContract && sourceMode() === 'quote' && !sources.length) {
+      msg('Selecione um orçamento existente ou marque Contrato direto para criar sem orçamento.', 'error');
+      return;
+    }
 
     if (!serviceCatalogMeta.length || !levelCatalog.length) {
       msg('Catálogo de serviços ou níveis não carregado. Recarregue a página antes de criar documentos; os dados existentes foram preservados.', 'error');
@@ -743,15 +791,6 @@
         msg('O nível de prestação só pode ser usado quando houver um serviço compatível selecionado.', 'error');
         return;
       }
-    }
-
-    const sources = selectedQuoteKeys()
-      .map(key => quoteSources.find(item => item.key === key))
-      .filter(Boolean);
-
-    if (isContract && !sources.length) {
-      msg('Selecione o orçamento aprovado que dará origem ao contrato. O contrato não permite redigitar o escopo manualmente.', 'error');
-      return;
     }
 
     if (!sameQuoteOwner(sources)) {
@@ -791,9 +830,12 @@
     }
 
     clearForm();
+    renderQuoteChoices();
     msg(
       isContract
-        ? `Contrato criado e vinculado a ${sources.length} orçamento${sources.length === 1 ? '' : 's'}: ${sources.map(item => item.quote_number).join(', ')}.`
+        ? (sources.length
+          ? `Contrato criado com os dados de ${sources.map(item => item.quote_number).join(', ')}.`
+          : 'Contrato direto criado sem orçamento anterior.')
         : 'Orçamento criado com numeração ORC independente.',
       'success'
     );
@@ -953,6 +995,7 @@
         key: `project:${project.id}`,
         sourceType: 'project',
         sourceId: project.id,
+        linked_client_id: project.cliente_id || null,
         quote_number: project.numero_orcamento,
         project_name: project.nome,
         prospect_name: owner.nome || project.nome,
@@ -980,7 +1023,7 @@
   async function load() {
     const [recordsRes, projectsRes, servicesRes, levelsRes, clientsRes] = await Promise.all([
       client().from('commercial_records')
-        .select('id,quote_number,contract_number,record_kind,source_mode,status,prospect_name,cpf_cnpj,email,phone,cep,address,city,state,property_address,property_type,area_terreno_m2,area_construida_m2,construction_standard,experience_level,services,custom_service,total_value,payment_terms,valid_until,notes,quote_document_id,contract_document_id,source_project_id,created_at')
+        .select('id,quote_number,contract_number,record_kind,source_mode,status,linked_client_id,prospect_name,cpf_cnpj,email,phone,cep,address,city,state,property_address,property_type,area_terreno_m2,area_construida_m2,construction_standard,experience_level,services,custom_service,total_value,payment_terms,valid_until,notes,quote_document_id,contract_document_id,source_project_id,created_at')
         .order('created_at', { ascending: false })
         .limit(200),
       client().from('projetos')
