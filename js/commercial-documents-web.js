@@ -401,7 +401,7 @@
     const box = document.createElement('div');
     box.id = 'contractQuoteSources';
     box.className = 'doc-contract-source doc-hidden';
-    box.innerHTML = \`
+    box.innerHTML = `
       <div class="doc-contract-origin-title">
         <strong>Como deseja criar este contrato?</strong>
         <small>Escolha a origem antes de preencher os dados.</small>
@@ -426,7 +426,7 @@
       </div>
       <p id="contractSourceManualHelp" class="doc-help doc-hidden">Preencha apenas os dados necessários para um novo contrato. Você também pode escolher um cliente já cadastrado abaixo.</p>
       <div id="contractQuoteSummary" class="doc-status doc-hidden" aria-live="polite"></div>
-    \`;
+    `;
     panel.insertBefore(box, $('commercialContextFields') || grid);
     box.addEventListener('change', event => {
       if (event.target.name === 'contractSourceMode') {
@@ -507,29 +507,29 @@
     const search = normalizeSearch($('contractQuoteSearch')?.value || '');
     const matches = item => !search || normalizeSearch([item.quote_number, item.prospect_name, item.project_name, item.property_type, item.cpf_cnpj].join(' ')).includes(search);
     const visible = quoteSources.filter(item => matches(item) || item.key === current);
-    const labelFor = item => \`\${item.quote_number || 'Sem número'} — \${item.prospect_name || item.project_name || 'Sem nome'}\`;
+    const labelFor = item => `${item.quote_number || 'Sem número'} — ${item.prospect_name || item.project_name || 'Sem nome'}`;
     let html = '<option value="">Selecione o orçamento...</option>';
     for (const [kind, title] of [['commercial', 'Orçamentos da Central'], ['project', 'Orçamentos de projetos anteriores']]) {
       const items = visible.filter(item => item.sourceType === kind);
       if (!items.length) continue;
-      html += \`<optgroup label="\${esc(title)}">\` + items.map(item => {
+      html += `<optgroup label="${esc(title)}">` + items.map(item => {
         const pending = kind === 'commercial' && !item.quote_document_id;
-        return \`<option value="\${esc(item.key)}">\${esc(labelFor(item))}\${pending ? ' • rascunho (emitir orçamento antes do contrato)' : ''}</option>\`;
+        return `<option value="${esc(item.key)}">${esc(labelFor(item))}${pending ? ' • rascunho (emitir orçamento antes do contrato)' : ''}</option>`;
       }).join('') + '</optgroup>';
     }
     select.innerHTML = html;
     select.value = current && visible.some(item => item.key === current) ? current : '';
     const extras = quoteSources.filter(item => item.key !== select.value && (matches(item) || extraChecked.has(item.key)));
-    extra.innerHTML = extras.length ? extras.map(item => \`
-      <label class="doc-contract-extra-row"><input type="checkbox" data-quote-extra="\${esc(item.key)}" \${extraChecked.has(item.key) ? 'checked' : ''}>
-        <span>\${esc(labelFor(item))}</span>
-      </label>\`).join('') : '<p class="doc-help">Nenhum orçamento adicional encontrado.</p>';
+    extra.innerHTML = extras.length ? extras.map(item => `
+      <label class="doc-contract-extra-row"><input type="checkbox" data-quote-extra="${esc(item.key)}" ${extraChecked.has(item.key) ? 'checked' : ''}>
+        <span>${esc(labelFor(item))}</span>
+      </label>`).join('') : '<p class="doc-help">Nenhum orçamento adicional encontrado.</p>';
     if (!quoteSources.length) {
       const help = $('contractQuoteHelp');
       if (help) help.textContent = 'Nenhum orçamento cadastrado. Escolha "Contrato direto" acima para continuar sem orçamento.';
     } else {
       const help = $('contractQuoteHelp');
-      if (help) help.textContent = \`\${quoteSources.length} orçamento(s) disponível(is). Ao selecionar, o sistema importa automaticamente os dados e o escopo.\`;
+      if (help) help.textContent = `${quoteSources.length} orçamento(s) disponível(is). Ao selecionar, o sistema importa automaticamente os dados e o escopo.`;
     }
   }
 
