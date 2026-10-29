@@ -27,7 +27,7 @@ export function AdminArea({area}:{area:AdminAreaKey}){
   const local=definition.groups.flatMap(item=>item.views).find(item=>item.module===module&&(!values.view||item.key===values.view))??definition.groups.flatMap(item=>item.views).find(item=>item.module===module);
   const destination=local?{area,view:local.key}:adminAreaForModule(module);
   const next={...(projectId?{projectId}:{}),...values};
-  if(destination?.area===area){router.setParams({...next,view:destination.view});return;}
+  if(destination?.area===area){router.setParams({...next,view:destination.view,...(module!=='receipts'?{financialId:undefined}:{})});return;}
   if(destination){router.push({pathname:`/admin/${destination.area}`,params:{...next,view:destination.view}} as Href);return;}
   router.push({pathname:`/admin/${module}`,params:next} as Href);
  },[area,definition.groups,projectId,router]);
@@ -45,7 +45,7 @@ export function AdminArea({area}:{area:AdminAreaKey}){
   const timer=setTimeout(()=>setCache(current=>current.some(item=>item.key===key)?current:current.concat(entry)),0);
   return()=>clearTimeout(timer);
  },[available,key,selected.module,selected.subview,selected.key,viewProject,financialId,extraKey]);
- const choose=(view:AdminAreaView)=>{router.setParams({view:view.key});setShowProjects(false);};
+ const choose=(view:AdminAreaView)=>{router.setParams({view:view.key,...(view.module!=='receipts'?{financialId:undefined}:{})});setShowProjects(false);};
  return <View style={styles.container}>
   <View style={styles.heading}><AdminPageHeader title={definition.title} description={definition.description} />
    <SelectionChips label="Área de trabalho" value={group.key} onChange={value=>choose(definition.groups.find(item=>item.key===value)!.views[0]!)} items={definition.groups.map(item=>({value:item.key,label:item.label}))} />
@@ -53,7 +53,7 @@ export function AdminArea({area}:{area:AdminAreaKey}){
    {scoped?<View style={styles.context}>
     {!projectId&&!selected.project&&!showProjects?<Button debounceMs={0} title="Filtrar por projeto" variant="ghost" onPress={()=>setShowProjects(true)} />:<>
      <AdminProjectPicker projects={projects} value={projectId} onChange={selectProject} disabled={!!financialId} />
-     {!selected.project&&projectId?<Button debounceMs={0} title="Todos os projetos" variant="ghost" onPress={()=>selectProject(null)} />:null}
+     {!selected.project&&projectId?<Button debounceMs={0} title="Todos os projetos" disabled={!!financialId} variant="ghost" onPress={()=>selectProject(null)} />:null}
     </>}
    </View>:null}
    {error?<Notice tone="warning">{error}</Notice>:null}

@@ -81,3 +81,4 @@ A publicação do código depende da aprovação automática das auditorias do r
 - Seleção explícita de obra e formulários preservados por módulo/projeto durante a navegação interna. Ferramentas clássicas integradas mantêm upload em lote, classificações e permissões existentes.
 - Eventos repetidos da mesma sessão revalidam o papel sem desmontar a ferramenta; troca de conta/token continua protegida e a revogação de acesso é aplicada.
 - Validação: TypeScript, lint, regressões de integração/autenticação, auditorias de cobertura, navegação autenticada sintética e navegador real desktop/mobile para contexto, rascunhos e recibo vinculado. Sem alterações de esquema, emissão de recibos reais ou mensagens enviadas como teste.
+- Publicação inclui atualização pontual de `decode-uri-component` 0.5.0 → 0.5.1 para corrigir GHSA-qr28-fpjm-wq7f, mantendo a auditoria rigorosa e a versão principal do Expo.

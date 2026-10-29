@@ -64,6 +64,13 @@ try{for(const width of [1440,390]){
  assert.equal(await description().inputValue(),'Lançamento não salvo');
  await page.getByRole('button',{name:'Recibos',exact:true}).click();
  assert.equal(await receipt.inputValue(),'Recibo avulso não emitido');
+ await page.getByRole('button',{name:'Lançamentos',exact:true}).click();
+ await page.getByRole('button',{name:'Emitir / abrir recibo deste recebimento',exact:true}).click();
+ await page.getByText('Recibo vinculado ao recebimento selecionado.',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'Lançamentos',exact:true}).click();
+ assert.equal(new URL(page.url()).searchParams.get('financialId'),null,'Vínculo antigo não acompanha outra visão/projeto');
+ await page.getByRole('button',{name:'Recibos',exact:true}).click();
+ assert.equal(await receipt.inputValue(),'Recibo avulso não emitido','Avulso preservado ao sair do vínculo');
  await page.goto(new URL('/portal/admin/asset-center/',base).href);
  const frame=page.locator('iframe:visible').contentFrame();
  await frame.locator('#novoDocumento').click();
