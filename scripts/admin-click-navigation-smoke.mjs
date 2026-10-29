@@ -181,8 +181,7 @@ for (const [slug, expectedPath] of quickTargets) {
         page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
         target.click({ timeout: 5000 }),
       ]);
-      if(label.includes('Biblioteca'))await page.waitForURL(url=>url.pathname===expectedPath,{timeout:10000});
-      const current = new URL(label.includes('Biblioteca')?page.url():(response?.url() || page.url()));
+      const current = new URL(response?.url() || page.url());
       assert(current.pathname === '/portal/admin/construction-schedule/', `Mobile: clique no Cronograma completo abriu ${current.pathname}`);
       assert(Boolean(response) && response.status() < 400, `Mobile: Cronograma completo respondeu HTTP ${response?.status() ?? 'sem resposta'}`);
     } catch (error) {
