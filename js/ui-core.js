@@ -73,7 +73,7 @@ function criarGrupoMenu(group,links,active,scope){
   if(active)details.classList.add('cme-current-group');
   const summary=document.createElement('summary');summary.className='cme-admin-group-toggle';summary.innerHTML=`<i class="fa-solid ${group.classicIcon}" aria-hidden="true"></i><span>${group.title}</span><i class="fa-solid fa-chevron-down cme-group-chevron" aria-hidden="true"></i>`;
   const body=document.createElement('div');body.className='cme-admin-submenu';body.append(...links);details.append(summary,body);
-  details.addEventListener('toggle',()=>{if(details.open)for(const other of scope.querySelectorAll(':scope > details.cme-admin-menu-group'))if(other!==details)other.open=false;});
+  summary.addEventListener('click',event=>{event.preventDefault();const opening=!details.open;for(const other of scope.querySelectorAll(':scope > details.cme-admin-menu-group'))if(other!==details)other.open=false;details.open=opening;});
   return details;
 }
 function normalizarHref(valor){try{const url=new URL(valor,location.origin);return url.pathname.replace(/^\//,"").replace(/\.html$/i,"").replace(/\/$/,"").toLowerCase()}catch{return String(valor||"").split("?")[0].replace(/^\//,"").replace(/\.html$/i,"").replace(/\/$/,"").toLowerCase()}}
