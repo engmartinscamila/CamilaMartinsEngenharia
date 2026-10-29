@@ -5,7 +5,7 @@ import ts from 'typescript';
 
 const deferred = () => { let resolve, reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
 const flush = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
-const adminSession = { user: { id: 'synthetic-admin' } };
+const adminSession = { access_token: 'synthetic-token', user: { id: 'synthetic-admin' } };
 const clientSession = { user: { id: 'synthetic-client' } };
 
 // Provider real, identidades sintéticas e agendamento determinístico; nenhuma rede.
@@ -108,5 +108,16 @@ function mount() {
   const before = app.state();
   app.requests[2].resolve({ role: 'client', client: null }); await flush();
   assert.equal(app.state().role, before.role, 'Resposta tardia não altera provider desmontado');
+}
+{
+  const app=mount();app.event('INITIAL_SESSION',adminSession);await app.tick();
+  app.requests[0].resolve({role:'admin',client:null});await flush();
+  app.event('SIGNED_IN',adminSession);await app.tick();
+  assert.equal(app.state().loading,false,'Sessão idêntica de ferramenta integrada não desmonta formulário');
+  assert.equal(app.requests.length,2,'O papel continua sendo revalidado no servidor');
+  app.requests[1].resolve({role:'unassigned',client:null});await flush();
+  assert.equal(app.state().role,'unassigned','Revalidação conserva a revogação de acesso');
+  app.event('SIGNED_IN',{...adminSession,access_token:'new-token'});
+  assert.equal(app.state().loading,true,'Token diferente exige validação antes da navegação');
 }
 process.stdout.write('PASS: restauração, concorrência de perfis, logout, falha, sessão ausente, renovação e desmontagem; sem rede nem dados reais.\n');

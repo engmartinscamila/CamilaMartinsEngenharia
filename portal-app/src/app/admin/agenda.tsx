@@ -1,3 +1,4 @@
+import {useAdminModule,useAdminProjectSelection} from '@/providers/admin-module-context';
 import { useNotificationProject } from '@/hooks/use-notification-project';
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
 import React, { useCallback, useState } from 'react';
@@ -12,9 +13,10 @@ import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 import type { AdminProjectSummary, AgendaSummary } from '@/types/domain';
 
 export default function AdminAgendaScreen() {
+ const embedded=useAdminModule();
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
   const [items, setItems] = useState<AgendaSummary[]>([]);
-  const [projectId, setProjectId] = useState<string | null>(null);
+  const [projectId, setProjectId] = useAdminProjectSelection(null);
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
@@ -35,7 +37,7 @@ export default function AdminAgendaScreen() {
     setProjects(projectResult.data); setItems(agendaResult.data);
     setProjectId((current) => current ?? projectResult.data[0]?.id ?? null);
     setError(projectResult.error ?? agendaResult.error); setLoading(false);
-  }, []);
+  }, [setProjectId]);
 
   useLiveRefresh(load);
 
@@ -62,7 +64,7 @@ export default function AdminAgendaScreen() {
       {error ? <Notice tone="danger">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}
       <Card>
         <Text style={styles.sectionTitle}>Novo compromisso</Text>
-        <View style={styles.projectList}>{projects.map((project) => <Pressable key={project.id} onPress={() => setProjectId(project.id)} style={[styles.projectChip, projectId === project.id && styles.selected]}><Text style={[styles.projectText, projectId === project.id && styles.selectedText]}>{project.contractNumber} • {project.name}</Text></Pressable>)}</View>
+        <View style={styles.projectList}>{projects.filter(project=>!embedded?.projectId||project.id===embedded.projectId).map((project) => <Pressable key={project.id} onPress={() => setProjectId(project.id)} style={[styles.projectChip, projectId === project.id && styles.selected]}><Text style={[styles.projectText, projectId === project.id && styles.selectedText]}>{project.contractNumber} • {project.name}</Text></Pressable>)}</View>
         <Field label="Título" onChangeText={setTitle} value={title} />
         <View style={styles.row}><View style={styles.grow}><Field label="Data (AAAA-MM-DD)" maxLength={10} onChangeText={setDate} placeholder="2026-08-20" value={date} /></View><View style={styles.time}><Field label="Horário" maxLength={5} onChangeText={setTime} placeholder="14:30" value={time} /></View></View>
         <Field label="Descrição" multiline onChangeText={setDescription} value={description} />
@@ -70,7 +72,7 @@ export default function AdminAgendaScreen() {
       </Card>
       {loading ? <ActivityIndicator color={colors.gold600} /> : null}
       {!loading && items.length === 0 ? <StateView description="Nenhum compromisso cadastrado." icon="calendar-outline" title="Agenda vazia" /> : null}
-      {items.map((item) => (
+      {items.filter(item=>!embedded?.projectId||item.projectId===embedded.projectId).map((item) => (
         <Card key={item.id}>
           <View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.title}>{item.title}</Text><Text style={styles.meta}>{formatDate(item.date)}{formatTime(item.startTime) ? ` • ${formatTime(item.startTime)}` : ''}</Text></View><StatusPill label={item.cancelled ? 'Cancelado' : humanizeStatus(item.invitationStatus)} tone={item.cancelled ? 'danger' : item.invitationStatus === 'accepted' ? 'success' : 'warning'} /></View>
           {item.description ? <Text style={styles.description}>{item.description}</Text> : null}

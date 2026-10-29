@@ -9,48 +9,85 @@ function assert(condition, message) {
 }
 
 const menuTargets = [
-  ['Dashboard', '/admin.html'],
-  ['Central de gestão', '/portal/admin/workspace/'],
-  ['Clientes', '/clientes.html'],
-  ['Projetos', '/projetos.html'],
-  ['Contratos gerais', '/orcamentos-contratos.html'],
-  ['Oportunidades comerciais', '/portal/admin/crm/'],
-  ['Revisar serviços × Bronze/Prata/Ouro', '/portal/admin/service-level-governance/'],
-  ['Arquivos antigos e restauração', '/portal/admin/document-archive/'],
-  ['Arquivos e biblioteca', '/documentos.html'],
-  ['Emissões e aprovações', '/portal/admin/document-center/'],
-  ['Fotos e evolução da obra', '/fotos.html'],
-  ['Tarefas do projeto', '/portal/admin/tasks/'],
-  ['Diário de obra', '/portal/admin/work-diary/'],
-  ['Fornecedores e cotações', '/portal/admin/procurement/'],
-  ['Financeiro', '/portal/admin/financial/'],
-  ['Emissão de recibos', '/recibos.html'],
-  ['Módulos do portal do cliente', '/portal/admin/portal-control/'],
-  ['Agenda', '/agenda.html'],
-  ['Cronograma (simples)', '/cronograma.html'],
-  ['Cronograma de obra completo', '/portal/admin/construction-schedule/'],
-  ['Solicitações', '/solicitacoes.html'],
-  ['Notificações internas', '/portal/admin/notifications/'],
-  ['Armazenamento e auditoria', '/portal/admin/security/'],
-  ['Conteúdo do site', '/protecao-pdf-admin.html'],
-  ['Configurações', '/configuracoes.html'],
-  ['Verificar funcionamento', '/integridade-sistema.html'],
+  [
+    "Visão geral",
+    "/portal/admin/workspace/"
+  ],
+  [
+    "Clientes e projetos",
+    "/portal/admin/client-center/"
+  ],
+  [
+    "Oportunidades comerciais",
+    "/portal/admin/crm/"
+  ],
+  [
+    "Contratos gerais",
+    "/orcamentos-contratos.html"
+  ],
+  [
+    "Acervo do projeto",
+    "/portal/admin/asset-center/"
+  ],
+  [
+    "Emissões e aprovações",
+    "/portal/admin/document-center/"
+  ],
+  [
+    "Gestão da obra",
+    "/portal/admin/works-center/"
+  ],
+  [
+    "Financeiro e recibos",
+    "/portal/admin/finance-center/"
+  ],
+  [
+    "Agenda e relacionamento",
+    "/portal/admin/relationship-center/"
+  ],
+  [
+    "Configurações",
+    "/portal/admin/settings-center/"
+  ]
 ];
 
 const quickTargets = [
-  ['document-center', '/portal/admin/document-center/'],
-  ['workspace', '/portal/admin/workspace/'],
-  ['crm', '/portal/admin/crm/'],
-  ['service-level-governance', '/portal/admin/service-level-governance/'],
-  ['document-archive', '/portal/admin/document-archive/'],
-  ['tasks', '/portal/admin/tasks/'],
-  ['work-diary', '/portal/admin/work-diary/'],
-  ['procurement', '/portal/admin/procurement/'],
-  ['financial', '/portal/admin/financial/'],
-  ['portal-control', '/portal/admin/portal-control/'],
-  ['construction-schedule', '/portal/admin/construction-schedule/'],
-  ['notifications', '/portal/admin/notifications/'],
-  ['security', '/portal/admin/security/'],
+  [
+    "workspace",
+    "/portal/admin/workspace/"
+  ],
+  [
+    "client-center",
+    "/portal/admin/client-center/"
+  ],
+  [
+    "crm",
+    "/portal/admin/crm/"
+  ],
+  [
+    "asset-center",
+    "/portal/admin/asset-center/"
+  ],
+  [
+    "document-center",
+    "/portal/admin/document-center/"
+  ],
+  [
+    "works-center",
+    "/portal/admin/works-center/"
+  ],
+  [
+    "finance-center",
+    "/portal/admin/finance-center/"
+  ],
+  [
+    "relationship-center",
+    "/portal/admin/relationship-center/"
+  ],
+  [
+    "settings-center",
+    "/portal/admin/settings-center/"
+  ]
 ];
 
 const browser = await chromium.launch({ headless: true });

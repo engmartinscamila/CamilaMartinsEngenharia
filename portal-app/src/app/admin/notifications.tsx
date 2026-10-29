@@ -1,7 +1,8 @@
+import {useAdminModule,useAdminProjectSelection} from '@/providers/admin-module-context';
 import { notificationRoute } from '@/lib/notification-route';
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
 import React, { useCallback, useState } from 'react';
-import { useRouter } from 'expo-router';
+import {useAdminModuleRouter as useRouter} from '@/hooks/use-admin-module-router';
 import { ActivityIndicator, Platform, Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
@@ -20,11 +21,12 @@ import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 import type { AdminNotificationSummary, AdminProjectSummary } from '@/types/domain';
 
 export default function AdminNotificationsScreen() {
+ const embedded=useAdminModule();
   const router = useRouter();
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
   const [items, setItems] = useState<AdminNotificationSummary[]>([]);
   const [activity, setActivity] = useState<AdminNotificationSummary[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useAdminProjectSelection(null);
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [type, setType] = useState('atualizacao');
@@ -45,7 +47,7 @@ export default function AdminNotificationsScreen() {
     setSelectedProjectId((current) => current ?? projectResult.data[0]?.id ?? null);
     setError(projectResult.error ?? notificationResult.error ?? activityResult.error);
     setLoading(false);
-  }, []);
+  }, [setSelectedProjectId]);
 
   useLiveRefresh(load);
 
@@ -91,7 +93,7 @@ export default function AdminNotificationsScreen() {
         <StatusPill label={`${activity.filter((item) => !item.read).length} nova${activity.filter((item) => !item.read).length === 1 ? '' : 's'}`} tone={activity.some((item) => !item.read) ? 'danger' : 'success'} />
       </View>
       {!loading && activity.length === 0 ? <StateView description="Solicitações e respostas novas aparecerão aqui automaticamente." icon="checkmark-circle-outline" title="Nenhuma novidade" /> : null}
-      {activity.map((item) => (
+      {activity.filter(item=>!embedded?.projectId||item.projectId===embedded.projectId).map((item) => (
         <Card key={item.id}>
           <View style={styles.header}>
             <View style={{ flex: 1 }}><Text style={styles.title}>{item.title}</Text><Text style={styles.meta}>{item.clientName} • {item.projectName} • {formatDate(item.createdAt)}</Text></View>
@@ -111,7 +113,7 @@ export default function AdminNotificationsScreen() {
       <Card>
         <Text style={styles.sectionTitle}>Enviar aviso ao cliente</Text>
         <Text style={styles.label}>Projeto e contrato</Text>
-        <View style={styles.projectList}>{projects.map((project) => <Pressable key={project.id} onPress={() => setSelectedProjectId(project.id)} style={[styles.projectChip, selectedProjectId === project.id && styles.selected]}><Text style={[styles.projectText, selectedProjectId === project.id && styles.selectedText]}>{project.contractNumber} • {project.name} • {project.clientName}</Text></Pressable>)}</View>
+        <View style={styles.projectList}>{projects.filter(project=>!embedded?.projectId||project.id===embedded.projectId).map((project) => <Pressable key={project.id} onPress={() => setSelectedProjectId(project.id)} style={[styles.projectChip, selectedProjectId === project.id && styles.selected]}><Text style={[styles.projectText, selectedProjectId === project.id && styles.selectedText]}>{project.contractNumber} • {project.name} • {project.clientName}</Text></Pressable>)}</View>
         <Field label="Tipo" onChangeText={setType} value={type} />
         <Field label="Título" onChangeText={setTitle} value={title} />
         <Field label="Mensagem" multiline onChangeText={setMessage} style={styles.message} value={message} />
@@ -121,7 +123,7 @@ export default function AdminNotificationsScreen() {
       {loading ? <ActivityIndicator color={colors.gold600} /> : null}
       <Text style={styles.sectionTitle}>Avisos enviados aos clientes</Text>
       {!loading && items.length === 0 ? <StateView description="Nenhum aviso foi enviado." icon="notifications-outline" title="Sem avisos enviados" /> : null}
-      {items.map((item) => <Card key={item.id}><View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.title}>{item.title}</Text><Text style={styles.meta}>{item.clientName} • {item.projectName} • {formatDate(item.createdAt)}</Text></View><StatusPill label={item.read ? 'Lida' : 'Não lida'} tone={item.read ? 'success' : 'warning'} /></View>{item.message ? <Text style={styles.body}>{item.message}</Text> : null}</Card>)}
+      {items.filter(item=>!embedded?.projectId||item.projectId===embedded.projectId).map((item) => <Card key={item.id}><View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.title}>{item.title}</Text><Text style={styles.meta}>{item.clientName} • {item.projectName} • {formatDate(item.createdAt)}</Text></View><StatusPill label={item.read ? 'Lida' : 'Não lida'} tone={item.read ? 'success' : 'warning'} /></View>{item.message ? <Text style={styles.body}>{item.message}</Text> : null}</Card>)}
     </Screen>
   );
 }

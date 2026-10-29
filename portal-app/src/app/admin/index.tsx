@@ -1,6 +1,6 @@
 import { isModernWebsiteAdminSection, openWebsiteAdminHome, openWebsiteAdminSection, usesWebsiteAdminHome } from '@/lib/admin-navigation';
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, useWindowDimensions, View } from 'react-native';
 
@@ -26,7 +26,7 @@ export default function AdminDashboard() {
   const requestedSection = Array.isArray(params.section) ? params.section[0] : params.section;
 
   useEffect(() => {
-    if (!websiteHome) return;
+    if (!websiteHome || !/^\/portal\/admin\/?$/.test(window.location.pathname)) return;
     if (requestedSection && isModernWebsiteAdminSection(requestedSection)) {
       openWebsiteAdminSection(requestedSection);
       return;
@@ -34,10 +34,10 @@ export default function AdminDashboard() {
     openWebsiteAdminHome();
   }, [requestedSection, websiteHome]);
 
-  return websiteHome ? <FullScreenLoader /> : <MainAdminDashboard />;
+  return websiteHome ? <FullScreenLoader /> : <Redirect href="/admin/workspace" />;
 }
 
-function MainAdminDashboard() {
+export function MainAdminDashboard() {
   const { width } = useWindowDimensions();
   const isMobile = width < 720;
   const router = useRouter();

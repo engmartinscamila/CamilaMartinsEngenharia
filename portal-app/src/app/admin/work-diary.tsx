@@ -1,3 +1,4 @@
+import {useAdminModule,useAdminProjectSelection} from '@/providers/admin-module-context';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -20,9 +21,10 @@ const escapeHtml = (value: string | null) => (value ?? '').replace(/[&<>"']/g, (
 type TeamDraft = { id: string; role: string; quantity: string };
 
 export default function AdminWorkDiaryScreen() {
+ const embedded=useAdminModule();
   const styles = useThemeStyles(styleDefinitions);
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
-  const [projectId, setProjectId] = useState<string | null>(null);
+  const [projectId, setProjectId] = useAdminProjectSelection(null);
   const [entries, setEntries] = useState<WorkDiarySummary[]>([]);
   const [entryDate, setEntryDate] = useState(today());
   const [weather, setWeather] = useState('');
@@ -42,7 +44,7 @@ export default function AdminWorkDiaryScreen() {
     const result = await listAdminProjects();
     const valid = result.data.filter((project) => project.contractId);
     setProjects(valid); setProjectId((current) => current ?? valid[0]?.id ?? null); setError(result.error);
-  }, []);
+  }, [setProjectId]);
   const loadEntries = useCallback(async () => {
     if (!projectId) return;
     setLoading(true); const result = await listWorkDiary(projectId);
@@ -116,7 +118,7 @@ export default function AdminWorkDiaryScreen() {
       <Notice tone="info">O horário é registrado automaticamente. No celular, o microfone do teclado pode preencher a transcrição para revisão antes do salvamento.</Notice>
       {error ? <Notice tone="danger">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}
 
-      <Card><Text style={styles.sectionTitle}>Projeto</Text><View style={styles.chips}>{projects.map((item) => <Pressable key={item.id} onPress={() => setProjectId(item.id)} style={[styles.chip, projectId === item.id && styles.selected]}><Text style={styles.chipText}>{item.contractNumber} • {item.name}</Text></Pressable>)}</View></Card>
+      {!embedded ? <Card><Text style={styles.sectionTitle}>Projeto</Text><View style={styles.chips}>{projects.map((item) => <Pressable key={item.id} onPress={() => setProjectId(item.id)} style={[styles.chip, projectId === item.id && styles.selected]}><Text style={styles.chipText}>{item.contractNumber} • {item.name}</Text></Pressable>)}</View></Card> : null}
 
       <Card>
         <Text style={styles.sectionTitle}>Registro do dia</Text>

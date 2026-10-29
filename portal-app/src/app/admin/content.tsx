@@ -1,3 +1,4 @@
+import {useAdminModule} from '@/providers/admin-module-context';
 import { useUnsavedForm } from '@/hooks/use-unsaved-form';
 import { useNotificationProject } from '@/hooks/use-notification-project';
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
@@ -63,13 +64,14 @@ export default function AdminContentScreen() {
 }
 
 function AdminContentForm() {
+  const embedded=useAdminModule();
   const router = useRouter();
   const params = useLocalSearchParams<{ tipo?: string | string[] }>();
   const requestedKind = Array.isArray(params.tipo) ? params.tipo[0] : params.tipo;
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
   const [items, setItems] = useState<AdminContentSummary[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const kind: AdminContentKind = isAdminContentKind(requestedKind) ? requestedKind : 'document';
+  const kind: AdminContentKind = embedded?.module==='photos'?'photo':isAdminContentKind(requestedKind) ? requestedKind : 'document';
   const setKind = (value: AdminContentKind) => router.setParams({ tipo: value });
   const [documentClassification, setDocumentClassification] = useState<DocumentClassification | null>(null);
   const [title, setTitle] = useState('');

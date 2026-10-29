@@ -1,3 +1,4 @@
+import {useAdminModule,useAdminProjectSelection} from '@/providers/admin-module-context';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 import { AdminPageHeader } from '@/components/admin-ui';
@@ -15,8 +16,9 @@ const asNumber = (value: string) => {
 };
 
 export default function ConstructionScheduleBudgetScreen() {
+ const embedded=useAdminModule();
   const [projects,setProjects]=useState<ConstructionProjectOption[]>([]);
-  const [projectId,setProjectId]=useState('');
+  const [projectId,setProjectId]=useAdminProjectSelection('');
   const [draft,setDraft]=useState<ScheduleBudgetDraft|null>(null);
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState<string|null>(null);
@@ -63,7 +65,7 @@ export default function ConstructionScheduleBudgetScreen() {
   };
 
   const save=async()=>{
-    if(!draft||preview.invalid||loading)return;
+    if(!projectId||!draft||preview.invalid||loading)return;
     setLoading(true);setError(null);setSuccess(null);
     const result=await saveCurrentScheduleBudget(draft);
     setLoading(false);
@@ -77,11 +79,11 @@ export default function ConstructionScheduleBudgetScreen() {
     <Notice tone="info">A composição só altera cronogramas em rascunho. Uma linha de base aprovada exige nova revisão/aditivo. O peso financeiro é derivado do custo da execução.</Notice>
     {error?<Notice tone="danger">{error}</Notice>:null}
     {success?<Notice tone="success">{success}</Notice>:null}
-    <Card>
+    {!embedded ? <Card>
       <Text>Projeto</Text>
       {projects.map(project=><Button key={project.id} title={`${project.clientName} — ${project.name}${projectId===project.id?' ✓':''}`} variant={projectId===project.id?'primary':'secondary'} onPress={()=>void load(project.id)} />)}
       {!projects.length?<StateView icon="briefcase-outline" title="Nenhum projeto" description="Cadastre ou vincule um projeto antes de montar o orçamento da execução." />:null}
-    </Card>
+    </Card> : null}
     {loading&&!draft?<StateView icon="calculator-outline" title="Carregando orçamento" description="Conferindo a revisão em rascunho e suas atividades." />:null}
     {draft?<>
       <Card>

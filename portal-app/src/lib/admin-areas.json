@@ -1,0 +1,375 @@
+{
+  "works-center": {
+    "title": "Gestão da obra",
+    "description": "Planejamento, atividades e registros no contexto da obra.",
+    "groups": [
+      {
+        "key": "planning",
+        "label": "Planejamento",
+        "views": [
+          {
+            "key": "complete",
+            "label": "Cronograma completo",
+            "module": "construction-schedule",
+            "project": true
+          },
+          {
+            "key": "simple",
+            "label": "Etapas simples",
+            "module": "schedule",
+            "project": true
+          },
+          {
+            "key": "budget",
+            "label": "Orçamento de execução",
+            "module": "construction-schedule-budget",
+            "project": true
+          },
+          {
+            "key": "measurements",
+            "label": "Medições",
+            "module": "construction-schedule-measurements",
+            "project": true
+          },
+          {
+            "key": "revision",
+            "label": "Reprogramar",
+            "module": "construction-schedule-revision",
+            "project": true
+          },
+          {
+            "key": "baselines",
+            "label": "Histórico de versões",
+            "module": "construction-schedule-baselines",
+            "project": true
+          },
+          {
+            "key": "new",
+            "label": "Criar cronograma",
+            "module": "construction-schedule-new",
+            "project": true
+          },
+          {
+            "key": "test",
+            "label": "Ambiente de teste",
+            "module": "construction-schedule-test"
+          }
+        ]
+      },
+      {
+        "key": "tasks",
+        "label": "Tarefas",
+        "views": [
+          {
+            "key": "tasks",
+            "label": "Tarefas",
+            "module": "tasks",
+            "project": true
+          }
+        ]
+      },
+      {
+        "key": "diary",
+        "label": "Diário",
+        "views": [
+          {
+            "key": "diary",
+            "label": "Diário de obra",
+            "module": "work-diary",
+            "project": true
+          }
+        ]
+      },
+      {
+        "key": "photos",
+        "label": "Fotos",
+        "views": [
+          {
+            "key": "photos",
+            "label": "Fotos da obra",
+            "module": "photos",
+            "project": true
+          }
+        ]
+      },
+      {
+        "key": "procurement",
+        "label": "Compras e cotações",
+        "views": [
+          {
+            "key": "procurement",
+            "label": "Fornecedores e cotações",
+            "module": "procurement",
+            "project": true
+          }
+        ]
+      }
+    ]
+  },
+  "finance-center": {
+    "title": "Financeiro",
+    "description": "Recebimentos, contas e recibos no mesmo lugar.",
+    "groups": [
+      {
+        "key": "entries",
+        "label": "Lançamentos",
+        "views": [
+          {
+            "key": "entries",
+            "label": "Lançamentos",
+            "module": "financial",
+            "subview": "entries",
+            "scope": true
+          }
+        ]
+      },
+      {
+        "key": "accounts",
+        "label": "Contas e OFX",
+        "views": [
+          {
+            "key": "accounts",
+            "label": "Contas e OFX",
+            "module": "financial",
+            "subview": "accounts"
+          }
+        ]
+      },
+      {
+        "key": "hours",
+        "label": "Horas e margem",
+        "views": [
+          {
+            "key": "hours",
+            "label": "Horas e margem",
+            "module": "financial",
+            "subview": "hours",
+            "scope": true
+          }
+        ]
+      },
+      {
+        "key": "receipts",
+        "label": "Recibos",
+        "views": [
+          {
+            "key": "receipts",
+            "label": "Recibos Word e PDF",
+            "module": "receipts",
+            "scope": true
+          }
+        ]
+      },
+      {
+        "key": "history",
+        "label": "Histórico e exportação",
+        "views": [
+          {
+            "key": "history",
+            "label": "Histórico e exportação",
+            "module": "financial",
+            "subview": "history"
+          }
+        ]
+      }
+    ]
+  },
+  "asset-center": {
+    "title": "Acervo do projeto",
+    "description": "Documentos, imagens e arquivos preservados.",
+    "groups": [
+      {
+        "key": "files",
+        "label": "Documentos e materiais",
+        "views": [
+          {
+            "key": "files",
+            "label": "Arquivos e biblioteca",
+            "module": "documents",
+            "scope": true
+          }
+        ]
+      },
+      {
+        "key": "photos",
+        "label": "Galeria de imagens",
+        "views": [
+          {
+            "key": "photos",
+            "label": "Álbum de fotos",
+            "module": "photos",
+            "scope": true
+          }
+        ]
+      },
+      {
+        "key": "archive",
+        "label": "Arquivados e restauração",
+        "views": [
+          {
+            "key": "archive",
+            "label": "Arquivados e restauração",
+            "module": "document-archive",
+            "scope": true
+          }
+        ]
+      }
+    ]
+  },
+  "client-center": {
+    "title": "Clientes e projetos",
+    "description": "Cadastros e ficha integrada do projeto.",
+    "groups": [
+      {
+        "key": "clients",
+        "label": "Clientes",
+        "views": [
+          {
+            "key": "clients",
+            "label": "Clientes",
+            "module": "clients"
+          }
+        ]
+      },
+      {
+        "key": "projects",
+        "label": "Projetos e contratos",
+        "views": [
+          {
+            "key": "projects",
+            "label": "Projetos",
+            "module": "projects"
+          }
+        ]
+      },
+      {
+        "key": "profile",
+        "label": "Ficha do projeto",
+        "views": [
+          {
+            "key": "profile",
+            "label": "Ficha integrada",
+            "module": "workspace",
+            "subview": "profile",
+            "scope": true
+          }
+        ]
+      }
+    ]
+  },
+  "relationship-center": {
+    "title": "Agenda e relacionamento",
+    "description": "Compromissos, solicitações e avisos vinculados aos projetos.",
+    "groups": [
+      {
+        "key": "requests",
+        "label": "Solicitações",
+        "views": [
+          {
+            "key": "requests",
+            "label": "Solicitações e respostas",
+            "module": "requests",
+            "scope": true
+          }
+        ]
+      },
+      {
+        "key": "agenda",
+        "label": "Agenda",
+        "views": [
+          {
+            "key": "agenda",
+            "label": "Compromissos",
+            "module": "agenda",
+            "scope": true
+          }
+        ]
+      },
+      {
+        "key": "notifications",
+        "label": "Avisos",
+        "views": [
+          {
+            "key": "notifications",
+            "label": "Notificações internas",
+            "module": "notifications",
+            "scope": true
+          }
+        ]
+      }
+    ]
+  },
+  "settings-center": {
+    "title": "Configurações",
+    "description": "Preferências, portal do cliente e ferramentas administrativas.",
+    "groups": [
+      {
+        "key": "general",
+        "label": "Dados e preferências",
+        "views": [
+          {
+            "key": "general",
+            "label": "Dados e preferências",
+            "module": "settings"
+          }
+        ]
+      },
+      {
+        "key": "portal",
+        "label": "Portal do cliente",
+        "views": [
+          {
+            "key": "portal",
+            "label": "Áreas disponíveis ao cliente",
+            "module": "portal-control",
+            "project": true
+          }
+        ]
+      },
+      {
+        "key": "security",
+        "label": "Armazenamento e auditoria",
+        "views": [
+          {
+            "key": "security",
+            "label": "Armazenamento e auditoria",
+            "module": "security"
+          }
+        ]
+      },
+      {
+        "key": "health",
+        "label": "Diagnóstico",
+        "views": [
+          {
+            "key": "health",
+            "label": "Verificar funcionamento",
+            "module": "system-health"
+          }
+        ]
+      },
+      {
+        "key": "services",
+        "label": "Serviços e níveis",
+        "views": [
+          {
+            "key": "services",
+            "label": "Revisar serviços e níveis",
+            "module": "service-level-governance"
+          }
+        ]
+      },
+      {
+        "key": "website",
+        "label": "Conteúdo do site",
+        "views": [
+          {
+            "key": "website",
+            "label": "Conteúdo do site",
+            "module": "website-content"
+          }
+        ]
+      }
+    ]
+  }
+}

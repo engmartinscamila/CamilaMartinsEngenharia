@@ -1,3 +1,4 @@
+import {useAdminModule} from '@/providers/admin-module-context';
 import React, { useEffect, useState } from 'react';
 import { Text } from 'react-native';
 import { AdminPageHeader } from '@/components/admin-ui';
@@ -21,6 +22,7 @@ const displayPercent = (value: number | null) => value === null ? 'Não medido' 
 const displayCost = (value: number | null) => value === null ? 'Não informado' : formatCurrency(value);
 
 export default function ConstructionScheduleMeasurementsScreen() {
+ const embedded=useAdminModule();
   const [schedules, setSchedules] = useState<ApprovedScheduleOption[]>([]);
   const [active, setActive] = useState<ApprovedScheduleOption | null>(null);
   const [overview, setOverview] = useState<ScheduleMeasurementOverview | null>(null);
@@ -36,11 +38,11 @@ export default function ConstructionScheduleMeasurementsScreen() {
     let mounted = true;
     void listApprovedSchedules().then((result) => {
       if (!mounted) return;
-      setSchedules(result.data);
+      setSchedules(result.data.filter(item=>!embedded?.projectId||item.projectId===embedded.projectId));
       setError(result.error);
     });
     return () => { mounted = false; };
-  }, []);
+  }, [embedded?.projectId]);
 
   const load = async (schedule: ApprovedScheduleOption, date: string) => {
     if (!isValidIsoDate(date) || busy) { setError('Data de consulta inválida.'); return; }

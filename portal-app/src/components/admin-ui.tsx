@@ -1,3 +1,5 @@
+import {adminAreaForModule} from '@/lib/admin-area-navigation';
+import {useAdminModule} from '@/providers/admin-module-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
 import { openWebsiteAdminHome, openWebsiteAdminSection } from '@/lib/admin-navigation';
@@ -13,12 +15,14 @@ import { getAdminUnreadNotificationCount } from '@/services/admin-service';
 import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 
 export function AdminPageHeader({ title, description }: { title: string; description: string }) {
+  const embedded=useAdminModule();
   const styles = useThemeStyles(styleDefinitions);
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const {width}=useWindowDimensions();
   const sidebarVisible=Platform.OS==='web'&&width>820;
+  if(embedded)return null;
   return (
     <View style={styles.pageTop}>
       <View style={styles.headerActions}>
@@ -40,11 +44,13 @@ export function AdminGroupedMenu({onNavigate,compact=true}:{onNavigate?:()=>void
   const {colors}=useAppTheme();
   const styles=useThemeStyles(styleDefinitions);
   const sectionsByKey=new Map<string,(typeof adminSections)[number]>(adminSections.map((section)=>[section.key,section]));
-  const activeKey=pathname==='/admin/content' ? tipo==='photo'?'photos':'documents' : pathname==='/admin'?'dashboard':adminSections.find(section=>typeof section.href==='string'&&section.href===pathname)?.key;
+  const originalKey=pathname==='/admin/content' ? tipo==='photo'?'photos':'documents' : pathname==='/admin'?'dashboard':adminSections.find(section=>typeof section.href==='string'&&section.href===pathname)?.key;
+  const activeKey=adminAreaForModule(originalKey??'')?.area??originalKey;
   const activeGroup=adminMenuGroups.find(group=>group.sections.includes(activeKey??''));
   const [expanded,setExpanded]=useState<string|null>(activeGroup?.id??'home');
   return <View style={styles.navigationMenu}>{adminMenuGroups.map(group=>{
     const open=expanded===group.id,current=group.id===activeGroup?.id;
+    if(group.sections.length===1){const section=sectionsByKey.get(group.sections[0]!);if(!section)return null;return <AdminMenuRow compact={compact} key={group.id} icon={section.icon} title={section.title} description={section.description} active={activeKey===section.key} onPress={()=>{onNavigate?.();if(!openWebsiteAdminSection(section.key))router.push(section.href);}} />;}
     return <View key={group.id} style={[styles.menuGroup,current&&styles.menuGroupCurrent]}>
       <Pressable accessibilityRole="button" accessibilityState={{expanded:open}} accessibilityLabel={group.title} onPress={()=>setExpanded(open?null:group.id)} style={styles.groupToggle}>
         <Ionicons name={group.icon as keyof typeof Ionicons.glyphMap} color={colors.gold600} size={21} />
@@ -123,7 +129,7 @@ export function AdminMenuRow({ icon, title, description, onPress, compact = fals
   const { colors } = useAppTheme();
   const styles = useThemeStyles(styleDefinitions);
   return (
-    <Pressable accessibilityRole="button" accessibilityState={{selected:active}} onPress={onPress} style={({ pressed }) => [styles.menu, compact && styles.menuCompact, active&&styles.menuGroupCurrent, pressed && styles.pressed]}>
+    <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityState={{selected:active}} onPress={onPress} style={({ pressed }) => [styles.menu, compact && styles.menuCompact, active&&styles.menuGroupCurrent, pressed && styles.pressed]}>
       <View style={[styles.menuIcon, compact && styles.menuIconCompact]}><Ionicons color={colors.gold600} name={icon} size={compact ? 20 : 22} /></View>
       <View style={{ flex: 1 }}><Text style={[styles.menuTitle, compact && styles.menuTitleCompact]}>{title}</Text>{!compact ? <Text style={styles.menuDescription}>{description}</Text> : null}</View>
       <Ionicons color={colors.muted} name="chevron-forward" size={18} />

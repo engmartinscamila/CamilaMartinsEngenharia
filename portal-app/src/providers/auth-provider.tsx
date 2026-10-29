@@ -53,10 +53,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [client, setClient] = useState<ClientProfile | null>(null);
   const [loading, setLoading] = useState(env.isSupabaseConfigured);
   const identityGeneration = useRef(0);
+  const validatedSession = useRef<Session | null>(null);
 
   const setIdentity = useCallback(async (nextSession: Session | null, generation = ++identityGeneration.current) => {
     if (generation !== identityGeneration.current) return;
     if (!nextSession?.user) {
+      validatedSession.current = null;
       setSession(null);
       setRole('unassigned');
       setClient(null);
@@ -67,11 +69,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const identity = await resolveIdentity(nextSession.user);
       if (generation !== identityGeneration.current) return;
+      validatedSession.current = nextSession;
       setSession(nextSession);
       setRole(identity.role);
       setClient(identity.client);
     } catch {
       if (generation !== identityGeneration.current) return;
+      validatedSession.current = null;
       setSession(nextSession);
       setRole('unassigned');
       setClient(null);
@@ -96,7 +100,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!active) return;
       const eventGeneration = ++identityGeneration.current;
-      if (event !== 'TOKEN_REFRESHED') setLoading(true);
+      // Embedded tools and another tab may repeat SIGNED_IN for the same token.
+      // Revalidate its role without unmounting the active route and its drafts.
+      const alreadyValidated = !!nextSession?.access_token && nextSession.user.id === validatedSession.current?.user.id
+        && nextSession.access_token === validatedSession.current?.access_token;
+      if (event !== 'TOKEN_REFRESHED' && !alreadyValidated) setLoading(true);
       // A consulta de identidade sai do callback para não manter o lock do Auth.
       setTimeout(() => {
         if (!active || eventGeneration !== identityGeneration.current) return;
@@ -159,6 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signIn: signInWithPassword,
       signOut: async () => {
         identityGeneration.current++;
+        validatedSession.current = null;
         setSession(null);
         setRole('unassigned');
         setClient(null);

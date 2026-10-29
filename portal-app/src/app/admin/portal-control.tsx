@@ -1,3 +1,4 @@
+import {useAdminModule,useAdminProjectSelection} from '@/providers/admin-module-context';
 import { useNotificationProject } from '@/hooks/use-notification-project';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -20,9 +21,10 @@ const labels: { key: Exclude<keyof ProjectPortalSettings, 'projectId'>; label: s
 ];
 
 export default function AdminPortalControlScreen() {
+ const embedded=useAdminModule();
   const styles = useThemeStyles(styleDefinitions);
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
-  const [projectId, setProjectId] = useState<string | null>(null);
+  const [projectId, setProjectId] = useAdminProjectSelection(null);
   useNotificationProject(projects, setProjectId);
   const [savedSettings,setSavedSettings]=useState<ProjectPortalSettings|null>(null);
   const [settings, setSettings] = useState<ProjectPortalSettings | null>(null);
@@ -36,7 +38,7 @@ export default function AdminPortalControlScreen() {
   const loadProjects = useCallback(async () => {
     const result = await listAdminProjects(); const valid = result.data.filter((project) => project.contractId);
     setProjects(valid); setProjectId((current) => current ?? valid[0]?.id ?? null); setError(result.error);
-  }, []);
+  }, [setProjectId]);
   const loadProject = useCallback(async () => {
     const project = projects.find((item) => item.id === projectId);
     if (!project) return;
@@ -87,7 +89,7 @@ export default function AdminPortalControlScreen() {
     <Screen>
       <AdminPageHeader title="Prévia do portal do cliente" description="Veja os módulos que o cliente verá e escolha o que ficará disponível em cada projeto." />
       {error ? <Notice tone="warning">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}
-      <Card><Text style={styles.sectionTitle}>Projeto</Text><View style={styles.chips}>{projects.map((item) => <Pressable key={item.id} onPress={() => setProjectId(item.id)} style={[styles.chip, projectId === item.id && styles.selected]}><Text style={styles.chipText}>{item.contractNumber} • {item.name}</Text></Pressable>)}</View></Card>
+      {!embedded ? <Card><Text style={styles.sectionTitle}>Projeto</Text><View style={styles.chips}>{projects.map((item) => <Pressable key={item.id} onPress={() => setProjectId(item.id)} style={[styles.chip, projectId === item.id && styles.selected]}><Text style={styles.chipText}>{item.contractNumber} • {item.name}</Text></Pressable>)}</View></Card> : null}
       {!project || !settings ? <StateView icon="person-circle-outline" title="Selecione um projeto" description="A configuração é individual por contrato e projeto." /> : <>
         <Card>
           <Text style={styles.sectionTitle}>Módulos liberados</Text>

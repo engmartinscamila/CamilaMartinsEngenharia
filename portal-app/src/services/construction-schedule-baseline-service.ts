@@ -12,17 +12,24 @@ export type ScheduleBaselineArchive = {
 };
 
 /** Somente administrador: a RLS e os GRANTs nunca expõem snapshots internos aos clientes. */
-export async function listConstructionScheduleBaselines(page: number): Promise<{
+export async function listConstructionScheduleBaselines(page: number, projectId?:string|null): Promise<{
   data: ScheduleBaselineArchive[];
   total: number;
   error: string | null;
 }> {
   if (!Number.isSafeInteger(page) || page < 0) return {data: [], total: 0, error: 'Página inválida.'};
   const pageSize = 50;
-  const response = await supabase.from('construction_schedule_baseline_versions')
+  let query=supabase.from('construction_schedule_baseline_versions')
     .select('id,schedule_id,baseline_version,baseline_snapshot,holiday_dates,approved_at,archived_at', {count: 'exact'})
     .order('archived_at', {ascending: false}).order('id', {ascending: false})
     .range(page * pageSize, page * pageSize + pageSize - 1);
+  if(projectId){
+    const schedules=await supabase.from('construction_schedules').select('id').eq('project_id',projectId);
+    if(schedules.error)return {data:[],total:0,error:'Não foi possível conferir os cronogramas do projeto.'};
+    if(!schedules.data?.length)return {data:[],total:0,error:null};
+    query=query.in('schedule_id',schedules.data.map(item=>item.id));
+  }
+  const response=await query;
   if (response.error) return {data: [], total: 0, error: 'Não foi possível consultar o histórico das linhas de base. Confira a implantação e as permissões.'};
   const items: ScheduleBaselineArchive[] = [];
   for (const row of response.data ?? []) {

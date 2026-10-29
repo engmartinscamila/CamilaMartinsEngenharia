@@ -1,3 +1,4 @@
+import {useAdminModule,useAdminProjectSelection} from '@/providers/admin-module-context';
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
 import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
@@ -39,9 +40,10 @@ function requestTone(status: string): 'neutral' | 'success' | 'warning' | 'dange
 }
 
 export default function AdminRequestsScreen() {
+ const embedded=useAdminModule();
   const [items, setItems] = useState<AdminRequestSummary[]>([]);
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useAdminProjectSelection(null);
   const [category, setCategory] = useState<RequestCategory>('duvida');
   const [newTitle, setNewTitle] = useState('');
   const [newMessage, setNewMessage] = useState('');
@@ -55,8 +57,8 @@ export default function AdminRequestsScreen() {
   const { colors } = useAppTheme();
   const styles = useThemeStyles(styleDefinitions);
 
-  const openItems = useMemo(() => items.filter((item) => !closedStatuses.has(item.status)), [items]);
-  const closedItems = useMemo(() => items.filter((item) => closedStatuses.has(item.status)), [items]);
+  const openItems = useMemo(() => items.filter(item=>!embedded?.projectId||item.projectId===embedded.projectId).filter((item) => !closedStatuses.has(item.status)), [items,embedded]);
+  const closedItems = useMemo(() => items.filter(item=>!embedded?.projectId||item.projectId===embedded.projectId).filter((item) => closedStatuses.has(item.status)), [items,embedded]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -66,7 +68,7 @@ export default function AdminRequestsScreen() {
     setSelectedProjectId((current) => current ?? projectResult.data[0]?.id ?? null);
     setError(requestResult.error ?? projectResult.error);
     setLoading(false);
-  }, []);
+  }, [setSelectedProjectId]);
 
   useLiveRefresh(load);
 
@@ -151,7 +153,7 @@ export default function AdminRequestsScreen() {
         <Text style={styles.sectionDescription}>Use esta área quando a equipe precisar de uma resposta ou informação do cliente.</Text>
         <Text style={styles.label}>Projeto e contrato</Text>
         <View style={styles.projectList}>
-          {projects.map((project) => (
+          {projects.filter(project=>!embedded?.projectId||project.id===embedded.projectId).map((project) => (
             <Pressable
               key={project.id}
               onPress={() => setSelectedProjectId(project.id)}

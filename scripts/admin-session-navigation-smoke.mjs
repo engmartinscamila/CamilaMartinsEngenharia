@@ -14,12 +14,9 @@ const visibleAdminToolsBlock = uiCoreSource.match(/const ferramentasAdministrati
 const menuSections = [...visibleAdminToolsBlock.matchAll(/\["([^"]+)"/g)].map(match => match[1]);
 for (const section of menuSections) assert.ok(modernSections.includes(section), `Ferramenta visível ${section} precisa ser uma rota moderna publicada`);
 const directSections = modernSections.filter(section => !menuSections.includes(section));
-assert.ok(menuSections.includes('service-level-governance'), 'Governança Serviço × Nível precisa continuar visível no menu');
-assert.deepEqual(
-  directSections.sort(),
-  ['contract-documents','document-governance','approvals','construction-schedule-baselines','construction-schedule-budget','construction-schedule-measurements','construction-schedule-new','construction-schedule-revision','construction-schedule-test'].sort(),
-  'Somente os subfluxos internos do cronograma podem ficar fora do menu principal',
-);
+const areas=JSON.parse(readFileSync('portal-app/src/lib/admin-areas.json','utf8'));
+const internalModules=new Set(Object.values(areas).flatMap(area=>area.groups.flatMap(group=>group.views.map(view=>view.module))));
+for(const section of directSections)assert.ok(internalModules.has(section)||['contract-documents','document-governance','approvals','document-preparation'].includes(section),`Subfluxo sem área integrada: ${section}`);
 const config = readFileSync('.github/workflows/pages.yml', 'utf8');
 const backend = new URL(config.match(/EXPO_PUBLIC_SUPABASE_URL:\s*(https:\/\/[^\s]+)/)[1]);
 const user = { id: '00000000-0000-4000-8000-000000000001', aud: 'authenticated', role: 'authenticated', email: 'navigation@example.invalid', app_metadata: {}, user_metadata: {}, created_at: '2026-01-01T00:00:00Z' };
@@ -89,10 +86,9 @@ try {
       if(section==='workspace'){
         if(viewport.width<=820)await page.getByRole('button',{name:'Outras áreas',exact:true}).click();
         else assert.equal(await page.locator('#cmePortalAdminSidebar').count(),1,'Menu lateral persistente no portal');
-        for(const title of ['Início','Clientes e contratos','Documentos e arquivos','Gestão de obras','Financeiro e recibos','Agenda e comunicação','Configurações'])assert.equal(await page.getByRole('button',{name:title,exact:true}).count(),1,`Grupo ${title} disponível no portal`);
+        for(const title of ['Visão geral','Clientes e contratos','Documentos e arquivos','Gestão da obra','Financeiro e recibos','Agenda e relacionamento','Configurações'])assert.equal(await page.getByRole('button',{name:title,exact:true}).count(),1,`Grupo ${title} disponível no portal`);
         await page.getByRole('button',{name:'Financeiro e recibos',exact:true}).click();
-        await page.getByRole('button').filter({has:page.getByText('Financeiro',{exact:true})}).click();
-        await verifyTool(page,'financial');
+        await verifyTool(page,'finance-center');
       }
     }
 
@@ -105,7 +101,7 @@ try {
 
     if (viewport.width > 820) {
       for (const section of menuSections) {
-        await page.goto(new URL('/admin.html', base).href);
+        await page.goto(new URL('/admin.html?legacy=1', base).href);
         await page.locator(`#abrirFerramenta-${section}`).waitFor({ state: 'attached', timeout: 5000 });
         await revealMenuTarget(page.locator(`#abrirFerramenta-${section}`));
         await page.locator(`#abrirFerramenta-${section}`).click();

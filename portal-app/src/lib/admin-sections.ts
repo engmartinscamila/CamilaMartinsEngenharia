@@ -1,5 +1,11 @@
 export const adminSections = [
-  { key: 'workspace', href: '/admin/workspace', icon: 'search-outline', title: 'Central de gestão', description: 'Busca geral, ficha por contrato e central de pendências.' },
+  { key: 'settings-center', href: '/admin/settings-center', icon: 'settings-outline', title: 'Configurações', description: 'Preferências, portal do cliente e ferramentas administrativas.' },
+  { key: 'relationship-center', href: '/admin/relationship-center', icon: 'chatbubbles-outline', title: 'Agenda e relacionamento', description: 'Solicitações, compromissos e avisos.' },
+  { key: 'client-center', href: '/admin/client-center', icon: 'people-outline', title: 'Clientes e projetos', description: 'Cadastros e ficha integrada por cliente e projeto.' },
+  { key: 'asset-center', href: '/admin/asset-center', icon: 'folder-open-outline', title: 'Acervo do projeto', description: 'Documentos, galeria, arquivados e restauração.' },
+  { key: 'finance-center', href: '/admin/finance-center', icon: 'wallet-outline', title: 'Financeiro e recibos', description: 'Lançamentos, contas, recibos, horas e histórico.' },
+  { key: 'works-center', href: '/admin/works-center', icon: 'construct-outline', title: 'Gestão da obra', description: 'Planejamento, atividades, diário, fotos e compras por projeto.' },
+  { key: 'workspace', href: '/admin/workspace', icon: 'search-outline', title: 'Visão geral', description: 'Busca geral, ficha por contrato e central de pendências.' },
   { key: 'crm', href: '/admin/crm', icon: 'funnel-outline', title: 'Oportunidades comerciais', description: 'Acompanhe interessados, propostas e negociações.' },
   { key: 'commercial-documents', href: '/admin/commercial-documents', icon: 'calculator-outline', title: 'Contratos gerais', description: 'Ponto único para criar orçamento, contrato, Anexo I e documentos complementares.' },
   { key: 'clients', href: '/admin/clients', icon: 'people-outline', title: 'Clientes', description: 'Convidar, arquivar, reativar, revogar ou excluir com confirmação.' },

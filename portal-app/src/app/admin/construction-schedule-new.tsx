@@ -1,5 +1,6 @@
+import {useAdminModule,useAdminProjectSelection} from '@/providers/admin-module-context';
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router';
+import {useAdminModuleRouter as useRouter} from '@/hooks/use-admin-module-router';
 import { Text } from 'react-native';
 import { AdminPageHeader } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView } from '@/components/ui';
@@ -26,9 +27,10 @@ type DraftRow = ScheduleTemplateItem & {
 const numeric = (value: string) => Number(value.replace(',', '.'));
 
 export default function NewConstructionScheduleScreen() {
+ const embedded=useAdminModule();
   const router = useRouter();
   const [options, setOptions] = useState<ScheduleCommercialOptions | null>(null);
-  const [projectId, setProjectId] = useState('');
+  const [projectId, setProjectId] = useAdminProjectSelection('');
   const [quoteId, setQuoteId] = useState('');
   const [contractId, setContractId] = useState('');
   const [additionalAuthorizationId, setAdditionalAuthorizationId] = useState('');
@@ -221,7 +223,7 @@ export default function NewConstructionScheduleScreen() {
       {options && !scheduleId ? <>
         <Card>
           <Text>1. Projeto / cliente</Text>
-          {options.projects.map((item) => <Button key={item.id} title={`${item.clientName} — ${item.name}${projectId === item.id ? ' ✓' : ''}`} variant={projectId === item.id ? 'primary' : 'secondary'} onPress={() => { setProjectId(item.id); setQuoteId(''); setContractId(''); setAdditionalAuthorizationId(''); clearPlan(); }} />)}
+          {options.projects.filter(item=>!embedded?.projectId||item.id===embedded.projectId).map((item) => <Button key={item.id} title={`${item.clientName} — ${item.name}${projectId === item.id ? ' ✓' : ''}`} variant={projectId === item.id ? 'primary' : 'secondary'} onPress={() => { setProjectId(item.id); setQuoteId(''); setContractId(''); setAdditionalAuthorizationId(''); clearPlan(); }} />)}
           {options.projects.length === 0 ? <Notice tone="warning">Nenhum projeto foi encontrado.</Notice> : null}
         </Card>
         {project ? <Card>

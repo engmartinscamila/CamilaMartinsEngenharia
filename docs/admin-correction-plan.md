@@ -71,3 +71,13 @@ A publicação do código depende da aprovação automática das auditorias do r
 - Painel lateral reúne versão vigente, versões vinculadas por revisão, histórico, respostas e ações permitidas; liberação/envio exigem confirmação.
 - Rascunhos de aprovação preservados na sessão por projeto; respostas atrasadas e falhas de consulta não produzem dados de outro projeto ou totais falsos.
 - Consultas paginadas reutilizam dados e permissões existentes; nenhum esquema ou registro de produção alterado.
+
+### Áreas administrativas integradas — 29/10/2026
+- Sete grupos e dez acessos principais; o catálogo conserva 37 rotas e todos os módulos internos.
+- Gestão da obra reúne planejamento completo/simples, orçamento de execução, medições, reprogramação, versões, tarefas, diário, fotos e compras.
+- Visão geral reúne indicadores, pesquisa, pendências e ficha cliente/projeto com contatos, contratos e atalhos contextualizados.
+- Financeiro reúne lançamentos, contas/OFX, horas/margem, histórico e recibos Word/PDF; recebimentos pagos abrem o recibo vinculado e a emissão avulsa continua disponível. NFS-e permanece em espera.
+- Acervo reutiliza o catálogo completo de documentos/biblioteca e a galeria, com arquivo/restauração. Relacionamento reúne solicitações, agenda e avisos; Configurações reúne os controles administrativos existentes.
+- Seleção explícita de obra e formulários preservados por módulo/projeto durante a navegação interna. Ferramentas clássicas integradas mantêm upload em lote, classificações e permissões existentes.
+- Eventos repetidos da mesma sessão revalidam o papel sem desmontar a ferramenta; troca de conta/token continua protegida e a revogação de acesso é aplicada.
+- Validação: TypeScript, lint, regressões de integração/autenticação, auditorias de cobertura, navegação autenticada sintética e navegador real desktop/mobile para contexto, rascunhos e recibo vinculado. Sem alterações de esquema, emissão de recibos reais ou mensagens enviadas como teste.

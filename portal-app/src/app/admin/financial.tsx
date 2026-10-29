@@ -1,3 +1,4 @@
+import {useAdminModule} from '@/providers/admin-module-context';
 import { useUnsavedForm } from '@/hooks/use-unsaved-form';
 import { useNotificationProject } from '@/hooks/use-notification-project';
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
@@ -47,6 +48,7 @@ import type {
 } from '@/types/domain';
 
 export default function AdminFinancialScreen() {
+  const embedded=useAdminModule();
   const [contracts, setContracts] = useState<AdminContractSummary[]>([]);
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
   const [entries, setEntries] = useState<FinancialEntrySummary[]>([]);
@@ -91,7 +93,9 @@ export default function AdminFinancialScreen() {
   const [paymentMethod,setPaymentMethod]=useState('');
   const [openingDate,setOpeningDate]=useState(financialToday());
   const [referenceAccount,setReferenceAccount]=useState<string|null>(null);
-  const [section,setSection]=useState('entries');
+  const [localSection,setLocalSection]=useState('entries');
+  const section=embedded?.subview??localSection;
+  const setSection=(value:string)=>{if(embedded)embedded.onNavigate('financial',{view:value});else setLocalSection(value);};
   const [filters,setFilters]=useState({query:'',projectId:'',status:'',month:''});
   const [coreError,setCoreError]=useState<string|null>(null);
   const [bankError,setBankError]=useState<string|null>(null);
@@ -120,6 +124,7 @@ export default function AdminFinancialScreen() {
   const selectContext=useCallback((id:string)=>{setSelectedProjectId(id);setFilters(current=>({...current,projectId:id}));setPage(0);},[]);
   useNotificationProject(projects, selectContext);
 
+  const contextProjectId=embedded?.projectId;
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -144,19 +149,19 @@ export default function AdminFinancialScreen() {
     setHourlyRateReference(preferenceResult.data.referenceNote ?? '');
     setHourlyCost((current) => current || (configuredRate === null ? '' : String(configuredRate).replace('.', ',')));
     setSelectedProjectId((current) => current ?? null);
-    setSelectedContractId((current) => current ?? contractResult.data[0]?.id ?? null);
+    setSelectedContractId((current) => contextProjectId ? projectResult.data.find(project=>project.id===contextProjectId)?.contractId ?? null : current ?? contractResult.data[0]?.id ?? null);
     setAccountId((current) => current ?? null);
     setError(contractResult.error ?? projectResult.error ?? entryResult.error ?? archiveResult.error ?? bankResult.error ?? accountResult.error ?? timeResult.error ?? fiscalResult.error ?? preferenceResult.error);
     } catch { const message='Não foi possível atualizar os dados financeiros. Tente novamente.'; setError(message); setCoreError(message); setBankError(message); setArchiveError(message); }
     finally { setLoading(false); }
-  }, []);
+  }, [contextProjectId]);
 
   useLiveRefresh(load);
 
   const filteredEntries=useMemo(()=>filterFinancialEntries(entries,filters),[entries,filters]);
   const totals=useMemo(()=>financialTotals(filteredEntries),[filteredEntries]);
   const visibleEntries=filteredEntries.slice(page*50,page*50+50);
-  const summaries=useMemo(()=>contracts.map(contract=>{
+  const summaries=useMemo(()=>contracts.filter(contract=>!embedded?.projectId||projects.some(project=>project.id===embedded.projectId&&project.contractId===contract.id)).map(contract=>{
     const linkedProjects=projects.filter(project=>project.contractId===contract.id);
     const ids=new Set(linkedProjects.map(project=>project.id));
     const values=financialTotals(entries.filter(entry=>entry.projectId&&ids.has(entry.projectId)));
@@ -164,7 +169,7 @@ export default function AdminFinancialScreen() {
     return {projectId:contract.id,projectName:linkedProjects.map(project=>project.name).join(' • '),contractNumber:contract.contractNumber,
       contractValue:contract.contractValue,received:values.received,receivable:values.receivable,paidCosts:values.paid,payable:values.payable,
       laborCost:hours.reduce((sum,item)=>sum+item.hours*item.hourlyCost,0)};
-  }),[projects,entries,timesheets,contracts]);
+  }),[projects,entries,timesheets,contracts,embedded]);
   const setFilter=(key:keyof typeof filters,value:string)=>{setFilters(current=>({...current,[key]:value}));setPage(0);};
   const exportComplete=async()=>{
     if(coreError||bankError||archiveError)throw new Error('Atualize os dados e resolva as falhas de leitura antes de exportar o conjunto completo.');
@@ -275,17 +280,17 @@ export default function AdminFinancialScreen() {
       {error ? <Notice tone="danger">{error}</Notice> : null}
       {success ? <Notice tone="success">{success}</Notice> : null}
       {loading ? <ActivityIndicator color={colors.gold600} /> : null}
-      <SelectionChips label="Área financeira" value={section} onChange={value=>{setSection(value);setError(null);setSuccess(null);}}
-        items={[{value:'entries',label:'Visão e lançamentos'},{value:'accounts',label:'Contas e OFX'},{value:'hours',label:'Horas e margem'},{value:'history',label:'Histórico e exportações'},{value:'fiscal',label:'Rascunhos fiscais'}]} />
-      <Button title="Emissão de recibos — Word e PDF" variant="secondary" onPress={()=>{if(Platform.OS==='web')window.location.assign('/recibos.html');else void Linking.openURL('https://camilamartinsengenharia.com.br/recibos.html');}} />
+      {!embedded ? <SelectionChips label="Área financeira" value={section} onChange={value=>{setSection(value);setError(null);setSuccess(null);}}
+        items={[{value:'entries',label:'Visão e lançamentos'},{value:'accounts',label:'Contas e OFX'},{value:'hours',label:'Horas e margem'},{value:'history',label:'Histórico e exportações'},{value:'fiscal',label:'Rascunhos fiscais'}]} /> : null}
+      {!embedded ? <Button title="Emissão de recibos — Word e PDF" variant="secondary" onPress={()=>{if(Platform.OS==='web')window.location.assign('/recibos.html');else void Linking.openURL('https://camilamartinsengenharia.com.br/recibos.html');}} /> : null}
       {section==='entries'?<>
       <Card><Text style={styles.sectionTitle}>Filtrar lançamentos e indicadores</Text>
         <Field label="Buscar cliente, contrato, projeto ou descrição" value={filters.query} onChangeText={value=>setFilter('query',value)} />
-        <SelectionChips label="Projeto / contrato" value={filters.projectId} onChange={value=>setFilter('projectId',value)} items={[{value:'',label:'Todos'},...projects.map(project=>({value:project.id,label:`${project.contractNumber} • ${project.clientName} • ${project.name}`}))]} />
+        {!embedded ? <SelectionChips label="Projeto / contrato" value={filters.projectId} onChange={value=>setFilter('projectId',value)} items={[{value:'',label:'Todos'},...projects.map(project=>({value:project.id,label:`${project.contractNumber} • ${project.clientName} • ${project.name}`}))]} /> : null}
         <SelectionChips label="Situação do lançamento" value={filters.status} onChange={value=>setFilter('status',value)} items={[{value:'',label:'Todas'},{value:'pago',label:'Recebidos / pagos'},{value:'pendente',label:'Pendentes a vencer'},{value:'atrasado',label:'Em atraso'},{value:'cancelado',label:'Cancelados'}]} />
         <Field label="Mês (AAAA-MM)" placeholder="Ex.: 2026-10" value={filters.month} onChangeText={value=>setFilter('month',value)} />
         <Text style={styles.meta}>O mês usa a data de pagamento para quitados e o vencimento para pendentes. Cancelados não entram nos totais.</Text>
-        <Button title="Limpar filtros" variant="ghost" onPress={()=>{setFilters({query:'',projectId:'',status:'',month:''});setPage(0);}} />
+        <Button title="Limpar filtros" variant="ghost" onPress={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'',month:''});setPage(0);}} />
       </Card>
       <View style={styles.metrics}>{[
         ['RECEBIDO',totals.received],['PAGO',totals.paid],['SALDO REALIZADO',totals.balance],
@@ -296,7 +301,7 @@ export default function AdminFinancialScreen() {
         <SelectionChips items={[{ value: 'entrada', label: 'Entrada' }, { value: 'saida', label: 'Saída' }]} label="Natureza" onChange={value=>{setType(value);requestId.current=null;}} value={type} />
         <SelectionChips items={[{ value: 'pendente', label: 'Pendente' }, { value: 'pago', label: type === 'entrada' ? 'Recebido' : 'Pago' },{value:'cancelado',label:'Cancelado'}]} label="Situação" onChange={value=>{setEntryStatus(value);requestId.current=null;}} value={entryStatus} />
         <Text style={styles.label}>Contrato e projeto</Text>
-        <View style={styles.selector}>{projects.map((project) => <Pressable key={project.id} onPress={() => {setSelectedProjectId(project.id);requestId.current=null;}} style={[styles.choice, selectedProjectId === project.id && styles.choiceSelected]}><Text style={[styles.choiceText, selectedProjectId === project.id && styles.choiceTextSelected]}>{project.contractNumber} • {project.clientName} • {project.name}</Text></Pressable>)}</View>
+        <View style={styles.selector}>{projects.filter(project=>!embedded?.projectId||project.id===embedded.projectId).map((project) => <Pressable key={project.id} onPress={() => {setSelectedProjectId(project.id);requestId.current=null;}} style={[styles.choice, selectedProjectId === project.id && styles.choiceSelected]}><Text style={[styles.choiceText, selectedProjectId === project.id && styles.choiceTextSelected]}>{project.contractNumber} • {project.clientName} • {project.name}</Text></Pressable>)}</View>
         <Field label="Descrição" onChangeText={value=>{setDescription(value);requestId.current=null;}} placeholder="Ex.: Parcela 2 do contrato" value={description} />
         <Text style={styles.label}>Categoria / centro de custo</Text><View style={styles.selector}>{[...financialCategories,...(financialCategories.some(item=>item.value===category)?[]:[{value:category,label:category}])].map((item) => <Pressable key={item.value} onPress={() => {setCategory(item.value);requestId.current=null;}} style={[styles.choice, category === item.value && styles.choiceSelected]}><Text style={[styles.choiceText, category === item.value && styles.choiceTextSelected]}>{item.label}</Text></Pressable>)}</View>
         <Field keyboardType="decimal-pad" label="Valor (R$)" onChangeText={value=>{setAmount(value);requestId.current=null;}} placeholder="Ex.: 2.500,00" value={amount} />
@@ -316,7 +321,7 @@ export default function AdminFinancialScreen() {
       {visibleEntries.map(entry=><Card key={entry.id}><Text style={styles.title}>{entry.description}</Text><Text style={styles.meta}>{entry.clientName} • {entry.contractNumber} • {entry.projectName}</Text>
         <Text style={styles.meta}>{entry.type==='saida'?'Saída':'Entrada'} • {formatCurrency(entry.amount)} • {effectiveStatus(entry)} • {categoryLabel(entry.category)} • {formatDate(entryDate(entry))}</Text>
         <Text style={styles.meta}>{entry.notes}</Text>
-        {entry.type==='entrada'&&financialStatus(entry.status)==='pago'?<Button title="Emitir / abrir recibo deste recebimento" variant="secondary" onPress={()=>{const url='/recibos.html?financialId='+encodeURIComponent(entry.id);if(Platform.OS==='web')window.location.assign(url);else void Linking.openURL('https://camilamartinsengenharia.com.br'+url);}} />:null}
+        {entry.type==='entrada'&&financialStatus(entry.status)==='pago'?<Button title="Emitir / abrir recibo deste recebimento" variant="secondary" onPress={()=>{const url='/recibos.html?financialId='+encodeURIComponent(entry.id);if(embedded)embedded.onNavigate('receipts',{financialId:entry.id,...(entry.projectId?{projectId:entry.projectId}:{})});else if(Platform.OS==='web')window.location.assign(url);else void Linking.openURL('https://camilamartinsengenharia.com.br'+url);}} />:null}
         {entry.bankTransactionId?<Notice tone="info">Lançamento conciliado. O vínculo bancário foi preservado.</Notice>:<View style={styles.rowFields}><Button title="Editar lançamento" variant="secondary" disabled={saving} onPress={()=>editEntry(entry)} /><Button title="Excluir dos ativos" variant="ghost" disabled={saving} onPress={()=>setDeleteTarget(entry)} /></View>}
       </Card>)}
       <View style={styles.rowFields}><Button title="Página anterior" disabled={page===0} variant="ghost" onPress={()=>setPage(value=>value-1)} /><Text style={styles.meta}>Página {page+1}</Text><Button title="Próxima página" disabled={(page+1)*50>=filteredEntries.length} variant="ghost" onPress={()=>setPage(value=>value+1)} /></View>
@@ -345,7 +350,7 @@ export default function AdminFinancialScreen() {
       {section==='hours'?<>
         <Card>
           <Text style={styles.sectionTitle}>Horas por projeto</Text>
-          <SelectionChips label="Projeto do apontamento" value={selectedProjectId??''} onChange={value=>setSelectedProjectId(value||null)} items={[{value:'',label:'Selecione'},...projects.map(project=>({value:project.id,label:`${project.contractNumber} • ${project.name}`}))]} />
+          <SelectionChips label="Projeto do apontamento" value={selectedProjectId??''} onChange={value=>setSelectedProjectId(value||null)} items={[{value:'',label:'Selecione'},...projects.filter(project=>!embedded?.projectId||project.id===embedded.projectId).map(project=>({value:project.id,label:`${project.contractNumber} • ${project.name}`}))]} />
           <DateField label="Data do apontamento" value={date} onChange={value=>{setDate(value);requestId.current=null;}} />
           <Notice tone="info">A taxa padrão é uma referência administrativa configurada por você. O sistema não calcula nem inventa valor profissional.</Notice>
           <Field keyboardType="decimal-pad" label="Taxa horária padrão (R$)" placeholder="Ex.: 180,00" onChangeText={setDefaultHourlyRate} value={defaultHourlyRate} />
@@ -357,7 +362,7 @@ export default function AdminFinancialScreen() {
           <Text style={styles.meta}>O valor deste lançamento continua editável sem alterar a referência padrão.</Text>
           <Field label="Atividade" onChangeText={setTimeDescription} value={timeDescription} />
           <Button onPress={() => void perform(saveTime)} title="Registrar horas" variant="secondary" />
-          <Text style={styles.meta}>{timesheets.length} apontamento(s) • {timesheets.reduce((sum, item) => sum + item.hours, 0).toLocaleString('pt-BR')} h registradas</Text>
+          <Text style={styles.meta}>{timesheets.filter(item=>!embedded?.projectId||item.projectId===embedded.projectId).length} apontamento(s) • {timesheets.filter(item=>!embedded?.projectId||item.projectId===embedded.projectId).reduce((sum, item) => sum + item.hours, 0).toLocaleString('pt-BR')} h registradas</Text>
         </Card>
       <Card>
         <Text style={styles.sectionTitle}>Margem por contrato</Text>
@@ -372,7 +377,7 @@ export default function AdminFinancialScreen() {
       </>:null}
       {section==='fiscal'?<Card>
         <Text style={styles.sectionTitle}>Rascunhos para NFS-e</Text>
-        <SelectionChips label="Projeto do rascunho fiscal" value={selectedProjectId??''} onChange={value=>setSelectedProjectId(value||null)} items={[{value:'',label:'Selecione'},...projects.map(project=>({value:project.id,label:`${project.contractNumber} • ${project.name}`}))]} />
+        <SelectionChips label="Projeto do rascunho fiscal" value={selectedProjectId??''} onChange={value=>setSelectedProjectId(value||null)} items={[{value:'',label:'Selecione'},...projects.filter(project=>!embedded?.projectId||project.id===embedded.projectId).map(project=>({value:project.id,label:`${project.contractNumber} • ${project.name}`}))]} />
         <Notice tone="info">Esta área apenas guarda um rascunho. Não valida os requisitos municipais nem emite nota fiscal. A transmissão depende de uma integração fiscal ainda não disponível neste painel.</Notice>
         <Field label="Descrição do serviço" onChangeText={setFiscalDescription} value={fiscalDescription} />
         <View style={styles.rowFields}><Field keyboardType="decimal-pad" label="Valor (R$)" onChangeText={setFiscalAmount} value={fiscalAmount} /><Field label="Código municipal do serviço" onChangeText={setServiceCode} value={serviceCode} /></View>
@@ -381,7 +386,7 @@ export default function AdminFinancialScreen() {
       </Card>:null}
       {section==='hours'?<Card>
         <Text style={styles.sectionTitle}>Valor do contrato</Text>
-        <View style={styles.selector}>{contracts.map((contract) => <Pressable key={contract.id} onPress={() => { setSelectedContractId(contract.id); setContractValue(contract.contractValue === null ? '' : String(contract.contractValue).replace('.', ',')); }} style={[styles.choice, selectedContractId === contract.id && styles.choiceSelected]}><Text style={[styles.choiceText, selectedContractId === contract.id && styles.choiceTextSelected]}>{contract.contractNumber} • {contract.clientName} • {formatCurrency(contract.contractValue)}</Text></Pressable>)}</View>
+        <View style={styles.selector}>{contracts.filter(contract=>!embedded?.projectId||projects.some(project=>project.id===embedded.projectId&&project.contractId===contract.id)).map((contract) => <Pressable key={contract.id} onPress={() => { setSelectedContractId(contract.id); setContractValue(contract.contractValue === null ? '' : String(contract.contractValue).replace('.', ',')); }} style={[styles.choice, selectedContractId === contract.id && styles.choiceSelected]}><Text style={[styles.choiceText, selectedContractId === contract.id && styles.choiceTextSelected]}>{contract.contractNumber} • {contract.clientName} • {formatCurrency(contract.contractValue)}</Text></Pressable>)}</View>
         <Field keyboardType="decimal-pad" label="Valor contratado (R$)" onChangeText={setContractValue} value={contractValue} />
         <Button loading={saving} onPress={() => void perform(saveContractValue)} title="Atualizar valor contratado" variant="secondary" />
       </Card>:null}

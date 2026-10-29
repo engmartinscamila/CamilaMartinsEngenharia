@@ -22,6 +22,7 @@
   let serviceCatalogMeta = [];
   let levelCatalog = [];
   let clientCatalog = [];
+  let initialClientContextApplied=false;
 
   const paymentOptions = [
     ['pix', 'Pix'],
@@ -1001,6 +1002,13 @@
     });
 
     renderMode();
+    if(!initialClientContextApplied){
+      const clientId=new URLSearchParams(location.search).get('clientId');
+      if(clientId&&clientCatalog.some(item=>String(item.id)===clientId)){
+        if($('linkedClientId'))$('linkedClientId').value=clientId;
+        applyClient(clientId);initialClientContextApplied=true;
+      }
+    }
   }
 
   function bind() {

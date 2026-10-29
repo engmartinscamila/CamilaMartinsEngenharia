@@ -415,15 +415,16 @@ for (const file of adminPages) {
   }
 
   const menuLinks = await page.locator("a.menu-item").count();
-  assert(menuLinks >= 11, `${file}: menu lateral incompleto (${menuLinks} links)`);
+  assert(menuLinks === 10, `${file}: menu lateral incompleto (${menuLinks} links)`);
 
-  const conteudoLinks = await page.locator('a.menu-item[href="protecao-pdf-admin.html"]').count();
+  const conteudoLinks = await page.locator('a.menu-item[href="/portal/admin/settings-center/"]').count();
   assert(
     conteudoLinks === 1,
-    `${file}: "Conteúdo do site" deve aparecer exatamente uma vez no menu (encontrado: ${conteudoLinks})`
+    `${file}: "Configurações" deve reunir as ferramentas uma única vez (encontrado: ${conteudoLinks})`
   );
 
-  const paginaAtual = file.toLowerCase();
+  const legacyGroups={'admin.html':'workspace','clientes.html':'client-center','projetos.html':'client-center','documentos.html':'asset-center','fotos.html':'asset-center','agenda.html':'relationship-center','cronograma.html':'works-center','solicitacoes.html':'relationship-center','configuracoes.html':'settings-center','protecao-pdf-admin.html':'settings-center'};
+  const paginaAtual = legacyGroups[file]?'/portal/admin/'+legacyGroups[file]+'/':file.toLowerCase();
   const ativo = await page.locator("a.menu-item.ativo").evaluateAll(links =>
     links.map(link => (link.getAttribute("href") || "").split("?")[0].toLowerCase())
   );
@@ -1009,7 +1010,7 @@ async function selecionarPrimeiraOpcaoValida(page, id) {
   const menuLinks = await page.locator('.menu-lateral a.menu-item').evaluateAll(links => links.map(link => link.getAttribute('href')));
   assert(!menuLinks.some(href => /^\/?portal\/admin\/?$/.test(href || '')), 'Administração: o painel intermediário redundante reapareceu');
   assert(new Set(menuLinks).size === menuLinks.length, 'Administração: há destinos repetidos no menu');
-  for (const route of ['crm', 'document-center', 'document-archive', 'tasks', 'work-diary', 'procurement', 'financial', 'portal-control', 'notifications', 'security']) {
+  for (const route of ['workspace','client-center','crm','asset-center','document-center','works-center','finance-center','relationship-center','settings-center']) {
     assert(menuLinks.filter(href => href === `/portal/admin/${route}/`).length === 1, `Administração: ${route} deve ter um acesso direto no menu`);
     assert(await page.locator(`#abrirFerramenta-${route}`).count() === 1, `Administração: ${route} deve aparecer uma vez nas ações principais`);
   }
@@ -1021,9 +1022,42 @@ async function selecionarPrimeiraOpcaoValida(page, id) {
 }
 
 const adminNav = [
-  ["abrirClientes","clientes.html"],["abrirProjetos","projetos.html"],["abrirDocumentos","documentos.html"],
-  ["abrirFotos","fotos.html"],["abrirFinanceiro","portal/admin/financial/"],
-  ["abrirAgenda","agenda.html"],["abrirConfiguracoes","configuracoes.html"]
+  [
+    "abrirFerramenta-workspace",
+    "portal/admin/workspace/"
+  ],
+  [
+    "abrirFerramenta-client-center",
+    "portal/admin/client-center/"
+  ],
+  [
+    "abrirFerramenta-crm",
+    "portal/admin/crm/"
+  ],
+  [
+    "abrirFerramenta-asset-center",
+    "portal/admin/asset-center/"
+  ],
+  [
+    "abrirFerramenta-document-center",
+    "portal/admin/document-center/"
+  ],
+  [
+    "abrirFerramenta-works-center",
+    "portal/admin/works-center/"
+  ],
+  [
+    "abrirFerramenta-finance-center",
+    "portal/admin/finance-center/"
+  ],
+  [
+    "abrirFerramenta-relationship-center",
+    "portal/admin/relationship-center/"
+  ],
+  [
+    "abrirFerramenta-settings-center",
+    "portal/admin/settings-center/"
+  ]
 ];
 
 for (const [buttonId, destination] of adminNav) {

@@ -8,18 +8,19 @@ try{for(const width of [360,390,1440]){
  await page.route('**/*',route=>{const url=new URL(route.request().url());if(route.request().resourceType()==='script'&&!/\/js\/ui-core\.js(?:\?|$)/.test(url.pathname+url.search))return route.fulfill({contentType:'application/javascript',body:''});if(url.origin!==new URL(base).origin)return route.abort();return route.continue();});
  await page.goto(base+'/admin.html');await page.locator('.menu-lateral[data-cme-ordem-fixa="true"]').waitFor();
  if(width<820)await page.locator('#cmeAdminMobileMenuButton').click();
- const groups=page.locator('.menu-lateral > details.cme-admin-menu-group');assert.equal(await groups.count(),7);assert.equal(await page.locator('.menu-lateral a.menu-item').count(),26);
- assert.deepEqual(await groups.locator(':scope > summary > span').allTextContents(),titles);
- assert.equal(await page.locator('.menu-lateral a.menu-item:visible').count(),2,'Only current area starts expanded');
- for(const group of await groups.all()){
+ const groups=page.locator('.menu-lateral > .cme-admin-menu-group');assert.equal(await groups.count(),7);assert.equal(await page.locator('.menu-lateral a.menu-item').count(),10);
+ assert.equal(await groups.locator(':scope > summary').count(),2,'Somente grupos com mais de um acesso precisam de expansão');
+ assert.equal(await page.locator('.menu-lateral a.menu-item:visible').count(),5,'Cinco áreas abrem diretamente sem uma expansão intermediária');
+ for(const group of await page.locator('.menu-lateral > details.cme-admin-menu-group').all()){
   const summary=group.locator('summary');if(!await group.evaluate(node=>node.open))await summary.click();
   // An open boolean attribute has value "", so explicitly verify its DOM state.
   if(!await group.evaluate(node=>node.open))await summary.click();
   assert.equal(await group.evaluate(node=>node.open),true);assert.equal(await page.locator('.menu-lateral > details[open]').count(),1);
  }
- const docs=page.locator('.menu-lateral [data-cme-menu-group="documents"]');await docs.locator('summary').focus();await page.keyboard.press('Enter');
+ const docs=page.locator('.menu-lateral [data-cme-menu-group="documents"]');await page.locator('.menu-lateral [data-cme-menu-group="clients"] summary').click();await docs.locator('summary').focus();await page.keyboard.press('Enter');
  assert.equal(await docs.evaluate(node=>node.open),true,'Keyboard opens group');
- await docs.locator('a.menu-item[href="documentos.html"]').click();await page.waitForURL(url=>url.pathname.endsWith('/documentos.html'));
+ assert.equal(await docs.locator('a.menu-item[href="/portal/admin/asset-center/"]').count(),1);
+ await page.goto(base+'/documentos.html');
  if(width<820)await page.locator('#cmeAdminMobileMenuButton').click();
  await page.locator('.menu-lateral [data-cme-menu-group="documents"][open]').waitFor();assert.equal(await page.locator('.menu-lateral a[aria-current="page"]').count(),1);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2),false);

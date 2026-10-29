@@ -1,3 +1,4 @@
+import {useAdminModule} from '@/providers/admin-module-context';
 import React,{useEffect,useMemo,useState} from 'react';
 import {Text} from 'react-native';
 import {useRouter} from 'expo-router';
@@ -7,6 +8,7 @@ import {loadScheduleCommercialOptions,type CommercialScheduleDocument,type Sched
 import {listCurrentApprovedSchedules,prepareScheduleRevision,type CurrentApprovedSchedule} from '@/services/construction-schedule-revision-service';
 
 export default function ConstructionScheduleRevisionScreen(){
+ const embedded=useAdminModule();
  const router=useRouter();
  const [schedules,setSchedules]=useState<CurrentApprovedSchedule[]>([]);
  const [options,setOptions]=useState<ScheduleCommercialOptions|null>(null);
@@ -18,8 +20,8 @@ export default function ConstructionScheduleRevisionScreen(){
  const [error,setError]=useState<string|null>(null);
  const [success,setSuccess]=useState<string|null>(null);
  useEffect(()=>{let mounted=true;void Promise.all([listCurrentApprovedSchedules(),loadScheduleCommercialOptions()]).then(([current,commercial])=>{
-   if(!mounted)return;setSchedules(current.data);setOptions(commercial.data);setError(current.error??commercial.error);
- });return()=>{mounted=false;};},[]);
+   if(!mounted)return;setSchedules(current.data.filter(item=>!embedded?.projectId||item.projectId===embedded.projectId));setOptions(commercial.data);setError(current.error??commercial.error);
+ });return()=>{mounted=false;};},[embedded?.projectId]);
  const quotes=useMemo(()=>{
    if(!active||!options)return [];
    return options.quotes.filter(item=>

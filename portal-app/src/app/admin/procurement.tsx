@@ -1,3 +1,4 @@
+import {useAdminModule,useAdminProjectSelection} from '@/providers/admin-module-context';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -19,9 +20,10 @@ const MEASURE_UNITS = ['un','m','m linear','m²','m³','kg','t','L','h','diária
 const PAYMENT_OPTIONS = ['Pix','Dinheiro','Transferência','Cartão à vista','Cartão parcelado','Boleto','Faturado','Outro'];
 
 export default function AdminProcurementScreen() {
+ const embedded=useAdminModule();
   const styles = useThemeStyles(styleDefinitions);
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
-  const [projectId, setProjectId] = useState<string | null>(null);
+  const [projectId, setProjectId] = useAdminProjectSelection(null);
   const [suppliers, setSuppliers] = useState<SupplierSummary[]>([]);
   const [quotes, setQuotes] = useState<PurchaseQuoteSummary[]>([]);
   const [supplierName, setSupplierName] = useState('');
@@ -50,7 +52,7 @@ export default function AdminProcurementScreen() {
     const valid = projectResult.data.filter((project) => project.contractId);
     setProjects(valid); setProjectId((current) => current ?? valid[0]?.id ?? null);
     setSuppliers(supplierResult.data); setError(projectResult.error ?? supplierResult.error);
-  }, []);
+  }, [setProjectId]);
   const loadQuotes = useCallback(async () => {
     if (!projectId) return;
     setLoading(true); const result = await listPurchaseQuotes(projectId);
@@ -93,7 +95,7 @@ export default function AdminProcurementScreen() {
     <Screen>
       <AdminPageHeader title="Fornecedores e cotações" description="Compare preço, prazo e condição de pagamento por projeto." />
       {error ? <Notice tone="danger">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}
-      <Card><Text style={styles.sectionTitle}>Projeto</Text><View style={styles.chips}>{projects.map((project) => <Pressable key={project.id} onPress={() => setProjectId(project.id)} style={[styles.chip, projectId === project.id && styles.selected]}><Text style={styles.chipText}>{project.contractNumber} • {project.name}</Text></Pressable>)}</View></Card>
+      {!embedded ? <Card><Text style={styles.sectionTitle}>Projeto</Text><View style={styles.chips}>{projects.map((project) => <Pressable key={project.id} onPress={() => setProjectId(project.id)} style={[styles.chip, projectId === project.id && styles.selected]}><Text style={styles.chipText}>{project.contractNumber} • {project.name}</Text></Pressable>)}</View></Card> : null}
       <View style={styles.columns}>
         <Card style={styles.column}><Text style={styles.sectionTitle}>Novo fornecedor</Text><Field label="Nome *" onChangeText={setSupplierName} value={supplierName} /><Text style={styles.label}>Categoria predefinida</Text><View style={styles.chips}>{SUPPLIER_CATEGORIES.map((item) => <Pressable key={item} onPress={() => setSupplierCategory(item)} style={[styles.chip, supplierCategory === item && styles.selected]}><Text style={styles.chipText}>{item}</Text></Pressable>)}</View>{supplierCategory === 'Outros' ? <Field label="Especifique a categoria" onChangeText={setCustomSupplierCategory} value={customSupplierCategory} /> : null}<Field label="Telefone / WhatsApp" onChangeText={setSupplierPhone} value={supplierPhone} /><Button onPress={() => void saveSupplier()} title="Cadastrar fornecedor" /></Card>
         <Card style={styles.column}><Text style={styles.sectionTitle}>Abrir cotação</Text><Field label="Título do pedido *" onChangeText={setTitle} value={title} /><Field label="Descrição" multiline onChangeText={setDescription} value={description} /><DateField label="Prazo para receber propostas" optional onChange={setDueDate} value={dueDate} /><Field label="Item ou material cotado *" onChangeText={setItemDescription} value={itemDescription} /><View style={styles.row}><Field keyboardType="decimal-pad" label="Quantidade" onChangeText={setQuantity} value={quantity} /></View><Text style={styles.label}>Unidade de medida</Text><View style={styles.chips}>{MEASURE_UNITS.map((item) => <Pressable key={item} onPress={() => setUnit(item)} style={[styles.chip, unit === item && styles.selected]}><Text style={styles.chipText}>{item}</Text></Pressable>)}</View>{unit === 'Outra' ? <Field label="Outra unidade" onChangeText={setCustomUnit} value={customUnit} placeholder="Ex.: caixa, rolo, conjunto" /> : null}<Button onPress={() => void saveQuote()} title="Abrir cotação" /></Card>

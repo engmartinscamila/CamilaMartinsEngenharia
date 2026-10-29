@@ -19,7 +19,7 @@ if (!uiCore.includes('menu.replaceChildren(fragment)')) fail('ui-core.js: menu c
 if (!uiCore.includes('menu.dataset.cmeOrdemFixa="true"')) fail('ui-core.js: marcador de ordem fixa ausente.');
 const canonicalBlock = uiCore.match(/const MENU_ADMIN_CANONICO=\[([\s\S]*?)\];/i)?.[1] ?? '';
 const canonicalRoutes = [...canonicalBlock.matchAll(/\["([^"]+)","[^"]+","([^"]+)"\]/g)].map((match) => ({ href: match[1], title: match[2] }));
-if (canonicalRoutes.length < 25) fail(`ui-core.js: menu canônico incompleto (${canonicalRoutes.length} itens).`);
+if (canonicalRoutes.length < 10) fail(`ui-core.js: menu canônico incompleto (${canonicalRoutes.length} itens).`);
 const hrefs = canonicalRoutes.map((item) => item.href);
 if (new Set(hrefs).size !== hrefs.length) fail('ui-core.js: há destinos duplicados no menu canônico.');
 for (const item of canonicalRoutes) {

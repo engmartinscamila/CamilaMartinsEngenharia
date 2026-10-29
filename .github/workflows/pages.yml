@@ -191,11 +191,18 @@ jobs:
             mkdir -p "site-public/portal/${route}"
             cp "$source" "site-public/portal/${route}/index.html"
           done
+          node scripts/redirect-integrated-admin.mjs
 
       - name: Testar rotas reais do Admin integrado
         run: |
           set -euo pipefail
           routes=(
+            works-center
+            finance-center
+            asset-center
+            client-center
+            relationship-center
+            settings-center
             document-center
             workspace
             crm
@@ -256,6 +263,7 @@ jobs:
           node scripts/portal-hydration-smoke.mjs
           node scripts/admin-session-navigation-smoke.mjs
           node scripts/document-center-browser.mjs
+          node scripts/admin-area-browser.mjs
 
       - name: Instalar dependências dos geradores de arquivos
         run: npm install --no-save tsx@4.20.5 docx@9.5.1 jszip@3.10.1 exceljs@4.4.0 pngjs@7.0.0

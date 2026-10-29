@@ -83,6 +83,8 @@
       $('printReceipt').addEventListener('click',() => window.print()); $('refreshReceipts').addEventListener('click',() => void loadHistory());
       $('receiptPrevious').addEventListener('click',()=>{offset=Math.max(0,offset-50);void loadHistory();}); $('receiptNext').addEventListener('click',()=>{offset+=50;void loadHistory();});
       $('receiptForm').addEventListener('input',()=>{if (!busy) requestId=null;});
+      const contextualProject=new URLSearchParams(location.search).get('projectId');
+      if(!financialId&&contextualProject){const project=projects.find(item=>String(item.id)===contextualProject);if(project){$('receiptClient').value=project.cliente_id;selectProject();$('receiptProject').value=project.id;}}
       if(financialId){
         const payment=await supabaseClient.from('financeiro').select('id,projeto_id,descricao,valor,tipo,status,data,data_pagamento,forma_pagamento').eq('id',financialId).maybeSingle();
         linkedPayment=payment.data;

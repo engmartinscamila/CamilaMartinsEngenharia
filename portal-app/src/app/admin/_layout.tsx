@@ -13,9 +13,9 @@ export default function AdminLayout() {
   const {width}=useWindowDimensions();
   const { loading, role, session } = useAuth();
   const pathname = usePathname();
-  const params = useLocalSearchParams<{ projectId?: string; tipo?: string; section?: string; view?:string; filter?:string; q?:string }>();
+  const params = useLocalSearchParams<{ projectId?: string; tipo?: string; section?: string; view?:string; filter?:string; q?:string; financialId?:string; clientId?:string }>();
   const query = new URLSearchParams();
-  for (const key of ['projectId', 'tipo', 'section', 'view', 'filter', 'q'] as const) {
+  for (const key of ['projectId', 'tipo', 'section', 'view', 'filter', 'q', 'financialId', 'clientId'] as const) {
     if (typeof params[key] === 'string') query.set(key, params[key]);
   }
   const returnTo = safeAdminReturnPath(`${pathname}?${query}`);
@@ -40,6 +40,12 @@ export default function AdminLayout() {
       <Stack.Screen name="website-content" />
       <Stack.Screen name="clients" />
       <Stack.Screen name="projects" />
+      <Stack.Screen name="works-center" />
+      <Stack.Screen name="finance-center" />
+      <Stack.Screen name="asset-center" />
+      <Stack.Screen name="client-center" />
+      <Stack.Screen name="relationship-center" />
+      <Stack.Screen name="settings-center" />
       <Stack.Screen name="content" />
       <Stack.Screen name="commercial-documents" />
       <Stack.Screen name="crm" />

@@ -9,7 +9,7 @@ function load(path, dependencies = {}) {
   return exports;
 }
 const sections = load('src/lib/admin-sections.ts');
-const { safeAdminReturnPath } = load('src/lib/auth-return-path.ts', { './admin-sections': sections });
+const { safeAdminReturnPath } = load('src/lib/auth-return-path.ts', { './admin-sections': sections,'./admin-area-navigation':{adminAreas:JSON.parse(readFileSync('src/lib/admin-areas.json','utf8'))} });
 for (const section of sections.adminSections) {
   const path = typeof section.href === 'string' ? section.href : section.href.pathname;
   assert.equal(safeAdminReturnPath(path), path);

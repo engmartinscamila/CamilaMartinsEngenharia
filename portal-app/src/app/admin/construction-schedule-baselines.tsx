@@ -1,3 +1,4 @@
+import {useAdminModule} from '@/providers/admin-module-context';
 import React, {useEffect, useState} from 'react';
 import {Text} from 'react-native';
 import {AdminPageHeader} from '@/components/admin-ui';
@@ -5,6 +6,7 @@ import {Button, Card, Notice, Screen, StateView} from '@/components/ui';
 import {listConstructionScheduleBaselines, type ScheduleBaselineArchive} from '@/services/construction-schedule-baseline-service';
 
 export default function ConstructionScheduleBaselinesScreen() {
+ const embedded=useAdminModule();
   const [page, setPage] = useState(0);
   const [rows, setRows] = useState<ScheduleBaselineArchive[]>([]);
   const [total, setTotal] = useState(0);
@@ -17,14 +19,14 @@ export default function ConstructionScheduleBaselinesScreen() {
     const task = setTimeout(() => {
       if (!mounted) return;
       setLoading(true);
-      void listConstructionScheduleBaselines(page).then((result) => {
+      void listConstructionScheduleBaselines(page,embedded?.projectId).then((result) => {
         if (!mounted) return;
         setRows(result.data); setTotal(result.total); setError(result.error);
         setSelected(null); setLoading(false);
       });
     }, 0);
     return () => {mounted = false; clearTimeout(task);};
-  }, [page, refresh]);
+  }, [page, refresh,embedded?.projectId]);
   return <Screen>
     <AdminPageHeader title="Arquivo de linhas de base" description="Versões aprovadas preservadas, somente consulta administrativa; não é uma tela de aditivos." />
     <Notice tone="info">Nenhuma consulta altera uma versão. Um aditivo e sua reprogramação precisam ser vinculados e aprovados separadamente antes de se tornarem vigentes.</Notice>

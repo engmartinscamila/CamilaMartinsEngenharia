@@ -18,53 +18,35 @@ function criarLinkMenu(href,icon,titulo){const link=document.createElement("a");
 // Ordem única e imutável para TODAS as páginas do Admin clássico.
 // Os hrefs modernos usam a mesma rota canônica no clique, nova aba e copiar link.
 const MENU_ADMIN_CANONICO=[
-  ["admin.html","fa-house","Dashboard"],
-  ["portal/admin/workspace","fa-magnifying-glass","Central de gestão"],
-  ["clientes.html","fa-users","Clientes"],
-  ["projetos.html","fa-compass-drafting","Projetos"],
-  ["orcamentos-contratos.html","fa-file-signature","Contratos gerais"],
+  ["portal/admin/workspace","fa-house","Visão geral"],
+  ["portal/admin/client-center","fa-users","Clientes e projetos"],
   ["portal/admin/crm","fa-filter","Oportunidades comerciais"],
-  ["portal/admin/service-level-governance","fa-layer-group","Revisar serviços × Bronze/Prata/Ouro"],
-  ["portal/admin/document-archive","fa-box-archive","Arquivos antigos e restauração"],
-  ["documentos.html","fa-folder-open","Arquivos e biblioteca"],
+  ["orcamentos-contratos.html","fa-file-signature","Contratos gerais"],
+  ["portal/admin/asset-center","fa-folder-open","Acervo do projeto"],
   ["portal/admin/document-center","fa-file-circle-check","Emissões e aprovações"],
-  ["fotos.html","fa-images","Fotos e evolução da obra"],
-  ["portal/admin/tasks","fa-check-square","Tarefas do projeto"],
-  ["portal/admin/work-diary","fa-book","Diário de obra"],
-  ["portal/admin/procurement","fa-cart-shopping","Fornecedores e cotações"],
-  ["portal/admin/financial","fa-chart-line","Financeiro"],
-  ["recibos.html","fa-receipt","Emissão de recibos"],
-  ["portal/admin/portal-control","fa-eye","Módulos do portal do cliente"],
-  ["agenda.html","fa-calendar-days","Agenda"],
-  ["cronograma.html","fa-list-check","Cronograma (simples)"],
-  ["portal/admin/construction-schedule","fa-chart-column","Cronograma de obra completo"],
-  ["solicitacoes.html","fa-comments","Solicitações"],
-  ["portal/admin/notifications","fa-bell","Notificações internas"],
-  ["portal/admin/security","fa-shield-halved","Armazenamento e auditoria"],
-  ["protecao-pdf-admin.html","fa-file-shield","Conteúdo do site"],
-  ["configuracoes.html","fa-gear","Configurações"],
-  ["integridade-sistema.html","fa-heart-pulse","Verificar funcionamento"],
+  ["portal/admin/works-center","fa-helmet-safety","Gestão da obra"],
+  ["portal/admin/finance-center","fa-wallet","Financeiro e recibos"],
+  ["portal/admin/relationship-center","fa-comments","Agenda e relacionamento"],
+  ["portal/admin/settings-center","fa-gear","Configurações"],
 ];
 const ferramentasAdministrativas=[
-  ["document-center","fa-file-circle-check","Emissões e aprovações"],
-  ["workspace","fa-magnifying-glass","Central de gestão"],
-  ["crm","fa-filter","Oportunidades comerciais"],
-  ["service-level-governance","fa-layer-group","Revisar serviços × Bronze/Prata/Ouro"],
-  ["document-archive","fa-box-archive","Arquivos antigos e restauração"],
-  ["tasks","fa-check-square","Tarefas do projeto"],
-  ["work-diary","fa-book","Diário de obra"],
-  ["procurement","fa-cart-shopping","Fornecedores e cotações"],
-  ["financial","fa-building-columns","Financeiro"],
-  ["portal-control","fa-eye","Módulos do portal do cliente"],
-  ["construction-schedule","fa-chart-column","Cronograma de obra completo"],
-  ["notifications","fa-bell","Notificações internas"],
-  ["security","fa-shield-halved","Armazenamento e auditoria"],
+  ["workspace", "fa-house", "Visão geral"],
+  ["client-center", "fa-users", "Clientes e projetos"],
+  ["crm", "fa-filter", "Oportunidades comerciais"],
+  ["asset-center", "fa-folder-open", "Acervo do projeto"],
+  ["document-center", "fa-file-circle-check", "Emissões e aprovações"],
+  ["works-center", "fa-helmet-safety", "Gestão da obra"],
+  ["finance-center", "fa-wallet", "Financeiro e recibos"],
+  ["relationship-center", "fa-comments", "Agenda e relacionamento"],
+  ["settings-center", "fa-gear", "Configurações"],
 ];
 // Generated from portal-app/src/lib/admin-menu-groups.json.
-const ADMIN_MENU_GROUPS=[{"id":"home","title":"Início","icon":"home-outline","classicIcon":"fa-house","sections":["dashboard","workspace"]},{"id":"clients","title":"Clientes e contratos","icon":"people-outline","classicIcon":"fa-users","sections":["clients","crm","commercial-documents","projects","service-level-governance"]},{"id":"documents","title":"Documentos e arquivos","icon":"folder-open-outline","classicIcon":"fa-folder-open","sections":["documents","document-center","photos","document-archive"]},{"id":"works","title":"Gestão de obras","icon":"construct-outline","classicIcon":"fa-helmet-safety","sections":["construction-schedule","schedule","tasks","work-diary","procurement","construction-schedule-new","construction-schedule-budget","construction-schedule-measurements","construction-schedule-revision","construction-schedule-baselines","construction-schedule-test"]},{"id":"finance","title":"Financeiro e recibos","icon":"wallet-outline","classicIcon":"fa-receipt","sections":["financial","receipts"]},{"id":"communication","title":"Agenda e comunicação","icon":"calendar-outline","classicIcon":"fa-calendar-days","sections":["agenda","requests","notifications"]},{"id":"settings","title":"Configurações","icon":"settings-outline","classicIcon":"fa-gear","sections":["settings","portal-control","website-content","security","system-health"]}];
+const ADMIN_MENU_GROUPS=[{"id":"home","title":"Início","icon":"home-outline","classicIcon":"fa-house","sections":["workspace"]},{"id":"clients","title":"Clientes e contratos","icon":"people-outline","classicIcon":"fa-users","sections":["client-center","crm","commercial-documents"]},{"id":"documents","title":"Documentos e arquivos","icon":"folder-open-outline","classicIcon":"fa-folder-open","sections":["asset-center","document-center"]},{"id":"works","title":"Gestão de obras","icon":"construct-outline","classicIcon":"fa-helmet-safety","sections":["works-center"]},{"id":"finance","title":"Financeiro e recibos","icon":"wallet-outline","classicIcon":"fa-receipt","sections":["finance-center"]},{"id":"communication","title":"Agenda e comunicação","icon":"calendar-outline","classicIcon":"fa-calendar-days","sections":["relationship-center"]},{"id":"settings","title":"Configurações","icon":"settings-outline","classicIcon":"fa-gear","sections":["settings-center"]}];
+const GROUPED_ADMIN_ROUTES={"clients":{"area":"client-center","view":"clients"},"projects":{"area":"client-center","view":"projects"},"documents":{"area":"asset-center","view":"files"},"photos":{"area":"asset-center","view":"photos"},"document-archive":{"area":"asset-center","view":"archive"},"financial":{"area":"finance-center","view":"entries"},"receipts":{"area":"finance-center","view":"receipts"},"requests":{"area":"relationship-center","view":"requests"},"agenda":{"area":"relationship-center","view":"agenda"},"notifications":{"area":"relationship-center","view":"notifications"},"settings":{"area":"settings-center","view":"general"},"portal-control":{"area":"settings-center","view":"portal"},"security":{"area":"settings-center","view":"security"},"system-health":{"area":"settings-center","view":"health"},"service-level-governance":{"area":"settings-center","view":"services"},"website-content":{"area":"settings-center","view":"website"},"construction-schedule":{"area":"works-center","view":"complete"},"schedule":{"area":"works-center","view":"simple"},"construction-schedule-budget":{"area":"works-center","view":"budget"},"construction-schedule-measurements":{"area":"works-center","view":"measurements"},"construction-schedule-revision":{"area":"works-center","view":"revision"},"construction-schedule-baselines":{"area":"works-center","view":"baselines"},"construction-schedule-new":{"area":"works-center","view":"new"},"construction-schedule-test":{"area":"works-center","view":"test"},"tasks":{"area":"works-center","view":"tasks"},"work-diary":{"area":"works-center","view":"diary"},"procurement":{"area":"works-center","view":"procurement"},"library":{"area":"asset-center","view":"files"}};
 const CLASSIC_MENU_KEYS={"admin.html":"dashboard","clientes.html":"clients","projetos.html":"projects","orcamentos-contratos.html":"commercial-documents","documentos.html":"documents","fotos.html":"photos","biblioteca.html":"library","recibos.html":"receipts","agenda.html":"agenda","cronograma.html":"schedule","solicitacoes.html":"requests","protecao-pdf-admin.html":"website-content","configuracoes.html":"settings","integridade-sistema.html":"system-health"};
 function chaveMenu(href){return rotaPortalDoHref(href)||CLASSIC_MENU_KEYS[href];}
 function criarGrupoMenu(group,links,active,scope){
+  if(links.length===1){const item=document.createElement('div');item.className='cme-admin-menu-group cme-admin-menu-single';item.dataset.cmeMenuGroup=group.id;if(active)item.classList.add('cme-current-group');item.append(links[0]);return item;}
   const details=document.createElement('details');details.className='cme-admin-menu-group';details.dataset.cmeMenuGroup=group.id;details.open=active;
   if(active)details.classList.add('cme-current-group');
   const summary=document.createElement('summary');summary.className='cme-admin-group-toggle';summary.innerHTML=`<i class="fa-solid ${group.classicIcon}" aria-hidden="true"></i><span>${group.title}</span><i class="fa-solid fa-chevron-down cme-group-chevron" aria-hidden="true"></i>`;
@@ -78,7 +60,8 @@ function normalizarMenuAdministrativo(){
   const atual=normalizarHref(location.pathname);
   const fragment=document.createDocumentFragment();
   const params=new URLSearchParams(location.search);
-  const currentKey=atual==='documentos'&&params.get('visao')==='biblioteca'?'documents':atual==='documentos'&&params.get('visao')==='fotos'?'photos':chaveMenu(atual.endsWith('.html')?atual:atual+'.html')||atual.replace(/^portal\/admin\//,'');
+  const originalKey=atual==='documentos'&&params.get('visao')==='biblioteca'?'documents':atual==='documentos'&&params.get('visao')==='fotos'?'photos':chaveMenu(atual.endsWith('.html')?atual:atual+'.html')||atual.replace(/^portal\/admin\//,'');
+  const currentKey=originalKey==='dashboard'?'workspace':GROUPED_ADMIN_ROUTES[originalKey]?.area||originalKey;
   const linksByKey=new Map();
   for(const[href,icone,titulo]of MENU_ADMIN_CANONICO){
     const link=criarLinkMenu(href,icone,titulo),key=chaveMenu(href);
@@ -94,6 +77,8 @@ function normalizarMenuAdministrativo(){
     if(card){
       document.getElementById('abrirBiblioteca')?.remove();
       const legacy={abrirClientes:'clients',abrirProjetos:'projects',abrirDocumentos:'documents',abrirBiblioteca:'documents',abrirFotos:'photos',abrirFinanceiro:'financial',abrirAgenda:'agenda',abrirConfiguracoes:'settings'};
+      const visible=new Set(ADMIN_MENU_GROUPS.flatMap(group=>group.sections));
+      for(const button of card.querySelectorAll('button[id]')){const key=button.id.startsWith('abrirFerramenta-')?button.id.slice(16):legacy[button.id];if(!visible.has(key))button.remove();}
       const buttons=Array.from(card.querySelectorAll('button[id]'));
       for(const group of ADMIN_MENU_GROUPS){const children=buttons.filter(button=>group.sections.includes(button.id.startsWith('abrirFerramenta-')?button.id.slice(16):legacy[button.id]));if(children.length)card.appendChild(criarGrupoMenu(group,children,false,card));}
     }

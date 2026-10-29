@@ -1,3 +1,4 @@
+import {useAdminModule,useAdminProjectSelection} from '@/providers/admin-module-context';
 import { useNotificationProject } from '@/hooks/use-notification-project';
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
 import React, { useCallback, useState } from 'react';
@@ -14,9 +15,10 @@ import type { AdminProjectSummary, ScheduleStageSummary } from '@/types/domain';
 type StageStatus = 'pendente' | 'em_andamento' | 'concluido' | 'pausado' | 'cancelado';
 
 export default function AdminScheduleScreen() {
+ const embedded=useAdminModule();
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
   const [stages, setStages] = useState<ScheduleStageSummary[]>([]);
-  const [projectId, setProjectId] = useState<string | null>(null);
+  const [projectId, setProjectId] = useAdminProjectSelection(null);
   const [title, setTitle] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -34,7 +36,7 @@ export default function AdminScheduleScreen() {
 
   const loadProjects = useCallback(async () => {
     const result = await listAdminProjects(); setProjects(result.data); setProjectId((current) => current ?? result.data[0]?.id ?? null); if (result.error) setError(result.error);
-  }, []);
+  }, [setProjectId]);
   const loadStages = useCallback(async () => {
     if (!projectId) { setStages([]); return; } setLoading(true); const result = await listAdminSchedule(projectId); setStages(result.data); setError(result.error); setLoading(false);
   }, [projectId]);
@@ -60,10 +62,10 @@ export default function AdminScheduleScreen() {
     <Screen>
       <AdminPageHeader description="Cadastre etapas em ordem e publique andamento real para o cliente." title="Cronogramas" />
       {error ? <Notice tone="danger">{error}</Notice> : null}
-      <Card>
+      {!embedded ? <Card>
         <Text style={styles.sectionTitle}>Projeto do cronograma</Text>
         <View style={styles.projectList}>{projects.map((project) => <Pressable key={project.id} onPress={() => setProjectId(project.id)} style={[styles.projectChip, projectId === project.id && styles.selected]}><Text style={[styles.projectText, projectId === project.id && styles.selectedText]}>{project.contractNumber} • {project.name}</Text></Pressable>)}</View>
-      </Card>
+      </Card> : null}
       <Card>
         <Text style={styles.sectionTitle}>Nova etapa</Text>
         <Field label="Nome da etapa" onChangeText={setTitle} value={title} />

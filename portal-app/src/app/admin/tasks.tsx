@@ -1,3 +1,4 @@
+import {useAdminModule,useAdminProjectSelection} from '@/providers/admin-module-context';
 import { useNotificationProject } from '@/hooks/use-notification-project';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -25,9 +26,10 @@ const statuses: { value: TaskStatus; label: string }[] = [
 ];
 
 export default function AdminTasksScreen() {
+ const embedded=useAdminModule();
   const styles = useThemeStyles(styleDefinitions);
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
-  const [projectId, setProjectId] = useState<string | null>(null);
+  const [projectId, setProjectId] = useAdminProjectSelection(null);
   const [tasks, setTasks] = useState<ProjectTaskSummary[]>([]);
   const [templates, setTemplates] = useState<TaskTemplateSummary[]>([]);
   const [title, setTitle] = useState('');
@@ -52,7 +54,7 @@ export default function AdminTasksScreen() {
     setTemplates(templateResult.data);
     setError(projectResult.error ?? templateResult.error);
     setProjectId((current) => current ?? projectResult.data.find((item) => item.contractId)?.id ?? null);
-  }, []);
+  }, [setProjectId]);
   const loadTasks = useCallback(async () => {
     if (!projectId) { setTasks([]); return; }
     setLoading(true);
@@ -113,11 +115,11 @@ export default function AdminTasksScreen() {
     <Screen>
       <AdminPageHeader title="Tarefas do projeto" description="Subtarefas, dependências, modelos, prazos e progresso automático por projeto." />
       {error ? <Notice tone="danger">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}
-      <Card>
+      {!embedded ? <Card>
         <Text style={styles.sectionTitle}>Projeto</Text>
         <View style={styles.chips}>{projects.map((project) => <Pressable key={project.id} onPress={() => setProjectId(project.id)} style={[styles.chip, projectId === project.id && styles.selected]}><Text style={[styles.chipText, projectId === project.id && styles.selectedText]}>{project.contractNumber} • {project.name}</Text></Pressable>)}</View>
         {selectedProject ? <View style={styles.progressRow}><Text style={styles.title}>{selectedProject.name}</Text><StatusPill label={`${progress}% concluído`} tone={progress === 100 ? 'success' : 'warning'} /></View> : null}
-      </Card>
+      </Card> : null}
 
       <Card>
         <Text style={styles.sectionTitle}>Nova tarefa</Text>

@@ -1,5 +1,6 @@
+import {useAdminModule} from '@/providers/admin-module-context';
 import React, { useCallback, useMemo, useState } from 'react';
-import { useRouter } from 'expo-router';
+import {useAdminModuleRouter as useRouter} from '@/hooks/use-admin-module-router';
 import { Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
@@ -39,6 +40,7 @@ function plannedPercent(item: ConstructionScheduleItem, referenceDate: string) {
 }
 
 export default function ConstructionScheduleScreen() {
+ const embedded=useAdminModule();
   const router = useRouter();
   const styles = useThemeStyles(styleDefinitions);
   const [projects, setProjects] = useState<ConstructionProjectOption[]>([]);
@@ -155,7 +157,7 @@ export default function ConstructionScheduleScreen() {
       {!project ? <>
         <Text style={styles.sectionTitle}>Selecione a obra/projeto</Text>
         {projects.length === 0 && !loading ? <StateView icon="calendar-outline" title="Nenhum projeto disponível" description="Cadastre um projeto para criar o cronograma completo." /> : null}
-        <View style={styles.projectList}>{projects.map((item) => <Card key={item.id} style={styles.projectCard}>
+        <View style={styles.projectList}>{projects.filter(item=>!embedded?.projectId||item.id===embedded.projectId).map((item) => <Card key={item.id} style={styles.projectCard}>
           <Text style={styles.title}>{item.name}</Text>
           <Text style={styles.meta}>{item.clientName}{item.contractNumber ? ` • Contrato ${item.contractNumber}` : ''}</Text>
           {item.workAddress ? <Text style={styles.detail}>{item.workAddress}</Text> : null}

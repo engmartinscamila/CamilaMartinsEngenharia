@@ -5,7 +5,6 @@
     "icon": "home-outline",
     "classicIcon": "fa-house",
     "sections": [
-      "dashboard",
       "workspace"
     ]
   },
@@ -15,11 +14,9 @@
     "icon": "people-outline",
     "classicIcon": "fa-users",
     "sections": [
-      "clients",
+      "client-center",
       "crm",
-      "commercial-documents",
-      "projects",
-      "service-level-governance"
+      "commercial-documents"
     ]
   },
   {
@@ -28,10 +25,8 @@
     "icon": "folder-open-outline",
     "classicIcon": "fa-folder-open",
     "sections": [
-      "documents",
-      "document-center",
-      "photos",
-      "document-archive"
+      "asset-center",
+      "document-center"
     ]
   },
   {
@@ -40,17 +35,7 @@
     "icon": "construct-outline",
     "classicIcon": "fa-helmet-safety",
     "sections": [
-      "construction-schedule",
-      "schedule",
-      "tasks",
-      "work-diary",
-      "procurement",
-      "construction-schedule-new",
-      "construction-schedule-budget",
-      "construction-schedule-measurements",
-      "construction-schedule-revision",
-      "construction-schedule-baselines",
-      "construction-schedule-test"
+      "works-center"
     ]
   },
   {
@@ -59,8 +44,7 @@
     "icon": "wallet-outline",
     "classicIcon": "fa-receipt",
     "sections": [
-      "financial",
-      "receipts"
+      "finance-center"
     ]
   },
   {
@@ -69,9 +53,7 @@
     "icon": "calendar-outline",
     "classicIcon": "fa-calendar-days",
     "sections": [
-      "agenda",
-      "requests",
-      "notifications"
+      "relationship-center"
     ]
   },
   {
@@ -80,11 +62,7 @@
     "icon": "settings-outline",
     "classicIcon": "fa-gear",
     "sections": [
-      "settings",
-      "portal-control",
-      "website-content",
-      "security",
-      "system-health"
+      "settings-center"
     ]
   }
 ]
