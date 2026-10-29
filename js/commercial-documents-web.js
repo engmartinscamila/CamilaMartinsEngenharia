@@ -314,6 +314,11 @@
     });
   }
 
+  function optionalNumericFormValue(id) {
+    const value = String($(id)?.value ?? '').trim();
+    return /^[-–—]$/.test(value) ? '' : value;
+  }
+
   function form() {
     const customService = $('customService').value.trim();
     const services = servicesCatalog.map(([code, name], index) => ({
@@ -336,13 +341,13 @@
       state: $('state').value.trim(),
       property_address: $('propertyAddress').value.trim(),
       property_type: $('propertyType').value.trim(),
-      area_terreno_m2: $('areaTerreno').value.trim(),
-      area_construida_m2: $('areaConstruida').value.trim(),
+      area_terreno_m2: optionalNumericFormValue('areaTerreno'),
+      area_construida_m2: optionalNumericFormValue('areaConstruida'),
       construction_standard: $('constructionStandard').value.trim(),
       experience_level: $('experienceLevel').value.trim(),
       services,
       custom_service: customService,
-      total_value: $('totalValue').value.trim(),
+      total_value: optionalNumericFormValue('totalValue'),
       notes: $('notes').value.trim(),
       payment_terms: $('paymentMethod')?.value ? [{ method: $('paymentMethod').value, label: paymentOptions.find(([value]) => value === $('paymentMethod').value)?.[1] || $('paymentMethod').value }] : []
     };
@@ -512,7 +517,11 @@
 
   function setField(id, value) {
     const element = $(id);
-    if (element) element.value = value ?? '';
+    if (!element) return;
+    const text = String(value ?? '');
+    element.value = ['areaTerreno', 'areaConstruida', 'totalValue'].includes(id) && /^[-–—]$/.test(text.trim())
+      ? ''
+      : text;
   }
 
   function moneyValue(value) {
