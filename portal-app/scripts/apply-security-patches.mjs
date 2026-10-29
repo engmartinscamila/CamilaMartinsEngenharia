@@ -1,6 +1,10 @@
+import { applyDeepmergePatch, verifyDeepmergePatch } from './deepmerge-security.mjs';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
+
+applyDeepmergePatch(process.argv.includes('--check'));
+verifyDeepmergePatch();
 
 // Expo 57.0.21 removed image-size. Check the lockfile instead of resolving a
 // package from an unrelated parent workspace or the machine's global modules.
