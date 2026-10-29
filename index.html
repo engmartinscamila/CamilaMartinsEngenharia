@@ -28,6 +28,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <link rel="stylesheet" href="css/styles.css?v=20261016-1" />
   <link rel="stylesheet" href="css/portfolio-motion-v1.css?v=20261029-1" />
+  <link rel="stylesheet" href="css/portfolio-3d.css?v=20261029-1" />
   <link rel="stylesheet" href="css/microinteracoes-publicas.css?v=20260910-1" />
   <style>
     .reviews-section{background:linear-gradient(180deg,var(--navy-3),var(--navy-2));border-top:1px solid rgba(184,154,99,.10);border-bottom:1px solid rgba(184,154,99,.10);padding:58px 0!important}
@@ -162,38 +163,47 @@
         </div>
 
         <div class="featured-projects-grid">
-          <a class="featured-project-card" href="galeria-projetos.html#tiny-house-signature" aria-label="Ver imagens do projeto Tiny House Signature">
+          <article class="featured-project-card" aria-label="Modelo 3D de Tiny House Signature">
+
             <img src="assets/projetos/tiny-house-signature/render-hiperrealista.webp?v=20261029-1" width="1377" height="955" loading="lazy" alt="Nova visualização hiper-realista da fachada da Tiny House Signature" />
             <video class="featured-project-video" data-portfolio-video data-src="assets/projetos/tiny-house-signature/videos/tiny-house-novo-hiperrealista.mp4" muted playsinline loop preload="none" aria-hidden="true"></video>
-            <span class="featured-motion-label" aria-hidden="true"><i class="bi bi-play-circle"></i> Vídeo do projeto</span>
-            <span class="featured-project-overlay">
+            <model-viewer class="featured-project-3d" src="assets/projetos/tiny-house-signature/modelo-3d-aproximado.glb" poster="assets/projetos/tiny-house-signature/render-hiperrealista.webp?v=20261029-1" alt="Reconstrução tridimensional aproximada do projeto Tiny House Signature" loading="lazy" reveal="auto" camera-controls auto-rotate auto-rotate-delay="1000" rotation-per-second="10deg" disable-zoom touch-action="pan-y" shadow-intensity="1" exposure="1.1" camera-orbit="0deg 73deg auto" interaction-prompt="none"></model-viewer>
+            <span class="featured-3d-note" aria-hidden="true">Modelo 3D aproximado</span>
+            <button class="featured-3d-open" type="button" data-title="Tiny House Signature" aria-label="Ampliar modelo 3D de Tiny House Signature"><i class="bi bi-arrows-fullscreen" aria-hidden="true"></i> Explorar 3D</button>
+            <a class="featured-project-overlay" href="galeria-projetos.html#tiny-house-signature" aria-label="Ver imagens do projeto Tiny House Signature">
               <small>Residência compacta • 32 m²</small>
               <strong>Tiny House Signature</strong>
               <em>Ver projeto <i class="bi bi-arrow-right" aria-hidden="true"></i></em>
-            </span>
-          </a>
+            </a>
+          </article>
 
-          <a class="featured-project-card" href="galeria-projetos.html#empreendimento-vitalle" aria-label="Ver imagens do Empreendimento Vitalle">
+          <article class="featured-project-card" aria-label="Modelo 3D de Empreendimento Vitalle">
+
             <img src="assets/projetos/empreendimento-vitalle/render-hiperrealista.webp?v=20261029-1" width="1672" height="941" loading="lazy" alt="Nova visualização hiper-realista da fachada do Empreendimento Vitalle" />
             <video class="featured-project-video" data-portfolio-video data-src="assets/projetos/empreendimento-vitalle/videos/vitalle-novo-hiperrealista.mp4" muted playsinline loop preload="none" aria-hidden="true"></video>
-            <span class="featured-motion-label" aria-hidden="true"><i class="bi bi-play-circle"></i> Tour do projeto</span>
-            <span class="featured-project-overlay">
+            <model-viewer class="featured-project-3d" src="assets/projetos/empreendimento-vitalle/modelo-3d-aproximado.glb" poster="assets/projetos/empreendimento-vitalle/render-hiperrealista.webp?v=20261029-1" alt="Reconstrução tridimensional aproximada do projeto Empreendimento Vitalle" loading="lazy" reveal="auto" camera-controls auto-rotate auto-rotate-delay="1000" rotation-per-second="10deg" disable-zoom touch-action="pan-y" shadow-intensity="1" exposure="1.1" camera-orbit="0deg 73deg auto" interaction-prompt="none"></model-viewer>
+            <span class="featured-3d-note" aria-hidden="true">Modelo 3D aproximado</span>
+            <button class="featured-3d-open" type="button" data-title="Empreendimento Vitalle" aria-label="Ampliar modelo 3D de Empreendimento Vitalle"><i class="bi bi-arrows-fullscreen" aria-hidden="true"></i> Explorar 3D</button>
+            <a class="featured-project-overlay" href="galeria-projetos.html#empreendimento-vitalle" aria-label="Ver imagens do Empreendimento Vitalle">
               <small>Habitação • 3 unidades</small>
               <strong>Empreendimento Vitalle</strong>
               <em>Ver projeto <i class="bi bi-arrow-right" aria-hidden="true"></i></em>
-            </span>
-          </a>
+            </a>
+          </article>
 
-          <a class="featured-project-card" href="galeria-projetos.html#casa-urban" aria-label="Ver imagens do projeto Casa Urben">
+          <article class="featured-project-card" aria-label="Modelo 3D de Casa Urben">
+
             <img src="assets/projetos/casa-urban/render-hiperrealista.webp?v=20261029-1" width="1600" height="600" loading="lazy" alt="Nova visualização hiper-realista da fachada noturna da Casa Urben" />
             <video class="featured-project-video" data-portfolio-video data-src="assets/projetos/casa-urban/videos/casa-urben-novo-hiperrealista.mp4" muted playsinline loop preload="none" aria-hidden="true"></video>
-            <span class="featured-motion-label" aria-hidden="true"><i class="bi bi-play-circle"></i> Tour do projeto</span>
-            <span class="featured-project-overlay">
+            <model-viewer class="featured-project-3d" src="assets/projetos/casa-urban/modelo-3d-aproximado.glb" poster="assets/projetos/casa-urban/render-hiperrealista.webp?v=20261029-1" alt="Reconstrução tridimensional aproximada do projeto Casa Urben" loading="lazy" reveal="auto" camera-controls auto-rotate auto-rotate-delay="1000" rotation-per-second="10deg" disable-zoom touch-action="pan-y" shadow-intensity="1" exposure="1.1" camera-orbit="0deg 73deg auto" interaction-prompt="none"></model-viewer>
+            <span class="featured-3d-note" aria-hidden="true">Modelo 3D aproximado</span>
+            <button class="featured-3d-open" type="button" data-title="Casa Urben" aria-label="Ampliar modelo 3D de Casa Urben"><i class="bi bi-arrows-fullscreen" aria-hidden="true"></i> Explorar 3D</button>
+            <a class="featured-project-overlay" href="galeria-projetos.html#casa-urban" aria-label="Ver imagens do projeto Casa Urben">
               <small>Residência contemporânea • 220 m²</small>
               <strong>Casa Urben</strong>
               <em>Ver projeto <i class="bi bi-arrow-right" aria-hidden="true"></i></em>
-            </span>
-          </a>
+            </a>
+          </article>
         </div>
 
         <div class="featured-projects-action">
@@ -380,8 +390,20 @@
     </a>
   </div>
 
+  <dialog id="portfolio3dDialog" class="portfolio-3d-dialog" aria-labelledby="portfolio3dTitle">
+    <div class="portfolio-3d-panel">
+      <div class="portfolio-3d-toolbar">
+        <h3 id="portfolio3dTitle">Visualização 3D</h3>
+        <button class="portfolio-3d-close" type="button" aria-label="Fechar visualização 3D">Fechar ×</button>
+      </div>
+      <model-viewer id="portfolio3dFull" class="portfolio-3d-full" camera-controls auto-rotate auto-rotate-delay="1500" rotation-per-second="8deg" shadow-intensity="1" exposure="1.2" interaction-prompt="auto" environment-image="neutral" loading="eager" camera-orbit="0deg 70deg auto"></model-viewer>
+      <p class="portfolio-3d-hint">Arraste para girar • Use o zoom para aproximar • Reconstrução visual aproximada, não é o modelo técnico original.</p>
+    </div>
+  </dialog>
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.4.0/model-viewer.min.js"></script>
   <script src="js/script.js?v=20260819-5"></script>
   <script src="js/cursor-dourado.js?v=20260910-1"></script>
   <script src="js/portfolio-motion-v1.js?v=20261029-1" defer></script>
+  <script src="js/portfolio-3d.js?v=20261029-1" defer></script>
 </body>
 </html>
