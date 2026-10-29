@@ -1,3 +1,4 @@
+import { usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
@@ -7,6 +8,7 @@ import { useSync } from '@/providers/sync-provider';
 import { spacing, ThemeColors, typography } from '@/theme/tokens';
 
 export function SyncFeedbackBanner() {
+  const pathname=usePathname();
   const { colors } = useAppTheme();
   const { lastSyncedAt, status } = useSync();
   const [hiddenSuccessKey, setHiddenSuccessKey] = useState<string | null>(null);
@@ -23,6 +25,7 @@ export function SyncFeedbackBanner() {
     ? new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(lastSyncedAt))
     : null, [lastSyncedAt]);
 
+  if(pathname.startsWith('/admin')&&status!=='offline'&&status!=='error')return null;
   if (status === 'idle' || (status === 'success' && hiddenSuccessKey === statusKey)) return null;
 
   const message = status === 'syncing'

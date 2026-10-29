@@ -125,7 +125,7 @@ export function AdminMenuRow({ icon, title, description, onPress, compact = fals
   return (
     <Pressable accessibilityRole="button" accessibilityState={{selected:active}} onPress={onPress} style={({ pressed }) => [styles.menu, compact && styles.menuCompact, active&&styles.menuGroupCurrent, pressed && styles.pressed]}>
       <View style={[styles.menuIcon, compact && styles.menuIconCompact]}><Ionicons color={colors.gold600} name={icon} size={compact ? 20 : 22} /></View>
-      <View style={{ flex: 1 }}><Text style={[styles.menuTitle, compact && styles.menuTitleCompact]}>{title}</Text><Text style={styles.menuDescription}>{description}</Text></View>
+      <View style={{ flex: 1 }}><Text style={[styles.menuTitle, compact && styles.menuTitleCompact]}>{title}</Text>{!compact ? <Text style={styles.menuDescription}>{description}</Text> : null}</View>
       <Ionicons color={colors.muted} name="chevron-forward" size={18} />
     </Pressable>
   );
@@ -153,7 +153,7 @@ const styleDefinitions = (colors: ThemeColors) => ({
   groupTitle: { flex:1,flexShrink:1,color:colors.ink,fontFamily:typography.family,fontSize:14,fontWeight:'700' },
   groupChildren: { padding:spacing.sm,gap:spacing.xs,borderTopWidth:1,borderTopColor:colors.line },
   menu: { minHeight: 76, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg, padding: spacing.md },
-  menuCompact: { minHeight: 68, padding: spacing.sm, gap: spacing.sm },
+  menuCompact: { minHeight: 48, padding: spacing.sm, gap: spacing.sm },
   menuIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.warningSoft },
   menuIconCompact: { width: 38, height: 38, borderRadius: 19 },
   menuTitle: { color: colors.ink, fontSize: typography.size.body, fontWeight: '700', fontFamily: typography.family },

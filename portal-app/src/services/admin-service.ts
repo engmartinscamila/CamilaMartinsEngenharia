@@ -451,12 +451,12 @@ export async function updateAdminScheduleStage(id: string, status: string, progr
   return null;
 }
 
-export async function listAdminApprovals(): Promise<ServiceResult<ApprovalSummary[]>> {
-  const result = await readAllRows(supabase
-    .from('aprovacoes')
+export async function listAdminApprovals(projectId?:string): Promise<ServiceResult<ApprovalSummary[]>> {
+  let query=supabase.from('aprovacoes')
     .select('id, projeto_id, tipo, titulo, descricao, approval_object, related_document_id, approval_due_at, status, comentario, created_at, respondido_at')
-    .order('created_at', { ascending: false })
-    );
+    .order('created_at', { ascending: false });
+  if(projectId)query=query.eq('projeto_id',projectId);
+  const result=await readAllRows(query);
   if (result.error) return { data: [], error: 'Não foi possível carregar as aprovações.' };
   return {
     data: (result.data ?? []).map((row) => ({

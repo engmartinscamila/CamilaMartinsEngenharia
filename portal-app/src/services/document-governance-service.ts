@@ -1,3 +1,4 @@
+import { readAllRows } from '@/lib/paginated-query';
 import { supabase } from '@/lib/supabase';
 
 export type ClientDocumentDecision = 'accepted' | 'accepted_with_notes' | 'rejected';
@@ -237,5 +238,20 @@ export async function reviewServiceLevelScope(input: {
   return {
     version: error || data === null ? null : Number(data),
     error: error ? error.message || 'Não foi possível salvar a revisão do serviço.' : null,
+  };
+}
+
+export interface DocumentDecision {
+  id: string; documentId: string; version: string | null;
+  decision: ClientDocumentDecision; note: string | null; acceptedAt: string;
+}
+export async function listProjectDocumentDecisions(projectId: string) {
+  const {data,error}=await readAllRows(supabase.from('document_acceptances')
+    .select('id,document_id,document_version,decision,note,accepted_at')
+    .eq('project_id',projectId).order('accepted_at',{ascending:false}));
+  return {
+    data:(data??[]).map((row):DocumentDecision=>({id:row.id,documentId:row.document_id,
+      version:row.document_version,decision:row.decision as ClientDocumentDecision,note:row.note,acceptedAt:row.accepted_at})),
+    error:error?'Não foi possível consultar o histórico de aceites.':null,
   };
 }

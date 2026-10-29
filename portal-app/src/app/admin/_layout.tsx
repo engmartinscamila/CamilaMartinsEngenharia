@@ -13,9 +13,9 @@ export default function AdminLayout() {
   const {width}=useWindowDimensions();
   const { loading, role, session } = useAuth();
   const pathname = usePathname();
-  const params = useLocalSearchParams<{ projectId?: string; tipo?: string; section?: string; view?:string }>();
+  const params = useLocalSearchParams<{ projectId?: string; tipo?: string; section?: string; view?:string; filter?:string; q?:string }>();
   const query = new URLSearchParams();
-  for (const key of ['projectId', 'tipo', 'section', 'view'] as const) {
+  for (const key of ['projectId', 'tipo', 'section', 'view', 'filter', 'q'] as const) {
     if (typeof params[key] === 'string') query.set(key, params[key]);
   }
   const returnTo = safeAdminReturnPath(`${pathname}?${query}`);

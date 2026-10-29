@@ -91,6 +91,7 @@ export function Card({ children, style }: { children: React.ReactNode; style?: V
 }
 
 interface ButtonProps {
+  debounceMs?: number;
   title: string;
   onPress: () => void;
   loading?: boolean;
@@ -99,7 +100,7 @@ interface ButtonProps {
   icon?: keyof typeof Ionicons.glyphMap;
 }
 
-export function Button({ title, onPress, loading, disabled, variant = 'primary', icon }: ButtonProps) {
+export function Button({ title, onPress, loading, disabled, variant = 'primary', icon, debounceMs = 500 }: ButtonProps) {
   const { colors } = useAppTheme();
   const styles = useThemeStyles(styleDefinitions);
   const blocked = disabled || loading;
@@ -110,7 +111,7 @@ export function Button({ title, onPress, loading, disabled, variant = 'primary',
       accessibilityLabel={title}
       accessibilityState={{ disabled: blocked, busy: loading }}
       disabled={blocked}
-      onPress={()=>{const now=Date.now();if(blocked||now-lastPress.current<500)return;lastPress.current=now;onPress();}}
+      onPress={()=>{const now=Date.now();if(blocked||now-lastPress.current<debounceMs)return;lastPress.current=now;onPress();}}
       style={({ pressed }) => [
         styles.button,
         styles[`button_${variant}`],

@@ -1,3 +1,4 @@
+import { readAllRows } from '@/lib/paginated-query';
 import { downloadBase64File } from '@/lib/download-generated-file';
 import { toUserMessage } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
@@ -54,6 +55,12 @@ export interface ContractDocumentSummary {
   archived: boolean;
   createdAt: string;
   generatedAt: string | null;
+  version?: string | null;
+  revisionOf?: string | null;
+  releasedAt?: string | null;
+  supersededAt?: string | null;
+  acceptanceRequired?: boolean;
+  validUntil?: string | null;
 }
 
 export interface ContractDocumentPreview {
@@ -150,9 +157,9 @@ export async function listProjectApprovals(projectId: string): Promise<ServiceRe
 }
 
 export async function listProjectContractDocuments(projectId: string): Promise<ServiceResult<ContractDocumentSummary[]>> {
-  const result = await supabase.from('documentos').select('id, projeto_id, nome, arquivo, document_kind, workflow_status, optional_document, created_at, generated_at').eq('projeto_id', projectId).not('document_kind', 'is', null).order('created_at', { ascending: false }).limit(100);
+  const result = await readAllRows(supabase.from('documentos').select('id, projeto_id, nome, arquivo, document_kind, workflow_status, optional_document, created_at, generated_at, version, versao, revision_of, client_released_at, superseded_at, acceptance_required, valid_until').eq('projeto_id', projectId).not('document_kind', 'is', null).order('created_at', { ascending: false }));
   if (result.error) return { data: [], error: 'Não foi possível carregar os documentos contratuais.' };
-  return { data: (result.data ?? []).map((row) => ({ id: row.id, projectId: row.projeto_id, kind: row.document_kind as ContractDocumentKind, title: row.nome, status: row.workflow_status, optional: row.optional_document === true, archived: Boolean(row.arquivo), createdAt: row.created_at, generatedAt: row.generated_at })), error: null };
+  return { data: (result.data ?? []).map((row) => ({ id: row.id, projectId: row.projeto_id, kind: row.document_kind as ContractDocumentKind, title: row.nome, status: row.workflow_status, optional: row.optional_document === true, archived: Boolean(row.arquivo), createdAt: row.created_at, generatedAt: row.generated_at, version: row.version ?? row.versao ?? null, revisionOf: row.revision_of ?? null, releasedAt: row.client_released_at ?? null, supersededAt: row.superseded_at ?? null, acceptanceRequired: row.acceptance_required === true, validUntil: row.valid_until ?? null })), error: null };
 }
 
 export async function previewContractDocument(input: { projectId: string; kind: Exclude<ContractDocumentKind, 'notificacao_formal'>; approvalId?: string | null; extraData?: Record<string, unknown> }): Promise<ServiceResult<ContractDocumentPreview | null>> {

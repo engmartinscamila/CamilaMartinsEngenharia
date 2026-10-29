@@ -81,15 +81,9 @@ try {
       assert.deepEqual(errors, [], `${section}: JavaScript`);
       console.log(`OK ${viewport.width}px Configurações -> ${section}: sessão preservada e ferramenta montada`);
       if(section==='document-center'){
-        const central=page.getByRole('button',{name:'Aprovações',exact:true});
-        await central.click();
-        const field=page.getByPlaceholder('Ex.: Layout térreo — versão 03');
-        await field.fill('Rascunho de verificação — sem envio');
-        await page.getByRole('button',{name:'Versões e liberações',exact:true}).click();
-        await page.getByText('Aqui você confere a versão vigente',{exact:false}).waitFor();
-        await page.getByRole('button',{name:'Documentos e aceites',exact:true}).click();
-        await central.click();
-        assert.equal(await field.inputValue(),'Rascunho de verificação — sem envio','Alternar visões preserva o formulário');
+        await page.getByRole('button',{name:'Decisões do projeto',exact:true}).click();
+        await page.getByRole('button',{name:'Documentos',exact:true}).click();
+        assert.equal(await page.getByRole('button',{name:'Versões e liberações',exact:true}).count(),0,'Versões ficam nos detalhes do documento');
         assert.equal(await page.getByRole('button',{name:'Início da administração',exact:true}).count(),1,'Um único cabeçalho de navegação');
       }
       if(section==='workspace'){

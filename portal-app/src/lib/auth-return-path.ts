@@ -19,6 +19,11 @@ export function safeAdminReturnPath(value: unknown): string | null {
   const query = new URLSearchParams();
   const view=url.searchParams.get('view');
   if(path==='/admin/document-center'&&['emissions','approvals','tracking'].includes(view??''))query.set('view',view!);
+  if(path==='/admin/document-center'){
+    const filter=url.searchParams.get('filter'),q=url.searchParams.get('q');
+    if(['all','waiting','overdue','accepted','rejected','superseded'].includes(filter??''))query.set('filter',filter!);
+    if(q&&q.length<=200&&!/[\u0000-\u001f]/.test(q))query.set('q',q);
+  }
   const projectId = url.searchParams.get('projectId');
   const tipo = url.searchParams.get('tipo');
   if (projectId && /^[a-z\d-]{1,64}$/i.test(projectId)) query.set('projectId', projectId);

@@ -165,7 +165,7 @@ export async function listDocuments(projectId: string, clientPreview=false): Pro
   };
 }
 
-export async function createDocumentSignedUrl(document: DocumentSummary) {
+export async function createDocumentSignedUrl(document: Pick<DocumentSummary, 'id' | 'allowDownload'>) {
   const result = await supabase.functions.invoke('issue-protected-asset', {
     body: { assetId: document.id, kind: 'document', action: document.allowDownload ? 'download' : 'view' },
   });

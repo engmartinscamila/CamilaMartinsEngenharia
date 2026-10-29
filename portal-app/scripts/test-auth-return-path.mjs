@@ -21,3 +21,5 @@ assert.equal(safeAdminReturnPath('/admin/tasks?projectId=project-1&next=https://
 assert.equal(safeAdminReturnPath('/admin/content?tipo=photo&projectId=project-1'), '/admin/content?projectId=project-1&tipo=photo');
 assert.equal(safeAdminReturnPath('/admin/tasks?tipo=photo&projectId=invalid%3C'), '/admin/tasks');
 process.stdout.write('PASS: retorno interno após login, aliases, projeto/tipo e rejeição de destinos externos ou desconhecidos.\n');
+
+assert.equal(safeAdminReturnPath('/admin/document-center?view=approvals&filter=waiting&q=Anexo&projectId=p1'),'/admin/document-center?view=approvals&filter=waiting&q=Anexo&projectId=p1');

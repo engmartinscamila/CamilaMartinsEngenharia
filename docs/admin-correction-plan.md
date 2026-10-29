@@ -62,3 +62,12 @@ A publicação do código depende da aprovação automática das auditorias do r
 - Emissões e aprovações: documentos e aceites, aprovações e versões/liberações em visões integradas; URLs antigas redirecionadas e projeto compartilhado entre as visões.
 - Barra lateral persistente no portal administrativo desktop e botões de ação com largura ajustável também no CSS móvel.
 - Sem cópia ou remoção de arquivos e sem alterações fiscais.
+
+
+### Central documental compacta — 29/10/2026
+- Menu lateral com ícone/nome; sincronização normal discreta no Admin e alertas preservados para falhas.
+- Pesquisa e seleção explícita de projeto, contexto compartilhado e criação no fluxo comercial existente.
+- Lista de documentos com pesquisa, filtros e contadores reais; decisões de projeto sem repetir aceites documentais.
+- Painel lateral reúne versão vigente, versões vinculadas por revisão, histórico, respostas e ações permitidas; liberação/envio exigem confirmação.
+- Rascunhos de aprovação preservados na sessão por projeto; respostas atrasadas e falhas de consulta não produzem dados de outro projeto ou totais falsos.
+- Consultas paginadas reutilizam dados e permissões existentes; nenhum esquema ou registro de produção alterado.

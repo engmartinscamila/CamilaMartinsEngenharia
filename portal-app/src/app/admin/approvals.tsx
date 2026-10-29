@@ -1,7 +1,7 @@
 import { useNotificationProject } from '@/hooks/use-notification-project';
 import {Redirect,useLocalSearchParams as useLegacyParams} from 'expo-router';
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
@@ -28,17 +28,20 @@ const APPROVAL_TYPES = [
   ['Outro', 'Outro'],
 ] as const;
 
-export function AdminApprovalsScreen({embedded=false,onProjectChange}:{embedded?:boolean;onProjectChange?:(id:string)=>void}={}) {
+export interface ApprovalDraft {type:string;approvalObject:string;description:string;relatedDocumentId:string|null;dueDate:string}
+
+export function AdminApprovalsScreen({embedded=false,onProjectChange,contextProject,onCreated,initialDraft,onDraftChange,onSavingChange,confirmBeforeSubmit}:{onSavingChange?:(saving:boolean)=>void;confirmBeforeSubmit?:()=>Promise<boolean>;initialDraft?:ApprovalDraft;onDraftChange?:(draft:ApprovalDraft)=>void;embedded?:boolean;onProjectChange?:(id:string)=>void;contextProject?:AdminProjectSummary;onCreated?:()=>void}={}) {
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
   const [items, setItems] = useState<ApprovalSummary[]>([]);
   const [documents, setDocuments] = useState<ContractDocumentSummary[]>([]);
   const [projectId, setProjectId] = useState<string | null>(null);
   useNotificationProject(projects, setProjectId);
-  const [type, setType] = useState('Projeto');
-  const [approvalObject, setApprovalObject] = useState('');
-  const [description, setDescription] = useState('');
-  const [relatedDocumentId, setRelatedDocumentId] = useState<string | null>(null);
-  const [dueDate, setDueDate] = useState('');
+  const [type, setType] = useState(initialDraft?.type??'Projeto');
+  const [approvalObject, setApprovalObject] = useState(initialDraft?.approvalObject??'');
+  const [description, setDescription] = useState(initialDraft?.description??'');
+  const [relatedDocumentId, setRelatedDocumentId] = useState<string | null>(initialDraft?.relatedDocumentId??null);
+  const [dueDate, setDueDate] = useState(initialDraft?.dueDate??'');
+  useEffect(()=>{onDraftChange?.({type,approvalObject,description,relatedDocumentId,dueDate});},[type,approvalObject,description,relatedDocumentId,dueDate,onDraftChange]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +50,7 @@ export function AdminApprovalsScreen({embedded=false,onProjectChange}:{embedded?
   const styles = useThemeStyles(styleDefinitions);
 
   const load = useCallback(async () => {
+    if(contextProject){setProjects([contextProject]);setProjectId(contextProject.id);return;}
     setLoading(true);
     const [p, a] = await Promise.all([listAdminProjects(), listAdminApprovals()]);
     setProjects(p.data);
@@ -54,7 +58,7 @@ export function AdminApprovalsScreen({embedded=false,onProjectChange}:{embedded?
     setProjectId((current) => current ?? p.data[0]?.id ?? null);
     setError(p.error ?? a.error);
     setLoading(false);
-  }, []);
+  }, [contextProject]);
   useLiveRefresh(load);
 
   useEffect(() => {
@@ -69,14 +73,17 @@ export function AdminApprovalsScreen({embedded=false,onProjectChange}:{embedded?
     return () => { mounted = false; };
   }, [projectId]);
 
-  const selectedProject = useMemo(() => projects.find((item) => item.id === projectId) ?? null, [projectId, projects]);
+  const selectedProject = contextProject ?? projects.find((item) => item.id === projectId) ?? null;
 
   const create = async () => {
     if (!selectedProject || approvalObject.trim().length < 3) {
       setError('Selecione o projeto e informe exatamente o que o cliente deverá avaliar.');
       return;
     }
-    setSaving(true); setError(null); setSuccess(null);
+    if(saving)return;
+    setSaving(true);onSavingChange?.(true);setError(null);setSuccess(null);
+    try{
+    if(confirmBeforeSubmit&&!await confirmBeforeSubmit())return;
     const result = await createAdminApproval({
       project: selectedProject,
       type,
@@ -85,24 +92,26 @@ export function AdminApprovalsScreen({embedded=false,onProjectChange}:{embedded?
       relatedDocumentId,
       dueDate: dueDate || null,
     });
-    setSaving(false);
     if (result) { setError(result); return; }
     setSuccess('Aprovação enviada ao cliente com objeto, contexto e prazo registrados.');
     setApprovalObject(''); setDescription(''); setRelatedDocumentId(null); setDueDate('');
     await load();
+    onCreated?.();
+    }catch{setError('Não foi possível criar a aprovação. Tente novamente.');}
+    finally{setSaving(false);onSavingChange?.(false);}
   };
 
   return (
-    <Screen>
+    <Screen scroll={!contextProject}>
       {!embedded ? <AdminPageHeader
         description="Crie somente decisões ou entregas que realmente precisem de manifestação do cliente."
         title="Aprovações"
       /> : null}
-      <Notice tone="info">O cliente é quem registra a decisão. Esta tela cria o objeto a ser avaliado; ela não aceita ou recusa no lugar dele.</Notice>
+      {!contextProject ? <Notice tone="info">O cliente é quem registra a decisão. Esta tela cria o objeto a ser avaliado; ela não aceita ou recusa no lugar dele.</Notice> : null}
       {error ? <Notice tone="danger">{error}</Notice> : null}
       {success ? <Notice tone="success">{success}</Notice> : null}
 
-      <Card>
+      {!contextProject ? <Card>
         <Text style={styles.sectionTitle}>1. Projeto / contrato</Text>
         <View style={styles.projectList}>
           {projects.map((project) => (
@@ -111,12 +120,12 @@ export function AdminApprovalsScreen({embedded=false,onProjectChange}:{embedded?
             </Pressable>
           ))}
         </View>
-      </Card>
+      </Card> : null}
 
       <Card>
         <Text style={styles.sectionTitle}>2. O que o cliente deverá aprovar?</Text>
         <View style={styles.chips}>
-          {APPROVAL_TYPES.map(([value, label]) => (
+          {APPROVAL_TYPES.filter(([value])=>!contextProject||value!=='Documento').map(([value, label]) => (
             <Pressable key={value} onPress={() => setType(value)} style={[styles.chip, type === value && styles.selected]}>
               <Text style={[styles.projectText, type === value && styles.selectedText]}>{label}</Text>
             </Pressable>
@@ -125,7 +134,7 @@ export function AdminApprovalsScreen({embedded=false,onProjectChange}:{embedded?
       </Card>
 
       <Card>
-        <Text style={styles.sectionTitle}>3. Objeto específico</Text>
+        <Text style={styles.sectionTitle}>Objeto específico</Text>
         <Field
           label="Objeto que será avaliado *"
           placeholder="Ex.: Layout térreo — versão 03"
@@ -133,7 +142,7 @@ export function AdminApprovalsScreen({embedded=false,onProjectChange}:{embedded?
           onChangeText={setApprovalObject}
         />
         <Field
-          label="4. Descrição para o cliente"
+          label="Descrição para o cliente"
           multiline
           placeholder="Explique de forma objetiva o que deve ser conferido e qual decisão é esperada."
           value={description}
@@ -141,7 +150,7 @@ export function AdminApprovalsScreen({embedded=false,onProjectChange}:{embedded?
           style={styles.descriptionField}
         />
 
-        <Text style={styles.sectionTitle}>5. Documento relacionado, quando houver</Text>
+        <Text style={styles.sectionTitle}>Documento relacionado, quando houver</Text>
         {documents.length === 0 ? (
           <Text style={styles.meta}>Nenhum documento contratual está disponível para vincular neste projeto.</Text>
         ) : (
@@ -159,15 +168,15 @@ export function AdminApprovalsScreen({embedded=false,onProjectChange}:{embedded?
           </View>
         )}
 
-        <DateField label="6. Prazo para manifestação" optional value={dueDate} onChange={setDueDate} />
+        <DateField label="Prazo para manifestação" optional value={dueDate} onChange={setDueDate} />
         <Notice tone="info">Sem prazo manual, permanecem válidas as regras contratuais e automações já configuradas no sistema.</Notice>
-        <Button loading={saving} onPress={() => void create()} title="7. Enviar para o cliente" />
+        <Button loading={saving} onPress={() => void create()} title="Enviar aprovação ao cliente" />
       </Card>
 
-      <Text style={styles.sectionTitle}>Histórico</Text>
-      {loading ? <ActivityIndicator color={colors.gold600} /> : null}
-      {!loading && items.length === 0 ? <StateView description="Nenhuma aprovação cadastrada." icon="checkmark-done-outline" title="Sem aprovações" /> : null}
-      {items.map((item) => (
+      {!contextProject?<Text style={styles.sectionTitle}>Histórico</Text>:null}
+      {loading&&!contextProject ? <ActivityIndicator color={colors.gold600} /> : null}
+      {!contextProject && !loading && items.length === 0 ? <StateView description="Nenhuma aprovação cadastrada." icon="checkmark-done-outline" title="Sem aprovações" /> : null}
+      {!contextProject && items.map((item) => (
         <Card key={item.id}>
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
