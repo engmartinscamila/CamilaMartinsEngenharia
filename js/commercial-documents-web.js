@@ -486,7 +486,7 @@
       if (title) title.textContent = isContract ? 'Dados do contratante' : 'Dados do prospect';
       const description = card.querySelector('p');
       if (description) description.textContent = isContract
-        ? 'Escolha um orçamento e aproveite os dados automaticamente, ou crie um contrato direto sem orçamento prévio.'
+        ? 'Escolha um orçamento ou crie um contrato direto. Quando o Word do contrato for gerado, o sistema criará ou vinculará automaticamente o projeto, aproveitando os dados cadastrados.'
         : 'O orçamento pode ser criado mesmo sem cliente cadastrado.';
     }
     renderQuoteChoices();
