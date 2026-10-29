@@ -852,6 +852,7 @@
     );
 
     await load();
+    window.dispatchEvent(new CustomEvent('cme:commercial-records-updated'));
   }
 
   async function generate(recordId, kind, archive) {
@@ -881,7 +882,19 @@
     }
 
     download(delivered.data.contentBase64, delivered.data.fileName);
-    msg(archive ? 'Word baixado e arquivado no sistema.' : 'Word baixado e extrato preservado.', 'success');
+    let notice = archive ? 'Word baixado e arquivado no sistema.' : 'Word baixado e extrato preservado.';
+    let noticeType = 'success';
+    if (kind === 'contrato') {
+      const linked = await client().rpc('admin_convert_commercial_record', { p_record_id: recordId });
+      if (!linked.error && linked.data?.project_id) {
+        notice += ' Projeto criado/vinculado automaticamente e disponível no Anexo I.';
+        window.dispatchEvent(new CustomEvent('cme:commercial-records-updated', { detail: { recordId, projectId: linked.data.project_id } }));
+      } else {
+        notice += ' O projeto ainda precisa ser vinculado. Abra o Anexo I e utilize o botão de vínculo. ' + (linked.error?.message || '');
+        noticeType = 'error';
+      }
+    }
+    msg(notice, noticeType);
     await load();
   }
 
