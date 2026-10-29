@@ -389,105 +389,148 @@
     msg('Dados preenchidos. Revise antes de continuar.', 'success');
   }
 
+  function sourceMode() {
+    return $('contractSourceManual')?.checked ? 'manual' : 'quote';
+  }
+
   function ensureContractSource() {
     if ($('contractQuoteSources')) return;
-
     const panel = $('panelCommercialCreate');
     const grid = panel?.querySelector('.doc-grid');
     if (!panel || !grid) return;
-
     const box = document.createElement('div');
     box.id = 'contractQuoteSources';
     box.className = 'doc-contract-source doc-hidden';
-    box.innerHTML = `
-      <div class="doc-field">
-        <label for="contractQuoteSelect">Vincular a um ou mais orçamentos existentes</label>
-        <select id="contractQuoteSelect" multiple size="6" aria-describedby="contractQuoteHelp">
-        </select>
-        <small id="contractQuoteHelp" class="doc-help">Selecione os ORCs que pertencem ao mesmo cliente ou prospect. No celular, marque os itens desejados; no computador, use Ctrl ou Command para selecionar vários.</small>
+    box.innerHTML = \`
+      <div class="doc-contract-origin-title">
+        <strong>Como deseja criar este contrato?</strong>
+        <small>Escolha a origem antes de preencher os dados.</small>
       </div>
+      <div class="doc-contract-origin-options" role="radiogroup" aria-label="Origem do contrato">
+        <label><input id="contractSourceQuote" name="contractSourceMode" type="radio" value="quote" checked><span><strong>Usar orçamento existente</strong><small>Recuperar automaticamente cliente, serviços, valores e condições</small></span></label>
+        <label><input id="contractSourceManual" name="contractSourceMode" type="radio" value="manual"><span><strong>Contrato direto</strong><small>Criar sem orçamento anterior, com cadastro existente ou novo</small></span></label>
+      </div>
+      <div id="contractSourceQuoteFields">
+        <div class="doc-field">
+          <label for="contractQuoteSelect">Selecione o orçamento que originará o contrato</label>
+          <input type="search" id="contractQuoteSearch" placeholder="Pesquisar número, cliente ou empreendimento..." aria-label="Pesquisar orçamento">
+          <select id="contractQuoteSelect" aria-describedby="contractQuoteHelp">
+            <option value="">Carregando orçamentos...</option>
+          </select>
+          <small id="contractQuoteHelp" class="doc-help">Selecione um ORC para importar o preenchimento completo; depois revise os dados do contrato.</small>
+        </div>
+        <details id="contractMoreQuotes" class="doc-contract-more">
+          <summary>Vincular outros orçamentos do mesmo cliente (opcional)</summary>
+          <div id="contractQuoteAdditional" class="doc-contract-extra-list"></div>
+        </details>
+      </div>
+      <p id="contractSourceManualHelp" class="doc-help doc-hidden">Preencha apenas os dados necessários para um novo contrato. Você também pode escolher um cliente já cadastrado abaixo.</p>
       <div id="contractQuoteSummary" class="doc-status doc-hidden" aria-live="polite"></div>
-    `;
-
-    panel.insertBefore(box, grid);
-    $('contractQuoteSelect')?.addEventListener('change', event => {
-      const keys = Array.from(event.target.selectedOptions)
-        .map(option => option.value)
-        .filter(Boolean);
-      applyQuotesToContract(keys);
+    \`;
+    panel.insertBefore(box, $('commercialContextFields') || grid);
+    box.addEventListener('change', event => {
+      if (event.target.name === 'contractSourceMode') {
+        $('contractQuoteSelect').value = '';
+        box.querySelectorAll('[data-quote-extra]').forEach(input => { input.checked = false; });
+        clearForm(false);
+        updateContractSourceUi();
+        msg(sourceMode() === 'manual'
+          ? 'Contrato direto selecionado. Preencha os dados ou escolha um cliente existente.'
+          : 'Escolha um orçamento para importar os dados automaticamente.', 'success');
+        return;
+      }
+      if (event.target.id === 'contractQuoteSelect' || event.target.matches('[data-quote-extra]')) {
+        const keys = selectedQuoteKeys();
+        renderQuoteChoices();
+        applyQuotesToContract(keys);
+      }
     });
+    $('contractQuoteSearch')?.addEventListener('input', renderQuoteChoices);
+  }
+
+  function updateSourceLocks() {
+    const locked = mode() === 'contrato' && selectedQuoteKeys().length > 0;
+    const openPicker = $('openCommercialServices');
+    if (openPicker) {
+      openPicker.disabled = locked;
+      openPicker.title = locked ? 'O escopo é herdado do orçamento selecionado.' : '';
+    }
+    if ($('customService')) {
+      $('customService').readOnly = locked;
+      $('customService').title = locked ? 'Serviço herdado do orçamento; altere o orçamento de origem para revisar o escopo.' : '';
+    }
+    syncExperienceLevelStep();
+  }
+
+  function updateContractSourceUi() {
+    const fromQuote = sourceMode() === 'quote';
+    $('contractSourceQuoteFields')?.classList.toggle('doc-hidden', !fromQuote);
+    $('contractSourceManualHelp')?.classList.toggle('doc-hidden', fromQuote);
+    if (sourceMode() === 'manual') {
+      const summary = $('contractQuoteSummary');
+      if (summary) summary.classList.add('doc-hidden');
+    }
+    updateSourceLocks();
   }
 
   function renderMode() {
     ensureContractSource();
     const isContract = mode() === 'contrato';
-
     $('contractQuoteSources')?.classList.toggle('doc-hidden', !isContract);
-
-    if ($('createCommercial')) {
-      $('createCommercial').textContent = isContract ? 'Criar contrato CON' : 'Criar orçamento ORC';
-    }
-
+    if ($('createCommercial')) $('createCommercial').textContent = isContract ? 'Criar contrato CON' : 'Criar orçamento ORC';
     const card = $('panelCommercialCreate');
     if (card) {
       const title = card.querySelector('h3');
       if (title) title.textContent = isContract ? 'Dados do contratante' : 'Dados do prospect';
-
       const description = card.querySelector('p');
-      if (description) {
-        description.textContent = isContract
-          ? 'Selecione um ou mais orçamentos do mesmo cliente para preencher os dados automaticamente, ou deixe sem seleção para criar o contrato manualmente.'
-          : 'O orçamento pode ser criado mesmo sem cliente cadastrado.';
-      }
+      if (description) description.textContent = isContract
+        ? 'Escolha um orçamento e aproveite os dados automaticamente, ou crie um contrato direto sem orçamento prévio.'
+        : 'O orçamento pode ser criado mesmo sem cliente cadastrado.';
     }
-
     renderQuoteChoices();
+    updateContractSourceUi();
     renderList();
-    const sourceLocked = isContract && selectedQuoteKeys().length > 0;
-    const openPicker = $('openCommercialServices');
-    if (openPicker) {
-      openPicker.disabled = sourceLocked;
-      openPicker.title = sourceLocked ? 'Os serviços deste contrato vêm do orçamento selecionado.' : '';
-    }
-    syncExperienceLevelStep();
   }
 
   function selectedQuoteKeys() {
-    const select = $('contractQuoteSelect');
-    if (!select) return [];
-    return Array.from(select.selectedOptions).map(option => option.value).filter(Boolean);
+    if (sourceMode() === 'manual') return [];
+    const chosen = [$('contractQuoteSelect')?.value, ...Array.from(document.querySelectorAll('[data-quote-extra]:checked')).map(input => input.dataset.quoteExtra)];
+    return [...new Set(chosen.filter(Boolean))];
   }
 
   function renderQuoteChoices() {
     const select = $('contractQuoteSelect');
-    if (!select) return;
-
-    const current = new Set(selectedQuoteKeys());
-    const commercial = quoteSources.filter(item => item.sourceType === 'commercial');
-    const projects = quoteSources.filter(item => item.sourceType === 'project');
-
-    let html = '';
-
-    if (commercial.length) {
-      html += '<optgroup label="Orçamentos da central">';
-      html += commercial.map(item =>
-        `<option value="${esc(item.key)}">${esc(item.quote_number)} — ${esc(item.prospect_name || 'Sem nome')}${item.property_type ? ' • ' + esc(item.property_type) : ''}</option>`
-      ).join('');
-      html += '</optgroup>';
+    const extra = $('contractQuoteAdditional');
+    if (!select || !extra) return;
+    const current = select.value;
+    const extraChecked = new Set(Array.from(extra.querySelectorAll('[data-quote-extra]:checked')).map(input => input.dataset.quoteExtra));
+    const search = normalizeSearch($('contractQuoteSearch')?.value || '');
+    const matches = item => !search || normalizeSearch([item.quote_number, item.prospect_name, item.project_name, item.property_type, item.cpf_cnpj].join(' ')).includes(search);
+    const visible = quoteSources.filter(item => matches(item) || item.key === current);
+    const labelFor = item => \`\${item.quote_number || 'Sem número'} — \${item.prospect_name || item.project_name || 'Sem nome'}\`;
+    let html = '<option value="">Selecione o orçamento...</option>';
+    for (const [kind, title] of [['commercial', 'Orçamentos da Central'], ['project', 'Orçamentos de projetos anteriores']]) {
+      const items = visible.filter(item => item.sourceType === kind);
+      if (!items.length) continue;
+      html += \`<optgroup label="\${esc(title)}">\` + items.map(item => {
+        const pending = kind === 'commercial' && !item.quote_document_id;
+        return \`<option value="\${esc(item.key)}">\${esc(labelFor(item))}\${pending ? ' • rascunho (emitir orçamento antes do contrato)' : ''}</option>\`;
+      }).join('') + '</optgroup>';
     }
-
-    if (projects.length) {
-      html += '<optgroup label="Orçamentos antigos já cadastrados">';
-      html += projects.map(item =>
-        `<option value="${esc(item.key)}">${esc(item.quote_number)} — ${esc(item.prospect_name || item.project_name || 'Sem nome')}${item.project_name ? ' • ' + esc(item.project_name) : ''}</option>`
-      ).join('');
-      html += '</optgroup>';
-    }
-
     select.innerHTML = html;
-    Array.from(select.options).forEach(option => {
-      option.selected = current.has(option.value);
-    });
+    select.value = current && visible.some(item => item.key === current) ? current : '';
+    const extras = quoteSources.filter(item => item.key !== select.value && (matches(item) || extraChecked.has(item.key)));
+    extra.innerHTML = extras.length ? extras.map(item => \`
+      <label class="doc-contract-extra-row"><input type="checkbox" data-quote-extra="\${esc(item.key)}" \${extraChecked.has(item.key) ? 'checked' : ''}>
+        <span>\${esc(labelFor(item))}</span>
+      </label>\`).join('') : '<p class="doc-help">Nenhum orçamento adicional encontrado.</p>';
+    if (!quoteSources.length) {
+      const help = $('contractQuoteHelp');
+      if (help) help.textContent = 'Nenhum orçamento cadastrado. Escolha "Contrato direto" acima para continuar sem orçamento.';
+    } else {
+      const help = $('contractQuoteHelp');
+      if (help) help.textContent = \`\${quoteSources.length} orçamento(s) disponível(is). Ao selecionar, o sistema importa automaticamente os dados e o escopo.\`;
+    }
   }
 
   function clearForm(clearSource = true) {
