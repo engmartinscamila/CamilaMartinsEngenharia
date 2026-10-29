@@ -1083,6 +1083,7 @@ async function selecionarPrimeiraOpcaoValida(page, id) {
   const page = await loadPage(context, "fotos.html");
   await page.locator("#novaFoto").click();
   await page.waitForURL(/documentos\.html\?novo=1/);
+  await page.locator('#modalDocumento').waitFor({state:'visible',timeout:10000});
   assert(await page.locator('#modalDocumento').isVisible(), 'Álbum precisa abrir o cadastro central de arquivos');
   await preencherCampo(page, 'documentoCliente', 'c1');
   await selecionarPrimeiraOpcaoValida(page, 'documentoProjeto');
