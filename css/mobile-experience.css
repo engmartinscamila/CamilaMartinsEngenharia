@@ -159,20 +159,22 @@
 
   /* Central documental */
   body:has(.layout .conteudo) .doc-picker {
-    display: flex !important;
-    overflow-x: auto !important;
+    display: grid !important;
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+    overflow: visible !important;
     gap: 8px !important;
-    padding: 2px 0 10px !important;
-    scroll-snap-type: x proximity;
-    scrollbar-width: none;
+    padding: 9px !important;
   }
   body:has(.layout .conteudo) .doc-picker::-webkit-scrollbar { display: none; }
   body:has(.layout .conteudo) .doc-picker button {
     flex: 0 0 auto !important;
     min-height: 44px !important;
     padding: 10px 14px !important;
-    scroll-snap-align: start;
-    white-space: nowrap;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
   body:has(.layout .conteudo) .doc-workspace-title,
   body:has(.layout .conteudo) .doc-extrato-head {

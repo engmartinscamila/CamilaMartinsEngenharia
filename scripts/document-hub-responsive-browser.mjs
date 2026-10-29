@@ -10,6 +10,7 @@ try{for(const width of [1920,1440,1280,1024,960,820,390,360]){
  await page.locator('#cmeAdminPolish').waitFor({state:'attached'});
  await page.waitForFunction(()=>!!document.getElementById('cmeAdminPolish')?.sheet);
  await page.waitForFunction(()=>getComputedStyle(document.getElementById('loading')).display==='none');
+ await page.addStyleTag({url:base+'/css/mobile-experience.css'});
  await page.evaluate(()=>{document.querySelector('#historyBody').innerHTML='<tr><td>29/10/2026</td><td>Ficha de Levantamento Técnico / Vistoria com observações complementares</td><td>MIG-C5272F21</td><td>Cliente sintético com nome empresarial extenso para validar a leitura completa</td><td>1.0</td><td>Aguardando manifestação do cliente</td><td>Arquivado com cópia preservada</td><td>150 KB</td></tr>';});
  const overflow=await page.evaluate(()=>({page:document.documentElement.scrollWidth-innerWidth,outside:[...document.querySelectorAll('.doc-shell,.doc-picker button,.doc-compact-filters input,#historyBody td')].filter(el=>{const r=el.getBoundingClientRect();return r.right>innerWidth+1||r.left<0||el.scrollWidth>el.clientWidth+2;}).map(el=>el.id||el.tagName)}));
  assert.ok(overflow.page<=2,`${width}px: página excedeu a tela ${JSON.stringify(overflow)}`);assert.deepEqual(overflow.outside,[],`${width}px: campos ou textos cortados`);
