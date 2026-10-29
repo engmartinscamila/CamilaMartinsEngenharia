@@ -196,6 +196,7 @@ jobs:
         run: |
           set -euo pipefail
           routes=(
+            document-center
             workspace
             crm
             contract-documents

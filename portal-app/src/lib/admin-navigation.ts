@@ -31,6 +31,7 @@ const classicWebsiteAdminRoutes: Record<string, string> = {
 };
 
 export const modernWebsiteAdminSections = new Set([
+  'document-center',
   'crm',
   'contract-documents',
   'document-governance',
@@ -71,6 +72,9 @@ export function websiteAdminBridgeUrl(key: string) {
 }
 
 export function openWebsiteAdminSection(key: string, params: Record<string,string> = {}) {
+  const aliases:Record<string,string>={'contract-documents':'emissions','approvals':'approvals','document-governance':'tracking'};
+  const aliasView=aliases[key];
+  if(aliasView){params={...params,view:aliasView};key='document-center';}
   const query = new URLSearchParams(params);
   const suffix = query.size ? `?${query}` : '';
   if (!usesWebsiteAdminHome()) return false;

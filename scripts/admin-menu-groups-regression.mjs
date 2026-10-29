@@ -8,5 +8,5 @@ const sections=fs.readFileSync('portal-app/src/lib/admin-sections.ts','utf8');co
 const classic=JSON.parse(source.match(/const CLASSIC_MENU_KEYS=(\{[^\n]*\});/)[1]);
 const routes=[...source.match(/const MENU_ADMIN_CANONICO=\[([\s\S]*?)\];/)[1].matchAll(/\["([^"]+)",/g)].map(m=>m[1]);
 for(const route of routes){const key=route.startsWith('portal/admin/')?route.slice(13):classic[route];assert(keys.includes(key),`Unreachable menu destination: ${route}`);}
-assert.equal(routes.length,29);assert(!keys.some(key=>/nfse|fiscal/.test(key)),'NF remains on standby');
-console.log('PASS: sete áreas, 29 destinos clássicos e 34 seções do portal, sem funções perdidas ou repetidas entre grupos.');
+assert.equal(routes.length,26);assert(!keys.some(key=>/nfse|fiscal/.test(key)),'NF remains on standby');
+console.log('PASS: sete áreas, 26 destinos clássicos e 31 seções do portal, sem funções perdidas ou repetidas entre grupos.');

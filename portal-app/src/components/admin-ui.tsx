@@ -40,7 +40,7 @@ export function AdminGroupedMenu({onNavigate,compact=true}:{onNavigate?:()=>void
   const {colors}=useAppTheme();
   const styles=useThemeStyles(styleDefinitions);
   const sectionsByKey=new Map<string,(typeof adminSections)[number]>(adminSections.map((section)=>[section.key,section]));
-  const activeKey=pathname==='/admin/content' ? tipo==='photo'?'photos':tipo==='library'?'library':'documents' : pathname==='/admin'?'dashboard':adminSections.find(section=>typeof section.href==='string'&&section.href===pathname)?.key;
+  const activeKey=pathname==='/admin/content' ? tipo==='photo'?'photos':'documents' : pathname==='/admin'?'dashboard':adminSections.find(section=>typeof section.href==='string'&&section.href===pathname)?.key;
   const activeGroup=adminMenuGroups.find(group=>group.sections.includes(activeKey??''));
   const [expanded,setExpanded]=useState<string|null>(activeGroup?.id??'home');
   return <View style={styles.navigationMenu}>{adminMenuGroups.map(group=>{

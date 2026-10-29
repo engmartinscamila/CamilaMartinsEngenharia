@@ -13,9 +13,9 @@ export default function AdminLayout() {
   const {width}=useWindowDimensions();
   const { loading, role, session } = useAuth();
   const pathname = usePathname();
-  const params = useLocalSearchParams<{ projectId?: string; tipo?: string; section?: string }>();
+  const params = useLocalSearchParams<{ projectId?: string; tipo?: string; section?: string; view?:string }>();
   const query = new URLSearchParams();
-  for (const key of ['projectId', 'tipo', 'section'] as const) {
+  for (const key of ['projectId', 'tipo', 'section', 'view'] as const) {
     if (typeof params[key] === 'string') query.set(key, params[key]);
   }
   const returnTo = safeAdminReturnPath(`${pathname}?${query}`);
@@ -43,6 +43,7 @@ export default function AdminLayout() {
       <Stack.Screen name="content" />
       <Stack.Screen name="commercial-documents" />
       <Stack.Screen name="crm" />
+      <Stack.Screen name="document-center" />
       <Stack.Screen name="tasks" />
       <Stack.Screen name="work-diary" />
       <Stack.Screen name="procurement" />

@@ -17,7 +17,7 @@ const directSections = modernSections.filter(section => !menuSections.includes(s
 assert.ok(menuSections.includes('service-level-governance'), 'Governança Serviço × Nível precisa continuar visível no menu');
 assert.deepEqual(
   directSections.sort(),
-  ['construction-schedule-baselines','construction-schedule-budget','construction-schedule-measurements','construction-schedule-new','construction-schedule-revision','construction-schedule-test'].sort(),
+  ['contract-documents','document-governance','approvals','construction-schedule-baselines','construction-schedule-budget','construction-schedule-measurements','construction-schedule-new','construction-schedule-revision','construction-schedule-test'].sort(),
   'Somente os subfluxos internos do cronograma podem ficar fora do menu principal',
 );
 const config = readFileSync('.github/workflows/pages.yml', 'utf8');
@@ -54,7 +54,7 @@ async function verifyTool(page, section) {
     console.error('Falha na ferramenta sintética:', section, page.url(), await page.locator('body').innerText());
     throw error;
   }
-  assert.equal(new URL(page.url()).pathname.replace(/\/$/, ''), `/portal/admin/${section}`, 'A sessão deve permanecer na ferramenta escolhida');
+  assert.equal(new URL(page.url()).pathname.replace(/\/$/, ''), `/portal/admin/${['contract-documents','document-governance','approvals'].includes(section)?'document-center':section}`, 'A sessão deve permanecer na ferramenta escolhida');
   assert.equal(await page.getByText('Página não encontrada', { exact: true }).count(), 0);
   assert.equal(await page.getByRole('heading', { name: 'Painel Administrativo', exact: true }).count(), 0);
   checked++;
@@ -80,6 +80,18 @@ try {
       await verifyTool(page, section);
       assert.deepEqual(errors, [], `${section}: JavaScript`);
       console.log(`OK ${viewport.width}px Configurações -> ${section}: sessão preservada e ferramenta montada`);
+      if(section==='document-center'){
+        const central=page.getByRole('button',{name:'Aprovações',exact:true});
+        await central.click();
+        const field=page.getByPlaceholder('Ex.: Layout térreo — versão 03');
+        await field.fill('Rascunho de verificação — sem envio');
+        await page.getByRole('button',{name:'Versões e liberações',exact:true}).click();
+        await page.getByText('Aqui você confere a versão vigente',{exact:false}).waitFor();
+        await page.getByRole('button',{name:'Documentos e aceites',exact:true}).click();
+        await central.click();
+        assert.equal(await field.inputValue(),'Rascunho de verificação — sem envio','Alternar visões preserva o formulário');
+        assert.equal(await page.getByRole('button',{name:'Início da administração',exact:true}).count(),1,'Um único cabeçalho de navegação');
+      }
       if(section==='workspace'){
         if(viewport.width<=820)await page.getByRole('button',{name:'Outras áreas',exact:true}).click();
         else assert.equal(await page.locator('#cmePortalAdminSidebar').count(),1,'Menu lateral persistente no portal');

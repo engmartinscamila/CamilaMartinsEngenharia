@@ -1009,7 +1009,7 @@ async function selecionarPrimeiraOpcaoValida(page, id) {
   const menuLinks = await page.locator('.menu-lateral a.menu-item').evaluateAll(links => links.map(link => link.getAttribute('href')));
   assert(!menuLinks.some(href => /^\/?portal\/admin\/?$/.test(href || '')), 'Administração: o painel intermediário redundante reapareceu');
   assert(new Set(menuLinks).size === menuLinks.length, 'Administração: há destinos repetidos no menu');
-  for (const route of ['crm', 'contract-documents', 'document-governance', 'document-archive', 'tasks', 'work-diary', 'procurement', 'financial', 'portal-control', 'approvals', 'notifications', 'security']) {
+  for (const route of ['crm', 'document-center', 'document-archive', 'tasks', 'work-diary', 'procurement', 'financial', 'portal-control', 'notifications', 'security']) {
     assert(menuLinks.filter(href => href === `/portal/admin/${route}/`).length === 1, `Administração: ${route} deve ter um acesso direto no menu`);
     assert(await page.locator(`#abrirFerramenta-${route}`).count() === 1, `Administração: ${route} deve aparecer uma vez nas ações principais`);
   }
@@ -1022,7 +1022,7 @@ async function selecionarPrimeiraOpcaoValida(page, id) {
 
 const adminNav = [
   ["abrirClientes","clientes.html"],["abrirProjetos","projetos.html"],["abrirDocumentos","documentos.html"],
-  ["abrirBiblioteca","documentos.html"],["abrirFotos","fotos.html"],["abrirFinanceiro","portal/admin/financial/"],
+  ["abrirFotos","fotos.html"],["abrirFinanceiro","portal/admin/financial/"],
   ["abrirAgenda","agenda.html"],["abrirConfiguracoes","configuracoes.html"]
 ];
 
@@ -1358,8 +1358,8 @@ for (const [button,email] of [["#firstAccess","cliente.qa@example.com"],["#forgo
 {
  const page=await loadPage(context,'biblioteca.html?projectId=p1');
  await page.waitForURL(url=>url.pathname==='/documentos.html');
- assert(new URL(page.url()).searchParams.get('visao')==='biblioteca','Biblioteca não usa o catálogo central');
- await page.locator('#novoDocumento').click();assert(await page.locator('#documentoDestino').inputValue()==='biblioteca','Biblioteca perdeu coleção do cadastro');await page.close();
+ assert(new URL(page.url()).searchParams.get('visao')===null,'Biblioteca não usa o catálogo central');
+ await page.locator('#novoDocumento').click();assert(await page.locator('#documentoDestino').inputValue()==='automatico','Biblioteca perdeu coleção do cadastro');await page.close();
 }
 await browser.close();
 

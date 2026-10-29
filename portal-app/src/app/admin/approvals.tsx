@@ -1,3 +1,5 @@
+import { useNotificationProject } from '@/hooks/use-notification-project';
+import {Redirect,useLocalSearchParams as useLegacyParams} from 'expo-router';
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
@@ -26,11 +28,12 @@ const APPROVAL_TYPES = [
   ['Outro', 'Outro'],
 ] as const;
 
-export default function AdminApprovalsScreen() {
+export function AdminApprovalsScreen({embedded=false,onProjectChange}:{embedded?:boolean;onProjectChange?:(id:string)=>void}={}) {
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
   const [items, setItems] = useState<ApprovalSummary[]>([]);
   const [documents, setDocuments] = useState<ContractDocumentSummary[]>([]);
   const [projectId, setProjectId] = useState<string | null>(null);
+  useNotificationProject(projects, setProjectId);
   const [type, setType] = useState('Projeto');
   const [approvalObject, setApprovalObject] = useState('');
   const [description, setDescription] = useState('');
@@ -91,10 +94,10 @@ export default function AdminApprovalsScreen() {
 
   return (
     <Screen>
-      <AdminPageHeader
+      {!embedded ? <AdminPageHeader
         description="Crie somente decisões ou entregas que realmente precisem de manifestação do cliente."
         title="Aprovações"
-      />
+      /> : null}
       <Notice tone="info">O cliente é quem registra a decisão. Esta tela cria o objeto a ser avaliado; ela não aceita ou recusa no lugar dele.</Notice>
       {error ? <Notice tone="danger">{error}</Notice> : null}
       {success ? <Notice tone="success">{success}</Notice> : null}
@@ -103,7 +106,7 @@ export default function AdminApprovalsScreen() {
         <Text style={styles.sectionTitle}>1. Projeto / contrato</Text>
         <View style={styles.projectList}>
           {projects.map((project) => (
-            <Pressable key={project.id} onPress={() => { setProjectId(project.id); setDocuments([]); setRelatedDocumentId(null); }} style={[styles.projectChip, projectId === project.id && styles.selected]}>
+            <Pressable key={project.id} onPress={() => { setProjectId(project.id); onProjectChange?.(project.id); setDocuments([]); setRelatedDocumentId(null); }} style={[styles.projectChip, projectId === project.id && styles.selected]}>
               <Text style={[styles.projectText, projectId === project.id && styles.selectedText]}>{project.contractNumber} • {project.name}</Text>
             </Pressable>
           ))}
@@ -204,3 +207,5 @@ const styleDefinitions = (colors: ThemeColors) => ({
   meta: { color: colors.muted, fontSize: 11, marginTop: 4, lineHeight: 17, fontFamily: typography.family },
   description: { color: colors.slate, fontSize: 13, lineHeight: 19, fontFamily: typography.family },
 });
+
+export default function LegacyDocumentRoute(){const params=useLegacyParams<{projectId?:string}>();return <Redirect href={{pathname:'/admin/document-center',params:{...params,view:'approvals'}}} />;}

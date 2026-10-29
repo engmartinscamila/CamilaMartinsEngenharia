@@ -1,5 +1,5 @@
+import {Redirect,useLocalSearchParams as useLegacyParams,useRouter} from 'expo-router';
 import { useNotificationProject } from '@/hooks/use-notification-project';
-import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, Text, View } from 'react-native';
 
@@ -23,7 +23,7 @@ import {
 import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 import type { AdminProjectSummary } from '@/types/domain';
 
-export default function AdminContractDocumentsScreen() {
+export function AdminContractDocumentsScreen({embedded=false,onProjectChange}:{embedded?:boolean;onProjectChange?:(id:string)=>void}={}) {
   const router = useRouter();
   const { colors } = useAppTheme();
   const styles = useThemeStyles(styleDefinitions);
@@ -123,10 +123,10 @@ export default function AdminContractDocumentsScreen() {
 
   return (
     <Screen>
-      <AdminPageHeader
+      {!embedded ? <AdminPageHeader
         title="Documentos gerados"
         description="Histórico, download, arquivamento e disponibilização ao cliente. A criação de novos documentos permanece centralizada em Contratos Gerais."
-      />
+      /> : null}
       <Notice tone="info">
         Esta tela não altera escopo, não cria aceite e não prepara um segundo documento concorrente. Use Contratos Gerais para criar; use Versões e pendências para governança; use Aprovações somente quando o cliente realmente precisar decidir algo.
       </Notice>
@@ -144,7 +144,7 @@ export default function AdminContractDocumentsScreen() {
         </View>
         <View style={styles.projectList}>
           {projects.map((project) => (
-            <Pressable key={project.id} onPress={() => setProjectId(project.id)} style={[styles.projectChip, projectId === project.id && styles.selected]}>
+            <Pressable key={project.id} onPress={() => { setProjectId(project.id); onProjectChange?.(project.id); }} style={[styles.projectChip, projectId === project.id && styles.selected]}>
               <Text style={[styles.projectText, projectId === project.id && styles.selectedText]}>{project.contractNumber} • {project.name}</Text>
             </Pressable>
           ))}
@@ -259,3 +259,5 @@ const styleDefinitions = (colors: ThemeColors) => ({
   meta: { color: colors.muted, fontSize: 11, lineHeight: 17, fontFamily: typography.family },
   actions: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: spacing.xs },
 });
+
+export default function LegacyDocumentRoute(){const params=useLegacyParams<{projectId?:string}>();return <Redirect href={{pathname:'/admin/document-center',params:{...params,view:'emissions'}}} />;}

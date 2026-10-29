@@ -55,3 +55,10 @@ Alterações de banco adicionais: `opening_balance_date` em contas, chave de rep
 - Registros antigos que apontam para o mesmo objeto não foram apagados automaticamente: o catálogo reúne a visualização e preserva outros vínculos quando um cadastro é removido.
 
 A publicação do código depende da aprovação automática das auditorias do repositório. O status final deve ser confirmado no deploy e nas URLs públicas, sem confundir alterações locais com publicação.
+
+
+### Consolidação de documentos — 29/10/2026
+- Arquivos e biblioteca: uma entrada para documentos, imagens e materiais, preservando os metadados e controles de upload existentes.
+- Emissões e aprovações: documentos e aceites, aprovações e versões/liberações em visões integradas; URLs antigas redirecionadas e projeto compartilhado entre as visões.
+- Barra lateral persistente no portal administrativo desktop e botões de ação com largura ajustável também no CSS móvel.
+- Sem cópia ou remoção de arquivos e sem alterações fiscais.

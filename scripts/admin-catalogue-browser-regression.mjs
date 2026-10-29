@@ -36,7 +36,7 @@ try{
  assert.equal(await page.locator('#modalDocumento').isVisible(),true,'Partial failure must preserve form');
  await page.locator('#formDocumento').evaluate(form=>form.requestSubmit());await page.locator('#modalDocumento').waitFor({state:'hidden'});
  assert.equal(await page.evaluate(()=>window.__records.documentos.length),3,'Retry must not duplicate the first confirmed file');
- await page.goto(base+'/biblioteca.html?projectId=p1');await page.waitForURL(url=>url.pathname==='/documentos.html');assert.equal(new URL(page.url()).searchParams.get('projectId'),'p1');assert.equal(new URL(page.url()).searchParams.get('visao'),'biblioteca');
- await page.locator('#novoDocumento').click();assert.equal(await page.locator('#documentoDestino').inputValue(),'biblioteca');
+ await page.goto(base+'/biblioteca.html?projectId=p1');await page.waitForURL(url=>url.pathname==='/documentos.html');assert.equal(new URL(page.url()).searchParams.get('projectId'),'p1');assert.equal(new URL(page.url()).searchParams.get('visao'),null);
+ await page.locator('#novoDocumento').click();assert.equal(await page.locator('#documentoDestino').inputValue(),'automatico');
  await page.close();console.log('PASS: catálogo real no navegador móvel, três fontes, autoria por registro, clique duplo, lote parcial e repetição sem duplicação, Biblioteca contextual.');
 }finally{await browser.close();}

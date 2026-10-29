@@ -150,11 +150,12 @@
   body:has(.layout .conteudo) .item-acoes {
     width: 100%;
     display: grid !important;
-    grid-template-columns: repeat(auto-fit,minmax(44px,1fr)) !important;
+    grid-template-columns: none !important;
+    display:flex !important; flex-wrap:wrap !important; align-items:center !important;
     gap: 8px !important;
   }
   body:has(.layout .conteudo) .item-acoes button,
-  body:has(.layout .conteudo) .btn-icon { width: 100% !important; min-width: 44px; height: 46px !important; margin: 0 !important; }
+  body:has(.layout .conteudo) .btn-icon { width:auto !important; max-width:100% !important; min-width:44px; height:auto !important; min-height:44px; flex:0 1 auto !important; white-space:normal; overflow-wrap:break-word; margin:0 !important; }
 
   /* Central documental */
   body:has(.layout .conteudo) .doc-picker {

@@ -109,7 +109,7 @@ function AdminContentForm() {
   useLiveRefresh(load);
 
   const pick = async () => {
-    const result = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true, multiple: true, type: kind === 'photo' ? 'image/*' : ['application/pdf', 'image/*'] });
+    const result = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true, multiple: true, type: kind === 'photo' ? 'image/*' : '*/*' });
     const selected = result.canceled ? null : result.assets[0] ?? null;
     if (selected) {
       setAssets(result.assets ?? []);

@@ -1,6 +1,6 @@
 import { adminSections } from './admin-sections';
 
-const allowedPaths = new Set<string>(['/admin', ...adminSections.map(section =>
+const allowedPaths = new Set<string>(['/admin','/admin/contract-documents','/admin/document-governance','/admin/approvals', ...adminSections.map(section =>
   typeof section.href === 'string' ? section.href : section.href.pathname)]);
 
 /** Guarda apenas destinos internos conhecidos; nunca concede autorização. */
@@ -17,6 +17,8 @@ export function safeAdminReturnPath(value: unknown): string | null {
   }
   if (!allowedPaths.has(path)) return null;
   const query = new URLSearchParams();
+  const view=url.searchParams.get('view');
+  if(path==='/admin/document-center'&&['emissions','approvals','tracking'].includes(view??''))query.set('view',view!);
   const projectId = url.searchParams.get('projectId');
   const tipo = url.searchParams.get('tipo');
   if (projectId && /^[a-z\d-]{1,64}$/i.test(projectId)) query.set('projectId', projectId);
