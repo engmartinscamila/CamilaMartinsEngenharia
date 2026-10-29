@@ -1,0 +1,66 @@
+/* Portfolio 3D: modelos aproximados, com posters de qualidade como fallback. */
+.featured-project-card{position:relative;isolation:isolate}
+.featured-project-card::after{z-index:3!important;pointer-events:none}
+.featured-project-card>img{z-index:0}
+.featured-project-card .featured-project-video{z-index:1}
+.featured-project-card .featured-project-3d{
+  position:absolute;inset:0;width:100%;height:100%;z-index:2;
+  opacity:0;transition:opacity .6s ease;background:transparent;
+  --poster-color:transparent;
+}
+.featured-project-card.is-model-ready .featured-project-3d{opacity:1}
+.featured-project-card.is-model-ready .featured-project-video{opacity:0!important;visibility:hidden}
+.featured-project-card .featured-project-overlay{
+  z-index:4;display:grid;text-decoration:none;cursor:pointer;
+  width:100%;box-sizing:border-box;
+}
+.featured-project-card .featured-project-overlay:hover em{color:var(--gold)}
+.featured-project-card .featured-3d-open{
+  position:absolute;z-index:5;top:14px;right:14px;
+  border:1px solid rgba(184,154,99,.66);background:rgba(1,9,20,.84);
+  color:#e8d2a6;padding:9px 11px;cursor:pointer;font-size:.66rem;
+  letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:7px;
+  box-shadow:0 4px 14px rgba(0,0,0,.25)
+}
+.featured-project-card .featured-3d-open:hover,
+.featured-project-card .featured-3d-open:focus-visible{
+  outline:2px solid #b89a63;outline-offset:2px;
+  background:rgba(14,27,43,.98)
+}
+.featured-project-card .featured-3d-note{
+  position:absolute;z-index:4;top:16px;left:13px;
+  font-size:.58rem;letter-spacing:.07em;
+  color:#e3ded5;background:rgba(1,9,20,.73);padding:7px 9px;
+  pointer-events:none
+}
+.featured-projects-grid>.featured-project-card:last-child{grid-column:auto}
+.portfolio-3d-dialog{
+  width:min(1100px,96vw);height:min(760px,93vh);max-width:none;max-height:none;
+  margin:auto;padding:0;border:1px solid rgba(184,154,99,.7);
+  background:#020b17;color:#e4e4e4;box-shadow:0 35px 95px rgba(0,0,0,.8);
+}
+.portfolio-3d-dialog::backdrop{background:rgba(0,4,11,.87);backdrop-filter:blur(5px)}
+.portfolio-3d-panel{height:100%;display:flex;flex-direction:column;min-height:0}
+.portfolio-3d-toolbar{
+  padding:12px 16px;border-bottom:1px solid rgba(184,154,99,.3);
+  display:flex;align-items:center;justify-content:space-between;gap:10px
+}
+.portfolio-3d-toolbar h3{margin:0;font-size:1rem;font-weight:400;color:#f4f1ea}
+.portfolio-3d-close{
+  background:transparent;border:1px solid rgba(184,154,99,.6);color:#d3bd91;
+  padding:8px 13px;cursor:pointer;font:inherit
+}
+.portfolio-3d-full{width:100%;flex:1;min-height:0;background:radial-gradient(circle at 50% 30%,#29384a,#081320 85%)}
+.portfolio-3d-hint{padding:10px 16px;font-size:.72rem;color:#d0c8bc;
+  border-top:1px solid rgba(184,154,99,.2)}
+@media(max-width:1050px) and (min-width:761px){
+  .featured-projects-grid>.featured-project-card:last-child{grid-column:1/-1}
+}
+@media(max-width:760px){
+  .featured-project-card .featured-3d-open{font-size:.6rem;padding:8px}
+  .portfolio-3d-dialog{width:100vw;height:93dvh}
+  .portfolio-3d-toolbar h3{font-size:.86rem}
+}
+@media(prefers-reduced-motion:reduce){
+  .featured-project-card .featured-project-3d{transition:none}
+}
