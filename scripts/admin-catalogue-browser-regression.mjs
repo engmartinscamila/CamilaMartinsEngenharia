@@ -38,5 +38,24 @@ try{
  assert.equal(await page.evaluate(()=>window.__records.documentos.length),3,'Retry must not duplicate the first confirmed file');
  await page.goto(base+'/biblioteca.html?projectId=p1');await page.waitForURL(url=>url.pathname==='/documentos.html');assert.equal(new URL(page.url()).searchParams.get('projectId'),'p1');assert.equal(new URL(page.url()).searchParams.get('visao'),null);
  await page.locator('#novoDocumento').click();assert.equal(await page.locator('#documentoDestino').inputValue(),'automatico');
+
+ await page.locator('#cancelarDocumento').click();
+ for(const width of [390,1024,1440,1920]){
+  await page.setViewportSize({width,height:1080});
+  await page.addStyleTag({url:base+'/css/mobile-experience.css'});
+  assert.equal(await page.locator('#modalDocumento .painel-principal').count(),0,'Detalhes e recentes ficam fora do modal');
+  const details=page.locator('.documentos-paineis');
+  await details.waitFor({state:'visible'});
+  const bounds=await page.locator('#detalhesDocumento').boundingBox();
+  assert.ok(bounds.width>=280,`${width}px: largura útil para detalhes`);
+  const title=page.getByRole('heading',{name:'Detalhes do Documento',exact:true});
+  assert.ok((await title.boundingBox()).height<110,`${width}px: título legível`);
+  await page.locator('#novoDocumento').click();
+  const modal=await page.locator('#modalDocumento .modal-content').boundingBox();
+  assert.ok(modal.x>=0&&modal.x+modal.width<=width+1,`${width}px: formulário dentro da tela`);
+  assert.ok(Math.abs(modal.x+modal.width/2-width/2)<4,`${width}px: somente o formulário ocupa o modal centralizado`);
+  await page.locator('#cancelarDocumento').click();
+  await details.waitFor({state:'visible'});
+ }
  await page.close();console.log('PASS: catálogo real no navegador móvel, três fontes, autoria por registro, clique duplo, lote parcial e repetição sem duplicação, Biblioteca contextual.');
 }finally{await browser.close();}

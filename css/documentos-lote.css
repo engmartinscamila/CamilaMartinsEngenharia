@@ -114,3 +114,33 @@
     outline: 1px solid var(--dourado);
     outline-offset: 1px;
 }
+
+/* O painel de consulta permanece na página, separado do formulário modal. */
+.documentos-paineis {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+}
+.documentos-paineis > .card-grande,
+.documentos-paineis .detalhes { min-width: 0; }
+.documentos-paineis h2,
+.documentos-paineis h3,
+.documentos-paineis p { overflow-wrap: anywhere; }
+#modalDocumento .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#modalDocumento .cme-authorship-card {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+    padding: 14px;
+}
+#modalDocumento .cme-authorship-card input[type="checkbox"] {
+    width: 18px; min-width: 18px; height: 18px; min-height: 18px; margin: 3px 0 0;
+}
+#modalDocumento .cme-authorship-card > span { display: grid; gap: 6px; }
+@media (max-width: 1400px) {
+    .documentos-paineis { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+    #modalDocumento .form-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+#modalDocumento #formDocumento > .campo { margin-bottom: 22px; }
