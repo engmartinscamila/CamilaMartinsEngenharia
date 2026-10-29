@@ -57,7 +57,7 @@ if (!adminUi.includes('adminSections.map((section)')) fail('Admin React: menu n�
 const dashboard = read('portal-app/src/app/admin/index.tsx');
 if (!dashboard.includes('isModernWebsiteAdminSection(requestedSection)')) fail('Dashboard React: entrada legada não valida a área moderna solicitada.');
 if (!dashboard.includes('openWebsiteAdminSection(requestedSection)')) fail('Dashboard React: entrada legada não redireciona para o HTML estático real da área.');
-if (!dashboard.includes('openWebsiteAdminSection(section.key)')) fail('Dashboard React: botões não passam pelo roteamento web seguro.');
+if (!adminUi.includes('openWebsiteAdminSection(section.key)')) fail('Dashboard React: botões não passam pelo roteamento web seguro.');
 if (!dashboard.includes('openWebsiteAdminSection(metric.key)')) fail('Dashboard React: indicadores não passam pelo roteamento web seguro.');
 
 const crm = read('portal-app/src/app/admin/crm.tsx');

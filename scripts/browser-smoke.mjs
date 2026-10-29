@@ -1,3 +1,4 @@
+import {revealMenuTarget} from './admin-menu-test-helpers.mjs';
 import { chromium } from "playwright";
 import fs from "node:fs";
 import path from "node:path";
@@ -1030,6 +1031,7 @@ for (const [buttonId, destination] of adminNav) {
   const button = page.locator(`#${buttonId}`);
   assert(await button.count() === 1, `admin.html: #${buttonId} ausente`);
   if (await button.count()) {
+    await revealMenuTarget(button);
     await Promise.all([
       page.waitForURL(url => url.pathname.endsWith("/" + destination), {timeout:3000}).catch(()=>null),
       button.click({timeout:3000}).catch(()=>null)

@@ -64,17 +64,42 @@ const ferramentasAdministrativas=[
   ["notifications","fa-bell","Notificações internas"],
   ["security","fa-shield-halved","Armazenamento e auditoria"],
 ];
+// Generated from portal-app/src/lib/admin-menu-groups.json.
+const ADMIN_MENU_GROUPS=[{"id":"home","title":"Início","icon":"home-outline","classicIcon":"fa-house","sections":["dashboard","workspace"]},{"id":"clients","title":"Clientes e contratos","icon":"people-outline","classicIcon":"fa-users","sections":["clients","crm","commercial-documents","projects","service-level-governance"]},{"id":"documents","title":"Documentos e arquivos","icon":"folder-open-outline","classicIcon":"fa-folder-open","sections":["documents","photos","library","contract-documents","document-governance","approvals","document-archive"]},{"id":"works","title":"Gestão de obras","icon":"construct-outline","classicIcon":"fa-helmet-safety","sections":["construction-schedule","schedule","tasks","work-diary","procurement","construction-schedule-new","construction-schedule-budget","construction-schedule-measurements","construction-schedule-revision","construction-schedule-baselines","construction-schedule-test"]},{"id":"finance","title":"Financeiro e recibos","icon":"wallet-outline","classicIcon":"fa-receipt","sections":["financial","receipts"]},{"id":"communication","title":"Agenda e comunicação","icon":"calendar-outline","classicIcon":"fa-calendar-days","sections":["agenda","requests","notifications"]},{"id":"settings","title":"Configurações","icon":"settings-outline","classicIcon":"fa-gear","sections":["settings","portal-control","website-content","security","system-health"]}];
+const CLASSIC_MENU_KEYS={"admin.html":"dashboard","clientes.html":"clients","projetos.html":"projects","orcamentos-contratos.html":"commercial-documents","documentos.html":"documents","fotos.html":"photos","biblioteca.html":"library","recibos.html":"receipts","agenda.html":"agenda","cronograma.html":"schedule","solicitacoes.html":"requests","protecao-pdf-admin.html":"website-content","configuracoes.html":"settings","integridade-sistema.html":"system-health"};
+function chaveMenu(href){return rotaPortalDoHref(href)||CLASSIC_MENU_KEYS[href];}
+function criarGrupoMenu(group,links,active,scope){
+  const details=document.createElement('details');details.className='cme-admin-menu-group';details.dataset.cmeMenuGroup=group.id;details.open=active;
+  if(active)details.classList.add('cme-current-group');
+  const summary=document.createElement('summary');summary.className='cme-admin-group-toggle';summary.innerHTML=`<i class="fa-solid ${group.classicIcon}" aria-hidden="true"></i><span>${group.title}</span><i class="fa-solid fa-chevron-down cme-group-chevron" aria-hidden="true"></i>`;
+  const body=document.createElement('div');body.className='cme-admin-submenu';body.append(...links);details.append(summary,body);
+  details.addEventListener('toggle',()=>{if(details.open)for(const other of scope.querySelectorAll(':scope > details.cme-admin-menu-group'))if(other!==details)other.open=false;});
+  return details;
+}
 function normalizarHref(valor){try{const url=new URL(valor,location.origin);return url.pathname.replace(/^\//,"").replace(/\.html$/i,"").replace(/\/$/,"").toLowerCase()}catch{return String(valor||"").split("?")[0].replace(/^\//,"").replace(/\.html$/i,"").replace(/\/$/,"").toLowerCase()}}
 function normalizarMenuAdministrativo(){
   const menu=document.querySelector(".menu-lateral");if(!menu)return;
   const atual=normalizarHref(location.pathname);
   const fragment=document.createDocumentFragment();
-  for(const[href,icone,titulo]of MENU_ADMIN_CANONICO){const link=criarLinkMenu(href,icone,titulo);const destino=normalizarHref(href);const ativo=destino===atual;if(ativo){link.classList.add("ativo");link.setAttribute("aria-current","page")}fragment.appendChild(link)}
+  const params=new URLSearchParams(location.search);
+  const currentKey=atual==='documentos'&&params.get('visao')==='biblioteca'?'library':atual==='documentos'&&params.get('visao')==='fotos'?'photos':chaveMenu(atual.endsWith('.html')?atual:atual+'.html')||atual.replace(/^portal\/admin\//,'');
+  const linksByKey=new Map();
+  for(const[href,icone,titulo]of MENU_ADMIN_CANONICO){
+    const link=criarLinkMenu(href,icone,titulo),key=chaveMenu(href);
+    if(key===currentKey){link.classList.add('ativo');link.setAttribute('aria-current','page');}
+    linksByKey.set(key,link);
+  }
+  for(const group of ADMIN_MENU_GROUPS){const links=group.sections.map(key=>linksByKey.get(key)).filter(Boolean);if(links.length)fragment.appendChild(criarGrupoMenu(group,links,group.sections.includes(currentKey),menu));}
   menu.replaceChildren(fragment);
   menu.dataset.cmeOrdemFixa="true";
   if(atual==="admin"||atual.endsWith("/admin")){
     const card=Array.from(document.querySelectorAll('.card-lateral')).find(item=>item.querySelector('h2')?.textContent?.trim()==='Ações Rápidas');
     if(card)for(const[rota,icone,titulo]of ferramentasAdministrativas){const id=`abrirFerramenta-${rota}`;if(document.getElementById(id))continue;const botao=document.createElement('button');botao.id=id;botao.type='button';botao.innerHTML=`<i class="fa-solid ${icone}"></i><span>${titulo}</span>`;botao.addEventListener('click',()=>{location.href=urlPontePortal(rota)});card.appendChild(botao)}
+    if(card){
+      const legacy={abrirClientes:'clients',abrirProjetos:'projects',abrirDocumentos:'documents',abrirBiblioteca:'library',abrirFotos:'photos',abrirFinanceiro:'financial',abrirAgenda:'agenda',abrirConfiguracoes:'settings'};
+      const buttons=Array.from(card.querySelectorAll('button[id]'));
+      for(const group of ADMIN_MENU_GROUPS){const children=buttons.filter(button=>group.sections.includes(button.id.startsWith('abrirFerramenta-')?button.id.slice(16):legacy[button.id]));if(children.length)card.appendChild(criarGrupoMenu(group,children,false,card));}
+    }
   }
 }
 function configurarMenuMobile(){

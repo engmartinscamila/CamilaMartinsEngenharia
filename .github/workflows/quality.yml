@@ -40,6 +40,7 @@ jobs:
         run: |
           node scripts/site-audit.mjs
           node scripts/admin-functional-audit.mjs
+          node scripts/admin-menu-groups-regression.mjs
           node scripts/document-generation-audit.mjs
           node scripts/document-governance-audit.mjs
           node scripts/commercial-custom-scope-regression.mjs
@@ -87,6 +88,7 @@ jobs:
         run: |
           node scripts/browser-smoke.mjs
           node scripts/mobile-admin-smoke.mjs
+          node scripts/admin-menu-groups-browser.mjs
 
       - name: Testar Worker público Cloudflare
         if: github.event_name == 'push'

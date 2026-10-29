@@ -37,6 +37,7 @@ jobs:
         run: |
           node scripts/site-audit.mjs
           node scripts/admin-functional-audit.mjs
+          node scripts/admin-menu-groups-regression.mjs
           node scripts/portal-canonical-path-test.mjs
           node scripts/document-generation-audit.mjs
           node scripts/portal-observations-regression.mjs
@@ -98,6 +99,7 @@ jobs:
         run: |
           node scripts/browser-smoke.mjs
           node scripts/mobile-admin-smoke.mjs
+          node scripts/admin-menu-groups-browser.mjs
           node scripts/receipts-browser-regression.mjs
           node scripts/admin-catalogue-browser-regression.mjs
 
@@ -273,6 +275,7 @@ jobs:
         run: |
           node scripts/site-public-audit.mjs
           node scripts/admin-functional-audit.mjs
+          node scripts/admin-menu-groups-regression.mjs
           node scripts/portal-canonical-path-test.mjs
           node scripts/document-generation-audit.mjs
 

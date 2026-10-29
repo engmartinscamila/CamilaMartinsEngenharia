@@ -1,12 +1,11 @@
 import { isModernWebsiteAdminSection, openWebsiteAdminHome, openWebsiteAdminSection, usesWebsiteAdminHome } from '@/lib/admin-navigation';
-import { adminSections } from '@/lib/admin-sections';
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, useWindowDimensions, View } from 'react-native';
 
 import { BrandMark, Button, Card, FullScreenLoader, Notice, PageHeader, Screen } from '@/components/ui';
-import { AdminMenuRow, AdminNotificationBell } from '@/components/admin-ui';
+import { AdminGroupedMenu, AdminNotificationBell } from '@/components/admin-ui';
 import { SyncControl } from '@/components/sync-control';
 import { ThemeSelector } from '@/components/theme-selector';
 import { env } from '@/lib/env';
@@ -74,10 +73,7 @@ function MainAdminDashboard() {
     { key: 'approvals', label: 'Aprovações pendentes', value: counts.pendingApprovals, route: '/admin/approvals' as const },
   ] as const;
 
-  const modules = adminSections.map((section) => ({
-    ...section,
-    onPress: () => { if (!openWebsiteAdminSection(section.key)) router.push(section.href); },
-  }));
+
 
   return (
     <Screen>
@@ -91,7 +87,7 @@ function MainAdminDashboard() {
       {archiveReminderCount > 0 ? <Card><Notice tone="info">Há {archiveReminderCount} documento(s) com mais de 180 dias aptos para manutenção de Storage. Nenhum será apagado automaticamente.</Notice><Button onPress={() => { if (!openWebsiteAdminSection('document-archive')) router.push('/admin/document-archive'); }} title="Revisar arquivo documental" variant="secondary" /></Card> : null}
       {error ? <Notice tone="warning">{error} Valores indisponíveis não são exibidos como zero.</Notice> : null}
       <View style={[styles.metrics, isMobile && styles.metricsMobile]}>{metrics.map((metric) => <Pressable accessibilityRole="button" key={metric.label} onPress={() => { if (!openWebsiteAdminSection(metric.key)) router.push(metric.route); }} style={({ pressed }) => [styles.metricPressable, isMobile && styles.metricPressableMobile, pressed && styles.metricPressed]}><Card style={isMobile ? { ...styles.metric, ...styles.metricMobile } : styles.metric}><Text style={styles.metricLabel}>{metric.label}</Text><Text style={styles.metricValue}>{metric.value === null ? 'Indisponível' : metric.value}</Text><Text style={styles.metricLink}>Abrir</Text></Card></Pressable>)}</View>
-      <View style={styles.moduleList}>{modules.map((module) => <AdminMenuRow compact={isMobile} description={module.description} icon={module.icon} key={module.key} onPress={module.onPress} title={module.title} />)}</View>
+      <AdminGroupedMenu compact={isMobile} />
       <Button loading={loading} onPress={() => void load()} title="Atualizar indicadores" variant="secondary" />
     </Screen>
   );

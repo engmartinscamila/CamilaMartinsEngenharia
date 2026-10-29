@@ -1,3 +1,4 @@
+import {revealMenuTarget} from './admin-menu-test-helpers.mjs';
 import { chromium } from 'playwright';
 
 const BASE = process.env.SITE_BASE || 'http://127.0.0.1:4174';
@@ -107,6 +108,7 @@ async function clickAndAssert({ label, selector, expectedPath, viewport }) {
 
   if (count === 1) {
     try {
+      await revealMenuTarget(target);
       const [response] = await Promise.all([
         page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
         target.click({ timeout: 5000 }),
@@ -177,6 +179,7 @@ for (const [slug, expectedPath] of quickTargets) {
 
     const target = page.locator('a.menu-item').filter({ hasText: 'Cronograma de obra completo' }).first();
     try {
+      await revealMenuTarget(target);
       const [response] = await Promise.all([
         page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
         target.click({ timeout: 5000 }),

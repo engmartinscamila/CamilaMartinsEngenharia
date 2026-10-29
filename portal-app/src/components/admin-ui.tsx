@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { usePathname, useRouter } from 'expo-router';
+import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
 import { openWebsiteAdminHome, openWebsiteAdminSection } from '@/lib/admin-navigation';
 import { adminSections } from '@/lib/admin-sections';
+import adminMenuGroups from '@/lib/admin-menu-groups.json';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -25,10 +26,35 @@ export function AdminPageHeader({ title, description }: { title: string; descrip
           {pathname !== '/admin/notifications' ? <AdminNotificationBell /> : null}
         </View>
       </View>
-      {menuOpen ? <View style={styles.navigationMenu}>{adminSections.map((section) => <AdminMenuRow key={section.key} compact icon={section.icon} title={section.title} description={section.description} onPress={() => { setMenuOpen(false); if (!openWebsiteAdminSection(section.key)) router.push(section.href); }} />)}</View> : null}
+      {menuOpen ? <AdminGroupedMenu key={pathname} onNavigate={()=>setMenuOpen(false)} /> : null}
       <PageHeader eyebrow="Administração" title={title} description={description} />
     </View>
   );
+}
+
+export function AdminGroupedMenu({onNavigate,compact=true}:{onNavigate?:()=>void;compact?:boolean}) {
+  const router=useRouter(),pathname=usePathname();
+  const {tipo}=useLocalSearchParams<{tipo?:string}>();
+  const {colors}=useAppTheme();
+  const styles=useThemeStyles(styleDefinitions);
+  const sectionsByKey=new Map<string,(typeof adminSections)[number]>(adminSections.map((section)=>[section.key,section]));
+  const activeKey=pathname==='/admin/content' ? tipo==='photo'?'photos':tipo==='library'?'library':'documents' : pathname==='/admin'?'dashboard':adminSections.find(section=>typeof section.href==='string'&&section.href===pathname)?.key;
+  const activeGroup=adminMenuGroups.find(group=>group.sections.includes(activeKey??''));
+  const [expanded,setExpanded]=useState<string|null>(activeGroup?.id??'home');
+  return <View style={styles.navigationMenu}>{adminMenuGroups.map(group=>{
+    const open=expanded===group.id,current=group.id===activeGroup?.id;
+    return <View key={group.id} style={[styles.menuGroup,current&&styles.menuGroupCurrent]}>
+      <Pressable accessibilityRole="button" accessibilityState={{expanded:open}} accessibilityLabel={group.title} onPress={()=>setExpanded(open?null:group.id)} style={styles.groupToggle}>
+        <Ionicons name={group.icon as keyof typeof Ionicons.glyphMap} color={colors.gold600} size={21} />
+        <Text style={styles.groupTitle}>{group.title}</Text><Ionicons name={open?'chevron-up-outline':'chevron-down-outline'} color={colors.muted} size={18} />
+      </Pressable>
+      {open ? <View style={styles.groupChildren}>{group.sections.map(key=>{
+        if(key==='dashboard')return <AdminMenuRow compact={compact} key={key} icon="home-outline" title="Dashboard" description="Visão geral da administração." active={activeKey===key} onPress={()=>{onNavigate?.();if(!openWebsiteAdminHome())router.replace('/admin');}} />;
+        const section=sectionsByKey.get(key);if(!section)return null;
+        return <AdminMenuRow compact={compact} key={key} icon={section.icon} title={section.title} description={section.description} active={activeKey===key} onPress={()=>{onNavigate?.();if(!openWebsiteAdminSection(section.key))router.push(section.href);}} />;
+      })}</View> : null}
+    </View>;
+  })}</View>;
 }
 
 export function AdminNotificationBell() {
@@ -91,11 +117,11 @@ export function SelectionChips<T extends string>({
   );
 }
 
-export function AdminMenuRow({ icon, title, description, onPress, compact = false }: { icon: keyof typeof Ionicons.glyphMap; title: string; description: string; onPress: () => void; compact?: boolean }) {
+export function AdminMenuRow({ icon, title, description, onPress, compact = false, active=false }: { icon: keyof typeof Ionicons.glyphMap; title: string; description: string; onPress: () => void; compact?: boolean; active?:boolean }) {
   const { colors } = useAppTheme();
   const styles = useThemeStyles(styleDefinitions);
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.menu, compact && styles.menuCompact, pressed && styles.pressed]}>
+    <Pressable accessibilityRole="button" accessibilityState={{selected:active}} onPress={onPress} style={({ pressed }) => [styles.menu, compact && styles.menuCompact, active&&styles.menuGroupCurrent, pressed && styles.pressed]}>
       <View style={[styles.menuIcon, compact && styles.menuIconCompact]}><Ionicons color={colors.gold600} name={icon} size={compact ? 20 : 22} /></View>
       <View style={{ flex: 1 }}><Text style={[styles.menuTitle, compact && styles.menuTitleCompact]}>{title}</Text><Text style={styles.menuDescription}>{description}</Text></View>
       <Ionicons color={colors.muted} name="chevron-forward" size={18} />
@@ -119,6 +145,11 @@ const styleDefinitions = (colors: ThemeColors) => ({
   chipSelected: { borderColor: colors.gold500, backgroundColor: colors.warningSoft },
   chipText: { color: colors.slate, fontSize: 12, fontWeight: '600', fontFamily: typography.family },
   chipTextSelected: { color: colors.gold600 },
+  menuGroup: { borderWidth:1,borderColor:colors.line,borderRadius:radius.md,overflow:'hidden' },
+  menuGroupCurrent: { borderColor:colors.gold500 },
+  groupToggle: { flexDirection:'row',alignItems:'center',gap:spacing.sm,padding:spacing.md,minHeight:52,backgroundColor:colors.surface },
+  groupTitle: { flex:1,flexShrink:1,color:colors.ink,fontFamily:typography.family,fontSize:14,fontWeight:'700' },
+  groupChildren: { padding:spacing.sm,gap:spacing.xs,borderTopWidth:1,borderTopColor:colors.line },
   menu: { minHeight: 76, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg, padding: spacing.md },
   menuCompact: { minHeight: 68, padding: spacing.sm, gap: spacing.sm },
   menuIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.warningSoft },

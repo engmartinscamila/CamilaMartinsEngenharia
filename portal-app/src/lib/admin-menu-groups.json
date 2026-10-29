@@ -1,0 +1,9 @@
+[
+  {"id":"home","title":"Início","icon":"home-outline","classicIcon":"fa-house","sections":["dashboard","workspace"]},
+  {"id":"clients","title":"Clientes e contratos","icon":"people-outline","classicIcon":"fa-users","sections":["clients","crm","commercial-documents","projects","service-level-governance"]},
+  {"id":"documents","title":"Documentos e arquivos","icon":"folder-open-outline","classicIcon":"fa-folder-open","sections":["documents","photos","library","contract-documents","document-governance","approvals","document-archive"]},
+  {"id":"works","title":"Gestão de obras","icon":"construct-outline","classicIcon":"fa-helmet-safety","sections":["construction-schedule","schedule","tasks","work-diary","procurement","construction-schedule-new","construction-schedule-budget","construction-schedule-measurements","construction-schedule-revision","construction-schedule-baselines","construction-schedule-test"]},
+  {"id":"finance","title":"Financeiro e recibos","icon":"wallet-outline","classicIcon":"fa-receipt","sections":["financial","receipts"]},
+  {"id":"communication","title":"Agenda e comunicação","icon":"calendar-outline","classicIcon":"fa-calendar-days","sections":["agenda","requests","notifications"]},
+  {"id":"settings","title":"Configurações","icon":"settings-outline","classicIcon":"fa-gear","sections":["settings","portal-control","website-content","security","system-health"]}
+]

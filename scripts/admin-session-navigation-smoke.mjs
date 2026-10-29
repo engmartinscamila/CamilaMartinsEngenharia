@@ -1,3 +1,4 @@
+import {revealMenuTarget} from './admin-menu-test-helpers.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
@@ -74,10 +75,18 @@ try {
       await target.waitFor({ state: 'attached', timeout: 5000 });
       assert.equal(await target.count(), 1, `${section}: item visível precisa existir uma única vez em Configurações`);
       if (viewport.width < 820) await page.locator('#cmeAdminMobileMenuButton').click();
+      await revealMenuTarget(target);
       await target.click();
       await verifyTool(page, section);
       assert.deepEqual(errors, [], `${section}: JavaScript`);
       console.log(`OK ${viewport.width}px Configurações -> ${section}: sessão preservada e ferramenta montada`);
+      if(section==='workspace'){
+        await page.getByRole('button',{name:'Outras áreas',exact:true}).click();
+        for(const title of ['Início','Clientes e contratos','Documentos e arquivos','Gestão de obras','Financeiro e recibos','Agenda e comunicação','Configurações'])assert.equal(await page.getByRole('button',{name:title,exact:true}).count(),1,`Grupo ${title} disponível no portal`);
+        await page.getByRole('button',{name:'Financeiro e recibos',exact:true}).click();
+        await page.getByRole('button').filter({has:page.getByText('Financeiro',{exact:true})}).click();
+        await verifyTool(page,'financial');
+      }
     }
 
     for (const section of directSections) {
@@ -91,6 +100,7 @@ try {
       for (const section of menuSections) {
         await page.goto(new URL('/admin.html', base).href);
         await page.locator(`#abrirFerramenta-${section}`).waitFor({ state: 'attached', timeout: 5000 });
+        await revealMenuTarget(page.locator(`#abrirFerramenta-${section}`));
         await page.locator(`#abrirFerramenta-${section}`).click();
         await verifyTool(page, section);
       }
