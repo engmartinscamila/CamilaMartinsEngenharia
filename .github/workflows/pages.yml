@@ -12,7 +12,8 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  # Finish the active release; newer changes wait instead of restarting it.
+  cancel-in-progress: false
 
 jobs:
   auditoria:
