@@ -1,4 +1,4 @@
-/* Galeria 3D — Tiny House + Vitalle. Casa Urben permanece inalterada. */
+/* Galeria: videos cinematograficos nas capas; 3D somente pelo botao Explorar 3D. */
 (() => {
   'use strict';
   const specs = [
@@ -18,9 +18,7 @@
     }
   ];
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const configs = new Map();
   const requests = new Map();
-  const ready = new Map();
   const grid = document.querySelector('.featured-projects-grid');
   if (!grid || !window.fetch || !window.Blob) return;
 
@@ -113,62 +111,22 @@
     }
   }
 
+  // O GLB é carregado somente quando o visitante abre a maquete.
+  // As capas mantêm suas imagens e vídeos cinematográficos originais.
   for (const spec of specs) {
     const card = [...grid.querySelectorAll('.featured-project-card')]
-      .find(el=>el.getAttribute('href')?.includes(spec.cardHref));
+      .find(el => el.getAttribute('href')?.includes(spec.cardHref));
     if (!card) continue;
-    const holder=document.createElement('div');
-    holder.className='featured-project-3d-wrap';
-    card.parentNode.insertBefore(holder,card);
+    const holder = document.createElement('div');
+    holder.className = 'featured-project-3d-wrap';
+    card.parentNode.insertBefore(holder, card);
     holder.appendChild(card);
-    const button=document.createElement('button');
-    button.className='portfolio3d-explore';
-    button.type='button';
-    button.textContent='Explorar 3D ↗';
-    button.setAttribute('aria-label','Abrir maquete 3D interativa de ' + spec.title);
-    button.addEventListener('click',()=>openModel(spec));
+    const button = document.createElement('button');
+    button.className = 'portfolio3d-explore';
+    button.type = 'button';
+    button.textContent = 'Explorar 3D ↗';
+    button.setAttribute('aria-label', 'Abrir maquete 3D interativa de ' + spec.title);
+    button.addEventListener('click', () => openModel(spec));
     holder.appendChild(button);
-    const viewer = document.createElement('model-viewer');
-    viewer.className='portfolio3d-inline';
-    viewer.setAttribute('alt','Maquete tridimensional giratória de ' + spec.title);
-    viewer.setAttribute('loading','lazy');
-    viewer.setAttribute('reveal','auto');
-    viewer.setAttribute('interaction-prompt','none');
-    viewer.setAttribute('camera-orbit',spec.orbit);
-    viewer.setAttribute('tone-mapping','aces');
-    viewer.setAttribute('shadow-intensity','0.55');
-    viewer.setAttribute('exposure','1.05');
-    viewer.setAttribute('rotation-per-second','7deg');
-    if (!reducedMotion) viewer.setAttribute('auto-rotate','');
-    viewer.addEventListener('load',()=>{
-      card.classList.add('is-3d-visible');
-      card.classList.add('is-model-ready');
-      card.querySelector('video')?.pause();
-      ready.set(spec.id,true);
-    });
-    viewer.addEventListener('error',()=>{
-      card.classList.remove('is-3d-visible');
-      card.classList.remove('is-model-ready');
-    });
-    card.insertBefore(viewer,card.querySelector('.featured-project-overlay'));
-    configs.set(spec.id,{spec,card,viewer});
-  }
-
-  async function loadCard(item) {
-    try { const src=await modelURL(item.spec);item.viewer.src=src; }
-    catch(e) { console.warn('Galeria 3D:',e); }
-  }
-  if ('IntersectionObserver' in window) {
-    const observer=new IntersectionObserver(entries=>{
-      for(const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        const item=[...configs.values()].find(a=>a.card===entry.target);
-        if (item) loadCard(item);
-        observer.unobserve(entry.target);
-      }
-    },{rootMargin:'350px 0px',threshold:.01});
-    for (const item of configs.values()) observer.observe(item.card);
-  } else {
-    for (const item of configs.values()) loadCard(item);
   }
 })();
