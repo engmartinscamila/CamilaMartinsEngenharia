@@ -9,7 +9,7 @@
       partDirectory: 'assets/projetos/tiny-house-signature/3d-aprovado',
       parts: 15,
       bytes: 3499172,
-      checksum: '00e46596b59097573025f2c3a35c543b43708816834e6ddb41c3d4bb3ba53180',
+      checksum: '959a0fd723117e0b803639c20a7a9146537ab4a5acb7a4111bf3251d4ff990fe',
       orbit: '30deg 75deg auto'
     },
     {
