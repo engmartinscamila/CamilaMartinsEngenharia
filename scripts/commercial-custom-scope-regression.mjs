@@ -4,13 +4,14 @@ import vm from 'node:vm';
 
 // Executa apenas a função pura de leitura do formulário, sem sessão, rede ou banco.
 const source = fs.readFileSync('js/commercial-documents-web.js', 'utf8');
-const start = source.indexOf('  function form() {');
+const start = source.indexOf('  function optionalNumericFormValue(');
+const formStart = source.indexOf('  function form() {');
 const end = source.indexOf('\n  async function lookup(', start);
-assert.ok(start >= 0 && end > start, 'Função form() não localizada');
+assert.ok(start >= 0 && formStart > start && end > formStart, 'Leitura do formulário e tratamento numérico não localizados');
 const snippet = source.slice(start, end);
 const servicesCatalog = [['a', 'Estudo Preliminar'], ['p', 'Outro'], ['q', 'Consultoria Técnica']];
-function inspect({ custom = '', selected = [] } = {}) {
-  const inputs = new Map([['customService', custom], ['prospectName', 'Prospect fictício'], ['experienceLevel', 'bronze']]);
+function inspect({ custom = '', selected = [], numerics = {} } = {}) {
+  const inputs = new Map([['customService', custom], ['prospectName', 'Prospect fictício'], ['experienceLevel', 'bronze'], ...Object.entries(numerics)]);
   const elements = { getElementById: id => ({ value: inputs.get(id) ?? '' }), querySelector: selector => {
     const match = selector.match(/^\[data-service="([a-z]+)"\]$/);
     return match ? { checked: selected.includes(match[1]) } : null;
@@ -21,6 +22,12 @@ function inspect({ custom = '', selected = [] } = {}) {
     $: elements.getElementById,
   });
 }
+for (const placeholder of ['-', '–', '—']) {
+  const blank = inspect({ numerics: { areaTerreno: placeholder, areaConstruida: placeholder, totalValue: placeholder } });
+  for (const field of ['area_terreno_m2', 'area_construida_m2', 'total_value']) assert.equal(blank[field], '', 'Marcador opcional não deve virar número inválido');
+}
+assert.equal(inspect({ numerics: { areaTerreno: '123,45', totalValue: '1.250,00' } }).area_terreno_m2, '123,45');
+assert.equal(inspect({ numerics: { totalValue: '1.250,00' } }).total_value, '1.250,00');
 const customOnly = inspect({ custom: 'Vistoria específica de fachada' });
 assert.equal(customOnly.services.filter(item => item.included).length, 1, 'Descrição livre deve selecionar uma única atividade');
 assert.equal(customOnly.services.find(item => item.code === 'p').included, true, 'Outro precisa estar vinculado ao snapshot');
