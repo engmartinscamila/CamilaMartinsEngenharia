@@ -128,6 +128,12 @@ const supabaseMock = `
   const session = { user, access_token:"mock-token" };
 
   const sample = {
+    commercial_records: window.__QA_QUOTE_SOURCES__ ? [100,200].map((value,index)=>({
+      id:'qa-q'+(index+1),quote_number:'ORC-QA-00'+(index+1),record_kind:'orcamento',
+      prospect_name:'Cliente de teste comercial',email:'quote@example.invalid',total_value:value,
+      quote_document_id:'qa-doc-'+(index+1),services:[{code:'p',name:'Outro',included:true}],
+      payment_terms:[],created_at:'2026-01-01T00:00:00Z'
+    })) : [],
     clientes:[{id:"c1", user_id:"client-test", nome:"Cliente Teste", email:"cliente@teste.local", status:"ativo", parceria:false}],
     projetos:[{id:"p1", cliente_id:"c1", nome:"Projeto Teste", status:"em_andamento", numero_contrato:"TESTE-001", parceria:false}],
     documentos:[{id:"d1", cliente_id:"c1", projeto_id:"p1", nome:"Documento Teste", titulo:"Documento Teste", tipo:"projeto", nome_original:"teste.pdf", arquivo:"c1/p1/teste.pdf", autoral:true}],
@@ -375,12 +381,13 @@ async function responsive(page, label) {
   }
 }
 
-async function loadPage(context, file) {
+async function loadPage(context, file, setup) {
   const page = await context.newPage();
   const pageErrors = [];
   page.__cmePageErrors = pageErrors;
   page.on("pageerror", error => pageErrors.push(error.message));
   page.on("dialog", dialog => dialog.accept().catch(()=>{}));
+  if(setup)await page.addInitScript(setup);
   await installMocks(page);
   await page.goto(`${BASE}/${file}?teste=${Date.now()}`, { waitUntil:"domcontentloaded", timeout:15000 });
   await page.waitForTimeout(900);
@@ -544,19 +551,26 @@ for (const [file,container] of [
 
 // Contratos: a interface deve permitir selecionar vários ORCs.
 {
-  const page = await loadPage(context, "orcamentos-contratos.html");
+  const page = await loadPage(context, "orcamentos-contratos.html",()=>{window.__QA_QUOTE_SOURCES__=true;});
   await page.locator('[data-doc-tab="contrato"]').click();
   await page.waitForTimeout(120);
 
   const select = page.locator("#contractQuoteSelect");
   assert(await select.count() === 1, "orcamentos-contratos.html: seletor de ORCs ausente");
   if (await select.count()) {
-    assert(
-      await select.getAttribute("multiple") !== null,
-      "orcamentos-contratos.html: seletor ainda aceita somente um ORC"
-    );
-    const label = (await page.locator('label[for="contractQuoteSelect"]').textContent() || "").trim();
-    assert(/um ou mais orçamentos/i.test(label), `orcamentos-contratos.html: rótulo do vínculo múltiplo inesperado: ${label}`);
+    assert(await select.getAttribute("multiple") === null,"Orçamento principal precisa usar seleção compacta");
+    assert(await page.locator('#contractSourceQuote').isChecked(),'Origem por orçamento começa selecionada');
+    await select.selectOption('commercial:qa-q1');
+    assert(await page.locator('#prospectName').inputValue()==='Cliente de teste comercial','Seleção deve importar os dados do cliente');
+    assert(await page.locator('#totalValue').inputValue()==='100,00','Valor do orçamento principal deve ser importado');
+    await page.locator('#contractMoreQuotes > summary').click();
+    await page.locator('[data-quote-extra="commercial:qa-q2"]').check();
+    assert(await page.locator('#totalValue').inputValue()==='300,00','Vínculo adicional deve preservar a soma dos dois ORCs');
+    assert(await page.locator('[data-quote-extra]:checked').count()===1,'Orçamento adicional deve permanecer selecionado');
+    await page.locator('#contractSourceManual').check();
+    assert(await page.locator('#contractSourceQuoteFields').isHidden(),'Contrato direto deve ocultar a origem por orçamento');
+    assert(await select.inputValue()===''&&await page.locator('[data-quote-extra]:checked').count()===0,'Contrato direto não pode carregar vínculos antigos');
+
   }
 
   const documentModal = page.locator("#documentModal");
