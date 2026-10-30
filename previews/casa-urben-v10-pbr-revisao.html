@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Casa Urben — Maquete 3D Interativa Final | Camila Martins Engenharia</title>
+<style>
+:root{font-family:Inter,'Segoe UI',system-ui,sans-serif;color:#e8edf2;color-scheme:dark;background:#071626}
+*{box-sizing:border-box}body{margin:0;background:#071626}.wrap{padding:20px 26px;max-width:1750px;margin:auto}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:0 0 15px}
+.brand{font:italic 25px Georgia,serif;color:#ddbb79}.sub{font-size:9px;letter-spacing:3px;color:#c4cdd5}
+h1{font-size:clamp(19px,2.2vw,31px);margin:0;font-weight:420}.meta{font-size:12px;color:#c9d0d7;margin-top:7px}
+.status{font-size:11px;color:#dec68d;text-transform:uppercase;letter-spacing:1.2px}
+.frame{position:relative;height:min(72vh,790px);min-height:440px;border:1px solid #355067;overflow:hidden;border-radius:12px;background:linear-gradient(135deg,#d9e4e3,#becdd0);touch-action:none}
+canvas{width:100%;height:100%;display:block;outline:0}.bar{position:absolute;left:14px;top:14px;display:flex;gap:6px;flex-wrap:wrap;z-index:5;right:14px;pointer-events:none}
+.bar button{pointer-events:auto;border:1px solid #344457;padding:10px 12px;background:#0b1b2be9;border-radius:6px;color:#fff;cursor:pointer;font-size:12px}
+.bar button:hover,.bar button.active{background:#344e65;border-color:#d4b375}
+.legend{position:absolute;bottom:12px;left:12px;max-width:calc(100% - 24px);background:#091b2bdc;padding:9px 14px;font-size:11px;border-radius:7px;color:#fff}
+#overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:11px;text-align:center;background:#071725ed;z-index:8;padding:24px}
+#overlay[hidden]{display:none}.track{height:4px;background:#475767;width:min(400px,75vw);overflow:hidden;border-radius:10px}.fill{height:100%;width:0;background:#d6b476;transition:width .3s}
+.hint{color:#bcc4cd;font-size:13px}.footer{color:#abb8c1;font-size:12px;line-height:1.5;padding:14px 0}.footer b{color:#d8bd8b}
+@media(max-width:700px){.wrap{padding:9px}.frame{height:78vh;min-height:430px}.bar{left:6px;top:6px;gap:4px;right:6px}.bar button{padding:9px 7px;font-size:11px}.legend{font-size:10px}}
+</style></head><body><main class="wrap">
+<header><div><div class="brand">Camila Martins</div><div class="sub">ENGENHARIA CIVIL</div></div><div class="status">CASA URBEN · REVISÃO 3D V10 · PISCINA E GARAGEM</div></header>
+<h1>Casa Urben | Visualização 3D com materiais PBR</h1>
+<div class="meta">Modelo GLB real · esquadrias da V8 · piscina revisada · garagem sem grama · materiais PBR</div>
+<section class="frame" id="frame"><canvas id="scene"></canvas>
+<div class="bar"><button data-view="frente" class="active">Fachada</button><button data-view="lateral">Lateral</button><button data-view="fundos">Fundos</button><button data-view="tres">3/4</button><button data-view="implantacao">Implantação</button><button data-view="piscina">Piscina</button><button id="turn">Girar 360°</button><button id="reset">Restaurar</button></div>
+<div class="legend">Arraste para girar · Role para aproximar · Clique nos botões para alterar a vista</div>
+<div id="overlay"><strong id="message">Preparando renderização PBR completa...</strong><div class="track"><div class="fill" id="fill"></div></div><span class="hint" id="detail">Materiais PBR e texturas carregados diretamente do modelo GLB</span></div>
+</section><div class="footer"><b>Geometria preservada:</b> modelo derivado do SketchUp. Piso da garagem e espelho d’água corrigidos; grama indevida retirada do deck. Volumetria e esquadrias preservadas. Esta versão usa GPU/WebGL para exibir as texturas; não é a prévia simplificada Canvas da V8.4.</div></main>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"}}</script>
+<script id="glb-manifest" type="application/json">{"parts":["part-01.txt","part-02.txt","part-03.txt","part-04.txt","part-05.txt","part-06.txt","part-07.txt","part-08.txt","part-09.txt","part-10.txt","part-11.txt","part-12.txt","part-13.txt","part-14.txt","part-15.txt","part-16.txt","part-17.txt","part-18.txt","part-19.txt","part-20.txt","part-21.txt"],"total":21,"version":"v9"}</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+const $=s=>document.querySelector(s), overlay=$('#overlay'),msg=$('#message'),detail=$('#detail'),fill=$('#fill'),frame=$('#frame'),canvas=$('#scene');
+function fail(e){ console.error(e);msg.textContent='Não foi possível iniciar o 3D neste navegador.';detail.textContent=(e&&e.message?e.message:'Ative a aceleração de hardware / WebGL no navegador.').slice(0,220);fill.style.background='#b66'; }
+try {
+ if(!window.WebGLRenderingContext) throw Error('WebGL indisponível. Ative aceleração de hardware no Brave/Chrome.');
+ const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+ renderer.outputColorSpace=THREE.SRGBColorSpace;
+ renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.24;
+ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+ const scene=new THREE.Scene(); scene.background=new THREE.Color('#d4dfe2');
+ const camera=new THREE.PerspectiveCamera(47,1,.1,250);
+ const controls=new OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.065;controls.minDistance=5;controls.maxDistance=125;controls.maxPolarAngle=Math.PI*.49;
+ const hem=new THREE.HemisphereLight(0xe4f5ff,0x99a084,2.15);scene.add(hem);
+ const sun=new THREE.DirectionalLight(0xffe6c3,3.4);sun.position.set(-20,44,35);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-34;sun.shadow.camera.right=34;sun.shadow.camera.top=40;sun.shadow.camera.bottom=-40;sun.shadow.camera.near=1;sun.shadow.camera.far=130;sun.shadow.bias=-.00008;scene.add(sun);
+ const fillLight=new THREE.DirectionalLight(0xb2d4ef,1.0);fillLight.position.set(30,12,-15);scene.add(fillLight);
+ try{const pmrem=new THREE.PMREMGenerator(renderer);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;pmrem.dispose();}catch(e){console.warn('Ambiente PBR simplificado',e)}
+ if(!('DecompressionStream' in window))throw Error('Navegador sem descompactação nativa. Use Brave/Chrome/Edge atualizado.');
+ const manifest=JSON.parse($('#glb-manifest').textContent);
+ msg.textContent='Baixando modelo 3D com materiais PBR...';
+ const pieces=await Promise.all(manifest.parts.map(async(p)=>{
+    const response=await fetch('./casa-urben-v9-assets/'+p,{cache:'force-cache'});
+    if(!response.ok)throw Error('Parte do modelo indisponível: '+p+' HTTP '+response.status);
+    return (await response.text()).trim();
+ }));
+ const base=atob(pieces.join(''));const packed=new Uint8Array(base.length);
+ for(let i=0;i<base.length;i++)packed[i]=base.charCodeAt(i);
+ const deflate=new Blob([packed]).stream().pipeThrough(new DecompressionStream('deflate'));
+ const bytes=new Uint8Array(await new Response(deflate).arrayBuffer());
+ msg.textContent='Carregando materiais e esquadrias em 3D...';fill.style.width='70%';
+ const gltf=await new Promise((resolve,reject)=>{new GLTFLoader().parse(bytes.buffer,'',resolve,reject)});
+ const model=gltf.scene;
+
+function refineV10(model) {
+ const store={}; model.traverse(o=>{if(o.isMesh)store[o.name]=o;});
+ const grass=store['grass_002'],water=store['water_007'],stucco=store['stucco_006'],pavers=store['pavers_004'];
+ if(!grass||!water||!stucco||!pavers)throw Error('Malhas da Casa Urben não encontradas. Nenhuma alteração parcial aplicada.');
+ function split(mesh, classify) {
+   const src=mesh.geometry.index?mesh.geometry.toNonIndexed():mesh.geometry;
+   const attr=src.getAttribute('position'), count=attr.count/3;
+   if(!Number.isInteger(count))throw Error('Malha inválida: '+mesh.name);
+   const buckets={keep:[],garage:[],water:[],drop:[]};
+   const min=[0,0,0], max=[0,0,0], center=[0,0,0];
+   for(let f=0;f<count;f++){
+     for(let axis=0;axis<3;axis++){
+       let lo=Infinity,hi=-Infinity,sum=0;
+       for(let j=0;j<3;j++){const v=attr.array[(f*3+j)*attr.itemSize+axis];lo=Math.min(lo,v);hi=Math.max(hi,v);sum+=v;}
+       min[axis]=lo;max[axis]=hi;center[axis]=sum/3;
+     }
+     const side=classify(min,max,center,f);
+     if(!(side in buckets))throw Error('Classificação inválida para '+mesh.name);
+     buckets[side].push(f);
+   }
+   function make(ids){
+     const result=new THREE.BufferGeometry();
+     for(const [key,a] of Object.entries(src.attributes)){
+       const dst=new a.array.constructor(ids.length*3*a.itemSize);
+       for(let n=0;n<ids.length;n++){
+         const start=ids[n]*3*a.itemSize;
+         dst.set(a.array.subarray(start,start+3*a.itemSize),n*3*a.itemSize);
+       }
+       result.setAttribute(key,new THREE.BufferAttribute(dst,a.itemSize,a.normalized));
+     }
+     if(!result.getAttribute('normal'))result.computeVertexNormals();
+     result.computeBoundingSphere();
+     return result;
+   }
+   mesh.geometry=make(buckets.keep);
+   return {counts:Object.fromEntries(Object.entries(buckets).map(([k,v])=>[k,v.length])),
+           garage:buckets.garage.length?make(buckets.garage):null,
+           water:buckets.water.length?make(buckets.water):null};
+ }
+ const a=split(grass,(mi,ma)=> {
+   if(mi[2]>11.7&&ma[2]<16.0&&mi[0]>-.1)return 'garage';
+   if(ma[2]<-20.5&&ma[0]>5.0&&mi[0]<-2.7)return 'drop';
+   return 'keep';
+ });
+ const b=split(water,(mi,ma)=>{
+   if(ma[1]<.05&&(ma[2]<-24.1||mi[0]>5.25))return 'drop';
+   return 'keep';
+ });
+ const c=split(stucco,(mi,ma,ctr,f)=>{
+   if(Math.abs(ctr[1]-.35975)<.003&&ctr[0]<-.9&&ctr[0]>-1.2&&ctr[2]<-17.5&&ctr[2]>-19&&
+      Math.abs(ma[1]-mi[1])<.001&&
+      ((ma[0]-mi[0])*(ma[2]-mi[2]))>8)return 'water';
+   return 'keep';
+ });
+ if(a.counts.garage!==3||a.counts.drop!==2||b.counts.drop!==5||c.counts.water!==1)
+   throw Error('Conferência V10: faces divergentes do projeto original: '+JSON.stringify([a.counts,b.counts,c.counts]));
+ function attach(geom,material,name){
+   const m=new THREE.Mesh(geom,material);m.name=name;m.matrixAutoUpdate=false;
+   m.matrix.copy(grass.matrix);grass.parent.add(m);m.receiveShadow=true;return m;
+ }
+ const garageMat=pavers.material.clone();garageMat.name='Urben V10 Piso Garagem';
+ const aux=attach(a.garage,garageMat,'Urben_V10_Piso_Garagem');
+ const waterMat=water.material.clone();
+ waterMat.name='Urben V10 Agua Piscina';waterMat.map=null;waterMat.color.setRGB(.23,.69,.73);
+ waterMat.opacity=.89;waterMat.transparent=true;waterMat.depthWrite=false;
+ waterMat.roughness=.08;waterMat.metalness=0;waterMat.side=THREE.DoubleSide;
+ waterMat.needsUpdate=true;water.material=waterMat;
+ const corrected=attach(c.water,waterMat,'Urben_V10_Espelho_Agua_Completo');
+ return {grass:a.counts,water:b.counts,stucco:c.counts};
+}
+
+ const correction=refineV10(model);console.info('V10 geometry corrections',correction);
+ model.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;o.receiveShadow=true;
+  if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats){if(m.name&&(/glass|vidro/i).test(m.name)){m.transparent=true;m.depthWrite=false;m.side=THREE.DoubleSide;m.metalness=.04;m.roughness=.13;m.opacity=Math.min(.72,Math.max(.36,m.opacity))}m.envMapIntensity=.76;m.needsUpdate=true}}
+ });
+ scene.add(model);
+ const center=new THREE.Vector3();new THREE.Box3().setFromObject(model).getCenter(center);
+ const target=new THREE.Vector3(0,1.15,3);controls.target.copy(target);
+ const cameras={
+   frente:[8,12,45],lateral:[28,13,9],fundos:[5,12,-43],tres:[23,17,34],implantacao:[0,72,4],piscina:[9,11,-32]};
+ function view(name){const p=cameras[name]||cameras.tres;camera.position.set(...p);controls.target.copy(name==='piscina'?new THREE.Vector3(0,.8,-16):target);camera.lookAt(controls.target);controls.update();document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===name));}
+ view('tres');fill.style.width='100%';overlay.hidden=true;
+ for(const b of document.querySelectorAll('[data-view]'))b.addEventListener('click',()=>{spinning=false;view(b.dataset.view)})
+ let spinning=false;$('#turn').onclick=()=>{spinning=!spinning;$('#turn').textContent=spinning?'Parar rotação':'Girar 360°'};$('#reset').onclick=()=>{spinning=false;view('tres')};
+ const resize=()=>{const w=frame.clientWidth,h=frame.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)};new ResizeObserver(resize).observe(frame);resize();
+ function tick(){requestAnimationFrame(tick);if(spinning){camera.position.applyAxisAngle(new THREE.Vector3(0,1,0),.003);camera.lookAt(controls.target);}controls.update();renderer.render(scene,camera)}tick();
+} catch(e){fail(e)}
+</script></body></html>
