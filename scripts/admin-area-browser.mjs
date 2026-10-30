@@ -48,6 +48,24 @@ try{for(const width of [1440,390]){
  await page.screenshot({path:`/tmp/admin-area-works-${width}.png`,fullPage:true});
  await page.goto(new URL('/portal/admin/finance-center/?view=entries&projectId=p1',base).href);
  const description=()=>page.getByPlaceholder('Ex.: Parcela 2 do contrato').locator('visible=true');
+ for(const layoutWidth of [1920,1280,960,390,360]){
+  await page.setViewportSize({width:layoutWidth,height:1000});
+  await page.goto(new URL('/portal/admin/finance-center/?view=entries&projectId=p1',base).href);
+  const categories=page.locator('#financialEntryCategories:visible');
+  await categories.waitFor();
+  await categories.scrollIntoViewIfNeeded();
+  const categoryBounds=await categories.boundingBox();
+  const optionBounds=await categories.getByRole('button').evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,clipped:node.scrollWidth>node.clientWidth+2};}));
+  assert.ok(optionBounds.length>=10,'Cobrir lista completa de categorias');
+  assert.ok(optionBounds.every(r=>r.top>=categoryBounds.y-1&&r.bottom<=categoryBounds.y+categoryBounds.height+1&&!r.clipped&&r.left>=0&&r.right<=layoutWidth+1),`${layoutWidth}px: categorias contidas no próprio seletor`);
+  const amountBounds=await page.getByLabel('Valor (R$)',{exact:true}).locator('visible=true').locator('..').boundingBox();
+  assert.ok(amountBounds.y>=categoryBounds.y+categoryBounds.height,`${layoutWidth}px: valor não sobrepõe categorias`);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2),false);
+  await categories.getByRole('button',{name:'Cronogramas',exact:true}).click();
+  if(layoutWidth===1920||layoutWidth===390)await page.screenshot({path:`/tmp/financial-layout-${layoutWidth}.png`});
+ }
+ await page.setViewportSize({width,height:1000});
+ await page.goto(new URL('/portal/admin/finance-center/?view=entries&projectId=p1',base).href);
  await description().fill('Lançamento não salvo');
  await page.getByRole('button',{name:'Horas e margem',exact:true}).click();
  await page.getByRole('button',{name:'Lançamentos',exact:true}).click();
