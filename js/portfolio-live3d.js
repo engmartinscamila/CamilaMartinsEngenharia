@@ -63,7 +63,11 @@
           const sha = [...new Uint8Array(digest)].map(n => n.toString(16).padStart(2, '0')).join('');
           if (sha !== spec.checksum) throw new Error('Integridade da Casa Urben não confirmada');
         }
-        return URL.createObjectURL(new Blob([buffer], { type: 'model/gltf-binary' }));
+        // Aplicar geometria/materialidade V17 antes de abrir no mesmo model-viewer dos outros projetos.
+        // Não modifica os 31 arquivos GLB originais preservados no repositório.
+        const { upgradeUrbenGLB } = await import(new URL('js/casa-urben-v17-glb-patch.js?v=20261030-2', document.baseURI).href);
+        const revised = upgradeUrbenGLB(buffer);
+        return URL.createObjectURL(new Blob([revised], { type: 'model/gltf-binary' }));
       }
       // Partes binárias remontam o GLB ORIGINAL byte a byte no navegador;
       // não há downgrade de textura ou geometria na Tiny House.
