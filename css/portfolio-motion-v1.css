@@ -41,9 +41,8 @@
   .featured-project-card .featured-motion-label{display:none!important}
 }
 
-/* Casa Urben: usar foto original do acervo com a esquadria lateral visível.
-   Evitar o recorte central que escondia a janela e não usar a capa noturna incorreta. */
+/* Casa Urben: imagem 03 original da galeria, enquadrada ao centro do cartão. */
 .featured-project-card[href*="casa-urban"] > img {
-  object-position: 18% center;
+  object-position: center center;
   filter: saturate(.86) contrast(1.03);
 }
