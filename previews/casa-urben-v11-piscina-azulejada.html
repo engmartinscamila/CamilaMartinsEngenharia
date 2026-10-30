@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Casa Urben — Maquete 3D Interativa Final | Camila Martins Engenharia</title>
+<style>
+:root{font-family:Inter,'Segoe UI',system-ui,sans-serif;color:#e8edf2;color-scheme:dark;background:#071626}
+*{box-sizing:border-box}body{margin:0;background:#071626}.wrap{padding:20px 26px;max-width:1750px;margin:auto}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:0 0 15px}
+.brand{font:italic 25px Georgia,serif;color:#ddbb79}.sub{font-size:9px;letter-spacing:3px;color:#c4cdd5}
+h1{font-size:clamp(19px,2.2vw,31px);margin:0;font-weight:420}.meta{font-size:12px;color:#c9d0d7;margin-top:7px}
+.status{font-size:11px;color:#dec68d;text-transform:uppercase;letter-spacing:1.2px}
+.frame{position:relative;height:min(72vh,790px);min-height:440px;border:1px solid #355067;overflow:hidden;border-radius:12px;background:linear-gradient(135deg,#d9e4e3,#becdd0);touch-action:none}
+canvas{width:100%;height:100%;display:block;outline:0}.bar{position:absolute;left:14px;top:14px;display:flex;gap:6px;flex-wrap:wrap;z-index:5;right:14px;pointer-events:none}
+.bar button{pointer-events:auto;border:1px solid #344457;padding:10px 12px;background:#0b1b2be9;border-radius:6px;color:#fff;cursor:pointer;font-size:12px}
+.bar button:hover,.bar button.active{background:#344e65;border-color:#d4b375}
+.legend{position:absolute;bottom:12px;left:12px;max-width:calc(100% - 24px);background:#091b2bdc;padding:9px 14px;font-size:11px;border-radius:7px;color:#fff}
+#overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:11px;text-align:center;background:#071725ed;z-index:8;padding:24px}
+#overlay[hidden]{display:none}.track{height:4px;background:#475767;width:min(400px,75vw);overflow:hidden;border-radius:10px}.fill{height:100%;width:0;background:#d6b476;transition:width .3s}
+.hint{color:#bcc4cd;font-size:13px}.footer{color:#abb8c1;font-size:12px;line-height:1.5;padding:14px 0}.footer b{color:#d8bd8b}
+@media(max-width:700px){.wrap{padding:9px}.frame{height:78vh;min-height:430px}.bar{left:6px;top:6px;gap:4px;right:6px}.bar button{padding:9px 7px;font-size:11px}.legend{font-size:10px}}
+</style></head><body><main class="wrap">
+<header><div><div class="brand">Camila Martins</div><div class="sub">ENGENHARIA CIVIL</div></div><div class="status">CASA URBEN · REVISÃO 3D V11 · PISCINA E GARAGEM</div></header>
+<h1>Casa Urben | Visualização 3D com materiais PBR</h1>
+<div class="meta">Modelo GLB real · esquadrias da V8 · piscina azulejada · água delimitada · pisos corrigidos · materiais PBR</div>
+<section class="frame" id="frame"><canvas id="scene"></canvas>
+<div class="bar"><button data-view="frente" class="active">Fachada</button><button data-view="lateral">Lateral</button><button data-view="fundos">Fundos</button><button data-view="tres">3/4</button><button data-view="implantacao">Implantação</button><button data-view="piscina">Piscina</button><button id="turn">Girar 360°</button><button id="reset">Restaurar</button></div>
+<div class="legend">Arraste para girar · Role para aproximar · Clique nos botões para alterar a vista</div>
+<div id="overlay"><strong id="message">Preparando renderização PBR completa...</strong><div class="track"><div class="fill" id="fill"></div></div><span class="hint" id="detail">Materiais PBR e texturas carregados diretamente do modelo GLB</span></div>
+</section><div class="footer"><b>Geometria preservada:</b> modelo derivado do SketchUp. Piso da garagem e espelho d’água corrigidos; grama indevida retirada do deck. Volumetria e esquadrias preservadas. Esta versão usa GPU/WebGL para exibir as texturas; não é a prévia simplificada Canvas da V8.4.</div></main>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"}}</script>
+<script id="glb-manifest" type="application/json">{"parts":["part-01.txt","part-02.txt","part-03.txt","part-04.txt","part-05.txt","part-06.txt","part-07.txt","part-08.txt","part-09.txt","part-10.txt","part-11.txt","part-12.txt","part-13.txt","part-14.txt","part-15.txt","part-16.txt","part-17.txt","part-18.txt","part-19.txt","part-20.txt","part-21.txt"],"total":21,"version":"v9"}</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+const $=s=>document.querySelector(s), overlay=$('#overlay'),msg=$('#message'),detail=$('#detail'),fill=$('#fill'),frame=$('#frame'),canvas=$('#scene');
+function fail(e){ console.error(e);msg.textContent='Não foi possível iniciar o 3D neste navegador.';detail.textContent=(e&&e.message?e.message:'Ative a aceleração de hardware / WebGL no navegador.').slice(0,220);fill.style.background='#b66'; }
+try {
+ if(!window.WebGLRenderingContext) throw Error('WebGL indisponível. Ative aceleração de hardware no Brave/Chrome.');
+ const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+ renderer.outputColorSpace=THREE.SRGBColorSpace;
+ renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.24;
+ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+ const scene=new THREE.Scene(); scene.background=new THREE.Color('#d4dfe2');
+ const camera=new THREE.PerspectiveCamera(47,1,.1,250);
+ const controls=new OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.065;controls.minDistance=5;controls.maxDistance=125;controls.maxPolarAngle=Math.PI*.49;
+ const hem=new THREE.HemisphereLight(0xe4f5ff,0x99a084,2.15);scene.add(hem);
+ const sun=new THREE.DirectionalLight(0xffe6c3,3.4);sun.position.set(-20,44,35);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-34;sun.shadow.camera.right=34;sun.shadow.camera.top=40;sun.shadow.camera.bottom=-40;sun.shadow.camera.near=1;sun.shadow.camera.far=130;sun.shadow.bias=-.00008;scene.add(sun);
+ const fillLight=new THREE.DirectionalLight(0xb2d4ef,1.0);fillLight.position.set(30,12,-15);scene.add(fillLight);
+ try{const pmrem=new THREE.PMREMGenerator(renderer);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;pmrem.dispose();}catch(e){console.warn('Ambiente PBR simplificado',e)}
+ if(!('DecompressionStream' in window))throw Error('Navegador sem descompactação nativa. Use Brave/Chrome/Edge atualizado.');
+ const manifest=JSON.parse($('#glb-manifest').textContent);
+ msg.textContent='Baixando modelo 3D com materiais PBR...';
+ const pieces=await Promise.all(manifest.parts.map(async(p)=>{
+    const response=await fetch('./casa-urben-v9-assets/'+p,{cache:'force-cache'});
+    if(!response.ok)throw Error('Parte do modelo indisponível: '+p+' HTTP '+response.status);
+    return (await response.text()).trim();
+ }));
+ const base=atob(pieces.join(''));const packed=new Uint8Array(base.length);
+ for(let i=0;i<base.length;i++)packed[i]=base.charCodeAt(i);
+ const deflate=new Blob([packed]).stream().pipeThrough(new DecompressionStream('deflate'));
+ const bytes=new Uint8Array(await new Response(deflate).arrayBuffer());
+ msg.textContent='Carregando materiais e esquadrias em 3D...';fill.style.width='70%';
+ const gltf=await new Promise((resolve,reject)=>{new GLTFLoader().parse(bytes.buffer,'',resolve,reject)});
+ const model=gltf.scene;
+
+function refineV11(model) {
+ const store={}; model.traverse(o=>{if(o.isMesh)store[o.name]=o;});
+ const grass=store['grass_002'],water=store['water_007'],stucco=store['stucco_006'],pavers=store['pavers_004'];
+ if(!grass||!water||!stucco||!pavers)throw Error('Malhas da Casa Urben não encontradas. Nenhuma alteração parcial aplicada.');
+ function split(mesh, classify) {
+   const src=mesh.geometry.index?mesh.geometry.toNonIndexed():mesh.geometry;
+   const attr=src.getAttribute('position'), count=attr.count/3;
+   if(!Number.isInteger(count))throw Error('Malha inválida: '+mesh.name);
+   const buckets={keep:[],garage:[],water:[],drop:[]};
+   const min=[0,0,0], max=[0,0,0], center=[0,0,0];
+   for(let f=0;f<count;f++){
+     for(let axis=0;axis<3;axis++){
+       let lo=Infinity,hi=-Infinity,sum=0;
+       for(let j=0;j<3;j++){const v=attr.array[(f*3+j)*attr.itemSize+axis];lo=Math.min(lo,v);hi=Math.max(hi,v);sum+=v;}
+       min[axis]=lo;max[axis]=hi;center[axis]=sum/3;
+     }
+     const side=classify(min,max,center,f);
+     if(!(side in buckets))throw Error('Classificação inválida para '+mesh.name);
+     buckets[side].push(f);
+   }
+   function make(ids){
+     const result=new THREE.BufferGeometry();
+     for(const [key,a] of Object.entries(src.attributes)){
+       const dst=new a.array.constructor(ids.length*3*a.itemSize);
+       for(let n=0;n<ids.length;n++){
+         const start=ids[n]*3*a.itemSize;
+         dst.set(a.array.subarray(start,start+3*a.itemSize),n*3*a.itemSize);
+       }
+       result.setAttribute(key,new THREE.BufferAttribute(dst,a.itemSize,a.normalized));
+     }
+     if(!result.getAttribute('normal'))result.computeVertexNormals();
+     result.computeBoundingSphere();
+     return result;
+   }
+   mesh.geometry=make(buckets.keep);
+   return {counts:Object.fromEntries(Object.entries(buckets).map(([k,v])=>[k,v.length])),
+           garage:buckets.garage.length?make(buckets.garage):null,
+           water:buckets.water.length?make(buckets.water):null};
+ }
+ const a=split(grass,(mi,ma)=> {
+   if(mi[2]>11.7&&ma[2]<16.0&&mi[0]>-.1)return 'garage';
+   if(ma[2]<-20.5&&ma[0]>5.0&&mi[0]<-2.7)return 'drop';
+   return 'keep';
+ });
+ const b=split(water,(mi,ma)=>{
+   if(ma[1]<.05&&(ma[2]<-24.1||mi[0]>5.25))return 'drop';
+   return 'keep';
+ });
+ const c=split(stucco,(mi,ma,ctr,f)=>{
+   if(Math.abs(ctr[1]-.35975)<.003&&ctr[0]<-.9&&ctr[0]>-1.2&&ctr[2]<-17.5&&ctr[2]>-19&&
+      Math.abs(ma[1]-mi[1])<.001&&
+      ((ma[0]-mi[0])*(ma[2]-mi[2]))>8)return 'water';
+   return 'keep';
+ });
+ if(a.counts.garage!==3||a.counts.drop!==2||b.counts.drop!==5||c.counts.water!==1)
+   throw Error('Conferência V11: faces divergentes do projeto original: '+JSON.stringify([a.counts,b.counts,c.counts]));
+ function attach(geom,material,name){
+   const m=new THREE.Mesh(geom,material);m.name=name;m.matrixAutoUpdate=false;
+   m.matrix.copy(grass.matrix);grass.parent.add(m);m.receiveShadow=true;return m;
+ }
+ const garageMat=pavers.material.clone();garageMat.name='Urben V11 Piso Garagem';
+ const aux=attach(a.garage,garageMat,'Urben_V11_Piso_Garagem');
+ const waterMat=water.material.clone();
+ waterMat.name='Urben V11 Agua Piscina';waterMat.map=null;waterMat.color.setRGB(.23,.69,.73);
+ waterMat.opacity=.89;waterMat.transparent=true;waterMat.depthWrite=false;
+ waterMat.roughness=.08;waterMat.metalness=0;waterMat.side=THREE.DoubleSide;
+ waterMat.needsUpdate=true;water.material=waterMat;
+ const corrected=attach(c.water,waterMat,'Urben_V11_Espelho_Agua_Completo');
+ return {grass:a.counts,water:b.counts,stucco:c.counts};
+}
+
+ const correction=refineV11(model);console.info('V11 geometry corrections',correction);
+ model.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;o.receiveShadow=true;
+  if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats){if(m.name&&(/glass|vidro/i).test(m.name)){m.transparent=true;m.depthWrite=false;m.side=THREE.DoubleSide;m.metalness=.04;m.roughness=.13;m.opacity=Math.min(.72,Math.max(.36,m.opacity))}m.envMapIntensity=.76;m.needsUpdate=true}}
+ });
+ scene.add(model);
+
+function patchCasaUrbenV11(){
+ const floor=model.getObjectByName('pavers_004');
+ if(!floor)throw Error('Material de piso externo indisponível');
+ const floorMat=floor.material.clone();
+ function replaceFaces(n, predicate, title){
+  const o=model.getObjectByName(n);
+  if(!o||!o.isMesh)throw Error('Geometria original não encontrada: '+n);
+  const geo=o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone();
+  const po=geo.getAttribute('position'),names=Object.keys(geo.attributes),kept={},add=[];
+  names.forEach(k=>kept[k]=[]);
+  for(let i=0;i<po.count;i+=3){
+    let c=[0,0,0],v=[];
+    for(let j=0;j<3;j++){
+      const p=[po.getX(i+j),po.getY(i+j),po.getZ(i+j)];
+      v.push(p);for(let k=0;k<3;k++)c[k]+=p[k]/3;
+    }
+    const a=new THREE.Vector3(...v[1]).sub(new THREE.Vector3(...v[0]));
+    const d=new THREE.Vector3(...v[2]).sub(new THREE.Vector3(...v[0]));
+    const area=a.cross(d).length()/2;
+    if(predicate(c,area)){
+      if(c[1]>.014 && c[2]>-20.5){
+        v.forEach(p=>add.push(p[0],p[1]+.014,p[2]));
+      } else if(n==='wood_008' && c[1]>.014) {
+        v.forEach(p=>add.push(p[0],p[1]+.014,p[2]));
+      }
+    } else {
+      for(const k of names){
+       const att=geo.getAttribute(k);
+       for(let j=0;j<3;j++)for(let q=0;q<att.itemSize;q++)kept[k].push(att.array[(i+j)*att.itemSize+q]);
+      }
+    }
+  }
+  const g=new THREE.BufferGeometry();
+  for(const k of names){
+    const att=geo.getAttribute(k);
+    g.setAttribute(k,new THREE.BufferAttribute(new att.array.constructor(kept[k]),att.itemSize,att.normalized));
+  }
+  o.geometry=g;
+  if(add.length){
+    const m=new THREE.BufferGeometry(),uv=[];
+    for(let i=0;i<add.length;i+=3)uv.push(add[i]/2.2,add[i+2]/2.2);
+    m.setAttribute('position',new THREE.Float32BufferAttribute(add,3));
+    m.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+    m.computeVertexNormals();
+    const mesh=new THREE.Mesh(m,floorMat);mesh.name=title;mesh.receiveShadow=true;model.add(mesh);
+  }
+ }
+ // V9 hospedada possuía grama na garagem, pátio e até nas bordas da piscina.
+ replaceFaces('grass_002',(c,a)=>c[2]<-.3 || (c[2]>11.7&&c[2]<15.9&&c[0]>0),'Urben_V11_Pisos_Exteriores');
+ replaceFaces('wood_008',(c,a)=>c[2]<-9.0&&c[1]<.05&&a>.4&&(c[0]<-3||a>5||c[2]<-22),'Urben_V11_Deck_Indevido_Removido');
+ // A versão hospedada anterior contém duas malhas de água fora do tanque.
+ for(const n of ['water_007','Urben_V11_Espelho_Agua_Completo']){
+  const o=model.getObjectByName(n);if(o)o.visible=false;
+ }
+ // Cobrir a face de argamassa indevidamente exposta no espelho d'água.
+ const stucco=model.getObjectByName('stucco_006');
+ if(stucco&&stucco.isMesh){
+  const geo=stucco.geometry.index?stucco.geometry.toNonIndexed():stucco.geometry.clone();
+  const p=geo.getAttribute('position'),n=Object.keys(geo.attributes), keep={};n.forEach(k=>keep[k]=[]);
+  for(let i=0;i<p.count;i+=3){
+    const ax=p.getX(i),bx=p.getX(i+1),cx=p.getX(i+2), 
+          az=p.getZ(i),bz=p.getZ(i+1),cz=p.getZ(i+2),
+          y=(p.getY(i)+p.getY(i+1)+p.getY(i+2))/3;
+    const area=Math.abs((bx-ax)*(cz-az)-(cx-ax)*(bz-az))/2;
+    const bad=Math.abs(y-.35975)<.002&&area>5.5&&area<6.5&&(az+bz+cz)/3<-17;
+    if(!bad)for(const k of n){
+      const att=geo.getAttribute(k);
+      for(let j=0;j<3;j++)for(let q=0;q<att.itemSize;q++)keep[k].push(att.array[(i+j)*att.itemSize+q]);
+    }
+  }
+  const g=new THREE.BufferGeometry();
+  for(const k of n){const att=geo.getAttribute(k);g.setAttribute(k,new THREE.BufferAttribute(new att.array.constructor(keep[k]),att.itemSize,att.normalized));}
+  stucco.geometry=g;
+ }
+ // Perímetro real da lâmina d'água no arquivo 3D: piscina em L, sem extrapolar o tanque.
+ const outline=[[-2.37,-20.12],[4.63,-20.12],[4.63,-13.11],[1.63,-13.11],[1.63,-17.12],[-2.37,-17.12]];
+ const inner=[[-2.335,-20.085],[4.595,-20.085],[4.595,-13.145],[1.665,-13.145],[1.665,-17.155],[-2.335,-17.155]];
+ function surface(coords,h,mat,name,uvscale){
+   const v=coords.map(p=>new THREE.Vector2(...p)),ind=THREE.ShapeUtils.triangulateShape(v,[]);
+   const pos=[],uv=[];
+   for(const ids of ind){
+     let tri=ids.map(i=>[coords[i][0],h,coords[i][1]]);
+     const a=new THREE.Vector3(...tri[1]).sub(new THREE.Vector3(...tri[0]));
+     const b=new THREE.Vector3(...tri[2]).sub(new THREE.Vector3(...tri[0]));
+     if(a.cross(b).y<0)tri=[tri[0],tri[2],tri[1]];
+     for(const p of tri){pos.push(...p);uv.push(p[0]/uvscale,p[2]/uvscale)}
+   }
+   const g=new THREE.BufferGeometry();
+   g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+   g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.computeVertexNormals();
+   const o=new THREE.Mesh(g,mat);o.name=name;o.receiveShadow=true;model.add(o);
+ }
+ const tc=document.createElement('canvas');tc.width=tc.height=256;const ctx=tc.getContext('2d');
+ ctx.fillStyle='#aebcc1';ctx.fillRect(0,0,256,256);
+ for(let x=0;x<8;x++)for(let y=0;y<8;y++){
+  const c=(x*17+y*23)%11;
+  ctx.fillStyle='rgb('+(112+2*c)+','+(141+2*c)+','+(154+c)+')';
+  ctx.fillRect(32*x+2,32*y+2,29,29);
+ }
+ const tex=new THREE.CanvasTexture(tc);tex.colorSpace=THREE.SRGBColorSpace;tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
+ const tile=new THREE.MeshStandardMaterial({name:'Urben V11 - revestimento em azulejo',map:tex,roughness:.31,metalness:.02,side:THREE.DoubleSide});
+ surface(inner,.04,tile,'Urben_V11_Azulejo_Fundo_Da_Piscina',.51);
+ const vp=[],uv=[];
+ for(let i=0;i<outline.length;i++){
+  const a=outline[i],b=outline[(i+1)%outline.length],u=Math.hypot(b[0]-a[0],b[1]-a[1])/.51;
+  vp.push(a[0],.025,a[1],b[0],.025,b[1],b[0],.525,b[1], a[0],.025,a[1],b[0],.525,b[1],a[0],.525,a[1]);
+  uv.push(0,0,u,0,u,1,0,0,u,1,0,1);
+ }
+ const wg=new THREE.BufferGeometry();
+ wg.setAttribute('position',new THREE.Float32BufferAttribute(vp,3));
+ wg.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));wg.computeVertexNormals();
+ const wall=new THREE.Mesh(wg,tile);wall.name='Urben_V11_Azulejo_Paredes';model.add(wall);
+ const waterMat=new THREE.MeshPhysicalMaterial({name:'Urben V11 - água contida',color:0x258eaa,transparent:true,opacity:.56,roughness:.09,metalness:0,depthWrite:false,side:THREE.DoubleSide,clearcoat:.5});
+ surface(inner,.354,waterMat,'Urben_V11_Agua_Dentro_Do_Tanque',2.45);
+}
+patchCasaUrbenV11();
+
+ const center=new THREE.Vector3();new THREE.Box3().setFromObject(model).getCenter(center);
+ const target=new THREE.Vector3(0,1.15,3);controls.target.copy(target);
+ const cameras={
+   frente:[8,12,45],lateral:[28,13,9],fundos:[5,12,-43],tres:[23,17,34],implantacao:[0,72,4],piscina:[11,9,-27]};
+ function view(name){const p=cameras[name]||cameras.tres;camera.position.set(...p);controls.target.copy(name==='piscina'?new THREE.Vector3(1,.6,-17):target);camera.lookAt(controls.target);controls.update();document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===name));}
+ view('tres');fill.style.width='100%';overlay.hidden=true;
+ for(const b of document.querySelectorAll('[data-view]'))b.addEventListener('click',()=>{spinning=false;view(b.dataset.view)})
+ let spinning=false;$('#turn').onclick=()=>{spinning=!spinning;$('#turn').textContent=spinning?'Parar rotação':'Girar 360°'};$('#reset').onclick=()=>{spinning=false;view('tres')};
+ const resize=()=>{const w=frame.clientWidth,h=frame.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)};new ResizeObserver(resize).observe(frame);resize();
+ function tick(){requestAnimationFrame(tick);if(spinning){camera.position.applyAxisAngle(new THREE.Vector3(0,1,0),.003);camera.lookAt(controls.target);}controls.update();renderer.render(scene,camera)}tick();
+} catch(e){fail(e)}
+</script></body></html>
