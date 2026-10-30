@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Casa Urben | Prévia 3D V17</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,'Segoe UI',Arial,sans-serif;background:#081726;color:#ecf1f6}
+*{box-sizing:border-box}body{margin:0}.wrap{padding:20px 24px;max-width:1760px;margin:auto}
+header{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{font:italic 27px Georgia,serif;color:#e4bc76}.sub{font-size:9px;letter-spacing:2.5px;color:#b2c4d2}
+.status{font-size:12px;color:#ddc48f;letter-spacing:1px}h1{font-size:clamp(20px,2.5vw,30px);font-weight:450;margin:18px 0 5px}
+p{font-size:12px;color:#becad3;line-height:1.5}.frame{position:relative;background:#cad9de;border:1px solid #4f6a81;border-radius:12px;overflow:hidden;height:min(76vh,810px);min-height:440px}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+.toolbar{position:absolute;z-index:3;top:12px;left:12px;right:12px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none}
+button{pointer-events:auto;border:1px solid #37495d;border-radius:6px;background:#0a1c2eeb;color:#fff;padding:9px 12px;cursor:pointer;font-size:12px}
+button.active,button:hover{border-color:#d6bb83;background:#314b60}button:disabled{opacity:.6}
+.load{position:absolute;inset:0;display:grid;place-items:center;text-align:center;background:#0b2130f0;color:#fff;z-index:5;padding:30px;font-size:14px}
+.load[hidden]{display:none}.progress{height:5px;border-radius:8px;background:#486077;max-width:400px;margin:17px auto;overflow:hidden}
+#fill{background:#d8b777;height:5px;width:0;transition:width .2s}.fallback{font-size:12px;max-width:420px}
+a{color:#edd4a4}footer{font-size:12px;color:#b6c6d1;padding:14px 2px}
+@media(max-width:700px){.wrap{padding:8px}.toolbar{top:7px;left:7px;right:7px;gap:4px}button{font-size:11px;padding:8px 7px}.frame{height:78vh;min-height:430px}}
+</style></head><body><main class="wrap">
+<header><div><div class="brand">Camila Martins</div><div class="sub">ENGENHARIA CIVIL</div></div><div class="status">CASA URBEN · PRÉVIA V17 · SEM PUBLICAÇÃO NO PORTFÓLIO</div></header>
+<h1>Casa Urben | Revisão de modelagem tridimensional</h1>
+<p>Prévia técnica para aprovação. Geometria original preservada · revisão dos fechamentos, gramado, revestimentos e piscina · navegação livre.</p>
+<section class="frame" id="frame"><canvas id="scene"></canvas>
+<nav class="toolbar">
+<button data-view="frente" class="active">Fachada</button>
+<button data-view="lateral">Lateral</button><button data-view="fundos">Fundos</button>
+<button data-view="tres">3/4</button><button data-view="implantacao">Implantação</button>
+<button data-view="piscina">Piscina</button><button data-view="pergolado">Pergolado</button>
+<button id="day">Fim de tarde</button><button id="rotate">Girar 360°</button>
+<button id="reset">Restaurar</button><button id="download">Baixar GLB 3D</button>
+</nav>
+<div id="load" class="load"><div><b id="msg">Carregando o modelo 3D...</b><div class="progress"><div id="fill"></div></div><span class="fallback" id="detail">Conectando aos arquivos do modelo hospedados no site</span></div></div></section>
+<footer><b>Prévia V17 para conferência.</b> Arraste para girar, use a roda do mouse para aproximar. Caso apareça um erro, pressione Ctrl+F5.</footer>
+</main>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"}}</script>
+<script type="module">
+const $=s=>document.querySelector(s),load=$('#load'),msg=$('#msg'),detail=$('#detail'),fill=$('#fill'),frame=$('#frame'),canvas=$('#scene');
+let busy=false,model=null,byteBuffer=null,renderer,controls,scene,camera,sun,THREE,GltfExporter=null,day=true;
+const views={
+ frente:{eye:[17,9,42],target:[0,1.5,13]},lateral:{eye:[30,13,2],target:[0,1.5,1]},
+ fundos:{eye:[17,15,-39],target:[0,1,-15]},tres:{eye:[29,26,48],target:[0,1,1]},
+ implantacao:{eye:[0,66,.01],target:[0,0,0]},piscina:{eye:[11,9,-31],target:[1,.4,-16]},
+ pergolado:{eye:[14,6,-9],target:[1,1,-1]}
+};
+function setView(v){const t=views[v]||views.frente;camera.position.set(...t.eye);controls.target.set(...t.target);controls.update();document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));}
+function makeGrassMaterial(){
+ const c=document.createElement('canvas');c.width=c.height=256;const ctx=c.getContext('2d'),id=ctx.createImageData(256,256);
+ let seed=202617;function rand(){seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;}
+ for(let y=0;y<256;y++)for(let x=0;x<256;x++){
+  const i=(y*256+x)*4, variation=(rand()-.5)*38+Math.sin(x*.09+y*.07)*5;
+  id.data[i]=Math.max(0,95+variation*.6);id.data[i+1]=Math.max(0,128+variation);id.data[i+2]=Math.max(0,66+variation*.5);id.data[i+3]=255;
+ }
+ ctx.putImageData(id,0,0);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;t.colorSpace=THREE.SRGBColorSpace;
+ return new THREE.MeshStandardMaterial({name:'Urben V17 | Gramado',map:t,roughness:1,metalness:0,side:THREE.DoubleSide});
+}
+function applyCorrections(root){
+ const grassMaterial=makeGrassMaterial();
+ const found={};
+ root.traverse(o=>{if(!o.isMesh)return;found[o.name]=o;});
+ // Remover apenas o fragmento degenerado do vidro lateral; preservar as esquadrias originais.
+ if(found.glass_001?.geometry){
+  const original=found.glass_001.geometry;
+  if(original.groups?.length){
+   const copy=original.clone();const gs=copy.groups.filter(g=>g.start!==0 || g.count>3);
+   if(gs.length){copy.clearGroups();for(const g of gs)copy.addGroup(g.start,g.count,g.materialIndex);found.glass_001.geometry=copy;}
+  }
+ }
+ // Sobrepor apenas a superfície de fechamento da cobertura sem alterar inclinação ou volumes.
+ for(const key of ['Urben_Cobertura_Principal_Membrana_Continua','Urben_Cobertura_Fundos_Membrana_Continua']){
+  const o=found[key];if(!o)return;
+  o.material=new THREE.MeshStandardMaterial({name:'Urben V17 | Cobertura',color:0x27282a,roughness:.69,metalness:.04,side:THREE.DoubleSide});
+  o.receiveShadow=true;o.castShadow=false;o.renderOrder=1;
+ }
+ // Gramado externo: evitar atravessar o piso do tanque da piscina.
+ const lawn=found['Urben_Gramado_Recortado_Fora_Do_Tanque'];
+ if(lawn){
+  lawn.material=grassMaterial;
+  const pos=lawn.geometry.getAttribute('position'),idx=lawn.geometry.index;
+  if(pos&&idx){
+   const indices=[];for(let i=0;i<idx.count;i+=3){
+    const a=idx.getX(i),b=idx.getX(i+1),c=idx.getX(i+2);
+    let cx=(pos.getX(a)+pos.getX(b)+pos.getX(c))/3;
+    let cz=(pos.getZ(a)+pos.getZ(b)+pos.getZ(c))/3;
+    if(cx>-2.35&&cx<4.61&&cz>-20.1&&cz< -13.13)continue;
+    indices.push(a,b,c);
+   }
+   const geom=lawn.geometry.clone();geom.setIndex(indices);lawn.geometry=geom;
+  }
+ }
+ // Ajustar acabamento do material sem afetar dimensões nem remover componentes SketchUp.
+ const touched=new Set();
+ root.traverse(o=>{if(!o.isMesh)return;
+  for(let m of (Array.isArray(o.material)?o.material:[o.material])){
+   if(!m||touched.has(m))continue;touched.add(m);
+   const n=(m.name||'').toLowerCase(),ty=m.userData?.surfaceType||'';
+   if(n.includes('gramado')||n.includes('grass')){if(o!==lawn){m.roughness=1;m.metalness=0;}}
+   if(n.includes('revestimento ceramico')){m.transparent=false;m.depthWrite=true;m.roughness=.4;m.metalness=0;}
+   if(n.includes('pintura branco quente')){m.roughness=.84;m.metalness=0;}
+   if(ty==='water'||n.includes('agua contida')){m.transparent=true;m.opacity=.52;m.depthWrite=false;m.roughness=.09;m.side=THREE.DoubleSide;m.color.set(0x70b0bd);}
+   if(ty==='glass'||n.includes('glass')){m.transparent=true;m.opacity=Math.min(m.opacity,.48);m.depthWrite=false;m.roughness=.15;}
+   if(ty==='water'||ty==='glass')o.castShadow=false;else{o.castShadow=true;o.receiveShadow=true;}
+   m.needsUpdate=true;
+  }
+ });
+ return root;
+}
+async function getModel(){
+ const parts=Array.from({length:31},(_,i)=>'part-'+String(i+1).padStart(2,'0')+'.txt'),b64=new Array(parts.length);
+ let next=0,complete=0;
+ async function worker(){while(next<parts.length){
+  const i=next++;let r=await fetch('./casa-urben-v16-assets/'+parts[i],{cache:'force-cache'});
+  if(!r.ok)throw Error('Parte '+(i+1)+' indisponível (HTTP '+r.status+')');
+  b64[i]=(await r.text()).trim();complete++;fill.style.width=Math.round(70*complete/parts.length)+'%';detail.textContent='Baixando as malhas: '+complete+' / '+parts.length;
+ }}
+ await Promise.all(Array.from({length:4},worker));
+ msg.textContent='Descompactando modelo 3D…';
+ const compressed=Uint8Array.from(atob(b64.join('')),c=>c.charCodeAt(0));
+ const raw=await new Response(new Blob([compressed]).stream().pipeThrough(new DecompressionStream('deflate'))).arrayBuffer();
+ if(raw.byteLength!==11742280)throw Error('O modelo recebido está incompleto.');
+ byteBuffer=raw;fill.style.width='85%';return raw;
+}
+async function start(){
+ try{
+  const mods=await Promise.all([import('three'),import('three/addons/loaders/GLTFLoader.js'),import('three/addons/controls/OrbitControls.js'),import('three/addons/environments/RoomEnvironment.js')]);
+  THREE=mods[0];
+  renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.6));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.02;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  scene=new THREE.Scene();scene.background=new THREE.Color(0xcad9dd);
+  camera=new THREE.PerspectiveCamera(45,1,.1,200);controls=new mods[2].OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=2;controls.maxDistance=95;controls.maxPolarAngle=Math.PI*.485;
+  scene.add(new THREE.HemisphereLight(0xe9efff,0x909080,1.05));
+  sun=new THREE.DirectionalLight(0xffe8cc,2.15);sun.position.set(-18,30,28);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-35;sun.shadow.camera.right=35;sun.shadow.camera.top=35;sun.shadow.camera.bottom=-35;sun.shadow.camera.near=.5;sun.shadow.camera.far=120;sun.shadow.normalBias=.025;scene.add(sun);
+  const fillLight=new THREE.DirectionalLight(0xcfdfed,.34);fillLight.position.set(20,18,-20);scene.add(fillLight);
+  const pmrem=new THREE.PMREMGenerator(renderer);const room=new mods[3].RoomEnvironment();const env=pmrem.fromScene(room,.05);scene.environment=env.texture;room.dispose();pmrem.dispose();
+  const raw=await getModel();
+  msg.textContent='Preparando geometria e acabamentos…';
+  const gltf=await new Promise((yes,no)=>new mods[1].GLTFLoader().parse(raw,'',yes,no));
+  model=applyCorrections(gltf.scene);scene.add(model);fill.style.width='100%';
+  let keys=Object.keys(views);for(const b of document.querySelectorAll('[data-view]'))b.onclick=()=>{controls.autoRotate=false;$('#rotate').textContent='Girar 360°';setView(b.dataset.view);};
+  $('#rotate').onclick=()=>{controls.autoRotate=!controls.autoRotate;$('#rotate').textContent=controls.autoRotate?'Parar rotação':'Girar 360°';};
+  $('#reset').onclick=()=>{controls.autoRotate=false;$('#rotate').textContent='Girar 360°';setView('frente');};
+  $('#day').onclick=()=>{day=!day;sun.position.set(...(day?[-18,30,28]:[-21,14,22]));sun.intensity=day?2.15:2.3;sun.color.set(day?0xffe8cc:0xffd6a3);$('#day').textContent=day?'Fim de tarde':'Luz diurna';};
+  $('#download').onclick=async()=>{
+   const b=$('#download');b.disabled=true;b.textContent='Exportando…';
+   try{
+    const {GLTFExporter}=await import('three/addons/exporters/GLTFExporter.js');
+    const result=await new Promise((yes,no)=>new GLTFExporter().parse(model,yes,no,{binary:true,maxTextureSize:2048,onlyVisible:true}));
+    const url=URL.createObjectURL(new Blob([result],{type:'model/gltf-binary'})),a=document.createElement('a');
+    a.href=url;a.download='Casa_Urben_V17_Preview.glb';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
+   }catch(e){alert('Exportação indisponível: '+e.message);}finally{b.disabled=false;b.textContent='Baixar GLB 3D';}
+  };
+  const resize=()=>{camera.aspect=frame.clientWidth/frame.clientHeight;camera.updateProjectionMatrix();renderer.setSize(frame.clientWidth,frame.clientHeight,false);};
+  new ResizeObserver(resize).observe(frame);resize();setView('frente');
+  load.hidden=true;
+  renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera);});
+ }catch(e){
+  console.error(e);msg.textContent='Não foi possível abrir o visualizador';detail.innerHTML='Falha no carregamento: '+String(e.message).replace(/[<>]/g,'')+'<p>Tente atualizar com Ctrl+F5 ou usar o navegador Chrome/Edge.</p>';fill.style.width='0%';
+ }
+}
+start();
+</script></body></html>
