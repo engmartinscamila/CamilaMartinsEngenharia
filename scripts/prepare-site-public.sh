@@ -14,6 +14,15 @@ rm -rf site-public/assets/pdfs-protegidos
 cp -R css site-public/css
 cp -R js site-public/js
 
+# Expor SOMENTE a prévia técnica da Casa Urben para revisão no navegador.
+# Não inserir no portfólio, nem copiar todas as outras prévias do repositório.
+mkdir -p site-public/previews
+cp previews/casa-urben-v13-1-glb-corrigido.html site-public/previews/
+cp -R previews/casa-urben-v13-1-assets site-public/previews/
+# Link acessível para aprovação, mas não indexável por mecanismos de busca.
+sed -i 's/<head>/<head><meta name="robots" content="noindex,nofollow,noarchive">/' site-public/previews/casa-urben-v13-1-glb-corrigido.html
+test -f site-public/previews/casa-urben-v13-1-assets/part-17.txt
+
 # Reconstruir o GLB aprovado e corrigir os materiais após copiar para site-public.
 # A geometria da Vitalle e todos os demais arquivos ficam preservados.
 python3 scripts/portfolio_repair_v2.py site-public
