@@ -6,17 +6,14 @@
       id: 'tiny',
       title: 'Tiny House Signature',
       cardHref: 'tiny-house-signature',
-      partDirectory: 'assets/projetos/tiny-house-signature/3d-aprovado',
-      parts: 15,
-      bytes: 3499172,
-      checksum: '959a0fd723117e0b803639c20a7a9146537ab4a5acb7a4111bf3251d4ff990fe',
+      src: 'assets/projetos/tiny-house-signature/3d-aprovado/modelo-3d-fechado.glb?v=20261030-2',
       orbit: '30deg 75deg auto'
     },
     {
       id: 'vitalle',
       title: 'Empreendimento Vitalle',
       cardHref: 'empreendimento-vitalle',
-      src: 'assets/projetos/empreendimento-vitalle/modelo-3d-v6-aprovado.glb',
+      src: 'assets/projetos/empreendimento-vitalle/modelo-3d-v6-aprovado.glb?v=20261030-2',
       orbit: '25deg 74deg auto'
     }
   ];
