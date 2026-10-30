@@ -85,7 +85,7 @@ try {
  projectUV(findMesh('stucco_006'),2.5);
  projectUV(findMesh('stone_005'),1.9);
  // Face traseira da cobertura renderizável evita que a laje desapareça pela orientação das normais.
- for(const n of ['charcoal_000','charcoal_009','Urben_Nativa_581704','Urben_Nativa_581711','Urben_Nativa_581705','Urben_Nativa_581707']){
+ for(const n of ['charcoal_000','charcoal_009','SKP_Original_581704','SKP_Original_581711','SKP_Original_581705','SKP_Original_581707']){
    const o=findMesh(n);if(!o)continue;o.material=o.material.clone();
    o.material.side=THREE.DoubleSide;o.material.needsUpdate=true;
  }
