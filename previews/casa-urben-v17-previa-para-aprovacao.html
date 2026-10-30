@@ -68,7 +68,7 @@ function applyCorrections(root){
  }
  // Sobrepor apenas a superfície de fechamento da cobertura sem alterar inclinação ou volumes.
  for(const key of ['Urben_Cobertura_Principal_Membrana_Continua','Urben_Cobertura_Fundos_Membrana_Continua']){
-  const o=found[key];if(!o)return;
+  const o=found[key];if(!o)continue;
   o.material=new THREE.MeshStandardMaterial({name:'Urben V17 | Cobertura',color:0x27282a,roughness:.69,metalness:.04,side:THREE.DoubleSide});
   o.receiveShadow=true;o.castShadow=false;o.renderOrder=1;
  }
