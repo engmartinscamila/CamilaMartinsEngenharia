@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Casa Urben — Maquete 3D V12.2 Revisão | Camila Martins Engenharia</title>
+<style>
+:root{font-family:Inter,'Segoe UI',system-ui,sans-serif;color:#e8edf2;color-scheme:dark;background:#071626}
+*{box-sizing:border-box}body{margin:0;background:#071626}.wrap{padding:20px 26px;max-width:1750px;margin:auto}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:0 0 15px}
+.brand{font:italic 25px Georgia,serif;color:#ddbb79}.sub{font-size:9px;letter-spacing:3px;color:#c4cdd5}
+h1{font-size:clamp(19px,2.2vw,31px);margin:0;font-weight:420}.meta{font-size:12px;color:#c9d0d7;margin-top:7px}
+.status{font-size:11px;color:#dec68d;text-transform:uppercase;letter-spacing:1.2px}
+.frame{position:relative;height:min(72vh,790px);min-height:440px;border:1px solid #355067;overflow:hidden;border-radius:12px;background:linear-gradient(135deg,#d9e4e3,#becdd0);touch-action:none}
+canvas{width:100%;height:100%;display:block;outline:0}.bar{position:absolute;left:14px;top:14px;display:flex;gap:6px;flex-wrap:wrap;z-index:5;right:14px;pointer-events:none}
+.bar button{pointer-events:auto;border:1px solid #344457;padding:10px 12px;background:#0b1b2be9;border-radius:6px;color:#fff;cursor:pointer;font-size:12px}
+.bar button:hover,.bar button.active{background:#344e65;border-color:#d4b375}
+.legend{position:absolute;bottom:12px;left:12px;max-width:calc(100% - 24px);background:#091b2bdc;padding:9px 14px;font-size:11px;border-radius:7px;color:#fff}
+#overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:11px;text-align:center;background:#071725ed;z-index:8;padding:24px}
+#overlay[hidden]{display:none}.track{height:4px;background:#475767;width:min(400px,75vw);overflow:hidden;border-radius:10px}.fill{height:100%;width:0;background:#d6b476;transition:width .3s}
+.hint{color:#bcc4cd;font-size:13px}.footer{color:#abb8c1;font-size:12px;line-height:1.5;padding:14px 0}.footer b{color:#d8bd8b}
+@media(max-width:700px){.wrap{padding:9px}.frame{height:78vh;min-height:430px}.bar{left:6px;top:6px;gap:4px;right:6px}.bar button{padding:9px 7px;font-size:11px}.legend{font-size:10px}}
+</style></head><body><main class="wrap">
+<header><div><div class="brand">Camila Martins</div><div class="sub">ENGENHARIA CIVIL</div></div><div class="status">CASA URBEN · REVISÃO 3D V12.2</div></header>
+<h1>Casa Urben | Visualização 3D com materiais PBR</h1>
+<div class="meta">Casa Urben V12.2 · Materiais originais preservados · fachadas e corredor com UV revisado · laje verificada · porta original SketchUp</div>
+<section class="frame" id="frame"><canvas id="scene"></canvas>
+<div class="bar"><button data-view="frente" class="active">Fachada</button><button data-view="lateral">Lateral</button><button data-view="fundos">Fundos</button><button data-view="tres">3/4</button><button data-view="implantacao">Implantação</button><button data-view="piscina">Piscina</button><button data-view="pergolado">Pergolado</button><button id="turn">Girar 360°</button><button id="reset">Restaurar</button></div>
+<div class="legend">Arraste para girar · Role para aproximar · Clique nos botões para alterar a vista</div>
+<div id="overlay"><strong id="message">Preparando renderização PBR completa...</strong><div class="track"><div class="fill" id="fill"></div></div><span class="hint" id="detail">Materiais PBR e texturas carregados diretamente do modelo GLB</span></div>
+</section><div class="footer"><b>Geometria preservada:</b> GLB original com correção de UV na pedra e paredes, faces da cobertura visíveis pelos dois lados, verificação de pequenos triângulos faltantes na laje e porta original SketchUp. Garagem e placas de acesso preservadas. Esta versão usa GPU/WebGL para exibir as texturas; não é a prévia simplificada Canvas da V8.4.</div></main>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"}}</script>
+<script id="glb-manifest" type="application/json">{"parts":["part-01.txt","part-02.txt","part-03.txt","part-04.txt","part-05.txt","part-06.txt","part-07.txt","part-08.txt","part-09.txt","part-10.txt","part-11.txt","part-12.txt","part-13.txt","part-14.txt","part-15.txt","part-16.txt","part-17.txt"],"total":17,"version":"v12.1"}</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+const $=s=>document.querySelector(s), overlay=$('#overlay'),msg=$('#message'),detail=$('#detail'),fill=$('#fill'),frame=$('#frame'),canvas=$('#scene');
+function fail(e){ console.error(e);msg.textContent='Não foi possível iniciar o 3D neste navegador.';detail.textContent=(e&&e.message?e.message:'Ative a aceleração de hardware / WebGL no navegador.').slice(0,220);fill.style.background='#b66'; }
+try {
+ if(!window.WebGLRenderingContext) throw Error('WebGL indisponível. Ative aceleração de hardware no Brave/Chrome.');
+ const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+ renderer.outputColorSpace=THREE.SRGBColorSpace;
+ renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.92;
+ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+ const scene=new THREE.Scene(); scene.background=new THREE.Color('#d4dfe2');
+ const camera=new THREE.PerspectiveCamera(47,1,.1,250);
+ const controls=new OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.065;controls.minDistance=5;controls.maxDistance=125;controls.maxPolarAngle=Math.PI*.49;
+ const hem=new THREE.HemisphereLight(0xe4f5ff,0x99a084,1.13);scene.add(hem);
+ const sun=new THREE.DirectionalLight(0xffe6c3,1.72);sun.position.set(-20,44,35);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-34;sun.shadow.camera.right=34;sun.shadow.camera.top=40;sun.shadow.camera.bottom=-40;sun.shadow.camera.near=1;sun.shadow.camera.far=130;sun.shadow.bias=-.00008;scene.add(sun);
+ const fillLight=new THREE.DirectionalLight(0xb2d4ef,.65);fillLight.position.set(30,12,-15);scene.add(fillLight);
+ try{const pmrem=new THREE.PMREMGenerator(renderer);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;pmrem.dispose();}catch(e){console.warn('Ambiente PBR simplificado',e)}
+ if(!('DecompressionStream' in window))throw Error('Navegador sem descompactação nativa. Use Brave/Chrome/Edge atualizado.');
+ const manifest=JSON.parse($('#glb-manifest').textContent);
+ msg.textContent='Baixando modelo 3D com materiais PBR...';
+ const pieces=await Promise.all(manifest.parts.map(async(p)=>{const response=await fetch('./casa-urben-v12-1-assets/'+p,{cache:'force-cache'});if(!response.ok)throw Error('Modelo indisponível: '+p+' HTTP '+response.status);return(await response.text()).trim();}));const base=atob(pieces.join(''));const packed=new Uint8Array(base.length);
+ for(let i=0;i<base.length;i++)packed[i]=base.charCodeAt(i);
+ const deflate=new Blob([packed]).stream().pipeThrough(new DecompressionStream('deflate'));
+ const bytes=new Uint8Array(await new Response(deflate).arrayBuffer());
+ msg.textContent='Carregando materiais e esquadrias em 3D...';fill.style.width='70%';
+ const gltf=await new Promise((resolve,reject)=>{new GLTFLoader().parse(bytes.buffer,'',resolve,reject)});
+ const model=gltf.scene;
+
+ // Casa Urben V12.2: correções nas superfícies reais da malha, não por cor na tela.
+ function findMesh(n){let o=model.getObjectByName(n);return o&&o.isMesh?o:null;}
+ function projectUV(o,scale){
+   if(!o||!o.material?.map)return;
+   let g=o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone(),p=g.getAttribute('position');
+   const uv=new Float32Array(p.count*2),a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3(),n=new THREE.Vector3();
+   for(let i=0;i<p.count;i+=3){
+     a.fromBufferAttribute(p,i);b.fromBufferAttribute(p,i+1);c.fromBufferAttribute(p,i+2);
+     n.subVectors(b,a).cross(c.sub(a)).normalize();
+     let x=Math.abs(n.x),y=Math.abs(n.y),z=Math.abs(n.z);
+     for(let j=0;j<3;j++){
+       const t=i+j,X=p.getX(t),Y=p.getY(t),Z=p.getZ(t);
+       uv[t*2]=(y>=x&&y>=z?X:x>z?Z:X)/scale;
+       uv[t*2+1]=(y>=x&&y>=z?Z:Y)/scale;
+     }
+   }
+   g.setAttribute('uv',new THREE.BufferAttribute(uv,2));o.geometry=g;
+   o.material=o.material.clone();o.material.map=o.material.map.clone();
+   o.material.map.wrapS=o.material.map.wrapT=THREE.RepeatWrapping;
+   o.material.map.needsUpdate=true;o.material.side=THREE.DoubleSide;o.material.needsUpdate=true;
+ }
+ // Corrige estiramento e orientações de textura nos panos de reboco/corredor e na pedra.
+ projectUV(findMesh('stucco_006'),2.5);
+ projectUV(findMesh('stone_005'),1.9);
+ // Face traseira da cobertura renderizável evita que a laje desapareça pela orientação das normais.
+ for(const n of ['charcoal_000','charcoal_009','Urben_Nativa_581704','Urben_Nativa_581711','Urben_Nativa_581705','Urben_Nativa_581707']){
+   const o=findMesh(n);if(!o)continue;o.material=o.material.clone();
+   o.material.side=THREE.DoubleSide;o.material.needsUpdate=true;
+ }
+ // Fechamento seguro de pequenos triângulos internos realmente faltantes em planos de laje.
+ // Nunca preencher a borda externa nem aberturas extensas.
+ function fixRoofHole(o){
+   if(!o)return 0;
+   const g=o.geometry.index?o.geometry.toNonIndexed():o.geometry,p=g.getAttribute('position');
+   const edge=new Map(),limits=new THREE.Box3().setFromBufferAttribute(p);
+   const code=(x,z)=>Math.round(x*1000)+','+Math.round(z*1000);
+   for(let i=0;i+2<p.count;i+=3){
+     const y0=p.getY(i),y1=p.getY(i+1),y2=p.getY(i+2);
+     if(Math.max(y0,y1,y2)-Math.min(y0,y1,y2)>.004||Math.min(y0,y1,y2)<2.35)continue;
+     const h=Math.round((y0+y1+y2)*100/3),v=[];
+     for(let j=0;j<3;j++)v.push({x:p.getX(i+j),y:p.getY(i+j),z:p.getZ(i+j),id:code(p.getX(i+j),p.getZ(i+j))});
+     for(let k=0;k<3;k++){const a=v[k],b=v[(k+1)%3];if(a.id===b.id)continue;
+       const id=h+'|'+[a.id,b.id].sort().join('|');
+       if(edge.has(id))edge.get(id).hits++;else edge.set(id,{a,b,h,hits:1});
+     }
+   }
+   const planes=new Map();
+   for(const e of edge.values())if(e.hits===1){
+     if(!planes.has(e.h))planes.set(e.h,[]);planes.get(e.h).push(e);
+   }
+   const patchPositions=[],patchUV=[];let repairs=0;
+   for(const list of planes.values()){
+     const ad=new Map();
+     for(const e of list)for(const v of [e.a,e.b]){let arr=ad.get(v.id)||[];arr.push(e);ad.set(v.id,arr);}
+     const seen=new Set();
+     for(const e of list){
+       if(seen.has(e))continue;
+       let stack=[e],group=[];seen.add(e);
+       while(stack.length){const t=stack.pop();group.push(t);for(const v of [t.a,t.b])
+         for(const nxt of ad.get(v.id)||[])if(!seen.has(nxt)){seen.add(nxt);stack.push(nxt);}}
+       if(group.length!==3)continue;
+       let points=new Map();for(const t of group){points.set(t.a.id,t.a);points.set(t.b.id,t.b);}
+       if(points.size!==3)continue;
+       let v=Array.from(points.values());
+       let cross=(v[1].x-v[0].x)*(v[2].z-v[0].z)-(v[2].x-v[0].x)*(v[1].z-v[0].z),area=Math.abs(cross)*.5;
+       const cx=v.reduce((s,p)=>s+p.x,0)/3,cz=v.reduce((s,p)=>s+p.z,0)/3;
+       if(area<.015||area>4||cx<=limits.min.x+.12||cx>=limits.max.x-.12||cz<=limits.min.z+.12||cz>=limits.max.z-.12)continue;
+       if(cross>0)[v[1],v[2]]=[v[2],v[1]];
+       for(const q of v){patchPositions.push(q.x,q.y,q.z);patchUV.push(q.x/2,q.z/2);}repairs++;
+     }
+   }
+   if(patchPositions.length){
+     const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(patchPositions,3));
+     geo.setAttribute('uv',new THREE.Float32BufferAttribute(patchUV,2));geo.computeVertexNormals();
+     let m=new THREE.Mesh(geo,o.material.clone());m.name='Urben_V12_2_ReparosLaje_'+o.name;
+     m.material.side=THREE.DoubleSide;m.material.polygonOffset=true;m.material.polygonOffsetFactor=-1;
+     m.matrixAutoUpdate=false;m.matrix.copy(o.matrix);o.parent.add(m);m.receiveShadow=true;
+   }
+   return repairs;
+ }
+ const repairs=['stucco_006','charcoal_000','charcoal_009'].map(n=>[n,fixRoofHole(findMesh(n))]);
+ // Usa a porta de madeira original importada do SketchUp, acima da face antiga coplanar.
+ for(const n of ['Urben_V12_Porta_Nativa_SketchUp_0','Urben_V12_Porta_Nativa_SketchUp_307910','Urben_V12_Porta_Nativa_SketchUp_287580']){
+   const o=findMesh(n);if(!o)continue;o.position.z+=.024;
+   o.material=o.material.clone();o.material.side=THREE.DoubleSide;
+   o.material.transparent=false;o.material.opacity=1;o.material.depthWrite=true;o.material.needsUpdate=true;
+ }
+ console.info('Casa Urben V12.2 — revisão de laje e materiais',repairs);
+
+ model.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;o.receiveShadow=true;
+  if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats){if(m.name&&(/glass|vidro/i).test(m.name)){m.transparent=true;m.depthWrite=false;m.side=THREE.DoubleSide;m.metalness=.04;m.roughness=.13;m.opacity=Math.min(.72,Math.max(.36,m.opacity))}m.envMapIntensity=.76;m.needsUpdate=true}}
+ });
+ scene.add(model);
+ const center=new THREE.Vector3();new THREE.Box3().setFromObject(model).getCenter(center);
+ const target=new THREE.Vector3(0,1.15,3);controls.target.copy(target);
+ const cameras={
+   pergolado:[-18,10,-6],
+   frente:[8,12,45],lateral:[28,13,9],fundos:[5,12,-43],tres:[23,17,34],implantacao:[0,72,4],piscina:[11,9,-27]};
+ function view(name){const p=cameras[name]||cameras.tres;camera.position.set(...p);controls.target.copy(name==='piscina'?new THREE.Vector3(1,.6,-17):(name==='pergolado'?new THREE.Vector3(0,.4,-4):target));camera.lookAt(controls.target);controls.update();document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===name));}
+ view('tres');fill.style.width='100%';overlay.hidden=true;
+ for(const b of document.querySelectorAll('[data-view]'))b.addEventListener('click',()=>{spinning=false;view(b.dataset.view)})
+ let spinning=false;$('#turn').onclick=()=>{spinning=!spinning;$('#turn').textContent=spinning?'Parar rotação':'Girar 360°'};$('#reset').onclick=()=>{spinning=false;view('tres')};
+ const resize=()=>{const w=frame.clientWidth,h=frame.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)};new ResizeObserver(resize).observe(frame);resize();
+ function tick(){requestAnimationFrame(tick);if(spinning){camera.position.applyAxisAngle(new THREE.Vector3(0,1,0),.003);camera.lookAt(controls.target);}controls.update();renderer.render(scene,camera)}tick();
+} catch(e){fail(e)}
+</script></body></html>
