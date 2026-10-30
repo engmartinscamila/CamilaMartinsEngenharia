@@ -15,6 +15,17 @@
       cardHref: 'empreendimento-vitalle',
       src: 'assets/projetos/empreendimento-vitalle/modelo-3d-v6-aprovado.glb?v=20261030-2',
       orbit: '25deg 74deg auto'
+    },
+    {
+      id: 'urben',
+      title: 'Casa Urben',
+      cardHref: 'casa-urban',
+      partDirectory: 'previews/casa-urben-v16-assets',
+      parts: 31,
+      packed: 'base64-deflate',
+      bytes: 11742280,
+      checksum: 'c46dc0e83d8945c9b9e4469cd2ab343b42666d5c65cfc7e991734fd5bfab0e7c',
+      orbit: '32deg 72deg auto'
     }
   ];
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -26,6 +37,34 @@
     if (requests.has(spec.id)) return requests.get(spec.id);
     const job = (async () => {
       if (spec.src) return spec.src;
+      if (spec.packed === 'base64-deflate') {
+        // Casa Urben: utiliza o GLB de origem já hospedado, remontado byte a byte.
+        // A interface, os controles e o modal são os mesmos de Tiny House e Vitalle.
+        const chunks = new Array(spec.parts);
+        let next = 0;
+        await Promise.all(Array.from({length: 4}, async () => {
+          while (next < chunks.length) {
+            const i = next++;
+            const path = spec.partDirectory + '/part-' + String(i + 1).padStart(2, '0') + '.txt';
+            const response = await fetch(path, { cache: 'force-cache' });
+            if (!response.ok) throw new Error('Não foi possível carregar uma parte do modelo Casa Urben (' + response.status + ')');
+            chunks[i] = (await response.text()).trim();
+          }
+        }));
+        const compressed = Uint8Array.from(atob(chunks.join('')), c => c.charCodeAt(0));
+        if (!('DecompressionStream' in window)) throw new Error('O navegador não oferece descompactação 3D');
+        const buffer = await new Response(new Blob([compressed]).stream().pipeThrough(new DecompressionStream('deflate'))).arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        if (bytes.byteLength !== spec.bytes || new DataView(buffer).getUint32(0, true) !== 0x46546c67) {
+          throw new Error('O arquivo 3D da Casa Urben está incompleto');
+        }
+        if (spec.checksum && crypto?.subtle) {
+          const digest = await crypto.subtle.digest('SHA-256', buffer);
+          const sha = [...new Uint8Array(digest)].map(n => n.toString(16).padStart(2, '0')).join('');
+          if (sha !== spec.checksum) throw new Error('Integridade da Casa Urben não confirmada');
+        }
+        return URL.createObjectURL(new Blob([buffer], { type: 'model/gltf-binary' }));
+      }
       // Partes binárias remontam o GLB ORIGINAL byte a byte no navegador;
       // não há downgrade de textura ou geometria na Tiny House.
       const paths = Array.from({length:spec.parts}, (_,i) =>
