@@ -84,6 +84,58 @@ try {
  // Corrige estiramento e orientações de textura nos panos de reboco/corredor e na pedra.
  projectUV(findMesh('stucco_006'),2.5);
  projectUV(findMesh('stone_005'),1.9);
+
+ // Retira placas grandes de piso incorreto no quintal: recupera grama apenas
+ // nas faces horizontais exteriores, preservando a borda da piscina e a garagem.
+ function restoreLawn(){
+   const floor=findMesh('pavers_004'),lawn=findMesh('grass_002');
+   if(!floor||!lawn)return 0;
+   const src=floor.geometry.index?floor.geometry.toNonIndexed():floor.geometry.clone();
+   const attrs=Object.keys(src.attributes),p=src.getAttribute('position');
+   const keep={};for(const n of attrs)keep[n]=[];
+   const replaced=[];
+   const a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3(),cross=new THREE.Vector3();
+   let count=0;
+   for(let i=0;i+2<p.count;i+=3){
+     a.fromBufferAttribute(p,i);b.fromBufferAttribute(p,i+1);c.fromBufferAttribute(p,i+2);
+     let cy=(a.y+b.y+c.y)/3,cx=(a.x+b.x+c.x)/3,cz=(a.z+b.z+c.z)/3;
+     let area=cross.subVectors(b,a).cross(new THREE.Vector3().subVectors(c,a)).length()/2;
+     let insidePool=cx>-2.55&&cx<4.8&&cz>-20.3&&cz<-13;
+     let toGrass=Math.max(a.y,b.y,c.y)-Math.min(a.y,b.y,c.y)<.02 &&
+       cy>-.08&&cy<.095&&cz<-9.8&&!insidePool&&area>1.35;
+     if(toGrass){
+       for(let j=0;j<3;j++){
+         const X=p.getX(i+j),Y=p.getY(i+j),Z=p.getZ(i+j);
+         replaced.push(X,Y+.008,Z);
+       }count++;
+     }else{
+       for(const key of attrs){
+         const at=src.getAttribute(key);
+         for(let j=0;j<3;j++)for(let q=0;q<at.itemSize;q++)keep[key].push(at.array[(i+j)*at.itemSize+q]);
+       }
+     }
+   }
+   if(!count)return 0;
+   const g=new THREE.BufferGeometry();
+   for(const key of attrs){
+     const at=src.getAttribute(key);
+     g.setAttribute(key,new THREE.BufferAttribute(new at.array.constructor(keep[key]),at.itemSize,at.normalized));
+   }
+   floor.geometry=g;
+   const newGeo=new THREE.BufferGeometry(),uv=[];
+   for(let i=0;i<replaced.length;i+=3)uv.push(replaced[i]/2.2,replaced[i+2]/2.2);
+   newGeo.setAttribute('position',new THREE.Float32BufferAttribute(replaced,3));
+   newGeo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));newGeo.computeVertexNormals();
+   const mat=lawn.material.clone();
+   if(mat.map){mat.map=mat.map.clone();mat.map.wrapS=mat.map.wrapT=THREE.RepeatWrapping;mat.map.needsUpdate=true;}
+   mat.side=THREE.DoubleSide;
+   const mesh=new THREE.Mesh(newGeo,mat);mesh.name='Urben_V12_2_Gramado_Quintal_Corrigido';
+   mesh.matrixAutoUpdate=false;mesh.matrix.copy(floor.matrix);floor.parent.add(mesh);mesh.receiveShadow=true;
+   return count;
+ }
+ const patioFaces=restoreLawn();
+ console.info('Casa Urben V12.2 — faces de piso externo substituídas por gramado:',patioFaces);
+
  // Face traseira da cobertura renderizável evita que a laje desapareça pela orientação das normais.
  for(const n of ['charcoal_000','charcoal_009','SKP_Original_581704','SKP_Original_581711','SKP_Original_581705','SKP_Original_581707']){
    const o=findMesh(n);if(!o)continue;o.material=o.material.clone();
