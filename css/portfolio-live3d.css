@@ -1,0 +1,54 @@
+/* Capas 3D aprovadas: preserva tipografia, cores e cartões originais. */
+.featured-project-3d-wrap { position:relative; min-width:0; display:flex; isolation:isolate }
+.featured-project-3d-wrap > .featured-project-card { flex:1; width:100%; min-width:0; height:100%; }
+.featured-project-3d-wrap .featured-project-card::after { z-index:3; }
+.featured-project-3d-wrap .featured-project-overlay { z-index:4; pointer-events:none; }
+.featured-project-3d-wrap .featured-project-overlay em { pointer-events:auto; }
+.featured-project-3d-wrap .portfolio3d-inline {
+  position:absolute; inset:0; width:100%; height:100%; z-index:2;
+  background:#081321; opacity:0; pointer-events:none;
+  transition:opacity .45s ease;
+}
+.featured-project-card.is-3d-visible .portfolio3d-inline { opacity:1; }
+.featured-project-card.is-3d-visible > img,
+.featured-project-card.is-3d-visible > video { opacity:0!important; visibility:hidden!important; }
+.portfolio3d-explore {
+  position:absolute; top:14px; right:14px; z-index:7;
+  border:1px solid rgba(200,170,112,.7); border-radius:0;
+  background:rgba(1,9,20,.91); color:#f1dba7; padding:10px 12px;
+  font:inherit; font-size:.64rem; letter-spacing:.1em; text-transform:uppercase;
+  cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.22);
+}
+.portfolio3d-explore:hover,.portfolio3d-explore:focus-visible {
+  background:#132236; outline:2px solid #b89a63; outline-offset:2px;
+}
+.portfolio3d-modal {
+  border:1px solid #b89a63; border-radius:0; padding:0; max-width:none; max-height:none;
+  width:min(1080px,95vw); height:min(750px,93dvh); margin:auto;
+  color:#e8e8e8; background:#03101f; overflow:hidden;
+}
+.portfolio3d-modal::backdrop { background:rgba(0,5,13,.9); backdrop-filter:blur(5px); }
+.portfolio3d-modal[open] { display:flex; flex-direction:column; }
+.portfolio3d-modal-header { display:flex; justify-content:space-between; align-items:center; gap:12px;
+  padding:13px 17px; border-bottom:1px solid rgba(184,154,99,.35); }
+.portfolio3d-modal-header h3 { color:#e6d3ab; margin:0; font-size:1.05rem; font-weight:400; }
+.portfolio3d-close { color:#f5e1b5; border:1px solid #b89a63; background:#101e31;
+  padding:8px 13px; cursor:pointer; font:inherit; }
+.portfolio3d-modal-stage { flex:1; min-height:0; position:relative; background:radial-gradient(ellipse at 50% 32%,#354456,#0b1525); }
+.portfolio3d-full { position:absolute; inset:0; width:100%; height:100%; }
+.portfolio3d-state { position:absolute; z-index:2; left:50%; top:48%; transform:translate(-50%,-50%);
+  padding:16px 22px; color:#ead7ae; background:rgba(1,9,20,.85); max-width:90%; text-align:center; }
+.portfolio3d-state[hidden] { display:none; }
+.portfolio3d-instructions { color:#d9c9aa; margin:0; padding:10px 16px; font-size:.72rem;
+  border-top:1px solid rgba(184,154,99,.3); }
+@media(max-width:1050px) and (min-width:761px) {
+ .featured-projects-grid>.featured-project-3d-wrap { min-height:360px; }
+}
+@media(max-width:760px) {
+ .featured-projects-grid>.featured-project-3d-wrap { min-height:360px; }
+ .portfolio3d-modal { width:100vw; height:94dvh; }
+ .portfolio3d-explore { font-size:.6rem; padding:9px 10px; }
+}
+@media(prefers-reduced-motion:reduce) {
+ .featured-project-3d-wrap .portfolio3d-inline { transition:none; }
+}
