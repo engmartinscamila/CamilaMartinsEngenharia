@@ -18,7 +18,9 @@ assert.ok(html.includes('id="experienceLevelField"')&&html.includes('doc-hidden'
 assert.ok(!/<label>Nível de prestação<\/label><select id="experienceLevel">/.test(html),'Nível voltou a aparecer no grid antes dos serviços.');
 assert.ok(commercial.includes('id="openCommercialServices"')&&commercial.includes('id="commercialServiceModal"'),'Serviços propostos precisam usar botão/modal.');
 assert.ok(commercial.includes('Um único nível será aplicado a todas as atividades elegíveis deste pacote'),'Pacote precisa usar um nível único.');
-assert.ok(commercial.includes("if (isContract && !sources.length)"),'Contrato precisa exigir orçamento de origem.');
+assert.ok(commercial.includes("if (isContract && sourceMode() === 'quote' && !sources.length)"),'Origem por orçamento exige seleção explícita.');
+assert.ok(commercial.includes('id="contractSourceQuote"')&&commercial.includes('id="contractSourceManual"'),'Origem do contrato deve oferecer orçamento existente e contrato direto.');
+assert.ok(commercial.includes("return $('contractSourceManual')?.checked ? 'manual' : 'quote'")&&commercial.includes("if (sourceMode() === 'manual') return []"),'Contrato direto precisa de escolha explícita e não pode reutilizar orçamento selecionado anteriormente.');
 assert.ok(commercial.includes('Os orçamentos selecionados possuem níveis de prestação diferentes'),'Contrato precisa bloquear mistura de níveis no mesmo pacote.');
 assert.ok(commercial.includes("aliases,synonyms,keywords"),'Reconhecimento de pequenos erros precisa consultar metadados canônicos do catálogo.');
 assert.ok(commercial.includes("customServiceSuggestionApply")&&commercial.includes("Confirme para substituir"),'Sugestão do catálogo precisa exigir confirmação explícita.');
