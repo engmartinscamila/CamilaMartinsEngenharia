@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive"><meta name="referrer" content="no-referrer">
+<title>Casa Urben | Visualizador do SketchUp original</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"}}</script>
+<style>
+:root{font-family:Inter,"Segoe UI",Arial,sans-serif;color:#edf2f7;background:#071827}*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#071827}header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 25px;border-bottom:1px solid #243d50}.brand{font:italic 26px Georgia,serif;color:#ddbc81}.brand small{display:block;font:9px "Segoe UI",Arial;letter-spacing:3px;font-style:normal;color:#bfcbd5}.flag{font-size:11px;color:#e2bd7a;letter-spacing:1px;text-align:right}.wrap{max-width:1680px;margin:auto;padding:20px 24px}h1{font-size:clamp(20px,3vw,30px);font-weight:440;margin:0 0 8px}.lead{font-size:13px;color:#b1becb;line-height:1.5;margin:0 0 16px}.viewer{position:relative;width:100%;height:min(72vh,760px);min-height:450px;border:1px solid #4e6978;border-radius:12px;overflow:hidden;background:linear-gradient(135deg,#dae5e6,#bfcdd0)}canvas{display:block;width:100%;height:100%;outline:0;touch-action:none}.start{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px;background:linear-gradient(135deg,#e6ecea,#bbc9ca);color:#153047;z-index:5}.start h2{font-size:23px;font-weight:500;margin:0 0 8px}.start p{max-width:580px;margin:0 0 18px;line-height:1.55;font-size:14px}.start button{background:#09253a;border:1px solid #425f71;color:white;padding:13px 22px;border-radius:9px;font-size:14px;cursor:pointer}.start button:hover{background:#22445b}.start .detail{margin-top:15px;color:#556a74;font-size:12px}.drop{border:2px dashed #95a7ae;border-radius:12px;max-width:600px;padding:33px 24px}.toolbar{position:absolute;top:12px;left:12px;right:12px;display:none;gap:6px;flex-wrap:wrap;z-index:3;pointer-events:none}.toolbar button{pointer-events:auto;color:#f4f7fb;border:1px solid #6c8796;border-radius:6px;background:#0b2738e9;padding:9px 12px;cursor:pointer}.toolbar button.active{background:#3c576a;border-color:#e6c383}.hint{position:absolute;left:12px;bottom:12px;background:#0a2339df;border-radius:6px;color:white;font-size:12px;padding:8px 11px}.status{margin:11px 0 0;font-size:13px;color:#b6c4cd;min-height:26px}.status.err{color:#ffb5a9}.status strong{color:#e2c184}.foot{font-size:12px;color:#aab6bf;line-height:1.5;margin-top:12px}.foot b{color:#dcbf8f}.helper{font-size:13px;margin-top:12px;color:#d8c7a5}#file{display:none}@media(max-width:720px){header{padding:13px}.wrap{padding:12px}.viewer{min-height:380px;height:70vh}.flag{font-size:9px}.toolbar button{padding:7px 8px;font-size:11px}}
+</style></head><body>
+<header><div class="brand">Camila Martins<small>ENGENHARIA CIVIL</small></div><div class="flag">CASA URBEN<br>PRÉVIA PARTICULAR · SEM APROVAÇÃO</div></header>
+<div class="wrap"><h1>Casa Urben | Modelo SketchUp original</h1>
+<p class="lead">Uma nova visualização gerada a partir do arquivo <b>Casa Guararema 1.skp</b>, sem carregar a geometria das versões V12/V13. O projeto não é enviado a nenhum servidor.</p>
+<div class="viewer" id="viewer"><canvas id="scene" hidden></canvas>
+<div class="start" id="start"><div class="drop" id="drop"><h2>Explore o SketchUp original no navegador</h2>
+<p>Selecione o arquivo <b>Casa Guararema 1.skp</b> no seu computador. O navegador fará a leitura e tentará reconstruir o 3D com materiais e componentes nativos, sem publicar o arquivo.</p>
+<button id="choose" type="button">Selecionar o arquivo .SKP</button>
+<div class="detail">Também é possível arrastar o arquivo .skp para esta área.</div></div></div>
+<input id="file" type="file" accept=".skp,application/octet-stream">
+<div class="toolbar" id="toolbar">
+<button data-view="frente">Fachada</button><button data-view="lateral">Lateral</button><button data-view="fundos">Fundos</button><button data-view="tres" class="active">3/4</button><button data-view="topo">Implantação</button><button id="spin">Girar 360°</button><button id="reset">Restaurar</button><button id="export">Baixar GLB convertido</button></div>
+<div class="hint">Arraste para girar · Role para aproximar · Use os botões para as vistas</div></div>
+<div class="status" id="status">Aguardando arquivo do SketchUp original.</div>
+<div class="foot"><b>Importante:</b> esta é uma prévia técnica para avaliação. A importação de arquivos SketchUp 2026 depende da compatibilidade do interpretador; se houver incompatibilidade, ela será indicada na tela em vez de mostrar um modelo aproximado. Nenhuma alteração no portfólio.</div></div>
+<script type="module">
+import * as THREE from "three";
+import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
+import {OrbitControls} from "three/addons/controls/OrbitControls.js";
+const $=q=>document.querySelector(q);
+const status=$("#status"),file=$("#file"),start=$("#start"),canvas=$("#scene"),host=$("#viewer");
+let busy=false,glbData=null;
+const setStatus=(s,error=false)=>{status.textContent=s;status.classList.toggle("err",error);};
+$("#choose").onclick=()=>file.click();
+$("#drop").addEventListener("dragover",e=>{e.preventDefault();e.dataTransfer.dropEffect="copy"});
+$("#drop").addEventListener("drop",e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)load(f)});
+file.onchange=()=>{if(file.files[0])load(file.files[0])};
+async function readOriginal(f){
+ if(!/\.skp$/i.test(f.name))throw Error("Selecione um arquivo com extensão .skp.");
+ setStatus("Lendo o SketchUp original ("+(f.size/1048576).toFixed(1)+" MB)…");
+ const buffer=await f.arrayBuffer();
+ setStatus("Carregando interpretador do formato SketchUp…");
+ let skp;try{skp=await import("https://esm.sh/openskp@1.4.0?bundle");}catch(e){skp=await import("https://cdn.jsdelivr.net/npm/openskp@1.4.0/+esm");}
+ if(!skp.buildInstancedScene || !skp.toInstancedGLB)throw Error("O interpretador do formato .skp não pôde ser iniciado.");
+ await new Promise(r=>setTimeout(r,80));
+ setStatus("Reconstruindo componentes e texturas do SketchUp original…");
+ let output;
+ try{const scene=skp.buildInstancedScene(buffer,{respectEdgeVisibility:true});output=skp.toInstancedGLB(scene,{textures:true});}
+ catch(e){console.error("Erro no importador SketchUp:",e);throw Error("Importação do SKP não concluída: "+(e?.message||String(e)));}
+ glbData=output instanceof Uint8Array?output:new Uint8Array(output);
+ if(glbData.byteLength<40)throw Error("O interpretador não produziu um arquivo 3D válido.");
+ setStatus("Carregando o modelo tridimensional…");
+ return new Promise((ok,fail)=>new GLTFLoader().parse(glbData.buffer.slice(glbData.byteOffset,glbData.byteOffset+glbData.byteLength),"",g=>ok(g.scene),fail));
+}
+async function display(model){
+ const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:"high-performance"});
+ renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+ const scene=new THREE.Scene();scene.background=new THREE.Color("#dbe4e6");
+ scene.add(new THREE.HemisphereLight(0xeaf3ff,0xa1a38c,2));
+ const light=new THREE.DirectionalLight(0xffe7c6,2.2);light.position.set(15,40,15);light.castShadow=true;light.shadow.mapSize.set(2048,2048);scene.add(light);
+ let meshCount=0;model.traverse(o=>{if(o.isMesh){meshCount++;o.castShadow=true;o.receiveShadow=true}});
+ if(meshCount===0)throw Error("Não foram encontradas malhas na importação do SKP.");
+ scene.add(model);
+ const bounds=new THREE.Box3().setFromObject(model);if(bounds.isEmpty())throw Error("A geometria importada está vazia.");
+ const ctr=bounds.getCenter(new THREE.Vector3()),sz=bounds.getSize(new THREE.Vector3());
+ const d=Math.max(sz.x,sz.y,sz.z,1),camera=new THREE.PerspectiveCamera(48,1,d/50000,d*100),orbit=new OrbitControls(camera,canvas);
+ orbit.enableDamping=true;orbit.dampingFactor=.08;orbit.maxPolarAngle=Math.PI*.58;orbit.minDistance=d*.025;orbit.maxDistance=d*15;
+ light.position.copy(ctr).add(new THREE.Vector3(-d*.5,d*1.9,d*.4));
+ light.shadow.camera.left=-d*1.5;light.shadow.camera.right=d*1.5;light.shadow.camera.top=d*1.5;light.shadow.camera.bottom=-d*1.5;light.shadow.camera.far=d*8;light.shadow.camera.updateProjectionMatrix();
+ const spots={frente:[.15,.55,1.55],lateral:[1.55,.55,0],fundos:[.1,.55,-1.55],tres:[1.15,.85,1.2],topo:[0,1.9,.01]};
+ let spinning=false;
+ function view(k){const a=spots[k]||spots.tres;orbit.target.copy(ctr);camera.position.set(ctr.x+a[0]*d,ctr.y+a[1]*d,ctr.z+a[2]*d);camera.lookAt(ctr);orbit.update();document.querySelectorAll("[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===k))}
+ const resize=()=>{camera.aspect=host.clientWidth/host.clientHeight;camera.updateProjectionMatrix();renderer.setSize(host.clientWidth,host.clientHeight,false)};
+ resize();new ResizeObserver(resize).observe(host);
+ start.hidden=true;start.style.display="none";canvas.hidden=false;$("#toolbar").style.display="flex";view("tres");
+ document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{spinning=false;$("#spin").textContent="Girar 360°";view(b.dataset.view)});
+ $("#spin").onclick=()=>{spinning=!spinning;$("#spin").textContent=spinning?"Parar rotação":"Girar 360°"};
+ $("#reset").onclick=()=>{spinning=false;$("#spin").textContent="Girar 360°";view("tres")};
+ $("#export").onclick=()=>{const obj=URL.createObjectURL(new Blob([glbData],{type:"model/gltf-binary"}));const a=document.createElement("a");a.href=obj;a.download="Casa_Urben_do_SketchUp_original.glb";a.click();setTimeout(()=>URL.revokeObjectURL(obj),5000)};
+ function frame(){requestAnimationFrame(frame);if(spinning)camera.position.sub(orbit.target).applyAxisAngle(new THREE.Vector3(0,1,0),.003).add(orbit.target);orbit.update();renderer.render(scene,camera)}frame();
+ setStatus("Modelo carregado: "+meshCount+" malhas do SketchUp original. Revise a fidelidade antes da aprovação.");
+}
+async function load(f){
+ if(busy)return;busy=true;$("#choose").disabled=true;
+ try{const obj=await readOriginal(f);await display(obj)}
+ catch(e){console.error(e);setStatus("Erro: "+(e?.message||String(e)),true);$("#choose").disabled=false;busy=false;return}
+ busy=false;
+}
+</script></body></html>
