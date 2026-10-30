@@ -20,6 +20,7 @@ mkdir -p site-public/previews
 cp previews/casa-urben-v13-1-glb-corrigido.html site-public/previews/
 cp previews/casa-urben-sketchup-original.html site-public/previews/
 cp -R previews/casa-urben-v13-1-assets site-public/previews/
+cp -R previews/casa-urben-v15-assets site-public/previews/
 # Unlisted V14 3D review; keep the public portfolio unchanged.
 cp previews/casa-urben-v14-modelo-3d.html site-public/previews/
 cp -R previews/casa-urben-v14-assets site-public/previews/
