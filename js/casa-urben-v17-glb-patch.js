@@ -28,8 +28,16 @@ export function upgradeUrbenGLB(buffer) {
     const vi = j.bufferViews.length;
     j.bufferViews.push({buffer: 0, byteOffset: pos, byteLength: data.byteLength, target});
     const ai = j.accessors.length;
-    j.accessors.push({bufferView: vi, byteOffset: 0, componentType, count:
-      data.length / (type === 'VEC3' ? 3 : type === 'VEC2' ? 2 : 1), type});
+    const item={bufferView: vi, byteOffset: 0, componentType, count:
+      data.length / (type === 'VEC3' ? 3 : type === 'VEC2' ? 2 : 1), type};
+    if(type==='VEC3' && componentType===5126){
+      const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity];
+      for(let k=0;k<data.length;k+=3)for(let d=0;d<3;d++){
+        lo[d]=Math.min(lo[d],data[k+d]);hi[d]=Math.max(hi[d],data[k+d]);
+      }
+      item.min=lo;item.max=hi;
+    }
+    j.accessors.push(item);
     return ai;
   }
   const mat = j.materials;
