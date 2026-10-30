@@ -43,6 +43,6 @@
 
 /* Casa Urben: imagem 03 original da galeria, enquadrada ao centro do cartão. */
 .featured-project-card[href*="casa-urban"] > img {
-  object-position: center center;
+  object-position: 10% center;
   filter: saturate(.86) contrast(1.03);
 }
