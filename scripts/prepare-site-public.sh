@@ -18,6 +18,7 @@ cp -R js site-public/js
 # Não inserir no portfólio, nem copiar todas as outras prévias do repositório.
 mkdir -p site-public/previews
 cp previews/casa-urben-v13-1-glb-corrigido.html site-public/previews/
+cp previews/casa-urben-sketchup-original.html site-public/previews/
 cp -R previews/casa-urben-v13-1-assets site-public/previews/
 # Link acessível para aprovação, mas não indexável por mecanismos de busca.
 sed -i 's/<head>/<head><meta name="robots" content="noindex,nofollow,noarchive">/' site-public/previews/casa-urben-v13-1-glb-corrigido.html
