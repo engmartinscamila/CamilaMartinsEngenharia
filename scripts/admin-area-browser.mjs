@@ -70,6 +70,8 @@ try{for(const width of [1440,390]){
  await page.getByRole('button',{name:'Horas e margem',exact:true}).click();
  await page.getByRole('button',{name:'Lançamentos',exact:true}).click();
  assert.equal(await description().inputValue(),'Lançamento não salvo');
+ // Separate visits to a receipt must work even within the generic 500 ms button guard.
+ await page.evaluate(()=>{const now=Date.now();Date.now=()=>now;});
  await page.getByRole('button',{name:'Emitir / abrir recibo deste recebimento',exact:true}).click();
  let receipt=page.locator('iframe:visible').contentFrame().locator('#receiptDescription');
  await receipt.waitFor();await page.waitForFunction(()=>document.querySelector('iframe')?.contentDocument?.getElementById('receiptDescription')?.value==='Parcela recebida sintética');
