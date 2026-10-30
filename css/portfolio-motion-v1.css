@@ -65,3 +65,38 @@
   z-index: 1;
   filter: saturate(.95) contrast(1.05);
 }
+
+/* Casa Urben: movimento cinematográfico da foto 03 ORIGINAL do acervo.
+   Pan e zoom discretos, sem trocar a fotografia e sem cortar a janela lateral. */
+@keyframes casaUrbenCapaEmMovimento {
+  0%   { transform: translate3d(-0.7%,  0.5%, 0) scale(1.006); }
+  50%  { transform: translate3d( 0.8%, -0.5%, 0) scale(1.035); }
+  100% { transform: translate3d(-0.5%,  0.3%, 0) scale(1.008); }
+}
+@keyframes casaUrbenFundoEmMovimento {
+  0%   { transform: scale(1.08) translate3d(-1%,  0%, 0); }
+  50%  { transform: scale(1.14) translate3d( 1%, -1%, 0); }
+  100% { transform: scale(1.08) translate3d(-1%,  0%, 0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .featured-project-card[href*="casa-urban"] > img {
+    animation: casaUrbenCapaEmMovimento 13s ease-in-out infinite;
+    transform-origin: center;
+    will-change: transform;
+  }
+  .featured-project-card[href*="casa-urban"]::before {
+    animation: casaUrbenFundoEmMovimento 17s ease-in-out infinite;
+    will-change: transform;
+  }
+  .featured-project-card[href*="casa-urban"]:hover > img,
+  .featured-project-card[href*="casa-urban"]:focus-visible > img {
+    animation-play-state: running;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .featured-project-card[href*="casa-urban"] > img,
+  .featured-project-card[href*="casa-urban"]::before {
+    animation: none !important;
+    transform: none;
+  }
+}
