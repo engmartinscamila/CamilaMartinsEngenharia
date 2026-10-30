@@ -20,6 +20,10 @@ mkdir -p site-public/previews
 cp previews/casa-urben-v13-1-glb-corrigido.html site-public/previews/
 cp previews/casa-urben-sketchup-original.html site-public/previews/
 cp -R previews/casa-urben-v13-1-assets site-public/previews/
+# Unlisted V14 3D review; keep the public portfolio unchanged.
+cp previews/casa-urben-v14-modelo-3d.html site-public/previews/
+cp -R previews/casa-urben-v14-assets site-public/previews/
+test -f site-public/previews/casa-urben-v14-assets/part-16.txt
 # Link acessível para aprovação, mas não indexável por mecanismos de busca.
 sed -i 's/<head>/<head><meta name="robots" content="noindex,nofollow,noarchive">/' site-public/previews/casa-urben-v13-1-glb-corrigido.html
 test -f site-public/previews/casa-urben-v13-1-assets/part-17.txt
