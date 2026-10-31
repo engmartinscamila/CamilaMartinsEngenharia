@@ -22,11 +22,11 @@ mkdir -p "$(dirname "${VIDEO}")"
 # The original photo is 1600x600. Frame 570x600 matches the card proportions.
 # Keep the camera on the stone/wood entrance + first garage bay; the photo's
 # far ends do not need to appear. Short movement (x=300..490, only 190px)
-# uses the same 12s loop and 60 fps, without any freeze/seek at the seam.
+# matches Tiny House and Vitalle: exact 8s loop at 60fps, 480 frames.
 # Sinusoidal x has the same position and velocity at the start/end of each loop.
 ffmpeg -hide_banner -loglevel error -nostdin -y \
-  -loop 1 -framerate 60 -i "${PHOTO}" -t 12 \
-  -vf "crop=w=570:h=600:x='395+95*sin(2*PI*n/720)':y=0,scale=760:800:flags=lanczos,format=yuv420p" \
+  -loop 1 -framerate 60 -i "${PHOTO}" -t 8 \
+  -vf "crop=w=570:h=600:x='395+95*sin(2*PI*n/480)':y=0,scale=760:800:flags=lanczos,format=yuv420p" \
   -c:v libx264 -preset veryfast -crf 24 -r 60 -g 120 -pix_fmt yuv420p -movflags +faststart \
   -an "${VIDEO}"
 
