@@ -14,6 +14,23 @@ rm -rf site-public/assets/pdfs-protegidos
 cp -R css site-public/css
 cp -R js site-public/js
 
+# Casa Urben: gerar vídeo MP4 no mesmo formato de capa animada da Tiny/Vitalle.
+# Usar SOMENTE a imagem 03 original do acervo, sem criar novas imagens.
+# A fachada é percorrida suavemente da janela lateral à garagem, em loop.
+# O arquivo é gerado no pacote publicado e nunca substitui a fotografia original.
+URBEN_PHOTO="site-public/assets/projetos/casa-urban/03.webp"
+URBEN_VIDEO="site-public/assets/projetos/casa-urban/videos/casa-urben-foto03-movimento.mp4"
+test -s "$URBEN_PHOTO" || { echo "Imagem 03 da Casa Urben ausente"; exit 1; }
+command -v ffmpeg >/dev/null 2>&1 || { echo "ffmpeg ausente no executor; sem publicação de vídeo incompleto"; exit 1; }
+mkdir -p "$(dirname "$URBEN_VIDEO")"
+ffmpeg -hide_banner -loglevel error -nostdin -y \
+  -loop 1 -framerate 24 -i "$URBEN_PHOTO" -t 12 \
+  -vf "crop=w=570:h=600:x='(in_w-out_w)*(0.5-0.5*cos(2*PI*n/(24*12)))':y=0,scale=760:800:flags=lanczos,format=yuv420p" \
+  -c:v libx264 -preset veryfast -crf 24 -pix_fmt yuv420p -movflags +faststart \
+  -an "$URBEN_VIDEO"
+test -s "$URBEN_VIDEO" || { echo "Falha na geração do vídeo de capa Casa Urben"; exit 1; }
+echo "Casa Urben: MP4 panorâmico gerado a partir da imagem 03 original."
+
 # Expor SOMENTE a prévia técnica da Casa Urben para revisão no navegador.
 # Não inserir no portfólio, nem copiar todas as outras prévias do repositório.
 mkdir -p site-public/previews
