@@ -43,7 +43,13 @@ function remediated(name, visiting = new Set()) {
 const unresolved = Object.entries(findings).filter(([name]) => !remediated(name));
 if (report.error || !report.metadata?.vulnerabilities || ![0,1].includes(auditProcess.status) || unresolved.length) {
   process.stderr.write('REPROVADO: auditoria indisponível ou vulnerabilidades sem correção verificada.\n');
-  for (const [name, finding] of unresolved) process.stderr.write(`- ${name}: ${finding.severity}\n`);
+  for (const [name, finding] of unresolved) {
+    const advisories = (finding.via ?? []).filter(v => typeof v === 'object').map(v => ({
+      advisory: v.url ?? v.title ?? '(sem identificação)',
+      range: v.range ?? null
+    }));
+    process.stderr.write(`- ${name}: ${finding.severity}; range=${finding.range}; fixAvailable=${JSON.stringify(finding.fixAvailable)}; via=${JSON.stringify(advisories)}\n`);
+  }
   process.exit(1);
 }
 process.stdout.write('APROVADO: nenhuma vulnerabilidade sem correção; deepmerge protegido por patch e testes de exploração.\n');
