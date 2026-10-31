@@ -66,6 +66,7 @@ jobs:
           node scripts/security/rls-regression.mjs
           node scripts/security/ofx-regression.mjs
           node scripts/security/admin-receipt-financial-regression.mjs
+          node scripts/security/receipt-cash-regression.mjs
 
       - name: Regressões estruturais completas antes da publicação
         run: |

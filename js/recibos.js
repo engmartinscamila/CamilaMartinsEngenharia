@@ -49,7 +49,7 @@
     try { amount = parseAmount(value('receiptAmount')); } catch (error) { message(error.message, true); return; }
     const c = clients.find(row => String(row.id) === value('receiptClient'));
     if (!c || (value('receiptProject') && !projects.some(row => String(row.id) === value('receiptProject') && row.cliente_id === c.id))) { message('Selecione o cliente e, se informado, um projeto pertencente a ele.',true); return; }
-    if (!confirm(`Emitir recibo para ${c.nome}?\n${money(amount)} recebidos em ${date(value('receiptDate'))}.\n\nConfira os dados: a emissão preserva este registro e recebe um número único.`)) return;
+    if (!confirm(`Emitir recibo para ${c.nome}?\n${money(amount)} recebidos em ${date(value('receiptDate'))}.\n\nConfira os dados: o recibo registra este recebimento no caixa, sem duplicar pagamentos já vinculados. A emissão recebe um número único.`)) return;
     busy = true; $('issueReceipt').disabled = true; message('Emitindo recibo...');
     requestId ||= crypto.randomUUID();
     const request = { p_data: { request_id: requestId, client_id: c.id, project_id: value('receiptProject') || null, contract_id: value('receiptContract') || null, amount, paid_on: value('receiptDate'), payment_method: value('receiptMethod'), description: value('receiptDescription'), city: value('receiptCity') } };
@@ -58,7 +58,7 @@
     const {data,error}=response;
     busy = false; $('issueReceipt').disabled = false;
     if (error || !data?.id) { message(error?.message || 'Não foi possível confirmar a emissão. Tente novamente sem alterar os dados.',true); return; }
-    showReceipt(data); message('Recibo emitido e preservado no histórico. Você já pode imprimir ou salvar em PDF.');
+    showReceipt(data); message('Recibo emitido e preservado no histórico. Recebimento registrado no caixa. Você já pode imprimir ou salvar em PDF.');
     requestId = null; $('receiptConfirmed').checked = false; $('receiptForm').dispatchEvent(new Event('cme:form-saved',{bubbles:true})); offset = 0; await loadHistory();
   }
   document.addEventListener('DOMContentLoaded', async () => {
@@ -91,12 +91,14 @@
       const contextualProject=new URLSearchParams(location.search).get('projectId');
       if(!financialId&&contextualProject){const project=projects.find(item=>String(item.id)===contextualProject);if(project){$('receiptClient').value=project.cliente_id;selectProject();$('receiptProject').value=project.id;}}
       if(financialId){
-        const payment=await supabaseClient.from('financeiro').select('id,projeto_id,descricao,valor,tipo,status,data,data_pagamento,forma_pagamento').eq('id',financialId).maybeSingle();
+        const payment=await supabaseClient.from('financeiro').select('id,projeto_id,cliente_id,contract_id,descricao,valor,tipo,status,data,data_pagamento,forma_pagamento').eq('id',financialId).maybeSingle();
         linkedPayment=payment.data;
         if(payment.error||!linkedPayment||linkedPayment.tipo!=='entrada'||!['pago','recebido','quitado'].includes(linkedPayment.status)){message('Recebimento não encontrado ou ainda não quitado. Abra um lançamento recebido no Financeiro.',true);return;}
         const project=projects.find(p=>String(p.id)===linkedPayment.projeto_id);
-        if(!project){message('O recebimento não possui projeto acessível.',true);return;}
-        $('receiptClient').value=project.cliente_id;selectProject();$('receiptProject').value=project.id;
+        const payer=project?.cliente_id||linkedPayment.cliente_id;
+        if(!payer||!clients.some(c=>String(c.id)===payer)){message('O recebimento não possui cliente acessível.',true);return;}
+        $('receiptClient').value=payer;selectProject();$('receiptProject').value=project?.id||'';
+        $('receiptContract').value=linkedPayment.contract_id||project?.contract_id||'';
         $('receiptAmount').value=Number(linkedPayment.valor).toFixed(2).replace('.',',');$('receiptDate').value=linkedPayment.data_pagamento||linkedPayment.data;
         $('receiptDescription').value=linkedPayment.descricao;
         const method=Array.from($('receiptMethod').options).find(o=>o.value.toLocaleLowerCase('pt-BR')===String(linkedPayment.forma_pagamento||'').toLocaleLowerCase('pt-BR'));

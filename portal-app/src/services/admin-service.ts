@@ -649,7 +649,7 @@ export async function listAdminFinancialEntries(): Promise<ServiceResult<Financi
   const rows: any[] = [];
   for (let offset=0; ; offset+=500) {
     const result=await supabase.from('financeiro')
-      .select('*, projetos(id,nome,numero_contrato,contract_id,clientes(nome),contratos!contract_id(contract_number))')
+      .select('*, projetos(id,nome,numero_contrato,contract_id,clientes(nome),contratos!contract_id(contract_number)),receipt_client:clientes!financeiro_cliente_id_fkey(nome),receipt_contract:contratos!financeiro_contract_id_fkey(contract_number)')
       .order('data',{ascending:false}).order('id').range(offset,offset+499);
     if(result.error)return {data:[],error:'Não foi possível carregar todos os lançamentos financeiros atuais.'};
     rows.push(...(result.data??[]));
@@ -665,9 +665,9 @@ export async function listAdminFinancialEntries(): Promise<ServiceResult<Financi
       return {
         id: row.id,
         projectId: row.projeto_id ?? null,
-        projectName: project?.nome ?? 'Projeto não identificado',
-        clientName: client?.nome ?? 'Cliente não identificado',
-        contractNumber: contract?.contract_number ?? project?.numero_contrato ?? 'Sem contrato',
+        projectName: project?.nome ?? (row.source==='receipt'?'Serviço sem projeto':'Projeto não identificado'),
+        clientName: client?.nome ?? (Array.isArray(row.receipt_client)?row.receipt_client[0]?.nome:row.receipt_client?.nome) ?? 'Cliente não identificado',
+        contractNumber: contract?.contract_number ?? project?.numero_contrato ?? (Array.isArray(row.receipt_contract)?row.receipt_contract[0]?.contract_number:row.receipt_contract?.contract_number) ?? 'Sem contrato',
         type: row.tipo ?? 'entrada',
         description: row.descricao ?? 'Lançamento financeiro',
         amount: Number(row.valor ?? 0),
