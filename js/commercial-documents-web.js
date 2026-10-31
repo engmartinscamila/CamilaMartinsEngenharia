@@ -479,7 +479,7 @@
     ensureContractSource();
     const isContract = mode() === 'contrato';
     $('contractQuoteSources')?.classList.toggle('doc-hidden', !isContract);
-    if ($('createCommercial')) $('createCommercial').textContent = isContract ? 'Criar contrato CON' : 'Criar orçamento ORC';
+    if ($('createCommercial')) $('createCommercial').textContent = isContract ? 'Gerar contrato e arquivar Word' : 'Criar orçamento ORC';
     const card = $('panelCommercialCreate');
     if (card) {
       const title = card.querySelector('h3');
@@ -743,7 +743,12 @@
     msg(`${numbers.length} orçamento(s) importado(s). Confira os dados abaixo.`, 'success');
   }
 
-  async function create() {
+  let creating=false;
+  async function create(){
+    if(creating)return;creating=true;const button=$('createCommercial');if(button)button.disabled=true;
+    try{await createRecord();}catch(error){msg(error?.message||'Não foi possível concluir. Confira o cadastro na lista antes de tentar novamente.','error');}finally{creating=false;if(button)button.disabled=false;}
+  }
+  async function createRecord() {
     const fromExistingQuote = mode() === 'contrato' && selectedQuoteKeys().length > 0;
     const typedCustom = fromExistingQuote ? '' : ($('customService')?.value.trim() || '');
     const canonical = fromExistingQuote ? null : suggestCatalogService(typedCustom);
@@ -820,7 +825,8 @@
       .map(item => item.sourceId);
     const sourceProjectId = legacySources[0]?.sourceId || null;
 
-    msg(isContract ? 'Criando contrato...' : 'Criando orçamento...');
+    if(isContract&&typeof window.CMEGenerateCommercialDocument!=='function'){msg('O gerador de Word não carregou. Atualize a página; nenhum cadastro foi criado.','error');return;}
+    msg(isContract ? 'Preparando cadastro e emissão do contrato...' : 'Criando orçamento...');
 
     const result = isContract
       ? await client().rpc('admin_create_independent_contract', {
@@ -842,17 +848,15 @@
 
     clearForm();
     renderQuoteChoices();
-    msg(
-      isContract
-        ? (sources.length
-          ? `Contrato criado com os dados de ${sources.map(item => item.quote_number).join(', ')}.`
-          : 'Contrato direto criado sem orçamento anterior.')
-        : 'Orçamento criado com numeração ORC independente.',
-      'success'
-    );
-
     await load();
     window.dispatchEvent(new CustomEvent('cme:commercial-records-updated'));
+    if(isContract){
+      const recordId=typeof result.data==='string'?result.data:result.data.id;
+      if(!recordId){msg('Cadastro salvo, mas não foi possível identificar o contrato para emitir o Word. Confira a lista de contratos.','error');return;}
+      const emission=await window.CMEGenerateCommercialDocument(recordId,'contrato',true);
+      await load();
+      if(!emission?.ok)msg('Cadastro do contrato preservado. '+(emission?.error||'A emissão do Word não foi concluída. Use Gerar Word na lista para tentar novamente.'),'error');
+    }else msg('Orçamento criado com numeração ORC independente.','success');
   }
 
   async function generate(recordId, kind, archive) {
@@ -936,7 +940,7 @@
         : '';
 
       const actions = kind === 'contrato'
-        ? `<button class="doc-btn secondary" data-action="contract" data-id="${record.id}">Baixar contrato</button>
+        ? `<button class="doc-btn secondary" data-action="contract" data-id="${record.id}">${record.contract_document_id?'Baixar / nova versão':'Gerar Word do contrato'}</button>
            <button class="doc-btn ghost" data-action="contract-archive" data-id="${record.id}">Baixar + arquivar</button>
            <button class="doc-btn" data-action="convert" data-id="${record.id}" ${record.status === 'convertido' ? 'disabled' : ''}>
              ${record.status === 'convertido' ? 'Cliente/projeto vinculados' : 'Formalizar cliente + projeto'}
@@ -955,7 +959,7 @@
                 ${new Date(record.created_at).toLocaleDateString('pt-BR')}${origin}
               </div>
             </div>
-            <span class="doc-badge">${esc(kind === 'contrato' && record.status === 'rascunho_orcamento' ? 'Rascunho de contrato' : String(record.status || '').replaceAll('_', ' '))}</span>
+            <span class="doc-badge">${esc(kind==='contrato'&&!record.contract_document_id?'Word pendente — cadastro salvo':kind === 'contrato' && record.status === 'rascunho_orcamento' ? 'Rascunho de contrato' : String(record.status || '').replaceAll('_', ' '))}</span>
           </summary>
           <div class="doc-actions">${actions}</div>
         </details>

@@ -203,6 +203,7 @@ jobs:
           npm install --no-save --prefix portal-app docx@9.5.1 jszip@3.10.1
           node --check js/document-function-routing-web.js
           node scripts/commercial-generator-preflight-regression.mjs
+          node scripts/contract-emission-regression.mjs
           node scripts/commercial-custom-scope-regression.mjs
           node scripts/portal-observations-regression.mjs
           node --experimental-strip-types scripts/commercial-word-regression.mjs
