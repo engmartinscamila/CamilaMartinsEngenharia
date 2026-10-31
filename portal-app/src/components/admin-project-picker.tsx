@@ -10,7 +10,7 @@ export function AdminProjectPicker({projects,value,onChange,disabled=false}:{pro
  const styles=useThemeStyles(styleDefinitions);
  const [editing,setEditing]=useState(false),[query,setQuery]=useState('');
  const selected=projects.find(project=>project.id===value);
- const matches=projects.filter(project=>normalizeDocumentSearch(`${project.clientName} ${project.name} ${project.contractNumber}`).includes(normalizeDocumentSearch(query)));
+ const matches=[...projects].sort((a,b)=>a.clientName.localeCompare(b.clientName,'pt-BR')||a.contractNumber.localeCompare(b.contractNumber,'pt-BR',{numeric:true})||a.name.localeCompare(b.name,'pt-BR')).filter(project=>normalizeDocumentSearch(`${project.clientName} ${project.name} ${project.contractNumber}`).includes(normalizeDocumentSearch(query)));
  return <View style={styles.wrapper}>
   {selected?<View style={styles.summary}>
    <View style={styles.texts}><Text style={styles.title}>{selected.name}</Text><Text style={styles.meta}>{selected.clientName}</Text>

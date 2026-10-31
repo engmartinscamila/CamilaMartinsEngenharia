@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  let clients = [], projects = [], history = [], offset = 0, requestId = null, busy = false, selectedReceipt = null;
+  let clients = [], contracts = [], projects = [], history = [], offset = 0, requestId = null, busy = false, selectedReceipt = null;
   const financialId = new URLSearchParams(location.search).get('financialId');
   let linkedPayment = null;
   const $ = id => document.getElementById(id);
@@ -19,14 +19,15 @@
   function options(id, items, label) { $(id).replaceChildren(new Option(label, ''), ...items.map(row => new Option(row.label || row.nome, row.id))); }
   function selectProject() {
     const matching = projects.filter(row => String(row.cliente_id) === value('receiptClient'));
-    options('receiptProject', matching.map(row => ({ ...row, label: [row.numero_contrato || row.contract_number, row.nome].filter(Boolean).join(' · ') })), 'Selecione o contrato / projeto');
+    options('receiptContract', contracts.filter(row=>String(row.cliente_id)===value('receiptClient')).map(row=>({...row,label:row.contract_number})), 'Sem contrato informado');
+    options('receiptProject', matching.map(row => ({ ...row, label: [row.numero_contrato || row.contract_number, row.nome].filter(Boolean).join(' · ') })), 'Sem projeto — serviço avulso');
   }
   function showReceipt(row) {
     selectedReceipt = row;
     const s = row.snapshot;
     const issuedOn = new Date(row.created_at).toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});
     const number = `REC-${String(row.receipt_number).padStart(6,'0')}/${issuedOn.slice(0,4)}`;
-    $('receiptPaper').innerHTML = `<header><div><strong>Camila Martins Engenharia</strong><br><span class="receipt-meta">${escape(s.issuer.title || 'Prestação de serviços')}</span></div><div><h1>RECIBO</h1><strong>${escape(number)}</strong></div></header><div class="receipt-value">${escape(money(row.amount))}</div><p>Recebi de <strong>${escape(s.payer_name)}</strong>${s.payer_document ? ', CPF/CNPJ ' + escape(s.payer_document) : ''}, a importância de <strong>${escape(money(row.amount))}</strong>, referente a:</p><p class="receipt-service">${escape(row.description)}</p><p><strong>Projeto:</strong> ${escape(s.project_name)}${s.contract_number ? '<br><strong>Contrato:</strong> ' + escape(s.contract_number) : ''}<br><strong>Recebimento:</strong> ${escape(date(row.paid_on))}<br><strong>Forma de pagamento:</strong> ${escape(row.payment_method)}</p><p>${escape(s.city)}, ${escape(date(issuedOn))}.</p><div class="receipt-signature"><strong>${escape(s.issuer.name)}</strong><br>CPF/CNPJ: ${escape(s.issuer.document)}</div><p class="receipt-meta">Emitido em ${escape(new Date(row.created_at).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}))} · ${escape(number)}</p>`;
+    $('receiptPaper').innerHTML = `<header><div><strong>Camila Martins Engenharia</strong><br><span class="receipt-meta">${escape(s.issuer.title || 'Prestação de serviços')}</span></div><div><h1>RECIBO</h1><strong>${escape(number)}</strong></div></header><div class="receipt-value">${escape(money(row.amount))}</div><p>Recebi de <strong>${escape(s.payer_name)}</strong>${s.payer_document ? ', CPF/CNPJ ' + escape(s.payer_document) : ''}, a importância de <strong>${escape(money(row.amount))}</strong>, referente a:</p><p class="receipt-service">${escape(row.description)}</p><p><strong>Projeto:</strong> ${escape(s.project_name || 'Serviço sem projeto')}${s.contract_number ? '<br><strong>Contrato:</strong> ' + escape(s.contract_number) : ''}<br><strong>Recebimento:</strong> ${escape(date(row.paid_on))}<br><strong>Forma de pagamento:</strong> ${escape(row.payment_method)}</p><p>${escape(s.city)}, ${escape(date(issuedOn))}.</p><div class="receipt-signature"><strong>${escape(s.issuer.name)}</strong><br>CPF/CNPJ: ${escape(s.issuer.document)}</div><p class="receipt-meta">Emitido em ${escape(new Date(row.created_at).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}))} · ${escape(number)}</p>`;
     $('receiptResult').hidden = false; $('receiptResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   async function loadHistory() {
@@ -47,11 +48,11 @@
     let amount;
     try { amount = parseAmount(value('receiptAmount')); } catch (error) { message(error.message, true); return; }
     const c = clients.find(row => String(row.id) === value('receiptClient'));
-    if (!c || !projects.some(row => String(row.id) === value('receiptProject') && row.cliente_id === c.id)) { message('Selecione o cliente e um projeto vinculado a ele.',true); return; }
+    if (!c || (value('receiptProject') && !projects.some(row => String(row.id) === value('receiptProject') && row.cliente_id === c.id))) { message('Selecione o cliente e, se informado, um projeto pertencente a ele.',true); return; }
     if (!confirm(`Emitir recibo para ${c.nome}?\n${money(amount)} recebidos em ${date(value('receiptDate'))}.\n\nConfira os dados: a emissão preserva este registro e recebe um número único.`)) return;
     busy = true; $('issueReceipt').disabled = true; message('Emitindo recibo...');
     requestId ||= crypto.randomUUID();
-    const request = { p_data: { request_id: requestId, client_id: c.id, project_id: value('receiptProject'), amount, paid_on: value('receiptDate'), payment_method: value('receiptMethod'), description: value('receiptDescription'), city: value('receiptCity') } };
+    const request = { p_data: { request_id: requestId, client_id: c.id, project_id: value('receiptProject') || null, contract_id: value('receiptContract') || null, amount, paid_on: value('receiptDate'), payment_method: value('receiptMethod'), description: value('receiptDescription'), city: value('receiptCity') } };
     let response;
     try { response = financialId ? await supabaseClient.rpc('admin_issue_receipt_for_payment', {p_financial_id:financialId,p_request_id:requestId,p_city:value('receiptCity')}) : await supabaseClient.rpc('admin_issue_payment_receipt',request); } catch {response={error:{message:'Não foi possível confirmar a emissão. Os campos foram preservados.'}};}
     const {data,error}=response;
@@ -69,6 +70,10 @@
     $('logoutButton')?.addEventListener('click', async () => { await supabaseClient.auth.signOut(); location.replace('login.html'); });
     try {
       [clients, projects] = await Promise.all([dbBuscarClientes(), dbBuscarProjetos()]);
+      const contractResult=await supabaseClient.from('contratos').select('id,cliente_id,contract_number').order('contract_number');
+      if(contractResult.error)throw contractResult.error; contracts=contractResult.data||[];
+      clients.sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR')); projects.sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt-BR')||String(a.numero_contrato).localeCompare(String(b.numero_contrato),'pt-BR'));
+      $('receiptProject').addEventListener('change',()=>{const p=projects.find(p=>String(p.id)===value('receiptProject'));if(p?.contract_id)$('receiptContract').value=p.contract_id;});
       options('receiptClient',clients,'Selecione o cliente');
       const config = await supabaseClient.from('configuracoes').select('cidade').limit(1).maybeSingle(); $('receiptCity').value = config.data?.cidade || '';
       const today = new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'}); $('receiptDate').value = today; $('receiptDate').max = today;
@@ -96,7 +101,7 @@
         $('receiptDescription').value=linkedPayment.descricao;
         const method=Array.from($('receiptMethod').options).find(o=>o.value.toLocaleLowerCase('pt-BR')===String(linkedPayment.forma_pagamento||'').toLocaleLowerCase('pt-BR'));
         $('receiptMethod').value=method?.value||'Outro';
-        for(const id of ['receiptClient','receiptProject','receiptAmount','receiptDate','receiptDescription','receiptMethod'])$(id).disabled=true;
+        for(const id of ['receiptClient','receiptProject','receiptContract','receiptAmount','receiptDate','receiptDescription','receiptMethod'])$(id).disabled=true;
         message('Recibo vinculado ao recebimento. Se já houve emissão, será aberto o mesmo recibo, sem gerar outro número.');
       }
       $('issueReceipt').disabled = false; await loadHistory();

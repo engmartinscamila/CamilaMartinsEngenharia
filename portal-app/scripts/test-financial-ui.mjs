@@ -24,6 +24,7 @@ const operations={listFinancialAccounts:()=>ok([{id:'account',name:'Conta de tes
 const moduleContext=load('src/providers/admin-module-context.tsx',{react:React});
 const component=load('src/app/admin/financial.tsx',{
  '@/providers/admin-module-context':moduleContext,
+ '@/components/admin-project-picker':{AdminProjectPicker:props=>e('project-picker',props)},
  react:React,'react-native':{View:'div',Text:'span',Pressable:props=>e('button',{onPress:props.onPress},props.children),ActivityIndicator:()=>null,Platform:{OS:'web'},Linking:{}},
  'expo-document-picker':{},'expo-crypto':{randomUUID:()=> '00000000-0000-4000-8000-000000000001'},
  '@/hooks/use-unsaved-form':{useUnsavedForm(){}},
@@ -46,7 +47,7 @@ assert(text().includes('SALDO REALIZADO'));assert(text().includes('100,00'));ass
 await act(async()=>{choices('Situação do lançamento').props.onChange('cancelado');});
 assert(text().includes('Cancelada'));assert(!text().includes('Parcela recebida'));
 await act(async()=>{button('Limpar filtros').props.onPress();choices('Contrato e projeto')?.props.onChange?.('p');});
-await act(async()=>{const match=renderer.root.findAllByType('button').find(node=>node.findAllByType('span').some(child=>child.children.join('').includes('CON-1'))&&!node.props.title);assert(match);match.props.onPress();field('Descrição').props.onChangeText('Nova parcela');field('Valor (R$)').props.onChangeText('250,00');});
+await act(async()=>{renderer.root.findByType('project-picker').props.onChange('p');field('Descrição').props.onChangeText('Nova parcela');field('Valor (R$)').props.onChangeText('250,00');});
 await act(async()=>{button('Registrar no extrato administrativo').props.onPress();button('Registrar no extrato administrativo').props.onPress();});
 assert.equal(calls,1,'Double-click must start one mutation');await act(async()=>release());assert.equal(field('Descrição').props.value,'');
 fail=true;

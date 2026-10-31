@@ -13,9 +13,9 @@ async function linkProjectAutomatically(recordId){
   if(lookup.data.source_project_id&&!lookup.data.linked_project_id){
     return {ok:false,error:'Este contrato utiliza um projeto anterior. Confirme o vínculo manualmente no Anexo I para não sobrescrever o contrato existente.'};
   }
-  const {data,error}=await client().rpc('admin_convert_commercial_record',{p_record_id:recordId});
+  const {data,error}=await client().rpc('admin_formalize_service_contract',{p_record_id:recordId});
   if(error) return {ok:false,error:error.message||'Não foi possível vincular o projeto'};
-  if(!data?.project_id) return {ok:false,error:'Não foi retornado o projeto vinculado'};
+  if(!data?.contract_id) return {ok:false,error:'Não foi retornado o projeto vinculado'};
   window.dispatchEvent(new CustomEvent('cme:commercial-records-updated',{
     detail:{recordId,projectId:data.project_id}
   }));
@@ -43,15 +43,15 @@ async function generate(recordId,kind,archive){
     download(delivered.data.contentBase64,delivered.data.fileName);
     const label=`${kind==='contrato'?'Contrato':'Orçamento'} v${generated.data.version||choice.version} gerado${archive?' e arquivado':''}.`;
     if(kind==='contrato'){
-      status(label+' Criando ou vinculando projeto...');
+      status(label+' Habilitando contrato sem projeto...');
       try{
         const linked=await linkProjectAutomatically(recordId);
         status(linked.ok
-          ? label+' Projeto vinculado automaticamente. O contrato está disponível no Anexo I.'
-          : label+' Atenção: o projeto ainda precisa ser vinculado. Acesse Anexo I e use o aviso de vínculo. '+linked.error,
+          ? label+' Contrato disponível no Anexo I sem exigir projeto.'
+          : label+' Atenção: o contrato precisa ser habilitado. Acesse Anexo I e use o aviso de vínculo. '+linked.error,
           linked.ok?'success':'error');
       }catch(error){
-        status(label+' O vínculo automático com o projeto não foi concluído. Use a ação de vínculo no Anexo I: '+(error?.message||'erro desconhecido'),'error');
+        status(label+' A habilitação do contrato não foi concluída. Use a ação de vínculo no Anexo I: '+(error?.message||'erro desconhecido'),'error');
       }
     }else{
       status(label,'success');

@@ -6,6 +6,7 @@ import React, { useCallback, useMemo, useState, useRef } from 'react';
 import { ActivityIndicator, Linking, Platform, Pressable, Text, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 
+import { AdminProjectPicker } from '@/components/admin-project-picker';
 import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
 import { DateField } from '@/components/date-field';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
@@ -301,7 +302,8 @@ export default function AdminFinancialScreen() {
         <SelectionChips items={[{ value: 'entrada', label: 'Entrada' }, { value: 'saida', label: 'Saída' }]} label="Natureza" onChange={value=>{setType(value);requestId.current=null;}} value={type} />
         <SelectionChips items={[{ value: 'pendente', label: 'Pendente' }, { value: 'pago', label: type === 'entrada' ? 'Recebido' : 'Pago' },{value:'cancelado',label:'Cancelado'}]} label="Situação" onChange={value=>{setEntryStatus(value);requestId.current=null;}} value={entryStatus} />
         <Text style={styles.label}>Contrato e projeto</Text>
-        <View style={styles.selector}>{projects.filter(project=>!embedded?.projectId||project.id===embedded.projectId).map((project) => <Pressable accessibilityRole="button" key={project.id} onPress={() => {setSelectedProjectId(project.id);requestId.current=null;}} style={[styles.choice, selectedProjectId === project.id && styles.choiceSelected]}><Text style={[styles.choiceText, selectedProjectId === project.id && styles.choiceTextSelected]}>{project.contractNumber} • {project.clientName} • {project.name}</Text></Pressable>)}</View>
+        <AdminProjectPicker projects={projects.filter(project=>!embedded?.projectId||project.id===embedded.projectId)} value={selectedProjectId} onChange={id=>{setSelectedProjectId(id);requestId.current=null;}} />
+        <Button title="Emitir recibo de serviço sem projeto" variant="ghost" debounceMs={0} onPress={()=>{if(embedded)embedded.onNavigate('receipts');else if(Platform.OS==='web')window.location.assign('/recibos.html');else void Linking.openURL('https://camilamartinsengenharia.com.br/recibos.html');}} />
         <Field label="Descrição" onChangeText={value=>{setDescription(value);requestId.current=null;}} placeholder="Ex.: Parcela 2 do contrato" value={description} />
         <Text style={styles.label}>Categoria / centro de custo</Text><View nativeID="financialEntryCategories" style={styles.selector}>{[...financialCategories,...(financialCategories.some(item=>item.value===category)?[]:[{value:category,label:category}])].map((item) => <Pressable accessibilityRole="button" key={item.value} onPress={() => {setCategory(item.value);requestId.current=null;}} style={[styles.choice, category === item.value && styles.choiceSelected]}><Text style={[styles.choiceText, category === item.value && styles.choiceTextSelected]}>{item.label}</Text></Pressable>)}</View>
         <Field keyboardType="decimal-pad" label="Valor (R$)" onChangeText={value=>{setAmount(value);requestId.current=null;}} placeholder="Ex.: 2.500,00" value={amount} />

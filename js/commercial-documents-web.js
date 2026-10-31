@@ -890,12 +890,12 @@
       const legacyReviewNeeded = !!existing.data?.source_project_id && !existing.data?.linked_project_id;
       const linked = existing.error || legacyReviewNeeded
         ? { error: existing.error || { message: 'Este contrato possui um projeto anterior; confirme o vínculo manualmente no Anexo I.' } }
-        : await client().rpc('admin_convert_commercial_record', { p_record_id: recordId });
-      if (!linked.error && linked.data?.project_id) {
-        notice += ' Projeto criado/vinculado automaticamente e disponível no Anexo I.';
+        : await client().rpc('admin_formalize_service_contract', { p_record_id: recordId });
+      if (!linked.error && linked.data?.contract_id) {
+        notice += ' Contrato disponível no Anexo I, sem exigir projeto. Para cadastrar um projeto, use Formalizar cliente + projeto.';
         window.dispatchEvent(new CustomEvent('cme:commercial-records-updated', { detail: { recordId, projectId: linked.data.project_id } }));
       } else {
-        notice += ' O projeto ainda precisa ser vinculado. Abra o Anexo I e utilize o botão de vínculo. ' + (linked.error?.message || '');
+        notice += ' Não foi possível habilitar o contrato no Anexo I. Tente novamente pelo botão de habilitação. ' + (linked.error?.message || '');
         noticeType = 'error';
       }
     }
@@ -925,7 +925,7 @@
     if (!box) return;
 
     const kind = mode();
-    const data = rows.filter(record => (record.record_kind || 'orcamento') === kind);
+    const data = rows.filter(record => (record.record_kind || 'orcamento') === kind).sort((a,b)=>String(a.prospect_name).localeCompare(String(b.prospect_name),'pt-BR')||String(a.contract_number||a.quote_number).localeCompare(String(b.contract_number||b.quote_number),'pt-BR',{numeric:true}));
     const title = $('commercialExistingTitle');
     if (title) title.textContent = kind === 'contrato' ? 'Contratos' : 'Orçamentos';
 
@@ -951,19 +951,19 @@
            <button class="doc-btn ghost" data-action="quote-archive" data-id="${record.id}">Baixar + arquivar</button>`;
 
       return `
-        <div class="doc-row">
-          <div class="doc-row-head">
+        <details class="doc-row">
+          <summary class="doc-row-head">
             <div>
-              <strong>${esc(number)} • ${esc(record.prospect_name)}</strong>
+              <strong>${esc(record.prospect_name)} • ${esc(number)}</strong>
               <div class="doc-meta">
                 ${esc(record.property_type || 'Serviço de engenharia')} •
                 ${new Date(record.created_at).toLocaleDateString('pt-BR')}${origin}
               </div>
             </div>
             <span class="doc-badge">${esc(kind === 'contrato' && record.status === 'rascunho_orcamento' ? 'Rascunho de contrato' : String(record.status || '').replaceAll('_', ' '))}</span>
-          </div>
+          </summary>
           <div class="doc-actions">${actions}</div>
-        </div>
+        </details>
       `;
     }).join('');
   }

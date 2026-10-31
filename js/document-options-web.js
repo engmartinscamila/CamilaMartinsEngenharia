@@ -193,8 +193,8 @@ async function optionsStep(kind){
  }})
 }
 async function getPreview(projectId,kind,approvalId,options,bump='minor',reason=''){
- const extra={document_options:options,version_bump:bump,version_reason:reason,...options};
- const {data,error}=await client().rpc('admin_preview_contract_document',{p_project_id:projectId,p_document_kind:kind,p_approval_id:approvalId||null,p_extra_data:extra});
+ const extra={document_options:options,version_bump:bump,version_reason:reason,...options,...(projectId.startsWith('commercial:')?{contract_id:$('contractProject')?.selectedOptions[0]?.dataset.contractId}:{})};
+ const {data,error}=await client().rpc('admin_preview_contract_document',{p_project_id:projectId.startsWith('commercial:')?null:projectId,p_document_kind:kind,p_approval_id:approvalId||null,p_extra_data:extra});
  if(error)throw error;return data||{}
 }
 function parseMoney(v){const t=String(v??'').trim().replace(/\s/g,'');if(!t)return null;const n=Number(t.includes(',')?t.replace(/\./g,'').replace(',','.'):t);return Number.isFinite(n)?n:null}
@@ -215,14 +215,14 @@ async function previewStep(projectId,kind,approvalId,options){
  };
  render();setError('');$('documentOptionsModal').classList.remove('doc-hidden');
  const btn=$('documentOptionsModal').querySelector('[data-options-confirm]');btn.textContent='Confirmar e preparar documento';
- return new Promise(resolve=>{pendingResolve=resolve;btn.onclick=()=>{reason=$('documentVersionReason')?.value.trim()||'';bump=$('documentVersionBump')?.value||'minor';if(p.revision_of&&!reason){setError('Informe o motivo da nova versão para preservar a rastreabilidade.');return}finish({extra:{document_options:options,version_bump:bump,version_reason:reason,...options},preview:p})}})
+ return new Promise(resolve=>{pendingResolve=resolve;btn.onclick=()=>{reason=$('documentVersionReason')?.value.trim()||'';bump=$('documentVersionBump')?.value||'minor';if(p.revision_of&&!reason){setError('Informe o motivo da nova versão para preservar a rastreabilidade.');return}finish({extra:{document_options:options,version_bump:bump,version_reason:reason,...options,...(projectId.startsWith('commercial:')?{contract_id:$('contractProject')?.selectedOptions[0]?.dataset.contractId}:{})},preview:p})}})
 }
 async function prepare(kind,approvalId){
  const select=$('contractProject'),projectId=select?.value;if(!projectId)return;
  try{
   const options=schemas[kind]?await optionsStep(kind):{};if(options===null)return;
   const review=await previewStep(projectId,kind,approvalId,options);if(!review)return;
-  const {data,error}=await client().rpc('admin_prepare_contract_document',{p_project_id:projectId,p_document_kind:kind,p_approval_id:approvalId||null,p_extra_data:review.extra});
+  const {data,error}=await client().rpc('admin_prepare_contract_document',{p_project_id:projectId.startsWith('commercial:')?null:projectId,p_document_kind:kind,p_approval_id:approvalId||null,p_extra_data:{...review.extra,...(projectId.startsWith('commercial:')?{contract_id:select.selectedOptions[0]?.dataset.contractId}:{})}});
   if(error)throw error;
   const box=$('contractMessage');if(box){box.textContent=`Documento preparado como versão v${review.preview?.next_version||'1.0'}. O snapshot será congelado na emissão do Word.`;box.className='doc-status success'}
   window.dispatchEvent(new CustomEvent('cme:document-options-prepared',{detail:{kind,documentId:data,version:review.preview?.next_version}}));

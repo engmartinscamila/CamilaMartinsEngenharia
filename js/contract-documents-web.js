@@ -29,7 +29,7 @@ function ensurePendingContractActions(){
   const info=document.createElement('div');
   info.id='pendingContractAction';
   info.className='doc-contract-pending doc-hidden';
-  info.innerHTML='<div><strong>Contrato gerado, ainda sem projeto vinculado</strong><p id="pendingContractExplanation">Este contrato existe na Central, mas os documentos vinculados precisam de um projeto associado. O vínculo aproveita os dados e o escopo já registrados, sem recadastrá-los.</p></div><button class="doc-btn" id="activatePendingContract" type="button">Vincular contrato e habilitar Anexo I</button>';
+  info.innerHTML='<div><strong>Contrato gerado, sem projeto vinculado</strong><p id="pendingContractExplanation">Este contrato pode ter Anexo I sem projeto. O cliente, número do contrato e escopo serão preservados.</p></div><button class="doc-btn" id="activatePendingContract" type="button">Habilitar Anexo I sem projeto</button>';
   selector.closest('.doc-field')?.insertAdjacentElement('afterend',info);
   const reminder=document.createElement('div');
   reminder.id='pendingContractReminder';
@@ -63,28 +63,26 @@ function showPendingContract(record){
   if($('pendingContractExplanation')){
     $('pendingContractExplanation').textContent=record.source_mode==='orcamento'
       ? 'Os serviços e dados do contrato serão aproveitados. A emissão do Anexo I também exige que o orçamento de origem esteja emitido e validado.'
-      : 'O vínculo cria ou reutiliza os cadastros de cliente, contrato e projeto. Nenhum dado do contrato precisa ser preenchido novamente.';
+      : 'Habilite o Anexo I sem projeto. Se precisar de um projeto depois, use Formalizar cliente + projeto na Central.';
   }
   renderAll();
-  msg('Contrato '+(record.contract_number||'')+' localizado. Use o botão de vinculação acima para habilitar os documentos relacionados.','success');
+  msg('Contrato '+(record.contract_number||'')+' localizado. Use o botão acima para habilitar o Anexo I sem projeto.','success');
 }
 async function activatePendingContract(){
   const record=pendingContract;
   if(!record)return;
-  if(!confirm('Vincular o contrato '+(record.contract_number||'')+' aos cadastros de cliente e projeto para habilitar o Anexo I? O contrato e o escopo existentes serão aproveitados.'))return;
+  if(!confirm('Habilitar o Anexo I do contrato '+record.contract_number+' sem criar projeto?'))return;
   const button=$('activatePendingContract');
-  if(button){button.disabled=true;button.textContent='Vinculando...';}
-  msg('Vinculando cliente, contrato e projeto...');
+  if(button)button.disabled=true;
   try{
-    const {data,error}=await client().rpc('admin_convert_commercial_record',{p_record_id:record.id});
-    if(error||!data?.project_id)throw error||new Error('Não foi possível obter o projeto vinculado.');
-    await loadProjects(data.project_id);
-    if($('contractProject')?.value!==String(data.project_id))throw new Error('O projeto foi vinculado, mas não pôde ser selecionado na lista.');
-    msg('Contrato '+record.contract_number+' vinculado ao cliente e projeto. Ele já está disponível no seletor do Anexo I; a emissão seguirá as verificações documentais.','success');
+    const {data,error}=await client().rpc('admin_formalize_service_contract',{p_record_id:record.id});
+    if(error||!data?.contract_id)throw error||new Error('Não foi possível habilitar o contrato.');
+    await loadProjects('commercial:'+record.id);
+    msg('Contrato habilitado para Anexo I sem projeto.','success');
   }catch(error){
     msg(error?.message||'Não foi possível vincular o contrato. Tente novamente.','error');
   }finally{
-    if(button){button.disabled=false;button.textContent='Vincular contrato e habilitar Anexo I';}
+    if(button){button.disabled=false;button.textContent='Habilitar Anexo I sem projeto';}
   }
 }
 async function loadProjects(preferredId=null){
@@ -94,19 +92,19 @@ async function loadProjects(preferredId=null){
       .select('id,nome,tipo,cliente_id,contract_id,numero_contrato,status,area_construida_m2,area_terreno_m2,endereco_obra,numero_obra,complemento_obra,bairro_obra,cidade_obra,estado_obra')
       .order('created_at',{ascending:false}).limit(150),
     client().from('commercial_records')
-      .select('id,contract_number,prospect_name,property_type,services,source_mode,status,linked_project_id,created_at')
+      .select('id,contract_number,prospect_name,property_type,services,source_mode,status,linked_project_id,linked_contract_id,linked_client_id,created_at')
       .eq('record_kind','contrato').is('linked_project_id',null)
       .order('created_at',{ascending:false}).limit(150)
   ]);
   if(res.error){msg('Não foi possível carregar os projetos.','error');return}
   if(commercial.error){msg('Os projetos foram carregados, mas não foi possível consultar os contratos recentes: '+commercial.error.message,'error');return}
-  projects=res.data||[];
-  unlinkedContracts=commercial.data||[];
+  projects=(res.data||[]).sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt-BR')||String(a.numero_contrato).localeCompare(String(b.numero_contrato),'pt-BR',{numeric:true}));
+  unlinkedContracts=(commercial.data||[]).sort((a,b)=>String(a.prospect_name).localeCompare(String(b.prospect_name),'pt-BR')||String(a.contract_number).localeCompare(String(b.contract_number),'pt-BR',{numeric:true}));
   const selector=$('contractProject');
   if(!selector)return;
   selector.innerHTML='<option value="">Selecione o contrato / projeto...</option>'
-    +(unlinkedContracts.length?'<optgroup label="Contratos recém-criados — vincular ao projeto">'
-       +unlinkedContracts.map(r=>`<option value="commercial:${esc(r.id)}">${esc(r.contract_number||'Contrato')} • ${esc(r.prospect_name||'Contratante')} • ainda sem projeto</option>`).join('')
+    +(unlinkedContracts.length?'<optgroup label="Contratos sem projeto">'
+       +unlinkedContracts.map(r=>`<option data-contract-id="${esc(r.linked_contract_id||'')}" value="commercial:${esc(r.id)}">${esc(r.contract_number||'Contrato')} • ${esc(r.prospect_name||'Contratante')} • sem projeto</option>`).join('')
        +'</optgroup>':'')
     +'<optgroup label="Contratos vinculados a projetos">'
     +projects.filter(p=>p.contract_id).map(p=>`<option value="${esc(p.id)}">${esc(p.numero_contrato||'Contrato')} • ${esc(p.nome)}${p.tipo?' • '+esc(p.tipo):''}</option>`).join('')
@@ -118,8 +116,8 @@ async function loadProjects(preferredId=null){
     reminder.classList.toggle('doc-hidden',!unlinkedContracts.length);
     const label=$('pendingContractReminderText');
     if(label)label.textContent=generatedPending.length
-      ? generatedPending.length+' contrato(s) já emitido(s) ainda sem projeto. Crie/vincule o projeto para usar o Anexo I.'
-      : unlinkedContracts.length+' contrato(s) em preparação sem projeto. Ao gerar o Word, o vínculo será automático.';
+      ? generatedPending.length+' contrato(s) já emitido(s) sem projeto. O Anexo I pode ser emitido sem projeto.'
+      : unlinkedContracts.length+' contrato(s) em preparação sem projeto. A emissão não exige projeto.';
   }
   const requested=new URLSearchParams(location.search).get('projectId');
   const activeSelection=[preferredId,previous,requested].find(id=>id&&selector.querySelector('option[value="'+CSS.escape(String(id))+'"]'));
@@ -131,6 +129,18 @@ async function loadProjects(preferredId=null){
 async function chooseProject(id){
   if(typeof id==='string'&&id.startsWith('commercial:')){
     const record=unlinkedContracts.find(item=>String(item.id)===id.slice('commercial:'.length));
+    if(record?.linked_contract_id){
+      pendingContract=null;
+      project={id:'commercial:'+record.id,contract_id:record.linked_contract_id,cliente_id:record.linked_client_id};
+      $('pendingContractAction')?.classList.add('doc-hidden');
+      const [s,d]=await Promise.all([
+        client().from('contract_scope_items').select('*').eq('contract_id',project.contract_id).order('display_order'),
+        client().from('documentos').select('id,nome,document_kind,workflow_status,optional_document,created_at,generated_at,arquivo,archived_explicitly,acceptance_required,client_released_at,version,versao').eq('contract_id',project.contract_id).is('projeto_id',null).not('document_kind','is',null).order('created_at',{ascending:false}).limit(100)
+      ]);
+      if(s.error||d.error){msg('Não foi possível carregar o contrato. Tente novamente.','error');return;}
+      scope=s.data||[];docs=d.data||[];approvals=[];attention=[];documentNotifications=[];documentAcceptances=[];
+      renderAll();msg('Contrato sem projeto: Anexo I disponível.','success');return;
+    }
     if(record){showPendingContract(record);return}
   }
   pendingContract=null;
@@ -170,7 +180,7 @@ function renderGenerators(){
     <div class="doc-row" data-generator-kind="${kind}">
       <div class="doc-row-head">
         <div><strong>${esc(title)}</strong><div class="doc-meta">${esc(desc)}</div></div>
-        <button class="doc-btn secondary" data-prepare="${kind}" ${pendingContract?'disabled title="Vincule o contrato a um projeto para preparar o documento."':''}>Preparar</button>
+        <button class="doc-btn secondary" data-prepare="${kind}" ${pendingContract||(String(project?.id||'').startsWith('commercial:')&&kind!=='anexo_i')?'disabled title="Habilite o contrato; documentos operacionais exigem projeto."':''}>Preparar</button>
       </div>
       ${kind==='estudo_preliminar'&&!included('a')?'<div class="doc-flow-explainer">Estudo Preliminar não consta no escopo vigente. Se for apenas apoio interno, será auxiliar; se o cliente o contratar, primeiro registre-o por orçamento/Serviço Adicional para que seja remunerado e passe a constar no Anexo I.</div>':''}
       ${kind==='servico_adicional'?'<div class="doc-flow-explainer">O serviço adicional ficará vinculado ao contrato selecionado acima. A versão aceita pelo cliente integra o histórico do contrato sem apagar ou substituir os documentos anteriores.</div>':''}
@@ -225,7 +235,7 @@ async function prepare(kind,approvalId=null){
   msg('Preparando documento com dados do contrato e escopo vigente...');
   try{
     const optionalStudy=kind==='estudo_preliminar'&&!included('a');
-    const {data,error}=await client().rpc('admin_prepare_contract_document',{p_project_id:project.id,p_document_kind:kind,p_approval_id:approvalId,p_extra_data:{}});
+    const {data,error}=await client().rpc('admin_prepare_contract_document',{p_project_id:String(project.id).startsWith('commercial:')?null:project.id,p_document_kind:kind,p_approval_id:approvalId,p_extra_data:String(project.id).startsWith('commercial:')?{contract_id:project.contract_id}:{}});
     if(error)throw error;
     if(!data)throw new Error('Documento não preparado');
     msg(optionalStudy?'Estudo Preliminar preparado como auxiliar. Para contratá-lo, registre o serviço antes de emitir o Anexo I.':'Rascunho preparado com dados do contrato e escopo vigente.','success');
