@@ -15,7 +15,7 @@ create table financial_accounts(id uuid primary key,opening_balance numeric);
 create table audit_log(user_id uuid,action text,entity_type text,entity_id uuid,details jsonb);
 create function public.service_get_professional_identity() returns jsonb language sql as $$select '{"full_name":"Profissional de Teste","cpf":"00000000000","professional_title":"Teste sintético"}'::jsonb$$;
 insert into auth.users values('${admin}');insert into clientes values('${client}','Cliente sintético','00000000000');insert into projetos values('${project}','${client}','Projeto sintético',null);
-insert into financeiro values('${payment}','${project}','Serviço sintético',123.45,'entrada','pago',current_date,current_date,'Pix');`);
+insert into financeiro values('${payment}','${project}','Serviço sintético',123.45,'entrada','pago',(now() at time zone 'America/Sao_Paulo')::date,(now() at time zone 'America/Sao_Paulo')::date,'Pix');`);
 for(const file of ['20261029001014_admin_payment_receipts.sql','20261029083346_financial_account_balance_reference.sql','20261029125022_payment_receipt_financial_link.sql'])await db.exec(fs.readFileSync('supabase/migrations/'+file,'utf8'));
 const uid=async id=>db.exec(`select set_config('request.jwt.claim.sub','${id}',false)`);
 const issue=async(request='00000000-0000-4000-8000-000000000010')=>(await db.query('select (public.admin_issue_receipt_for_payment($1,$2,$3)).*',[payment,request,'Cidade de teste'])).rows[0];
