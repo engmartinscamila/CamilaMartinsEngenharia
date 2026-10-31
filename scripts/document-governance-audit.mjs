@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const root = process.cwd();
-const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
+const read = rel => fs.readFileSync(path.join(root, rel), 'utf8')+(rel.endsWith('generate-commercial-document/index.ts')?'\n'+fs.readFileSync(path.join(root,path.dirname(path.dirname(rel)),'_shared/commercial-word-renderer.ts'),'utf8'):'');
 const errors = [];
 const requireText = (rel, needle, message) => {
   if (!read(rel).includes(needle)) errors.push(`${rel}: ${message}`);
@@ -85,12 +85,13 @@ const delivery = read('portal-app/supabase/functions/deliver-generated-document/
 for (const marker of [
   'const archive = body.archive === true',
   "storage_mode: archive ? 'archived' : 'download_only'",
-  'if (archive)',
-  'arquivo: null',
-  "remove([row.arquivo])"
+  'if (archive && !row.archived_explicitly)',
+  'existingHistory.data',
+  'last_downloaded_at:now'
 ]) {
-  if (!delivery.includes(marker)) errors.push(`deliver-generated-document: regra de não salvamento ausente: ${marker}`);
+  if (!delivery.includes(marker)) errors.push(`deliver-generated-document: regra de preservação do Word ausente: ${marker}`);
 }
+if(delivery.includes('.remove(')||delivery.includes('arquivo: null'))errors.push('deliver-generated-document: download não pode apagar o Word emitido.');
 for (const marker of ['expectedDocumentKind', 'actualDocumentKind', 'commercial_document_kind', 'documentKind: actualDocumentKind']) {
   if (!delivery.includes(marker)) errors.push(`deliver-generated-document: validação de tipo ausente: ${marker}`);
 }

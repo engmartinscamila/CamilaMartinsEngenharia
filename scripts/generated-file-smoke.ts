@@ -48,23 +48,14 @@ async function validateDocx(name:string,bytes:Uint8Array|Buffer,expected:string[
 }
 
 function buildPureCommercialModule(){
-  const source=read('portal-app/supabase/functions/generate-commercial-document/index.ts');
-  const docxImport=source.match(/import \{[^;]+\} from 'docx';/)?.[0];
-  const start=source.indexOf('type CommercialRecord=');
-  const end=source.indexOf('Deno.serve');
-  if(!docxImport||start<0||end<0)throw new Error('Não foi possível extrair o renderizador comercial real.');
   const target=path.join(TMP,'commercial-core.ts');
-  fs.writeFileSync(target,`${docxImport}\n${source.slice(start,end)}\nexport { quoteDocument, contractDocument };\n`);
+  fs.writeFileSync(target,read('portal-app/supabase/functions/_shared/commercial-word-renderer.ts'));
   return target;
 }
 
 function buildCommercialFinalModule(){
-  const source=read('portal-app/supabase/functions/generate-commercial-document-final/index.ts');
-  const start=source.search(/const\s+text\s*=/);
-  const end=source.indexOf('Deno.serve');
-  if(start<0||end<0)throw new Error('Não foi possível extrair o pós-processamento comercial final.');
   const target=path.join(TMP,'commercial-final.ts');
-  fs.writeFileSync(target,`import JSZip from 'jszip';\n${source.slice(start,end)}\nexport { enhanceContractDocument, enhanceQuoteDocument };\n`);
+  fs.writeFileSync(target,read('portal-app/supabase/functions/_shared/commercial-word-enhancements.ts'));
   return target;
 }
 

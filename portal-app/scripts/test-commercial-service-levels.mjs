@@ -3,7 +3,7 @@ import fs from 'node:fs';
 
 const screen = fs.readFileSync(new URL('../src/app/admin/commercial-documents.tsx', import.meta.url), 'utf8');
 const service = fs.readFileSync(new URL('../src/services/commercial-service.ts', import.meta.url), 'utf8');
-const generator = fs.readFileSync(new URL('../../supabase/functions/generate-commercial-document/index.ts', import.meta.url), 'utf8');
+const generator = fs.readFileSync(new URL('../../supabase/functions/_shared/commercial-word-renderer.ts', import.meta.url), 'utf8');
 
 let checks=0;
 const ok=(value,message)=>{assert.ok(value,message);checks+=1;};
