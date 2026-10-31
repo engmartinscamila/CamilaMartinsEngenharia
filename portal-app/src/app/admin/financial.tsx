@@ -6,6 +6,7 @@ import React, { useCallback, useMemo, useState, useRef } from 'react';
 import { ActivityIndicator, Linking, Platform, Pressable, Text, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 
+import { AdminClientPicker } from '@/components/admin-client-picker';
 import { AdminProjectPicker } from '@/components/admin-project-picker';
 import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
 import { DateField } from '@/components/date-field';
@@ -20,6 +21,7 @@ import {
   createAdminFinancialEntry,
   updateAdminFinancialEntry,
   deleteAdminFinancialEntry,
+  listAdminClients,
   listAdminContracts,
   listAdminFinancialEntries,
   listAdminProjects,
@@ -39,6 +41,7 @@ import {
 } from '@/services/operations-service';
 import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 import type {
+  AdminClientSummary,
   AdminContractSummary,
   AdminProjectSummary,
   FinancialAccountSummary,
@@ -50,6 +53,10 @@ import type {
 
 export default function AdminFinancialScreen() {
   const embedded=useAdminModule();
+  const [clients,setClients]=useState<AdminClientSummary[]>([]);
+  const [entryLink,setEntryLink]=useState('client');
+  const [entryClientId,setEntryClientId]=useState<string|null>(null);
+  const [entryContractId,setEntryContractId]=useState<string|null>(null);
   const [contracts, setContracts] = useState<AdminContractSummary[]>([]);
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
   const [entries, setEntries] = useState<FinancialEntrySummary[]>([]);
@@ -113,7 +120,7 @@ export default function AdminFinancialScreen() {
   }
   const clearEntry=()=>{setEditing(null);setDescription('');setAmount('');setNotes('');setCategory('outros');setEntryStatus('pendente');setPaidAt(financialToday());setPaymentMethod('');requestId.current=null;};
   const editEntry=(entry:FinancialEntrySummary)=>{
-    setEditing(entry);setSelectedProjectId(entry.projectId);setType(entry.type as 'entrada'|'saida');setDescription(entry.description);
+    setEditing(entry);setEntryLink(entry.projectId?'project':'client');setEntryClientId(entry.clientId??projects.find(p=>p.id===entry.projectId)?.clientId??null);setEntryContractId(entry.contractId??null);setSelectedProjectId(entry.projectId);setType(entry.type as 'entrada'|'saida');setDescription(entry.description);
     setAmount(entry.amount.toFixed(2).replace('.',','));setDate(entry.date??financialToday());setDueDate(entry.dueDate??'');setNotes(entry.notes??'');
     setCategory(financialCategory(entry.category));setEntryStatus(financialStatus(entry.status));setAccountId(entry.accountId);setPaidAt(entry.paidAt??entry.date??financialToday());
     setPaymentMethod(entry.paymentMethod??'');setSection('entries');requestId.current=null;
@@ -122,24 +129,25 @@ export default function AdminFinancialScreen() {
   const styles = useThemeStyles(styleDefinitions);
   useUnsavedForm(Boolean(description||amount||notes||accountName||timeHours||timeDescription||fiscalDescription||fiscalAmount||contractValue));
 
-  const selectContext=useCallback((id:string)=>{setSelectedProjectId(id);setFilters(current=>({...current,projectId:id}));setPage(0);},[]);
+  const selectContext=useCallback((id:string)=>{setEntryLink('project');setSelectedProjectId(id);setFilters(current=>({...current,projectId:id}));setPage(0);},[]);
   useNotificationProject(projects, selectContext);
 
   const contextProjectId=embedded?.projectId;
   const load = useCallback(async () => {
     setLoading(true);
     try {
-    const [contractResult, projectResult, entryResult, archiveResult, bankResult, accountResult, timeResult, fiscalResult, preferenceResult] = await Promise.all([
+    const [contractResult, projectResult, entryResult, archiveResult, bankResult, accountResult, timeResult, fiscalResult, preferenceResult, clientResult] = await Promise.all([
       listAdminContracts(), listAdminProjects(), listAdminFinancialEntries(), listFinancialArchive(),
-      listBankTransactions(), listFinancialAccounts(), listTimesheets(), listFiscalDocuments(), getAdminFinancialPreferences(),
+      listBankTransactions(), listFinancialAccounts(), listTimesheets(), listFiscalDocuments(), getAdminFinancialPreferences(), listAdminClients(),
     ]);
+    setClients(clientResult.data);
     setContracts(contractResult.data);
     setProjects(projectResult.data);
     setEntries(entryResult.data);
     setArchive(archiveResult.data);
     setArchiveError(archiveResult.error);
     setTransactions(bankResult.data);
-    setCoreError(contractResult.error ?? projectResult.error ?? entryResult.error ?? timeResult.error);
+    setCoreError(clientResult.error ?? contractResult.error ?? projectResult.error ?? entryResult.error ?? timeResult.error);
     setBankError(bankResult.error ?? accountResult.error);
     setAccounts(accountResult.data);
     setTimesheets(timeResult.data);
@@ -152,7 +160,7 @@ export default function AdminFinancialScreen() {
     setSelectedProjectId((current) => current ?? null);
     setSelectedContractId((current) => contextProjectId ? projectResult.data.find(project=>project.id===contextProjectId)?.contractId ?? null : current ?? contractResult.data[0]?.id ?? null);
     setAccountId((current) => current ?? null);
-    setError(contractResult.error ?? projectResult.error ?? entryResult.error ?? archiveResult.error ?? bankResult.error ?? accountResult.error ?? timeResult.error ?? fiscalResult.error ?? preferenceResult.error);
+    setError(clientResult.error ?? contractResult.error ?? projectResult.error ?? entryResult.error ?? archiveResult.error ?? bankResult.error ?? accountResult.error ?? timeResult.error ?? fiscalResult.error ?? preferenceResult.error);
     } catch { const message='Não foi possível atualizar os dados financeiros. Tente novamente.'; setError(message); setCoreError(message); setBankError(message); setArchiveError(message); }
     finally { setLoading(false); }
   }, [contextProjectId]);
@@ -191,16 +199,20 @@ export default function AdminFinancialScreen() {
   const saveEntry = async () => {
     setError(null); setSuccess(null);
     const parsed = parseBrazilianCurrency(amount);
-    if (!selectedProjectId || description.trim().length < 2 || parsed === null || parsed <= 0 || !isValidIsoDate(date)) {
-      setError('Selecione o projeto e informe descrição, valor e data válidos.');
+    const linkedProject=(embedded?.projectId||entryLink==='project')?projects.find(project=>project.id===selectedProjectId):null;
+    const clientId=linkedProject?.clientId||((embedded?.projectId||entryLink==='project')?null:entryClientId);
+    const contractId=linkedProject?.contractId||((embedded?.projectId||entryLink==='project')?null:entryContractId);
+    const projectId=linkedProject?.id||null;
+    if (!clientId || description.trim().length < 2 || parsed === null || parsed <= 0 || !isValidIsoDate(date)) {
+      setError('Selecione o cliente ou projeto e informe descrição, valor e data válidos.');
       return;
     }
     if (dueDate && !isValidIsoDate(dueDate)) { setError('A data de vencimento deve usar AAAA-MM-DD.'); return; }
     setSaving(true);
-    const fingerprint=JSON.stringify({selectedProjectId,description,type,parsed,date,notes,category,entryStatus,dueDate,accountId,paidAt,paymentMethod});
+    const fingerprint=JSON.stringify({projectId,clientId,contractId,description,type,parsed,date,notes,category,entryStatus,dueDate,accountId,paidAt,paymentMethod});
     if(requestFingerprint.current!==fingerprint){requestId.current=null;requestFingerprint.current=fingerprint;}
     requestId.current ??= randomUUID();
-    const input={projectId:selectedProjectId,description,type,amount:parsed,date,notes,category,status:entryStatus,dueDate,accountId,paidAt,paymentMethod,requestId:requestId.current};
+    const input={projectId,clientId,contractId,description,type,amount:parsed,date,notes,category,status:entryStatus,dueDate,accountId,paidAt,paymentMethod,requestId:requestId.current};
     const result=editing ? await updateAdminFinancialEntry(editing.id,input) : await createAdminFinancialEntry(input);
     setSaving(false);
     if (result) setError(result);
@@ -301,8 +313,12 @@ export default function AdminFinancialScreen() {
         <Text style={styles.sectionTitle}>{editing?"Editar lançamento":"Novo lançamento"}</Text>
         <SelectionChips items={[{ value: 'entrada', label: 'Entrada' }, { value: 'saida', label: 'Saída' }]} label="Natureza" onChange={value=>{setType(value);requestId.current=null;}} value={type} />
         <SelectionChips items={[{ value: 'pendente', label: 'Pendente' }, { value: 'pago', label: type === 'entrada' ? 'Recebido' : 'Pago' },{value:'cancelado',label:'Cancelado'}]} label="Situação" onChange={value=>{setEntryStatus(value);requestId.current=null;}} value={entryStatus} />
-        <Text style={styles.label}>Contrato e projeto</Text>
-        <AdminProjectPicker projects={projects.filter(project=>!embedded?.projectId||project.id===embedded.projectId)} value={selectedProjectId} onChange={id=>{setSelectedProjectId(id);requestId.current=null;}} />
+        {!embedded?.projectId?<SelectionChips label="Vincular lançamento a" value={entryLink} onChange={value=>{setEntryLink(value);requestId.current=null;}} items={[{value:'client',label:'Cliente — contrato opcional'},{value:'project',label:'Contrato e projeto'}]} />:null}
+        {embedded?.projectId||entryLink==='project'?<AdminProjectPicker projects={projects.filter(project=>!embedded?.projectId||project.id===embedded.projectId)} value={selectedProjectId} onChange={id=>{setSelectedProjectId(id);requestId.current=null;}} />:<>
+          <AdminClientPicker clients={clients} contracts={contracts} value={entryClientId} onChange={id=>{setEntryClientId(id);setEntryContractId(null);requestId.current=null;}} />
+          {entryClientId?<SelectionChips label="Contrato (opcional)" value={entryContractId??''} onChange={id=>{setEntryContractId(id||null);requestId.current=null;}} items={[{value:'',label:'Sem contrato — serviço avulso'},...contracts.filter(contract=>contract.clientId===entryClientId).map(contract=>({value:contract.id,label:contract.contractNumber}))]} />:null}
+          <Text style={styles.meta}>Você pode registrar a receber ou recebido sem cadastrar contrato ou projeto.</Text>
+        </>}
         <Button title="Emitir recibo de serviço sem projeto" variant="ghost" debounceMs={0} onPress={()=>{if(embedded)embedded.onNavigate('receipts');else if(Platform.OS==='web')window.location.assign('/recibos.html');else void Linking.openURL('https://camilamartinsengenharia.com.br/recibos.html');}} />
         <Field label="Descrição" onChangeText={value=>{setDescription(value);requestId.current=null;}} placeholder="Ex.: Parcela 2 do contrato" value={description} />
         <Text style={styles.label}>Categoria / centro de custo</Text><View nativeID="financialEntryCategories" style={styles.selector}>{[...financialCategories,...(financialCategories.some(item=>item.value===category)?[]:[{value:category,label:category}])].map((item) => <Pressable accessibilityRole="button" key={item.value} onPress={() => {setCategory(item.value);requestId.current=null;}} style={[styles.choice, category === item.value && styles.choiceSelected]}><Text style={[styles.choiceText, category === item.value && styles.choiceTextSelected]}>{item.label}</Text></Pressable>)}</View>

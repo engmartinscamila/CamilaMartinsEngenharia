@@ -649,7 +649,7 @@ export async function listAdminFinancialEntries(): Promise<ServiceResult<Financi
   const rows: any[] = [];
   for (let offset=0; ; offset+=500) {
     const result=await supabase.from('financeiro')
-      .select('*, projetos(id,nome,numero_contrato,contract_id,clientes(nome),contratos!contract_id(contract_number)),receipt_client:clientes!financeiro_cliente_id_fkey(nome),receipt_contract:contratos!financeiro_contract_id_fkey(contract_number)')
+      .select('*, projetos(id,cliente_id,nome,numero_contrato,contract_id,clientes(nome),contratos!contract_id(contract_number)),receipt_client:clientes!financeiro_cliente_id_fkey(nome),receipt_contract:contratos!financeiro_contract_id_fkey(contract_number)')
       .order('data',{ascending:false}).order('id').range(offset,offset+499);
     if(result.error)return {data:[],error:'Não foi possível carregar todos os lançamentos financeiros atuais.'};
     rows.push(...(result.data??[]));
@@ -665,7 +665,9 @@ export async function listAdminFinancialEntries(): Promise<ServiceResult<Financi
       return {
         id: row.id,
         projectId: row.projeto_id ?? null,
-        projectName: project?.nome ?? (row.source==='receipt'?'Serviço sem projeto':'Projeto não identificado'),
+        clientId: row.cliente_id ?? project?.cliente_id ?? null,
+        contractId: row.contract_id ?? project?.contract_id ?? null,
+        projectName: project?.nome ?? (row.cliente_id?'Serviço sem projeto':'Projeto não identificado'),
         clientName: client?.nome ?? (Array.isArray(row.receipt_client)?row.receipt_client[0]?.nome:row.receipt_client?.nome) ?? 'Cliente não identificado',
         contractNumber: contract?.contract_number ?? project?.numero_contrato ?? (Array.isArray(row.receipt_contract)?row.receipt_contract[0]?.contract_number:row.receipt_contract?.contract_number) ?? 'Sem contrato',
         type: row.tipo ?? 'entrada',
@@ -715,7 +717,7 @@ export async function listFinancialArchive(): Promise<ServiceResult<FinancialArc
   };
 }
 
-export type FinancialEntryInput={projectId:string;description:string;type:'entrada'|'saida';amount:number;date:string;notes?:string;category?:string;status?:string;dueDate?:string;accountId?:string|null;paidAt?:string;paymentMethod?:string;requestId?:string};
+export type FinancialEntryInput={projectId:string|null;clientId?:string|null;contractId?:string|null;description:string;type:'entrada'|'saida';amount:number;date:string;notes?:string;category?:string;status?:string;dueDate?:string;accountId?:string|null;paidAt?:string;paymentMethod?:string;requestId?:string};
 export async function createAdminFinancialEntry(input: FinancialEntryInput) {
   const payload=financialEntryPayload(input);
   if(typeof payload==='string')return payload;
@@ -728,12 +730,12 @@ export async function createAdminFinancialEntry(input: FinancialEntryInput) {
   return result.error || !result.data ? 'Não foi possível confirmar o lançamento. Tente novamente sem alterar os dados.' : null;
 }
 export function financialEntryPayload(input:FinancialEntryInput) {
-  if(!input.projectId || input.description.trim().length<2 || !Number.isFinite(input.amount) || input.amount<=0)return 'Informe projeto, descrição e um valor maior que zero.';
+  if((!input.projectId&&!input.clientId) || input.description.trim().length<2 || !Number.isFinite(input.amount) || input.amount<=0)return 'Informe cliente ou projeto, descrição e um valor maior que zero.';
   if(!['entrada','saida'].includes(input.type) || !isValidIsoDate(input.date) || (input.dueDate && !isValidIsoDate(input.dueDate)) || (input.paidAt && !isValidIsoDate(input.paidAt)))return 'Informe datas e natureza válidas.';
   const status=financialStatus(input.status??'pendente');
   const paid=status==='pago' ? input.paidAt || input.date : null;
   if(paid && paid>financialToday())return 'A data de recebimento/pagamento não pode estar no futuro.';
-  return {projeto_id:input.projectId,descricao:input.description.trim(),tipo:input.type,valor:input.amount,data:input.date,
+  return {projeto_id:input.projectId??null,cliente_id:input.clientId??null,contract_id:input.contractId??null,descricao:input.description.trim(),tipo:input.type,valor:input.amount,data:input.date,
     observacoes:input.notes?.trim()||null,categoria:financialCategory(input.category??'outros'),status,
     data_vencimento:input.dueDate||input.date||null,data_pagamento:paid,account_id:input.accountId??null,forma_pagamento:input.paymentMethod?.trim()||null};
 }

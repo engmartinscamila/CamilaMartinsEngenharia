@@ -13,17 +13,25 @@ function load(file,deps={}){
 }
 const format=load('src/lib/format.ts'),model=load('src/lib/financial-model.ts');
 const today=model.financialToday();
+const payloadSource=fs.readFileSync('src/services/admin-service.ts','utf8').match(/export function financialEntryPayload[\s\S]*?\n}/)[0];
+const payloadExports={};vm.runInNewContext(ts.transpileModule(payloadSource,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:payloadExports,...format,...model});
+const standaloneInput={projectId:null,clientId:'client-only',contractId:null,description:'Serviço sem projeto',type:'entrada',amount:125,date:'2026-10-22',status:'pendente'};
+const pendingPayload=payloadExports.financialEntryPayload(standaloneInput);assert.equal(pendingPayload.cliente_id,'client-only');assert.equal(pendingPayload.projeto_id,null);assert.equal(pendingPayload.contract_id,null);assert.equal(pendingPayload.data_pagamento,null);
+const paidPayload=payloadExports.financialEntryPayload({...standaloneInput,status:'pago',paidAt:'2026-10-23'});assert.equal(paidPayload.data_pagamento,'2026-10-23');
+assert.equal(typeof payloadExports.financialEntryPayload({...standaloneInput,clientId:null}),'string');
+
 let entries=[{id:'paid',projectId:'p',projectName:'Obra',clientName:'Cliente',contractNumber:'CON-1',description:'Parcela recebida',amount:100,type:'entrada',status:'pago',date:today,paidAt:today,dueDate:today,category:'Projetos',accountId:'account',notes:null},
  {id:'cancel',projectId:'p',projectName:'Obra',clientName:'Cliente',contractNumber:'CON-1',description:'Cancelada',amount:999,type:'entrada',status:'cancelado',date:today,paidAt:null,dueDate:today,category:'outros',accountId:null,notes:null}];
 const project={id:'p',clientId:'c',clientName:'Cliente',contractId:'contract',contractNumber:'CON-1',name:'Obra'};
 const ok=data=>Promise.resolve({data,error:null});
-let calls=0,release,fail=false;
-const admin={listAdminContracts:()=>ok([{id:'contract',contractNumber:'CON-1',clientName:'Cliente',contractValue:500}]),listAdminProjects:()=>ok([project]),listAdminFinancialEntries:()=>ok(entries),listFinancialArchive:()=>ok([]),
- createAdminFinancialEntry:async input=>{calls++;await new Promise(resolve=>{release=resolve;});if(fail)return 'Falha simulada';entries=[...entries,{...entries[0],id:'new',description:input.description,amount:input.amount}];return null;},updateAdminFinancialEntry:async()=>null,deleteAdminFinancialEntry:async()=>null,updateAdminContractValue:async()=>null};
+let calls=0,release,fail=false,lastInput;
+const admin={listAdminClients:()=>ok([{id:'c',name:'Cliente'},{id:'avulso',name:'Harison sintético sem contrato'}]),listAdminContracts:()=>ok([{id:'contract',clientId:'c',contractNumber:'CON-1',clientName:'Cliente',contractValue:500}]),listAdminProjects:()=>ok([project]),listAdminFinancialEntries:()=>ok(entries),listFinancialArchive:()=>ok([]),
+ createAdminFinancialEntry:async input=>{lastInput=input;calls++;await new Promise(resolve=>{release=resolve;});if(fail)return 'Falha simulada';entries=[...entries,{...entries[0],...input,id:'new-'+calls,description:input.description,amount:input.amount}];return null;},updateAdminFinancialEntry:async(id,input)=>{lastInput=input;entries=entries.map(row=>row.id===id?{...row,...input}:row);return null;},deleteAdminFinancialEntry:async()=>null,updateAdminContractValue:async()=>null};
 const operations={listFinancialAccounts:()=>ok([{id:'account',name:'Conta de teste',openingBalance:1000,openingBalanceDate:'2020-01-01',accountType:'bank'}]),listTimesheets:()=>ok([]),listFiscalDocuments:()=>ok([]),getAdminFinancialPreferences:()=>ok({defaultHourlyRate:null}),createFinancialAccount:async()=>null,updateAdminFinancialPreferences:async()=>null,createTimesheet:async()=>null,createFiscalDocument:async()=>null,importOfxTransactions:async()=>({imported:0,reconciled:0,error:null})};
 const moduleContext=load('src/providers/admin-module-context.tsx',{react:React});
 const component=load('src/app/admin/financial.tsx',{
  '@/providers/admin-module-context':moduleContext,
+ '@/components/admin-client-picker':{AdminClientPicker:props=>e('client-picker',props)},
  '@/components/admin-project-picker':{AdminProjectPicker:props=>e('project-picker',props)},
  react:React,'react-native':{View:'div',Text:'span',Pressable:props=>e('button',{onPress:props.onPress},props.children),ActivityIndicator:()=>null,Platform:{OS:'web'},Linking:{}},
  'expo-document-picker':{},'expo-crypto':{randomUUID:()=> '00000000-0000-4000-8000-000000000001'},
@@ -47,14 +55,27 @@ assert(text().includes('SALDO REALIZADO'));assert(text().includes('100,00'));ass
 await act(async()=>{choices('Situação do lançamento').props.onChange('cancelado');});
 assert(text().includes('Cancelada'));assert(!text().includes('Parcela recebida'));
 await act(async()=>{button('Limpar filtros').props.onPress();choices('Contrato e projeto')?.props.onChange?.('p');});
-await act(async()=>{renderer.root.findByType('project-picker').props.onChange('p');field('Descrição').props.onChangeText('Nova parcela');field('Valor (R$)').props.onChangeText('250,00');});
+await act(async()=>{choices('Vincular lançamento a').props.onChange('project');field('Descrição').props.onChangeText('Nova parcela');field('Valor (R$)').props.onChangeText('250,00');});
+await act(async()=>renderer.root.findByType('project-picker').props.onChange('p'));
 await act(async()=>{button('Registrar no extrato administrativo').props.onPress();button('Registrar no extrato administrativo').props.onPress();});
 assert.equal(calls,1,'Double-click must start one mutation');await act(async()=>release());assert.equal(field('Descrição').props.value,'');
 fail=true;
 await act(async()=>{field('Descrição').props.onChangeText('Preservar formulário');field('Valor (R$)').props.onChangeText('300,00');});
 await act(async()=>button('Registrar no extrato administrativo').props.onPress());await act(async()=>release());assert.equal(field('Descrição').props.value,'Preservar formulário');assert(text().includes('Falha simulada'));
+fail=false;
+await act(async()=>{button('Cancelar edição / limpar formulário').props.onPress();choices('Vincular lançamento a').props.onChange('client');});
+await act(async()=>renderer.root.findByType('client-picker').props.onChange('avulso'));
+await act(async()=>{field('Descrição').props.onChangeText('Serviço avulso a receber');field('Valor (R$)').props.onChangeText('125,00');});
+await act(async()=>button('Registrar no extrato administrativo').props.onPress());
+assert.equal(lastInput.clientId,'avulso');assert.equal(lastInput.projectId,null);assert.equal(lastInput.contractId,null);assert.equal(lastInput.status,'pendente');
+await act(async()=>release());
+assert(text().includes('375,00'),'Pending client-only entry must count toward receivable');
+await act(async()=>renderer.root.findAllByType('button').filter(node=>node.props.title==='Editar lançamento').at(-1).props.onPress());
+await act(async()=>choices('Situação').props.onChange('pago'));
+await act(async()=>button('Confirmar alterações').props.onPress());
+assert.equal(lastInput.clientId,'avulso');assert.equal(lastInput.projectId,null);assert.equal(lastInput.status,'pago');assert(text().includes('225,00'),'Receiving a client-only payment must update received cash');
 await act(async()=>choices('Área financeira').props.onChange('accounts'));
-assert(text().includes('Saldo gerencial: '));assert(text().includes('1.350,00'),'Account must reflect opening plus paid entries');
+assert(text().includes('Saldo gerencial: '));assert(text().includes('1.100,00'),'Account must reflect opening plus paid entries');
 await act(async()=>choices('Área financeira').props.onChange('fiscal'));assert(text().includes('Não valida os requisitos municipais'));assert(choices('Projeto do rascunho fiscal'));
 await act(async()=>renderer.unmount());
 console.log('FINANCEIRO UI: filtros, cancelados, cadastro com clique duplo, preservação após erro, saldo e rascunho fiscal aprovados.');

@@ -279,6 +279,8 @@ export interface ClientDeletionPreview {
 
 export interface FinancialEntrySummary {
   id: string;
+  clientId?: string | null;
+  contractId?: string | null;
   projectId: string | null;
   projectName: string;
   clientName: string;
