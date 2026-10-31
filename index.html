@@ -27,9 +27,53 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <link rel="stylesheet" href="css/styles.css?v=20261016-1" />
-  <link rel="stylesheet" href="css/portfolio-motion-v1.css?v=20261030-foto3-video-fullbleed" />
+  <link rel="stylesheet" href="css/portfolio-motion-v1.css?v=20261031-urben-foto03-pan-15s" />
   <link rel="stylesheet" href="css/portfolio-live3d.css?v=20261030-3" />
   <link rel="stylesheet" href="css/microinteracoes-publicas.css?v=20260910-1" />
+  <!-- Corrige diretamente a capa da Casa Urben, independente do cache de arquivos CSS/JS externos. -->
+  <style id="casa-urben-foto03-movimento-final">
+    .featured-projects-grid .featured-project-3d-wrap > .featured-project-card[href*="casa-urban"],
+    .featured-projects-grid > .featured-project-card[href*="casa-urban"] {
+      background: #07111e !important;
+    }
+    .featured-projects-grid .featured-project-card[href*="casa-urban"]::before {
+      content: none !important;
+      display: none !important;
+      background: none !important;
+      animation: none !important;
+    }
+    .featured-projects-grid .featured-project-card[href*="casa-urban"] > .featured-project-video,
+    .featured-projects-grid .featured-project-card[href*="casa-urban"] > canvas {
+      display: none !important;
+    }
+    .featured-projects-grid .featured-project-card[href*="casa-urban"] > img {
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-width: 100% !important;
+      min-height: 100% !important;
+      z-index: 1 !important;
+      object-fit: cover !important;
+      object-position: 0% 50%;
+      transform: none !important;
+      filter: saturate(.95) contrast(1.06) !important;
+      animation: urbenFoto03Panorama 15s ease-in-out infinite !important;
+      animation-play-state: running !important;
+      will-change: object-position;
+    }
+    @keyframes urbenFoto03Panorama {
+      0%, 7%  { object-position: 0% 50%; }
+      46%, 54% { object-position: 100% 50%; }
+      93%, 100% { object-position: 0% 50%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .featured-projects-grid .featured-project-card[href*="casa-urban"] > img {
+        animation: none !important;
+        object-position: 0% 50% !important;
+      }
+    }
+  </style>
   <style>
     .reviews-section{background:linear-gradient(180deg,var(--navy-3),var(--navy-2));border-top:1px solid rgba(184,154,99,.10);border-bottom:1px solid rgba(184,154,99,.10);padding:58px 0!important}
     .reviews-heading{max-width:680px;margin:0 auto 15px;text-align:center}
@@ -560,80 +604,6 @@
 })();
 
   </script>
-  <script id="casa-urben-movimento-inline-v1">
-/* Casa Urben — movimento de câmera baseado SOMENTE na foto 03 original.
-   Usa vídeo HTML5 alimentado pelo Canvas para ter capa dinâmica e manter a mesma
-   camada de mídia dos cartões Tiny House e Vitalle. */
-(() => {
-  'use strict';
-  const card=document.querySelector('.featured-project-card[href*="casa-urban"]');
-  if(!card||card.dataset.urbenLiveCover==='1')return;
-  const photo=card.querySelector('img');
-  if(!photo)return;
-  card.dataset.urbenLiveCover='1';
-  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const saveData=!!navigator.connection?.saveData;
-  if(reduced||saveData||!window.IntersectionObserver)return;
-  const canvas=document.createElement('canvas');
-  canvas.width=740; canvas.height=780;
-  const ctx=canvas.getContext('2d',{alpha:false});
-  if(!ctx)return;
-  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
-  let video=null, initialized=false, active=false, raf=0, clock=0;
-  function draw(now) {
-    raf=0;
-    if(!active||document.hidden||!initialized||!photo.naturalWidth)return;
-    const sec=(now-clock)/1000;
-    const cycle=(sec%20)/20;
-    const ease=.5-.5*Math.cos(cycle*Math.PI*2);
-    const sourceW=photo.naturalWidth,sourceH=photo.naturalHeight;
-    const zoom=1.025+.024*(.5-.5*Math.cos(sec*Math.PI/9));
-    const cropH=sourceH/zoom, cropW=cropH*canvas.width/canvas.height;
-    const x=Math.max(0,sourceW-cropW)*ease;
-    const y=(sourceH-cropH)*(.45+.08*Math.sin(sec*.22));
-    ctx.drawImage(photo,x,y,cropW,cropH,0,0,canvas.width,canvas.height);
-    raf=requestAnimationFrame(draw);
-  }
-  function start(){
-    if(!active||document.hidden||!initialized)return;
-    if(!raf){clock=performance.now();raf=requestAnimationFrame(draw);}
-    if(video)video.play().catch(()=>{});
-  }
-  function stop(){
-    if(raf)cancelAnimationFrame(raf);
-    raf=0;
-    if(video)video.pause();
-  }
-  function install(){
-    if(initialized||!photo.complete||!photo.naturalWidth)return;
-    initialized=true;
-    try {
-      if(typeof canvas.captureStream!=='function')throw Error('No captureStream');
-      const stream=canvas.captureStream(24);
-      video=document.createElement('video');
-      video.className='featured-project-video urben-foto03-em-movimento';
-      video.muted=true;video.autoplay=true;video.playsInline=true;video.loop=true;
-      video.setAttribute('aria-hidden','true');
-      video.setAttribute('disablepictureinpicture','');
-      video.srcObject=stream;
-      video.addEventListener('loadeddata',()=>card.classList.add('is-video-ready'),{once:true});
-      card.insertBefore(video,card.querySelector('.featured-project-overlay'));
-    }catch(e){
-      canvas.className='featured-project-video urben-foto03-em-movimento';
-      canvas.setAttribute('aria-hidden','true');
-      card.insertBefore(canvas,card.querySelector('.featured-project-overlay'));
-      card.classList.add('is-video-ready');
-    }
-    start();
-  }
-  if(photo.complete)install();else photo.addEventListener('load',install,{once:true});
-  const io=new IntersectionObserver(entries=>{
-    active=entries.some(e=>e.isIntersecting&&e.intersectionRatio>=.12);
-    if(active){if(!initialized)install();start();}else stop();
-  },{threshold:[0,.12,.4],rootMargin:'90px 0px'});
-  io.observe(card);
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();else start();});
-})();
-</script>
+  <!-- Casa Urben: animation now handled exclusively by native CSS (no canvas/stream). -->
 </body>
 </html>
