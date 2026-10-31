@@ -42,22 +42,11 @@
 }
 
 
-/* Casa Urben: foto 03 original é a capa e a fonte do vídeo animado.
-   Sem faixa horizontal central, sem pseudo-fundo desfocado e sem CSS Ken Burns.
-   O vídeo dinâmico preenche 100% do cartão, tal qual as duas outras capas. */
-.featured-project-card[href*="casa-urban"] > img {
+
+/* Casa Urben: mesmo vídeo MP4 em loop e mesmo enquadramento dos demais cartões.
+   A foto original 03 permanece como poster e fallback para vídeo indisponível. */
+.featured-project-card[href*="casa-urban"] > img,
+.featured-project-card[href*="casa-urban"] > .featured-project-video {
   object-fit: cover;
-  object-position: 20% center;
-  filter: saturate(.94) contrast(1.03);
-}
-.featured-project-card[href*="casa-urban"] > .urben-foto03-em-movimento {
-  object-fit: cover;
-  width: 100%;
-  height: 100%;
-  inset: 0;
-  background: #061320;
-  display: block;
-}
-@media (prefers-reduced-motion: reduce) {
-  .featured-project-card[href*="casa-urban"] > .urben-foto03-em-movimento { display:none !important; }
+  object-position: center center;
 }
