@@ -24,6 +24,7 @@
   }
   function showReceipt(row) {
     selectedReceipt = row;
+    document.title = window.CMEReceiptIdentity.fileStem(row);
     const s = row.snapshot;
     const issuedOn = new Date(row.created_at).toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});
     const number = `REC-${String(row.receipt_number).padStart(6,'0')}/${issuedOn.slice(0,4)}`;
@@ -81,11 +82,15 @@
       $('wordReceipt').addEventListener('click', () => {
         try {
           const blob = window.CMEReceiptWord.build(selectedReceipt), url = URL.createObjectURL(blob), link = document.createElement('a');
-          link.href = url; link.download = `Recibo-${String(selectedReceipt.receipt_number).padStart(6,'0')}.docx`;
+          link.href = url; link.download = window.CMEReceiptIdentity.fileStem(selectedReceipt)+'.docx';
           document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000);
         } catch (error) { message(error.message || 'Não foi possível gerar o Word.',true); }
       });
-      $('printReceipt').addEventListener('click',() => window.print()); $('refreshReceipts').addEventListener('click',() => void loadHistory());
+      $('printReceipt').addEventListener('click',() => {
+        const title=window.CMEReceiptIdentity.fileStem(selectedReceipt);let parentTitle;
+        try{if(window.parent!==window){parentTitle=window.parent.document.title;window.parent.document.title=title;}}catch{}
+        try{document.title=title;window.print();}finally{if(parentTitle!==undefined)try{window.parent.document.title=parentTitle;}catch{}}
+      }); $('refreshReceipts').addEventListener('click',() => void loadHistory());
       $('receiptPrevious').addEventListener('click',()=>{offset=Math.max(0,offset-50);void loadHistory();}); $('receiptNext').addEventListener('click',()=>{offset+=50;void loadHistory();});
       $('receiptForm').addEventListener('input',()=>{if (!busy) requestId=null;});
       const contextualProject=new URLSearchParams(location.search).get('projectId');
@@ -107,6 +112,8 @@
         message('Recibo vinculado ao recebimento. Se já houve emissão, será aberto o mesmo recibo, sem gerar outro número.');
       }
       $('issueReceipt').disabled = false; await loadHistory();
+      const receiptId=new URLSearchParams(location.search).get('receiptId');
+      if(receiptId){const saved=await supabaseClient.from('payment_receipts').select('*').eq('id',receiptId).maybeSingle();if(saved.error||!saved.data)message('Não foi possível abrir o recibo solicitado.',true);else showReceipt(saved.data);}
     } catch { message('Não foi possível carregar os cadastros. Atualize a página para tentar novamente.',true); }
   });
   window.CMEReceipts = { parseAmount, showReceipt };

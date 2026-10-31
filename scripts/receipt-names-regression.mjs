@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+const context={window:{}};vm.runInNewContext(fs.readFileSync('js/receipt-identity.js','utf8'),context);
+const stem=context.window.CMEReceiptIdentity.fileStem;
+const row={receipt_number:2,created_at:'2026-01-01T01:00:00Z',snapshot:{payer_name:'João da Silva',contract_number:'CT-2026-001'}};
+assert.equal(stem(row),'Recibo-CT-2026-001-REC-000002-2025');
+assert.equal(stem({...row,snapshot:{payer_name:'João da Silva'}}),'Recibo-Joao-da-Silva-REC-000002-2025');
+assert.notEqual(stem(row),stem({...row,receipt_number:3}));
+assert.ok(!/[\\/:*?"<>|]/.test(stem({...row,snapshot:{payer_name:'../Cliente / \\teste:*?<>|'}})));
+assert.equal(stem({...row,snapshot:{payer_name:'A'.repeat(500)}}).length<160,true);
+console.log('PASS: contrato prioritário; cliente sem contrato; número único; ano local; nomes seguros e limitados.');

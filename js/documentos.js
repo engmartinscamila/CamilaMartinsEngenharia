@@ -9,6 +9,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
     "use strict";
 
     let documentos = [];
+    let recibosAviso = "";
     let clientes = [];
     let projetos = [];
     let documentoSelecionadoId = null;
@@ -28,7 +29,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
 
         try {
             [documentos, clientes, projetos] = await Promise.all([
-                dbBuscarDocumentos(),
+                carregarAcervo(),
                 dbBuscarClientes(),
                 dbBuscarProjetos()
             ]);
@@ -45,6 +46,20 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
             mostrarLoading(false);
         }
     }
+
+    async function carregarAcervo(){
+        const docs=await dbBuscarDocumentos();const receipts=[];recibosAviso='';
+        try{
+            for(let offset=0;;offset+=500){
+                const result=await supabaseClient.from('payment_receipts').select('id,receipt_number,client_id,project_id,description,created_at,snapshot').order('created_at',{ascending:false}).range(offset,offset+499);
+                if(result.error)throw result.error;
+                receipts.push(...(result.data||[]));if((result.data||[]).length<500)break;
+            }
+        }catch{recibosAviso='Não foi possível carregar os recibos emitidos. Atualize para tentar novamente.';}
+        return docs.concat(receipts.map(row=>({id:'receipt:'+row.id,source:'payment_receipt',nome:window.CMEReceiptIdentity.fileStem(row),cliente_id:row.client_id,projeto_id:row.project_id,descricao:row.description,categoria:'Recibos emitidos',receipt_id:row.id,url:'recibos.html?receiptId='+encodeURIComponent(row.id)})));
+    }
+    function grupoAcervo(item){return item.source==='payment_receipt'?'recibos-emitidos':item.cliente_id?String(item.cliente_id):item.categoria==='Comercial'?'comerciais':'sem-cliente';}
+    function tituloGrupo(item){return item.source==='payment_receipt'?'Recibos emitidos':item.cliente_id?nomeCliente(item.cliente_id):item.categoria==='Comercial'?'Contratos e orçamentos':'Documentos sem cliente';}
 
     function configurarEventos() {
         document.getElementById("novoDocumento")?.addEventListener("click", novoDocumento);
@@ -68,22 +83,22 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
         if (!container) return;
 
         if (!lista.length) {
-            container.innerHTML = '<div class="estado-vazio">Nenhum documento cadastrado.</div>';
+            container.innerHTML = recibosAviso?`<p role="status">${escapar(recibosAviso)}</p>`:'<div class="estado-vazio">Nenhum documento cadastrado.</div>';
             if (recentes) recentes.innerHTML = '<div class="estado-vazio">Nenhum arquivo recente.</div>';
             return;
         }
 
         const porCliente = lista.reduce((mapa, item) => {
-            const chave = String(item.cliente_id || "sem-cliente");
+            const chave = grupoAcervo(item);
             (mapa[chave] ||= []).push(item);
             return mapa;
         }, {});
 
-        container.innerHTML = Object.values(porCliente).map(grupoCliente => {
+        container.innerHTML = (recibosAviso?`<p role="status">${escapar(recibosAviso)}</p>`:'') + Object.values(porCliente).map(grupoCliente => {
             const primeiro = grupoCliente[0];
 
             const porProjeto = grupoCliente.reduce((mapa, item) => {
-                const chave = String(item.projeto_id || "sem-projeto");
+                const chave = item.source==='payment_receipt'?'recibos':String(item.projeto_id || "sem-projeto");
                 (mapa[chave] ||= []).push(item);
                 return mapa;
             }, {});
@@ -93,7 +108,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
 
                 return `
                     <section class="cme-subpasta-projeto">
-                        <h4>${escapar(rotuloProjeto(referencia.projeto_id))}</h4>
+                        <h4>${escapar(referencia.source==='payment_receipt'?'PDF e Word — abrir recibo para baixar':rotuloProjeto(referencia.projeto_id))}</h4>
                         ${grupoProjeto.map(documento => `
                             <article class="item-lista documento-item">
                                 <div class="item-info">
@@ -101,9 +116,9 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
                                     <span>${escapar(categoriaExibida(documento))}</span>
                                 </div>
                                 <div class="item-acoes">
-                                    ${botao("abrir", documento.id, "fa-eye", "Abrir detalhes")}
-                                    ${botao("editar", documento.id, "fa-pen", "Editar documento", "edit")}
-                                    ${botao("excluir", documento.id, "fa-trash", "Excluir documento", "delete")}
+                                    ${documento.source==='payment_receipt'?`<a class="btn" href="${escapar(documento.url)}" target="_blank" rel="noopener">Abrir recibo • PDF / Word</a>`:botao("abrir", documento.id, "fa-eye", "Abrir detalhes")}
+                                    ${documento.source==='payment_receipt'?'':botao("editar", documento.id, "fa-pen", "Editar documento", "edit")}
+                                    ${documento.source==='payment_receipt'?'':botao("excluir", documento.id, "fa-trash", "Excluir documento", "delete")}
                                 </div>
                             </article>
                         `).join("")}
@@ -114,7 +129,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
             return `
                 <details class="pasta-cliente cme-pasta-cliente" ${abrirPastas ? "open" : ""}>
                     <summary>
-                        <span><i class="fa-solid fa-folder"></i> ${escapar(nomeCliente(primeiro.cliente_id))}</span>
+                        <span><i class="fa-solid fa-folder"></i> ${escapar(tituloGrupo(primeiro))}</span>
                         <span class="cme-pasta-contagem">${grupoCliente.length} ${grupoCliente.length === 1 ? "documento" : "documentos"}</span>
                     </summary>
                     <div class="cme-pasta-corpo">${conteudo}</div>
@@ -252,8 +267,8 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
                     Arquivo indisponível${documento.urlErro ? `: ${escapar(documento.urlErro)}` : ""}
                 </div>`}
             <div class="detalhes-acoes">
-                ${botao("editar", documento.id, "fa-pen", "Editar documento", "edit")}
-                ${botao("excluir", documento.id, "fa-trash", "Excluir documento", "delete")}
+                ${documento.source==='payment_receipt'?'':botao("editar", documento.id, "fa-pen", "Editar documento", "edit")}
+                ${documento.source==='payment_receipt'?'':botao("excluir", documento.id, "fa-trash", "Excluir documento", "delete")}
             </div>
         `;
     }
@@ -336,7 +351,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
     }
 
     async function recarregar() {
-        documentos = await dbBuscarDocumentos();
+        documentos = await carregarAcervo();
         renderizar();
     }
 

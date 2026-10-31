@@ -57,6 +57,7 @@ jobs:
           node scripts/client-email-notification-regression.mjs
           node scripts/password-link-outbox-regression.mjs
           node scripts/project-files-receipts-regression.mjs
+          node scripts/receipt-names-regression.mjs
           node scripts/admin-priority-regression.mjs
 
       - name: Verificar segurança antes de publicar
@@ -298,6 +299,7 @@ jobs:
           node scripts/admin-session-navigation-smoke.mjs
           node scripts/document-center-browser.mjs
           node scripts/admin-area-browser.mjs
+          node scripts/receipt-folders-browser.mjs
 
       - name: Instalar dependências dos geradores de arquivos
         run: npm install --no-save tsx@4.20.5 docx@9.5.1 jszip@3.10.1 exceljs@4.4.0 pngjs@7.0.0
