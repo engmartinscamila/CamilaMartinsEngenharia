@@ -1,52 +1,51 @@
-/* Capas cinematograficas: imagem estatica leve como fallback. */
-.featured-project-card>img{z-index:0;object-position:center center}
-.featured-project-card .featured-project-video{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  object-position:center center;
-  z-index:1;
-  opacity:0;
-  background:#000711;
-  pointer-events:none;
-  filter:saturate(1) contrast(1.025);
-  transition:opacity .6s ease,transform .75s ease;
-}
-.featured-project-card.is-video-ready .featured-project-video{opacity:1}
-.featured-project-card::after{z-index:2}
-.featured-project-card .featured-project-overlay{z-index:3}
-.featured-project-card:hover .featured-project-video,
-.featured-project-card:focus-visible .featured-project-video{transform:scale(1.025)}
-.featured-project-card .featured-motion-label{
-  position:absolute;
-  top:18px;
-  right:18px;
-  z-index:4;
-  padding:7px 10px;
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-  border:1px solid rgba(184,154,99,.48);
-  background:rgba(1,9,20,.78);
-  color:var(--gold);
-  font-size:.59rem;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  pointer-events:none;
-}
-@media(prefers-reduced-motion:reduce){
-  .featured-project-card .featured-project-video{display:none!important}
-  .featured-project-card .featured-motion-label{display:none!important}
-}
-
-
-
-/* Casa Urben: mesmo vídeo MP4 em loop e mesmo enquadramento dos demais cartões.
-   A foto original 03 permanece como poster e fallback para vídeo indisponível. */
-.featured-project-card[href*="casa-urban"] > img,
-.featured-project-card[href*="casa-urban"] > .featured-project-video {
+/* Projetos em destaque — uma animação CSS para as três fotografias originais.
+   Sem players MP4, buffering, seeks ou velocidades independentes.
+   Todos usam o MESMO keyframe e o mesmo relógio de animação do documento. */
+.featured-projects-grid .featured-project-card.motion-card > img.featured-project-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
   object-fit: cover;
-  object-position: center center;
+  object-position: 50% 50%;
+  transform-origin: 50% 50%;
+  filter: saturate(.85) contrast(1.035);
+  animation: projectPhotoUnified 8s ease-in-out infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* A Casa Urben tem uma fotografia panorâmica original; o enquadramento
+   prioriza a janela lateral, a entrada em pedra e o começo da garagem. */
+.featured-projects-grid .featured-project-card.motion-card[href*="casa-urban"] > img.featured-project-image {
+  object-position: 29% 50%;
+  filter: saturate(.96) contrast(1.04);
+}
+
+/* Movimento curto e idêntico para Tiny House, Vitalle e Casa Urben:
+   os três têm 8 segundos, a mesma fase, a mesma amplitude e a mesma curva.
+   O primeiro e o último quadros são geometricamente iguais. */
+@keyframes projectPhotoUnified {
+  0%, 100% { transform: translate3d(-1.6%, 0, 0) scale(1.09); }
+  50%      { transform: translate3d( 1.6%, 0, 0) scale(1.09); }
+}
+
+/* O destaque de foco/hover mantém a animação; não altera sua fase. */
+.featured-projects-grid .featured-project-card.motion-card:hover > img.featured-project-image,
+.featured-projects-grid .featured-project-card.motion-card:focus-visible > img.featured-project-image {
+  filter: saturate(.97) contrast(1.04);
+}
+
+/* Sobreposições, texto e controle 3D mantêm a hierarquia atual. */
+.featured-projects-grid .featured-project-card.motion-card::after { z-index: 2; }
+.featured-projects-grid .featured-project-card.motion-card .featured-project-overlay { z-index: 3; }
+
+/* Acessibilidade: imagens estáticas quando o sistema pede menos movimento. */
+@media (prefers-reduced-motion: reduce) {
+  .featured-projects-grid .featured-project-card.motion-card > img.featured-project-image {
+    animation: none !important;
+    transform: scale(1.03);
+    will-change: auto;
+  }
 }
