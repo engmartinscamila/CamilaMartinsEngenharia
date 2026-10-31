@@ -36,6 +36,17 @@ jobs:
       - name: Gerar e revisar acervo de frases
         run: node scripts/build-frases-do-dia-v7.mjs
 
+      # A capa da Casa Urben é gerada a partir da foto 03 original.
+      # Precisa existir antes dos testes de referências locais.
+      - name: Instalar FFmpeg para a capa da Casa Urben
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          ffmpeg -version | head -n 1
+
+      - name: Gerar capa MP4 Casa Urben antes da auditoria
+        run: bash scripts/generate-casa-urben-cover.sh assets/projetos/casa-urban
+
       - name: Auditoria estática e funcional do Admin
         run: |
           node scripts/site-audit.mjs
