@@ -220,6 +220,7 @@ async function previewStep(projectId,kind,approvalId,options){
 async function prepare(kind,approvalId){
  const select=$('contractProject'),projectId=select?.value;if(!projectId)return;
  try{
+  if(projectId.startsWith('commercial:')&&!select.selectedOptions[0]?.dataset.contractId){if(typeof window.CMEEnsureSelectedServiceContract!=='function')throw new Error('Atualize a página para preparar o Anexo I sem projeto.');await window.CMEEnsureSelectedServiceContract();}
   const options=schemas[kind]?await optionsStep(kind):{};if(options===null)return;
   const review=await previewStep(projectId,kind,approvalId,options);if(!review)return;
   const {data,error}=await client().rpc('admin_prepare_contract_document',{p_project_id:projectId.startsWith('commercial:')?null:projectId,p_document_kind:kind,p_approval_id:approvalId||null,p_extra_data:{...review.extra,...(projectId.startsWith('commercial:')?{contract_id:select.selectedOptions[0]?.dataset.contractId}:{})}});

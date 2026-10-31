@@ -35,7 +35,7 @@ async function generate(recordId,kind,archive){
       const error=delivered.data?.error||delivered.error?.message||'O Word foi gerado, mas não foi possível preparar o download.';status(error,'error');window.dispatchEvent(new CustomEvent('cme:commercial-generated',{detail:{recordId,documentId,kind}}));return {ok:false,generated:true,documentId,error};
     }
     download(delivered.data.contentBase64,delivered.data.fileName);
-    const label=`${kind==='contrato'?'Contrato':'Orçamento'} v${generated.data.version||choice.version} gerado${archive?' e arquivado':''}.`;
+    const label=`${kind==='contrato'?'Contrato '+(generated.data.contractNumber||''):'Orçamento '+(generated.data.quoteNumber||'')} v${generated.data.version||choice.version} gerado${archive?' e arquivado':''}.`;
     if(kind==='contrato'){
       status(label+' Habilitando contrato sem projeto...');
       try{

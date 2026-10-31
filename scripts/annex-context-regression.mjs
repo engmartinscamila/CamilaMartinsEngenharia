@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import vm from 'node:vm';
+const read=p=>readFileSync(p,'utf8');
+const elements=new Map();const element=id=>{if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:'',className:'',classList:{add(){},remove(){}},querySelectorAll:()=>[],addEventListener(){}});return elements.get(id)};
+let result=[],calls=[];const selector=element('contractProject');selector.value='commercial:7edcc59a-4b80-45a4-b5d2-da3914346c7a';selector.selectedOptions=[{dataset:{}}];
+const window={addEventListener(){},supabaseClient:{rpc:async(name,args)=>{calls.push({name,args});return {data:[]}},from:table=>{const q={select(){return q},eq(field,value){calls.push({table,field,value});return q},is(){return q},order:async()=>({data:result})};return q;}}};
+vm.runInNewContext(read('js/document-governance-web.js').replace('})();','window.__load=load;})();'),{window,document:{readyState:'complete',getElementById:element},setTimeout(){}});
+await window.__load();assert.equal(calls.length,0,'Contrato ainda sem vínculo não pode chamar RPC de projeto');assert.match(element('documentGovernanceMap').innerHTML,/precisa ser habilitado/);
+selector.selectedOptions[0].dataset.contractId='0039e1ee-23f5-4148-bdc4-22e9d7d89ecf';await window.__load();assert.ok(calls.some(c=>c.field==='contract_id'));assert.ok(!calls.some(c=>c.name),'Contrato sem projeto deve consultar documentos pelo contrato');assert.ok(!calls.some(c=>String(c.value).startsWith('commercial:')));
+calls=[];selector.value='70317b13-d39b-4d4b-9e7d-f1c575874b24';await window.__load();assert.equal(calls.filter(c=>c.name).length,2,'Projeto real mantém mapa e pendências');assert.ok(calls.filter(c=>c.name).every(c=>c.args.p_project_id===selector.value));
+selector.value='';await window.__load();assert.match(element('documentGovernanceMap').innerHTML,/Selecione um contrato/);assert.equal(element('documentValidityTools').innerHTML,'');
+const contracts=read('js/contract-documents-web.js');assert.match(contracts,/CMEEnsureSelectedServiceContract/);assert.match(contracts,/const fallback=''/);assert.match(contracts,/event.detail.recordId/);assert.match(contracts,/pendingContract.contract_document_id/);
+const options=read('js/document-options-web.js');assert.ok(options.indexOf('await window.CMEEnsureSelectedServiceContract()')<options.indexOf('const options=schemas[kind]?await optionsStep(kind)'));
+const hub=read('js/document-hub-web.js');assert.match(hub,/message.textContent=''/);
+const archive=read('js/document-archive-web.js');assert.ok(!archive.includes("q=q.ilike('document_kind'"),'Filtro de contrato deve abranger o histórico legado classificado como Comercial');
+console.log('PASS: identificador comercial nunca enviado como UUID de projeto; consulta por contrato; projeto normal preservado; seleção explícita; vínculo antes do Anexo I e histórico legado.');

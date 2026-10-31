@@ -85,6 +85,16 @@ async function activatePendingContract(){
     if(button){button.disabled=false;button.textContent='Habilitar Anexo I sem projeto';}
   }
 }
+let enablingServiceContract=null;
+window.CMEEnsureSelectedServiceContract=async function(){
+ const select=$('contractProject'),selection=select?.value||'';
+ if(!selection.startsWith('commercial:'))return null;
+ if(select.selectedOptions[0]?.dataset.contractId)return select.selectedOptions[0].dataset.contractId;
+ const recordId=selection.slice('commercial:'.length);
+ if(enablingServiceContract?.recordId===recordId)return enablingServiceContract.task;
+ const task=(async()=>{const {data,error}=await client().rpc('admin_formalize_service_contract',{p_record_id:recordId});if(error||!data?.contract_id)throw error||new Error('Não foi possível habilitar o contrato para o Anexo I.');if(select.value!==selection)throw new Error('O contrato selecionado mudou. Confira a seleção e tente novamente.');await loadProjects(selection);return data.contract_id;})().finally(()=>{enablingServiceContract=null;});
+ enablingServiceContract={recordId,task};return task;
+};
 async function loadProjects(preferredId=null){
   const previous=$('contractProject')?.value||'';
   const [res,commercial]=await Promise.all([
@@ -92,7 +102,7 @@ async function loadProjects(preferredId=null){
       .select('id,nome,tipo,cliente_id,contract_id,numero_contrato,status,area_construida_m2,area_terreno_m2,endereco_obra,numero_obra,complemento_obra,bairro_obra,cidade_obra,estado_obra')
       .order('created_at',{ascending:false}).limit(150),
     client().from('commercial_records')
-      .select('id,contract_number,prospect_name,property_type,services,source_mode,status,linked_project_id,linked_contract_id,linked_client_id,created_at')
+      .select('id,contract_number,prospect_name,property_type,services,source_mode,status,linked_project_id,linked_contract_id,linked_client_id,contract_document_id,created_at')
       .eq('record_kind','contrato').is('linked_project_id',null)
       .order('created_at',{ascending:false}).limit(150)
   ]);
@@ -121,7 +131,7 @@ async function loadProjects(preferredId=null){
   }
   const requested=new URLSearchParams(location.search).get('projectId');
   const activeSelection=[preferredId,previous,requested].find(id=>id&&selector.querySelector('option[value="'+CSS.escape(String(id))+'"]'));
-  const fallback=unlinkedContracts[0]?'commercial:'+unlinkedContracts[0].id:projects.find(p=>p.contract_id)?.id||'';
+  const fallback='';
   const selected=activeSelection||fallback;
   selector.value=selected;
   await chooseProject(selected);
@@ -180,7 +190,7 @@ function renderGenerators(){
     <div class="doc-row" data-generator-kind="${kind}">
       <div class="doc-row-head">
         <div><strong>${esc(title)}</strong><div class="doc-meta">${esc(desc)}</div></div>
-        <button class="doc-btn secondary" data-prepare="${kind}" ${pendingContract||(String(project?.id||'').startsWith('commercial:')&&kind!=='anexo_i')?'disabled title="Habilite o contrato; documentos operacionais exigem projeto."':''}>Preparar</button>
+        <button class="doc-btn secondary" data-prepare="${kind}" ${(pendingContract&&(!pendingContract.contract_document_id||kind!=='anexo_i'))||(String(project?.id||'').startsWith('commercial:')&&kind!=='anexo_i')?'disabled title="Habilite o contrato; documentos operacionais exigem projeto."':''}>Preparar</button>
       </div>
       ${kind==='estudo_preliminar'&&!included('a')?'<div class="doc-flow-explainer">Estudo Preliminar não consta no escopo vigente. Se for apenas apoio interno, será auxiliar; se o cliente o contratar, primeiro registre-o por orçamento/Serviço Adicional para que seja remunerado e passe a constar no Anexo I.</div>':''}
       ${kind==='servico_adicional'?'<div class="doc-flow-explainer">O serviço adicional ficará vinculado ao contrato selecionado acima. A versão aceita pelo cliente integra o histórico do contrato sem apagar ou substituir os documentos anteriores.</div>':''}
@@ -310,4 +320,4 @@ function createApprovalRequest(){
     else msg('Solicitação criada. Clique em “Preparar termo” para continuar.','success');
   })
 }
-function bind(){$('contractProject')?.addEventListener('change',e=>chooseProject(e.target.value));$('contractGenerators')?.addEventListener('click',e=>{const b=e.target.closest('[data-prepare]');if(b)prepare(b.dataset.prepare)});$('approvalList')?.addEventListener('click',e=>{if(e.target.closest('#newApprovalRequest')){createApprovalRequest();return}const b=e.target.closest('[data-approval]');if(b)prepare('termo_aceite',b.dataset.approval)});$('preparedDocuments')?.addEventListener('click',e=>{const b=e.target.closest('[data-download],[data-archive],[data-send]');if(!b)return;const expected=b.dataset.kind||activeDocumentKind;if(b.dataset.download)generateAndDeliver(b.dataset.download,false,expected);if(b.dataset.archive)generateAndDeliver(b.dataset.archive,true,expected);if(b.dataset.send)send(b.dataset.send,expected)});$('contractAttention')?.addEventListener('click',e=>{const b=e.target.closest('[data-notice]');if(b)notice(b.dataset.notice)});window.addEventListener('cme:document-mode',e=>{const kind=e.detail?.kind;activeDocumentKind=supportedDocumentKinds.has(kind)?kind:null;renderDocs()});window.addEventListener('cme:commercial-records-updated',event=>loadProjects(event.detail?.projectId||null));setTimeout(async()=>{await loadCatalog();await loadProjects()},300)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();})();
+function bind(){$('contractProject')?.addEventListener('change',e=>chooseProject(e.target.value));$('contractGenerators')?.addEventListener('click',e=>{const b=e.target.closest('[data-prepare]');if(b)prepare(b.dataset.prepare)});$('approvalList')?.addEventListener('click',e=>{if(e.target.closest('#newApprovalRequest')){createApprovalRequest();return}const b=e.target.closest('[data-approval]');if(b)prepare('termo_aceite',b.dataset.approval)});$('preparedDocuments')?.addEventListener('click',e=>{const b=e.target.closest('[data-download],[data-archive],[data-send]');if(!b)return;const expected=b.dataset.kind||activeDocumentKind;if(b.dataset.download)generateAndDeliver(b.dataset.download,false,expected);if(b.dataset.archive)generateAndDeliver(b.dataset.archive,true,expected);if(b.dataset.send)send(b.dataset.send,expected)});$('contractAttention')?.addEventListener('click',e=>{const b=e.target.closest('[data-notice]');if(b)notice(b.dataset.notice)});window.addEventListener('cme:document-mode',e=>{const kind=e.detail?.kind;activeDocumentKind=supportedDocumentKinds.has(kind)?kind:null;renderDocs()});window.addEventListener('cme:commercial-records-updated',event=>loadProjects(event.detail?.projectId||(event.detail?.recordId?'commercial:'+event.detail.recordId:null)));setTimeout(async()=>{await loadCatalog();await loadProjects()},300)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();})();
