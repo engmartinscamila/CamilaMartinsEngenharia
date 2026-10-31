@@ -848,7 +848,6 @@
 
     clearForm();
     renderQuoteChoices();
-    await load();
     window.dispatchEvent(new CustomEvent('cme:commercial-records-updated'));
     if(isContract){
       const recordId=typeof result.data==='string'?result.data:result.data.id;
@@ -856,7 +855,7 @@
       const emission=await window.CMEGenerateCommercialDocument(recordId,'contrato',true);
       await load();
       if(!emission?.ok)msg('Cadastro do contrato preservado. '+(emission?.error||'A emissão do Word não foi concluída. Use Gerar Word na lista para tentar novamente.'),'error');
-    }else msg('Orçamento criado com numeração ORC independente.','success');
+    }else{await load();msg('Orçamento criado com numeração ORC independente.','success');}
   }
 
   async function generate(recordId, kind, archive) {
@@ -1246,6 +1245,7 @@
       if (action === 'convert') convert(id);
     });
 
+    window.addEventListener('cme:commercial-generated',load);
     window.addEventListener('hashchange', renderMode);
     window.addEventListener('cme:document-mode', renderMode);
     document.querySelectorAll('[data-doc-tab]').forEach(button => {

@@ -23,5 +23,16 @@ const cancelled=await scenario({cancel:true});assert.equal(cancelled.result.canc
 const failed=await scenario({fail:true});assert.equal(failed.result.ok,false);assert.equal(failed.downloads,0);assert.equal(failed.message.className,'doc-status error');
 const delivery=await scenario({deliveryFail:true});assert.equal(delivery.result.generated,true);assert.equal(delivery.result.ok,false);assert.ok(delivery.events.some(e=>e.type==='cme:commercial-generated'),'Histórico deve atualizar mesmo se a entrega falhar depois de emitir');
 const create=read('js/commercial-documents-web.js');assert.match(create,/await window.CMEGenerateCommercialDocument\(recordId,'contrato',true\)/);assert.match(create,/if\(creating\)return/);assert.ok(!create.includes('Contrato direto criado sem orçamento anterior.'));
+const start=create.indexOf('  async function createRecord()'),end=create.indexOf('  async function generate(',start);
+const creation=create.slice(start,end);
+async function createScenario(emission={ok:true}){
+ const sequence=[],messages=[];
+ const context={mode:()=> 'contrato',selectedQuoteKeys:()=>[],suggestCatalogService:()=>null,$:()=>({value:''}),form:()=>({prospect_name:'Cliente teste',services:[{code:'x',included:true}]}),sourceMode:()=> 'direct',serviceCatalogMeta:[{code:'x',level_applicable:false}],levelCatalog:[{code:'basic'}],sameQuoteOwner:()=>true,msg:(text,type)=>messages.push({text,type}),client:()=>({rpc:async name=>{sequence.push(name);return {data:'created-contract'};}}),clearForm(){},renderQuoteChoices(){},load:async()=>sequence.push('refresh'),window:{dispatchEvent(){},CMEGenerateCommercialDocument:async(id,kind,archive)=>{sequence.push({id,kind,archive});return emission;}},CustomEvent:class{}};
+ await vm.runInNewContext(`(async()=>{${creation};await createRecord();})()`,context);
+ assert.equal(sequence[0],'admin_create_independent_contract');assert.deepEqual(JSON.parse(JSON.stringify(sequence[1])),{id:'created-contract',kind:'contrato',archive:true});assert.equal(sequence[2],'refresh');
+ return messages;
+}
+assert.ok(!(await createScenario()).some(m=>m.type==='success'),'Cadastro isolado não deve anunciar emissão');
+assert.ok((await createScenario({ok:false,error:'Falha sintética'})).some(m=>m.type==='error'&&m.text.includes('preservado')));
 const history=read('js/document-archive-web.js');assert.match(history,/addEventListener\('cme:commercial-generated',loadHistory\)/);assert.match(history,/Contratos aguardando emissão do Word/);
 console.log('PASS: emissão confirmada, cancelamento, falhas, arquivo arquivado, clique duplo, histórico e primeira emissão após conversão.');
