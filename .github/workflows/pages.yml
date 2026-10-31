@@ -157,6 +157,14 @@ jobs:
         working-directory: portal-app
         run: npm ci
 
+      # Atualização de segurança não forçada: somente versões compatíveis.
+      # Se restar qualquer alerta, npm run security:audit continua bloqueando o deploy.
+      - name: Atualizar dependências transitivas vulneráveis do portal
+        working-directory: portal-app
+        run: |
+          npm audit fix --no-fund || true
+          npm run security:patch
+
       - name: Regressões completas do portal integrado
         working-directory: portal-app
         run: |
