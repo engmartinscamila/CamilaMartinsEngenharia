@@ -17,7 +17,7 @@ Deno.serve(async req=>{
   const caller=createClient(url,anon,{global:{headers:{Authorization:authorization}},auth:{persistSession:false,autoRefreshToken:false}});
   const user=await caller.auth.getUser();if(user.error||!user.data.user)return json({error:'Sessão administrativa inválida.'},401);
   const admin=await caller.rpc('is_portal_admin');if(admin.error||admin.data!==true)return json({error:'Acesso administrativo necessário.'},403);
-  const rate=await caller.rpc('consume_admin_rate_limit',{p_action:'commercial-word-existing-download'});if(rate.error)return json({error:'Aguarde alguns instantes antes de repetir o download.'},429);
+  const rate=await caller.rpc('consume_admin_rate_limit',{p_action:'document-delivery-download'});if(rate.error)return json({error:'Aguarde alguns instantes antes de repetir o download.'},429);
   const service=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
   const body=await req.json();if(!uuid(body.documentId))return json({error:'Documento inválido.'},400);
   const doc=await service.from('documentos').select('id,nome,arquivo,storage_bucket,document_kind,generated_data,versao,generated_at').eq('id',body.documentId).single();if(doc.error)throw doc.error;
