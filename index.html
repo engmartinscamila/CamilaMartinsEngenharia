@@ -27,53 +27,11 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <link rel="stylesheet" href="css/styles.css?v=20261016-1" />
-  <link rel="stylesheet" href="css/portfolio-motion-v1.css?v=20261031-urben-foto03-pan-15s" />
+  <link rel="stylesheet" href="css/portfolio-motion-v1.css?v=20261031-urben-mp4-final" />
   <link rel="stylesheet" href="css/portfolio-live3d.css?v=20261030-3" />
   <link rel="stylesheet" href="css/microinteracoes-publicas.css?v=20260910-1" />
   <!-- Corrige diretamente a capa da Casa Urben, independente do cache de arquivos CSS/JS externos. -->
-  <style id="casa-urben-foto03-movimento-final">
-    .featured-projects-grid .featured-project-3d-wrap > .featured-project-card[href*="casa-urban"],
-    .featured-projects-grid > .featured-project-card[href*="casa-urban"] {
-      background: #07111e !important;
-    }
-    .featured-projects-grid .featured-project-card[href*="casa-urban"]::before {
-      content: none !important;
-      display: none !important;
-      background: none !important;
-      animation: none !important;
-    }
-    .featured-projects-grid .featured-project-card[href*="casa-urban"] > .featured-project-video,
-    .featured-projects-grid .featured-project-card[href*="casa-urban"] > canvas {
-      display: none !important;
-    }
-    .featured-projects-grid .featured-project-card[href*="casa-urban"] > img {
-      position: absolute !important;
-      inset: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
-      min-width: 100% !important;
-      min-height: 100% !important;
-      z-index: 1 !important;
-      object-fit: cover !important;
-      object-position: 0% 50%;
-      transform: none !important;
-      filter: saturate(.95) contrast(1.06) !important;
-      animation: urbenFoto03Panorama 15s ease-in-out infinite !important;
-      animation-play-state: running !important;
-      will-change: object-position;
-    }
-    @keyframes urbenFoto03Panorama {
-      0%, 7%  { object-position: 0% 50%; }
-      46%, 54% { object-position: 100% 50%; }
-      93%, 100% { object-position: 0% 50%; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .featured-projects-grid .featured-project-card[href*="casa-urban"] > img {
-        animation: none !important;
-        object-position: 0% 50% !important;
-      }
-    }
-  </style>
+  
   <style>
     .reviews-section{background:linear-gradient(180deg,var(--navy-3),var(--navy-2));border-top:1px solid rgba(184,154,99,.10);border-bottom:1px solid rgba(184,154,99,.10);padding:58px 0!important}
     .reviews-heading{max-width:680px;margin:0 auto 15px;text-align:center}
@@ -229,6 +187,7 @@
 
           <a class="featured-project-card" href="galeria-projetos.html#casa-urban" aria-label="Ver imagens do projeto Casa Urben">
             <img src="assets/projetos/casa-urban/03.webp?v=20261030-foto3-inteira" width="1600" height="600" loading="lazy" alt="Casa Urben — foto original 03 da galeria, fachada noturna com a janela lateral envidraçada" />
+            <video class="featured-project-video" data-portfolio-video data-src="assets/projetos/casa-urban/videos/casa-urben-foto03-movimento.mp4" poster="assets/projetos/casa-urban/03.webp" muted playsinline autoplay loop preload="none" aria-hidden="true"></video>
             <span class="featured-project-overlay">
               <small>Residência contemporânea • 220 m²</small>
               <strong>Casa Urben</strong>
