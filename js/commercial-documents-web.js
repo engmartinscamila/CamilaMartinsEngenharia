@@ -885,12 +885,7 @@
     let notice = archive ? 'Word baixado e arquivado no sistema.' : 'Word baixado e extrato preservado.';
     let noticeType = 'success';
     if (kind === 'contrato') {
-      const existing = await client().from('commercial_records')
-        .select('source_project_id,linked_project_id').eq('id',recordId).maybeSingle();
-      const legacyReviewNeeded = !!existing.data?.source_project_id && !existing.data?.linked_project_id;
-      const linked = existing.error || legacyReviewNeeded
-        ? { error: existing.error || { message: 'Este contrato possui um projeto anterior; confirme o vínculo manualmente no Anexo I.' } }
-        : await client().rpc('admin_formalize_service_contract', { p_record_id: recordId });
+      const linked = await client().rpc('admin_formalize_service_contract', { p_record_id: recordId });
       if (!linked.error && linked.data?.contract_id) {
         notice += ' Contrato disponível no Anexo I, sem exigir projeto. Para cadastrar um projeto, use Formalizar cliente + projeto.';
         window.dispatchEvent(new CustomEvent('cme:commercial-records-updated', { detail: { recordId, projectId: linked.data.project_id } }));
