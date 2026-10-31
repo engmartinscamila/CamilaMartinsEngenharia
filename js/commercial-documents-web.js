@@ -486,7 +486,7 @@
       if (title) title.textContent = isContract ? 'Dados do contratante' : 'Dados do prospect';
       const description = card.querySelector('p');
       if (description) description.textContent = isContract
-        ? 'Escolha um orçamento ou crie um contrato direto. Quando o Word do contrato for gerado, o sistema criará ou vinculará automaticamente o projeto, aproveitando os dados cadastrados.'
+        ? 'Escolha um orçamento ou crie um contrato direto. O contrato pode ser emitido sem projeto. A criação ou vinculação de um projeto é opcional.'
         : 'O orçamento pode ser criado mesmo sem cliente cadastrado.';
     }
     renderQuoteChoices();
@@ -939,14 +939,12 @@
         : '';
 
       const actions = kind === 'contrato'
-        ? `<button class="doc-btn secondary" data-action="contract" data-id="${record.id}">${record.contract_document_id?'Baixar / nova versão':'Gerar Word do contrato'}</button>
-           <button class="doc-btn ghost" data-action="contract-archive" data-id="${record.id}">Baixar + arquivar</button>
+        ? `${record.contract_document_id?`<button class="doc-btn secondary" data-action="contract-download" data-document-id="${record.contract_document_id}" data-id="${record.id}">Baixar Word emitido</button><button class="doc-btn secondary" data-action="contract-versions" data-id="${record.id}">Versões anteriores</button><button class="doc-btn ghost" data-action="contract-revision" data-id="${record.id}">Criar nova revisão</button>`:`<button class="doc-btn secondary" data-action="contract" data-id="${record.id}">Gerar Word e arquivar</button>`}
            <button class="doc-btn" data-action="convert" data-id="${record.id}" ${record.status === 'convertido' ? 'disabled' : ''}>
              ${record.status === 'convertido' ? 'Cliente/projeto vinculados' : 'Formalizar cliente + projeto'}
            </button>`
         : `<button class="doc-btn" data-action="use-quote" data-id="${record.id}">Criar contrato deste orçamento</button>
-           <button class="doc-btn secondary" data-action="quote" data-id="${record.id}">Baixar orçamento</button>
-           <button class="doc-btn ghost" data-action="quote-archive" data-id="${record.id}">Baixar + arquivar</button>`;
+           ${record.quote_document_id?`<button class="doc-btn secondary" data-action="quote-download" data-document-id="${record.quote_document_id}" data-id="${record.id}">Baixar orçamento emitido</button><button class="doc-btn secondary" data-action="quote-versions" data-id="${record.id}">Versões anteriores</button><button class="doc-btn ghost" data-action="quote-revision" data-id="${record.id}">Criar nova revisão</button>`:`<button class="doc-btn secondary" data-action="quote" data-id="${record.id}">Gerar orçamento e arquivar</button>`}`;
 
       return `
         <details class="doc-row">

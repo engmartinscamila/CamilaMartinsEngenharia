@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
     if (rateError) return json({ error: 'Muitas operações em sequência. Aguarde e tente novamente.' }, 429);
 
     const rowResult = await service.from('documentos')
-      .select('id,nome,arquivo,storage_bucket,categoria,document_kind,workflow_status,versao,cliente_id,projeto_id,contract_id,generated_data')
+      .select('id,nome,arquivo,storage_bucket,categoria,document_kind,workflow_status,versao,cliente_id,projeto_id,contract_id,generated_data,archived_explicitly')
       .eq('id', documentId).maybeSingle();
     if (rowResult.error) throw rowResult.error;
     if (!rowResult.data) return json({ error: 'Documento não encontrado.' }, 404);
@@ -74,9 +74,11 @@ Deno.serve(async (req) => {
     const fileName = safeFileName(`${row.nome}.docx`);
     const now = new Date().toISOString();
 
-    const historyInsert = await service.from('document_generation_history').insert({
+    const existingHistory=await service.from('document_generation_history').select('id').eq('document_id',row.id).order('generated_at',{ascending:false}).limit(1).maybeSingle();
+    if(existingHistory.error)throw existingHistory.error;
+    const historyInsert = existingHistory.data ? {data:existingHistory.data,error:null} : await service.from('document_generation_history').insert({
       document_id: row.id,
-      document_kind: row.document_kind ?? row.categoria,
+      document_kind: actualDocumentKind,
       document_name: row.nome,
       document_number: documentNumber,
       version: row.versao,
@@ -95,15 +97,11 @@ Deno.serve(async (req) => {
     const historyId = historyInsert.data.id as string;
 
     let archivePath: string | null = null;
-    if (archive) {
+    if (archive && !row.archived_explicitly) {
       const originalName = row.arquivo.split('/').pop() || fileName;
       archivePath = `_generated_archive/${row.id}/${historyId}-${safeFileName(originalName)}`;
       const uploaded = await service.storage.from(bucket).upload(archivePath, bytes, { contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', upsert: false });
       if (uploaded.error) throw uploaded.error;
-      if (archivePath !== row.arquivo) {
-        const removed = await service.storage.from(bucket).remove([row.arquivo]);
-        if (removed.error) throw removed.error;
-      }
       const updated = await service.from('documentos').update({
         arquivo: archivePath,
         storage_bucket: bucket,
@@ -116,20 +114,15 @@ Deno.serve(async (req) => {
       const historyUpdated = await service.from('document_generation_history').update({ archive_path: archivePath }).eq('id', historyId);
       if (historyUpdated.error) throw historyUpdated.error;
     } else {
-      const removed = await service.storage.from(bucket).remove([row.arquivo]);
-      if (removed.error) throw removed.error;
-      const updated = await service.from('documentos').update({
-        arquivo: null,
-        archived_explicitly: false,
-        last_downloaded_at: now,
-        archived_storage_size: null,
-      }).eq('id', row.id);
-      if (updated.error) throw updated.error;
+      archivePath=row.arquivo;
+      const updated=await service.from('documentos').update({last_downloaded_at:now}).eq('id',row.id);
+      if(updated.error)throw updated.error;
     }
+    if(archive){const updated=await service.from('document_generation_history').update({storage_mode:'archived',archive_path:archivePath}).eq('id',historyId);if(updated.error)throw updated.error;}
 
     await service.from('audit_log').insert({
       user_id: user.id,
-      action: archive ? 'download_and_archive_generated_document' : 'download_generated_document_without_archive',
+      action: archive ? 'download_and_archive_generated_document' : 'download_existing_generated_document',
       entity_type: 'documentos',
       entity_id: row.id,
       details: { history_id: historyId, file_size_bytes: bytes.byteLength, archive_path: archivePath },

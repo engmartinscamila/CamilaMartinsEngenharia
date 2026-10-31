@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const canonical = readFileSync('supabase/functions/generate-commercial-document/index.ts', 'utf8');
+const coreSource = readFileSync('supabase/functions/generate-commercial-document/index.ts', 'utf8');
+const canonical=coreSource+'\n'+readFileSync('supabase/functions/_shared/commercial-word-renderer.ts','utf8');
 const mirror = readFileSync('portal-app/supabase/functions/generate-commercial-document/index.ts', 'utf8');
-assert.equal(mirror, canonical, 'Gerador do aplicativo divergente da função canônica.');
+assert.equal(mirror, coreSource, 'Gerador do aplicativo divergente da função canônica.');
 const handler = canonical.slice(canonical.indexOf('Deno.serve(async(req)=>{'));
 function position(fragment) {
   const index = handler.indexOf(fragment);
@@ -22,7 +23,7 @@ console.log('PASS: validação de identidade e Contrato Mestre antes de criar/vi
 
 assert.ok(canonical.includes('serviceBudgetDescription'), 'Orçamento não usa campo específico da matriz.');
 assert.ok(canonical.includes('item.budgetDescription??item.description'), 'Orçamento não preserva fallback legado quando a matriz não está aprovada.');
-const finalGenerator = readFileSync('supabase/functions/generate-commercial-document-final/index.ts', 'utf8');
+const finalGenerator = readFileSync('supabase/functions/generate-commercial-document-final/index.ts', 'utf8')+readFileSync('supabase/functions/_shared/commercial-word-enhancements.ts','utf8');
 assert.ok(finalGenerator.includes('text(item.contractScope) || text(item.description)'), 'Contrato não prioriza contractScope aprovado.');
 const derivedGenerator = readFileSync('supabase/functions/generate-contract-document/index.ts', 'utf8');
 assert.ok(derivedGenerator.includes('item.annexScope??item.description'), 'Anexo I não prioriza annexScope aprovado.');

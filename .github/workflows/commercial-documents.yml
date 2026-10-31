@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - 'supabase/functions/generate-commercial-document/**'
+      - 'supabase/functions/_shared/commercial-word-*.ts'
+      - 'portal-app/supabase/functions/_shared/commercial-word-*.ts'
+      - 'supabase/functions/download-commercial-word/**'
+      - 'scripts/commercial-word-download-regression.mjs'
       - 'portal-app/supabase/functions/generate-commercial-document/**'
       - 'supabase/functions/generate-commercial-document-final/**'
       - 'supabase/functions/generate-contract-document/**'
@@ -30,6 +34,10 @@ on:
     branches: [main]
     paths:
       - 'supabase/functions/generate-commercial-document/**'
+      - 'supabase/functions/_shared/commercial-word-*.ts'
+      - 'portal-app/supabase/functions/_shared/commercial-word-*.ts'
+      - 'supabase/functions/download-commercial-word/**'
+      - 'scripts/commercial-word-download-regression.mjs'
       - 'portal-app/supabase/functions/generate-commercial-document/**'
       - 'supabase/functions/generate-commercial-document-final/**'
       - 'supabase/functions/generate-contract-document/**'

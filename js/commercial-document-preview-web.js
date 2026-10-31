@@ -15,6 +15,31 @@ async function formalizeServiceContract(recordId){
   }));
   return {ok:true,projectId:data.project_id};
 }
+async function invocationError(result,fallback){
+ if(result.data?.error)return String(result.data.error);
+ if(result.error?.context?.json){try{const body=await result.error.context.clone().json();if(body?.error)return String(body.error);}catch{}}
+ return result.error?.message||fallback;
+}
+async function downloadIssued(documentId,recover=false){
+ status(recover?'Reconstituindo cópia da versão emitida...':'Baixando a versão emitida, sem criar revisão...');
+ const result=await client().functions.invoke('download-commercial-word',{body:{documentId,recover}});
+ if(result.error||!result.data?.delivered){
+  let code=result.data?.code,error=await invocationError(result,'Não foi possível baixar a versão emitida.');
+  if(result.error?.context?.json){try{code=(await result.error.context.clone().json())?.code||code;}catch{}}
+  if(code==='ORIGINAL_WORD_MISSING'&&!recover&&window.confirm(error+'\n\nReconstituir essa cópia agora?'))return downloadIssued(documentId,true);
+  status(error,'error');return {ok:false,error};
+ }
+ download(result.data.contentBase64,result.data.fileName);
+ status(result.data.reconstituted?'Cópia reconstituída baixada. A versão e a data da emissão foram preservadas; confira a identificação profissional antes de usar.':'Word da versão emitida baixado. Nenhuma revisão foi criada.','success');
+ return {ok:true,documentId,reconstituted:result.data.reconstituted};
+}
+async function showVersions(recordId,kind){
+ const {data,error}=await client().from('documentos').select('id,nome,versao,generated_at').contains('generated_data',{commercial_record_id:recordId,commercial_document_kind:kind}).not('generated_at','is',null).order('generated_at',{ascending:false}).limit(100);
+ if(error){status(error.message||'Não foi possível carregar as versões.','error');return;}
+ const wrap=document.createElement('div');wrap.className='commercial-preview-modal';wrap.innerHTML=`<div class="commercial-preview-dialog"><button type="button" class="commercial-preview-close">×</button><h3>Versões emitidas</h3><p>Baixar uma versão existente não altera o contrato e não cria revisão.</p>${(data||[]).map(d=>`<div class="commercial-preview-block"><strong>${esc(d.nome)} • v${esc(d.versao)}</strong><span>Emitido em ${esc(new Date(d.generated_at).toLocaleString('pt-BR'))}</span><button type="button" class="doc-btn" data-issued-document="${esc(d.id)}">Baixar Word v${esc(d.versao)}</button></div>`).join('')||'<p>Nenhuma versão emitida localizada.</p>'}</div>`;document.body.appendChild(wrap);wrap.querySelector('.commercial-preview-close').onclick=()=>wrap.remove();
+ wrap.addEventListener('click',async e=>{const b=e.target.closest('[data-issued-document]');if(!b)return;b.disabled=true;try{await downloadIssued(b.dataset.issuedDocument);}finally{b.disabled=false;}});
+}
+window.CMEDownloadIssuedCommercialWord=downloadIssued;
 async function generate(recordId,kind,archive){
   try{
     const choice=await preview(recordId,kind);
@@ -24,7 +49,7 @@ async function generate(recordId,kind,archive){
       body:{recordId,kind,versionBump:choice.versionBump,versionReason:choice.versionReason}
     });
     if(generated.error||!generated.data?.generated){
-      const error=generated.data?.error||generated.error?.message||'Não foi possível gerar o Word.';status(error,'error');return {ok:false,error};
+      const error=await invocationError(generated,'Não foi possível gerar o Word.');status(error,'error');return {ok:false,error};
     }
     const documentId=generated.data.documentId;
     if(!documentId){status('Documento gerado sem vínculo de entrega.','error');return {ok:false,error:'Documento gerado sem vínculo de entrega.'};}
@@ -32,7 +57,7 @@ async function generate(recordId,kind,archive){
       body:{documentId,archive,expectedDocumentKind:kind}
     });
     if(delivered.error||!delivered.data?.delivered){
-      const error=delivered.data?.error||delivered.error?.message||'O Word foi gerado, mas não foi possível preparar o download.';status(error,'error');window.dispatchEvent(new CustomEvent('cme:commercial-generated',{detail:{recordId,documentId,kind}}));return {ok:false,generated:true,documentId,error};
+      const error=await invocationError(delivered,'O Word foi gerado, mas não foi possível preparar o download.');status(error,'error');window.dispatchEvent(new CustomEvent('cme:commercial-generated',{detail:{recordId,documentId,kind}}));return {ok:false,generated:true,documentId,error};
     }
     download(delivered.data.contentBase64,delivered.data.fileName);
     const label=`${kind==='contrato'?'Contrato '+(generated.data.contractNumber||''):'Orçamento '+(generated.data.quoteNumber||'')} v${generated.data.version||choice.version} gerado${archive?' e arquivado':''}.`;
@@ -56,6 +81,12 @@ async function generate(recordId,kind,archive){
 }
 const generationLocks=new Map();
 window.CMEGenerateCommercialDocument=function(recordId,kind,archive){const key=recordId+':'+kind;if(generationLocks.has(key))return generationLocks.get(key);const task=generate(recordId,kind,archive).finally(()=>generationLocks.delete(key));generationLocks.set(key,task);return task;};
-document.addEventListener('click',e=>{const b=e.target.closest('#commercialList [data-action]');if(!b)return;const action=b.dataset.action;if(!['contract','contract-archive','quote','quote-archive'].includes(action))return;e.preventDefault();e.stopImmediatePropagation();const kind=action.startsWith('contract')?'contrato':'orcamento';window.CMEGenerateCommercialDocument(b.dataset.id,kind,action.endsWith('archive'))},true);
+document.addEventListener('click',async e=>{
+ const b=e.target.closest('#commercialList [data-action]');if(!b)return;const action=b.dataset.action;
+ if(!['contract','contract-archive','quote','quote-archive','contract-download','quote-download','contract-revision','quote-revision','contract-versions','quote-versions'].includes(action))return;
+ e.preventDefault();e.stopImmediatePropagation();if(b.disabled)return;b.disabled=true;
+ const kind=action.startsWith('contract')?'contrato':'orcamento';
+ try{if(action.endsWith('-download'))await downloadIssued(b.dataset.documentId);else if(action.endsWith('-versions'))await showVersions(b.dataset.id,kind);else await window.CMEGenerateCommercialDocument(b.dataset.id,kind,true);}catch(error){status(error?.message||'Não foi possível concluir a operação.','error');}finally{b.disabled=false;}
+},true);
 const style=document.createElement('style');style.textContent="\n/* Prévia comercial: sempre em alto contraste, independente das variáveis globais de tema. */\n.commercial-preview-modal{\n  position:fixed;inset:0;z-index:10060;\n  display:flex;justify-content:center;align-items:center;\n  padding:clamp(10px,2.5vw,24px);box-sizing:border-box;\n  background:rgba(0,7,17,.84);backdrop-filter:blur(5px);\n}\n.commercial-preview-dialog{\n  position:relative;box-sizing:border-box;\n  width:min(800px,100%);max-height:calc(100dvh - 32px);\n  overflow:auto;overscroll-behavior:contain;\n  padding:clamp(18px,3vw,30px);\n  border:1px solid rgba(197,166,105,.68);border-top:4px solid #c6a86d;\n  border-radius:18px;background:#0b1727!important;color:#f2f5fb!important;\n  box-shadow:0 30px 85px rgba(0,0,0,.66);\n  font-family:Montserrat,'Segoe UI',sans-serif;line-height:1.5;color-scheme:dark;\n}\n.commercial-preview-dialog *,\n.commercial-preview-dialog *::before,\n.commercial-preview-dialog *::after{box-sizing:border-box}\n.commercial-preview-dialog h3{\n  margin:0 44px 4px 0!important;color:#f6f8fd!important;\n  font-size:clamp(1.15rem,2.1vw,1.42rem);font-weight:750;line-height:1.3;\n}\n.commercial-preview-dialog > p:not(.commercial-preview-first){\n  color:#c7d3e1!important;margin:0 0 16px;font-size:.89rem;\n}\n.commercial-preview-close{\n  position:absolute;top:16px;right:16px;width:38px;height:38px;\n  display:grid;place-items:center;border:1px solid rgba(197,166,105,.45);\n  border-radius:10px;background:#14243a!important;color:#dfc28b!important;\n  font-size:27px;line-height:1;cursor:pointer;\n}\n.commercial-preview-close:hover{background:#203550!important;color:#fff!important}\n.commercial-preview-grid{\n  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));\n  gap:12px;margin:16px 0;\n}\n.commercial-preview-grid>div,.commercial-preview-block{\n  min-width:0;padding:13px 15px;\n  border:1px solid rgba(190,163,114,.34);\n  border-radius:11px;background:#13243a!important;\n  color:#f5f7fc!important;overflow-wrap:anywhere;\n}\n.commercial-preview-grid>div{display:flex;flex-direction:column;gap:6px;justify-content:center}\n.commercial-preview-grid small,.commercial-preview-block small{\n  display:block;margin:0;color:#bdc9d9!important;opacity:1!important;\n  font-size:.77rem;font-weight:600;letter-spacing:.01em;\n}\n.commercial-preview-grid strong,.commercial-preview-block strong,\n.commercial-preview-block span{\n  display:block;color:#f8fafc!important;opacity:1!important;\n  font-size:.94rem;line-height:1.5;font-weight:600;white-space:normal;\n}\n.commercial-preview-grid strong{font-size:1rem}\n.commercial-preview-block{display:grid;gap:6px;margin:10px 0}\n.commercial-preview-first{\n  margin:12px 0;padding:11px 14px;border-radius:10px;\n  border:1px solid rgba(197,166,105,.26);\n  background:#1d2937!important;color:#ead5ae!important;\n  font-size:.85rem;font-weight:600;\n}\n.commercial-preview-dialog .doc-field{margin:12px 0}\n.commercial-preview-dialog .doc-field label{\n  color:#d5dfeb!important;font-weight:650;font-size:.82rem;\n}\n.commercial-preview-dialog .doc-field input,\n.commercial-preview-dialog .doc-field select{\n  width:100%;padding:11px 12px;border-radius:9px;\n  border:1px solid rgba(197,166,105,.5);\n  background:#15263c!important;color:#fff!important;font:inherit;\n}\n.commercial-preview-dialog .doc-status.error{\n  color:#ffd0d0!important;background:#51252b!important;\n  border:1px solid #a45561;padding:12px;margin:12px 0;\n}\n.commercial-preview-dialog .doc-actions{\n  position:sticky;bottom:-30px;display:flex;justify-content:flex-end;\n  gap:10px;margin:18px -30px -30px;padding:14px 30px 18px;\n  border-top:1px solid rgba(197,166,105,.33);\n  border-radius:0 0 14px 14px;background:#0b1727!important;\n}\n.commercial-preview-dialog .doc-btn{\n  min-height:44px;padding:10px 17px;border-radius:9px;\n  background:#c6a86d!important;color:#091322!important;\n  font-size:.88rem;font-weight:700;white-space:normal;\n}\n.commercial-preview-dialog .doc-btn:hover{background:#e0c38a!important}\n.commercial-preview-dialog .doc-btn.ghost{\n  background:transparent!important;color:#e9d0a2!important;\n  border:1px solid rgba(197,166,105,.48)!important;\n}\n.commercial-preview-dialog .doc-btn.ghost:hover{background:#23344a!important}\n.commercial-preview-dialog :is(button,input,select):focus-visible{\n  outline:3px solid #ebcc8f;outline-offset:3px;\n}\n@media(max-width:620px){\n .commercial-preview-modal{align-items:center;padding:8px}\n .commercial-preview-dialog{max-height:calc(100dvh - 16px);padding:18px 14px;border-radius:12px}\n .commercial-preview-grid{grid-template-columns:1fr;gap:8px;margin:12px 0}\n .commercial-preview-grid>div,.commercial-preview-block{padding:11px 12px}\n .commercial-preview-dialog .doc-actions{\n  bottom:-18px;margin:16px -14px -18px;padding:12px 14px;\n  flex-direction:column-reverse;\n }\n .commercial-preview-dialog .doc-btn{width:100%}\n .commercial-preview-close{top:12px;right:12px}\n}";document.head.appendChild(style);
 })();

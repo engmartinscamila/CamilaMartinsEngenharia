@@ -10,9 +10,9 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const portalRequire = createRequire(pathToFileURL(resolve(root, 'portal-app/package.json')));
 const JSZip = portalRequire('jszip');
 const { Document, Paragraph, TextRun, Packer } = portalRequire('docx');
-const source = readFileSync(resolve(root, 'supabase/functions/generate-commercial-document-final/index.ts'), 'utf8');
+const source = readFileSync(resolve(root, 'supabase/functions/_shared/commercial-word-enhancements.ts'), 'utf8');
 const start = source.indexOf('const isProjectTierEligible =');
-const end = source.indexOf('async function sha256(');
+const end = source.indexOf('export {');
 assert.ok(start > 0 && end > start, 'Funções de revisão Word não foram encontradas');
 const isolatedCode = stripTypeScriptTypes(source.slice(start, end), { mode: 'strip' });
 const context = {
@@ -160,7 +160,7 @@ assert.ok(mixedLevelContract.includes('Níveis de prestação: definidos individ
 assert.ok(!mixedLevelContract.includes('Nível de prestação: BRONZE — Essencial.'), 'Primeiro nível vazou para o resumo de toda a contratação');
 assert.ok(!mixedLevelContract.includes('BRONZE — Essencial') && !mixedLevelContract.includes('OURO — Completo'), 'Descritores não podem virar nomes paralelos dos níveis');
 
-const coreGenerator = readFileSync(resolve(root,'supabase/functions/generate-commercial-document/index.ts'),'utf8');
+const coreGenerator = readFileSync(resolve(root,'supabase/functions/_shared/commercial-word-renderer.ts'),'utf8');
 assert.ok(coreGenerator.includes('2. NÍVEIS DE PRESTAÇÃO POR ATIVIDADE'), 'Orçamento não apresenta níveis por atividade');
 assert.ok(coreGenerator.includes('Nível desta atividade:'), 'Bloco individual do serviço não informa o próprio nível');
 assert.ok(coreGenerator.includes('definidos individualmente por atividade no escopo técnico vinculado'), 'Contrato não possui resumo seguro para níveis mistos');
