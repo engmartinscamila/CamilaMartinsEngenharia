@@ -19,13 +19,13 @@ fi
 
 mkdir -p "$(dirname "${VIDEO}")"
 
-# The original image is 1600 x 600. A 570 x 600 sliding crop fills the
-# portrait-oriented project card, showing both the lateral window and garage
-# over a seamless 12-second panoramic movement.
+# Original photo: 1600 x 600. Smooth panoramic camera at native 60 fps.
+# Fixed-rate H.264 playback avoids the 24-fps stepping and aggressive seeking.
+# The photo is unchanged; this is purely a moving crop for the homepage card.
 ffmpeg -hide_banner -loglevel error -nostdin -y \
-  -loop 1 -framerate 24 -i "${PHOTO}" -t 12 \
-  -vf "crop=w=570:h=600:x='(in_w-out_w)*(0.5-0.5*cos(2*PI*n/(24*12)))':y=0,scale=760:800:flags=lanczos,format=yuv420p" \
-  -c:v libx264 -preset veryfast -crf 24 -pix_fmt yuv420p -movflags +faststart \
+  -loop 1 -framerate 60 -i "${PHOTO}" -t 12 \
+  -vf "crop=w=570:h=600:x='(in_w-out_w)*(0.5-0.5*cos(2*PI*n/(60*12)))':y=0,scale=760:800:flags=lanczos,format=yuv420p" \
+  -c:v libx264 -preset veryfast -crf 24 -r 60 -g 120 -pix_fmt yuv420p -movflags +faststart \
   -an "${VIDEO}"
 
 test -s "${VIDEO}" || { echo "ERRO: vídeo de capa Casa Urben não gerado." >&2; exit 1; }
