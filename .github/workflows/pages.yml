@@ -55,6 +55,7 @@ jobs:
           node scripts/portal-observations-regression.mjs
           node scripts/invite-email-regression.mjs
           node scripts/client-email-notification-regression.mjs
+          node scripts/project-email-notice-regression.mjs
           node scripts/password-link-outbox-regression.mjs
           node scripts/project-files-receipts-regression.mjs
           node scripts/receipt-names-regression.mjs

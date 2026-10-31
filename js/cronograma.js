@@ -254,9 +254,7 @@ CRONOGRAMA.JS - CRUD ADMINISTRATIVO
             await recarregar();
             alert(
                 `${editando ? "Etapa atualizada" : "Etapa cadastrada"} com sucesso.` +
-                (notificacao.enviado
-                    ? "\nO cliente também recebeu um aviso por e-mail."
-                    : "\nO registro foi salvo, mas o aviso por e-mail ainda não está configurado.")
+                window.CMEEmailNotice(notificacao)
             );
         }
         catch (error) {
