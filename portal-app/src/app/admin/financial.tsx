@@ -51,10 +51,13 @@ import type {
   TimesheetSummary,
 } from '@/types/domain';
 
+function financialDateInput(value:string){return value.trim().replace(/^(\d{2})\/(\d{2})\/(\d{4})$/, '$3-$2-$1');}
+
 export default function AdminFinancialScreen() {
   const embedded=useAdminModule();
   const [clients,setClients]=useState<AdminClientSummary[]>([]);
   const [entryLink,setEntryLink]=useState('client');
+  const [entryErrors,setEntryErrors]=useState<Record<string,string>>({});
   const [entryClientId,setEntryClientId]=useState<string|null>(null);
   const [entryContractId,setEntryContractId]=useState<string|null>(null);
   const [contracts, setContracts] = useState<AdminContractSummary[]>([]);
@@ -118,7 +121,7 @@ export default function AdminFinancialScreen() {
     try{await task();}catch(reason){setError(reason instanceof Error?reason.message:'Não foi possível concluir. Seus campos foram preservados.');}
     finally{actionLock.current=false;setSaving(false);}
   }
-  const clearEntry=()=>{setEditing(null);setDescription('');setAmount('');setNotes('');setCategory('outros');setEntryStatus('pendente');setPaidAt(financialToday());setPaymentMethod('');requestId.current=null;};
+  const clearEntry=()=>{setEntryErrors({});setEditing(null);setDescription('');setAmount('');setNotes('');setCategory('outros');setEntryStatus('pendente');setPaidAt(financialToday());setPaymentMethod('');requestId.current=null;};
   const editEntry=(entry:FinancialEntrySummary)=>{
     setEditing(entry);setEntryLink(entry.projectId?'project':'client');setEntryClientId(entry.clientId??projects.find(p=>p.id===entry.projectId)?.clientId??null);setEntryContractId(entry.contractId??null);setSelectedProjectId(entry.projectId);setType(entry.type as 'entrada'|'saida');setDescription(entry.description);
     setAmount(entry.amount.toFixed(2).replace('.',','));setDate(entry.date??financialToday());setDueDate(entry.dueDate??'');setNotes(entry.notes??'');
@@ -199,20 +202,26 @@ export default function AdminFinancialScreen() {
   const saveEntry = async () => {
     setError(null); setSuccess(null);
     const parsed = parseBrazilianCurrency(amount);
+    const dateValue=financialDateInput(date),dueValue=financialDateInput(dueDate),paidValue=financialDateInput(paidAt);
     const linkedProject=(embedded?.projectId||entryLink==='project')?projects.find(project=>project.id===selectedProjectId):null;
     const clientId=linkedProject?.clientId||((embedded?.projectId||entryLink==='project')?null:entryClientId);
     const contractId=linkedProject?.contractId||((embedded?.projectId||entryLink==='project')?null:entryContractId);
     const projectId=linkedProject?.id||null;
-    if (!clientId || description.trim().length < 2 || parsed === null || parsed <= 0 || !isValidIsoDate(date)) {
-      setError('Selecione o cliente ou projeto e informe descrição, valor e data válidos.');
-      return;
-    }
-    if (dueDate && !isValidIsoDate(dueDate)) { setError('A data de vencimento deve usar AAAA-MM-DD.'); return; }
+    const invalid:Record<string,string>={};
+    if(!clientId)invalid.client=(embedded?.projectId||entryLink==='project')?'Selecione um projeto da lista ou use Cliente — contrato opcional para um serviço avulso.':'Selecione o cliente na lista. Contrato e projeto são opcionais neste modo.';
+    if(description.trim().length<2)invalid.description='Preencha a descrição do lançamento com pelo menos 2 caracteres.';
+    if(parsed===null||parsed<=0)invalid.amount='Informe um valor maior que zero. Exemplo: 500,00.';
+    if(!isValidIsoDate(dateValue))invalid.date='Informe uma data válida para o lançamento (DD/MM/AAAA ou AAAA-MM-DD).';
+    if(dueValue&&!isValidIsoDate(dueValue))invalid.dueDate='Informe uma data de vencimento válida ou deixe em branco.';
+    if(paidValue&&!isValidIsoDate(paidValue))invalid.paidAt='Informe uma data efetiva de pagamento válida.';
+    if(entryStatus==='pago'&&(paidValue||dateValue)>financialToday())invalid.paidAt='A data efetiva de pagamento não pode estar no futuro.';
+    setEntryErrors(invalid);
+    if(Object.keys(invalid).length||parsed===null){setError(Object.values(invalid).join(' '));return;}
     setSaving(true);
     const fingerprint=JSON.stringify({projectId,clientId,contractId,description,type,parsed,date,notes,category,entryStatus,dueDate,accountId,paidAt,paymentMethod});
     if(requestFingerprint.current!==fingerprint){requestId.current=null;requestFingerprint.current=fingerprint;}
     requestId.current ??= randomUUID();
-    const input={projectId,clientId,contractId,description,type,amount:parsed,date,notes,category,status:entryStatus,dueDate,accountId,paidAt,paymentMethod,requestId:requestId.current};
+    const input={projectId,clientId,contractId,description,type,amount:parsed,date:dateValue,notes,category,status:entryStatus,dueDate:dueValue,accountId,paidAt:paidValue,paymentMethod,requestId:requestId.current};
     const result=editing ? await updateAdminFinancialEntry(editing.id,input) : await createAdminFinancialEntry(input);
     setSaving(false);
     if (result) setError(result);
@@ -315,17 +324,19 @@ export default function AdminFinancialScreen() {
         <SelectionChips items={[{ value: 'pendente', label: 'Pendente' }, { value: 'pago', label: type === 'entrada' ? 'Recebido' : 'Pago' },{value:'cancelado',label:'Cancelado'}]} label="Situação" onChange={value=>{setEntryStatus(value);requestId.current=null;}} value={entryStatus} />
         {!embedded?.projectId?<SelectionChips label="Vincular lançamento a" value={entryLink} onChange={value=>{setEntryLink(value);requestId.current=null;}} items={[{value:'client',label:'Cliente — contrato opcional'},{value:'project',label:'Contrato e projeto'}]} />:null}
         {embedded?.projectId||entryLink==='project'?<AdminProjectPicker projects={projects.filter(project=>!embedded?.projectId||project.id===embedded.projectId)} value={selectedProjectId} onChange={id=>{setSelectedProjectId(id);requestId.current=null;}} />:<>
-          <AdminClientPicker clients={clients} contracts={contracts} value={entryClientId} onChange={id=>{setEntryClientId(id);setEntryContractId(null);requestId.current=null;}} />
+          <AdminClientPicker clients={clients} contracts={contracts} value={entryClientId} onChange={id=>{setEntryLink('client');setEntryClientId(id);setEntryContractId(null);setEntryErrors({});requestId.current=null;}} />
           {entryClientId?<SelectionChips label="Contrato (opcional)" value={entryContractId??''} onChange={id=>{setEntryContractId(id||null);requestId.current=null;}} items={[{value:'',label:'Sem contrato — serviço avulso'},...contracts.filter(contract=>contract.clientId===entryClientId).map(contract=>({value:contract.id,label:contract.contractNumber}))]} />:null}
+          {entryErrors.client?<Notice tone="warning">{entryErrors.client}</Notice>:null}
           <Text style={styles.meta}>Você pode registrar a receber ou recebido sem cadastrar contrato ou projeto.</Text>
         </>}
         <Button title="Emitir recibo de serviço sem projeto" variant="ghost" debounceMs={0} onPress={()=>{if(embedded)embedded.onNavigate('receipts');else if(Platform.OS==='web')window.location.assign('/recibos.html');else void Linking.openURL('https://camilamartinsengenharia.com.br/recibos.html');}} />
-        <Field label="Descrição" onChangeText={value=>{setDescription(value);requestId.current=null;}} placeholder="Ex.: Parcela 2 do contrato" value={description} />
+        <Field label="Descrição" error={entryErrors.description} onChangeText={value=>{setDescription(value);setEntryErrors(current=>({...current,description:''}));requestId.current=null;}} placeholder="Ex.: Parcela 2 do contrato" value={description} />
         <Text style={styles.label}>Categoria / centro de custo</Text><View nativeID="financialEntryCategories" style={styles.selector}>{[...financialCategories,...(financialCategories.some(item=>item.value===category)?[]:[{value:category,label:category}])].map((item) => <Pressable accessibilityRole="button" key={item.value} onPress={() => {setCategory(item.value);requestId.current=null;}} style={[styles.choice, category === item.value && styles.choiceSelected]}><Text style={[styles.choiceText, category === item.value && styles.choiceTextSelected]}>{item.label}</Text></Pressable>)}</View>
-        <Field keyboardType="decimal-pad" label="Valor (R$)" onChangeText={value=>{setAmount(value);requestId.current=null;}} placeholder="Ex.: 2.500,00" value={amount} />
+        <Field keyboardType="decimal-pad" label="Valor (R$)" error={entryErrors.amount} onChangeText={value=>{setAmount(value);setEntryErrors(current=>({...current,amount:''}));requestId.current=null;}} placeholder="Ex.: 2.500,00" value={amount} />
         <View style={styles.rowFields}><DateField label="Data" onChange={value=>{setDate(value);requestId.current=null;}} value={date} /><DateField label="Vencimento" optional onChange={value=>{setDueDate(value);requestId.current=null;}} value={dueDate} /></View>
         {accounts.length ? <><Text style={styles.label}>Conta</Text><View style={styles.selector}>{accounts.map((account) => <Pressable accessibilityRole="button" key={account.id} onPress={() => {setAccountId(account.id);requestId.current=null;}} style={[styles.choice, accountId === account.id && styles.choiceSelected]}><Text style={[styles.choiceText, accountId === account.id && styles.choiceTextSelected]}>{account.name} • {account.accountType}</Text></Pressable>)}</View></> : <Notice tone="warning">Cadastre uma conta para conciliar os lançamentos.</Notice>}
         <DateField label="Data efetiva de pagamento / recebimento" optional={entryStatus!=='pago'} value={paidAt} onChange={value=>{setPaidAt(value);requestId.current=null;}} />
+        {entryErrors.date||entryErrors.dueDate||entryErrors.paidAt?<Notice tone="warning">{[entryErrors.date,entryErrors.dueDate,entryErrors.paidAt].filter(Boolean).join(' ')}</Notice>:null}
         <Field label="Forma de pagamento" value={paymentMethod} onChangeText={value=>{setPaymentMethod(value);requestId.current=null;}} />
         <Button title="Sem conta vinculada" variant="ghost" onPress={()=>{setAccountId(null);requestId.current=null;}} />
         <Field label="Observações (opcional)" multiline onChangeText={value=>{setNotes(value);requestId.current=null;}} value={notes} />
