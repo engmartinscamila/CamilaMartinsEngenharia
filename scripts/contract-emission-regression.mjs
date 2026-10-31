@@ -4,10 +4,11 @@ import vm from 'node:vm';
 const read=p=>readFileSync(p,'utf8');
 const core=read('supabase/functions/generate-commercial-document/index.ts');
 const guard=core.slice(core.indexOf("  if(kind==='contrato'&&firstRead.data.contract_document_id)"),core.indexOf("  if(kind==='contrato'){const assigned="));
-async function checkGuard(record,previous){return vm.runInNewContext(`(async()=>{${guard};return {status:200};})()`,{kind:'contrato',firstRead:{data:record},service:{from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:previous})})})})},json:(_body,status)=>({status})});}
+async function checkGuard(record,previous,frozen=null){return vm.runInNewContext(`(async()=>{${guard};return {status:200};})()`,{kind:'contrato',firstRead:{data:record},service:{from:table=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:table==='documentos'?previous:frozen})})})})},json:(_body,status)=>({status})});}
 assert.equal((await checkGuard({status:'convertido',contract_document_id:null})).status,200,'Primeira emissão após conversão deve funcionar');
 assert.equal((await checkGuard({contract_document_id:'draft'},{workflow_status:'rascunho'})).status,200,'Revisão em rascunho deve funcionar');
-for(const previous of [{workflow_status:'gerado'},{workflow_status:'rascunho',generated_at:'2026-10-31'},{workflow_status:'rascunho',snapshot_frozen_at:'2026-10-31'}])assert.equal((await checkGuard({contract_document_id:'issued'},previous)).status,409,'Documento emitido deve permanecer imutável');
+assert.equal((await checkGuard({contract_document_id:'issued'},{id:'issued'},{id:'snapshot'})).status,409,'Documento emitido deve permanecer imutável');
+assert.equal((await checkGuard({status:'convertido',contract_document_id:'partial'},{id:'partial',workflow_status:'gerado',generated_at:'2026-10-31'})).status,200,'Falha parcial antes do snapshot deve permitir nova tentativa');
 const source=read('js/commercial-document-preview-web.js');
 async function scenario({cancel=false,fail=false,deliveryFail=false}={}){
  const calls=[],events=[],message={},actions={};let downloads=0;

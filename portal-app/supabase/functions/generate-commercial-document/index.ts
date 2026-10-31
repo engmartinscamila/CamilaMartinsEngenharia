@@ -420,10 +420,12 @@ Deno.serve(async(req)=>{
   const governance=await service.rpc('assert_document_governance_ready');if(governance.error)throw governance.error;
   const firstRead=await service.from('commercial_records').select('*').eq('id',recordId).maybeSingle();if(firstRead.error)throw firstRead.error;if(!firstRead.data)return json({error:'Registro comercial não encontrado.'},404);
   if(kind==='contrato'&&firstRead.data.contract_document_id){
-   const previous=await service.from('documentos').select('workflow_status,generated_at,snapshot_frozen_at').eq('id',firstRead.data.contract_document_id).maybeSingle();
+   const previous=await service.from('documentos').select('id').eq('id',firstRead.data.contract_document_id).maybeSingle();
    if(previous.error)throw previous.error;
    if(!previous.data)return json({error:'O documento vinculado não foi encontrado. Confira o cadastro antes de emitir.'},409);
-   if(previous.data.workflow_status!=='rascunho'||previous.data.generated_at||previous.data.snapshot_frozen_at)return json({error:'O contrato já foi emitido. Gere uma nova versão para preservar o histórico.'},409);
+   const frozen=await service.from('document_emission_snapshots').select('id').eq('document_id',firstRead.data.contract_document_id).maybeSingle();
+   if(frozen.error)throw frozen.error;
+   if(frozen.data)return json({error:'O contrato já foi emitido. Gere uma nova versão para preservar o histórico.'},409);
   }
   if(kind==='contrato'){const assigned=await caller.rpc('admin_assign_commercial_contract_number',{p_record_id:recordId});if(assigned.error)throw assigned.error;}
   const preparedScope=await service.rpc('admin_prepare_commercial_scope_for_generation',{p_record_id:recordId});if(preparedScope.error)throw preparedScope.error;
