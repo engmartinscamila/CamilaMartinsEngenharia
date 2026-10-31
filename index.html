@@ -27,7 +27,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <link rel="stylesheet" href="css/styles.css?v=20261016-1" />
-  <link rel="stylesheet" href="css/portfolio-motion-v1.css?v=20261031-urben-mp4-final" />
+  <link rel="stylesheet" href="css/portfolio-motion-v1.css?v=20261031-shared-photo-motion-v1" />
   <link rel="stylesheet" href="css/portfolio-live3d.css?v=20261030-3" />
   <link rel="stylesheet" href="css/microinteracoes-publicas.css?v=20260910-1" />
   <!-- Corrige diretamente a capa da Casa Urben, independente do cache de arquivos CSS/JS externos. -->
@@ -165,9 +165,8 @@
         </div>
 
         <div class="featured-projects-grid">
-          <a class="featured-project-card" href="galeria-projetos.html#tiny-house-signature" aria-label="Ver imagens do projeto Tiny House Signature">
-            <img src="assets/projetos/tiny-house-signature/render-hiperrealista.webp?v=20261029-1" width="1377" height="955" loading="lazy" alt="Nova visualização hiper-realista da fachada da Tiny House Signature" />
-            <video class="featured-project-video" data-portfolio-video data-src="assets/projetos/tiny-house-signature/videos/tiny-house-novo-hiperrealista.mp4" muted playsinline loop preload="none" aria-hidden="true"></video>
+          <a class="featured-project-card motion-card" href="galeria-projetos.html#tiny-house-signature" aria-label="Ver imagens do projeto Tiny House Signature">
+            <img class="featured-project-image" src="assets/projetos/tiny-house-signature/render-hiperrealista.webp?v=20261029-1" width="1377" height="955" loading="lazy" alt="Nova visualização hiper-realista da fachada da Tiny House Signature" />
             <span class="featured-project-overlay">
               <small>Residência compacta • 32 m²</small>
               <strong>Tiny House Signature</strong>
@@ -175,9 +174,8 @@
             </span>
           </a>
 
-          <a class="featured-project-card" href="galeria-projetos.html#empreendimento-vitalle" aria-label="Ver imagens do Empreendimento Vitalle">
-            <img src="assets/projetos/empreendimento-vitalle/render-hiperrealista.webp?v=20261029-1" width="1672" height="941" loading="lazy" alt="Nova visualização hiper-realista da fachada do Empreendimento Vitalle" />
-            <video class="featured-project-video" data-portfolio-video data-src="assets/projetos/empreendimento-vitalle/videos/vitalle-novo-hiperrealista.mp4" muted playsinline loop preload="none" aria-hidden="true"></video>
+          <a class="featured-project-card motion-card" href="galeria-projetos.html#empreendimento-vitalle" aria-label="Ver imagens do Empreendimento Vitalle">
+            <img class="featured-project-image" src="assets/projetos/empreendimento-vitalle/render-hiperrealista.webp?v=20261029-1" width="1672" height="941" loading="lazy" alt="Nova visualização hiper-realista da fachada do Empreendimento Vitalle" />
             <span class="featured-project-overlay">
               <small>Habitação • 3 unidades</small>
               <strong>Empreendimento Vitalle</strong>
@@ -185,9 +183,8 @@
             </span>
           </a>
 
-          <a class="featured-project-card" href="galeria-projetos.html#casa-urban" aria-label="Ver imagens do projeto Casa Urben">
-            <img src="assets/projetos/casa-urban/03.webp?v=20261030-foto3-inteira" width="1600" height="600" loading="lazy" alt="Casa Urben — foto original 03 da galeria, fachada noturna com a janela lateral envidraçada" />
-            <video class="featured-project-video" data-portfolio-video data-src="assets/projetos/casa-urban/videos/casa-urben-foto03-movimento.mp4?v=20261031-sync8s-60fps" poster="assets/projetos/casa-urban/03.webp" muted playsinline loop preload="none" aria-hidden="true"></video>
+          <a class="featured-project-card motion-card" href="galeria-projetos.html#casa-urban" aria-label="Ver imagens do projeto Casa Urben">
+            <img class="featured-project-image" src="assets/projetos/casa-urban/03.webp?v=20261030-foto3-inteira" width="1600" height="600" loading="lazy" alt="Casa Urben — foto original 03 da galeria, fachada noturna com a janela lateral envidraçada" />
             <span class="featured-project-overlay">
               <small>Residência contemporânea • 220 m²</small>
               <strong>Casa Urben</strong>
@@ -382,7 +379,7 @@
 
   <script src="js/script.js?v=20260819-5"></script>
   <script src="js/cursor-dourado.js?v=20260910-1"></script>
-  <script src="js/portfolio-motion-v1.js?v=20261031-fluid-native-v2" defer></script>
+  <!-- As três capas usam o mesmo keyframe CSS; não há players de vídeo independentes. -->
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.1.0/model-viewer.min.js"></script>
   <!-- Modelador dos 3 projetos embutido para impedir cache antigo sem Casa Urben. -->
   <script id="portfolio-live3d-inline-v17">
