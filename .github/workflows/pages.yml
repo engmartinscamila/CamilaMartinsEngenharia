@@ -164,6 +164,7 @@ jobs:
         run: |
           npm audit fix --no-fund || true
           npm run security:patch
+          npm run security:audit
 
       - name: Regressões completas do portal integrado
         working-directory: portal-app
