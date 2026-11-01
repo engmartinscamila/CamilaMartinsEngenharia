@@ -365,7 +365,7 @@ function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,c
    p('Pelo presente instrumento particular de Contrato de Prestação de Serviços de Engenharia, de um lado:'),
    p(`CONTRATADO(A): ${professionalQualification(profile)}, doravante denominada simplesmente CONTRATADO(A);`),
    p(`CONTRATANTE: ${record.prospect_name}, CPF/CNPJ ${text(record.cpf_cnpj)}, com endereço em ${text(record.address)}, e-mail ${text(record.email)} e telefone/WhatsApp ${text(record.phone)}, doravante denominado(a) simplesmente CONTRATANTE.`),
-   ...(String(record.cpf_cnpj??'').replace(/\\D/g,'').length===14 ? [p('Representante legal da pessoa jurídica: [NOME, CPF, QUALIDADE E PODERES DE REPRESENTAÇÃO A CONFIRMAR ANTES DA ASSINATURA].')] : []),
+   ...(String(record.cpf_cnpj??'').replace(/\D/g,'').length===14 ? [p('Representante legal da pessoa jurídica: [NOME, CPF, QUALIDADE E PODERES DE REPRESENTAÇÃO A CONFIRMAR ANTES DA ASSINATURA].')] : []),
    ...contractCoobligors(record).map(item=>p(`COOBRIGADO(A) SOLIDÁRIO(A): ${item.name}, CPF nº ${item.cpf}, na qualidade de ${coobligorRole(item)}, aderindo expressamente às obrigações solidárias previstas neste instrumento.`)),
    p('Têm entre si, justo e acertado, o presente Contrato de Prestação de Serviços de Engenharia, que se regerá pelas cláusulas e condições a seguir:'),
    ...body,
