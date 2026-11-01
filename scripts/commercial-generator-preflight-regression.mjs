@@ -6,6 +6,18 @@ const canonical=coreSource+'\n'+readFileSync('supabase/functions/_shared/commerc
 const mirror = readFileSync('portal-app/supabase/functions/generate-commercial-document/index.ts', 'utf8');
 assert.equal(mirror, coreSource, 'Gerador do aplicativo divergente da função canônica.');
 const handler = canonical.slice(canonical.indexOf('Deno.serve(async(req)=>{'));
+// Uma revisão v2.1 precisa ser aceita; a antiga expressão com barra duplicada rejeitava versões reais.
+const versionGuard = coreSource.match(/if\(!\/([^/\\n]+)\/\.test\(docVersion\)\)/);
+assert.ok(versionGuard, 'Validação da versão do documento ausente.');
+const versionPattern = new RegExp(versionGuard[1]);
+for (const validVersion of ['1.0','2.1','12.30']) {
+  assert.equal(versionPattern.test(validVersion),true,`Versão válida rejeitada: ${validVersion}`);
+}
+for (const invalidVersion of ['2\\\\1','2X1','2.1a','2..1']) {
+  assert.equal(versionPattern.test(invalidVersion),false,`Versão inválida aceita: ${invalidVersion}`);
+}
+console.log('PASS: gerador aceita numeração real de revisão, inclusive v2.1.');
+
 function position(fragment) {
   const index = handler.indexOf(fragment);
   assert.ok(index >= 0, `Trecho obrigatório ausente: ${fragment}`);
