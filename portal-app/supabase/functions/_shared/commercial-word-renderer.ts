@@ -306,8 +306,6 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
  const entries=levelEntries(selected);
  const distinctLevels=[...new Set(entries.map(entry=>entry.code))];
  const commonLevel=distinctLevels.length===1?entries.find(entry=>entry.code===distinctLevels[0])?.level??null:null;
- const commonLevelFeatures=arrStrings(commonLevel?.features);
- const commonLevelExclusions=arrStrings(commonLevel?.exclusions);
  const legacyLevel=entries.length===0&&record.experience_level?levelName(record.experience_level):'';
  const consolidatedExclusions=unique(selected.flatMap(item=>arrStrings(item.exclusions)));
  const today=generatedDatePt(generatedAt);
