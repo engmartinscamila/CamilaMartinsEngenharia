@@ -169,7 +169,8 @@ const serviceAnnexDescription=(item:Record<string,unknown>)=>{
  const custom=String(item.customDescription??'').trim() || (String(item.description??'').includes('Atividade específica solicitada:') ? String(item.description).trim() : '');
  const code=String(item.code??'').trim().toLowerCase();
  if(['p','outro','outros'].includes(code)&&custom){
-   return `Atividade específica contratada: ${custom}. O escopo fica limitado às atividades, etapas, entregáveis, quantidades, formatos, revisões, visitas e prazos expressamente registrados neste Anexo I; qualquer ampliação dependerá de aprovação e contratação prévias.`;
+   const listed=String(item.annexScope??'').trim();
+   return listed||`PRODUTO PERSONALIZADO: ${custom}. A ficha de quantitativos deste Anexo deve indicar o conteúdo, quantidade de páginas, desenhos, imagens ou documentos, revisões, visitas e prazo.`;
  }
  const described=String(item.annexScope??item.description??'').trim();
  if(!described||described==='Outro')throw new Error('Descrição técnica da atividade '+serviceName(item)+' ausente. Preencha os produtos, quantidades e limites antes de emitir o Anexo I.');
