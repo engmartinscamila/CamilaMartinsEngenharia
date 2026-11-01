@@ -166,7 +166,7 @@ const excludedScope=(d:Data)=>scopeItems(d).filter(item=>item.included!==true);
 const serviceName=(item:Record<string,unknown>)=>String(item.name??item.service_name??item.code??'Serviço');
 const serviceDescription=(item:Record<string,unknown>)=>String(item.description??'Serviço técnico conforme escopo contratado e Anexo I.');
 const serviceAnnexDescription=(item:Record<string,unknown>)=>{
- const custom=String(item.customDescription??'').trim();
+ const custom=String(item.customDescription??'').trim() || (String(item.description??'').includes('Atividade específica solicitada:') ? String(item.description).trim() : '');
  const code=String(item.code??'').trim().toLowerCase();
  if(['p','outro','outros'].includes(code)&&custom){
    return `Atividade específica contratada: ${custom}. O escopo fica limitado às atividades, etapas, entregáveis, quantidades, formatos, revisões, visitas e prazos expressamente registrados neste Anexo I; qualquer ampliação dependerá de aprovação e contratação prévias.`;
@@ -191,7 +191,7 @@ const levelName=(d:Data)=>{
  return 'Não aplicável / não selecionado';
 };
 const levelEligibleServices=(d:Data)=>includedScope(d).filter(item=>item.levelApplicable===true).map(serviceName);
-const consolidatedExclusions=(d:Data)=>unique(includedScope(d).flatMap(item=>arrStrings(item.exclusions)));
+const consolidatedExclusions=(d:Data)=>unique(includedScope(d).flatMap(item=>arrStrings(item.exclusions).map(rule=>`${serviceName(item)}: ${rule}`)));
 const contractedScopeLines=(d:Data)=>includedScope(d).map(item=>`(${String(item.code??'')}) ${serviceName(item)}`);
 const scopeMatch=(d:Data)=>{
  const title=String(d.approval_title??'').toLowerCase();
@@ -204,8 +204,8 @@ const scopeMatch=(d:Data)=>{
 };
 const paymentLines=(d:Data)=>{
  const terms=Array.isArray(d.payment_terms)?d.payment_terms as Array<Record<string,unknown>>:[];
- if(!terms.length)return [p('Forma de pagamento: conforme condições registradas no contrato e na proposta comercial de origem.')];
- return terms.map((term,index)=>p(`${index+1}. ${String(term.label??term.description??'Parcela')} — ${String(term.value??term.amount??'valor conforme registro')} — ${String(term.due??term.dueDate??'vencimento conforme registro')}`));
+ if(!terms.length)return [p('PENDÊNCIA COMERCIAL: definir quantidade de parcelas, valores e vencimentos antes de concluir a emissão do documento.')];
+ return terms.map((term,index)=>p(`${index+1}. ${String(term.label??term.description??'Parcela')} — ${String(term.value??term.amount??'[VALOR PENDENTE]')} — ${String(term.due??term.dueDate??'[VENCIMENTO PENDENTE]')}`));
 };
 const brandHeader=(profile:ProfessionalIdentity)=>new Header({children:[
  new Paragraph({
@@ -229,7 +229,7 @@ const clientIdentity=(d:Data)=>value(d,'client_cpf_cnpj',value(d,'client_documen
 const identity=(d:Data,profile:ProfessionalIdentity,generatedAt:Date)=>[
  h('1. IDENTIFICAÇÃO'),
  p(`Data de emissão: ${generatedDatePt(generatedAt)}`),
- p(`Contrato: ${value(d,'contract_number')} • Data de assinatura: ${datePt(d.contract_signed_at,generatedDatePt(generatedAt))}`),
+ p(`Contrato: ${value(d,'contract_number')} • Data de assinatura: ${d.contract_signed_at?datePt(d.contract_signed_at):'A CONFIRMAR NO ATO DA ASSINATURA'}`),
  p(`CONTRATADO(A): ${professionalLabel(profile)}`),
  p(`CONTRATANTE: ${value(d,'client_name')} • CPF/CNPJ: ${clientIdentity(d)}`),
  p(`Projeto: ${value(d,'project_name')} • Tipo: ${value(d,'project_type')}`),
@@ -237,7 +237,7 @@ const identity=(d:Data,profile:ProfessionalIdentity,generatedAt:Date)=>[
  ...(d.source_quote_number?[small(`Orçamento de origem: ${String(d.source_quote_number)}`)]:[])
 ];
 const sig=(profile:ProfessionalIdentity,generatedAt:Date,d:Data={})=>[
- p(`Local: _______________________________ • Data: ${generatedDatePt(generatedAt)}`),
+ p(`Local: _______________________________ • Data da assinatura: ____/____/________`),
  p('_______________________________________________'),
  p(professionalLabel(profile)),
  p('_______________________________________________'),
@@ -535,7 +535,8 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
        serviceBlocks.push(small('Insumos e definições esperados do cliente:'));
        clientInputs.forEach(value=>serviceBlocks.push(bullet(value)));
      }
-     serviceBlocks.push(small(`Revisões incluídas: ${typeof item.revisions==='number'?item.revisions:'conforme condição específica'} • Formatos: ${arrStrings(item.deliveryFormats).join(', ')||'PDF'} • Aceite de etapa: ${item.acceptanceRequired===false?'não obrigatório':'previsto'}`));
+     serviceBlocks.push(small(`Revisões incluídas: ${typeof item.revisions==='number'?item.revisions:'[PENDENTE DE DEFINIÇÃO]'} • Formatos: ${arrStrings(item.deliveryFormats).join(', ')||'[FORMATO PENDENTE]'} • Aceite de etapa: ${item.acceptanceRequired===false?'não obrigatório':'previsto'}`));
+     if(typeof item.revisions!=='number'||!arrStrings(item.deliveryFormats).length){serviceBlocks.push(p('ATENÇÃO: parâmetros de entrega incompletos. Preencher e validar antes de assinar; o texto-padrão não substitui a definição individualizada.',true,GOLD));}
      if(item.planningReference)serviceBlocks.push(small(`Referência de planejamento: ${String(item.planningReference)}`));
      if(item.notes)serviceBlocks.push(p(`Observação específica: ${String(item.notes)}`));
    });
@@ -555,6 +556,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      h('6. ITENS NÃO CONTRATADOS'),
      ...(excluded.length?excluded.map(item=>bullet(`(${String(item.code??'')}) ${serviceName(item)}`)):[p('Não há outros itens cadastrados no catálogo para este contrato.')]),
      h('7. EXCLUSÕES E LIMITES CONSOLIDADOS'),
+     p('As exclusões a seguir aplicam-se exclusivamente ao serviço indicado antes dos dois-pontos. Não excluem a prestação expressamente contratada em outra atividade deste Anexo.'),
      p(smartRule(d,'scope_limits_rule','Somente os itens expressamente incluídos neste Anexo I integram o escopo. Itens não previstos serão tratados como serviço adicional mediante aprovação prévia.')),
      ...exclusions.map(bullet),
      bullet('Qualquer item não previsto neste Anexo I será tratado como serviço adicional quando solicitado posteriormente.'),
@@ -688,7 +690,7 @@ Deno.serve(async(req)=>{
   if(!Number.isInteger(masterVersion)||masterVersion<=0||!smartTexts||typeof smartTexts!=='object'||Array.isArray(smartTexts)||!Object.keys(smartTexts as Record<string,unknown>).length){
    return json({error:'Este rascunho é anterior à governança documental atual. Prepare o documento novamente para alinhar contrato mestre, serviços e textos inteligentes.'},409);
   }
-  const generatedData={...sourceData,emitted_at:generatedAtIso,document_date:documentDate,contract_signed_at:documentDate};
+  const generatedData={...sourceData,emitted_at:generatedAtIso,document_date:documentDate};
   const buffer=await Packer.toBuffer(build(row.document_kind,generatedData,professionalProfile,generatedAt));
   const version=String(row.versao??'1.0').replace(/[^0-9.]/g,'')||'1.0';
   const path=`${row.projeto_id}/contratual/${row.id}/${names[row.document_kind]}-v${version}.docx`;
