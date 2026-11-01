@@ -32,6 +32,7 @@ on:
       - 'scripts/finalization-word-regression.mjs'
       - 'scripts/finalization-regression.mjs'
       - 'scripts/commercial-generator-preflight-regression.mjs'
+      - 'scripts/contract-emission-regression.mjs'
       - 'scripts/commercial-custom-scope-regression.mjs'
       - '.github/workflows/commercial-documents.yml'
   pull_request:
@@ -65,6 +66,7 @@ on:
       - 'scripts/finalization-word-regression.mjs'
       - 'scripts/finalization-regression.mjs'
       - 'scripts/commercial-generator-preflight-regression.mjs'
+      - 'scripts/contract-emission-regression.mjs'
       - 'scripts/commercial-custom-scope-regression.mjs'
       - '.github/workflows/commercial-documents.yml'
   workflow_dispatch:
@@ -85,6 +87,8 @@ jobs:
         run: node --check js/document-function-routing-web.js
       - name: Conferir validação antes de criar documento e sincronismo dos geradores
         run: node scripts/commercial-generator-preflight-regression.mjs
+      - name: Verificar cadastro e emissão com condições comerciais
+        run: node scripts/contract-emission-regression.mjs
       - name: Validar editor comercial e condições estruturadas
         run: |
           node --check js/commercial-terms-web.js
