@@ -38,7 +38,8 @@ Deno.serve(async req=>{
    const date=new Date(frozen.emitted_at||snapshot.data.emitted_at);if(!Number.isFinite(date.getTime()))throw new Error('Data histórica da emissão ausente.');
    const profile=frozen.professional_identity_snapshot||await loadProfessionalIdentity(service,kind);
    const master=kind==='contrato'?await loadContractMaster(service,record):null;
-   const original=new Uint8Array(await Packer.toBuffer(kind==='contrato'?contractDocument(record,profile,master!.body,date):quoteDocument(record,profile,date)));
+   const historicRecord={...record,historical_reconstitution:true,document_version:String(snapshot.data.version||row.versao||'1.0')};
+    const original=new Uint8Array(await Packer.toBuffer(kind==='contrato'?contractDocument(historicRecord,profile,master!.body,date):quoteDocument(historicRecord,profile,date)));
    bytes=kind==='contrato'?await enhanceContractDocument(original,record.property_address||'',record.services,record.custom_service,record.experience_level):await enhanceQuoteDocument(original,record.services,record.custom_service);
    path=`_issued_word/reconstituted/${row.id}.docx`;
    const saved=await service.storage.from(bucket).upload(path,bytes,{contentType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',upsert:false});if(saved.error&&!/already exists|duplicate/i.test(saved.error.message||''))throw saved.error;
