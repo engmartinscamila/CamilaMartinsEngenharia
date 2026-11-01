@@ -329,7 +329,11 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
      serviceBlocks.push(small('Informações e insumos normalmente necessários do cliente:'));
      inputs.forEach(value=>serviceBlocks.push(bullet(value)));
    }
-   serviceBlocks.push(small(`Revisões incluídas: ${serviceRevisions(item)} • Formatos: ${arrStrings(item.deliveryFormats).join(', ')||'conforme Anexo I'} • Prazo: ${String(item.planningReference??'integrado ao cronograma geral')}`));
+   const terms= commercialTerms(record);
+   const particular=Array.isArray(terms.scope)?(terms.scope as Array<Record<string,unknown>>).find(row=>String(row.code||'')===String(item.code||'')):null;
+   const revisions=particular?String(particular.revisions??''):serviceRevisions(item);
+   const prazo=particular?.deadline_type==='municipal'?'Análise/expedição da Prefeitura sem prazo garantido':particular?.days?String(particular.days)+' '+(String((terms.schedule as Record<string,unknown>|undefined)?.day_type)==='uteis'?'dias úteis':'dias corridos'):'PENDENTE de definição na ficha da atividade';
+   serviceBlocks.push(small(`Revisões desta atividade: ${revisions} • Formatos: ${arrStrings(item.deliveryFormats).join(', ')||'PDF'} • Prazo: ${prazo}`));
  });
 
  if(record.custom_service){
@@ -358,9 +362,7 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
     : distinctLevels.length===1
       ? [
           p(`Nível selecionado para as atividades aplicáveis: ${levelLabel(commonLevel)||levelName(distinctLevels[0])}.`,true,GOLD),
-          ...(commonLevel?[p(String(commonLevel.description??''))]:[]),
-          ...commonLevelFeatures.map(value=>bullet(value)),
-          ...commonLevelExclusions.map(value=>bullet(`Não incluído neste nível: ${value}`)),
+          p('Os produtos técnicos próprios de cada atividade selecionada e seus acréscimos por nível são discriminados abaixo, com nome, descrição e entregas correspondentes.'),
         ]
       : [
           p('Os níveis de prestação foram definidos individualmente por atividade.',true,GOLD),
