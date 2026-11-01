@@ -54,13 +54,7 @@ BEGIN
       END IF;
       IF length(coalesce(v_entry->>'municipal_notes',''))>2000 THEN RAISE EXCEPTION 'Observações da atividade % devem ter até 2000 caracteres.',v_code; END IF;
     ELSE
-      IF coalesce(v_entry->>'days','') !~ '^[0-9]{1,4}
-    IF coalesce(v_entry->>'revisions','') !~ '^[0-9]{1,3}$' THEN RAISE EXCEPTION 'Indique quantas revisões estão incluídas na atividade %, inclusive zero.',v_code;END IF;
-    IF nullif(v_entry->>'visits','') IS NOT NULL AND v_entry->>'visits' !~ '^[0-9]{1,3}$' THEN RAISE EXCEPTION 'Visitas inválidas na atividade %.',v_code; END IF;
-  END LOOP;
-END;
-$function$
- OR (v_entry->>'days')::integer NOT BETWEEN 1 AND 3650 THEN RAISE EXCEPTION 'Informe prazo técnico em dias para a atividade %.',v_code; END IF;
+      IF coalesce(v_entry->>'days','') !~ '^[0-9]{1,4}$' OR (v_entry->>'days')::integer NOT BETWEEN 1 AND 3650 THEN RAISE EXCEPTION 'Informe prazo técnico em dias para a atividade %.',v_code; END IF;
     END IF;
     IF coalesce(v_entry->>'revisions','') !~ '^[0-9]{1,3}$' THEN RAISE EXCEPTION 'Indique quantas revisões estão incluídas na atividade %, inclusive zero.',v_code;END IF;
     IF nullif(v_entry->>'visits','') IS NOT NULL AND v_entry->>'visits' !~ '^[0-9]{1,3}$' THEN RAISE EXCEPTION 'Visitas inválidas na atividade %.',v_code; END IF;
