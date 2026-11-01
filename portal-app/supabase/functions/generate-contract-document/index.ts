@@ -233,13 +233,19 @@ const brandFooter=(profile:ProfessionalIdentity,documentCode:string)=>new Footer
  })
 ]});
 const clientIdentity=(d:Data)=>value(d,'client_cpf_cnpj',value(d,'client_document',value(d,'cpf_cnpj','não informado')));
+const legalRepresentativeInfo=(d:Data)=>{
+ const terms=d.commercial_terms&&typeof d.commercial_terms==='object'?d.commercial_terms as Record<string,unknown>:{};
+ const r=terms.legal_representative&&typeof terms.legal_representative==='object'?terms.legal_representative as Record<string,unknown>:{};
+ const cpf=String(r.cpf||'').replace(/\D/g,'');
+ return {name:String(r.name||'').trim(),cpf:cpf.length===11?cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4'):cpf,role:String(r.role||'').trim(),powers:String(r.powers||'').trim()};
+};
 const identity=(d:Data,profile:ProfessionalIdentity,generatedAt:Date)=>[
  h('1. IDENTIFICAÇÃO'),
  p(`Data de emissão: ${generatedDatePt(generatedAt)}`),
  p(`Contrato: ${value(d,'contract_number')} • Versão do Anexo I: v${String(d.document_version||'1.0')} • Data de assinatura: ${d.contract_signed_at?datePt(d.contract_signed_at):'A CONFIRMAR NO ATO DA ASSINATURA'}`),
  p(`CONTRATADO(A): ${professionalLabel(profile)}`),
  p(`CONTRATANTE: ${value(d,'client_name')} • CPF/CNPJ: ${clientIdentity(d)}`),
- ...(String(clientIdentity(d)).replace(/\D/g,'').length===14?[p('Representante legal: '+String(((d.commercial_terms as Record<string,unknown>|undefined)?.legal_representative as Record<string,unknown>|undefined)?.name||'não identificado')+' • Qualificação: '+String(((d.commercial_terms as Record<string,unknown>|undefined)?.legal_representative as Record<string,unknown>|undefined)?.role||'não informada')+'.')]:[]),
+ ...(String(clientIdentity(d)).replace(/\D/g,'').length===14?[p('Representante legal da pessoa jurídica: '+legalRepresentativeInfo(d).name+' • CPF: '+legalRepresentativeInfo(d).cpf+' • Cargo: '+legalRepresentativeInfo(d).role+' • Poderes: '+legalRepresentativeInfo(d).powers+'.')]:[]),
  p(`Projeto: ${value(d,'project_name')} • Tipo: ${value(d,'project_type')}`),
  p(`Imóvel / obra: ${value(d,'property_address')}`),
  ...(d.source_quote_number?[small(`Orçamento de origem: ${String(d.source_quote_number)}`)]:[])
@@ -249,7 +255,8 @@ const sig=(profile:ProfessionalIdentity,generatedAt:Date,d:Data={})=>[
  p('_______________________________________________'),
  p(professionalLabel(profile)),
  p('_______________________________________________'),
- p(`CONTRATANTE: ${value(d,'client_name')} • CPF/CNPJ: ${clientIdentity(d)}`)
+ p(`CONTRATANTE: ${value(d,'client_name')} • CPF/CNPJ: ${clientIdentity(d)}`),
+ ...(String(clientIdentity(d)).replace(/\D/g,'').length===14?[p('Representante legal: '+legalRepresentativeInfo(d).name+' — CPF '+legalRepresentativeInfo(d).cpf)]:[])
 ];
 const doc=(children:Paragraph[],profile:ProfessionalIdentity,documentCode:string)=>new Document({
  styles:{
