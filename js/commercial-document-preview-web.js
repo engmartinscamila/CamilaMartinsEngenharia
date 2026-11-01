@@ -42,6 +42,14 @@ async function showVersions(recordId,kind){
 window.CMEDownloadIssuedCommercialWord=downloadIssued;
 async function generate(recordId,kind,archive){
   try{
+    if(kind==='contrato'){
+      const {data:terms,error:termsError}=await client().from('commercial_records').select('commercial_terms').eq('id',recordId).single();
+      if(termsError)throw termsError;
+      if(!Array.isArray(terms?.commercial_terms?.installments)||!terms.commercial_terms.installments.length){
+        const saved=await window.CMEEditCommercialTerms(recordId);
+        if(!saved)return {ok:false,cancelled:true,error:'Preencha as condições comerciais para emitir o contrato.'};
+      }
+    }
     const choice=await preview(recordId,kind);
     if(!choice)return {ok:false,cancelled:true,error:'Emissão cancelada. O cadastro foi preservado.'};
     status(`Gerando ${kind} v${choice.version}...`);
