@@ -1,5 +1,5 @@
 import { AlignmentType, BorderStyle, Document, Footer, Header, HeadingLevel, Packer, Paragraph, TextRun } from 'docx';
-type CommercialRecord={id:string;linked_client_id:string|null;linked_contract_id:string|null;linked_project_id:string|null;quote_number:string;contract_number:string|null;status:string;prospect_name:string;cpf_cnpj:string|null;email:string|null;phone:string|null;address:string|null;city:string|null;state:string|null;property_address:string|null;property_type:string|null;area_terreno_m2:number|null;area_construida_m2:number|null;construction_standard:string|null;experience_level:string|null;services:unknown;coobligors:unknown;custom_service:string|null;total_value:number|null;payment_terms:unknown;commercial_terms?:unknown;document_version?:string;document_version_reason?:string|null;valid_until:string|null;notes:string|null;quote_document_id:string|null;contract_document_id:string|null;contract_master_id:string|null;contract_master_version:number|null;smart_texts:unknown};
+type CommercialRecord={id:string;linked_client_id:string|null;linked_contract_id:string|null;linked_project_id:string|null;quote_number:string;contract_number:string|null;status:string;prospect_name:string;cpf_cnpj:string|null;email:string|null;phone:string|null;address:string|null;city:string|null;state:string|null;property_address:string|null;property_type:string|null;area_terreno_m2:number|null;area_construida_m2:number|null;construction_standard:string|null;experience_level:string|null;services:unknown;coobligors:unknown;custom_service:string|null;total_value:number|null;payment_terms:unknown;commercial_terms?:unknown;historical_reconstitution?:boolean;document_version?:string;document_version_reason?:string|null;valid_until:string|null;notes:string|null;quote_document_id:string|null;contract_document_id:string|null;contract_master_id:string|null;contract_master_version:number|null;smart_texts:unknown};
 type ServiceItem=Record<string,unknown>;
 type ProfessionalIdentity=Record<string,string|undefined>;
 
@@ -275,7 +275,10 @@ const legalRepresentative=(record:CommercialRecord)=>{
 const legalRepresentativeLabel=(record:CommercialRecord)=>{
  const r=legalRepresentative(record);
  const name=String(r.name??'').trim(),cpf=String(r.cpf??'').replace(/\\D/g,''),role=String(r.role??'').trim(),powers=String(r.powers??'').trim();
- if(!name||cpf.length!==11||!role||!powers)throw new Error('Representante legal da pessoa jurídica incompleto. Edite a identificação antes de gerar o contrato.');
+ if(!name||cpf.length!==11||!role||!powers){
+  if(record.historical_reconstitution)return 'Dados do representante não registrados na emissão histórica; conferir a via original antes de utilizar esta cópia reconstituída';
+  throw new Error('Representante legal da pessoa jurídica incompleto. Edite a identificação antes de gerar o contrato.');
+ }
  return `${name}, CPF nº ${cpfDisplay(cpf)}, na qualidade de ${role}, com poderes de representação: ${powers}`;
 };
 const commercialTerms=(record:CommercialRecord)=>record.commercial_terms&&typeof record.commercial_terms==='object'?record.commercial_terms as Record<string,unknown>:{};
@@ -413,6 +416,7 @@ function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,c
  return makeDoc([
    ...title(`CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE ENGENHARIA — ${text(record.contract_number,'CONTRATO SEM NUMERAÇÃO — NÃO EMITIR')}`,'Instrumento particular • identidade profissional protegida'),
    small(`Data de emissão: ${generatedDatePt(generatedAt)} • Versão do contrato: v${String(record.document_version||'1.0')} • Data de assinatura: a preencher no ato da assinatura`),
+   ...(record.historical_reconstitution?[p('CÓPIA RECONSTITUÍDA A PARTIR DE DADOS HISTÓRICOS — confira antes de usar; não constitui nova revisão.',true,GOLD)]:[]),
    p('Pelo presente instrumento particular de Contrato de Prestação de Serviços de Engenharia, de um lado:'),
    p(`CONTRATADO(A): ${professionalQualification(profile)}, doravante denominada simplesmente CONTRATADO(A);`),
    p(`CONTRATANTE: ${record.prospect_name}, CPF/CNPJ ${text(record.cpf_cnpj)}, com endereço em ${text(record.address)}, e-mail ${text(record.email)} e telefone/WhatsApp ${text(record.phone)}, doravante denominado(a) simplesmente CONTRATANTE.`),
