@@ -7,7 +7,7 @@ const mirror = readFileSync('portal-app/supabase/functions/generate-commercial-d
 assert.equal(mirror, coreSource, 'Gerador do aplicativo divergente da função canônica.');
 const handler = canonical.slice(canonical.indexOf('Deno.serve(async(req)=>{'));
 // Uma revisão v2.1 precisa ser aceita; a antiga expressão com barra duplicada rejeitava versões reais.
-const versionGuard = coreSource.match(/if\(!\/([^/\\n]+)\/\.test\(docVersion\)\)/);
+const versionGuard = coreSource.match(/if\(!\/(.+?)\/\.test\(docVersion\)\)/);
 assert.ok(versionGuard, 'Validação da versão do documento ausente.');
 const versionPattern = new RegExp(versionGuard[1]);
 for (const validVersion of ['1.0','2.1','12.30']) {
