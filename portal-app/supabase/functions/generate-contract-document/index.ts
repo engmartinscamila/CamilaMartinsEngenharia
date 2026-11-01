@@ -239,7 +239,7 @@ const identity=(d:Data,profile:ProfessionalIdentity,generatedAt:Date)=>[
  p(`Contrato: ${value(d,'contract_number')} • Versão do Anexo I: v${String(d.document_version||'1.0')} • Data de assinatura: ${d.contract_signed_at?datePt(d.contract_signed_at):'A CONFIRMAR NO ATO DA ASSINATURA'}`),
  p(`CONTRATADO(A): ${professionalLabel(profile)}`),
  p(`CONTRATANTE: ${value(d,'client_name')} • CPF/CNPJ: ${clientIdentity(d)}`),
- ...(String(clientIdentity(d)).replace(/\\D/g,'').length===14?[p('Representante legal: '+String(((d.commercial_terms as Record<string,unknown>|undefined)?.legal_representative as Record<string,unknown>|undefined)?.name||'não identificado')+' • Qualificação: '+String(((d.commercial_terms as Record<string,unknown>|undefined)?.legal_representative as Record<string,unknown>|undefined)?.role||'não informada')+'.')]:[]),
+ ...(String(clientIdentity(d)).replace(/\D/g,'').length===14?[p('Representante legal: '+String(((d.commercial_terms as Record<string,unknown>|undefined)?.legal_representative as Record<string,unknown>|undefined)?.name||'não identificado')+' • Qualificação: '+String(((d.commercial_terms as Record<string,unknown>|undefined)?.legal_representative as Record<string,unknown>|undefined)?.role||'não informada')+'.')]:[]),
  p(`Projeto: ${value(d,'project_name')} • Tipo: ${value(d,'project_type')}`),
  p(`Imóvel / obra: ${value(d,'property_address')}`),
  ...(d.source_quote_number?[small(`Orçamento de origem: ${String(d.source_quote_number)}`)]:[])
