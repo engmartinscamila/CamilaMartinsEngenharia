@@ -22,12 +22,15 @@ function getInstallments(root){return [...root.querySelectorAll('.cme-terms-inst
 function renderScopeItem(item,terms){
  const code=String(item.code||''),values=terms||{},revisions=values.revisions,municipal=isMunicipal(code);
  const old=String(values.deliverables||'').trim();
+ const catalogProducts=Array.isArray(item._catalogProducts)?item._catalogProducts.filter(Boolean):[];
+ const suggested=code==='p'?'':catalogProducts.join('; ');
+ const defaultDeliverables=old||suggested;
  const genericOld=/^(alvar[aá](\s+de\s+constru[cç][aã]o)?|habite[\s-]?se)[.!]?$/i.test(old);
  const note=values.municipal_notes??(old&&!genericOld&&old!==municipalScopes[code]?old:'');
  const deadline=municipal?'<div class="cme-terms-wide"><label>Prazo estimado da Prefeitura</label><div class="cme-municipal-deadline" role="note">'+esc(municipalDeadline)+'</div></div>':'<label>Prazo técnico desta atividade (dias) * '+input('days','Ex.: 15',values.days||'','number')+'</label>';
  const deliverables=municipal?
   '<div class="cme-terms-wide"><label>Escopo contratual padrão (automático, sem necessidade de redigir)</label><div class="cme-municipal-standard" role="note">'+esc(municipalScopes[code])+'</div></div><label class="cme-terms-wide">Observações complementares (opcional) <textarea name="municipal_notes" rows="2" placeholder="Informe somente particularidades desta contratação">'+esc(note)+'</textarea></label>':
-  '<label class="cme-terms-wide">Entregáveis e quantitativos detalhados * <textarea name="deliverables" rows="2" placeholder="Ex.: 4 pranchas técnicas, 2 perspectivas e 1 memorial">'+esc(values.deliverables||'')+'</textarea></label>';
+  '<label class="cme-terms-wide">Entregáveis e quantitativos detalhados * <textarea name="deliverables" rows="2" placeholder="Ex.: 4 pranchas técnicas, 2 perspectivas e 1 memorial">'+esc(defaultDeliverables)+'</textarea></label>'+ (code==='p'?'<p class="cme-terms-hint cme-terms-wide">SERVIÇO PERSONALIZADO: detalhe o produto final, número de páginas, imagens, pranchas ou documentos, formato e limites. Não use somente o nome do serviço.</p>':'');
  return '<fieldset class="cme-terms-scope" data-code="'+esc(code)+'"><legend>'+esc(item.name||code)+' <small>('+esc(code)+')</small></legend><div class="cme-terms-grid"><label>Quantidade * '+input('quantity','Ex.: 2',values.quantity||'','text')+'</label><label>Unidade * <select name="unit"><option value="">Selecionar</option>'+units.map(u=>'<option value="'+esc(u)+'" '+(values.unit===u?'selected':'')+'>'+esc(u)+'</option>').join('')+'</select></label>'+deadline+'<label>Rodadas de revisão incluídas * '+input('revisions','0 quando nenhuma',revisions??'','number')+'</label><label>Visitas incluídas (se aplicável) '+input('visits','0 quando nenhuma',values.visits??'','number')+'</label>'+deliverables+'</div></fieldset>';
 }
 async function editTerms(recordId){
@@ -36,6 +39,16 @@ async function editTerms(recordId){
  .eq('id',recordId).single();
  if(error||!rec)throw Error(error?.message||'Registro comercial não encontrado.');
  const selected=(Array.isArray(rec.services)?rec.services:[]).filter(i=>i?.included===true);
+ const codes=[...new Set(selected.map(i=>String(i.code||'')).filter(Boolean))];
+ if(codes.length){
+   const {data:patterns,error:patternError}=await api().from('service_level_scope_catalog')
+     .select('service_code,level_code,included_deliverables').in('service_code',codes).eq('active',true).eq('review_status','approved');
+   if(patternError)throw new Error('Não foi possível carregar os escopos técnicos vigentes: '+patternError.message);
+   for(const service of selected){
+     const current=patterns?.find(p=>p.service_code===service.code&&p.level_code===(service.levelCode||service.level?.code));
+     service._catalogProducts=Array.isArray(current?.included_deliverables)?current.included_deliverables:[];
+   }
+ }
  const saved=rec.commercial_terms&&typeof rec.commercial_terms==='object'?rec.commercial_terms:{};
  const scope=Array.isArray(saved.scope)?saved.scope:[];
  const isCompany=String(rec.cpf_cnpj||'').replace(/\D/g,'').length===14;
