@@ -22,7 +22,7 @@ function getInstallments(root){return [...root.querySelectorAll('.cme-terms-inst
 function renderScopeItem(item,terms){
  const code=String(item.code||''),values=terms||{},revisions=values.revisions,municipal=isMunicipal(code);
  const old=String(values.deliverables||'').trim();
- const genericOld=/^(alvar[aá](\\s+de\\s+constru[cç][aã]o)?|habite[\\s-]?se)[.!]?$/i.test(old);
+ const genericOld=/^(alvar[aá](\s+de\s+constru[cç][aã]o)?|habite[\s-]?se)[.!]?$/i.test(old);
  const note=values.municipal_notes??(old&&!genericOld&&old!==municipalScopes[code]?old:'');
  const deadline=municipal?'<div class="cme-terms-wide"><label>Prazo estimado da Prefeitura</label><div class="cme-municipal-deadline" role="note">'+esc(municipalDeadline)+'</div></div>':'<label>Prazo técnico desta atividade (dias) * '+input('days','Ex.: 15',values.days||'','number')+'</label>';
  const deliverables=municipal?
