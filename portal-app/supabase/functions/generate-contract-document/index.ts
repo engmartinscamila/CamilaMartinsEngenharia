@@ -521,10 +521,19 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
    const excluded=excludedScope(d);
    const exclusions=consolidatedExclusions(d);
    const serviceBlocks:Paragraph[]=[];
+   const terms=d.commercial_terms&&typeof d.commercial_terms==='object'?d.commercial_terms as Record<string,unknown>:{};
+   const schedule=terms.schedule&&typeof terms.schedule==='object'?terms.schedule as Record<string,unknown>:{};
+   const termScopes=Array.isArray(terms.scope)?terms.scope as Array<Record<string,unknown>>:[];
+   const dayType=String(schedule.day_type)==='uteis'?'dias úteis':'dias corridos';
 
    included.forEach((item,index)=>{
      serviceBlocks.push(sub(`${index+1}. (${String(item.code??'')}) ${serviceName(item)}`));
      serviceBlocks.push(p(serviceAnnexDescription(item)));
+     const conditions=termScopes.find(row=>String(row.code||'')===String(item.code||''));
+     if(conditions){
+       serviceBlocks.push(p('QUANTITATIVO CONTRATADO: '+String(conditions.quantity||'')+' '+String(conditions.unit||'')+'. Entregáveis e respectivas quantidades: '+String(conditions.deliverables||'')+'.',true,GOLD));
+       serviceBlocks.push(p('Prazo desta atividade: '+String(conditions.days||'')+' '+dayType+'. Revisões incluídas: '+String(conditions.revisions??'')+'. Visitas incluídas: '+(conditions.visits===''?'não previstas':String(conditions.visits??'não previstas'))+'.'));
+     }
      const deliverables=arrStrings(item.deliverables);
      if(deliverables.length){
        serviceBlocks.push(small('Entregáveis contratados a partir do padrão deste serviço:'));
@@ -535,8 +544,8 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
        serviceBlocks.push(small('Insumos e definições esperados do cliente:'));
        clientInputs.forEach(value=>serviceBlocks.push(bullet(value)));
      }
-     serviceBlocks.push(small(`Revisões incluídas: ${typeof item.revisions==='number'?item.revisions:'sem rodadas adicionais presumidas; confirmar condições particulares'} • Formatos: ${arrStrings(item.deliveryFormats).join(', ')||'conforme condições expressas do Anexo I'} • Aceite de etapa: ${item.acceptanceRequired===false?'não obrigatório':'previsto'}`));
-     if(typeof item.revisions!=='number'||!arrStrings(item.deliveryFormats).length){serviceBlocks.push(p('ATENÇÃO: parâmetros de entrega incompletos. Preencher e validar antes de assinar; o texto-padrão não substitui a definição individualizada.',true,GOLD));}
+     serviceBlocks.push(small(`Formato de entrega: ${arrStrings(item.deliveryFormats).join(', ')||'conforme condições particulares'} • Aceite de etapa: ${item.acceptanceRequired===false?'não obrigatório':'previsto'}`));
+     if(!conditions){serviceBlocks.push(p('Quantitativo e prazo desta atividade não foram registrados na contratação.',true,GOLD));}
      if(item.planningReference)serviceBlocks.push(small(`Referência de planejamento: ${String(item.planningReference)}`));
      if(item.notes)serviceBlocks.push(p(`Observação específica: ${String(item.notes)}`));
    });
@@ -566,6 +575,8 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      ...paymentLines(d),
      ...(d.commercial_notes?[p(`Observações comerciais registradas: ${String(d.commercial_notes)}`)]:[]),
      h('9. PRAZO E CRONOGRAMA'),
+     p('Início da contagem: '+String(schedule.start_trigger||'não informado')+'.',true),
+     p('Prazo técnico total: '+String(schedule.days||'não informado')+' '+dayType+'.'),
      p(smartRule(d,'anexo_timeline_rule','O prazo e as referências de planejamento obedecem ao Contrato Mestre e às condições específicas deste Anexo I, considerando o recebimento dos insumos necessários.')),
      p('Prazos de análise de órgãos públicos, concessionárias, cartórios e terceiros são externos ao prazo técnico de elaboração.'),
      h('10. REVISÕES, ACEITES E ALTERAÇÕES'),
