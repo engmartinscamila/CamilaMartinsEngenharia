@@ -164,14 +164,16 @@ const scopeItems=(d:Data)=>{
 const includedScope=(d:Data)=>scopeItems(d).filter(item=>item.included===true);
 const excludedScope=(d:Data)=>scopeItems(d).filter(item=>item.included!==true);
 const serviceName=(item:Record<string,unknown>)=>String(item.name??item.service_name??item.code??'Serviço');
-const serviceDescription=(item:Record<string,unknown>)=>String(item.description??'Serviço técnico conforme escopo contratado e Anexo I.');
+const serviceDescription=(item:Record<string,unknown>)=>String(item.description??'').trim();
 const serviceAnnexDescription=(item:Record<string,unknown>)=>{
  const custom=String(item.customDescription??'').trim() || (String(item.description??'').includes('Atividade específica solicitada:') ? String(item.description).trim() : '');
  const code=String(item.code??'').trim().toLowerCase();
  if(['p','outro','outros'].includes(code)&&custom){
    return `Atividade específica contratada: ${custom}. O escopo fica limitado às atividades, etapas, entregáveis, quantidades, formatos, revisões, visitas e prazos expressamente registrados neste Anexo I; qualquer ampliação dependerá de aprovação e contratação prévias.`;
  }
- return String(item.annexScope??item.description??'Serviço técnico conforme escopo contratado e Anexo I.');
+ const described=String(item.annexScope??item.description??'').trim();
+ if(!described||described==='Outro')throw new Error('Descrição técnica da atividade '+serviceName(item)+' ausente. Preencha os produtos, quantidades e limites antes de emitir o Anexo I.');
+ return described;
 };
 const itemLevelCode=(item:Record<string,unknown>)=>{
  const level=item.level&&typeof item.level==='object'?item.level as Record<string,unknown>:null;
