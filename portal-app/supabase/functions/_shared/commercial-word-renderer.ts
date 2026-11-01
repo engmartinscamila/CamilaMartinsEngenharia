@@ -175,7 +175,7 @@ const makeDoc=(children:Paragraph[],profile:ProfessionalIdentity,documentCode:st
 });
 const text=(value:unknown,fallback='Não informado')=>typeof value==='string'&&value.trim()?value.trim():fallback;
 const money=(value:number|string|null)=>{
- const amount=value===null?NaN:Number(value);
+ const amount=value===null||String(value).trim()===''?NaN:Number(value);
  return Number.isFinite(amount)?new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(amount):'A definir';
 };
 const datePt=(raw:string|null)=>raw?new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(`${raw}T12:00:00-03:00`)):'A definir';
