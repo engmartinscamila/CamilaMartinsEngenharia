@@ -59,23 +59,15 @@ BEGIN
     END IF;
     IF coalesce(v_entry->>'quantity','') !~ '^[0-9]+([.][0-9]{1,3})?$' OR (v_entry->>'quantity')::numeric<=0 THEN RAISE EXCEPTION 'Defina quantidade positiva para a atividade %.',v_code;END IF;
     IF length(btrim(coalesce(v_entry->>'unit','')))<1 OR length(btrim(coalesce(v_entry->>'deliverables','')))<5 THEN RAISE EXCEPTION 'Indique unidade e entregáveis específicos para a atividade %.',v_code;END IF;
-    IF v_code IN ('k','l','m') AND lower(btrim(coalesce(v_entry->>'deliverables',''))) ~ '^(alvar[aá]( de constru[cç][aã]o)?|habite[ -]?se)[.!]?
-    IF coalesce(v_entry->>'days','') !~ '^[0-9]{1,4}$' OR (v_entry->>'days')::integer NOT BETWEEN 1 AND 3650 THEN RAISE EXCEPTION 'Informe prazo em dias para a atividade %.',v_code;END IF;
-    IF coalesce(v_entry->>'revisions','') !~ '^[0-9]{1,3}$' THEN RAISE EXCEPTION 'Indique quantas revisões estão incluídas na atividade %, inclusive zero.',v_code;END IF;
-    IF nullif(v_entry->>'visits','') IS NOT NULL AND v_entry->>'visits' !~ '^[0-9]{1,3}$' THEN RAISE EXCEPTION 'Visitas inválidas na atividade %.',v_code; END IF;
-  END LOOP;
-END;
-$function$
- THEN
-      RAISE EXCEPTION 'Descreva o escopo de protocolo e acompanhamento da atividade %. Alvará e Habite-se são expedidos pela Prefeitura, não constituem entrega garantida.',v_code;
+    IF v_code IN ('k','l','m') AND lower(btrim(coalesce(v_entry->>'deliverables',''))) ~ '^(alvar[aá]( de constru[cç][aã]o)?|habite[ -]?se)[.!]?$' THEN
+      RAISE EXCEPTION 'Especifique protocolo e acompanhamento na atividade %. Alvará/Habite-se são expedidos pela Prefeitura, não constituem entrega garantida.',v_code;
     END IF;
     IF coalesce(v_entry->>'days','') !~ '^[0-9]{1,4}$' OR (v_entry->>'days')::integer NOT BETWEEN 1 AND 3650 THEN RAISE EXCEPTION 'Informe prazo em dias para a atividade %.',v_code;END IF;
     IF coalesce(v_entry->>'revisions','') !~ '^[0-9]{1,3}$' THEN RAISE EXCEPTION 'Indique quantas revisões estão incluídas na atividade %, inclusive zero.',v_code;END IF;
     IF nullif(v_entry->>'visits','') IS NOT NULL AND v_entry->>'visits' !~ '^[0-9]{1,3}$' THEN RAISE EXCEPTION 'Visitas inválidas na atividade %.',v_code; END IF;
   END LOOP;
 END;
-$function$
-;
+$function$;
 CREATE OR REPLACE FUNCTION public.admin_save_commercial_terms(p_record_id uuid, p_terms jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
