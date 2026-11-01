@@ -1,0 +1,293 @@
+{
+  "source": "Auditoria de escopos genéricos, 01/11/2026",
+  "notes": "Cada serviço tem objeto e entregáveis técnicos próprios; adicionais por nível são explícitos e sujeitos à quantificação por contrato. Não alterar emissões históricas.",
+  "profiles": {
+    "a": [
+      "Estudo de distribuição dos ambientes conforme necessidades do cliente e condições do terreno.",
+      "Programa de necessidades validado; duas alternativas esquemáticas de organização dos ambientes; implantação preliminar e quadro inicial de áreas.",
+      "Plantas esquemáticas dimensionadas com circulação e acesso; síntese comparativa das alternativas escolhidas.",
+      "Plantas do estudo consolidado, cortes esquemáticos de níveis e volumetria conceitual com registro das decisões.",
+      "Área do terreno, programa, recuos e referências do imóvel."
+    ],
+    "b": [
+      "Desenvolvimento arquitetônico do estudo escolhido, definindo ambientes, dimensões, acessos e fachadas principais.",
+      "Plantas de anteprojeto com cotas principais e layout; cortes de alturas; fachadas preliminares; quadro de áreas.",
+      "Revisão de layout e circulação; indicação preliminar de materiais nas fachadas e esquemas de níveis.",
+      "Conjunto coordenado de plantas, cortes e fachadas do anteprojeto; vistas tridimensionais esquemáticas; lista de decisões a validar antes do executivo.",
+      "Planta do estudo aprovado, pé-direitos, áreas e restrições urbanísticas."
+    ],
+    "c": [
+      "Projeto arquitetônico/legal destinado à representação do imóvel nos desenhos exigidos para o tipo de protocolo municipal selecionado.",
+      "Plantas dos pavimentos com identificação dos ambientes, implantação no lote, cortes, fachadas e quadro de áreas urbanísticas quando exigidos no tipo de projeto legal.",
+      "Conferência cruzada entre quadro de áreas e implantação; quadro de parâmetros urbanísticos e legenda de áreas.",
+      "Organização das pranchas de projeto legal em padrão municipal e uma rodada de resposta técnica para exigências relativas a erro nos próprios desenhos, sem garantia de aprovação.",
+      "Município e tipo de processo, endereço, matrícula, dimensões confiáveis do lote e projeto aprovado pelo cliente."
+    ],
+    "d": [
+      "Projeto arquitetônico executivo para orientar a construção dos ambientes e elementos arquitetônicos desenhados.",
+      "Plantas executivas cotadas, eixos e níveis; cortes e fachadas dimensionados; locação básica de portas e janelas.",
+      "Ampliações das áreas molhadas e paginação de pisos selecionados; detalhes de esquadrias e encontros construtivos.",
+      "Detalhamento de soleiras, peitoris, escadas, corrimãos e arremates arquitetônicos escolhidos; tabela de esquadrias e caderno de acabamentos.",
+      "Anteprojeto aprovado, levantamento geométrico e definição dos materiais e sistemas construtivos."
+    ],
+    "e": [
+      "Dimensionamento estrutural dos elementos definidos para o sistema e as cargas do projeto.",
+      "Plantas de fundações e fôrmas dos elementos calculados; indicação de seções e materiais; memória de critérios estruturais.",
+      "Detalhamento de armaduras e ligações dos elementos selecionados; tabelas de aço e volume de concreto.",
+      "Pranchas consolidadas para execução estrutural, detalhes de encontros críticos e memória de cálculo dos elementos abrangidos.",
+      "Arquitetônico, sondagem quando necessária, cargas, classe de agressividade e sistema construtivo."
+    ],
+    "f": [
+      "Projeto das instalações elétricas de baixa tensão nos ambientes definidos, sem instalação ou responsabilidade pela execução.",
+      "Planta de luminárias e tomadas, localização de pontos de força e previsão de circuitos; quadro básico de cargas.",
+      "Diagrama unifilar dos quadros, dimensionamento de proteção e condutores, identificação de circuitos e aterramento.",
+      "Tabela de cargas e circuitos, detalhes de quadros e infraestrutura, especificações de dispositivos e coordenação de circuitos especiais.",
+      "Tensão, equipamentos e respectivas potências, arquitetura e posição dos quadros."
+    ],
+    "g": [
+      "Projeto conjunto de água e esgoto sanitário predial nas unidades e pavimentos definidos.",
+      "Planta de pontos e tubulações de água fria e esgoto, caminhamento de ramais e posição das prumadas.",
+      "Isométricos hidráulicos, declividades e diâmetros de esgoto, dimensionamento de reservação e ventilação sanitária pertinente.",
+      "Detalhes de caixas, barriletes, reservatórios, passagens e conexões de interfaces hidráulicas e sanitárias.",
+      "Arquitetura, equipamentos, pontos de água quente e alimentação/esgotamento disponíveis."
+    ],
+    "h": [
+      "Projeto de organização interna dos ambientes, mobiliário e escolha de materiais de acabamento.",
+      "Planta de layout mobiliado com circulação; paleta preliminar de materiais e acabamentos.",
+      "Plantas de revestimentos e iluminação decorativa; elevações das principais paredes e bancadas selecionadas.",
+      "Detalhes de marcenaria contratada, paginação de revestimentos e caderno de acabamentos com referências e ambientes.",
+      "Planta arquitetônica, medidas dos ambientes, móveis existentes e preferências do cliente."
+    ],
+    "i": [
+      "Projeto paisagístico para organização da área externa e escolha de vegetação.",
+      "Planta com distribuição de canteiros, circulação e posição das espécies por porte.",
+      "Lista de espécies com porte e espaçamento; detalhes de canteiros e pisos externos.",
+      "Detalhes de jardineiras, especificações de plantio, bordas e quadro de quantidades das espécies previstas.",
+      "Área externa, insolação, disponibilidade de água e manutenção pretendida."
+    ],
+    "j": [
+      "Produção de imagens de representação tridimensional do projeto arquitetônico ou interior fornecido.",
+      "Modelagem visual das áreas identificadas e imagens estáticas dos ângulos contratados.",
+      "Ajuste de materiais e iluminação das cenas contratadas; imagens em resolução acordada.",
+      "Tratamento final das imagens e conjunto de enquadramentos contratados; arquivos finais no formato e resolução acordados.",
+      "Modelo ou desenhos confiáveis, referências de materiais, quantidade de imagens e enquadramentos."
+    ],
+    "k": [
+      "Organização, protocolo e acompanhamento administrativo do procedimento municipal de legalização definido no orçamento, sem produzir documentos complementares de terceiros.",
+      "Conferência da lista municipal de documentos; montagem do processo com projetos do cliente e documentos por ele fornecidos; comprovante de protocolo.",
+      "Acompanhamento das movimentações no portal municipal e comunicação documentada de exigências ao proprietário.",
+      "Relatório de andamento e consolidação das pendências comunicadas pelo órgão, com suporte administrativo às respostas fornecidas pelo proprietário e responsáveis técnicos.",
+      "Endereço e número de cadastro municipal, título de propriedade, documentos e projetos já elaborados."
+    ],
+    "l": [
+      "Tramitação do pedido municipal de Alvará de Construção, sem promessa de aprovação ou expedição.",
+      "Preparação de formulários do protocolo e organização dos projetos do cliente; comprovante do pedido.",
+      "Consulta de andamento e encaminhamento ao cliente das exigências do processo.",
+      "Quadro de pendências, histórico de respostas e conferência administrativa do resultado disponibilizado pela Prefeitura.",
+      "Projeto legal do imóvel, propriedade, cadastro municipal, taxas quitadas e documentos exigidos."
+    ],
+    "m": [
+      "Tramitação do pedido municipal de Habite-se ou certificado equivalente, sem responsabilidade pela conclusão física da obra.",
+      "Relação de documentos exigidos para conclusão; organização dos documentos do cliente e protocolo do requerimento.",
+      "Acompanhamento do processo e comunicação de exigências, vistorias municipais e pendências ao proprietário.",
+      "Relatório administrativo de acompanhamento, organização de respostas documentais recebidas e disponibilização da decisão municipal quando expedida.",
+      "Projeto aprovado, dados de conclusão da obra, matrículas, certificados e documentos de terceiros."
+    ],
+    "n": [
+      "Visitas de acompanhamento técnico para observar execução de itens da obra previamente identificados.",
+      "Visitas agendadas às etapas de obra indicadas e registro fotográfico das condições visíveis.",
+      "Relatório de visita com apontamentos de divergências em relação ao projeto e recomendações técnicas.",
+      "Relatórios comparativos de etapas, lista de pendências com responsáveis e conferência posterior das correções informadas.",
+      "Projetos, cronograma da obra, acesso aos locais e frequência de visitas acordada."
+    ],
+    "o": [
+      "Vistoria ou avaliação técnica com finalidade e imóvel definidos pelo contratante.",
+      "Inspeção visual acessível, registro fotográfico e descrição das constatações.",
+      "Relatório com análise técnica e descrição de causas prováveis dentro das evidências obtidas.",
+      "Conclusão fundamentada e recomendações priorizadas; quando for avaliação, método de avaliação e memória conforme dados disponíveis.",
+      "Finalidade, matrícula e acesso ao imóvel, documentos e finalidade do laudo."
+    ],
+    "p": [
+      "Serviço técnico personalizado: exige identificação do objeto, atividade profissional, produtos finais e responsabilidades no cadastro, sem aceitar apenas a palavra 'Outro'.",
+      "Plano de trabalho individual com objeto nomeado, produto técnico definido, quantidade e formato registrados.",
+      "Plano individual acrescido das verificações técnicas nominalmente selecionadas pelo cliente.",
+      "Plano individual com produtos adicionais e etapa de validação descritos nominalmente, sem inclusão automática de serviço distinto.",
+      "Objeto específico, descrição de cada entrega, quantidade, local, prazo e responsável."
+    ],
+    "q": [
+      "Orientação técnica sobre um problema concreto de engenharia registrado no pedido de consultoria.",
+      "Reunião ou análise de documentos com resposta técnica às perguntas delimitadas.",
+      "Relatório sintético com alternativas, premissas e riscos da solução discutida.",
+      "Parecer consultivo consolidado com recomendações hierarquizadas e plano de providências; sem se tornar laudo ou projeto.",
+      "Perguntas e contexto técnico, desenhos, fotos e duração da consultoria."
+    ],
+    "r": [
+      "Projeto de prevenção e combate a incêndio das medidas e sistemas definidos para a edificação e regulamentação aplicável.",
+      "Plantas com posição dos equipamentos de prevenção e rotas de saída das áreas abrangidas.",
+      "Dimensionamentos e detalhes dos dispositivos contratados, sinalização e iluminação de emergência quando aplicáveis.",
+      "Memorial técnico e detalhamento das interfaces dos sistemas previstos; pranchas para apresentação técnica.",
+      "Uso/ocupação da edificação, área, altura, plantas e exigências aplicáveis do Corpo de Bombeiros."
+    ],
+    "s": [
+      "Planejamento físico-financeiro das atividades de obra cadastradas com durações, pesos e custos informados.",
+      "Planilha de atividades, durações, predecessoras, marcos e distribuição física/financeira inicial.",
+      "Curva física e financeira planejada e indicadores de marcos e caminho crítico identificável.",
+      "Painel de desvios e cenários de reprogramação baseados nos dados entregues pelo gestor, sem acompanhamento contínuo implícito.",
+      "EAP de serviços, quantidades, custos, recursos e marcos da obra."
+    ],
+    "t": [
+      "Projeto de adequação de ambientes existentes com intervenções arquitetônicas detalhadas.",
+      "Planta do estado existente e da proposta de intervenção com demolições e novas paredes indicadas.",
+      "Plantas de reforma cotadas, quadro de modificações e detalhes dos novos acabamentos selecionados.",
+      "Detalhes executivos das interfaces construtivas abrangidas e memorial de intervenções e materiais.",
+      "Levantamento do imóvel, elementos estruturais conhecidos e atividades de obra previstas."
+    ],
+    "u": [
+      "Medição geométrica de ambientes ou elementos acessíveis, sem certificação topográfica.",
+      "Croqui cotado das dimensões verificadas e registro fotográfico dos elementos medidos.",
+      "Planta cadastral cotada por ambiente com vãos, pé-direitos e níveis acessíveis.",
+      "Cortes cadastrais e detalhes de elementos medidos, com quadro de dimensões e limitações de acesso.",
+      "Acesso físico, finalidade do levantamento e áreas abrangidas."
+    ],
+    "v": [
+      "Comparação de desenhos fornecidos de disciplinas selecionadas para localizar interferências.",
+      "Lista de incompatibilidades entre arquitetura e disciplinas entregues, com referência às pranchas.",
+      "Matriz de interferências por ambiente e disciplina com indicação de prioridade técnica.",
+      "Relatório comparativo após envio de versões corrigidas, indicando itens resolvidos e pendentes.",
+      "Projetos atualizados de todas as disciplinas e revisões a confrontar."
+    ],
+    "w": [
+      "Memorial técnico descritivo das soluções construtivas que aparecem no projeto específico.",
+      "Identificação de materiais, ambientes e sistemas presentes no projeto e critérios gerais de execução.",
+      "Especificação por elemento construtivo, padrão de acabamento, interfaces e referências técnicas.",
+      "Caderno de especificações com tabelas de materiais, modelos de referência e requisitos de aceitação dos itens descritos.",
+      "Projetos, lista de materiais selecionados e sistemas construtivos."
+    ],
+    "x": [
+      "Quantificação de materiais e serviços a partir de plantas e critérios de medição definidos.",
+      "Planilha de itens com unidade, quantidade e referência de cálculo.",
+      "Memória de levantamento e agrupamento por etapa, ambiente ou sistema.",
+      "Quadro comparativo de consumo por etapa e perdas consideradas, com indicação de bases de cálculo.",
+      "Projetos dimensionados, áreas de medição e critérios de perdas."
+    ],
+    "y": [
+      "Orçamento técnico de execução a partir de quantidades, composições e preços com data-base.",
+      "Planilha de custo com quantitativos, unidade, preço unitário, fonte e total.",
+      "Composições dos principais serviços e separação de materiais, mão de obra e equipamentos.",
+      "Orçamento analítico por etapa com BDI discriminado quando aplicável e resumo por categoria.",
+      "Projetos, quantitativos, fonte de preço, região e data-base."
+    ],
+    "z": [
+      "Estudo das alternativas de implantação ou execução conforme restrições físicas, normativas e econômicas.",
+      "Quadro de premissas e restrições do empreendimento; análise inicial de viabilidade técnica.",
+      "Comparação de cenários de área, uso, custos aproximados e principais riscos.",
+      "Relatório de cenários com matriz de riscos, condicionantes e indicação da alternativa recomendada.",
+      "Localização, áreas, legislação, programa e parâmetros econômicos de referência."
+    ],
+    "aa": [
+      "Resposta técnica escrita a uma questão definida, baseada nas informações analisadas.",
+      "Identificação da pergunta e dos documentos consultados, fundamentação e conclusão técnica.",
+      "Análise de hipóteses ou alternativas com referências e limitações da prova.",
+      "Parecer comparativo estruturado com recomendações e medidas de verificação adicional.",
+      "Quesito técnico, fotografias e documentos examináveis."
+    ],
+    "ab": [
+      "Inspeção visual da edificação ou de sistemas acessíveis para identificar manifestações e anomalias.",
+      "Roteiro da inspeção e registros fotográficos das ocorrências visíveis.",
+      "Quadro das anomalias observadas por local e grau de atenção; recomendações de verificação.",
+      "Relatório consolidado com prioridades de intervenção, limites de acesso e programa preliminar de acompanhamento.",
+      "Acesso à edificação, histórico de manutenção e áreas/sistemas a inspecionar."
+    ],
+    "ac": [
+      "Análise pericial de objeto e quesitos delimitados, sem garantia de decisão administrativa ou judicial.",
+      "Descrição do objeto e quesitos, análise documental e conclusões técnicas.",
+      "Vistoria ou diligência contratada e registro das evidências associadas aos quesitos.",
+      "Relatório técnico pericial com respostas organizadas aos quesitos e limitações de prova.",
+      "Quesitos, finalidade, documentos, local e diligências autorizadas."
+    ],
+    "ad": [
+      "Fiscalização de conformidade de etapas de obra com projetos e especificações fornecidos.",
+      "Visitas técnicas à execução das etapas escolhidas com registro de não conformidades visíveis.",
+      "Relatórios de inspeção por etapa com referência a projeto e recomendações de correção.",
+      "Conferência de correções comunicadas e quadro consolidado de pendências e sua evolução.",
+      "Projetos executivos, cronograma e acesso às frentes de obra."
+    ],
+    "ae": [
+      "Coordenação da programação, interfaces e comunicação entre equipes de obra contratadas.",
+      "Plano de frentes, responsáveis e calendário de reuniões da obra.",
+      "Quadro de atividades, riscos e pendências por equipe; atas de reuniões técnicas.",
+      "Relatório periódico de avanço físico e riscos, com plano de reprogramação conforme dados recebidos.",
+      "Cronograma, equipes responsáveis e orçamento aprovado."
+    ],
+    "af": [
+      "Execução material de itens de obra listados em planilha contratual, com responsabilidades de execução e ART quando exigíveis.",
+      "Execução dos itens e respectivas quantidades previstos no orçamento, com registro de medições.",
+      "Relatórios das etapas e inspeções dos itens construídos, com relação de correções.",
+      "Conjunto de registros de entrega e testes efetivamente realizados nos sistemas executados.",
+      "Projeto executivo, planilha quantitativa, materiais, acesso ao canteiro e condições de segurança."
+    ],
+    "ag": [
+      "Atualização cadastral dos desenhos com alterações executadas que puderem ser verificadas em campo.",
+      "Plantas atualizadas com modificações constatadas nas áreas acessíveis.",
+      "Cortes e identificação das mudanças de vãos, níveis e elementos conferidos.",
+      "Conjunto final cadastral integrado por disciplina selecionada e relação de informações não verificáveis.",
+      "Projeto anterior, informações de obra e acesso aos elementos medidos."
+    ],
+    "ah": [
+      "Projeto de coleta e condução de águas pluviais da área e redes indicadas.",
+      "Plantas de contribuição e encaminhamento da água pluvial com pontos de captação.",
+      "Dimensionamento de calhas, condutores, caixas e declividades das redes previstas.",
+      "Detalhes de captação e lançamento e memória de premissas hidrológicas e hidráulicas.",
+      "Áreas de captação, intensidade de chuva, cotas e destino de lançamento."
+    ],
+    "ai": [
+      "Projeto de camadas e geometria de pavimentação da área selecionada.",
+      "Planta de área pavimentada, seção-tipo e especificação inicial das camadas.",
+      "Dimensionamento das espessuras com base no tráfego e suporte de solo disponíveis.",
+      "Detalhes de encontros, juntas, acessos e critérios de aceitação da pavimentação.",
+      "Levantamento geométrico, tráfego, dados geotécnicos e drenagem."
+    ],
+    "aj": [
+      "Projeto de redes de abastecimento de água e/ou coleta de esgoto definidas fora das instalações internas prediais.",
+      "Plantas de rede com traçado, pontos de ligação e direção de fluxo.",
+      "Dimensionamento de trechos, perfis longitudinais e detalhes das conexões selecionadas.",
+      "Memória hidráulica e detalhes de poços de visita, caixas e estruturas previstas.",
+      "Base topográfica fornecida pelo cliente, vazões, cotas e regras da concessionária."
+    ],
+    "ak": [
+      "Plano de inspeções e manutenções de sistemas do edifício identificados por inventário.",
+      "Inventário dos elementos e tabela de inspeções e manutenções preventivas.",
+      "Procedimentos de inspeção, periodicidades e registros a preencher pelo operador.",
+      "Manual organizado por sistema com matriz de responsabilidades e formulários de controle.",
+      "Sistemas, manuais de fabricantes, histórico e responsáveis pela manutenção."
+    ],
+    "al": [
+      "Projeto de impermeabilização de superfícies e pontos críticos identificados.",
+      "Planta indicando áreas a impermeabilizar e sistemas propostos.",
+      "Detalhes de ralos, rodapés, juntas e arremates nas superfícies definidas.",
+      "Caderno de sistemas, preparo de substrato, camadas e critérios de inspeção e aceitação.",
+      "Áreas úmidas, impermeabilizações existentes e interfaces dos elementos."
+    ],
+    "am": [
+      "Projeto predial de abastecimento e distribuição de água fria e, quando selecionado, água quente, sem projeto de esgoto.",
+      "Planta de pontos e tubulações de água, distribuição e posição de reservatórios.",
+      "Isométricos de distribuição, dimensionamento de trechos e previsões de registros.",
+      "Detalhes de barrilete, reservação, pressurização e conexões das redes projetadas.",
+      "Planta arquitetônica, pressão de fornecimento, equipamentos e água quente se incluída."
+    ],
+    "an": [
+      "Diagramação editorial de material de apresentação comercial de um empreendimento com plantas e imagens autorizadas.",
+      "Capa e páginas com texto de apresentação, plantas e imagens disponibilizadas pelo cliente; arquivo PDF.",
+      "Tratamento editorial de legendas, quadros de características e paginação das páginas contratadas.",
+      "Versão final diagramada para envio digital e versão para impressão nas dimensões contratadas.",
+      "Plantas, renders licenciados, identidade de marca, textos validados e número de páginas."
+    ],
+    "ao": [
+      "Cadastramento ou alteração administrativa de ART referente apenas a trabalho técnico realmente assumido por profissional habilitado.",
+      "Conferência de dados e atividades assumidas; cadastramento da ART e guia da taxa devida.",
+      "Verificação dos dados declarados, correção cadastral permitida e disponibilização do comprovante após recolhimento.",
+      "Complementação, substituição ou baixa prevista para o caso específico e entrega de protocolo e histórico da ART.",
+      "Dados do profissional e contrato, descrição do trabalho e pagamento da taxa pelo cliente."
+    ]
+  }
+}

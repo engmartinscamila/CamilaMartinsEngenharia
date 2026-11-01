@@ -217,11 +217,11 @@ const levelEntries=(items:ServiceItem[])=>items
  .filter(item=>item.levelApplicable===true)
  .map(item=>({item,level:serviceLevelObject(item),code:serviceLevelCode(item)}))
  .filter(entry=>Boolean(entry.code));
-const serviceDescription=(item:ServiceItem)=>String(item.description??'Serviço técnico conforme escopo descrito no orçamento e no Anexo I.');
-const serviceBudgetDescription=(item:ServiceItem)=>String(item.budgetDescription??item.description??'Serviço técnico conforme escopo descrito no orçamento e no Anexo I.');
+const serviceDescription=(item:ServiceItem)=>String(item.description??'').trim();
+const serviceBudgetDescription=(item:ServiceItem)=>{const result=String(item.budgetDescription??item.description??'').trim();if(!result)throw new Error('Serviço sem descrição específica e produtos técnicos: '+String(item.name??item.code));return result;};
 const serviceRevisions=(item:ServiceItem)=>{
  const value=item.revisions;
- return typeof value==='number'?String(value):'conforme condição específica do Anexo I';
+ return typeof value==='number'?String(value):'PENDENTE DE DEFINIÇÃO — preencher a quantidade de revisões antes da contratação';
 };
 
 const smartRule=(record:CommercialRecord,code:string,fallback:string)=>{
@@ -306,8 +306,6 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
  const entries=levelEntries(selected);
  const distinctLevels=[...new Set(entries.map(entry=>entry.code))];
  const commonLevel=distinctLevels.length===1?entries.find(entry=>entry.code===distinctLevels[0])?.level??null:null;
- const commonLevelFeatures=arrStrings(commonLevel?.features);
- const commonLevelExclusions=arrStrings(commonLevel?.exclusions);
  const legacyLevel=entries.length===0&&record.experience_level?levelName(record.experience_level):'';
  const consolidatedExclusions=unique(selected.flatMap(item=>arrStrings(item.exclusions)));
  const today=generatedDatePt(generatedAt);
@@ -329,7 +327,11 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
      serviceBlocks.push(small('Informações e insumos normalmente necessários do cliente:'));
      inputs.forEach(value=>serviceBlocks.push(bullet(value)));
    }
-   serviceBlocks.push(small(`Revisões incluídas: ${serviceRevisions(item)} • Formatos: ${arrStrings(item.deliveryFormats).join(', ')||'conforme Anexo I'} • Prazo: ${String(item.planningReference??'integrado ao cronograma geral')}`));
+   const terms= commercialTerms(record);
+   const particular=Array.isArray(terms.scope)?(terms.scope as Array<Record<string,unknown>>).find(row=>String(row.code||'')===String(item.code||'')):null;
+   const revisions=particular?String(particular.revisions??''):serviceRevisions(item);
+   const prazo=particular?.deadline_type==='municipal'?'Análise/expedição da Prefeitura sem prazo garantido':particular?.days?String(particular.days)+' '+(String((terms.schedule as Record<string,unknown>|undefined)?.day_type)==='uteis'?'dias úteis':'dias corridos'):'PENDENTE de definição na ficha da atividade';
+   serviceBlocks.push(small(`Revisões desta atividade: ${revisions} • Formatos: ${arrStrings(item.deliveryFormats).join(', ')||'conforme Anexo I'} • Prazo: ${prazo}`));
  });
 
  if(record.custom_service){
@@ -358,9 +360,7 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
     : distinctLevels.length===1
       ? [
           p(`Nível selecionado para as atividades aplicáveis: ${levelLabel(commonLevel)||levelName(distinctLevels[0])}.`,true,GOLD),
-          ...(commonLevel?[p(String(commonLevel.description??''))]:[]),
-          ...commonLevelFeatures.map(value=>bullet(value)),
-          ...commonLevelExclusions.map(value=>bullet(`Não incluído neste nível: ${value}`)),
+          p('Os produtos técnicos próprios de cada atividade selecionada e seus acréscimos por nível são discriminados abaixo, com nome, descrição e entregas correspondentes.'),
         ]
       : [
           p('Os níveis de prestação foram definidos individualmente por atividade.',true,GOLD),
