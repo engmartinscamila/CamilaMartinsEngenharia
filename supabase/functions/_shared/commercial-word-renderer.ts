@@ -331,7 +331,7 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
    const particular=Array.isArray(terms.scope)?(terms.scope as Array<Record<string,unknown>>).find(row=>String(row.code||'')===String(item.code||'')):null;
    const revisions=particular?String(particular.revisions??''):serviceRevisions(item);
    const prazo=particular?.deadline_type==='municipal'?'Análise/expedição da Prefeitura sem prazo garantido':particular?.days?String(particular.days)+' '+(String((terms.schedule as Record<string,unknown>|undefined)?.day_type)==='uteis'?'dias úteis':'dias corridos'):'PENDENTE de definição na ficha da atividade';
-   serviceBlocks.push(small(`Revisões desta atividade: ${revisions} • Formatos: ${arrStrings(item.deliveryFormats).join(', ')||'PDF'} • Prazo: ${prazo}`));
+   serviceBlocks.push(small(`Revisões desta atividade: ${revisions} • Formatos: ${arrStrings(item.deliveryFormats).join(', ')||'conforme Anexo I'} • Prazo: ${prazo}`));
  });
 
  if(record.custom_service){
