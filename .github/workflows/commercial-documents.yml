@@ -9,6 +9,10 @@ on:
       - 'portal-app/supabase/functions/_shared/commercial-word-*.ts'
       - 'supabase/functions/download-commercial-word/**'
       - 'scripts/commercial-word-download-regression.mjs'
+      - 'scripts/condicoes-comerciais-estruturadas-regression.mjs'
+      - 'js/commercial-terms-web.js'
+      - 'js/commercial-documents-web.js'
+      - 'js/commercial-document-preview-web.js'
       - 'portal-app/supabase/functions/generate-commercial-document/**'
       - 'supabase/functions/generate-commercial-document-final/**'
       - 'supabase/functions/generate-contract-document/**'
@@ -38,6 +42,10 @@ on:
       - 'portal-app/supabase/functions/_shared/commercial-word-*.ts'
       - 'supabase/functions/download-commercial-word/**'
       - 'scripts/commercial-word-download-regression.mjs'
+      - 'scripts/condicoes-comerciais-estruturadas-regression.mjs'
+      - 'js/commercial-terms-web.js'
+      - 'js/commercial-documents-web.js'
+      - 'js/commercial-document-preview-web.js'
       - 'portal-app/supabase/functions/generate-commercial-document/**'
       - 'supabase/functions/generate-commercial-document-final/**'
       - 'supabase/functions/generate-contract-document/**'
@@ -77,6 +85,12 @@ jobs:
         run: node --check js/document-function-routing-web.js
       - name: Conferir validação antes de criar documento e sincronismo dos geradores
         run: node scripts/commercial-generator-preflight-regression.mjs
+      - name: Validar editor comercial e condições estruturadas
+        run: |
+          node --check js/commercial-terms-web.js
+          node --check js/commercial-documents-web.js
+          node --check js/commercial-document-preview-web.js
+          node scripts/condicoes-comerciais-estruturadas-regression.mjs
       - name: Instalar dependências travadas do aplicativo
         run: npm ci --prefix portal-app
       - name: Verificar TypeScript do aplicativo
