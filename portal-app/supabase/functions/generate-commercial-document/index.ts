@@ -51,7 +51,7 @@ Deno.serve(async(req)=>{
   if(currentDocument.error)throw currentDocument.error;
   if(currentDocument.data.generated_at||currentDocument.data.workflow_status==='enviado'||currentDocument.data.workflow_status==='assinado')return json({error:'Esta versão já foi emitida e não pode ser reescrita. Crie uma nova revisão.'},409);
   const docVersion=String(currentDocument.data.versao||'1.0');
-  if(!/^\d+\\.\d+$/.test(docVersion))return json({error:'Versão documental inválida.'},422);
+  if(!/^\d+\.\d+$/.test(docVersion))return json({error:'Versão documental inválida.'},422);
   const renderRecord={...record,document_version:docVersion,document_version_reason:currentDocument.data.version_reason||null};
   const generatedAt=new Date();
   const generatedAtIso=generatedAt.toISOString();
