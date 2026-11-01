@@ -294,7 +294,10 @@ const scopeQuantityRows=(record:CommercialRecord)=>{
  return rows.map(row=>{
    const item=services.find(x=>String(x.code||'')===String(row.code||''));
    if(!item)return null;
-   return p(String(item.name||row.code)+': '+String(row.quantity||'')+' '+String(row.unit||'')+'; entregáveis: '+String(row.deliverables||'')+'; prazo: '+String(row.days||'')+' '+(String((t.schedule as Record<string,unknown>|undefined)?.day_type)==='uteis'?'dias úteis':'dias corridos')+'; revisões incluídas: '+String(row.revisions??'')+'; visitas incluídas: '+(row.visits===''?'não previstas':String(row.visits??'não previstas'))+'.');
+   const municipality=['k','l','m'].includes(String(row.code||''));
+   const deadline=municipality?'Prazo de análise, aprovação e expedição: depende exclusivamente da Prefeitura, sem prazo garantido; a preparação técnica da CONTRATADA segue o prazo técnico global contratual.':'Prazo técnico: '+String(row.days||'')+' '+(String((t.schedule as Record<string,unknown>|undefined)?.day_type)==='uteis'?'dias úteis':'dias corridos')+'.';
+   const notes=municipality&&String(row.municipal_notes||'').trim()?' Observações complementares: '+String(row.municipal_notes).trim()+'.':'';
+   return p(String(item.name||row.code)+': '+String(row.quantity||'')+' '+String(row.unit||'')+'; serviços/entregáveis: '+String(row.deliverables||'')+'. '+deadline+' Revisões incluídas: '+String(row.revisions??'')+'; visitas incluídas: '+(row.visits===''?'não previstas':String(row.visits??'não previstas'))+'.'+notes);
  }).filter((x):x is Paragraph=>x!==null);
 };
 
