@@ -26,7 +26,8 @@ function renderScopeItem(item,terms){
  const suggested=code==='p'?'':catalogProducts.join('; ');
  const defaultDeliverables=old||suggested;
  const genericOld=/^(alvar[aá](\s+de\s+constru[cç][aã]o)?|habite[\s-]?se)[.!]?$/i.test(old);
- const note=values.municipal_notes??(old&&!genericOld&&old!==municipalScopes[code]?old:'');
+ const oldDefault=/^(serviço técnico-administrativo|organização das peças|preparação dos requerimentos)/i.test(old);
+ const note=values.municipal_notes??(old&&!genericOld&&!oldDefault&&old!==municipalScopes[code]?old:'');
  const deadline=municipal?'<div class="cme-terms-wide"><label>Prazo estimado da Prefeitura</label><div class="cme-municipal-deadline" role="note">'+esc(municipalDeadline)+'</div></div>':'<label>Prazo técnico desta atividade (dias) * '+input('days','Ex.: 15',values.days||'','number')+'</label>';
  const deliverables=municipal?
   '<div class="cme-terms-wide"><label>Escopo contratual padrão (automático, sem necessidade de redigir)</label><div class="cme-municipal-standard" role="note">'+esc(municipalScopes[code])+'</div></div><label class="cme-terms-wide">Observações complementares (opcional) <textarea name="municipal_notes" rows="2" placeholder="Informe somente particularidades desta contratação">'+esc(note)+'</textarea></label>':
