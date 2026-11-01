@@ -122,7 +122,7 @@ const t=(text:string,subtitle?:string)=>[
 const value=(d:Data,key:string,fallback='Não informado')=>typeof d[key]==='string'&&String(d[key]).trim()?String(d[key]).trim():fallback;
 const datePt=(raw:unknown,fallback='Não informado')=>{
  if(typeof raw!=='string'||!raw)return fallback;
- const date=new Date(raw);
+ const date=/^\d{4}-\d{2}-\d{2}$/.test(raw)?new Date(`${raw}T12:00:00-03:00`):new Date(raw);
  return Number.isNaN(date.getTime())?raw:new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric'}).format(date);
 };
 const dateTimePt=(raw:unknown,fallback='Não informado')=>{
@@ -203,9 +203,16 @@ const scopeMatch=(d:Data)=>{
  })||null;
 };
 const paymentLines=(d:Data)=>{
+ const termsData=d.commercial_terms&&typeof d.commercial_terms==='object'?d.commercial_terms as Record<string,unknown>:{};
+ const installments=Array.isArray(termsData.installments)?termsData.installments as Array<Record<string,unknown>>:[];
+ const methods:Record<string,string>={pix:'Pix',transferencia:'Transferência bancária',boleto:'Boleto',dinheiro:'Dinheiro',cartao:'Cartão',cartao_parcelado:'Cartão de crédito parcelado',outro:'Conforme condição específica'};
+ if(installments.length)return [
+   p('Forma de pagamento: '+(methods[String(termsData.payment_method||'')]||String(termsData.payment_method||'não informada'))+'.'),
+   ...installments.map((t,i)=>p('Parcela '+(i+1)+' de '+installments.length+': '+money(t.amount)+' • Vencimento: '+(/^\d{4}-\d{2}-\d{2}$/.test(String(t.due_date||''))?datePt(t.due_date):String(t.due_event||'não informado'))))
+ ];
  const terms=Array.isArray(d.payment_terms)?d.payment_terms as Array<Record<string,unknown>>:[];
- if(!terms.length)return [p('PENDÊNCIA COMERCIAL: definir quantidade de parcelas, valores e vencimentos antes de concluir a emissão do documento.')];
- return terms.map((term,index)=>p(`${index+1}. ${String(term.label??term.description??'Parcela')} — ${String(term.value??term.amount??'[VALOR PENDENTE]')} — ${String(term.due??term.dueDate??'[VENCIMENTO PENDENTE]')}`));
+ if(!terms.length)return [p('PENDÊNCIA COMERCIAL: definir quantidade de parcelas, valores e vencimentos antes da emissão.')];
+ return terms.map((t,i)=>p('Parcela '+(i+1)+': '+money(t.value??t.amount)+' • Vencimento: '+(/^\d{4}-\d{2}-\d{2}$/.test(String(t.due??t.dueDate??''))?datePt(t.due??t.dueDate):String(t.due??t.dueDate??'não informado'))));
 };
 const brandHeader=(profile:ProfessionalIdentity)=>new Header({children:[
  new Paragraph({
@@ -226,12 +233,19 @@ const brandFooter=(profile:ProfessionalIdentity,documentCode:string)=>new Footer
  })
 ]});
 const clientIdentity=(d:Data)=>value(d,'client_cpf_cnpj',value(d,'client_document',value(d,'cpf_cnpj','não informado')));
+const legalRepresentativeInfo=(d:Data)=>{
+ const terms=d.commercial_terms&&typeof d.commercial_terms==='object'?d.commercial_terms as Record<string,unknown>:{};
+ const r=terms.legal_representative&&typeof terms.legal_representative==='object'?terms.legal_representative as Record<string,unknown>:{};
+ const cpf=String(r.cpf||'').replace(/\D/g,'');
+ return {name:String(r.name||'').trim(),cpf:cpf.length===11?cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4'):cpf,role:String(r.role||'').trim(),powers:String(r.powers||'').trim()};
+};
 const identity=(d:Data,profile:ProfessionalIdentity,generatedAt:Date)=>[
  h('1. IDENTIFICAÇÃO'),
  p(`Data de emissão: ${generatedDatePt(generatedAt)}`),
- p(`Contrato: ${value(d,'contract_number')} • Data de assinatura: ${d.contract_signed_at?datePt(d.contract_signed_at):'A CONFIRMAR NO ATO DA ASSINATURA'}`),
+ p(`Contrato: ${value(d,'contract_number')} • Versão do Anexo I: v${String(d.document_version||'1.0')} • Data de assinatura: ${d.contract_signed_at?datePt(d.contract_signed_at):'A CONFIRMAR NO ATO DA ASSINATURA'}`),
  p(`CONTRATADO(A): ${professionalLabel(profile)}`),
  p(`CONTRATANTE: ${value(d,'client_name')} • CPF/CNPJ: ${clientIdentity(d)}`),
+ ...(String(clientIdentity(d)).replace(/\D/g,'').length===14?[p('Representante legal da pessoa jurídica: '+legalRepresentativeInfo(d).name+' • CPF: '+legalRepresentativeInfo(d).cpf+' • Cargo: '+legalRepresentativeInfo(d).role+' • Poderes: '+legalRepresentativeInfo(d).powers+'.')]:[]),
  p(`Projeto: ${value(d,'project_name')} • Tipo: ${value(d,'project_type')}`),
  p(`Imóvel / obra: ${value(d,'property_address')}`),
  ...(d.source_quote_number?[small(`Orçamento de origem: ${String(d.source_quote_number)}`)]:[])
@@ -241,7 +255,8 @@ const sig=(profile:ProfessionalIdentity,generatedAt:Date,d:Data={})=>[
  p('_______________________________________________'),
  p(professionalLabel(profile)),
  p('_______________________________________________'),
- p(`CONTRATANTE: ${value(d,'client_name')} • CPF/CNPJ: ${clientIdentity(d)}`)
+ p(`CONTRATANTE: ${value(d,'client_name')} • CPF/CNPJ: ${clientIdentity(d)}`),
+ ...(String(clientIdentity(d)).replace(/\D/g,'').length===14?[p('Representante legal: '+legalRepresentativeInfo(d).name+' — CPF '+legalRepresentativeInfo(d).cpf)]:[])
 ];
 const doc=(children:Paragraph[],profile:ProfessionalIdentity,documentCode:string)=>new Document({
  styles:{
@@ -529,6 +544,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
    included.forEach((item,index)=>{
      serviceBlocks.push(sub(`${index+1}. (${String(item.code??'')}) ${serviceName(item)}`));
      serviceBlocks.push(p(serviceAnnexDescription(item)));
+     if(['k','l','m'].includes(String(item.code||'')))serviceBlocks.push(p('IMPORTANTE: a CONTRATADA entrega o serviço técnico-administrativo de organização, protocolo e acompanhamento descrito neste Anexo. Alvará de Construção e Habite-se são documentos expedidos exclusivamente pela Prefeitura, sujeitos à análise e decisão do órgão público, sem garantia de deferimento.',true,GOLD));
      const conditions=termScopes.find(row=>String(row.code||'')===String(item.code||''));
      if(conditions){
        serviceBlocks.push(p('QUANTITATIVO CONTRATADO: '+String(conditions.quantity||'')+' '+String(conditions.unit||'')+'. Entregáveis e respectivas quantidades: '+String(conditions.deliverables||'')+'.',true,GOLD));
@@ -701,7 +717,7 @@ Deno.serve(async(req)=>{
   if(!Number.isInteger(masterVersion)||masterVersion<=0||!smartTexts||typeof smartTexts!=='object'||Array.isArray(smartTexts)||!Object.keys(smartTexts as Record<string,unknown>).length){
    return json({error:'Este rascunho é anterior à governança documental atual. Prepare o documento novamente para alinhar contrato mestre, serviços e textos inteligentes.'},409);
   }
-  const generatedData={...sourceData,emitted_at:generatedAtIso,document_date:documentDate};
+  const generatedData={...sourceData,emitted_at:generatedAtIso,document_date:documentDate,document_version:row.versao,document_version_reason:row.version_reason??null};
   const buffer=await Packer.toBuffer(build(row.document_kind,generatedData,professionalProfile,generatedAt));
   const version=String(row.versao??'1.0').replace(/[^0-9.]/g,'')||'1.0';
   const path=`${row.projeto_id}/contratual/${row.id}/${names[row.document_kind]}-v${version}.docx`;

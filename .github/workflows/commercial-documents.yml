@@ -33,6 +33,7 @@ on:
       - 'scripts/finalization-regression.mjs'
       - 'scripts/commercial-generator-preflight-regression.mjs'
       - 'scripts/contract-emission-regression.mjs'
+      - 'scripts/contrato-documento-revisao-integridade.mjs'
       - 'scripts/commercial-custom-scope-regression.mjs'
       - '.github/workflows/commercial-documents.yml'
   pull_request:
@@ -67,6 +68,7 @@ on:
       - 'scripts/finalization-regression.mjs'
       - 'scripts/commercial-generator-preflight-regression.mjs'
       - 'scripts/contract-emission-regression.mjs'
+      - 'scripts/contrato-documento-revisao-integridade.mjs'
       - 'scripts/commercial-custom-scope-regression.mjs'
       - '.github/workflows/commercial-documents.yml'
   workflow_dispatch:
@@ -103,6 +105,8 @@ jobs:
         run: npm install --no-save --prefix portal-app docx@9.5.1 jszip@3.10.1
       - name: Gerar DOCX de teste e validar ZIP, XML, escopo e endereços
         run: node --experimental-strip-types scripts/commercial-word-regression.mjs
+      - name: Auditar versão, representante e parcelamento pt-BR em Word real
+        run: node --experimental-strip-types scripts/contrato-documento-revisao-integridade.mjs
       - name: Validar checkboxes OOXML e aceite exclusivo do cliente
         run: node --experimental-strip-types scripts/finalization-word-regression.mjs
       - name: Regressão estática da finalização

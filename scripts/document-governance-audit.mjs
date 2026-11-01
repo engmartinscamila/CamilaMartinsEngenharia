@@ -21,8 +21,9 @@ for (const [canonical, mirror] of generators) {
   requireText(canonical, "rpc('assert_document_governance_ready')", 'não bloqueia geração com governança incoerente');
   requireText(canonical, 'emitted_at', 'não registra a data de emissão no snapshot');
   requireText(canonical, 'document_date', 'não registra a data civil da geração no snapshot');
-  requireText(canonical, 'contract_signed_at', 'não alinha a data de assinatura à geração');
-  forbidText(canonical, 'Local e data: _______________________________, _____/_____/________', 'ainda deixa a data de assinatura totalmente manual');
+  forbidText(canonical, 'contract_signed_at:documentDate', 'não se pode declarar assinatura na data da emissão');
+  if(canonical.includes('generate-contract-document/index.ts')) requireText(canonical, 'A CONFIRMAR NO ATO DA ASSINATURA', 'o Anexo I deve distinguir emissão de assinatura');
+  else requireText(canonical, 'Data de assinatura: a preencher no ato da assinatura', 'o contrato deve distinguir emissão de assinatura');
   requireText(canonical, 'generatedDatePt', 'não imprime a data de geração no Word');
 }
 
