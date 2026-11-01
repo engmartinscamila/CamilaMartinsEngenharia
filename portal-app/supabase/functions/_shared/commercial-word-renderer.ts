@@ -1,5 +1,5 @@
 import { AlignmentType, BorderStyle, Document, Footer, Header, HeadingLevel, Packer, Paragraph, TextRun } from 'docx';
-type CommercialRecord={id:string;linked_client_id:string|null;linked_contract_id:string|null;linked_project_id:string|null;quote_number:string;contract_number:string|null;status:string;prospect_name:string;cpf_cnpj:string|null;email:string|null;phone:string|null;address:string|null;city:string|null;state:string|null;property_address:string|null;property_type:string|null;area_terreno_m2:number|null;area_construida_m2:number|null;construction_standard:string|null;experience_level:string|null;services:unknown;coobligors:unknown;custom_service:string|null;total_value:number|null;payment_terms:unknown;valid_until:string|null;notes:string|null;quote_document_id:string|null;contract_document_id:string|null;contract_master_id:string|null;contract_master_version:number|null;smart_texts:unknown};
+type CommercialRecord={id:string;linked_client_id:string|null;linked_contract_id:string|null;linked_project_id:string|null;quote_number:string;contract_number:string|null;status:string;prospect_name:string;cpf_cnpj:string|null;email:string|null;phone:string|null;address:string|null;city:string|null;state:string|null;property_address:string|null;property_type:string|null;area_terreno_m2:number|null;area_construida_m2:number|null;construction_standard:string|null;experience_level:string|null;services:unknown;coobligors:unknown;custom_service:string|null;total_value:number|null;payment_terms:unknown;commercial_terms?:unknown;valid_until:string|null;notes:string|null;quote_document_id:string|null;contract_document_id:string|null;contract_master_id:string|null;contract_master_version:number|null;smart_texts:unknown};
 type ServiceItem=Record<string,unknown>;
 type ProfessionalIdentity=Record<string,string|undefined>;
 
@@ -246,6 +246,24 @@ const paymentLines=(record:CommercialRecord)=>{
  if(!terms.length)return [p('Condição de pagamento: conforme condição comercial registrada no orçamento/contrato.')];
  return terms.map((term,index)=>p(`${index+1}. ${String(term.label??term.description??'Parcela')} — ${String(term.value??term.amount??'valor conforme registro')} — ${String(term.due??term.dueDate??'vencimento conforme registro')}`));
 };
+
+const commercialTerms=(record:CommercialRecord)=>record.commercial_terms&&typeof record.commercial_terms==='object'?record.commercial_terms as Record<string,unknown>:{};
+const termsSchedule=(record:CommercialRecord)=>{
+ const t=commercialTerms(record),s=t.schedule&&typeof t.schedule==='object'?t.schedule as Record<string,unknown>:null;
+ if(!s)return [];
+ const type=String(s.day_type)==='uteis'?'dias úteis':'dias corridos';
+ return [p('Início da contagem: '+String(s.start_trigger||'não definido')+'.'),p('Prazo total de elaboração: '+String(s.days||'não definido')+' '+type+'. Prazos de órgãos públicos e terceiros não integram automaticamente o prazo técnico.')];
+};
+const scopeQuantityRows=(record:CommercialRecord)=>{
+ const t=commercialTerms(record),rows=Array.isArray(t.scope)?t.scope as Array<Record<string,unknown>>:[];
+ const services=selectedServices(record);
+ return rows.map(row=>{
+   const item=services.find(x=>String(x.code||'')===String(row.code||''));
+   if(!item)return null;
+   return p(String(item.name||row.code)+': '+String(row.quantity||'')+' '+String(row.unit||'')+'; entregáveis: '+String(row.deliverables||'')+'; prazo: '+String(row.days||'')+' '+(String((t.schedule as Record<string,unknown>|undefined)?.day_type)==='uteis'?'dias úteis':'dias corridos')+'; revisões incluídas: '+String(row.revisions??'')+'; visitas incluídas: '+(row.visits===''?'não previstas':String(row.visits??'não previstas'))+'.');
+ }).filter((x):x is Paragraph=>x!==null);
+};
+
 function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,generatedAt:Date){
  const selected=selectedServices(record);
  const entries=levelEntries(selected);
@@ -332,6 +350,8 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
   h('7. INVESTIMENTO'),
   p(`Valor total dos honorários: ${money(record.total_value)}`,true,GOLD),
   ...paymentLines(record),
+  ...termsSchedule(record),
+  ...scopeQuantityRows(record),
   ...(record.notes?[p(`Condições / observações comerciais registradas: ${record.notes}`)]:[]),
 
   h('8. PRÓXIMOS PASSOS'),
@@ -372,7 +392,12 @@ function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,c
    h('RESUMO COMERCIAL VINCULADO'),
    p(`Valor total dos honorários: ${money(record.total_value)}.`,true,GOLD),
    p(`Nível de prestação: ${contractLevelSummary}.`),
-   p('O detalhamento dos serviços, entregáveis, quantitativos, revisões, formatos, cronograma e pagamento deve constar do Anexo I com parâmetros verificáveis. Informações descritas apenas como “a combinar”, “conforme condição específica” ou “conforme registro” permanecem pendentes de acordo expresso entre as partes.'),
+   p('As condições comerciais, os quantitativos e os prazos individualizados são especificados abaixo e reproduzidos no Anexo I. A versão emitida preserva os dados aprovados no momento da emissão.'),
+   h('PARCELAMENTO E VENCIMENTOS'),
+   ...paymentLines(record),
+   h('PRAZOS E QUANTITATIVOS CONTRATADOS'),
+   ...termsSchedule(record),
+   ...scopeQuantityRows(record),
    p('E por estarem assim justas e contratadas, as partes assinam o presente instrumento em 2 (duas) vias de igual teor e forma, na presença das testemunhas abaixo.'),
    p('Local: _______________________________ • Data da assinatura: ____/____/________'),
    p('_____________________________________________'),
