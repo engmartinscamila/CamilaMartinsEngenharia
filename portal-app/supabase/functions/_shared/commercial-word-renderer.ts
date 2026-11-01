@@ -217,11 +217,11 @@ const levelEntries=(items:ServiceItem[])=>items
  .filter(item=>item.levelApplicable===true)
  .map(item=>({item,level:serviceLevelObject(item),code:serviceLevelCode(item)}))
  .filter(entry=>Boolean(entry.code));
-const serviceDescription=(item:ServiceItem)=>String(item.description??'Serviço técnico conforme escopo descrito no orçamento e no Anexo I.');
-const serviceBudgetDescription=(item:ServiceItem)=>String(item.budgetDescription??item.description??'Serviço técnico conforme escopo descrito no orçamento e no Anexo I.');
+const serviceDescription=(item:ServiceItem)=>String(item.description??'').trim();
+const serviceBudgetDescription=(item:ServiceItem)=>{const result=String(item.budgetDescription??item.description??'').trim();if(!result)throw new Error('Serviço sem descrição específica e produtos técnicos: '+String(item.name??item.code));return result;};
 const serviceRevisions=(item:ServiceItem)=>{
  const value=item.revisions;
- return typeof value==='number'?String(value):'conforme condição específica do Anexo I';
+ return typeof value==='number'?String(value):'PENDENTE DE DEFINIÇÃO — preencher a quantidade de revisões antes da contratação';
 };
 
 const smartRule=(record:CommercialRecord,code:string,fallback:string)=>{
