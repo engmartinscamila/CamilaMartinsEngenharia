@@ -166,7 +166,7 @@ begin
 
   return v_services;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.admin_prepare_contract_document(p_project_id uuid, p_document_kind text, p_approval_id uuid DEFAULT NULL::uuid, p_extra_data jsonb DEFAULT '{}'::jsonb)
  RETURNS uuid
@@ -365,6 +365,6 @@ begin
 
   return v_document_id;
 end
-$function$
+$function$;
 
 COMMIT;
