@@ -10,6 +10,8 @@ on:
       - 'supabase/functions/download-commercial-word/**'
       - 'scripts/commercial-word-download-regression.mjs'
       - 'scripts/condicoes-comerciais-estruturadas-regression.mjs'
+      - 'scripts/catalogo-escopos-especificos-regression.mjs'
+      - 'docs/CATALOGO_41_ATIVIDADES_ESCOPOS_ESPECIFICOS.json'
       - 'js/commercial-terms-web.js'
       - 'js/commercial-documents-web.js'
       - 'js/commercial-document-preview-web.js'
@@ -45,6 +47,8 @@ on:
       - 'supabase/functions/download-commercial-word/**'
       - 'scripts/commercial-word-download-regression.mjs'
       - 'scripts/condicoes-comerciais-estruturadas-regression.mjs'
+      - 'scripts/catalogo-escopos-especificos-regression.mjs'
+      - 'docs/CATALOGO_41_ATIVIDADES_ESCOPOS_ESPECIFICOS.json'
       - 'js/commercial-terms-web.js'
       - 'js/commercial-documents-web.js'
       - 'js/commercial-document-preview-web.js'
@@ -97,6 +101,7 @@ jobs:
           node --check js/commercial-documents-web.js
           node --check js/commercial-document-preview-web.js
           node scripts/condicoes-comerciais-estruturadas-regression.mjs
+          node scripts/catalogo-escopos-especificos-regression.mjs
       - name: Instalar dependências travadas do aplicativo
         run: npm ci --prefix portal-app
       - name: Verificar TypeScript do aplicativo
