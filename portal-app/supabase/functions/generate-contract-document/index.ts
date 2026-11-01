@@ -535,7 +535,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
        serviceBlocks.push(small('Insumos e definições esperados do cliente:'));
        clientInputs.forEach(value=>serviceBlocks.push(bullet(value)));
      }
-     serviceBlocks.push(small(`Revisões incluídas: ${typeof item.revisions==='number'?item.revisions:'[PENDENTE DE DEFINIÇÃO]'} • Formatos: ${arrStrings(item.deliveryFormats).join(', ')||'[FORMATO PENDENTE]'} • Aceite de etapa: ${item.acceptanceRequired===false?'não obrigatório':'previsto'}`));
+     serviceBlocks.push(small(`Revisões incluídas: ${typeof item.revisions==='number'?item.revisions:'sem rodadas adicionais presumidas; confirmar condições particulares'} • Formatos: ${arrStrings(item.deliveryFormats).join(', ')||'conforme condições expressas do Anexo I'} • Aceite de etapa: ${item.acceptanceRequired===false?'não obrigatório':'previsto'}`));
      if(typeof item.revisions!=='number'||!arrStrings(item.deliveryFormats).length){serviceBlocks.push(p('ATENÇÃO: parâmetros de entrega incompletos. Preencher e validar antes de assinar; o texto-padrão não substitui a definição individualizada.',true,GOLD));}
      if(item.planningReference)serviceBlocks.push(small(`Referência de planejamento: ${String(item.planningReference)}`));
      if(item.notes)serviceBlocks.push(p(`Observação específica: ${String(item.notes)}`));
