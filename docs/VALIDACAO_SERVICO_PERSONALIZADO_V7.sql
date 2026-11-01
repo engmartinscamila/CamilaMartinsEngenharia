@@ -43,6 +43,12 @@ begin
 
     v_included := coalesce((v_item->>'included')::boolean,false);
     v_custom_description := nullif(btrim(coalesce(v_item->>'customDescription','')),'');
+    -- Documentos antigos armazenavam a atividade personalizada em description,
+    -- antes da criação do campo customDescription. A leitura histórica não pode bloquear.
+    IF v_code='p' AND v_custom_description IS NULL
+       AND coalesce(v_item->>'description','') LIKE 'Atividade específica solicitada: %' THEN
+      v_custom_description := nullif(btrim(split_part(split_part(v_item->>'description','Atividade específica solicitada: ',2),'. ',1)), '');
+    END IF;
     if v_code='p' and v_included and (v_custom_description is null or length(v_custom_description)<15 or lower(v_custom_description) IN ('outro','outros','serviço técnico','serviço personalizado')) then
       raise exception 'Serviço personalizado sem objeto técnico individualizado. Informe o produto final, a finalidade e os itens que serão entregues.';
     end if;
