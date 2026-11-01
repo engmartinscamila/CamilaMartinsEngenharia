@@ -856,6 +856,8 @@
     if(isContract){
       const recordId=typeof result.data==='string'?result.data:result.data.id;
       if(!recordId){msg('Cadastro salvo, mas não foi possível identificar o contrato para emitir o Word. Confira a lista de contratos.','error');return;}
+      const savedTerms=await window.CMEEditCommercialTerms(recordId);
+      if(!savedTerms){await load();msg('Contrato cadastrado, mas ainda não emitido. Preencha parcelas, prazos e quantitativos pela ação Editar condições.','error');return;}
       const emission=await window.CMEGenerateCommercialDocument(recordId,'contrato',true);
       await load();
       if(!emission?.ok)msg('Cadastro do contrato preservado. '+(emission?.error||'A emissão do Word não foi concluída. Use Gerar Word na lista para tentar novamente.'),'error');
@@ -943,11 +945,11 @@
         : '';
 
       const actions = kind === 'contrato'
-        ? `${record.contract_document_id?`<button class="doc-btn secondary" data-action="contract-download" data-document-id="${record.contract_document_id}" data-id="${record.id}">Baixar Word emitido</button><button class="doc-btn secondary" data-action="contract-versions" data-id="${record.id}">Versões anteriores</button><button class="doc-btn ghost" data-action="contract-revision" data-id="${record.id}">Criar nova revisão</button>`:`<button class="doc-btn secondary" data-action="contract" data-id="${record.id}">Gerar Word e arquivar</button>`}
+        ? `${record.contract_document_id?`<button class="doc-btn secondary" data-action="contract-download" data-document-id="${record.contract_document_id}" data-id="${record.id}">Baixar Word emitido</button><button class="doc-btn secondary" data-action="contract-versions" data-id="${record.id}">Versões anteriores</button><button class="doc-btn secondary" data-action="commercial-terms" data-id="${record.id}">Editar parcelas, prazos e quantidades</button><button class="doc-btn ghost" data-action="contract-revision" data-id="${record.id}">Criar nova revisão</button>`:`<button class="doc-btn secondary" data-action="commercial-terms" data-id="${record.id}">Editar parcelas, prazos e quantidades</button><button class="doc-btn secondary" data-action="contract" data-id="${record.id}">Gerar Word e arquivar</button>`}
            <button class="doc-btn" data-action="convert" data-id="${record.id}" ${record.status === 'convertido' ? 'disabled' : ''}>
              ${record.status === 'convertido' ? 'Cliente/projeto vinculados' : 'Formalizar cliente + projeto'}
            </button>`
-        : `<button class="doc-btn" data-action="use-quote" data-id="${record.id}">Criar contrato deste orçamento</button>
+        : `<button class="doc-btn secondary" data-action="commercial-terms" data-id="${record.id}">Editar parcelas, prazos e quantidades</button><button class="doc-btn" data-action="use-quote" data-id="${record.id}">Criar contrato deste orçamento</button>
            ${record.quote_document_id?`<button class="doc-btn secondary" data-action="quote-download" data-document-id="${record.quote_document_id}" data-id="${record.id}">Baixar orçamento emitido</button><button class="doc-btn secondary" data-action="quote-versions" data-id="${record.id}">Versões anteriores</button><button class="doc-btn ghost" data-action="quote-revision" data-id="${record.id}">Criar nova revisão</button>`:`<button class="doc-btn secondary" data-action="quote" data-id="${record.id}">Gerar orçamento e arquivar</button>`}`;
 
       return `
@@ -1053,7 +1055,7 @@
   async function load() {
     const [recordsRes, projectsRes, servicesRes, levelsRes, clientsRes] = await Promise.all([
       client().from('commercial_records')
-        .select('id,quote_number,contract_number,record_kind,source_mode,status,linked_client_id,prospect_name,cpf_cnpj,email,phone,cep,address,city,state,property_address,property_type,area_terreno_m2,area_construida_m2,construction_standard,experience_level,services,custom_service,total_value,payment_terms,valid_until,notes,quote_document_id,contract_document_id,source_project_id,created_at')
+        .select('id,quote_number,contract_number,record_kind,source_mode,status,linked_client_id,prospect_name,cpf_cnpj,email,phone,cep,address,city,state,property_address,property_type,area_terreno_m2,area_construida_m2,construction_standard,experience_level,services,custom_service,total_value,payment_terms,commercial_terms,valid_until,notes,quote_document_id,contract_document_id,source_project_id,created_at')
         .order('created_at', { ascending: false })
         .limit(200),
       client().from('projetos')
@@ -1248,6 +1250,7 @@
     });
 
     window.addEventListener('cme:commercial-generated',load);
+    window.addEventListener('cme:commercial-terms-saved',load);
     window.addEventListener('hashchange', renderMode);
     window.addEventListener('cme:document-mode', renderMode);
     document.querySelectorAll('[data-doc-tab]').forEach(button => {
