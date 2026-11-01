@@ -1,5 +1,5 @@
 import { AlignmentType, BorderStyle, Document, Footer, Header, HeadingLevel, Packer, Paragraph, TextRun } from 'docx';
-type CommercialRecord={id:string;linked_client_id:string|null;linked_contract_id:string|null;linked_project_id:string|null;quote_number:string;contract_number:string|null;status:string;prospect_name:string;cpf_cnpj:string|null;email:string|null;phone:string|null;address:string|null;city:string|null;state:string|null;property_address:string|null;property_type:string|null;area_terreno_m2:number|null;area_construida_m2:number|null;construction_standard:string|null;experience_level:string|null;services:unknown;coobligors:unknown;custom_service:string|null;total_value:number|null;payment_terms:unknown;commercial_terms?:unknown;valid_until:string|null;notes:string|null;quote_document_id:string|null;contract_document_id:string|null;contract_master_id:string|null;contract_master_version:number|null;smart_texts:unknown};
+type CommercialRecord={id:string;linked_client_id:string|null;linked_contract_id:string|null;linked_project_id:string|null;quote_number:string;contract_number:string|null;status:string;prospect_name:string;cpf_cnpj:string|null;email:string|null;phone:string|null;address:string|null;city:string|null;state:string|null;property_address:string|null;property_type:string|null;area_terreno_m2:number|null;area_construida_m2:number|null;construction_standard:string|null;experience_level:string|null;services:unknown;coobligors:unknown;custom_service:string|null;total_value:number|null;payment_terms:unknown;commercial_terms?:unknown;document_version?:string;document_version_reason?:string|null;valid_until:string|null;notes:string|null;quote_document_id:string|null;contract_document_id:string|null;contract_master_id:string|null;contract_master_version:number|null;smart_texts:unknown};
 type ServiceItem=Record<string,unknown>;
 type ProfessionalIdentity=Record<string,string|undefined>;
 
@@ -174,7 +174,10 @@ const makeDoc=(children:Paragraph[],profile:ProfessionalIdentity,documentCode:st
  }]
 });
 const text=(value:unknown,fallback='Não informado')=>typeof value==='string'&&value.trim()?value.trim():fallback;
-const money=(value:number|null)=>value===null?'A definir':new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(value);
+const money=(value:number|string|null)=>{
+ const amount=value===null?NaN:Number(value);
+ return Number.isFinite(amount)?new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(amount):'A definir';
+};
 const datePt=(raw:string|null)=>raw?new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(`${raw}T12:00:00-03:00`)):'A definir';
 const generatedDatePt=(value:Date)=>new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric'}).format(value);
 const generatedDateIso=(value:Date)=>{
@@ -242,11 +245,39 @@ async function loadContractMaster(service:any,record:CommercialRecord){
 }
 
 const paymentLines=(record:CommercialRecord)=>{
+ const details=commercialTerms(record);
+ const methodMap:Record<string,string>={pix:'Pix',transferencia:'Transferência bancária',boleto:'Boleto',dinheiro:'Dinheiro',cartao:'Cartão',cartao_parcelado:'Cartão de crédito parcelado',outro:'Conforme condição específica'};
+ const method=String(details.payment_method||'').trim();
+ const installments=Array.isArray(details.installments)?details.installments as Array<Record<string,unknown>>:[];
+ if(installments.length)return [
+   p('Forma de pagamento: '+(methodMap[method]||method||'Não informada')+'.'),
+   ...installments.map((term,index)=>{
+     const amount=money(String(term.amount??''));
+     const date=String(term.due_date||'').trim();
+     const event=String(term.due_event||'').trim();
+     const due=date&&/^\\d{4}-\\d{2}-\\d{2}$/.test(date)?datePt(date):event||'Não definido';
+     return p(`Parcela ${index+1} de ${installments.length}: ${amount} • Vencimento: ${due}`);
+   })
+ ];
  const terms=Array.isArray(record.payment_terms)?record.payment_terms as Array<Record<string,unknown>>:[];
- if(!terms.length)return [p('Condição de pagamento: conforme condição comercial registrada no orçamento/contrato.')];
- return terms.map((term,index)=>p(`${index+1}. ${String(term.label??term.description??'Parcela')} — ${String(term.value??term.amount??'valor conforme registro')} — ${String(term.due??term.dueDate??'vencimento conforme registro')}`));
+ if(!terms.length)return [p('Condição de pagamento não informada.')];
+ return terms.map((term,index)=>{
+   const rawDue=String(term.due??term.dueDate??'').trim();
+   const due=/^\\d{4}-\\d{2}-\\d{2}$/.test(rawDue)?datePt(rawDue):rawDue||'Não informado';
+   return p(`Parcela ${index+1}: ${money(String(term.value??term.amount??''))} • Vencimento: ${due}`);
+ });
 };
 
+const legalRepresentative=(record:CommercialRecord)=>{
+ const t=commercialTerms(record);
+ return t.legal_representative&&typeof t.legal_representative==='object'?t.legal_representative as Record<string,unknown>:{};
+};
+const legalRepresentativeLabel=(record:CommercialRecord)=>{
+ const r=legalRepresentative(record);
+ const name=String(r.name??'').trim(),cpf=String(r.cpf??'').replace(/\\D/g,''),role=String(r.role??'').trim(),powers=String(r.powers??'').trim();
+ if(!name||cpf.length!==11||!role||!powers)throw new Error('Representante legal da pessoa jurídica incompleto. Edite a identificação antes de gerar o contrato.');
+ return `${name}, CPF nº ${cpfDisplay(cpf)}, na qualidade de ${role}, com poderes de representação: ${powers}`;
+};
 const commercialTerms=(record:CommercialRecord)=>record.commercial_terms&&typeof record.commercial_terms==='object'?record.commercial_terms as Record<string,unknown>:{};
 const termsSchedule=(record:CommercialRecord)=>{
  const t=commercialTerms(record),s=t.schedule&&typeof t.schedule==='object'?t.schedule as Record<string,unknown>:null;
@@ -381,11 +412,11 @@ function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,c
      : 'definidos individualmente por atividade no escopo técnico vinculado';
  return makeDoc([
    ...title(`CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE ENGENHARIA — ${text(record.contract_number,'CONTRATO SEM NUMERAÇÃO — NÃO EMITIR')}`,'Instrumento particular • identidade profissional protegida'),
-   small(`Data de emissão: ${generatedDatePt(generatedAt)} • Data de assinatura: a preencher no ato da assinatura`),
+   small(`Data de emissão: ${generatedDatePt(generatedAt)} • Versão do contrato: v${String(record.document_version||'1.0')} • Data de assinatura: a preencher no ato da assinatura`),
    p('Pelo presente instrumento particular de Contrato de Prestação de Serviços de Engenharia, de um lado:'),
    p(`CONTRATADO(A): ${professionalQualification(profile)}, doravante denominada simplesmente CONTRATADO(A);`),
    p(`CONTRATANTE: ${record.prospect_name}, CPF/CNPJ ${text(record.cpf_cnpj)}, com endereço em ${text(record.address)}, e-mail ${text(record.email)} e telefone/WhatsApp ${text(record.phone)}, doravante denominado(a) simplesmente CONTRATANTE.`),
-   ...(String(record.cpf_cnpj??'').replace(/\D/g,'').length===14 ? [p('Representante legal da pessoa jurídica: [NOME, CPF, QUALIDADE E PODERES DE REPRESENTAÇÃO A CONFIRMAR ANTES DA ASSINATURA].')] : []),
+   ...(String(record.cpf_cnpj??'').replace(/\D/g,'').length===14 ? [p('Representante legal da pessoa jurídica: '+legalRepresentativeLabel(record)+'.')] : []),
    ...contractCoobligors(record).map(item=>p(`COOBRIGADO(A) SOLIDÁRIO(A): ${item.name}, CPF nº ${item.cpf}, na qualidade de ${coobligorRole(item)}, aderindo expressamente às obrigações solidárias previstas neste instrumento.`)),
    p('Têm entre si, justo e acertado, o presente Contrato de Prestação de Serviços de Engenharia, que se regerá pelas cláusulas e condições a seguir:'),
    ...body,
@@ -393,6 +424,7 @@ function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,c
    p(`Valor total dos honorários: ${money(record.total_value)}.`,true,GOLD),
    p(`Nível de prestação: ${contractLevelSummary}.`),
    p('As condições comerciais, os quantitativos e os prazos individualizados são especificados abaixo e reproduzidos no Anexo I. A versão emitida preserva os dados aprovados no momento da emissão.'),
+   ...(record.document_version_reason?[p(`Motivo registrado para esta revisão: ${record.document_version_reason}.`)]:[]),
    h('PARCELAMENTO E VENCIMENTOS'),
    ...paymentLines(record),
    h('PRAZOS E QUANTITATIVOS CONTRATADOS'),
@@ -403,7 +435,7 @@ function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,c
    p('_____________________________________________'),
    p(professionalLabel(profile)),
    p('_____________________________________________'),
-   p('CONTRATANTE'),
+   p(String(record.cpf_cnpj??'').replace(/\D/g,'').length===14 ? `CONTRATANTE: ${record.prospect_name} • Representada por ${String(legalRepresentative(record).name??'')}` : 'CONTRATANTE'),
    ...contractCoobligors(record).flatMap(item=>[
      p('_____________________________________________'),
      p(`${item.name} — CPF ${item.cpf}`),
