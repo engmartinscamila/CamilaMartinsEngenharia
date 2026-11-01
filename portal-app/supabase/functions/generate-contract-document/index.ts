@@ -208,11 +208,11 @@ const paymentLines=(d:Data)=>{
  const methods:Record<string,string>={pix:'Pix',transferencia:'Transferência bancária',boleto:'Boleto',dinheiro:'Dinheiro',cartao:'Cartão',cartao_parcelado:'Cartão de crédito parcelado',outro:'Conforme condição específica'};
  if(installments.length)return [
    p('Forma de pagamento: '+(methods[String(termsData.payment_method||'')]||String(termsData.payment_method||'não informada'))+'.'),
-   ...installments.map((t,i)=>p('Parcela '+(i+1)+' de '+installments.length+': '+money(t.amount)+' • Vencimento: '+(/^\\d{4}-\\d{2}-\\d{2}$/.test(String(t.due_date||''))?datePt(t.due_date):String(t.due_event||'não informado'))))
+   ...installments.map((t,i)=>p('Parcela '+(i+1)+' de '+installments.length+': '+money(t.amount)+' • Vencimento: '+(/^\d{4}-\d{2}-\d{2}$/.test(String(t.due_date||''))?datePt(t.due_date):String(t.due_event||'não informado'))))
  ];
  const terms=Array.isArray(d.payment_terms)?d.payment_terms as Array<Record<string,unknown>>:[];
  if(!terms.length)return [p('PENDÊNCIA COMERCIAL: definir quantidade de parcelas, valores e vencimentos antes da emissão.')];
- return terms.map((t,i)=>p('Parcela '+(i+1)+': '+money(t.value??t.amount)+' • Vencimento: '+(/^\\d{4}-\\d{2}-\\d{2}$/.test(String(t.due??t.dueDate??''))?datePt(t.due??t.dueDate):String(t.due??t.dueDate??'não informado'))));
+ return terms.map((t,i)=>p('Parcela '+(i+1)+': '+money(t.value??t.amount)+' • Vencimento: '+(/^\d{4}-\d{2}-\d{2}$/.test(String(t.due??t.dueDate??''))?datePt(t.due??t.dueDate):String(t.due??t.dueDate??'não informado'))));
 };
 const brandHeader=(profile:ProfessionalIdentity)=>new Header({children:[
  new Paragraph({
