@@ -548,7 +548,10 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      const conditions=termScopes.find(row=>String(row.code||'')===String(item.code||''));
      if(conditions){
        serviceBlocks.push(p('QUANTITATIVO CONTRATADO: '+String(conditions.quantity||'')+' '+String(conditions.unit||'')+'. Entregáveis e respectivas quantidades: '+String(conditions.deliverables||'')+'.',true,GOLD));
-       serviceBlocks.push(p('Prazo desta atividade: '+String(conditions.days||'')+' '+dayType+'. Revisões incluídas: '+String(conditions.revisions??'')+'. Visitas incluídas: '+(conditions.visits===''?'não previstas':String(conditions.visits??'não previstas'))+'.'));
+       const municipality=['k','l','m'].includes(String(item.code||''));
+       const deadline=municipality?'Prazo administrativo para análise, aprovação e expedição: depende exclusivamente da Prefeitura, sem prazo garantido. A preparação e o protocolo técnicos pela CONTRATADA seguem o prazo técnico global do contrato.':'Prazo técnico desta atividade: '+String(conditions.days||'')+' '+dayType+'.';
+       serviceBlocks.push(p(deadline+' Revisões incluídas: '+String(conditions.revisions??'')+'. Visitas incluídas: '+(conditions.visits===''?'não previstas':String(conditions.visits??'não previstas'))+'.'));
+       if(municipality&&String(conditions.municipal_notes||'').trim())serviceBlocks.push(p('Observações complementares desta atividade: '+String(conditions.municipal_notes).trim()+'.'));
      }
      const deliverables=arrStrings(item.deliverables);
      if(deliverables.length){
