@@ -546,7 +546,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      }
      serviceBlocks.push(small(`Formato de entrega: ${arrStrings(item.deliveryFormats).join(', ')||'conforme condições particulares'} • Aceite de etapa: ${item.acceptanceRequired===false?'não obrigatório':'previsto'}`));
      if(!conditions){serviceBlocks.push(p('Quantitativo e prazo desta atividade não foram registrados na contratação.',true,GOLD));}
-     if(item.planningReference)serviceBlocks.push(small(`Referência de planejamento: ${String(item.planningReference)}`));
+     if(item.planningReference&&!conditions)serviceBlocks.push(small(`Referência de planejamento: ${String(item.planningReference)}`));
      if(item.notes)serviceBlocks.push(p(`Observação específica: ${String(item.notes)}`));
    });
 
