@@ -28,7 +28,7 @@ const record={
   payment_method:'pix',
   installments:[{amount:'1500.00',due_date:'2026-11-06',due_event:''},{amount:'10500.00',due_date:'2027-06-11',due_event:''}],
   schedule:{days:'150',day_type:'uteis',start_trigger:'Assinatura, pagamento e entrega dos documentos'},
-  scope:[{code:'k',quantity:'1',unit:'processo',days:'30',revisions:'0',visits:'',deliverables:'Protocolo e acompanhamento municipal sem garantia de deferimento'}],
+  scope:[{code:'k',quantity:'1',unit:'processo',days:'',deadline_type:'municipal',revisions:'0',visits:'',municipal_notes:'Protocolo somente após recebimento de todos os documentos',deliverables:'Preparação e acompanhamento perante a Prefeitura, sem garantia de deferimento'}],
   legal_representative:{name:'Maria da Silva',cpf:'12345678909',role:'Sócia-administradora',powers:'Representação conforme contrato social'}
  },
  document_version:'2.1',document_version_reason:'Atualização de condições comerciais',
@@ -46,6 +46,13 @@ assert.match(text,/11\/06\/2027/,'Segunda data brasileira');
 assert.ok(!text.includes('2026-11-06')&&!text.includes('1500.00'),'Word não pode expor formato de banco');
 assert.match(text,/Versão do contrato:\s*v2\.1/,'Identificar versão emitida');
 assert.match(text,/150 dias úteis/,'Preservar prazo de 150 dias úteis');
+assert.match(text,/depende exclusivamente da Prefeitura/,'Prazo externo municipal deve constar do Word');
+assert.match(text,/Observações complementares/,'Observações opcionais devem integrar o Word');
+assert.ok(!text.includes('prazo: 30')&&!text.includes('prazo: 0'),'Prazo municipal não pode virar número em contrato');
+assert.ok(editor.includes('municipalScopes')&&editor.includes('municipal_notes')&&editor.includes('municipalDeadline'),'Editor deve conter texto padrão, notas e prazo municipal');
+const municipalSql=read('docs/VALIDACAO_PRAZOS_MUNICIPAIS_PADRAO_20261101.sql');
+assert.ok(municipalSql.includes("v_entry->>'deadline_type'='municipal'"),'Banco deve dispensar dias numéricos apenas para etapas municipais');
+assert.ok(annex.includes('depende exclusivamente da Prefeitura'),'Anexo deve separar prazo municipal');
 assert.match(text,/Maria da Silva/,'Representante legal no corpo e assinatura');
 assert.match(text,/123\.456\.789-09/,'CPF formatado');
 assert.ok(!text.includes('A CONFIRMAR ANTES DA ASSINATURA'),'Não permitir placeholder de representante');
