@@ -255,7 +255,7 @@ const paymentLines=(record:CommercialRecord)=>{
      const amount=money(String(term.amount??''));
      const date=String(term.due_date||'').trim();
      const event=String(term.due_event||'').trim();
-     const due=date&&/^\\d{4}-\\d{2}-\\d{2}$/.test(date)?datePt(date):event||'Não definido';
+     const due=date&&/^\d{4}-\d{2}-\d{2}$/.test(date)?datePt(date):event||'Não definido';
      return p(`Parcela ${index+1} de ${installments.length}: ${amount} • Vencimento: ${due}`);
    })
  ];
@@ -263,7 +263,7 @@ const paymentLines=(record:CommercialRecord)=>{
  if(!terms.length)return [p('Condição de pagamento não informada.')];
  return terms.map((term,index)=>{
    const rawDue=String(term.due??term.dueDate??'').trim();
-   const due=/^\\d{4}-\\d{2}-\\d{2}$/.test(rawDue)?datePt(rawDue):rawDue||'Não informado';
+   const due=/^\d{4}-\d{2}-\d{2}$/.test(rawDue)?datePt(rawDue):rawDue||'Não informado';
    return p(`Parcela ${index+1}: ${money(String(term.value??term.amount??''))} • Vencimento: ${due}`);
  });
 };
