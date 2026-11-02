@@ -34,6 +34,9 @@ on:
       - 'scripts/finalization-word-regression.mjs'
       - 'scripts/finalization-regression.mjs'
       - 'scripts/commercial-generator-preflight-regression.mjs'
+      - 'scripts/anexo-aditivo-estrutura-regression.mjs'
+      - 'js/document-options-web.js'
+      - 'js/contract-documents-web.js'
       - 'scripts/contract-emission-regression.mjs'
       - 'scripts/contrato-documento-revisao-integridade.mjs'
       - 'scripts/commercial-custom-scope-regression.mjs'
@@ -71,6 +74,9 @@ on:
       - 'scripts/finalization-word-regression.mjs'
       - 'scripts/finalization-regression.mjs'
       - 'scripts/commercial-generator-preflight-regression.mjs'
+      - 'scripts/anexo-aditivo-estrutura-regression.mjs'
+      - 'js/document-options-web.js'
+      - 'js/contract-documents-web.js'
       - 'scripts/contract-emission-regression.mjs'
       - 'scripts/contrato-documento-revisao-integridade.mjs'
       - 'scripts/commercial-custom-scope-regression.mjs'
@@ -93,6 +99,11 @@ jobs:
         run: node --check js/document-function-routing-web.js
       - name: Conferir validação antes de criar documento e sincronismo dos geradores
         run: node scripts/commercial-generator-preflight-regression.mjs
+      - name: Auditar Anexo I, aditivos e código da interface
+        run: |
+          node --check js/document-options-web.js
+          node --check js/contract-documents-web.js
+          node scripts/anexo-aditivo-estrutura-regression.mjs
       - name: Verificar cadastro e emissão com condições comerciais
         run: node scripts/contract-emission-regression.mjs
       - name: Validar editor comercial e condições estruturadas
