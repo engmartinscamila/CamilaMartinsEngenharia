@@ -97,5 +97,4 @@ begin
       'old_document_id',v_record.contract_document_id,'historical_documents_untouched',true));
   return jsonb_build_object('updated',true,'old_code',v_old,'new_code',v_new,'requires_new_contract_revision',true);
 end;
-$function$
-
+$function$;
