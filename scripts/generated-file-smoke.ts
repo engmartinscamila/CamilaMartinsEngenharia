@@ -97,19 +97,28 @@ const services=[{
   code:'b',name:'Consultoria de Obra',included:true,levelApplicable:false,description:'Acompanhamento técnico consultivo.',deliverables:['Relatório técnico'],clientInputs:['Acesso à obra'],revisions:1,deliveryFormats:['PDF'],planningReference:'Conforme agenda',exclusions:['Execução de mão de obra'],acceptanceRequired:true
 }];
 const smartTexts={scope_limits_rule:{body:'Somente os serviços expressamente contratados integram o escopo QA.'},proposal_timeline_rule:{body:'Prazo QA conforme planejamento aprovado.'},anexo_timeline_rule:{body:'Cronograma QA vinculado ao contrato.'}};
+const commercialTerms={
+  schedule:{days:45,day_type:'uteis',start_trigger:'Recebimento dos documentos e aprovação do início da prestação'},
+  installments:[{number:1,value:10000,due:'2026-09-11'},{number:2,value:15000,due:'2026-10-20'}],
+  payment_method:'pix',
+  scope:[
+    {code:'a',quantity:1,unit:'projeto',deliverables:'Plantas técnicas, cortes, fachadas e memorial arquitetônico da residência',days:30,revisions:2,visits:0},
+    {code:'b',quantity:1,unit:'relatório',deliverables:'Relatório técnico de consultoria de obra',days:15,revisions:1,visits:1}
+  ]
+};
 
 const commercialRecord:any={
   id:'11111111-1111-4111-8111-111111111111',quote_number:'ORC-2026-09-QA01',contract_number:'CON-2026-09-QA01',status:'contrato_gerado',prospect_name:'Cliente Arquivo QA',
   cpf_cnpj:'000.000.000-00',email:'cliente.qa@example.com',phone:'(21) 98888-0000',address:'Rua Particular QA, 123 - Rio de Janeiro/RJ',city:'Rio de Janeiro',state:'RJ',
   property_address:'Rua da Obra QA, 999 - Rio de Janeiro/RJ',property_type:'Residencial',area_terreno_m2:420,area_construida_m2:210,construction_standard:'Médio/alto',experience_level:'essencial',
-  services,custom_service:'Compatibilização adicional QA.',total_value:25000,payment_terms:[{label:'Entrada',value:'R$ 10.000,00',due:'na assinatura'},{label:'Saldo',value:'R$ 15.000,00',due:'conforme etapas'}],
+  services,commercial_terms:commercialTerms,custom_service:'Compatibilização adicional QA.',total_value:25000,payment_terms:[{label:'Entrada',value:'R$ 10.000,00',due:'na assinatura'},{label:'Saldo',value:'R$ 15.000,00',due:'conforme etapas'}],
   valid_until:'2026-10-15',notes:'Condição comercial de teste.',quote_document_id:null,contract_document_id:null,contract_master_id:'master-qa',contract_master_version:3,smart_texts:smartTexts
 };
 
 const contractData:any={
   emitted_at:'2026-09-11T12:00:00-03:00',document_date:'2026-09-11',contract_signed_at:'2026-09-11',contract_number:'CON-2026-09-QA01',contract_master_version:3,
   client_name:'Cliente Arquivo QA',project_name:'Residência QA',project_type:'Residencial',property_address:'Rua da Obra QA, 999 - Rio de Janeiro/RJ',source_quote_number:'ORC-2026-09-QA01',
-  area_terreno_m2:420,area_construida_m2:210,contract_value:25000,payment_terms:commercialRecord.payment_terms,commercial_notes:'Condição QA',experience_level:'essencial',service_level:serviceLevel,
+  area_terreno_m2:420,area_construida_m2:210,contract_value:25000,payment_terms:commercialRecord.payment_terms,commercial_terms:commercialTerms,annex_source:'emitted_contract_snapshot',source_contract_document_version:'1.0',has_project:true,commercial_notes:'Condição QA',experience_level:'essencial',service_level:serviceLevel,
   scope_items:[...services,{code:'c',name:'Projeto Estrutural',included:false,description:'Não contratado.'}],scope_snapshot:services,smart_texts:smartTexts,
   approval_title:'Projeto Arquitetônico - Estudo preliminar',approval_description:'Entrega preliminar para validação.',delivered_at:'2026-09-10T15:00:00-03:00',approval_due_at:'2026-09-15T23:59:59-03:00',
   notification_reason:'Aguardando manifestação do cliente.',regularization_days:3,additional_service_description:'Alteração de layout da cozinha.',project_description:'Residência unifamiliar QA.',outside_contracted_scope:false
@@ -131,6 +140,7 @@ try{
     commercialRecord.services,
     commercialRecord.custom_service,
     commercialRecord.experience_level,
+    commercialRecord.commercial_terms,
   );
   await validateDocx(
     '02-contrato-comercial-final',
@@ -158,7 +168,7 @@ try{
   const nativeCases:any[]=[
     ['termo_aceite','06-termo-aceite','TERMO DE ACEITE DE ETAPA',{acceptance:'accepted_with_notes',acceptance_notes:'Ressalva QA registrada.'},['Aceito com ressalvas','Ressalvas / motivo da recusa:']],
     ['levantamento_tecnico','07-levantamento-tecnico','FICHA DE LEVANTAMENTO TÉCNICO / VISTORIA',{inspection_datetime:'11/09/2026 10:00',site_contact:'Responsável QA',observed:['electrical','structure'],conditions:['cracks'],conditions_description:'Fissura superficial QA.'},['Instalações / pontos elétricos','Fissura superficial QA.']],
-    ['servico_adicional','08-servico-adicional','TERMO DE APROVAÇÃO DE SERVIÇO ADICIONAL',{reasons:['scope_change'],pricing:'fixed',additional_service_description:'Alteração de layout QA.',additional_value:'R$ 2.500,00',schedule_impact:'5 dias úteis',approval:['approved']},['Alteração de layout QA.','R$ 2.500,00']],
+    ['servico_adicional','08-servico-adicional','TERMO ADITIVO AO CONTRATO — SERVIÇO ADICIONAL',{reasons:['scope_change'],pricing:'fixed',additional_service_code:'a',additional_service_name:'Projeto Arquitetônico',additional_service_description:'Alteração de layout QA.',additional_deliverables:'Planta de layout revisada e detalhamento de cozinha QA',additional_quantity:'1',additional_unit:'projeto',additional_deadline_type:'uteis',additional_deadline_days:'5',additional_revisions:'1',additional_value:'R$ 2.500,00',payment_method:'pix',payment_terms:'Pagamento via Pix na aprovação do aditivo',new_contract_total:'27500',schedule_impact:'5 dias úteis'},['Alteração de layout QA.','R$ 2.500,00','Planta de layout revisada']],
     ['autorizacao_imagem','09-autorizacao-imagem','AUTORIZAÇÃO DE USO DE IMAGEM E DIVULGAÇÃO',{materials:['facade','interiors'],channels:['portfolio','social'],privacy:['hide_address'],wait_months:'6'},['Fotografias externas / fachada','Aguardar 6 meses']],
     ['quitacao_encerramento','10-quitacao-encerramento','TERMO DE QUITAÇÃO E ENCERRAMENTO',{closing_reason:'completed',financial:'paid',delivered_files:'Projetos finais QA',open_items:'Nenhuma',public_processes:'Nenhum'},['Conclusão integral do escopo contratado','Quitação integral']]
   ];
