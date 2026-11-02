@@ -924,7 +924,7 @@
     await load();
   }
 
-  async function correctServiceClassification(recordId) {
+  async function correctServiceClassification(recordId,preselectCode='') {
     const record=rows.find(item=>String(item.id)===String(recordId)&&item.record_kind==='contrato');
     if(!record){msg('Contrato não localizado para revisão de atividades.','error');return;}
     const included=(Array.isArray(record.services)?record.services:[]).filter(item=>item?.included===true);
@@ -942,6 +942,7 @@
       Array.from(target.options).forEach(option=>{if(option.value===old.value)option.disabled=true;else option.disabled=false;});
       target.value='';
     }
+    if(preselectCode&&included.some(item=>String(item.code)===String(preselectCode)))old.value=preselectCode;
     old.addEventListener('change',describe);describe();
     overlay.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>overlay.remove()));
     overlay.querySelector('#reclassifyConfirm').addEventListener('click',async ()=>{
@@ -958,6 +959,8 @@
       }catch(error){button.disabled=false;msg(error?.message||'Falha ao atualizar classificação.','error');}
     });
   }
+
+  window.CMECorrectCommercialServiceClassification=correctServiceClassification;
 
   function renderList() {
     const box = $('commercialList');
