@@ -49,7 +49,9 @@ function contractScopeXml(services: unknown, customService: unknown, experienceL
       return;
     }
     const description = other && text(customService)
-      ? `Atividade contratada: ${sentencePart(customService)}. Entrega técnica aprovada: ${agreed}.`
+      ? sentencePart(customService).toLowerCase() === agreed.toLowerCase()
+        ? `Atividade e entrega técnica contratadas: ${agreed}.`
+        : `Atividade contratada: ${sentencePart(customService)}. Entrega técnica aprovada: ${agreed}.`
       : `Entrega técnica aprovada para esta atividade: ${agreed}.`;
     parts.push(wordParagraph(`${index + 1}. ${name}`, true));
     if (isProjectTierEligible(item) && serviceLevelCode(item)) {
