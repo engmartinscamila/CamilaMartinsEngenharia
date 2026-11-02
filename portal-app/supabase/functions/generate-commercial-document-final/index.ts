@@ -69,6 +69,28 @@ Deno.serve(async req => {
     if (selected.some(isOther) && text(source.data.custom_service).length < 12) {
       return json({ error: 'Descreva a atividade Outros com pelo menos 12 caracteres antes de gerar o documento.' }, 422);
     }
+    if (kind === 'contrato') {
+      // Bloqueio de classificações contraditórias: não transformar um serviço do catálogo
+      // em outra atividade apenas porque a ficha possui entregáveis de natureza distinta.
+      const terms = source.data.commercial_terms && typeof source.data.commercial_terms === 'object'
+        ? source.data.commercial_terms as Obj : {};
+      const scope = Array.isArray(terms.scope) ? terms.scope as Obj[] : [];
+      for (const item of selected) {
+        const code = text(item.code).toLowerCase();
+        const row = scope.find(entry => text(entry.code).toLowerCase() === code);
+        const deliverables = text(row?.deliverables).toLowerCase();
+        const normalized = deliverables.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');
+        if (!normalized) return json({error: 'Preencha os entregáveis específicos do serviço '+text(item.name)+' antes de emitir.'},422);
+        if (code === 'aj' && /projeto.*hidraulico|projeto.*hidrossanitario/.test(normalized) &&
+            !/rede externa|rede publica|saneamento externo|rede de abastecimento/.test(normalized)) {
+          return json({error: 'Inconsistência na classificação: Projeto de Saneamento / Redes de Água e Esgoto foi associado a pranchas de instalações prediais hidráulicas e hidrossanitárias. Corrija a atividade para Projeto Hidrossanitário Predial ou ajuste os entregáveis ao serviço realmente contratado antes de emitir.'},422);
+        }
+        if (code === 'u' && /elaboracao de projeto arquitetonico|projeto arquitetonico para projeto executivo/.test(normalized) &&
+            !/levantamento geometrico|levantamento cadastral|medicao cadastral/.test(normalized)) {
+          return json({error: 'Inconsistência na classificação: Levantamento Técnico / Cadastral possui entregáveis de elaboração de projeto arquitetônico/maquete. Corrija a seleção da atividade ou descreva os produtos específicos do levantamento antes de emitir.'},422);
+        }
+      }
+    }
     pointerField = kind === 'contrato' ? 'contract_document_id' : 'quote_document_id';
     previousDocumentId = text(source.data[pointerField]) || null;
     if (previousDocumentId) {
