@@ -129,7 +129,7 @@ Deno.serve(async req => {
     if (downloaded.error || !downloaded.data) throw downloaded.error ?? new Error('Não foi possível abrir o documento recém-gerado.');
     const originalBytes = new Uint8Array(await downloaded.data.arrayBuffer());
     const finalBytes = kind === 'contrato'
-      ? await enhanceContractDocument(originalBytes, source.data.property_address, source.data.services, source.data.custom_service, source.data.experience_level)
+      ? await enhanceContractDocument(originalBytes, source.data.property_address, source.data.services, source.data.custom_service, source.data.experience_level, source.data.commercial_terms)
       : await enhanceQuoteDocument(originalBytes, source.data.services, source.data.custom_service);
     if (finalBytes !== originalBytes) {
       const uploaded = await service.storage.from(bucket).upload(doc.data.arquivo, finalBytes, {
