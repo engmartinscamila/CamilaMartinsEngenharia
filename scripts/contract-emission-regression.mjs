@@ -10,6 +10,17 @@ assert.equal((await checkGuard({contract_document_id:'draft'},{workflow_status:'
 assert.equal((await checkGuard({contract_document_id:'issued'},{id:'issued'},{id:'snapshot'})).status,409,'Documento emitido deve permanecer imutável');
 assert.equal((await checkGuard({status:'convertido',contract_document_id:'partial'},{id:'partial',workflow_status:'gerado',generated_at:'2026-10-31'})).status,200,'Falha parcial antes do snapshot deve permitir nova tentativa');
 const source=read('js/commercial-document-preview-web.js');
+const checkStart=source.indexOf('function validateContractScopeForPreview(');
+const checkEnd=source.indexOf('async function preview(',checkStart);
+assert.ok(checkStart>=0&&checkEnd>checkStart,'Prévia precisa conferir serviços antes de gerar revisão.');
+const checkPreview=vm.runInNewContext(source.slice(checkStart,checkEnd)+';validateContractScopeForPreview;');
+const incompatible={services:[{code:'u',name:'Levantamento Técnico',included:true},{code:'am',name:'Projeto Hidráulico',included:true}],commercial_terms:{scope:[{code:'u',deliverables:'Elaboração de projeto arquitetônico para projeto executivo e maquete tridimensional'},{code:'am',deliverables:'Prancha de projeto hidráulico executivo'}]}};
+const pending=checkPreview(incompatible);
+assert.equal(pending.length,1,'Prévia deve identificar a única classificação incompatível, sem bloquear atividade hidráulica correta.');
+assert.equal(pending[0].code,'u');
+assert.equal(pending[0].kind,'classification');
+assert.ok(source.includes('data-preview-correct')&&source.includes('CMECorrectCommercialServiceClassification'),'O bloqueio deve oferecer correção direta.');
+assert.ok(source.includes("disabled title="),'Confirmação deve ficar desabilitada enquanto houver inconsistências.');
 async function scenario({cancel=false,fail=false,deliveryFail=false}={}){
  const calls=[],events=[],message={},actions={};let downloads=0;
  const modal={querySelector(selector){return actions[selector]??=( {addEventListener(){},classList:{remove(){}},value:''} );},querySelectorAll(){return[];},remove(){}};
