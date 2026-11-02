@@ -47,7 +47,7 @@ console.log('PASS: validação de identidade e Contrato Mestre antes de criar/vi
 assert.ok(canonical.includes('serviceBudgetDescription'), 'Orçamento não usa campo específico da matriz.');
 assert.ok(canonical.includes('item.budgetDescription??item.description'), 'Orçamento não preserva fallback legado quando a matriz não está aprovada.');
 const finalGenerator = readFileSync('supabase/functions/generate-commercial-document-final/index.ts', 'utf8')+readFileSync('supabase/functions/_shared/commercial-word-enhancements.ts','utf8');
-assert.ok(finalGenerator.includes('text(item.contractScope) || text(item.description)'), 'Contrato não prioriza contractScope aprovado.');
+assert.ok(finalGenerator.includes('specificRows.find(') && finalGenerator.includes('Entrega técnica aprovada para esta atividade:') && !finalGenerator.includes('text(item.contractScope) || text(item.description)'), 'Contrato deve priorizar entregáveis individuais do orçamento e Anexo I, sem textos genéricos do catálogo.');
 const derivedGenerator = readFileSync('supabase/functions/generate-contract-document/index.ts', 'utf8');
 assert.ok(derivedGenerator.includes('item.annexScope??item.description'), 'Anexo I não prioriza annexScope aprovado.');
 assert.ok(derivedGenerator.includes('item.customDescription'), 'Documento derivado não preserva descrição de serviço personalizado.');
