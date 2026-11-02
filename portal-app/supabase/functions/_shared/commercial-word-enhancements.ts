@@ -11,6 +11,7 @@ const serviceLevelLabel = (item: Obj) => {
   return label || serviceLevelCode(item).toUpperCase();
 };
 const xmlEsc = (value: unknown) => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+const sentencePart = (value: unknown) => text(value).replace(/[.!?]+\s*$/u, '');
 const wordParagraph = (value: string, bold = false) => `<w:p><w:pPr><w:spacing w:after="120" w:line="300" w:lineRule="auto"/></w:pPr><w:r><w:rPr>${bold ? '<w:b/>' : ''}<w:rFonts w:ascii="Century Gothic" w:hAnsi="Century Gothic"/></w:rPr><w:t xml:space="preserve">${xmlEsc(value)}</w:t></w:r></w:p>`;
 const customScopeDescription = (specification: string) => `Atividade específica solicitada: ${specification}. A prestação abrange exclusivamente esta atividade e os resultados expressamente descritos e aprovados no orçamento e no Anexo I. Quantidades, formato de entrega, visitas, revisões, prazo e etapas somente serão considerados incluídos quando definidos expressamente; acréscimos exigem aprovação e contratação prévias.`;
 function selectedServices(services: unknown) {
@@ -19,9 +20,11 @@ function selectedServices(services: unknown) {
 function paragraphText(paragraph: string) {
   return [...paragraph.matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g)].map(match => match[1]).join('');
 }
-function contractScopeXml(services: unknown, customService: unknown, experienceLevel: unknown, propertyAddress: string) {
+function contractScopeXml(services: unknown, customService: unknown, experienceLevel: unknown, propertyAddress: string, commercialTerms: unknown) {
   const selected = selectedServices(services);
   if (!selected.length && !text(customService)) return '';
+  const terms = commercialTerms && typeof commercialTerms === 'object' ? commercialTerms as Obj : {};
+  const specificRows = Array.isArray(terms.scope) ? terms.scope.filter(row => row && typeof row === 'object') as Obj[] : [];
   const perItemLevels = selected.filter(item => isProjectTierEligible(item) && serviceLevelCode(item));
   const distinctLevels = [...new Set(perItemLevels.map(serviceLevelCode))];
   const parts = [
@@ -37,9 +40,12 @@ function contractScopeXml(services: unknown, customService: unknown, experienceL
   selected.forEach((item, index) => {
     const other = isOther(item);
     const name = other ? 'Serviço técnico personalizado' : text(item.name) || `Serviço ${index + 1}`;
+    const row = specificRows.find(entry => text(entry.code).toLowerCase() === text(item.code).toLowerCase());
+    const agreed = sentencePart(row?.deliverables);
+    if (!row || !agreed) throw new Error(`Preencha os entregáveis específicos de ${name} nas condições comerciais antes de gerar o contrato.`);
     const description = other && text(customService)
-      ? customScopeDescription(text(customService))
-      : text(item.contractScope) || text(item.description) || 'Serviço técnico conforme o escopo expressamente contratado e detalhado no Anexo I.';
+      ? `Atividade contratada: ${sentencePart(customService)}. Entrega técnica aprovada: ${agreed}.`
+      : `Entrega técnica aprovada para esta atividade: ${agreed}.`;
     parts.push(wordParagraph(`${index + 1}. ${name}`, true));
     if (isProjectTierEligible(item) && serviceLevelCode(item)) {
       parts.push(wordParagraph(`Nível desta atividade: ${serviceLevelLabel(item)}.`));
@@ -61,7 +67,7 @@ function insertionBeforeParagraph(xml: string, marker: string) {
   if (start === undefined) throw new Error('Não foi possível localizar um parágrafo válido para o escopo do contrato.');
   return start;
 }
-async function enhanceContractDocument(bytes: Uint8Array, propertyAddress: string, services: unknown, customService: unknown, experienceLevel: unknown) {
+async function enhanceContractDocument(bytes: Uint8Array, propertyAddress: string, services: unknown, customService: unknown, experienceLevel: unknown, commercialTerms: unknown) {
   const zip = await JSZip.loadAsync(bytes);
   const file = zip.file('word/document.xml');
   if (!file) throw new Error('O contrato gerado não contém o documento Word esperado.');
@@ -81,7 +87,7 @@ async function enhanceContractDocument(bytes: Uint8Array, propertyAddress: strin
         : paragraph);
   }
   // Não substitui endereço cadastral do contratante no preâmbulo.
-  const scopeXml = contractScopeXml(services, customService, experienceLevel, propertyAddress);
+  const scopeXml = contractScopeXml(services, customService, experienceLevel, propertyAddress, commercialTerms);
   if (scopeXml) {
     const insertion = insertionBeforeParagraph(xml, 'RESUMO COMERCIAL VINCULADO');
     xml = xml.slice(0, insertion) + scopeXml + xml.slice(insertion);
