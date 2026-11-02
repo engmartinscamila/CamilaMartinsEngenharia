@@ -89,7 +89,7 @@ export const CONTRACT_DOCUMENT_OPTIONS: { kind: Exclude<ContractDocumentKind, 'n
   { kind: 'anexo_i', title: 'Anexo I', description: 'Escopo, proposta comercial, valores e cronograma somente dos serviços contratados.' },
   { kind: 'estudo_preliminar', title: 'Estudo Preliminar', description: 'Documento auxiliar opcional. Se não estiver contratado no item (a), sua geração não altera o escopo do Anexo I.' },
   { kind: 'levantamento_tecnico', title: 'Ficha de Levantamento / Vistoria', description: 'Documento opcional para registrar medidas e condições verificadas no local.' },
-  { kind: 'servico_adicional', title: 'Serviço Adicional', description: 'Orçamento e aprovação prévia para trabalho fora do escopo original.' },
+  { kind: 'servico_adicional', title: 'Aditivo contratual — Serviço adicional', description: 'Nova atividade vinculada ao contrato original, com objeto, quantidade, preço e prazo específicos, sujeita ao aceite do cliente.' },
   { kind: 'autorizacao_imagem', title: 'Autorização de Uso de Imagem', description: 'Permissões e restrições para divulgação do projeto.' },
   { kind: 'quitacao_encerramento', title: 'Quitação e Encerramento', description: 'Formalização do encerramento e situação financeira do contrato.' },
 ];
