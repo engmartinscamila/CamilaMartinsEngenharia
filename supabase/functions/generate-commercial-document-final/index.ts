@@ -79,7 +79,7 @@ Deno.serve(async req => {
         const code = text(item.code).toLowerCase();
         const row = scope.find(entry => text(entry.code).toLowerCase() === code);
         const deliverables = text(row?.deliverables).toLowerCase();
-        const normalized = deliverables.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');
+        const normalized = deliverables.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         if (!normalized) return json({error: 'Preencha os entregáveis específicos do serviço '+text(item.name)+' antes de emitir.'},422);
         if (code === 'aj' && /projeto.*hidraulico|projeto.*hidrossanitario/.test(normalized) &&
             !/rede externa|rede publica|saneamento externo|rede de abastecimento/.test(normalized)) {
