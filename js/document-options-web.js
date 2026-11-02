@@ -30,8 +30,8 @@ const schemas={
   ]
  },
  servico_adicional:{
-  title:'Serviço adicional vinculado ao contrato',
-  intro:'Selecione a atividade do catálogo. O texto padrão será preenchido automaticamente e poderá ser ajustado nesta contratação sem alterar o catálogo global.',
+  title:'Aditivo contratual — serviço adicional',
+  intro:'O aditivo herda os dados do contrato vigente. Preencha somente o novo serviço, seu escopo, quantitativos, prazo e valor. O contrato original não será sobrescrito; o adicional dependerá de aceite do cliente.',
   groups:[
    ['Origem da solicitação','reasons',[['extra_revisions','Revisão além das rodadas incluídas'],['scope_change','Alteração de escopo, premissas, programa, metragem ou layout'],['level_upgrade','Migração para nível de prestação superior'],['survey','Vistoria ou levantamento não incluído'],['editable_file','Arquivo editável ou formato não previsto'],['other','Outro']],'checkbox'],
    ['Critério comercial','pricing',[['hour','Hora técnica'],['percentage','Percentual sobre etapa afetada'],['fixed','Valor fechado aprovado para esta atividade']],'radio']
@@ -40,8 +40,15 @@ const schemas={
    {key:'additional_service_code',type:'service-select',label:'Atividade adicional *'},
    {key:'additional_service_level',type:'level-select',label:'Nível desta atividade'},
    {key:'additional_service_description',type:'textarea',label:'Descrição do serviço adicional *',rows:6},
+   {key:'additional_deliverables',type:'textarea',label:'Entregáveis específicos deste adicional *',rows:4},
+   {key:'additional_quantity',type:'number',label:'Quantidade do adicional *'},
+   {key:'additional_unit',type:'text',label:'Unidade (prancha, documento, visita etc.) *'},
+   {key:'additional_deadline_days',type:'number',label:'Prazo técnico adicional em dias (se aplicável)'},
+   {key:'additional_deadline_type',type:'select',label:'Tipo de prazo',options:[['uteis','Dias úteis'],['corridos','Dias corridos'],['municipal','Depende de órgão público']]},
+   {key:'additional_revisions',type:'number',label:'Revisões incluídas no adicional'},
    {key:'additional_value',type:'money',label:'Valor adicional (R$) *'},
    {key:'payment_method',type:'payment-select',label:'Forma de pagamento *'},
+   {key:'payment_terms',type:'textarea',label:'Condição de pagamento do adicional *',rows:3},
    {key:'schedule_impact',type:'textarea',label:'Impacto no cronograma',rows:3},
    {key:'other_reason',type:'textarea',label:'Outro motivo / observações',rows:5}
   ]
@@ -152,8 +159,13 @@ function validate(kind,o){
   if(!o.pricing)return'Selecione um único critério comercial.';
   if(!o.additional_service_code)return'Selecione a atividade adicional.';
   if(!o.additional_service_description)return'Confira ou ajuste a descrição da atividade.';
+  if(!o.additional_deliverables)return'Defina os entregáveis adicionais.';
+  if(!o.additional_quantity||Number(o.additional_quantity)<=0||!o.additional_unit)return'Informe quantidade e unidade do adicional.';
+  if(!o.additional_deadline_type)return'Escolha o tipo de prazo do adicional.';
+  if(o.additional_deadline_type!=='municipal'&&(!o.additional_deadline_days||Number(o.additional_deadline_days)<=0))return'Informe o prazo técnico adicional em dias.';
   if(!o.additional_value)return'Informe o valor adicional.';
   if(!o.payment_method)return'Selecione a forma de pagamento.';
+  if(!o.payment_terms)return'Informe a condição de pagamento deste adicional.';
  }
  if(kind==='levantamento_tecnico'){if(!o.survey_datetime)return'Informe a data e o horário da vistoria ou use o botão "Usar agora".'}
  if(kind==='quitacao_encerramento'){if(!o.closing_reason)return'Selecione o motivo do encerramento.';if(o.closing_reason==='other'&&!o.closing_other)return'Descreva o outro motivo.';if(!o.financial)return'Selecione a situação financeira.';if(o.financial==='balance'&&(!o.balance_value||!o.balance_due))return'Informe valor e vencimento do saldo.'}
@@ -200,22 +212,22 @@ async function getPreview(projectId,kind,approvalId,options,bump='minor',reason=
 function parseMoney(v){const t=String(v??'').trim().replace(/\s/g,'');if(!t)return null;const n=Number(t.includes(',')?t.replace(/\./g,'').replace(',','.'):t);return Number.isFinite(n)?n:null}
 const money=v=>Number.isFinite(Number(v))?Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):'Não informado';
 async function previewStep(projectId,kind,approvalId,options){
- ensureModal();let bump='minor',reason='';let p=await getPreview(projectId,kind,approvalId,options,bump,reason);
+ ensureModal();const bump='major';let reason='';let p=await getPreview(projectId,kind,approvalId,options,bump,reason);
  if(kind==='servico_adicional'){
   const add=parseMoney(options.additional_value),base=Number(p.contract_value);
-  if(add!==null&&Number.isFinite(base))options.new_total_value=base+add;
+  if(add!==null&&Number.isFinite(base)){options.new_total_value=base+add;options.new_contract_total=String(base+add);}
  }
  $('documentOptionsTitle').textContent='Pré-visualização antes do Word';$('documentOptionsIntro').innerHTML='<p>Confira os dados principais. Nenhum Word será criado antes da confirmação.</p>';$('documentOptionsForm').classList.add('doc-hidden');
  const box=$('documentPreview');box.classList.remove('doc-hidden');
  const render=()=>{
   const scope=Array.isArray(p.scope_items)?p.scope_items:[];
   const additional=kind==='servico_adicional'?`<div class="doc-preview-block"><small>Serviço adicional</small><strong>${esc(options.additional_service_name||'—')}</strong><span>${esc(options.additional_service_description||'')}</span><span>Valor adicional: ${esc(options.additional_value||'—')} • Novo total de referência: ${options.new_total_value?esc(money(options.new_total_value)):'a calcular'}</span></div>`:'';
-  box.innerHTML=`<div class="doc-preview-grid"><div><small>Versão</small><strong id="documentPreviewVersion">v${esc(p.next_version||'1.0')}</strong></div><div><small>Contrato</small><strong>${esc(p.contract_number||'—')}</strong></div><div><small>Cliente</small><strong>${esc(p.client_name||'—')}</strong></div><div><small>Projeto</small><strong>${esc(p.project_name||'—')}</strong></div></div><div class="doc-preview-block"><small>Endereço da obra</small><strong>${esc(p.property_address||'Não informado')}</strong></div><div class="doc-preview-block"><small>Endereço cadastral do contratante</small><span>${esc(p.client_address||'Não informado')}</span></div><div class="doc-preview-block"><small>Valor contratual vigente</small><span>${esc(money(p.contract_value))}</span></div>${additional}<div class="doc-preview-block"><small>Serviços do contrato</small><span>${scope.length?scope.map(x=>`(${esc(x.code)}) ${esc(x.name)}`).join(' • '):'Nenhum item localizado'}</span></div>${p.revision_of?'<div class="doc-field"><label>Tipo de nova versão</label><select id="documentVersionBump"><option value="minor">Revisão menor</option><option value="major">Nova versão principal</option></select></div><div class="doc-field"><label>Motivo da nova versão *</label><input id="documentVersionReason" placeholder="Ex.: ajuste solicitado pelo cliente"></div>':'<p class="doc-preview-first">Primeira emissão deste tipo de documento: versão v1.0.</p>'}`;
-  if(p.revision_of){$('documentVersionBump').value=bump;$('documentVersionReason').value=reason;$('documentVersionBump').onchange=async e=>{bump=e.target.value;reason=$('documentVersionReason').value.trim();try{p=await getPreview(projectId,kind,approvalId,options,bump,reason);$('documentPreviewVersion').textContent=`v${p.next_version||'1.0'}`}catch(err){setError(err?.message||'Não foi possível recalcular a versão.')}}}
+  box.innerHTML=`<div class="doc-preview-grid"><div><small>Versão</small><strong id="documentPreviewVersion">v${esc(p.next_version||'1.0')}</strong></div><div><small>Contrato</small><strong>${esc(p.contract_number||'—')}</strong></div><div><small>Cliente</small><strong>${esc(p.client_name||'—')}</strong></div><div><small>Projeto</small><strong>${esc(p.project_name||'—')}</strong></div></div><div class="doc-preview-block"><small>Endereço da obra</small><strong>${esc(p.property_address||'Não informado')}</strong></div><div class="doc-preview-block"><small>Endereço cadastral do contratante</small><span>${esc(p.client_address||'Não informado')}</span></div><div class="doc-preview-block"><small>Valor contratual vigente</small><span>${esc(money(p.contract_value))}</span></div>${additional}<div class="doc-preview-block"><small>Serviços do contrato</small><span>${scope.length?scope.map(x=>`(${esc(x.code)}) ${esc(x.name)}`).join(' • '):'Nenhum item localizado'}</span></div>${p.revision_of?'<div class="doc-field"><label>Justificativa administrativa da revisão (não aparecerá no Word) *</label><input id="documentVersionReason" placeholder="Ex.: atualização da versão de referência"></div>':'<p class="doc-preview-first">Primeira emissão deste tipo de documento: versão v1.0.</p>'}`;
+  if(p.revision_of){$('documentVersionReason').value=reason;}
  };
  render();setError('');$('documentOptionsModal').classList.remove('doc-hidden');
  const btn=$('documentOptionsModal').querySelector('[data-options-confirm]');btn.textContent='Confirmar e preparar documento';
- return new Promise(resolve=>{pendingResolve=resolve;btn.onclick=()=>{reason=$('documentVersionReason')?.value.trim()||'';bump=$('documentVersionBump')?.value||'minor';if(p.revision_of&&!reason){setError('Informe o motivo da nova versão para preservar a rastreabilidade.');return}finish({extra:{document_options:options,version_bump:bump,version_reason:reason,...options,...(projectId.startsWith('commercial:')?{contract_id:$('contractProject')?.selectedOptions[0]?.dataset.contractId}:{})},preview:p})}})
+ return new Promise(resolve=>{pendingResolve=resolve;btn.onclick=()=>{reason=$('documentVersionReason')?.value.trim()||'';if(p.revision_of&&!reason){setError('Informe o motivo da nova versão para preservar a rastreabilidade.');return}finish({extra:{document_options:options,version_bump:bump,version_reason:reason,...options,...(projectId.startsWith('commercial:')?{contract_id:$('contractProject')?.selectedOptions[0]?.dataset.contractId}:{})},preview:p})}})
 }
 async function prepare(kind,approvalId){
  const select=$('contractProject'),projectId=select?.value;if(!projectId)return;
