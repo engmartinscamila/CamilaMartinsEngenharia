@@ -549,7 +549,8 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      const conditions=termScopes.find(row=>String(row.code||'')===String(item.code||''));
      const specificDeliverables=String(conditions?.deliverables||'').trim().replace(/[.!?]+\s*$/u,'');
      if(conditions&&!specificDeliverables)throw new Error('Entregáveis específicos ausentes da atividade '+serviceName(item)+'.');
-     serviceBlocks.push(p(specificDeliverables?'Entrega técnica expressamente contratada: '+specificDeliverables+'.':serviceAnnexDescription(item)));
+     if(!conditions||!specificDeliverables)throw new Error('O contrato emitido não contém entregáveis específicos para '+serviceName(item)+'. Corrija as condições contratuais e emita uma nova revisão antes do Anexo I.');
+     serviceBlocks.push(p('Entrega técnica expressamente contratada: '+specificDeliverables+'.'));
      if(['k','l','m'].includes(String(item.code||'')))serviceBlocks.push(p('IMPORTANTE: a CONTRATADA entrega o serviço técnico-administrativo de organização, protocolo e acompanhamento descrito neste Anexo. Alvará de Construção e Habite-se são documentos expedidos exclusivamente pela Prefeitura, sujeitos à análise e decisão do órgão público, sem garantia de deferimento.',true,GOLD));
      if(conditions){
        serviceBlocks.push(p('QUANTITATIVO CONTRATADO: '+String(conditions.quantity||'')+' '+String(conditions.unit||'')+'.',true,GOLD));
@@ -564,11 +565,11 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
        deliverables.forEach(value=>serviceBlocks.push(bullet(value)));
      }
      const clientInputs=arrStrings(item.clientInputs);
-     if(clientInputs.length){
+     if(clientInputs.length&&!conditions){
        serviceBlocks.push(small('Insumos e definições esperados do cliente:'));
        clientInputs.forEach(value=>serviceBlocks.push(bullet(value)));
      }
-     serviceBlocks.push(small(`Formato de entrega: ${arrStrings(item.deliveryFormats).join(', ')||'conforme condições particulares'} • Aceite de etapa: ${item.acceptanceRequired===false?'não obrigatório':'previsto'}`));
+     if(!conditions)serviceBlocks.push(small(`Formato de entrega do catálogo: ${arrStrings(item.deliveryFormats).join(', ')||'não especificado'} • Aceite de etapa: ${item.acceptanceRequired===false?'não obrigatório':'previsto'}`));
      if(!conditions){serviceBlocks.push(p('Quantitativo e prazo desta atividade não foram registrados na contratação.',true,GOLD));}
      if(item.planningReference&&!conditions)serviceBlocks.push(small(`Referência de planejamento: ${String(item.planningReference)}`));
      if(item.notes)serviceBlocks.push(p(`Observação específica: ${String(item.notes)}`));
@@ -578,6 +579,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      ...t('ANEXO I','ESCOPO DE SERVIÇOS • PROPOSTA COMERCIAL • CRONOGRAMA'),
      ...identity(d,profile,generatedAt),
      h('2. FUNÇÃO DESTE ANEXO'),
+     p(`Origem documental: contrato ${value(d,'contract_number')} — versão v${value(d,'source_contract_document_version','1.0')}. Dados comerciais reproduzidos da emissão oficial correspondente.`,true,GOLD),
      p(smartRule(d,'anexo_scope_governance','Este Anexo I integra o Contrato e constitui a referência específica para o escopo, entregáveis, revisões, formatos, valores e planejamento da contratação. Somente os itens expressamente indicados como incluídos integram o objeto.')),
      h('3. DADOS DO IMÓVEL / OBRA'),
      p(`Tipo: ${value(d,'project_type')}`),
@@ -604,7 +606,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      p(smartRule(d,'anexo_timeline_rule','O prazo e as referências de planejamento obedecem ao Contrato Mestre e às condições específicas deste Anexo I, considerando o recebimento dos insumos necessários.')),
      p('Prazos de análise de órgãos públicos, concessionárias, cartórios e terceiros são externos ao prazo técnico de elaboração.'),
      h('10. REVISÕES, ACEITES E ALTERAÇÕES'),
-     p(smartRule(d,'anexo_revision_rule','Na ausência de indicação diversa em item específico, aplicam-se até 2 (duas) rodadas de revisão por etapa para ajustes dentro do escopo original. Pedidos que alterem programa, metragem, layout, partido, premissas aprovadas ou serviços não listados poderão exigir orçamento e aditivo.')),
+     p('As quantidades de revisões são exclusivamente as informadas para cada atividade no quadro deste Anexo I. Correções de falhas técnicas próprias não consomem revisões contratadas. Serviços, formatos ou alterações além do objeto exigem aditivo específico aceito pelas partes.'),
      p('Os aceites de etapa previstos acima serão registrados por Termo de Aceite ou pelo mecanismo contratual aplicável.'),
      h('11. ASSINATURAS'),
      ...sig(profile,generatedAt,d)
@@ -650,7 +652,7 @@ Deno.serve(async(req)=>{
   if(rateError)return json({error:'Muitas tentativas. Aguarde antes de repetir a operação.'},429);
 
   const {data:row,error}=await service.from('documentos')
-   .select('id,cliente_id,projeto_id,contract_id,nome,arquivo,document_kind,workflow_status,generated_data,versao')
+   .select('id,cliente_id,projeto_id,contract_id,nome,arquivo,document_kind,workflow_status,generated_data,versao,version_reason')
    .eq('id',documentId).maybeSingle();
   if(error)throw error;
   if(!row)return json({error:'Documento não encontrado.'},404);
@@ -725,10 +727,28 @@ Deno.serve(async(req)=>{
   if(!Number.isInteger(masterVersion)||masterVersion<=0||!smartTexts||typeof smartTexts!=='object'||Array.isArray(smartTexts)||!Object.keys(smartTexts as Record<string,unknown>).length){
    return json({error:'Este rascunho é anterior à governança documental atual. Prepare o documento novamente para alinhar contrato mestre, serviços e textos inteligentes.'},409);
   }
+  if(row.document_kind==='anexo_i'){
+    if(sourceData.annex_source!=='emitted_contract_snapshot'||!sourceData.source_contract_document_id)
+      return json({error:'O Anexo I deve ser preparado novamente a partir da versão oficial do contrato emitido.'},409);
+    const selected=includedScope(sourceData);
+    const terms=sourceData.commercial_terms&&typeof sourceData.commercial_terms==='object'?sourceData.commercial_terms as Record<string,unknown>:{};
+    const termsScope=Array.isArray(terms.scope)?terms.scope as Array<Record<string,unknown>>:[];
+    for(const item of selected){
+      const code=String(item.code??'').toLowerCase();
+      const row=termsScope.find(t=>String(t.code??'').toLowerCase()===code);
+      const agreed=String(row?.deliverables??'').trim();
+      if(!agreed)return json({error:'O contrato original não contém entregáveis específicos de '+serviceName(item)+'. Corrija os dados contratuais e emita uma revisão antes do Anexo I.'},422);
+      const normalized=agreed.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      if(code==='aj'&&/projeto.*hidraulico|projeto.*hidrossanitario/.test(normalized)&&!/rede externa|rede publica|saneamento externo|rede de abastecimento/.test(normalized))
+        return json({error:'O contrato original classifica instalações prediais como saneamento externo. Corrija o enquadramento e emita nova revisão antes do Anexo I.'},422);
+      if(code==='u'&&/elaboracao de projeto arquitetonico|projeto arquitetonico para projeto executivo/.test(normalized)&&!/levantamento geometrico|levantamento cadastral|medicao cadastral/.test(normalized))
+        return json({error:'O contrato original classifica projeto arquitetônico como levantamento cadastral. Corrija o enquadramento e emita nova revisão antes do Anexo I.'},422);
+    }
+  }
   const generatedData={...sourceData,emitted_at:generatedAtIso,document_date:documentDate,document_version:row.versao,document_version_reason:row.version_reason??null};
   const buffer=await Packer.toBuffer(build(row.document_kind,generatedData,professionalProfile,generatedAt));
   const version=String(row.versao??'1.0').replace(/[^0-9.]/g,'')||'1.0';
-  const path=`${row.projeto_id}/contratual/${row.id}/${names[row.document_kind]}-v${version}.docx`;
+  const path=`${row.projeto_id||row.contract_id}/contratual/${row.id}/${names[row.document_kind]}-v${version}.docx`;
   const upload=await service.storage.from('documentos').upload(path,buffer,{contentType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',upsert:true});
   if(upload.error)throw upload.error;
   const updated=await service.from('documentos').update({
