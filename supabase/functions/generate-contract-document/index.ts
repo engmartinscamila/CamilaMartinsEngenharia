@@ -546,18 +546,20 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
 
    included.forEach((item,index)=>{
      serviceBlocks.push(sub(`${index+1}. (${String(item.code??'')}) ${serviceName(item)}`));
-     serviceBlocks.push(p(serviceAnnexDescription(item)));
-     if(['k','l','m'].includes(String(item.code||'')))serviceBlocks.push(p('IMPORTANTE: a CONTRATADA entrega o serviço técnico-administrativo de organização, protocolo e acompanhamento descrito neste Anexo. Alvará de Construção e Habite-se são documentos expedidos exclusivamente pela Prefeitura, sujeitos à análise e decisão do órgão público, sem garantia de deferimento.',true,GOLD));
      const conditions=termScopes.find(row=>String(row.code||'')===String(item.code||''));
+     const specificDeliverables=String(conditions?.deliverables||'').trim().replace(/[.!?]+\s*$/u,'');
+     if(conditions&&!specificDeliverables)throw new Error('Entregáveis específicos ausentes da atividade '+serviceName(item)+'.');
+     serviceBlocks.push(p(specificDeliverables?'Entrega técnica expressamente contratada: '+specificDeliverables+'.':serviceAnnexDescription(item)));
+     if(['k','l','m'].includes(String(item.code||'')))serviceBlocks.push(p('IMPORTANTE: a CONTRATADA entrega o serviço técnico-administrativo de organização, protocolo e acompanhamento descrito neste Anexo. Alvará de Construção e Habite-se são documentos expedidos exclusivamente pela Prefeitura, sujeitos à análise e decisão do órgão público, sem garantia de deferimento.',true,GOLD));
      if(conditions){
-       serviceBlocks.push(p('QUANTITATIVO CONTRATADO: '+String(conditions.quantity||'')+' '+String(conditions.unit||'')+'. Entregáveis e respectivas quantidades: '+String(conditions.deliverables||'')+'.',true,GOLD));
+       serviceBlocks.push(p('QUANTITATIVO CONTRATADO: '+String(conditions.quantity||'')+' '+String(conditions.unit||'')+'.',true,GOLD));
        const municipality=['k','l','m'].includes(String(item.code||''));
        const deadline=municipality?'Prazo administrativo para análise, aprovação e expedição: depende exclusivamente da Prefeitura, sem prazo garantido. A preparação e o protocolo técnicos pela CONTRATADA seguem o prazo técnico global do contrato.':'Prazo técnico desta atividade: '+String(conditions.days||'')+' '+dayType+'.';
        serviceBlocks.push(p(deadline+' Revisões incluídas: '+String(conditions.revisions??'')+'. Visitas incluídas: '+(conditions.visits===''?'não previstas':String(conditions.visits??'não previstas'))+'.'));
        if(municipality&&String(conditions.municipal_notes||'').trim())serviceBlocks.push(p('Observações complementares desta atividade: '+String(conditions.municipal_notes).trim()+'.'));
      }
      const deliverables=arrStrings(item.deliverables);
-     if(deliverables.length){
+     if(deliverables.length&&!conditions){
        serviceBlocks.push(small('Entregáveis contratados a partir do padrão deste serviço:'));
        deliverables.forEach(value=>serviceBlocks.push(bullet(value)));
      }
