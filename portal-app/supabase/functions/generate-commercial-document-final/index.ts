@@ -103,7 +103,7 @@ Deno.serve(async req => {
           protection_mode: old.data.protection_mode || 'administrative', autoral: old.data.autoral === true,
           document_kind: kind, workflow_status: 'rascunho', optional_document: old.data.optional_document === true,
           generated_data: { ...oldData, commercial_document_kind: kind, commercial_record_id: recordId,
-            version_bump: body.versionBump === 'major' ? 'major' : 'minor', version_reason: reason },
+            version_bump: 'major', version_reason: reason },
         }).select('id,versao').single();
         if (inserted.error) throw inserted.error;
         createdRevisionId = inserted.data.id;
