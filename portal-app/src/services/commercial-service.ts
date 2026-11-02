@@ -374,15 +374,14 @@ export async function createCommercialRecord(input: NewCommercialRecordInput) {
   return { recordId, error: null };
 }
 
-function bumpVersion(current: string | null, bump: 'minor' | 'major') {
+function bumpVersion(current: string | null) {
   if (!current) return '1.0';
   const match = current.match(/(\d+)\.(\d+)/);
   const major = Number(match?.[1] ?? 1);
-  const minor = Number(match?.[2] ?? 0);
-  return bump === 'major' ? `${major + 1}.0` : `${major}.${minor + 1}`;
+  return `${major + 1}.0`;
 }
 
-export async function previewCommercialDocument(record: CommercialRecord, kind: 'orcamento' | 'contrato', bump: 'minor' | 'major' = 'minor'): Promise<ServiceResult<CommercialDocumentPreview | null>> {
+export async function previewCommercialDocument(record: CommercialRecord, kind: 'orcamento' | 'contrato'): Promise<ServiceResult<CommercialDocumentPreview | null>> {
   const documentId = kind === 'orcamento' ? record.quoteDocumentId : record.contractDocumentId;
   let currentVersion: string | null = null;
   let frozen = false;
@@ -406,13 +405,13 @@ export async function previewCommercialDocument(record: CommercialRecord, kind: 
       ? `(p) Serviço personalizado: ${record.customService}`
       : `(${item.code}) ${item.name}${item.levelCode ? ` — ${String(item.levelCode).toUpperCase()}` : ''}`),
     currentVersion,
-    nextVersion: frozen ? bumpVersion(currentVersion, bump) : currentVersion ?? '1.0',
+    nextVersion: frozen ? bumpVersion(currentVersion) : currentVersion ?? '1.0',
     frozen,
   }, error: null };
 }
 
-export async function generateCommercialDocument(recordId: string, kind: 'orcamento' | 'contrato', archive = false, version?: { bump: 'minor' | 'major'; reason: string }) {
-  const generated = await supabase.functions.invoke('generate-commercial-document-final', { body: { recordId, kind, versionBump: version?.bump ?? 'minor', versionReason: version?.reason ?? '' } });
+export async function generateCommercialDocument(recordId: string, kind: 'orcamento' | 'contrato', archive = false, version?: { reason: string }) {
+  const generated = await supabase.functions.invoke('generate-commercial-document-final', { body: { recordId, kind, versionReason: version?.reason ?? '' } });
   if (generated.error || !generated.data?.generated || !generated.data?.documentId) return generated.data?.error ?? generated.error?.message ?? `Não foi possível gerar o ${kind}.`;
 
   const delivered = await supabase.functions.invoke('deliver-generated-document', { body: { documentId: generated.data.documentId, archive, expectedDocumentKind: kind } });
