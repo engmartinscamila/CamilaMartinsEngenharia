@@ -37,6 +37,7 @@ async function xmlOf(bytes) {
 
 const specification = 'Levantamento de informações para diagnóstico de infiltrações na cobertura';
 const service = { code: 'p', name: 'Outro', included: true, levelApplicable: false };
+const termsFor = (services) => ({scope: services.map(item => ({code: item.code, deliverables: item.code === 'p' ? specification : `Entrega individual aprovada para ${item.name}`}))});
 const quote = await fixture([
   'PROPOSTA COMERCIAL',
   '2. NÍVEL DE PRESTAÇÃO DE SERVIÇO',
@@ -109,17 +110,17 @@ const contract = await fixture([
   'Valor total dos honorários: R$ 1.000,00.',
   'Nível de experiência: BRONZE — Essencial.',
 ]);
-const revisedContract = await api.enhanceContractDocument(contract, propertyAddress, [service], specification, '');
+const revisedContract = await api.enhanceContractDocument(contract, propertyAddress, [service], specification, '', termsFor([service]));
 const contractXml = await xmlOf(revisedContract);
 assert.ok(contractXml.includes(partyAddress), 'Endereço cadastral foi substituído indevidamente');
 assert.ok(contractXml.includes(propertyAddress), 'Endereço da obra não aparece no escopo');
 assert.equal(contractXml.split(specification).length - 1, 1, 'Atividade personalizada duplicada no contrato');
 assert.ok(contractXml.includes('RESUMO COMERCIAL VINCULADO'), 'Resumo comercial desapareceu');
 assert.ok(!contractXml.includes('Nível de experiência: BRONZE'), 'Contrato de Outros ainda contém nível de projeto do gerador principal');
-const consultancyContract = await xmlOf(await api.enhanceContractDocument(contract, propertyAddress, [legacyConsultancy], '', 'bronze'));
+const consultancyContract = await xmlOf(await api.enhanceContractDocument(contract, propertyAddress, [legacyConsultancy], '', 'bronze', termsFor([legacyConsultancy])));
 assert.ok(!consultancyContract.includes('Nível de prestação:'), 'Consultoria recebeu indevidamente nível no escopo');
 assert.ok(!consultancyContract.includes('Nível de experiência: BRONZE'), 'Consultoria recebeu Bronze no resumo do contrato');
-const mixedContract = await xmlOf(await api.enhanceContractDocument(contract, propertyAddress, [legacyConsultancy, { code: 'a', name: 'Estudo Preliminar', included: true, levelApplicable: true }], '', 'bronze'));
+const mixedContract = await xmlOf(await api.enhanceContractDocument(contract, propertyAddress, [legacyConsultancy, { code: 'a', name: 'Estudo Preliminar', included: true, levelApplicable: true }], '', 'bronze', termsFor([legacyConsultancy, { code: 'a', name: 'Estudo Preliminar' }])));
 assert.ok(mixedContract.includes('aplicável exclusivamente às atividades elegíveis'), 'Nível não foi restrito às atividades com pacote da proposta mista');
 assert.ok(mixedContract.includes('Nível de experiência: BRONZE'), 'Nível de projeto foi removido indevidamente de contrato misto');
 const tieredConsultancy = { ...legacyConsultancy, levelApplicable: true };
@@ -138,7 +139,7 @@ const tieredXml = await xmlOf(await api.enhanceQuoteDocument(tieredConsultancyWo
 assert.ok(tieredXml.includes('Nível selecionado: OURO'), 'Consultoria avulsa perdeu o pacote contratado');
 assert.ok(!tieredXml.includes('Revisões incluídas: 2'), 'Consultoria avulsa recebeu revisões de projeto automaticamente');
 assert.ok(!tieredXml.includes('prazo geral de referência é de 45'), 'Consultoria avulsa recebeu prazo de projeto automaticamente');
-const tieredContract = await xmlOf(await api.enhanceContractDocument(contract,propertyAddress,[tieredConsultancy],'','bronze'));
+const tieredContract = await xmlOf(await api.enhanceContractDocument(contract,propertyAddress,[tieredConsultancy],'','bronze', termsFor([tieredConsultancy])));
 assert.ok(tieredContract.includes('Nível de prestação: BRONZE'), 'Contrato da consultoria avulsa perdeu o pacote');
 assert.ok(tieredContract.includes(partyAddress) && tieredContract.includes(propertyAddress), 'Endereços divergiram');
 
@@ -153,7 +154,7 @@ const mixedLevelContractWord = await fixture([
   'Valor total dos honorários: R$ 1.000,00.',
   'Nível de prestação: BRONZE — Essencial.',
 ]);
-const mixedLevelContract = await xmlOf(await api.enhanceContractDocument(mixedLevelContractWord, propertyAddress, mixedLevelServices, '', ''));
+const mixedLevelContract = await xmlOf(await api.enhanceContractDocument(mixedLevelContractWord, propertyAddress, mixedLevelServices, '', '', termsFor(mixedLevelServices)));
 assert.ok(mixedLevelContract.includes('Nível desta atividade: BRONZE.'), 'Nível Bronze da primeira atividade não foi preservado');
 assert.ok(mixedLevelContract.includes('Nível desta atividade: OURO.'), 'Nível Ouro da segunda atividade não foi preservado');
 assert.ok(mixedLevelContract.includes('Níveis de prestação: definidos individualmente por atividade no escopo técnico vinculado.'), 'Resumo do contrato não reconheceu níveis mistos');
