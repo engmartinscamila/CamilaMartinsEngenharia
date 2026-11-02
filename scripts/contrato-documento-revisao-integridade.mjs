@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { contractDocument } from '../portal-app/supabase/functions/_shared/commercial-word-renderer.ts';
+import { enhanceContractDocument } from '../portal-app/supabase/functions/_shared/commercial-word-enhancements.ts';
 
 const requirePortal=createRequire(new URL('../portal-app/package.json',import.meta.url));
 const {Packer}=requirePortal('docx');
@@ -31,7 +32,7 @@ const record={
   scope:[{code:'k',quantity:'1',unit:'processo',days:'',deadline_type:'municipal',revisions:'0',visits:'',municipal_notes:'Protocolo somente após recebimento de todos os documentos',deliverables:'Preparação e acompanhamento perante a Prefeitura, sem garantia de deferimento'}],
   legal_representative:{name:'Maria da Silva',cpf:'12345678909',role:'Sócia-administradora',powers:'Representação conforme contrato social'}
  },
- document_version:'2.1',document_version_reason:'Atualização de condições comerciais',
+ document_version:'2.1',document_version_reason:'MOTIVO-INTERNO-NAO-EXIBIR',
  coobligors:[],contract_master_version:5,smart_texts:{},notes:''
 };
 const profile={full_name:'Profissional de Engenharia',professional_title:'Engenheira Civil',crea_sp:'123456'};
@@ -46,6 +47,20 @@ assert.match(text,/11\/06\/2027/,'Segunda data brasileira');
 assert.ok(!text.includes('2026-11-06')&&!text.includes('1500.00'),'Word não pode expor formato de banco');
 assert.match(text,/Versão do contrato:\s*v2\.1/,'Identificar versão emitida');
 assert.match(text,/150 dias úteis/,'Preservar prazo de 150 dias úteis');
+assert.ok(!text.includes('MOTIVO-INTERNO-NAO-EXIBIR')&&!text.includes('Motivo registrado para esta revisão'),'Não publicar motivo interno de revisão no Word.');
+const footers = Object.keys(zip.files).filter(name=>/^word\/footer\d+\.xml$/.test(name));
+assert.ok(footers.length>0,'Word deve conter rodapé.');
+for(const filename of footers){
+  const footerXml=await zip.file(filename).async('string');
+  assert.ok(!footerXml.includes('CON CON-TEST'),'Não duplicar o prefixo CON no rodapé.');
+  assert.ok(footerXml.includes('CON-TEST'),'Rodapé deve identificar o número de contrato.');
+}
+const finalized=await enhanceContractDocument(new Uint8Array(buff),'Rua Santa Rita da Estrela',record.services,null,'prata',record.commercial_terms);
+const finalXml=await (await JSZip.loadAsync(finalized)).file('word/document.xml').async('string');
+assert.match(finalXml,/Entrega técnica aprovada para esta atividade:/,'O contrato deve reproduzir entregáveis contratados.');
+assert.ok(finalXml.includes('Preparação e acompanhamento perante a Prefeitura'),'Não perder descrição contratada de serviço municipal.');
+assert.ok(!finalXml.includes('O contrato identifica o número de produtos'),'Não inserir texto genérico de catálogo.');
+await assert.rejects(()=>enhanceContractDocument(new Uint8Array(buff),'Rua Teste',record.services,null,'prata',{scope:[]}),/Preencha os entregáveis específicos/,'Bloquear geração sem escopo individualizado.');
 assert.match(text,/depende exclusivamente da Prefeitura/,'Prazo externo municipal deve constar do Word');
 assert.match(text,/Observações complementares/,'Observações opcionais devem integrar o Word');
 assert.ok(!text.includes('prazo: 30')&&!text.includes('prazo: 0'),'Prazo municipal não pode virar número em contrato');
