@@ -385,7 +385,7 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
   p(smartRule(record,'proposal_client_inputs_rule','O cliente deverá fornecer documentos, respostas de briefing, medidas, aprovações e demais definições necessárias. A falta desses insumos pode suspender ou repercutir no cronograma, nos termos do Contrato.')),
 
   h('6. PRAZO E CRONOGRAMA'),
-  p(smartRule(record,'proposal_timeline_rule','O prazo técnico será exclusivamente o preenchido nas condições comerciais aprovadas e no Anexo I, com indicação de dias úteis ou corridos e do marco inicial da contagem. Não existe prazo geral presumido de 45 dias. Prazos de análise de órgãos públicos e terceiros não são prazos técnicos controlados pela contratada.')),
+  p(smartRule(record,'proposal_timeline_rule','O prazo técnico será exclusivamente o preenchido nas condições comerciais aprovadas e no Anexo I, com indicação de dias úteis ou corridos e do marco inicial da contagem. Não há prazo técnico presumido nem limite padrão aplicável a todas as contratações. Prazos de análise de órgãos públicos e terceiros não são prazos técnicos controlados pela contratada.')),
 
   h('7. INVESTIMENTO'),
   p(`Valor total dos honorários: ${money(record.total_value)}`,true,GOLD),
