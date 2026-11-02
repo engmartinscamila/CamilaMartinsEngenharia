@@ -207,7 +207,36 @@ async function optionsStep(kind){
 async function getPreview(projectId,kind,approvalId,options,bump='minor',reason=''){
  const extra={document_options:options,version_bump:bump,version_reason:reason,...options,...(projectId.startsWith('commercial:')?{contract_id:$('contractProject')?.selectedOptions[0]?.dataset.contractId}:{})};
  const {data,error}=await client().rpc('admin_preview_contract_document',{p_project_id:projectId.startsWith('commercial:')?null:projectId,p_document_kind:kind,p_approval_id:approvalId||null,p_extra_data:extra});
- if(error)throw error;return data||{}
+ if(error)throw error;
+ const result=data||{};
+ if(kind==='anexo_i'||kind==='servico_adicional'){
+   let contractId=$('contractProject')?.selectedOptions[0]?.dataset.contractId||'';
+   if(!contractId&&projectId.startsWith('commercial:')){
+     const source=await client().from('commercial_records').select('linked_contract_id').eq('id',projectId.slice('commercial:'.length)).maybeSingle();
+     if(source.error)throw source.error;
+     contractId=source.data?.linked_contract_id||'';
+   }else if(!contractId&&projectId){
+     const source=await client().from('projetos').select('contract_id').eq('id',projectId).maybeSingle();
+     if(source.error)throw source.error;
+     contractId=source.data?.contract_id||'';
+   }
+   if(!contractId)throw new Error('Selecione um contrato formalizado antes de preparar Anexo I ou aditivo.');
+   const c=await client().from('commercial_records').select('contract_document_id').eq('linked_contract_id',contractId).eq('record_kind','contrato').order('updated_at',{ascending:false}).limit(1).maybeSingle();
+   if(c.error)throw c.error;
+   if(!c.data?.contract_document_id)throw new Error('Gere primeiro o contrato Word oficial; o Anexo I e os aditivos devem partir dessa emissão.');
+   const frozen=await client().from('document_emission_snapshots').select('snapshot').eq('document_id',c.data.contract_document_id).maybeSingle();
+   if(frozen.error)throw frozen.error;
+   const issued=frozen.data?.snapshot?.commercial_record_snapshot;
+   if(!issued||!issued.commercial_terms||!Array.isArray(issued.services))throw new Error('O contrato emitido não possui dados comerciais congelados. Gere uma nova revisão correta antes de criar este documento.');
+   result.contract_value=Number(issued.total_value);
+   result.property_address=issued.property_address||result.property_address;
+   result.client_name=issued.prospect_name||result.client_name;
+   result.scope_items=issued.services.filter(x=>x?.included===true).map(x=>({code:x.code,name:x.name}));
+   result.source_contract_version=frozen.data.snapshot.version||'1.0';
+   result.source_contract_document_id=c.data.contract_document_id;
+   result.inherited_terms=issued.commercial_terms;
+ }
+ return result;
 }
 function parseMoney(v){const t=String(v??'').trim().replace(/\s/g,'');if(!t)return null;const n=Number(t.includes(',')?t.replace(/\./g,'').replace(',','.'):t);return Number.isFinite(n)?n:null}
 const money=v=>Number.isFinite(Number(v))?Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):'Não informado';
@@ -221,8 +250,11 @@ async function previewStep(projectId,kind,approvalId,options){
  const box=$('documentPreview');box.classList.remove('doc-hidden');
  const render=()=>{
   const scope=Array.isArray(p.scope_items)?p.scope_items:[];
+  const inherited=kind==='anexo_i'&&p.inherited_terms
+    ? `<div class="doc-preview-block"><small>Origem do Anexo I — dados herdados do contrato v${esc(p.source_contract_version)}</small><span>Prazo técnico: ${esc(p.inherited_terms.schedule?.days||'não informado')} ${p.inherited_terms.schedule?.day_type==='uteis'?'dias úteis':'dias corridos'} • Parcelas: ${esc(p.inherited_terms.installments?.length||0)}</span><span>Serviços, entregáveis, valores e condições já foram definidos na emissão original. Nenhum novo preenchimento será solicitado.</span></div>`
+    : '';
   const additional=kind==='servico_adicional'?`<div class="doc-preview-block"><small>Serviço adicional</small><strong>${esc(options.additional_service_name||'—')}</strong><span>${esc(options.additional_service_description||'')}</span><span>Valor adicional: ${esc(options.additional_value||'—')} • Novo total de referência: ${options.new_total_value?esc(money(options.new_total_value)):'a calcular'}</span></div>`:'';
-  box.innerHTML=`<div class="doc-preview-grid"><div><small>Versão</small><strong id="documentPreviewVersion">v${esc(p.next_version||'1.0')}</strong></div><div><small>Contrato</small><strong>${esc(p.contract_number||'—')}</strong></div><div><small>Cliente</small><strong>${esc(p.client_name||'—')}</strong></div><div><small>Projeto</small><strong>${esc(p.project_name||'—')}</strong></div></div><div class="doc-preview-block"><small>Endereço da obra</small><strong>${esc(p.property_address||'Não informado')}</strong></div><div class="doc-preview-block"><small>Endereço cadastral do contratante</small><span>${esc(p.client_address||'Não informado')}</span></div><div class="doc-preview-block"><small>Valor contratual vigente</small><span>${esc(money(p.contract_value))}</span></div>${additional}<div class="doc-preview-block"><small>Serviços do contrato</small><span>${scope.length?scope.map(x=>`(${esc(x.code)}) ${esc(x.name)}`).join(' • '):'Nenhum item localizado'}</span></div>${p.revision_of?'<div class="doc-field"><label>Justificativa administrativa da revisão (não aparecerá no Word) *</label><input id="documentVersionReason" placeholder="Ex.: atualização da versão de referência"></div>':'<p class="doc-preview-first">Primeira emissão deste tipo de documento: versão v1.0.</p>'}`;
+  box.innerHTML=`<div class="doc-preview-grid"><div><small>Versão</small><strong id="documentPreviewVersion">v${esc(p.next_version||'1.0')}</strong></div><div><small>Contrato</small><strong>${esc(p.contract_number||'—')}</strong></div><div><small>Cliente</small><strong>${esc(p.client_name||'—')}</strong></div><div><small>Projeto</small><strong>${esc(p.project_name||'—')}</strong></div></div><div class="doc-preview-block"><small>Endereço da obra</small><strong>${esc(p.property_address||'Não informado')}</strong></div><div class="doc-preview-block"><small>Endereço cadastral do contratante</small><span>${esc(p.client_address||'Não informado')}</span></div><div class="doc-preview-block"><small>Valor contratual vigente</small><span>${esc(money(p.contract_value))}</span></div>${inherited}${additional}<div class="doc-preview-block"><small>Serviços do contrato</small><span>${scope.length?scope.map(x=>`(${esc(x.code)}) ${esc(x.name)}`).join(' • '):'Nenhum item localizado'}</span></div>${p.revision_of?'<div class="doc-field"><label>Justificativa administrativa da revisão (não aparecerá no Word) *</label><input id="documentVersionReason" placeholder="Ex.: atualização da versão de referência"></div>':'<p class="doc-preview-first">Primeira emissão deste tipo de documento: versão v1.0.</p>'}`;
   if(p.revision_of){$('documentVersionReason').value=reason;}
  };
  render();setError('');$('documentOptionsModal').classList.remove('doc-hidden');
