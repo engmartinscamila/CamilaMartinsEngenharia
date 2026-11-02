@@ -924,6 +924,41 @@
     await load();
   }
 
+  async function correctServiceClassification(recordId) {
+    const record=rows.find(item=>String(item.id)===String(recordId)&&item.record_kind==='contrato');
+    if(!record){msg('Contrato não localizado para revisão de atividades.','error');return;}
+    const included=(Array.isArray(record.services)?record.services:[]).filter(item=>item?.included===true);
+    if(!included.length){msg('Nenhuma atividade selecionada no contrato.','error');return;}
+    const overlay=document.createElement('div');
+    overlay.className='commercial-preview-modal';
+    overlay.innerHTML=`<div class="commercial-preview-dialog"><button class="commercial-preview-close" type="button" data-close>×</button><h3>Corrigir enquadramento dos serviços</h3><p>Corrija a categoria de uma atividade ou retire um item redundante. Os documentos emitidos continuarão arquivados e somente uma nova revisão usará as alterações.</p><div class="doc-field"><label>Atividade contratada a corrigir</label><select id="reclassifyOld">${included.map(x=>`<option value="${esc(x.code)}">(${esc(x.code)}) ${esc(x.name||x.code)}</option>`).join('')}</select></div><div id="reclassifyCurrent" class="doc-preview-block"></div><div class="doc-field"><label>Classificação correta</label><select id="reclassifyNew"><option value="">Selecione o destino</option><option value="__remove__">Remover atividade redundante do próximo contrato</option>${serviceCatalogMeta.filter(x=>x.active!==false).map(x=>`<option value="${esc(x.code)}">(${esc(x.code)}) ${esc(x.name)}</option>`).join('')}</select></div><p class="doc-help">Para alterar um entregável ou quantidade sem mudar a categoria, utilize “Editar parcelas, prazos e quantidades”.</p><div class="doc-actions"><button class="doc-btn ghost" type="button" data-close>Cancelar</button><button class="doc-btn" type="button" id="reclassifyConfirm">Aplicar ao cadastro para a próxima revisão</button></div></div>`;
+    document.body.appendChild(overlay);
+    const old=overlay.querySelector('#reclassifyOld');
+    const target=overlay.querySelector('#reclassifyNew');
+    const description=overlay.querySelector('#reclassifyCurrent');
+    function describe(){
+      const row=(record.commercial_terms?.scope||[]).find(x=>String(x.code)===String(old.value));
+      description.innerHTML=`<small>Entregáveis atualmente cadastrados</small><span>${esc(row?.deliverables||'Não informados')}</span>`;
+      Array.from(target.options).forEach(option=>{if(option.value===old.value)option.disabled=true;else option.disabled=false;});
+      target.value='';
+    }
+    old.addEventListener('change',describe);describe();
+    overlay.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>overlay.remove()));
+    overlay.querySelector('#reclassifyConfirm').addEventListener('click',async ()=>{
+      if(!target.value){msg('Selecione a nova categoria ou a remoção do item redundante.','error');return;}
+      if(target.value===old.value){msg('Escolha uma categoria diferente.','error');return;}
+      const label=target.selectedOptions[0]?.textContent||'';
+      if(!window.confirm(`Confirmar alteração apenas para a próxima revisão do contrato ${record.contract_number}?\n\nDe: ${old.selectedOptions[0]?.textContent}\nPara: ${label}\n\nDocumentos já emitidos não serão alterados.`))return;
+      const button=overlay.querySelector('#reclassifyConfirm');button.disabled=true;
+      try{
+        const response=await client().rpc('admin_reclassify_commercial_service',{p_record_id:record.id,p_old_code:old.value,p_new_code:target.value==='__remove__'?null:target.value});
+        if(response.error||!response.data?.updated)throw response.error||new Error('Não foi possível corrigir a atividade.');
+        overlay.remove();await load();
+        msg('Classificação ajustada no cadastro. Confira os quantitativos e gere nova revisão para aplicar ao Word. As emissões anteriores permanecem intactas.','success');
+      }catch(error){button.disabled=false;msg(error?.message||'Falha ao atualizar classificação.','error');}
+    });
+  }
+
   function renderList() {
     const box = $('commercialList');
     if (!box) return;
@@ -946,6 +981,7 @@
 
       const actions = kind === 'contrato'
         ? `${record.contract_document_id?`<button class="doc-btn secondary" data-action="contract-download" data-document-id="${record.contract_document_id}" data-id="${record.id}">Baixar Word emitido</button><button class="doc-btn secondary" data-action="contract-versions" data-id="${record.id}">Versões anteriores</button><button class="doc-btn secondary" data-action="commercial-terms" data-id="${record.id}">Editar parcelas, prazos e quantidades</button><button class="doc-btn ghost" data-action="contract-revision" data-id="${record.id}">Criar nova revisão</button>`:`<button class="doc-btn secondary" data-action="commercial-terms" data-id="${record.id}">Editar parcelas, prazos e quantidades</button><button class="doc-btn secondary" data-action="contract" data-id="${record.id}">Gerar Word e arquivar</button>`}
+           <button class="doc-btn secondary" data-action="reclassify-services" data-id="${record.id}">Corrigir enquadramento de serviços</button>
            <button class="doc-btn" data-action="convert" data-id="${record.id}" ${record.status === 'convertido' ? 'disabled' : ''}>
              ${record.status === 'convertido' ? 'Cliente/projeto vinculados' : 'Formalizar cliente + projeto'}
            </button>`
@@ -1228,6 +1264,7 @@
       const action = button.dataset.action;
       const id = button.dataset.id;
 
+      if(action==='reclassify-services'){void correctServiceClassification(id);return;}
       if (action === 'use-quote') {
         const chosen = quoteSources.find(item => item.sourceType === 'commercial' && String(item.sourceId) === String(id));
         if (!chosen) { msg('Orçamento não encontrado na lista disponível.', 'error'); return; }
