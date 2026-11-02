@@ -40,7 +40,7 @@ Deno.serve(async req=>{
    const master=kind==='contrato'?await loadContractMaster(service,record):null;
    const historicRecord={...record,historical_reconstitution:true,document_version:String(snapshot.data.version||row.versao||'1.0')};
     const original=new Uint8Array(await Packer.toBuffer(kind==='contrato'?contractDocument(historicRecord,profile,master!.body,date):quoteDocument(historicRecord,profile,date)));
-   bytes=kind==='contrato'?await enhanceContractDocument(original,record.property_address||'',record.services,record.custom_service,record.experience_level):await enhanceQuoteDocument(original,record.services,record.custom_service);
+   bytes=kind==='contrato'?await enhanceContractDocument(original,record.property_address||'',record.services,record.custom_service,record.experience_level,record.commercial_terms,true):await enhanceQuoteDocument(original,record.services,record.custom_service);
    path=`_issued_word/reconstituted/${row.id}.docx`;
    const saved=await service.storage.from(bucket).upload(path,bytes,{contentType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',upsert:false});if(saved.error&&!/already exists|duplicate/i.test(saved.error.message||''))throw saved.error;
    const linked=await service.from('documentos').update({arquivo:path,storage_bucket:bucket,archived_explicitly:true,archived_storage_size:bytes.byteLength,purged_at:null}).eq('id',row.id);if(linked.error)throw linked.error;
