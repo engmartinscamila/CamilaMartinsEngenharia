@@ -288,16 +288,19 @@ const termsSchedule=(record:CommercialRecord)=>{
  const type=String(s.day_type)==='uteis'?'dias úteis':'dias corridos';
  return [p('Início da contagem: '+String(s.start_trigger||'não definido')+'.'),p('Prazo total de elaboração: '+String(s.days||'não definido')+' '+type+'. Prazos de órgãos públicos e terceiros não integram automaticamente o prazo técnico.')];
 };
+const sentencePart=(value:unknown)=>String(value??'').trim().replace(/[.!?]+\s*$/u,'');
 const scopeQuantityRows=(record:CommercialRecord)=>{
  const t=commercialTerms(record),rows=Array.isArray(t.scope)?t.scope as Array<Record<string,unknown>>:[];
  const services=selectedServices(record);
  return rows.map(row=>{
    const item=services.find(x=>String(x.code||'')===String(row.code||''));
    if(!item)return null;
+   const deliverables=sentencePart(row.deliverables);
+   if(!deliverables)throw new Error('Entregáveis específicos não preenchidos para a atividade '+String(item.name||row.code)+'.');
    const municipality=['k','l','m'].includes(String(row.code||''));
    const deadline=municipality?'Prazo de análise, aprovação e expedição: depende exclusivamente da Prefeitura, sem prazo garantido; a preparação técnica da CONTRATADA segue o prazo técnico global contratual.':'Prazo técnico: '+String(row.days||'')+' '+(String((t.schedule as Record<string,unknown>|undefined)?.day_type)==='uteis'?'dias úteis':'dias corridos')+'.';
-   const notes=municipality&&String(row.municipal_notes||'').trim()?' Observações complementares: '+String(row.municipal_notes).trim()+'.':'';
-   return p(String(item.name||row.code)+': '+String(row.quantity||'')+' '+String(row.unit||'')+'; serviços/entregáveis: '+String(row.deliverables||'')+'. '+deadline+' Revisões incluídas: '+String(row.revisions??'')+'; visitas incluídas: '+(row.visits===''?'não previstas':String(row.visits??'não previstas'))+'.'+notes);
+   const notes=municipality&&String(row.municipal_notes||'').trim()?' Observações complementares: '+sentencePart(row.municipal_notes)+'.':'';
+   return p(String(item.name||row.code)+': '+String(row.quantity||'')+' '+String(row.unit||'')+'; serviços/entregáveis: '+deliverables+'. '+deadline+' Revisões incluídas: '+String(row.revisions??'')+'; visitas incluídas: '+(row.visits===''?'não previstas':String(row.visits??'não previstas'))+'.'+notes);
  }).filter((x):x is Paragraph=>x!==null);
 };
 
@@ -345,7 +348,7 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
   p(professionalLabel(profile),true,GOLD),
   p(`Preparada para: ${record.prospect_name}`,true),
   p(`Imóvel / obra: ${text(record.property_address)}`),
-  small(`Emissão: ${today} • Validade: ${datePt(record.valid_until)} • Documento vinculado ao ORC ${record.quote_number}`),
+  small(`Emissão: ${today} • Validade: ${datePt(record.valid_until)} • Documento vinculado ao orçamento ${record.quote_number}`),
 
   h('1. VISÃO GERAL DA PROPOSTA'),
   p(smartRule(record,'proposal_scope_governance','Esta proposta organiza o escopo e as condições comerciais sem ampliar, por si só, as obrigações contratuais. Após a formalização, o Contrato e o Anexo I passam a reger definitivamente a relação entre as partes.')),
@@ -382,7 +385,7 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
   p(smartRule(record,'proposal_client_inputs_rule','O cliente deverá fornecer documentos, respostas de briefing, medidas, aprovações e demais definições necessárias. A falta desses insumos pode suspender ou repercutir no cronograma, nos termos do Contrato.')),
 
   h('6. PRAZO E CRONOGRAMA'),
-  p(smartRule(record,'proposal_timeline_rule','O prazo geral de referência é de 45 (quarenta e cinco) dias úteis, contado conforme as condições previstas no Contrato, podendo ser ajustado no Anexo I em função do escopo efetivamente contratado. Prazos de análise de órgãos públicos e terceiros não se confundem com o prazo técnico de elaboração.')),
+  p(smartRule(record,'proposal_timeline_rule','O prazo técnico será exclusivamente o preenchido nas condições comerciais aprovadas e no Anexo I, com indicação de dias úteis ou corridos e do marco inicial da contagem. Não existe prazo geral presumido de 45 dias. Prazos de análise de órgãos públicos e terceiros não são prazos técnicos controlados pela contratada.')),
 
   h('7. INVESTIMENTO'),
   p(`Valor total dos honorários: ${money(record.total_value)}`,true,GOLD),
@@ -402,7 +405,7 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
   p(`Esta proposta permanece válida até ${datePt(record.valid_until)}. Após essa data, valores, disponibilidade e condições poderão ser revistos antes da formalização.`),
   p('O aceite desta proposta não substitui o Contrato e o Anexo I definitivos quando esses instrumentos forem aplicáveis à contratação.'),
   quoteSignatureBlock(signaturePlaceAndDate(record.city,generatedAt),`${profileValue(profile,'full_name')||'Camila Martins'} — proponente`)
- ],profile,`ORC ${record.quote_number}`);
+ ],profile,record.quote_number);
 }
 
 
@@ -431,7 +434,6 @@ function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,c
    p(`Valor total dos honorários: ${money(record.total_value)}.`,true,GOLD),
    p(`Nível de prestação: ${contractLevelSummary}.`),
    p('As condições comerciais, os quantitativos e os prazos individualizados são especificados abaixo e reproduzidos no Anexo I. A versão emitida preserva os dados aprovados no momento da emissão.'),
-   ...(record.document_version_reason?[p(`Motivo registrado para esta revisão: ${record.document_version_reason}.`)]:[]),
    h('PARCELAMENTO E VENCIMENTOS'),
    ...paymentLines(record),
    h('PRAZOS E QUANTITATIVOS CONTRATADOS'),
@@ -451,7 +453,7 @@ function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,c
    p('Testemunhas:'),
    p('1) ______________________________  CPF: ______________________'),
    p('2) ______________________________  CPF: ______________________')
- ],profile,`CON ${record.contract_number??''}`);
+ ],profile,record.contract_number??'');
 }
 
 export { quoteDocument, contractDocument, loadProfessionalIdentity, missingProfessionalFields, loadContractMaster, generatedDateIso };
