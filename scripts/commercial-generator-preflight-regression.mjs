@@ -17,6 +17,17 @@ for (const invalidVersion of ['2\\\\1','2X1','2.1a','2..1']) {
   assert.equal(versionPattern.test(invalidVersion),false,`Versão inválida aceita: ${invalidVersion}`);
 }
 console.log('PASS: gerador aceita numeração real de revisão, inclusive v2.1.');
+const finalRevisionGenerator = readFileSync('supabase/functions/generate-commercial-document-final/index.ts', 'utf8');
+const finalRevisionMirror = readFileSync('portal-app/supabase/functions/generate-commercial-document-final/index.ts', 'utf8');
+assert.equal(finalRevisionMirror, finalRevisionGenerator, 'Finalizadores comerciais divergentes.');
+assert.ok(finalRevisionGenerator.includes("version_bump: 'major', version_reason: reason"), 'Revisão comercial não deve depender de escolha entre menor e principal.');
+assert.ok(!finalRevisionGenerator.includes("body.versionBump === 'major' ? 'major' : 'minor'"), 'Classificação de revisão ainda controlada pelo usuário.');
+const webPreview = readFileSync('js/commercial-document-preview-web.js', 'utf8');
+assert.ok(!webPreview.includes('Revisão menor')&&!webPreview.includes('Nova versão principal')&&!webPreview.includes('data-preview-bump'), 'Seletor desnecessário ainda visível no portal web.');
+assert.ok(webPreview.includes('nextVersion(currentVersion)'), 'Prévia deve usar somente uma revisão sequencial.');
+const appPreview = readFileSync('portal-app/src/app/admin/commercial-documents.tsx', 'utf8');
+assert.ok(!appPreview.includes('changeBump')&&!appPreview.includes('Revisão menor')&&!appPreview.includes('Nova versão principal'), 'Aplicativo ainda oferece dois tipos de revisão.');
+console.log('PASS: uma única revisão sequencial no portal, no app e no Supabase.');
 
 function position(fragment) {
   const index = handler.indexOf(fragment);
