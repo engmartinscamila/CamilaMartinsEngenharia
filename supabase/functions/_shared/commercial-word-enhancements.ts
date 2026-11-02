@@ -20,7 +20,7 @@ function selectedServices(services: unknown) {
 function paragraphText(paragraph: string) {
   return [...paragraph.matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g)].map(match => match[1]).join('');
 }
-function contractScopeXml(services: unknown, customService: unknown, experienceLevel: unknown, propertyAddress: string, commercialTerms: unknown) {
+function contractScopeXml(services: unknown, customService: unknown, experienceLevel: unknown, propertyAddress: string, commercialTerms: unknown, historicalReconstitution = false) {
   const selected = selectedServices(services);
   if (!selected.length && !text(customService)) return '';
   const terms = commercialTerms && typeof commercialTerms === 'object' ? commercialTerms as Obj : {};
@@ -42,7 +42,12 @@ function contractScopeXml(services: unknown, customService: unknown, experienceL
     const name = other ? 'Serviço técnico personalizado' : text(item.name) || `Serviço ${index + 1}`;
     const row = specificRows.find(entry => text(entry.code).toLowerCase() === text(item.code).toLowerCase());
     const agreed = sentencePart(row?.deliverables);
-    if (!row || !agreed) throw new Error(`Preencha os entregáveis específicos de ${name} nas condições comerciais antes de gerar o contrato.`);
+    if (!row || !agreed) {
+      if (!historicalReconstitution) throw new Error(`Preencha os entregáveis específicos de ${name} nas condições comerciais antes de gerar o contrato.`);
+      parts.push(wordParagraph(`${index + 1}. ${name}`, true));
+      parts.push(wordParagraph('Dados específicos não registrados no histórico disponível; consulte o Anexo I original antes de utilizar esta cópia reconstituída.'));
+      return;
+    }
     const description = other && text(customService)
       ? `Atividade contratada: ${sentencePart(customService)}. Entrega técnica aprovada: ${agreed}.`
       : `Entrega técnica aprovada para esta atividade: ${agreed}.`;
@@ -67,7 +72,7 @@ function insertionBeforeParagraph(xml: string, marker: string) {
   if (start === undefined) throw new Error('Não foi possível localizar um parágrafo válido para o escopo do contrato.');
   return start;
 }
-async function enhanceContractDocument(bytes: Uint8Array, propertyAddress: string, services: unknown, customService: unknown, experienceLevel: unknown, commercialTerms: unknown) {
+async function enhanceContractDocument(bytes: Uint8Array, propertyAddress: string, services: unknown, customService: unknown, experienceLevel: unknown, commercialTerms: unknown, historicalReconstitution = false) {
   const zip = await JSZip.loadAsync(bytes);
   const file = zip.file('word/document.xml');
   if (!file) throw new Error('O contrato gerado não contém o documento Word esperado.');
@@ -87,7 +92,7 @@ async function enhanceContractDocument(bytes: Uint8Array, propertyAddress: strin
         : paragraph);
   }
   // Não substitui endereço cadastral do contratante no preâmbulo.
-  const scopeXml = contractScopeXml(services, customService, experienceLevel, propertyAddress, commercialTerms);
+  const scopeXml = contractScopeXml(services, customService, experienceLevel, propertyAddress, commercialTerms, historicalReconstitution);
   if (scopeXml) {
     const insertion = insertionBeforeParagraph(xml, 'RESUMO COMERCIAL VINCULADO');
     xml = xml.slice(0, insertion) + scopeXml + xml.slice(insertion);
