@@ -39,7 +39,7 @@ const SERVICE_LEVELS: { code: CommercialServiceLevelCode; label: string }[] = [
   { code: 'ouro', label: 'Ouro' },
 ];
 const digitsOnly = (value: string) => value.replace(/\D/g, '');
-type PendingGeneration={record:CommercialRecord;kind:'orcamento'|'contrato';archive:boolean;preview:CommercialDocumentPreview;bump:'minor'|'major';reason:string};
+type PendingGeneration={record:CommercialRecord;kind:'orcamento'|'contrato';archive:boolean;preview:CommercialDocumentPreview;reason:string};
 
 export default function AdminCommercialDocumentsScreen() {
   const styles = useThemeStyles(styleDefinitions);
@@ -202,18 +202,10 @@ export default function AdminCommercialDocumentsScreen() {
     if(kind==='contrato'&&!record.propertyAddress?.trim()){setError('Informe o endereço do imóvel / obra antes de gerar o contrato. O endereço cadastral não será usado automaticamente como endereço da obra.');return;}
     const key = `preview-${kind}-${record.id}`;
     setLoadingKey(key);setError(null);setSuccess(null);
-    const result=await previewCommercialDocument(record,kind,'minor');
+    const result=await previewCommercialDocument(record,kind);
     setLoadingKey(null);
     if(result.error||!result.data){setError(result.error??'Não foi possível montar a prévia do documento.');return;}
-    setPending({record,kind,archive,preview:result.data,bump:'minor',reason:''});
-  };
-
-  const changeBump=async(bump:'minor'|'major')=>{
-    if(!pending)return;
-    const result=await previewCommercialDocument(pending.record,pending.kind,bump);
-    if(result.error||!result.data){setError(result.error??'Não foi possível recalcular a versão.');return;}
-    const preview=result.data;
-    setPending(current=>current?{...current,bump,preview}:current);
+    setPending({record,kind,archive,preview:result.data,reason:''});
   };
 
   const confirmGenerate=async()=>{
@@ -221,7 +213,7 @@ export default function AdminCommercialDocumentsScreen() {
     if(pending.preview.frozen&&!pending.reason.trim()){setError('Informe o motivo da nova versão.');return;}
     const key = `${pending.kind}-${pending.archive ? 'archive' : 'download'}-${pending.record.id}`;
     setLoadingKey(key); setError(null); setSuccess(null);
-    const actionError = await generateCommercialDocument(pending.record.id, pending.kind, pending.archive,{bump:pending.bump,reason:pending.reason.trim()});
+    const actionError = await generateCommercialDocument(pending.record.id, pending.kind, pending.archive,{reason:pending.reason.trim()});
     if (actionError) setError(actionError);
     else setSuccess(`${pending.kind==='contrato'?'Contrato':'Orçamento'} v${pending.preview.nextVersion} gerado${pending.archive?', baixado e arquivado':' para download'}. A emissão ficou vinculada ao snapshot desta versão.`);
     setPending(null);await load(); setLoadingKey(null);
@@ -300,7 +292,7 @@ export default function AdminCommercialDocumentsScreen() {
         <Button disabled={catalogServices.length===0} loading={loadingKey === 'create'} onPress={() => void create()} title="Criar orçamento numerado" />
       </Card>
 
-      {pending?<Card><View style={styles.recordHeader}><View style={{flex:1}}><Text style={styles.sectionTitle}>Prévia antes do Word</Text><Text style={styles.help}>Confira os dados que serão usados. Nenhum novo Word será gerado até a confirmação.</Text></View><StatusPill label={`v${pending.preview.nextVersion}`} tone="warning" /></View><Text style={styles.meta}>{pending.kind==='contrato'?'Contrato':'Orçamento'}: {pending.preview.number}</Text><Text style={styles.meta}>Cliente/prospect: {pending.preview.prospectName}</Text><Text style={styles.meta}>Endereço cadastral: {pending.preview.partyAddress||'Não informado'}</Text><Text style={styles.previewStrong}>Endereço da obra: {pending.preview.propertyAddress||'Não informado'}</Text><Text style={styles.meta}>Valor: {pending.preview.totalValue===null?'Não informado':pending.preview.totalValue.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</Text><Text style={styles.meta}>Serviços: {pending.preview.services.join(' • ')||'Nenhum serviço localizado'}</Text>{pending.preview.frozen?<><Text style={styles.subTitle}>Nova versão</Text><View style={styles.twoColumns}><Button onPress={()=>void changeBump('minor')} title="Revisão menor" variant={pending.bump==='minor'?'secondary':'ghost'} /><Button onPress={()=>void changeBump('major')} title="Nova versão principal" variant={pending.bump==='major'?'secondary':'ghost'} /></View><Field label="Motivo da nova versão *" value={pending.reason} onChangeText={reason=>setPending(current=>current?{...current,reason}:current)} /></>:<Notice tone="info">Primeira emissão ou versão ainda não congelada: não é necessário motivo de revisão.</Notice>}<View style={styles.actions}><Button loading={Boolean(loadingKey?.includes(pending.record.id))} onPress={()=>void confirmGenerate()} title={pending.archive?'Confirmar, baixar + arquivar':'Confirmar e baixar Word'} /><Button disabled={Boolean(loadingKey)} onPress={()=>setPending(null)} title="Cancelar" variant="ghost" /></View></Card>:null}
+      {pending?<Card><View style={styles.recordHeader}><View style={{flex:1}}><Text style={styles.sectionTitle}>Prévia antes do Word</Text><Text style={styles.help}>Confira os dados que serão usados. Nenhum novo Word será gerado até a confirmação.</Text></View><StatusPill label={`v${pending.preview.nextVersion}`} tone="warning" /></View><Text style={styles.meta}>{pending.kind==='contrato'?'Contrato':'Orçamento'}: {pending.preview.number}</Text><Text style={styles.meta}>Cliente/prospect: {pending.preview.prospectName}</Text><Text style={styles.meta}>Endereço cadastral: {pending.preview.partyAddress||'Não informado'}</Text><Text style={styles.previewStrong}>Endereço da obra: {pending.preview.propertyAddress||'Não informado'}</Text><Text style={styles.meta}>Valor: {pending.preview.totalValue===null?'Não informado':pending.preview.totalValue.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</Text><Text style={styles.meta}>Serviços: {pending.preview.services.join(' • ')||'Nenhum serviço localizado'}</Text>{pending.preview.frozen?<><Text style={styles.subTitle}>Nova revisão sequencial — histórico preservado</Text><Field label="Motivo da revisão *" value={pending.reason} onChangeText={reason=>setPending(current=>current?{...current,reason}:current)} /></>:<Notice tone="info">Primeira emissão ou versão ainda não congelada: não é necessário motivo de revisão.</Notice>}<View style={styles.actions}><Button loading={Boolean(loadingKey?.includes(pending.record.id))} onPress={()=>void confirmGenerate()} title={pending.archive?'Confirmar, baixar + arquivar':'Confirmar e baixar Word'} /><Button disabled={Boolean(loadingKey)} onPress={()=>setPending(null)} title="Cancelar" variant="ghost" /></View></Card>:null}
 
       <Card>
         <Text style={styles.sectionTitle}>Orçamentos e contratos existentes</Text>
