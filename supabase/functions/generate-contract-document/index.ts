@@ -745,7 +745,7 @@ Deno.serve(async(req)=>{
         return json({error:'O contrato original classifica projeto arquitetônico como levantamento cadastral. Corrija o enquadramento e emita nova revisão antes do Anexo I.'},422);
     }
   }
-  const generatedData={...sourceData,emitted_at:generatedAtIso,document_date:documentDate,document_version:row.versao,document_version_reason:row.version_reason??null};
+  const generatedData={...sourceData,has_project:Boolean(row.projeto_id),emitted_at:generatedAtIso,document_date:documentDate,document_version:row.versao,document_version_reason:row.version_reason??null};
   const buffer=await Packer.toBuffer(build(row.document_kind,generatedData,professionalProfile,generatedAt));
   const version=String(row.versao??'1.0').replace(/[^0-9.]/g,'')||'1.0';
   const path=`${row.projeto_id||row.contract_id}/contratual/${row.id}/${names[row.document_kind]}-v${version}.docx`;
