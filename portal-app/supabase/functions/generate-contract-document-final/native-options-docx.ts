@@ -9,7 +9,7 @@ const value=(d:Obj,key:string,fallback='Não informado')=>typeof d[key]==='strin
 const list=(v:unknown)=>Array.isArray(v)?v.map(String).filter(Boolean):v?[String(v)]:[];
 const selected=(v:unknown,key:string)=>Array.isArray(v)?v.map(String).includes(key):String(v??'')===key;
 const options=(d:Obj)=>(d.document_options&&typeof d.document_options==='object'?d.document_options:{}) as Obj;
-const money=(raw:unknown)=>{const normalized=typeof raw==='string'?raw.trim().replace(/\s/g,'').replace(/^R\$/,'').replace(/\./g,'').replace(',','.'):raw;const n=Number(normalized);return Number.isFinite(n)?new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n):'A definir';};
+const money=(raw:unknown)=>{const clean=typeof raw==='string'?raw.trim().replace(/\s/g,'').replace(/^R\$/,''):raw;const normalized=typeof clean==='string'&&clean.includes(',')?clean.replace(/\./g,'').replace(',','.'):typeof clean==='string'&&/^\d{1,3}(?:\.\d{3})+$/.test(clean)?clean.replace(/\./g,''):clean;const n=Number(normalized);return Number.isFinite(n)?new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n):'A definir';};
 const datePt=(raw:unknown)=>{if(typeof raw!=='string'||!raw)return'Não informado';const date=new Date(raw);return Number.isNaN(date.getTime())?raw:new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric'}).format(date);};
 const p=(text:string,bold=false,color=TEXT)=>new Paragraph({spacing:{after:120,line:300},children:[new TextRun({text,bold,font:'Century Gothic',size:20,color})]});
 const h=(text:string)=>new Paragraph({heading:HeadingLevel.HEADING_2,spacing:{before:300,after:130},border:{bottom:{color:GOLD,style:BorderStyle.SINGLE,size:8,space:5}},children:[new TextRun({text,bold:true,font:'Century Gothic',size:23,color:NAVY})]});
@@ -29,11 +29,11 @@ const identity=(d:Obj,profile:Profile)=>[
  p(`Contrato: ${value(d,'contract_number')}`),
  p(`CONTRATADO(A): ${professionalLabel(profile)}`),
  p(`CONTRATANTE: ${value(d,'client_name')}`),
- p(`Projeto: ${value(d,'project_name')} • Tipo: ${value(d,'project_type')}`),
+ p(d.has_project===true?`Projeto: ${value(d,'project_name')} • Tipo: ${value(d,'project_type')}`:'Modalidade: prestação de serviço sem projeto vinculado'),
  p(`Imóvel / obra: ${value(d,'property_address')}`),
 ];
 const signature=(profile:Profile,d:Obj)=>[
- p(`Local: _______________________________ • Data: ${datePt(d.emitted_at)}`),p('_______________________________________________'),p(professionalLabel(profile)),p('_______________________________________________'),p('CONTRATANTE')
+ p('Local: _______________________________ • Data da assinatura: ____/____/________'),p('_______________________________________________'),p(professionalLabel(profile)),p('_______________________________________________'),p('CONTRATANTE')
 ];
 const brandHeader=()=>new Header({children:[new Paragraph({border:{bottom:{color:GOLD,style:BorderStyle.SINGLE,size:6,space:4}},spacing:{after:70},children:[new TextRun({text:'Camila Martins',bold:true,font:'Century Gothic',size:18,color:GOLD}),new TextRun({text:'  •  Engenharia Civil',font:'Century Gothic',size:14,color:NAVY})]})]});
 const brandFooter=(profile:Profile,code:string)=>new Footer({children:[new Paragraph({alignment:AlignmentType.CENTER,border:{top:{color:GOLD,style:BorderStyle.SINGLE,size:4,space:4}},spacing:{before:70},children:[new TextRun({text:`${professionalLabel(profile)}  •  ${code}`,font:'Century Gothic',size:13,color:MUTED})]})]});
