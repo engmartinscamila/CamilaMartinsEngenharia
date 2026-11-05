@@ -34,11 +34,11 @@ try{for(const width of [1440,390]){
  assert.equal(resolutions.length,2);assert.equal(resolutions[0].args.p_target_code,'g');assert.equal(resolutions[1].args.p_action,'use_approved_deliverables');
  const box=await page.locator('.closure-dialog').boundingBox();assert.ok(box.x>=0&&box.x+box.width<=width+1,'Modal fits desktop and mobile');
  await page.getByRole('button',{name:'Resolver vínculos de projetos',exact:true}).click();
- await page.getByRole('combobox').selectOption('contract-qa');
+ await page.locator('.closure-dialog').getByRole('combobox').selectOption('contract-qa');
  await page.getByRole('button',{name:'Vincular este projeto',exact:true}).click();
  await page.getByText('Selecione o contrato e confirme a conferência da abrangência e dos endereços.',{exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>window.closureCalls.filter(c=>c.name==='admin_link_existing_project_contract').length),0);
- await page.getByRole('checkbox').check();await page.getByRole('button',{name:'Vincular este projeto',exact:true}).click();
+ await page.locator('.closure-dialog').getByRole('checkbox').check();await page.getByRole('button',{name:'Vincular este projeto',exact:true}).click();
  await page.getByText('✓ Todos os projetos possuem vínculo contratual.',{exact:true}).waitFor();
  const links=await page.evaluate(()=>window.closureCalls.filter(c=>c.name==='admin_link_existing_project_contract'));assert.equal(links.length,1);assert.equal(links[0].args.p_expected_token,'project-token');
  assert.deepEqual(errors,[]);await page.close();console.log(`PASS: assisted contract repair and explicit project linking at ${width}px, without unsolicited emission or duplicate projects.`);
