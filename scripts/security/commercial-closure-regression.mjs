@@ -20,6 +20,7 @@ create function public.enrich_commercial_services(jsonb,text) returns jsonb lang
 create function public.admin_save_commercial_terms(uuid,jsonb) returns jsonb language plpgsql as $$begin update public.commercial_records set commercial_terms=$2,updated_at=clock_timestamp() where id=$1;return $2;end$$;`);
 await db.exec(fs.readFileSync('supabase/migrations/20261102024600_reclassify_without_duplicate_catalog_codes.sql','utf8'));
 await db.exec(fs.readFileSync('supabase/migrations/20261105215025_commercial_closure_assistant.sql','utf8'));
+await db.exec(fs.readFileSync('supabase/migrations/20261105220500_commercial_closure_catalog_guard.sql','utf8'));
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const record=id(10),client=id(20),otherClient=id(21),project=id(30),contract=id(40),otherContract=id(41),document=id(50);
 const services=[{code:'am',name:'Hidráulico',included:true,levelCode:'prata'},{code:'g',name:'Hidrossanitário',included:false},{code:'u',name:'Levantamento cadastral',included:true,levelCode:'prata'},{code:'d',name:'Executivo',included:true},{code:'j',name:'Maquete',included:true}];
@@ -39,6 +40,8 @@ let p=await plan();assert.equal(p.issues.length,2);assert.equal(p.issues.find(i=
 assert.equal(p.emitted,true);assert.equal(p.annexCurrent,false);assert.equal(p.accessReady,false);
 await rejected('select admin_resolve_commercial_closure($1,$2,$3,$4,$5)',[record,'stale','reclassify','am','g'],/mudou/);
 await rejected('select admin_resolve_commercial_closure($1,$2,$3,$4,$5)',[record,p.token,'reclassify','am','u'],/sugestão/);
+const catalogToken=p.token;await db.exec("update service_level_scope_catalog set version=8 where service_code='u'");
+await rejected('select admin_resolve_commercial_closure($1,$2,$3,$4,$5)',[record,catalogToken,'use_approved_deliverables','u',null],/mudou/);p=await plan();
 const staleToken=p.token;
 p=(await db.query('select admin_resolve_commercial_closure($1,$2,$3,$4,$5) result',[record,p.token,'reclassify','am','g'])).rows[0].result;
 assert.equal(p.issues.length,1);await rejected('select admin_resolve_commercial_closure($1,$2,$3,$4,$5)',[record,staleToken,'use_approved_deliverables','u',null],/mudou/);
