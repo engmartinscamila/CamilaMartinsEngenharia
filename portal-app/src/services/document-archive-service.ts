@@ -1,3 +1,4 @@
+import { readAllRows } from '@/lib/paginated-query';
 import { encode } from 'base64-arraybuffer';
 import { supabase } from '@/lib/supabase';
 import type { ServiceResult } from '@/types/domain';
@@ -5,6 +6,7 @@ import type { ServiceResult } from '@/types/domain';
 export interface DocumentArchiveFilters {
   clientName?: string;
   projectName?: string;
+  projectId?: string;
   kind?: string;
   fromDate?: string;
   toDate?: string;
@@ -47,6 +49,7 @@ export interface PurgedDocument {
 export interface DocumentGenerationHistoryItem {
   id: string;
   documentId: string | null;
+  projectId: string | null;
   kind: string | null;
   name: string;
   number: string | null;
@@ -93,21 +96,26 @@ export async function restorePurgedDocument(documentId: string, fileName: string
   return null;
 }
 
-export async function listPurgedDocuments(): Promise<ServiceResult<PurgedDocument[]>> {
-  const result = await supabase.from('documentos').select('id,nome,document_kind,categoria,purged_at').not('purged_at', 'is', null).order('purged_at', { ascending: false }).limit(100);
+export async function listPurgedDocuments(projectId?: string | null): Promise<ServiceResult<PurgedDocument[]>> {
+  let query = supabase.from('documentos').select('id,nome,document_kind,categoria,purged_at').not('purged_at', 'is', null).order('purged_at', { ascending: false });
+  if(projectId)query=query.eq('projeto_id',projectId);
+  const result = await readAllRows(query);
   if (result.error) return { data: [], error: 'Não foi possível carregar os documentos limpos.' };
   return { data: (result.data ?? []).map((row) => ({ id: row.id, name: row.nome, kind: row.document_kind ?? row.categoria, purgedAt: row.purged_at })), error: null };
 }
 
-export async function listDocumentGenerationHistory(limit = 200): Promise<ServiceResult<DocumentGenerationHistoryItem[]>> {
-  const result = await supabase.from('document_generation_history')
-    .select('id,document_id,document_kind,document_name,document_number,version,workflow_status,party_name,storage_mode,file_size_bytes,generated_at')
-    .order('generated_at', { ascending: false })
-    .limit(Math.max(1, Math.min(limit, 500)));
+export async function listDocumentGenerationHistory(projectId?: string | null): Promise<ServiceResult<DocumentGenerationHistoryItem[]>> {
+  let query = supabase.from('document_generation_history')
+    .select('id,document_id,project_id,document_kind,document_name,document_number,version,workflow_status,party_name,storage_mode,file_size_bytes,generated_at')
+    .order('generated_at', { ascending: false });
+  if(projectId)query=query.eq('project_id',projectId);
+  // Filters are applied before pagination; no silent omission beyond the old 200-row cap.
+  const result = await readAllRows(query);
   if (result.error) return { data: [], error: 'Não foi possível carregar o extrato de documentos gerados.' };
   return { data: (result.data ?? []).map((row) => ({
     id: row.id,
     documentId: row.document_id,
+    projectId: row.project_id,
     kind: row.document_kind,
     name: row.document_name,
     number: row.document_number,

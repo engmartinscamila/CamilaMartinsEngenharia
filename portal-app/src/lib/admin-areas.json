@@ -161,6 +161,19 @@
         ]
       },
       {
+        "key": "fiscal",
+        "label": "Rascunhos fiscais",
+        "views": [
+          {
+            "key": "fiscal",
+            "label": "Rascunhos fiscais",
+            "module": "financial",
+            "subview": "fiscal",
+            "scope": true
+          }
+        ]
+      },
+      {
         "key": "history",
         "label": "Histórico e exportação",
         "views": [
