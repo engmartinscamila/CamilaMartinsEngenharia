@@ -21,7 +21,7 @@ try{for(const width of [1440,390]){
    if(name==='admin_link_existing_project_contract'){pending=[];return {data:{linked:true},error:null};}
    return {data:null,error:{message:'Chamada não prevista no fixture'}};
   }};
-  document.addEventListener('DOMContentLoaded',()=>{const b=document.createElement('button');b.dataset.closureRecord='record-qa';b.textContent='Resolver contrato sintético';document.body.appendChild(b);});
+  document.addEventListener('DOMContentLoaded',()=>{document.getElementById('loading')?.remove();const b=document.createElement('button');b.dataset.closureRecord='record-qa';b.textContent='Resolver contrato sintético';document.body.appendChild(b);});
  });
  await page.route('**/*',route=>{const url=new URL(route.request().url());if(url.origin!==base.origin)return route.abort();if(route.request().resourceType()==='script'&&url.pathname!=='/js/management-closure-web.js')return route.fulfill({contentType:'application/javascript',body:''});return route.continue();});
  await page.goto(new URL('/orcamentos-contratos.html',base).href);
