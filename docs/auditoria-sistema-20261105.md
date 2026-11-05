@@ -69,3 +69,9 @@ Não declarar 100% enquanto houver vínculos comerciais indefinidos, acesso de c
 - Conferência adicional: 45 HTML, incluindo previews, e 528 referências locais de href/src/poster sem caminho quebrado encontrado. Não cobre URLs externas.
 - Backend archive-generated-documents v4 ACTIVE, JWT preservado, conteúdo publicado conferido contra o patch. Nenhum documento, histórico, recibo ou e-mail foi criado/removido pela auditoria; contagens finais permanecem 36, 17, 2 e 21, respectivamente.
 - Testes ampliados: as 20 suítes test-*.mjs preexistentes foram executadas; 18 passaram de imediato e duas exigiram as dependências isoladas já previstas nos workflows. Verificação final e publicação constam no PR e nos workflows associados.
+
+### Achado adicional na validação do GitHub
+
+A16 — O workflow de publicação aplicava overrides corrigidos de glob e minimatch apenas no runner, mas o package.json/package-lock.json versionados ainda instalavam versões sinalizadas. Isso fazia a validação do PR reprovar na auditoria de dependências. Correção: persistir os overrides glob 14.0.3 e minimatch 11.0.3 e o lockfile correspondente, preservando Expo 57 e sem forçar atualização de arquitetura. Validação de segurança, TypeScript, integração e build devem passar no mesmo código versionado.
+
+Testes de artefatos concluídos: os dez Word e o Excel foram gerados e reabertos com sucesso a partir dos geradores reais. As duas suítes que exigiam dependências isoladas também passaram (financeiro UI e 14 verificações de XLSX real).
