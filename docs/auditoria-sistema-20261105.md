@@ -75,3 +75,7 @@ Não declarar 100% enquanto houver vínculos comerciais indefinidos, acesso de c
 A16 — O workflow de publicação aplicava overrides corrigidos de glob e minimatch apenas no runner, mas o package.json/package-lock.json versionados ainda instalavam versões sinalizadas. Isso fazia a validação do PR reprovar na auditoria de dependências. Correção: persistir os overrides glob 14.0.3 e minimatch 11.0.3 e o lockfile correspondente, preservando Expo 57 e sem forçar atualização de arquitetura. Validação de segurança, TypeScript, integração e build devem passar no mesmo código versionado.
 
 Testes de artefatos concluídos: os dez Word e o Excel foram gerados e reabertos com sucesso a partir dos geradores reais. As duas suítes que exigiam dependências isoladas também passaram (financeiro UI e 14 verificações de XLSX real).
+
+### Pendência de escopo comercial confirmada
+
+A17 — Um contrato ainda tem, nas condições comerciais do item “Levantamento Técnico / Cadastral”, entregáveis de projeto arquitetônico executivo e maquete tridimensional. O catálogo do item está aprovado, porém não substitui as condições particulares já preenchidas. A prévia existente bloqueia corretamente essa incompatibilidade antes de criar revisão. A correção exige conferir o serviço efetivamente contratado e escolher entre ajustar os entregáveis do levantamento ou retirar/reclassificar o item redundante; não foi feita alteração unilateral do acordo nem emissão de nova versão nesta auditoria. A pendência de dados comerciais permanece aberta.
