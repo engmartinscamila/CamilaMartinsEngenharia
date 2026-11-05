@@ -79,3 +79,19 @@ Testes de artefatos concluídos: os dez Word e o Excel foram gerados e reabertos
 ### Pendência de escopo comercial confirmada
 
 A17 — Um contrato ainda tem, nas condições comerciais do item “Levantamento Técnico / Cadastral”, entregáveis de projeto arquitetônico executivo e maquete tridimensional. O catálogo do item está aprovado, porém não substitui as condições particulares já preenchidas. A prévia existente bloqueia corretamente essa incompatibilidade antes de criar revisão. A correção exige conferir o serviço efetivamente contratado e escolher entre ajustar os entregáveis do levantamento ou retirar/reclassificar o item redundante; não foi feita alteração unilateral do acordo nem emissão de nova versão nesta auditoria. A pendência de dados comerciais permanece aberta.
+
+## Plano ampliado — fechamento assistido dos contratos
+
+A18 — Assistente de fechamento nos contratos comerciais, incluindo os da Tributino: diagnóstico de escopo particular, enquadramento hidráulico/hidrossanitário, acesso do cliente, emissão e Anexo I correspondente. Cada correção apresenta o conteúdo atual e a solução sugerida com dados do catálogo aprovado. Alterações exigem versão atual do cadastro e afetam somente a preparação da próxima revisão. Sem emissão ou aceite automáticos.
+
+A19 — Reconciliação de vínculos dos projetos existentes: sugere contratos do mesmo cliente, prioriza referência numérica já preenchida e exibe os endereços para conferência. Divergência de endereço exige reconhecimento explícito da abrangência do contrato. A operação é atômica, preserva arquivos e não recria o projeto.
+
+A20 — Regularização de projeto legado sem candidato: permite registrar o número, serviço e valor do acordo existente e vinculá-lo ao mesmo projeto. Não inventa dados comerciais, não presume assinatura e não emite documento automaticamente. Cliques repetidos não criam contratos/projetos adicionais.
+
+A21 — Decisão guiada para escopo incompatível: no item cadastral, apresenta a alternativa de manter a atividade com seus entregáveis aprovados ou retirar a linha redundante após conferir a cobertura em projeto executivo e 3D. Água e esgoto em item somente hidráulico recebem sugestão de reenquadramento hidrossanitário com preservação do texto particular, valores, quantidades e prazos. A revisão anterior permanece íntegra.
+
+A22 — Conferência final em sequência: resolver escopo → conferir vínculo do projeto → habilitar acesso no cadastro existente → emitir/revisar contrato → gerar Anexo I da mesma emissão → conferir arquivos e histórico → disponibilizar para aceite. O diagnóstico informa cada etapa em separado; acesso preparado não equivale a convite entregue, e arquivo emitido não equivale a contrato assinado.
+
+Validação: regressão PostgreSQL com casos sintéticos de conflitos reais de classificação, alteração concorrente, cliente incorreto, dupla aplicação, manutenção de 150 dias/parcelas e imutabilidade dos snapshots. Teste de interface desktop/celular integrado ao GitHub. As funções novas usam SECURITY INVOKER, RLS existente e verificação administrativa explícita; sem tabelas ou fontes de dados paralelas.
+
+A23 — Publicação sem espera indefinida: a execução anterior permaneceu na instalação de FFmpeg depois das auditorias aprovadas. O preparo passa a reutilizar a ferramenta quando já disponível, limitar tempo/tentativas de instalação e cancelar builds antigos quando chegar uma correção validada mais recente. Nenhuma animação ou geometria foi alterada.
