@@ -44,4 +44,5 @@ assert.throws(()=>out.applyFilters(q,{projectId:'invalid'},{clientIds:null,proje
 const bridge=fs.readFileSync('src/components/admin-web-tool.tsx','utf8');
 assert.equal((bridge.match(/\['projectId','financialId','receiptId'/g)||[]).length,2);
 assert.ok(fs.readFileSync('src/components/admin-area.tsx','utf8').includes("?['financialId','receiptId']:"));
+assert.equal((fs.readFileSync('src/app/admin/document-archive.tsx','utf8').match(/batches\.map/g)||[]).length,1,'One batch list instead of duplicated history');
 console.log('PASS: receipt identity, finance subviews, notification routes, exact project history, 605-row pagination and repeated-generation grouping.');

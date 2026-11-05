@@ -78,7 +78,7 @@ export default function DocumentArchiveScreen() {
   const load = useCallback(async () => {
     const ticket=++request.current;setLoadingHistory(true);setError(null);
     try {
-    const [batchResult, purgedResult, historyResult] = await Promise.all([listDocumentArchiveBatches(), listPurgedDocuments(typeof projectId==='string'?projectId:null), listDocumentGenerationHistory(typeof projectId==='string'?projectId:null)]);
+    const [batchResult, purgedResult, historyResult] = await Promise.all([listDocumentArchiveBatches(typeof projectId==='string'?projectId:null), listPurgedDocuments(typeof projectId==='string'?projectId:null), listDocumentGenerationHistory(typeof projectId==='string'?projectId:null)]);
     if(ticket!==request.current)return;
     setBatches(batchResult.data); setPurgedDocs(purgedResult.data); setHistory(historyResult.data);
     if (batchResult.error || purgedResult.error || historyResult.error) setError(batchResult.error ?? purgedResult.error ?? historyResult.error);
@@ -86,8 +86,8 @@ export default function DocumentArchiveScreen() {
     finally{if(ticket===request.current)setLoadingHistory(false);}
   }, [projectId]);
 
-  useEffect(()=>{setHistoryPage(0);setPreviewData(null);setSelectedBatchId(null);setConfirmation('');},[projectId,clientName,projectName,kind,fromDate,toDate,showEvents]);
-  useEffect(() => { const task = setTimeout(() => void load(), 0); return () => {clearTimeout(task);request.current++;}; }, [load]);
+  useEffect(()=>{const timer=setTimeout(()=>{setHistoryPage(0);setPreviewData(null);setSelectedBatchId(null);setConfirmation('');},0);return()=>clearTimeout(timer);},[projectId,clientName,projectName,kind,fromDate,toDate,showEvents]);
+  useEffect(() => { const pending=request;const task = setTimeout(() => void load(), 0); return () => {clearTimeout(task);pending.current++;}; }, [load]);
   const parsedDays = () => Math.max(30, Math.min(Number(days) || 180, 3650));
 
   const preview = async () => {
@@ -114,7 +114,7 @@ export default function DocumentArchiveScreen() {
   };
 
   const purge = async () => {
-    if (!selectedBatchId) { setError('Selecione um lote exportado no histórico.'); return; }
+    if (!selectedBatchId) { setError('Selecione um lote exportado na lista abaixo.'); return; }
     setLoadingKey('purge'); setError(null); setSuccess(null);
     const result = await purgeDocumentArchive(selectedBatchId, confirmation);
     if (result) setError(result);
@@ -170,7 +170,6 @@ export default function DocumentArchiveScreen() {
 
       <Card><Text style={styles.sectionTitle}>Restaurar documento arquivado anteriormente</Text><Text style={styles.help}>Selecione o Word correspondente salvo fora do sistema. Depois da restauração ele fica protegido até você liberá-lo.</Text>{purgedDocs.length === 0 ? <StateView icon="cloud-upload-outline" title="Nenhum documento limpo" description="Documentos removidos do Storage aparecerão aqui para eventual restauração." /> : purgedDocs.map((doc) => <View key={doc.id} style={styles.row}><View style={{ flex: 1 }}><Text style={styles.title}>{doc.name}</Text><Text style={styles.help}>{doc.kind ?? 'Documento'} • limpo em {formatDate(doc.purgedAt)}</Text></View><Button loading={loadingKey === `restore-${doc.id}`} onPress={() => void restore(doc)} title="Restaurar Word" variant="secondary" /></View>)}</Card>
 
-      <Card><Text style={styles.sectionTitle}>Histórico de lotes</Text>{batches.map((batch) => <View key={batch.id} style={styles.row}><View style={{ flex: 1 }}><Text style={styles.title}>{batch.documentCount} documentos</Text><Text style={styles.help}>Criado em {formatDate(batch.createdAt)} • corte em {formatDate(batch.cutoffAt)}</Text></View><StatusPill label={batch.status} tone={batch.status === 'limpo' ? 'success' : batch.status === 'exportado' ? 'neutral' : 'warning'} /></View>)}</Card>
     </Screen>
   );
 }

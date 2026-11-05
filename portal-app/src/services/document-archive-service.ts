@@ -135,8 +135,10 @@ export async function getDocumentArchiveReminder(days = 180): Promise<ServiceRes
   return { data: Number(row?.eligible_count ?? 0), error: null };
 }
 
-export async function listDocumentArchiveBatches(): Promise<ServiceResult<DocumentArchiveBatch[]>> {
-  const result = await supabase.from('document_archive_batches').select('id,cutoff_at,document_count,status,created_at,exported_at,purged_at').order('created_at', { ascending: false }).limit(30);
+export async function listDocumentArchiveBatches(projectId?: string | null): Promise<ServiceResult<DocumentArchiveBatch[]>> {
+  let query = supabase.from('document_archive_batches').select('id,cutoff_at,document_count,status,created_at,exported_at,purged_at').order('created_at', { ascending: false });
+  if(projectId)query=query.eq('manifest->filters->>projectId',projectId);
+  const result = await readAllRows(query);
   if (result.error) return { data: [], error: 'Não foi possível carregar o histórico de exportações.' };
   return { data: (result.data ?? []).map((row) => ({ id: row.id, cutoffAt: row.cutoff_at, documentCount: row.document_count, status: row.status, createdAt: row.created_at, exportedAt: row.exported_at, purgedAt: row.purged_at })), error: null };
 }

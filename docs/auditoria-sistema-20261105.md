@@ -1,6 +1,6 @@
 # Auditoria do sistema de gestão — 05/11/2026
 
-Estado: auditoria de código e banco concluída para o escopo abaixo; correções em execução. Não representa certificação de funcionamento integral em sessão autenticada. A pedido da administradora, testes continuam pelo GitHub quando o acesso interativo não concluir.
+Estado: auditoria de código e banco concluída para o escopo abaixo; correções implementadas e em validação de publicação. Não representa certificação de funcionamento integral em sessão autenticada. A pedido da administradora, testes continuam pelo GitHub quando o acesso interativo não concluir.
 
 Base: main 9d29f471600bec0217f61d6f823654a9bc58ed65. Site estático GitHub Pages, portal Expo web e Supabase de produção existente. Nenhum banco paralelo, documento emitido, aceite, pagamento ou histórico foi criado para realizar esta auditoria.
 
@@ -58,3 +58,14 @@ As 37 áreas registradas são compostas em centrais; não representam 37 funcion
 ## Encerramento exigido
 
 Não declarar 100% enquanto houver vínculos comerciais indefinidos, acesso de cliente ausente, teste autenticado pendente ou integrações sem evidência. Cada correção deve ter teste de comportamento, commit, CI e publicação confirmada. Nenhum registro histórico deve ser apagado para esconder duplicação visual.
+
+## Execução do plano
+
+- A01–A08, A11 e A12 implementados com regressões: contexto de recibo existente preservado, filtro por UUID no extrato/restauração/lotes/manutenção, histórico agrupado por versão com acesso opcional aos eventos, paginação completa, subárea fiscal e navegação financeira corrigidas, notificações com destinos internos atuais e documentação atualizada.
+- Eliminada também uma lista duplicada: os mesmos lotes apareciam no seletor de exportados e novamente no rodapé como histórico. A tela mantém uma única listagem com as ações existentes.
+- A09 e A10: pendências de contrato e acesso expostas na Visão geral; os registros reais foram preservados. A escolha entre dois contratos possíveis e a contratação ausente dependem de informação comercial que o código não pode inferir.
+- A13: aviso de senha vazada continua registrado para revisão de configuração; CAPTCHA e controles de acesso foram mantidos.
+- A14 e A15: sem conclusão autenticada real nesta sessão. A orientação recebida foi prosseguir com validação pelo GitHub; isso não prova entrega de e-mails, push ou calendário em dispositivos reais.
+- Conferência adicional: 45 HTML, incluindo previews, e 528 referências locais de href/src/poster sem caminho quebrado encontrado. Não cobre URLs externas.
+- Backend archive-generated-documents v4 ACTIVE, JWT preservado, conteúdo publicado conferido contra o patch. Nenhum documento, histórico, recibo ou e-mail foi criado/removido pela auditoria; contagens finais permanecem 36, 17, 2 e 21, respectivamente.
+- Testes ampliados: as 20 suítes test-*.mjs preexistentes foram executadas; 18 passaram de imediato e duas exigiram as dependências isoladas já previstas nos workflows. Verificação final e publicação constam no PR e nos workflows associados.
