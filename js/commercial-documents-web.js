@@ -984,6 +984,7 @@
 
       const actions = kind === 'contrato'
         ? `${record.contract_document_id?`<button class="doc-btn secondary" data-action="contract-download" data-document-id="${record.contract_document_id}" data-id="${record.id}">Baixar Word emitido</button><button class="doc-btn secondary" data-action="contract-versions" data-id="${record.id}">Versões anteriores</button><button class="doc-btn secondary" data-action="commercial-terms" data-id="${record.id}">Editar parcelas, prazos e quantidades</button><button class="doc-btn ghost" data-action="contract-revision" data-id="${record.id}">Criar nova revisão</button>`:`<button class="doc-btn secondary" data-action="commercial-terms" data-id="${record.id}">Editar parcelas, prazos e quantidades</button><button class="doc-btn secondary" data-action="contract" data-id="${record.id}">Gerar Word e arquivar</button>`}
+           <button type="button" class="doc-btn" data-closure-record="${record.id}">Resolver pendências</button>
            <button class="doc-btn secondary" data-action="reclassify-services" data-id="${record.id}">Corrigir enquadramento de serviços</button>
            <button class="doc-btn" data-action="convert" data-id="${record.id}" ${record.status === 'convertido' ? 'disabled' : ''}>
              ${record.status === 'convertido' ? 'Cliente/projeto vinculados' : 'Formalizar cliente + projeto'}
