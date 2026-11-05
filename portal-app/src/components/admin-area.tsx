@@ -13,7 +13,7 @@ import type {AdminProjectSummary} from '@/types/domain';
 import {spacing,ThemeColors,typography} from '@/theme/tokens';
 interface CachedModule {key:string;module:string;projectId:string|null;subview?:string;view:string;financialId?:string;params:Record<string,string>}
 export function AdminArea({area}:{area:AdminAreaKey}){
- const router=useRouter(),params=useLocalSearchParams<{view?:string;projectId?:string;financialId?:string;clientId?:string;novo?:string;visao?:string;foto?:string}>();
+ const router=useRouter(),params=useLocalSearchParams<{view?:string;projectId?:string;financialId?:string;receiptId?:string;clientId?:string;novo?:string;visao?:string;foto?:string}>();
  const definition=adminAreas[area],views=definition.groups.flatMap(group=>group.views);
  const selected=views.find(view=>view.key===params.view)??views[0]!;
  const group=definition.groups.find(item=>item.views.includes(selected))!;
@@ -27,14 +27,14 @@ export function AdminArea({area}:{area:AdminAreaKey}){
   const local=definition.groups.flatMap(item=>item.views).find(item=>item.module===module&&(!values.view||item.key===values.view))??definition.groups.flatMap(item=>item.views).find(item=>item.module===module);
   const destination=local?{area,view:local.key}:adminAreaForModule(module);
   const next={...(projectId?{projectId}:{}),...values};
-  if(destination?.area===area){router.setParams({...next,view:destination.view,...(module!=='receipts'?{financialId:undefined}:{})});return;}
+  if(destination?.area===area){router.setParams({...next,view:destination.view,...(module==='receipts'&&values.receiptId?{financialId:undefined}:module==='receipts'&&values.financialId?{receiptId:undefined}:{}),...(module!=='receipts'?{financialId:undefined,receiptId:undefined}:{})});return;}
   if(destination){router.push({pathname:`/admin/${destination.area}`,params:{...next,view:destination.view}} as Href);return;}
   router.push({pathname:`/admin/${module}`,params:next} as Href);
  },[area,definition.groups,projectId,router]);
  const selectProject=useCallback((id:string|null)=>router.setParams({projectId:id??undefined}),[router]);
  const viewProject=scoped?projectId:null;
  const financialId=selected.module==='receipts'&&typeof params.financialId==='string'?params.financialId:undefined;
- const names=selected.module==='receipts'?['financialId']:['clients','projects','workspace'].includes(selected.module)?['clientId']:['documents','photos'].includes(selected.module)?['novo','visao','foto']:[];
+ const names=selected.module==='receipts'?['financialId','receiptId']:['clients','projects','workspace'].includes(selected.module)?['clientId']:['documents','photos'].includes(selected.module)?['novo','visao','foto']:[];
  const contextual=Object.fromEntries(Object.entries(params).filter(([name,value])=>names.includes(name)&&typeof value==='string')) as Record<string,string>;
  const extraKey=JSON.stringify(contextual);
  const key=`${selected.module}:${viewProject??'all'}:${extraKey}`;
@@ -45,7 +45,7 @@ export function AdminArea({area}:{area:AdminAreaKey}){
   const timer=setTimeout(()=>setCache(current=>current.some(item=>item.key===key)?current:current.concat(entry)),0);
   return()=>clearTimeout(timer);
  },[available,key,selected.module,selected.subview,selected.key,viewProject,financialId,extraKey]);
- const choose=(view:AdminAreaView)=>{router.setParams({view:view.key,...(view.module!=='receipts'?{financialId:undefined}:{})});setShowProjects(false);};
+ const choose=(view:AdminAreaView)=>{router.setParams({view:view.key,...(view.module!=='receipts'?{financialId:undefined,receiptId:undefined}:{})});setShowProjects(false);};
  return <View style={styles.container}>
   <View style={styles.heading}><AdminPageHeader title={definition.title} description={definition.description} />
    <SelectionChips label="Área de trabalho" value={group.key} onChange={value=>choose(definition.groups.find(item=>item.key===value)!.views[0]!)} items={definition.groups.map(item=>({value:item.key,label:item.label}))} />
@@ -57,7 +57,7 @@ export function AdminArea({area}:{area:AdminAreaKey}){
     </>}
    </View>:null}
    {error?<Notice tone="warning">{error}</Notice>:null}
-   {area==='finance-center'&&selected.module==='receipts'&&financialId?<View style={styles.receiptContext}><Text style={styles.meta}>Recibo vinculado ao recebimento selecionado.</Text><Button debounceMs={0} title="Novo recibo avulso" variant="ghost" onPress={()=>router.setParams({financialId:undefined})} /></View>:null}
+   {area==='finance-center'&&selected.module==='receipts'&&financialId?<View style={styles.receiptContext}><Text style={styles.meta}>Recibo vinculado ao recebimento selecionado.</Text><Button debounceMs={0} title="Novo recibo avulso" variant="ghost" onPress={()=>router.setParams({financialId:undefined,receiptId:undefined})} /></View>:null}
   </View>
   {!available?<ScrollView contentContainerStyle={styles.empty}><StateView title="Selecione o projeto" description="O planejamento e os registros serão abertos no projeto escolhido." icon="briefcase-outline" /></ScrollView>:null}
   {cache.map(entry=>{

@@ -12,7 +12,7 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 });
 
 type Service = ReturnType<typeof createClient>;
-type Filters = { clientName?: string; projectName?: string; kind?: string; fromDate?: string; toDate?: string };
+type Filters = { projectId?: string; clientName?: string; projectName?: string; kind?: string; fromDate?: string; toDate?: string };
 type DocRow = {
   id: string;
   nome: string;
@@ -79,6 +79,10 @@ function applyFilters(query: any, filters: Filters, ids: { clientIds: string[] |
   let q = query;
   if (ids.clientIds) q = ids.clientIds.length ? q.in('cliente_id', ids.clientIds) : q.eq('cliente_id', '00000000-0000-0000-0000-000000000000');
   if (ids.projectIds) q = ids.projectIds.length ? q.in('projeto_id', ids.projectIds) : q.eq('projeto_id', '00000000-0000-0000-0000-000000000000');
+  if (filters.projectId) {
+    if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(filters.projectId))throw new Error('Projeto inválido para manutenção.');
+    q=q.eq('projeto_id',filters.projectId);
+  }
   if (filters.kind?.trim()) q = q.eq('document_kind', filters.kind.trim());
   if (filters.fromDate) q = q.gte('generated_at', `${filters.fromDate}T00:00:00-03:00`);
   if (filters.toDate) q = q.lte('generated_at', `${filters.toDate}T23:59:59-03:00`);

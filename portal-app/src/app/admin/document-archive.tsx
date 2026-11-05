@@ -1,8 +1,8 @@
 import {useAdminModule} from '@/providers/admin-module-context';
 import { useLocalSearchParams } from 'expo-router';
-import { listAdminProjects } from '@/services/admin-service';
+import { groupDocumentGenerations } from '@/lib/document-generation-history';
 import * as DocumentPicker from 'expo-document-picker';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Linking, Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
@@ -41,7 +41,9 @@ export default function DocumentArchiveScreen() {
   const embedded=useAdminModule();
   const params=useLocalSearchParams<{projectId?:string}>();
   const projectId=embedded?embedded.projectId:params.projectId;
-  useEffect(()=>{if(!projectId)return;let active=true;void listAdminProjects().then(result=>{const project=result.data.find(p=>p.id===projectId);if(active&&project)setProjectName(project.name);});return()=>{active=false;};},[projectId]);
+  const [showEvents,setShowEvents]=useState(false),[showHistory,setShowHistory]=useState(false),[historyPage,setHistoryPage]=useState(0);
+  const [loadingHistory,setLoadingHistory]=useState(true);
+  const request=useRef(0);
   const [kind, setKind] = useState('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
@@ -58,10 +60,11 @@ export default function DocumentArchiveScreen() {
   const filters = useMemo<DocumentArchiveFilters>(() => ({
     clientName: clientName.trim() || undefined,
     projectName: projectName.trim() || undefined,
+    projectId: typeof projectId==='string'?projectId:undefined,
     kind: kind.trim() || undefined,
     fromDate: fromDate.trim() || undefined,
     toDate: toDate.trim() || undefined,
-  }), [clientName, projectName, kind, fromDate, toDate]);
+  }), [clientName, projectName, kind, fromDate, toDate, projectId]);
 
   const filteredHistory = useMemo(() => history.filter((item) => {
     if (clientName.trim() && !String(item.partyName ?? '').toLocaleLowerCase('pt-BR').includes(clientName.trim().toLocaleLowerCase('pt-BR'))) return false;
@@ -71,13 +74,20 @@ export default function DocumentArchiveScreen() {
     return true;
   }), [history, clientName, kind, fromDate, toDate]);
 
+  const displayedHistory=useMemo(()=>showEvents?filteredHistory.map(item=>({...item,generationCount:1})):groupDocumentGenerations(filteredHistory),[filteredHistory,showEvents]);
   const load = useCallback(async () => {
-    const [batchResult, purgedResult, historyResult] = await Promise.all([listDocumentArchiveBatches(), listPurgedDocuments(), listDocumentGenerationHistory()]);
+    const ticket=++request.current;setLoadingHistory(true);setError(null);
+    try {
+    const [batchResult, purgedResult, historyResult] = await Promise.all([listDocumentArchiveBatches(typeof projectId==='string'?projectId:null), listPurgedDocuments(typeof projectId==='string'?projectId:null), listDocumentGenerationHistory(typeof projectId==='string'?projectId:null)]);
+    if(ticket!==request.current)return;
     setBatches(batchResult.data); setPurgedDocs(purgedResult.data); setHistory(historyResult.data);
     if (batchResult.error || purgedResult.error || historyResult.error) setError(batchResult.error ?? purgedResult.error ?? historyResult.error);
-  }, []);
+    }catch{if(ticket===request.current)setError('Não foi possível atualizar os arquivos antigos. Tente novamente.');}
+    finally{if(ticket===request.current)setLoadingHistory(false);}
+  }, [projectId]);
 
-  useEffect(() => { const task = setTimeout(() => void load(), 0); return () => clearTimeout(task); }, [load]);
+  useEffect(()=>{const timer=setTimeout(()=>{setHistoryPage(0);setPreviewData(null);setSelectedBatchId(null);setConfirmation('');},0);return()=>clearTimeout(timer);},[projectId,clientName,projectName,kind,fromDate,toDate,showEvents]);
+  useEffect(() => { const pending=request;const task = setTimeout(() => void load(), 0); return () => {clearTimeout(task);pending.current++;}; }, [load]);
   const parsedDays = () => Math.max(30, Math.min(Number(days) || 180, 3650));
 
   const preview = async () => {
@@ -104,7 +114,7 @@ export default function DocumentArchiveScreen() {
   };
 
   const purge = async () => {
-    if (!selectedBatchId) { setError('Selecione um lote exportado no histórico.'); return; }
+    if (!selectedBatchId) { setError('Selecione um lote exportado na lista abaixo.'); return; }
     setLoadingKey('purge'); setError(null); setSuccess(null);
     const result = await purgeDocumentArchive(selectedBatchId, confirmation);
     if (result) setError(result);
@@ -128,15 +138,18 @@ export default function DocumentArchiveScreen() {
 
   return (
     <Screen>
-      <AdminPageHeader title="Arquivos antigos e restauração" description="Veja tudo o que já foi gerado e gerencie apenas os arquivos que você decidiu arquivar no sistema." />
-      <Notice tone="info">Gerar um Word não ocupa Storage por padrão. O extrato abaixo é leve e permanece mesmo quando o arquivo é apenas baixado e não arquivado.</Notice>
+      <AdminPageHeader title="Arquivos antigos e restauração" description="Exportação, retenção e restauração dos arquivos antigos. Emissões e aceites ficam em Emissões e aprovações." />
+      <Notice tone="info">Gerar um Word não ocupa Storage por padrão. A auditoria de gerações é opcional e permanece mesmo quando o arquivo é apenas baixado e não arquivado.</Notice>
       {error ? <Notice tone="danger">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}
 
-      <Card>
-        <Text style={styles.sectionTitle}>Extrato de documentos gerados</Text>
-        <Text style={styles.help}>Cada geração é registrada, inclusive regenerações. “Somente download” significa que o Word não ficou armazenado no sistema.</Text>
-        {filteredHistory.length === 0 ? <StateView icon="receipt-outline" title="Extrato vazio" description="As próximas gerações de orçamento, contrato e demais documentos aparecerão aqui." /> : filteredHistory.slice(0, 100).map((item) => <View key={item.id} style={styles.row}><View style={{ flex: 1 }}><Text style={styles.title}>{item.number ? `${item.number} • ` : ''}{item.name}</Text><Text style={styles.help}>{item.partyName ?? 'Sem cliente/prospect identificado'} • {item.kind ?? 'documento'} • v{item.version ?? '—'} • {formatDate(item.generatedAt)}</Text>{item.fileSizeBytes ? <Text style={styles.help}>{formatBytes(item.fileSizeBytes)}</Text> : null}</View><StatusPill label={item.storageMode === 'archived' ? 'Arquivado' : 'Somente download'} tone={item.storageMode === 'archived' ? 'success' : 'neutral'} /></View>)}
-      </Card>
+      <Button title={showHistory?'Fechar auditoria de gerações':'Consultar auditoria de gerações'} variant="ghost" onPress={()=>setShowHistory(value=>!value)} />
+      {showHistory?<Card>
+        <Text style={styles.sectionTitle}>Auditoria de gerações</Text>
+        <Button title={showEvents?'Agrupar por documento e versão':'Consultar cada evento de geração'} variant="ghost" onPress={()=>setShowEvents(current=>!current)} />
+        <Text style={styles.help}>Cada documento e versão aparece uma vez. A contagem de gerações preserva reprocessamentos sem apresentá-los como novas versões. “Somente download” significa que o Word não ficou armazenado no sistema.</Text>
+        {loadingHistory?<Text style={styles.help}>Carregando auditoria…</Text>:error?<Text style={styles.help}>Consulta incompleta. Atualize antes de conferir os registros.</Text>:displayedHistory.length === 0 ? <StateView icon="receipt-outline" title="Extrato vazio" description="As próximas gerações de orçamento, contrato e demais documentos aparecerão aqui." /> : displayedHistory.slice(historyPage*50, historyPage*50+50).map((item) => <View key={item.id} style={styles.row}><View style={{ flex: 1 }}><Text style={styles.title}>{item.number ? `${item.number} • ` : ''}{item.name}</Text><Text style={styles.help}>{item.partyName ?? 'Sem cliente/prospect identificado'} • {item.kind ?? 'documento'} • v{item.version ?? '—'} • {formatDate(item.generatedAt)}</Text>{item.generationCount>1?<Text style={styles.help}>{item.generationCount} gerações registradas desta versão</Text>:null}{item.fileSizeBytes ? <Text style={styles.help}>{formatBytes(item.fileSizeBytes)}</Text> : null}</View><StatusPill label={item.storageMode === 'archived' ? 'Arquivado' : 'Somente download'} tone={item.storageMode === 'archived' ? 'success' : 'neutral'} /></View>)}
+        {displayedHistory.length>50?<View style={styles.twoColumns}><Button title="Página anterior" variant="ghost" disabled={historyPage===0} onPress={()=>setHistoryPage(page=>page-1)} /><Text style={styles.help}>Página {historyPage+1} • {displayedHistory.length} registros</Text><Button title="Próxima página" variant="ghost" disabled={(historyPage+1)*50>=displayedHistory.length} onPress={()=>setHistoryPage(page=>page+1)} /></View>:null}
+      </Card>:null}
 
       <Card>
         <Text style={styles.sectionTitle}>Filtros e manutenção dos arquivos arquivados</Text>
@@ -157,7 +170,6 @@ export default function DocumentArchiveScreen() {
 
       <Card><Text style={styles.sectionTitle}>Restaurar documento arquivado anteriormente</Text><Text style={styles.help}>Selecione o Word correspondente salvo fora do sistema. Depois da restauração ele fica protegido até você liberá-lo.</Text>{purgedDocs.length === 0 ? <StateView icon="cloud-upload-outline" title="Nenhum documento limpo" description="Documentos removidos do Storage aparecerão aqui para eventual restauração." /> : purgedDocs.map((doc) => <View key={doc.id} style={styles.row}><View style={{ flex: 1 }}><Text style={styles.title}>{doc.name}</Text><Text style={styles.help}>{doc.kind ?? 'Documento'} • limpo em {formatDate(doc.purgedAt)}</Text></View><Button loading={loadingKey === `restore-${doc.id}`} onPress={() => void restore(doc)} title="Restaurar Word" variant="secondary" /></View>)}</Card>
 
-      <Card><Text style={styles.sectionTitle}>Histórico de lotes</Text>{batches.map((batch) => <View key={batch.id} style={styles.row}><View style={{ flex: 1 }}><Text style={styles.title}>{batch.documentCount} documentos</Text><Text style={styles.help}>Criado em {formatDate(batch.createdAt)} • corte em {formatDate(batch.cutoffAt)}</Text></View><StatusPill label={batch.status} tone={batch.status === 'limpo' ? 'success' : batch.status === 'exportado' ? 'neutral' : 'warning'} /></View>)}</Card>
     </Screen>
   );
 }

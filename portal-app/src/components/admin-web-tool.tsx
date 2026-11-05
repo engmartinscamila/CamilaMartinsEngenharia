@@ -10,13 +10,13 @@ const modules:Record<string,string>={
  '/configuracoes.html':'settings','/integridade-sistema.html':'system-health','/protecao-pdf-admin.html':'website-content',
 };
 export function AdminWebTool({title,path}:{title:string;path:string}){
- const embedded=useAdminModule(),params=useLocalSearchParams<{financialId?:string;clientId?:string;novo?:string;visao?:string;foto?:string}>();
+ const embedded=useAdminModule(),params=useLocalSearchParams<{financialId?:string;receiptId?:string;clientId?:string;novo?:string;visao?:string;foto?:string}>();
  const [ready,setReady]=useState(false),[failed,setFailed]=useState(false);
  const iframe=useRef<HTMLIFrameElement|null>(null);
  const query=new URLSearchParams();
  if(embedded?.projectId)query.set('projectId',embedded.projectId);
  const contextParams=embedded?.params??params;
- for(const name of ['financialId','clientId','novo','visao','foto'] as const){const value=contextParams[name];if(typeof value==='string')query.set(name,value);}
+ for(const name of ['financialId','receiptId','clientId','novo','visao','foto'] as const){const value=contextParams[name];if(typeof value==='string')query.set(name,value);}
  const fullPath=path+(query.size?'?'+query:'');
  useEffect(()=>{if(Platform.OS==='web'&&!embedded)window.location.replace(fullPath);},[embedded,fullPath]);
  const loaded=()=>{
@@ -26,7 +26,7 @@ export function AdminWebTool({title,path}:{title:string;path:string}){
    const url=new URL(frame.contentWindow.location.href);
    if(url.origin!==location.origin)throw new Error('Origem não permitida');
    if(url.pathname!==path&&modules[url.pathname]){
-    const values=Object.fromEntries([...url.searchParams.entries()].filter(([key])=>['projectId','financialId','clientId','novo','visao','foto'].includes(key)));
+    const values=Object.fromEntries([...url.searchParams.entries()].filter(([key])=>['projectId','financialId','receiptId','clientId','novo','visao','foto'].includes(key)));
     embedded?.onNavigate(modules[url.pathname]!,values);frame.src=fullPath;return;
    }
    const doc=frame.contentDocument,style=doc.createElement('style');
@@ -39,7 +39,7 @@ export function AdminWebTool({title,path}:{title:string;path:string}){
     if(!anchor||anchor.target==='_blank'||anchor.hasAttribute('download'))return;
     const target=new URL(anchor.href);
     if(target.origin!==location.origin||!modules[target.pathname])return;
-    event.preventDefault();embedded?.onNavigate(modules[target.pathname]!,Object.fromEntries([...target.searchParams.entries()].filter(([key])=>['projectId','financialId','clientId','novo','visao','foto'].includes(key))));
+    event.preventDefault();embedded?.onNavigate(modules[target.pathname]!,Object.fromEntries([...target.searchParams.entries()].filter(([key])=>['projectId','financialId','receiptId','clientId','novo','visao','foto'].includes(key))));
    });
    setReady(true);setFailed(false);
   }catch{setFailed(true);setReady(false);}

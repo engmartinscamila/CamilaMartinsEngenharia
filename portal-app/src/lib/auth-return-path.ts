@@ -20,7 +20,7 @@ export function safeAdminReturnPath(value: unknown): string | null {
   const query = new URLSearchParams();
   const area=adminAreas[path.slice('/admin/'.length) as keyof typeof adminAreas];
   if(area){const value=url.searchParams.get('view');if(area.groups.some(group=>group.views.some(view=>view.key===value)))query.set('view',value!);}
-  for(const name of ['financialId','clientId'] as const){const value=url.searchParams.get(name);if(value&&/^[a-z\d-]{1,64}$/i.test(value))query.set(name,value);}
+  for(const name of ['financialId','receiptId','clientId'] as const){const value=url.searchParams.get(name);if(value&&/^[a-z\d-]{1,64}$/i.test(value))query.set(name,value);}
   const view=url.searchParams.get('view');
   if(path==='/admin/document-center'&&['emissions','approvals','tracking'].includes(view??''))query.set('view',view!);
   if(path==='/admin/document-center'){

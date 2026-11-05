@@ -51,10 +51,12 @@ export default function AdminWorkspace(){
    for(const a of approvals)if(mode==='search'||['aguardando','pendente','aguardando_cliente','em_analise'].includes(text(a.status)))rows.push({id:'approval:'+a.id,label:a.title,detail:`Aprovação • ${a.status} • Prazo ${formatDate(a.dueAt)}`,section:'approvals',projectId:a.projectId});
    if(mode==='pending'||mode==='summary'){
     for(const e of entries)if(financialStatus(e.status)==='pendente'&&e.dueDate&&e.dueDate<financialToday())rows.push({id:e.id,label:e.description,detail:`Financeiro em atraso • ${e.clientName} • ${formatCurrency(e.amount)}`,section:'financial',projectId:e.projectId});
+    for(const p of projects)if(!p.contractId)rows.push({id:'missing-contract:'+p.id,label:p.name,detail:'Projeto sem vínculo contratual. Confira o contrato correto antes de vincular.',section:'projects',projectId:p.id});
+    for(const c of clients)if(c.status==='ativo'&&!c.authId)rows.push({id:'missing-access:'+c.id,label:c.name,detail:'Cliente ativo sem acesso ao portal. Confira o cadastro e o convite.',section:'clients',clientId:c.id});
     for(const j of emailJobs)if(['failed','pending','processing'].includes(j.status))rows.push({id:'email:'+j.id,label:'E-mail: '+(clients.find(c=>c.id===j.client_id)?.name??'Cliente'),detail:j.status+' • '+(j.last_error??'Envio automático em andamento'),section:'clients',clientId:j.client_id});
    }
   }
-  return rows.filter(r=>(!projectId||r.projectId===projectId||r.id==='client:'+project?.clientId||(r.id.startsWith('email:')&&r.clientId===project?.clientId))&&text(r.label+' '+r.detail).includes(text(query)));
+  return rows.filter(r=>(!projectId||r.projectId===projectId||r.id==='client:'+project?.clientId||((r.id.startsWith('email:')||r.id.startsWith('missing-access:'))&&r.clientId===project?.clientId))&&text(r.label+' '+r.detail).includes(text(query)));
  },[clients,projects,files,entries,approvals,requests,emailJobs,mode,projectId,project,query]);
  return <Screen><AdminPageHeader title="Visão geral" description="Indicadores, busca, pendências e ficha do cliente ou projeto." />
  {error?<Notice tone="warning">{error} O resumo pode estar incompleto; atualize antes de tomar decisões.</Notice>:null}
