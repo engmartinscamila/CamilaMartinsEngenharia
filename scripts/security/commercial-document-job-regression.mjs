@@ -1,0 +1,55 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {PGlite} from '@electric-sql/pglite';
+import {createHash} from 'node:crypto';
+const db=new PGlite();const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
+const token='ab'.repeat(32),digest=createHash('sha256').update(token).digest('hex');
+try{
+ await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;
+ create table auth.users(id uuid primary key);create table pdf_admins(user_id uuid primary key);
+ create table commercial_records(id uuid primary key,record_kind text,contract_document_id uuid,linked_project_id uuid,linked_contract_id uuid);
+ create table documentos(id uuid primary key default gen_random_uuid(),kind text,project_id uuid,extra jsonb);
+ create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ create function public.admin_commercial_closure(p uuid) returns jsonb language sql as $$select jsonb_build_object('token','expected','documentId',contract_document_id,'issues','[]'::jsonb,'emissionPending',false,'revisionRequired',true) from public.commercial_records where id=p$$;
+ create function public.consume_admin_rate_limit(p text) returns boolean language plpgsql as $$begin if auth.uid() is null then raise exception 'Missing actor';end if;return true;end$$;
+ create function public.admin_assign_commercial_contract_number(p uuid) returns text language sql as $$select 'CON-SYNTHETIC'::text$$;
+ create function public.admin_prepare_contract_document(p uuid,k text,a uuid,e jsonb) returns uuid language plpgsql as $$declare d uuid;begin if auth.uid() is null then raise exception 'Missing actor';end if;insert into public.documentos(kind,project_id,extra)values(k,p,e)returning id into d;return d;end$$;
+ grant usage on schema auth to service_role;grant select on pdf_admins,commercial_records to service_role;grant all on documentos to service_role;
+ insert into auth.users values('${id(1)}');insert into pdf_admins values('${id(1)}');insert into documentos(id)values('${id(10)}'),('${id(11)}');
+ insert into commercial_records values('${id(2)}','contrato','${id(10)}','${id(3)}','${id(4)}');`);
+ const migrations=process.env.CME_DOCUMENT_JOB_MIGRATION?[process.env.CME_DOCUMENT_JOB_MIGRATION]:fs.readdirSync('supabase/migrations').filter(f=>f.endsWith('_commercial_document_jobs.sql')).sort().map(f=>'supabase/migrations/'+f);
+ assert.ok(migrations.length);for(const file of migrations)await db.exec(fs.readFileSync(file,'utf8'));
+ for(const role of ['anon','authenticated']){
+  assert.equal((await db.query("select has_function_privilege($1,'service_claim_commercial_document_job(uuid,text)','execute') ok",[role])).rows[0].ok,false);
+  assert.equal((await db.query("select has_table_privilege($1,'commercial_document_jobs','select') ok",[role])).rows[0].ok,false);
+ }
+ const add=async(n,expected='expected')=>db.query('insert into commercial_document_jobs(id,record_id,requested_by,token_hash,expected_source_token,original_contract_document_id) values($1,$2,$3,$4,$5,$6)',[id(n),id(2),id(1),digest,expected,id(10)]);
+ await add(20);
+ await assert.rejects(()=>add(21),/unique/);
+ await db.exec('set role service_role');
+ const claim=(n,t=token)=>db.query('select service_claim_commercial_document_job($1,$2) job',[id(n),t]);
+ await assert.rejects(()=>claim(20,'cd'.repeat(32)),/autorizada/);
+ const first=(await claim(20)).rows[0].job;assert.equal(first.status,'processing');assert.equal(first.attempts,1);assert.ok(!('token_hash' in first));
+ await assert.rejects(()=>claim(20),/andamento/);
+ const rpc=(name,args={})=>db.query('select service_commercial_document_job_rpc($1,$2,$3,$4) result',[id(20),token,name,args]);
+ assert.equal((await rpc('consume_admin_rate_limit',{p_action:'commercial-document-contrato'})).rows[0].result,true);
+ await assert.rejects(()=>rpc('consume_admin_rate_limit',{p_action:'admin-delete-client'}),/permitida/);
+ await assert.rejects(()=>rpc('admin_assign_commercial_contract_number',{p_record_id:id(999)}),/permitido/);
+ await assert.rejects(()=>rpc('admin_purge_client_database'),/permitida/);
+ await assert.rejects(()=>rpc('admin_prepare_contract_document'),/concluído/);
+ await db.query("update commercial_document_jobs set contract_document_id=$1,phase='contract_done' where id=$2",[id(11),id(20)]);
+ await db.exec('reset role');await db.query('update commercial_records set contract_document_id=$1 where id=$2',[id(11),id(2)]);await db.exec('set role service_role');
+ const annex=(await rpc('admin_prepare_contract_document',{p_project_id:id(999),p_document_kind:'quitacao_encerramento'})).rows[0].result;
+ assert.equal((await rpc('admin_prepare_contract_document')).rows[0].result,annex,'Lost preparation response must reuse the same document');
+ const prepared=(await db.query('select * from documentos where id=$1',[annex])).rows[0];assert.equal(prepared.project_id,id(3));assert.equal(prepared.kind,'anexo_i');assert.equal(prepared.extra.maintenance_job_id,id(20));
+ assert.equal((await db.query("select nullif(current_setting('request.jwt.claim.sub',true),'') uid")).rows[0].uid,null,'Delegation must be transaction-local');
+ await db.query("update commercial_document_jobs set status='failed',lease_until=null where id=$1",[id(20)]);
+ assert.equal((await claim(20)).rows[0].job.annex_document_id,annex,'Retry retains both document checkpoints');
+ await db.query("update commercial_document_jobs set status='completed',result='{}' where id=$1",[id(20)]);
+ assert.equal((await claim(20)).rows[0].job.status,'completed','Completed job is read-only on replay');
+ await db.exec('reset role');await add(22,'outdated');await db.exec('set role service_role');
+ await assert.rejects(()=>claim(22),/alterado/);
+ await db.query("update commercial_document_jobs set expires_at=now()-interval '1 second' where id=$1",[id(22)]);
+ await assert.rejects(()=>claim(22),/autorizada/);
+ console.log('PASS PostgreSQL: server-only jobs, high-entropy token hash, exclusive claims, approved input, scoped delegation, transaction-local actor, preparation checkpoints, retry and expiry.');
+}finally{await db.close();}

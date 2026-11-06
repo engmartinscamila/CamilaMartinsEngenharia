@@ -70,6 +70,9 @@ jobs:
       - name: Testar liberação, aceite e substituição documental no PostgreSQL
         run: node scripts/security/document-client-flow-regression.mjs
 
+      - name: Testar trabalhos documentais exclusivos do servidor
+        run: node scripts/security/commercial-document-job-regression.mjs
+
       - name: Testar conciliação OFX atômica e isolada
         run: node scripts/security/ofx-regression.mjs
 

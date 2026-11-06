@@ -39,6 +39,10 @@ on:
       - 'js/contract-documents-web.js'
       - 'scripts/contract-emission-regression.mjs'
       - 'scripts/commercial-emission-recovery-regression.mjs'
+      - 'supabase/functions/process-commercial-document-job/**'
+      - 'scripts/build-commercial-document-job.mjs'
+      - 'scripts/commercial-document-job-regression.mjs'
+      - 'scripts/security/commercial-document-job-regression.mjs'
       - 'scripts/security/commercial-emission-leases-regression.mjs'
       - 'scripts/contrato-documento-revisao-integridade.mjs'
       - 'scripts/commercial-custom-scope-regression.mjs'
@@ -81,6 +85,10 @@ on:
       - 'js/contract-documents-web.js'
       - 'scripts/contract-emission-regression.mjs'
       - 'scripts/commercial-emission-recovery-regression.mjs'
+      - 'supabase/functions/process-commercial-document-job/**'
+      - 'scripts/build-commercial-document-job.mjs'
+      - 'scripts/commercial-document-job-regression.mjs'
+      - 'scripts/security/commercial-document-job-regression.mjs'
       - 'scripts/security/commercial-emission-leases-regression.mjs'
       - 'scripts/contrato-documento-revisao-integridade.mjs'
       - 'scripts/commercial-custom-scope-regression.mjs'
@@ -124,12 +132,15 @@ jobs:
           npm ci --prefix scripts/security
           node scripts/security/commercial-emission-leases-regression.mjs
           node scripts/security/document-client-flow-regression.mjs
+          node scripts/security/commercial-document-job-regression.mjs
       - name: Instalar dependências travadas do aplicativo
         run: npm ci --prefix portal-app
       - name: Verificar TypeScript do aplicativo
         run: npm run typecheck --prefix portal-app
       - name: Instalar bibliotecas isoladas para os testes de documento
         run: npm install --no-save --prefix portal-app docx@9.5.1 jszip@3.10.1
+      - name: Testar execução protegida e retomada de contrato e Anexo I
+        run: node --experimental-strip-types scripts/commercial-document-job-regression.mjs
       - name: Gerar DOCX de teste e validar ZIP, XML, escopo e endereços
         run: node --experimental-strip-types scripts/commercial-word-regression.mjs
       - name: Auditar versão, representante e parcelamento pt-BR em Word real
