@@ -22,6 +22,7 @@ await db.exec(fs.readFileSync('supabase/migrations/20261102024600_reclassify_wit
 await db.exec(fs.readFileSync('supabase/migrations/20261105215025_commercial_closure_assistant.sql','utf8'));
 await db.exec(fs.readFileSync('supabase/migrations/20261105220500_commercial_closure_catalog_guard.sql','utf8'));
 await db.exec(fs.readFileSync('supabase/migrations/20261105232919_commercial_closure_semantic_revision.sql','utf8'));
+await db.exec(fs.readFileSync('supabase/migrations/20261105232935_commercial_closure_semantic_revision.sql','utf8'));
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const record=id(10),client=id(20),otherClient=id(21),project=id(30),contract=id(40),otherContract=id(41),document=id(50);
 const services=[{code:'am',name:'Hidráulico',included:true,levelCode:'prata'},{code:'g',name:'Hidrossanitário',included:false},{code:'u',name:'Levantamento cadastral',included:true,levelCode:'prata'},{code:'d',name:'Executivo',included:true},{code:'j',name:'Maquete',included:true}];
@@ -61,6 +62,9 @@ const issuedRecord=(await db.query('select to_jsonb(r) data from commercial_reco
 await db.query('update documentos set generated_data=$1 where id=$2',[{commercial_record_snapshot:issuedRecord},document]);
 await db.query('update commercial_records set updated_at=clock_timestamp() where id=$1',[record]);
 assert.equal((await plan()).revisionRequired,false,'Bookkeeping timestamps alone must not request another revision');
+await db.query("update commercial_records set commercial_terms=jsonb_set(commercial_terms,'{saved_at}',to_jsonb(now()::text)) where id=$1",[record]);
+assert.equal((await plan()).revisionRequired,false,'Saving identical commercial terms must not request another revision');
+
 await db.query('update commercial_records set total_value=total_value+100 where id=$1',[record]);
 assert.equal((await plan()).revisionRequired,true,'A commercial value change must require a revision');
 await db.query('update commercial_records set total_value=total_value-100 where id=$1',[record]);
