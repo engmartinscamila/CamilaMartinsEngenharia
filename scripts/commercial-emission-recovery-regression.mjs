@@ -10,7 +10,7 @@ const read=p=>fs.readFileSync(p,'utf8');
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const clone=v=>structuredClone(v);
 const ok=data=>({data:clone(data),error:null});
-async function fixture(failure,{kind='contrato',issued=true,admin=true,status='convertido'}={}){
+async function fixture(failure,{kind='contrato',issued=true,admin=true,status='convertido',hold=false}={}){
  const record={id:id(1),record_kind:kind,contract_number:'CON-QA',quote_number:'ORC-QA',prospect_name:'Cliente sintético',
   total_value:9000,property_address:'Endereço de teste',address:'Endereço cadastral de teste',experience_level:'prata',
   services:[{code:'d',name:'Executivo',included:true}],commercial_terms:{scope:[{code:'d',deliverables:'Uma prancha executiva'}]},
@@ -57,12 +57,26 @@ async function fixture(failure,{kind='contrato',issued=true,admin=true,status='c
   },async download(path){const bytes=objects.get(path);return bytes?{data:new Blob([bytes]),error:null}:{data:null,error:{message:'Object not found',statusCode:'404'}};}
  };}};
  const caller={auth:{getUser:async()=>ok({user:{id:id(90)}})},rpc:async name=>ok(name==='is_portal_admin'?admin:null)};
- const service={from:query,storage,rpc:async()=>ok(true)};
+ const leases=new Map();
+ const service={from:query,storage,rpc:async(name,args={})=>{
+  const key=[args.p_record_id,args.p_kind,args.p_lane].join(':');
+  const parent=[args.p_record_id,args.p_kind,'finalizer'].join(':');
+  const coreKey=[args.p_record_id,args.p_kind,'core'].join(':');
+  if(name==='service_acquire_commercial_emission'){
+   if(args.p_lane==='finalizer'&&leases.has(coreKey))return ok(false);
+   if(args.p_lane==='core'&&leases.get(parent)!==args.p_parent_token)return ok(false);
+   if(leases.has(key))return ok(false);leases.set(key,args.p_token);return ok(true);
+  }
+  if(name==='service_release_commercial_emission'){
+   if(leases.get(key)!==args.p_token)return ok(false);leases.delete(key);return ok(true);
+  }
+  return ok(true);
+ }};
  let core,finalizer;
  const helpers={
   loadProfessionalIdentity:async()=>({full_name:'Profissional sintético'}),missingProfessionalFields:()=>[],loadContractMaster:async()=>({body:'Contrato mestre sintético'}),
   generatedDateIso:date=>date.toISOString().slice(0,10),quoteDocument:r=>r,contractDocument:r=>r,
-  Packer:{toBuffer:async r=>{packed++;if(failure==='core-transport'&&!failed){markCoreStarted();await coreGate;}return Buffer.from(`word:${r.total_value}:${r.document_version}`);}},
+  Packer:{toBuffer:async r=>{packed++;if((failure==='core-transport'&&!failed)||hold){markCoreStarted();await coreGate;}return Buffer.from(`word:${r.total_value}:${r.document_version}`);}},
   selectedServices:services=>services.filter(s=>s.included!==false),
   enhanceQuoteDocument:async bytes=>{const error=fail('enhancement');if(error)throw Error(error.error.message);return bytes;},enhanceContractDocument:async bytes=>{const error=fail('enhancement');if(error)throw Error(error.error.message);return bytes;}
  };
@@ -77,7 +91,8 @@ async function fixture(failure,{kind='contrato',issued=true,admin=true,status='c
  load('supabase/functions/generate-commercial-document/index.ts',h=>core=h);
  load('supabase/functions/generate-commercial-document-final/index.ts',h=>finalizer=h);
  async function emit(){const response=await finalizer(new Request('https://qa.invalid/final',{method:'POST',headers:{Authorization:'Bearer synthetic','Content-Type':'application/json'},body:JSON.stringify({recordId:record.id,kind,versionReason:'Motivo interno QA'})}));return {status:response.status,body:await response.json()};}
- return {emit,tables,objects,record,before,packed:()=>packed,failed:()=>failed,settleCore:async()=>{releaseCore();if(backgroundCore)await backgroundCore;}};
+ async function emitCore(){const response=await core(new Request('https://qa.invalid/core',{method:'POST',headers:{Authorization:'Bearer synthetic','Content-Type':'application/json'},body:JSON.stringify({recordId:record.id,kind})}));return {status:response.status,body:await response.json()};}
+ return {emit,emitCore,tables,objects,record,before,packed:()=>packed,failed:()=>failed,waitCoreStarted:()=>coreStarted,settleCore:async()=>{releaseCore();if(backgroundCore)await backgroundCore;}};
 }
 
 const stages=process.env.RECOVERY_STAGE?[process.env.RECOVERY_STAGE]:['core-status','core-transport','enhancement','snapshot','archive','history','completion','final-status'];
@@ -125,3 +140,24 @@ for(const kind of ['contrato','orcamento']){
  assert.equal(f.record[kind==='contrato'?'contract_document_id':'quote_document_id'],id(2));
 }
 console.log('PASS: rollback is limited to an unused draft before the core request starts.');
+
+for(const kind of ['contrato','orcamento']){
+ const f=await fixture(null,{kind,hold:true});const first=f.emit();const second=f.emit();await f.waitCoreStarted();
+ await new Promise(resolve=>setTimeout(resolve,10));await f.settleCore();
+ const results=await Promise.all([first,second]);
+ assert.equal(f.tables.documentos.length,2,'Requisições simultâneas não podem criar duas revisões');
+ assert.deepEqual(results.map(r=>r.status).sort(),[200,423]);
+ assert.equal(f.packed(),1,'Somente um núcleo pode renderizar por cadastro e tipo');
+ console.log(`PASS ${kind}: simultaneous finalizers share one protected emission.`);
+}
+
+for(const kind of ['contrato','orcamento']){
+ const f=await fixture('core-transport',{kind});assert.ok((await f.emit()).status>=400);
+ assert.equal((await f.emit()).status,423,'Uma nova chamada não pode disputar o Word ainda em geração');
+ assert.equal((await f.emitCore()).status,423,'A chamada direta ao núcleo também deve respeitar a emissão em andamento');
+ assert.equal(f.packed(),1);await f.settleCore();
+ const resumed=await f.emit();assert.equal(resumed.status,200);assert.equal(resumed.body.version,'2.0');assert.equal(f.tables.documentos.length,2);
+ assert.equal((await f.emitCore()).status,409,'Uma versão emitida continua imutável');
+ assert.equal((await f.emit()).status,200,'A recusa de reescrita precisa liberar seu controle para uma revisão legítima');
+ console.log(`PASS ${kind}: immediate retry and direct core are blocked while the disconnected worker finishes; recovery and later revision succeed.`);
+}

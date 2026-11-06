@@ -38,6 +38,8 @@ on:
       - 'js/document-options-web.js'
       - 'js/contract-documents-web.js'
       - 'scripts/contract-emission-regression.mjs'
+      - 'scripts/commercial-emission-recovery-regression.mjs'
+      - 'scripts/security/commercial-emission-leases-regression.mjs'
       - 'scripts/contrato-documento-revisao-integridade.mjs'
       - 'scripts/commercial-custom-scope-regression.mjs'
       - '.github/workflows/commercial-documents.yml'
@@ -78,6 +80,8 @@ on:
       - 'js/document-options-web.js'
       - 'js/contract-documents-web.js'
       - 'scripts/contract-emission-regression.mjs'
+      - 'scripts/commercial-emission-recovery-regression.mjs'
+      - 'scripts/security/commercial-emission-leases-regression.mjs'
       - 'scripts/contrato-documento-revisao-integridade.mjs'
       - 'scripts/commercial-custom-scope-regression.mjs'
       - '.github/workflows/commercial-documents.yml'
@@ -115,6 +119,10 @@ jobs:
           node --check js/commercial-document-preview-web.js
           node scripts/condicoes-comerciais-estruturadas-regression.mjs
           node scripts/catalogo-escopos-especificos-regression.mjs
+      - name: Validar exclusividade da emissão no PostgreSQL
+        run: |
+          npm ci --prefix scripts/security
+          node scripts/security/commercial-emission-leases-regression.mjs
       - name: Instalar dependências travadas do aplicativo
         run: npm ci --prefix portal-app
       - name: Verificar TypeScript do aplicativo

@@ -52,6 +52,7 @@ async function wordHash(bytes: Uint8Array) {
 Deno.serve(async req => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return json({ error: 'Método não permitido.' }, 405);
+  let emissionLease: { service:any;recordId:string;kind:string;token:string } | null = null;
   let createdRevisionId: string | null = null;
   let previousDocumentId: string | null = null;
   let pointerField = '';
@@ -63,6 +64,11 @@ Deno.serve(async req => {
     const recordId = text(body.recordId);
     const kind = body.kind === 'contrato' ? 'contrato' : 'orcamento';
     if (!/^[0-9a-f-]{36}$/i.test(recordId)) return json({ error: 'Registro comercial inválido.' }, 400);
+    const leaseToken=crypto.randomUUID();
+    const lease=await service.rpc('service_acquire_commercial_emission',{p_record_id:recordId,p_kind:kind,p_lane:'finalizer',p_token:leaseToken});
+    if(lease.error)throw lease.error;
+    if(lease.data!==true)return json({error:'Uma emissão deste documento já está em andamento. Aguarde a conclusão e tente novamente.',code:'EMISSION_IN_PROGRESS'},423);
+    emissionLease={service,recordId,kind,token:leaseToken};
     cleanup={service,recordId};
     const preparedScope = await service.rpc('admin_prepare_commercial_scope_for_generation', { p_record_id: recordId });
     if (preparedScope.error) throw preparedScope.error;
@@ -169,7 +175,7 @@ Deno.serve(async req => {
       ? { response: { ok: true, status: 200 }, data: { generated: true, documentId: resumedDocument.id,
           version: resumedDocument.versao, contractNumber: source.data.contract_number, quoteNumber: source.data.quote_number,
           emittedAt: resumedDocument.generated_at, documentDate: resumedDocument.generated_data?.document_date } as Obj }
-      : await proxyCore(url, anonKey, authorization, { recordId, kind });
+      : await proxyCore(url, anonKey, authorization, { recordId, kind, emissionToken:leaseToken });
     if (!core.response.ok) {
       // The core may already have persisted the Word before returning an error.
       // Never remove that version; it must remain linked for an explicit retry.
@@ -254,6 +260,10 @@ Deno.serve(async req => {
       }
     }
     const message = error instanceof Error ? error.message : String((error as { message?: string })?.message || 'Não foi possível finalizar o documento comercial.');
-    return json({ error: message }, message.includes('Acesso') ? 403 : message.includes('Sessão') ? 401 : 500);
+    return json({ error: message }, message.includes('Registro comercial não encontrado') ? 404 : message.includes('Acesso') ? 403 : message.includes('Sessão') ? 401 : 500);
+  } finally {
+    if(emissionLease){
+      try{const released=await emissionLease.service.rpc('service_release_commercial_emission',{p_record_id:emissionLease.recordId,p_kind:emissionLease.kind,p_lane:'finalizer',p_token:emissionLease.token});if(released.error)console.error('Falha ao liberar controle de emissão.');}catch{console.error('Falha ao liberar controle de emissão.');}
+    }
   }
 });

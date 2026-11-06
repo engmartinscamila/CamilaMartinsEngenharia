@@ -24,9 +24,25 @@ async function requireAdmin(req:Request){
 Deno.serve(async(req)=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers:corsHeaders});
  if(req.method!=='POST')return json({error:'Método não permitido.'},405);
+ let leaseService:any=null,leaseRecordId='',leaseKind='',parentLeaseToken:string|null=null,coreLeaseToken:string|null=null;
  try{
   const {caller,service,user}=await requireAdmin(req);const body=await req.json();const recordId=typeof body.recordId==='string'?body.recordId:'';const kind=body.kind==='contrato'?'contrato':'orcamento';
   if(!/^[0-9a-f-]{36}$/i.test(recordId))return json({error:'Registro comercial inválido.'},400);
+  leaseService=service;leaseRecordId=recordId;leaseKind=kind;
+  let parentToken=typeof body.emissionToken==='string'?body.emissionToken:'';
+  if(parentToken&&!/^[0-9a-f-]{36}$/i.test(parentToken))return json({error:'Controle de emissão inválido.'},400);
+  if(!parentToken){
+   const candidate=crypto.randomUUID();
+   const lease=await service.rpc('service_acquire_commercial_emission',{p_record_id:recordId,p_kind:kind,p_lane:'finalizer',p_token:candidate});
+   if(lease.error)throw lease.error;
+   if(lease.data!==true)return json({error:'Uma emissão deste documento já está em andamento. Aguarde a conclusão e tente novamente.',code:'EMISSION_IN_PROGRESS'},423);
+   parentToken=candidate;parentLeaseToken=candidate;
+  }
+  const coreCandidate=crypto.randomUUID();
+  const coreLease=await service.rpc('service_acquire_commercial_emission',{p_record_id:recordId,p_kind:kind,p_lane:'core',p_token:coreCandidate,p_parent_token:parentToken});
+  if(coreLease.error)throw coreLease.error;
+  if(coreLease.data!==true)return json({error:'Uma emissão deste documento já está em andamento. Aguarde a conclusão e tente novamente.',code:'EMISSION_IN_PROGRESS'},423);
+  coreLeaseToken=coreCandidate;
   const {error:rateError}=await caller.rpc('consume_admin_rate_limit',{p_action:`commercial-document-${kind}`});if(rateError)return json({error:'Muitas tentativas. Aguarde antes de repetir.'},429);
   const governance=await service.rpc('assert_document_governance_ready');if(governance.error)throw governance.error;
   const firstRead=await service.from('commercial_records').select('*').eq('id',recordId).maybeSingle();if(firstRead.error)throw firstRead.error;if(!firstRead.data)return json({error:'Registro comercial não encontrado.'},404);
@@ -63,5 +79,11 @@ Deno.serve(async(req)=>{
   const nextStatus=record.status==='convertido'?'convertido':kind==='contrato'?'contrato_gerado':record.contract_document_id?'contrato_gerado':'orcamento_gerado';const updatedRecord=await service.from('commercial_records').update({status:nextStatus,updated_at:generatedAtIso}).eq('id',record.id);if(updatedRecord.error)throw updatedRecord.error;
   await service.from('audit_log').insert({user_id:user.id,action:`generate_commercial_${kind}_docx`,entity_type:'commercial_records',entity_id:record.id,details:{document_id:documentId,path,quote_number:record.quote_number,contract_number:record.contract_number,contract_master_version:record.contract_master_version,emitted_at:generatedAtIso,document_date:documentDate}});
   return json({generated:true,documentId,path,quoteNumber:record.quote_number,contractNumber:record.contract_number,emittedAt:generatedAtIso,documentDate,version:docVersion});
- }catch(error){const message=error instanceof Error?error.message:String((error as {message?:string})?.message||'Não foi possível gerar o documento comercial.');const status=message.includes('Acesso')?403:message.includes('Sessão')?401:message.includes('Governanca')||message.includes('Governança')?409:500;return json({error:message},status);}
+ }catch(error){const message=error instanceof Error?error.message:String((error as {message?:string})?.message||'Não foi possível gerar o documento comercial.');const status=message.includes('Registro comercial não encontrado')?404:message.includes('Acesso')?403:message.includes('Sessão')?401:message.includes('Governanca')||message.includes('Governança')?409:500;return json({error:message},status);}
+ finally{
+  for(const [lane,token] of [['core',coreLeaseToken],['finalizer',parentLeaseToken]]){
+   if(!leaseService||!token)continue;
+   try{const released=await leaseService.rpc('service_release_commercial_emission',{p_record_id:leaseRecordId,p_kind:leaseKind,p_lane:lane,p_token:token});if(released.error)console.error('Falha ao liberar controle de emissão.');}catch{console.error('Falha ao liberar controle de emissão.');}
+  }
+ }
 });
