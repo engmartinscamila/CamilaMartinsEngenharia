@@ -37,12 +37,7 @@ jobs:
       # O index.html referencia um MP4 gerado a partir da foto 03 original.
       # Gerar ANTES de site-audit.mjs para a auditoria validar o arquivo real.
       - name: Instalar FFmpeg para gerar vídeo da Casa Urben
-        run: |
-          if ! command -v ffmpeg >/dev/null 2>&1; then
-            sudo timeout 180s apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update -qq
-            sudo timeout 300s apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y --no-install-recommends ffmpeg
-          fi
-          ffmpeg -version
+        run: bash scripts/install-ci-ffmpeg.sh
 
       - name: Gerar capa MP4 Casa Urben antes da auditoria
         run: bash scripts/generate-casa-urben-cover.sh assets/projetos/casa-urban
@@ -155,12 +150,7 @@ jobs:
         run: node scripts/build-frases-do-dia-v7.mjs
 
       - name: Instalar FFmpeg para a publicação da Casa Urben
-        run: |
-          if ! command -v ffmpeg >/dev/null 2>&1; then
-            sudo timeout 180s apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update -qq
-            sudo timeout 300s apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y --no-install-recommends ffmpeg
-          fi
-          ffmpeg -version
+        run: bash scripts/install-ci-ffmpeg.sh
 
       - name: Prepare protected classic website
         env:

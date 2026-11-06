@@ -39,12 +39,7 @@ jobs:
       # A capa da Casa Urben é gerada a partir da foto 03 original.
       # Precisa existir antes dos testes de referências locais.
       - name: Instalar FFmpeg para a capa da Casa Urben
-        run: |
-          if ! command -v ffmpeg >/dev/null 2>&1; then
-            sudo timeout 180s apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update -qq
-            sudo timeout 300s apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y --no-install-recommends ffmpeg
-          fi
-          ffmpeg -version
+        run: bash scripts/install-ci-ffmpeg.sh
 
       - name: Gerar capa MP4 Casa Urben antes da auditoria
         run: bash scripts/generate-casa-urben-cover.sh assets/projetos/casa-urban
