@@ -55,6 +55,7 @@ Deno.serve(async req => {
   let createdRevisionId: string | null = null;
   let previousDocumentId: string | null = null;
   let pointerField = '';
+  let coreDispatched = false;
   let cleanup: { service: any; recordId: string } | null = null;
   try {
     const { authorization, url, anonKey, service, user } = await requireAdmin(req);
@@ -161,6 +162,9 @@ Deno.serve(async req => {
         if (linked.error) throw linked.error;
       }
     }
+    // A lost HTTP response does not stop the core worker. Never roll its draft back
+    // once dispatched: it may still be persisting the Word in the background.
+    coreDispatched = !resumedDocument;
     const core = resumedDocument
       ? { response: { ok: true, status: 200 }, data: { generated: true, documentId: resumedDocument.id,
           version: resumedDocument.versao, contractNumber: source.data.contract_number, quoteNumber: source.data.quote_number,
@@ -241,7 +245,7 @@ Deno.serve(async req => {
       addressUsed: kind === 'contrato' ? 'party_and_property_separate' : null,
       scopeTextsInjected: kind === 'contrato', quoteScopeReconciled: kind === 'orcamento' && selected.some(isOther), snapshotFrozen: true }, 200);
   } catch (error) {
-    if(cleanup&&createdRevisionId&&previousDocumentId){
+    if(!coreDispatched&&cleanup&&createdRevisionId&&previousDocumentId){
       const state=await cleanup.service.from('documentos').select('workflow_status,generated_at').eq('id',createdRevisionId).maybeSingle();
       const frozen=await cleanup.service.from('document_emission_snapshots').select('id').eq('document_id',createdRevisionId).maybeSingle();
       if(!state.error&&!frozen.error&&!frozen.data&&state.data?.workflow_status==='rascunho'&&!state.data.generated_at){

@@ -16,7 +16,10 @@ async function fixture(failure,{kind='contrato',issued=true,admin=true,status='c
   services:[{code:'d',name:'Executivo',included:true}],commercial_terms:{scope:[{code:'d',deliverables:'Uma prancha executiva'}]},
   contract_document_id:kind==='contrato'&&issued?id(2):null,quote_document_id:kind==='orcamento'&&issued?id(2):null,status};
  const tables={commercial_records:[record],documentos:[],document_emission_snapshots:[],document_generation_history:[],audit_log:[]};
- const objects=new Map();let sequence=10,failed=false,packed=0;
+ const objects=new Map();let sequence=10,failed=false,packed=0,backgroundCore;
+ let releaseCore,markCoreStarted;
+ const coreGate=new Promise(resolve=>releaseCore=resolve);
+ const coreStarted=new Promise(resolve=>markCoreStarted=resolve);
  if(issued){tables.documentos.push({id:id(2),categoria:'Comercial',document_kind:kind,versao:'1.0',workflow_status:'gerado',generated_at:'2026-01-01T00:00:00Z',snapshot_frozen_at:'2026-01-01T00:00:00Z',arquivo:'_issued_word/original.docx',storage_bucket:'documentos',generated_data:{commercial_record_id:record.id,commercial_record_snapshot:clone(record),commercial_finalization_state:'complete'}});tables.document_emission_snapshots.push({id:id(3),document_id:id(2),snapshot:{original:true},version:'1.0'});objects.set('_issued_word/original.docx',new Uint8Array([1,2,3]));}
  const before=issued?clone(tables.documentos[0]):null;
  function fail(stage){if(stage===failure&&!failed){failed=true;return {error:{message:'Injected '+stage,status:503},data:null};}}
@@ -26,6 +29,7 @@ async function fixture(failure,{kind='contrato',issued=true,admin=true,status='c
    single(){return execute(true);},maybeSingle(){return execute(true);},then(resolve,reject){return execute(false).then(resolve,reject);}};
   async function execute(single){if(executed)return executed;
    executed=(async()=>{
+    if(table==='commercial_records'&&operation==='update'&&!payload.status&&(payload.contract_document_id||payload.quote_document_id)){const error=fail('link-update');if(error)return error;}
     if(table==='commercial_records'&&operation==='update'&&payload.status){const error=fail(tables.document_emission_snapshots.some(s=>s.document_id!==id(2))?'final-status':'core-status');if(error)return error;}
     if(table==='document_emission_snapshots'&&operation==='insert'){const error=fail('snapshot');if(error)return error;}
     if(table==='document_generation_history'&&operation==='insert'){const error=fail('history');if(error)return error;}
@@ -58,7 +62,7 @@ async function fixture(failure,{kind='contrato',issued=true,admin=true,status='c
  const helpers={
   loadProfessionalIdentity:async()=>({full_name:'Profissional sintético'}),missingProfessionalFields:()=>[],loadContractMaster:async()=>({body:'Contrato mestre sintético'}),
   generatedDateIso:date=>date.toISOString().slice(0,10),quoteDocument:r=>r,contractDocument:r=>r,
-  Packer:{toBuffer:async r=>{packed++;return Buffer.from(`word:${r.total_value}:${r.document_version}`);}},
+  Packer:{toBuffer:async r=>{packed++;if(failure==='core-transport'&&!failed){markCoreStarted();await coreGate;}return Buffer.from(`word:${r.total_value}:${r.document_version}`);}},
   selectedServices:services=>services.filter(s=>s.included!==false),
   enhanceQuoteDocument:async bytes=>{const error=fail('enhancement');if(error)throw Error(error.error.message);return bytes;},enhanceContractDocument:async bytes=>{const error=fail('enhancement');if(error)throw Error(error.error.message);return bytes;}
  };
@@ -67,18 +71,18 @@ async function fixture(failure,{kind='contrato',issued=true,admin=true,status='c
   vm.runInNewContext(stripTypeScriptTypes(source,{mode:'strip'}),{
    ...helpers,Deno:{env:{get:k=>({SUPABASE_URL:'https://qa.invalid',SUPABASE_ANON_KEY:'qa-public',SUPABASE_SERVICE_ROLE_KEY:'qa-private-adapter'})[k]},serve:setHandler},
    createClient:(_url,key)=>key==='qa-public'?caller:service,Response,Request,Blob,TextEncoder,Uint8Array,Date,Array,crypto:webcrypto,
-   fetch:(_url,options)=>core(new Request('https://qa.invalid/core',options))
+   fetch:async(_url,options)=>{const request=core(new Request('https://qa.invalid/core',options));if(failure==='core-transport'&&!failed){backgroundCore=request;await coreStarted;failed=true;throw Error('Injected core transport failure');}return request;}
   });
  }
  load('supabase/functions/generate-commercial-document/index.ts',h=>core=h);
  load('supabase/functions/generate-commercial-document-final/index.ts',h=>finalizer=h);
  async function emit(){const response=await finalizer(new Request('https://qa.invalid/final',{method:'POST',headers:{Authorization:'Bearer synthetic','Content-Type':'application/json'},body:JSON.stringify({recordId:record.id,kind,versionReason:'Motivo interno QA'})}));return {status:response.status,body:await response.json()};}
- return {emit,tables,objects,record,before,packed:()=>packed,failed:()=>failed};
+ return {emit,tables,objects,record,before,packed:()=>packed,failed:()=>failed,settleCore:async()=>{releaseCore();if(backgroundCore)await backgroundCore;}};
 }
 
-const stages=process.env.RECOVERY_STAGE?[process.env.RECOVERY_STAGE]:['core-status','enhancement','snapshot','archive','history','completion','final-status'];
+const stages=process.env.RECOVERY_STAGE?[process.env.RECOVERY_STAGE]:['core-status','core-transport','enhancement','snapshot','archive','history','completion','final-status'];
 for(const kind of ['contrato','orcamento'])for(const stage of stages){
- const f=await fixture(stage,{kind,status:stage==='final-status'?'novo':'convertido'});const first=await f.emit();
+ const f=await fixture(stage,{kind,status:stage==='final-status'?'novo':'convertido'});const first=await f.emit();await f.settleCore();
  assert.ok(first.status>=400,`${kind}/${stage}: fault must reach the caller`);assert.equal(f.failed(),true,'Fault adapter must actually run');
  const pointer=kind==='contrato'?'contract_document_id':'quote_document_id';const pending=f.record[pointer];
  assert.notEqual(pending,id(2),`${stage}: generated version must stay available for resumption`);
@@ -114,3 +118,10 @@ for(const kind of ['contrato','orcamento']){
  assert.equal(f.record.status,kind==='contrato'?'contrato_gerado':'orcamento_gerado','Successful resumption must finish commercial status too');
 }
 console.log('PASS: a resumed first emission also completes the commercial record status.');
+
+for(const kind of ['contrato','orcamento']){
+ const f=await fixture('link-update',{kind});assert.ok((await f.emit()).status>=400);
+ assert.equal(f.packed(),0);assert.equal(f.tables.documentos.length,1,'Falha antes de acionar o gerador deve remover somente o rascunho não utilizado');
+ assert.equal(f.record[kind==='contrato'?'contract_document_id':'quote_document_id'],id(2));
+}
+console.log('PASS: rollback is limited to an unused draft before the core request starts.');

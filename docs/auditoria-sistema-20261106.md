@@ -29,3 +29,8 @@ Antes do patch foram reproduzidos: remoção da revisão gerada, retorno 409 na 
 ## Fechamento e evidência
 
 B01–B05 implementados com regressões e integrados aos workflows comercial e de publicação. A evidência final de CI e implantação é o resultado dos workflows associados ao commit. Os dados reais e as emissões anteriores permanecem preservados; testes em ambiente isolado não devem ser apresentados como novas emissões na produção nem como prova de entrega de e-mail, push ou calendário.
+
+
+## Complemento — perda da resposta durante geração
+
+Reteste solicitado: uma conexão HTTP interrompida não cancela necessariamente o gerador que já está executando. Foi reproduzido um caso em que o finalizador fazia rollback de um rascunho enquanto o núcleo ainda gerava o Word, deixando a gravação posterior sem vínculo. A limpeza agora só pode ocorrer antes do despacho ao núcleo. Depois do despacho, a versão fica vinculada para retomada. O teste controla a execução em segundo plano e confirma UUID, versão, arquivo e histórico preservados; outra verificação garante que uma falha de vínculo anterior ao despacho continua removendo apenas o rascunho não utilizado.
