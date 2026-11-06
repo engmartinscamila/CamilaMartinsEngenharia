@@ -172,7 +172,7 @@ const supabaseMock = `
     const api={
       select(){return api}, eq(){return api}, neq(){return api}, gt(){return api}, gte(){return api},
       lt(){return api}, lte(){return api}, in(){return api}, is(){return api}, not(){return api},
-      match(){return api}, order(){return api}, limit(){return api}, range(){return api},
+      match(){return api}, or(){return api}, order(){return api}, limit(){return api}, range(){return api},
       insert(){return api}, update(){return api}, upsert(){return api}, delete(){return api},
       maybeSingle(){ return Promise.resolve({data:(sample[table]||[])[0]||null,error:null}); },
       single(){ return Promise.resolve({data:(sample[table]||[])[0]||null,error:null}); },
