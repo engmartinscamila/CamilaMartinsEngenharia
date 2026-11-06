@@ -19,6 +19,23 @@ const pending=checkPreview(incompatible);
 assert.equal(pending.length,1,'Prévia deve identificar a única classificação incompatível, sem bloquear atividade hidráulica correta.');
 assert.equal(pending[0].code,'u');
 assert.equal(pending[0].kind,'classification');
+const waterAndSewage={services:[{code:'am',name:'Projeto Hidráulico',included:true}],commercial_terms:{scope:[{code:'am',deliverables:'Prancha hidráulica de água e esgoto sanitário'}]}};
+assert.equal(checkPreview(waterAndSewage)[0].code,'am','Água e esgoto não podem ser emitidos como somente hidráulico');
+const corrected={services:[{code:'g',name:'Projeto Hidrossanitário',included:true}],commercial_terms:{scope:[{code:'g',deliverables:'Prancha hidráulica de água e esgoto sanitário'}]}};
+assert.equal(checkPreview(corrected).length,0,'Classificação corrigida deve permitir a prévia');
+const finalizer=read('supabase/functions/generate-commercial-document-final/index.ts');
+const backendBlock=finalizer.slice(finalizer.indexOf('      for (const item of selected) {'),finalizer.indexOf('    pointerField ='));
+const backendValidation=record=>vm.runInNewContext('(function(){if(true){'+backendBlock+';return json({ok:true},200)})()',{
+ selected:record.services,scope:record.commercial_terms.scope,text:v=>String(v??'').trim(),json:(body,status)=>({body,status})
+});
+assert.equal(backendValidation(waterAndSewage).status,422,'Servidor deve bloquear antes de criar qualquer revisão');
+assert.equal(backendValidation(corrected).status,200);
+const waterOnlyWithExclusion={services:[{code:'am',name:'Projeto Hidráulico',included:true}],commercial_terms:{scope:[{code:'am',deliverables:'Projeto de água fria; não inclui projeto de esgoto sanitário'}]}};
+assert.equal(checkPreview(waterOnlyWithExclusion).length,0,'Exclusão explícita de esgoto não equivale à contratação de esgoto');
+assert.equal(backendValidation(waterOnlyWithExclusion).status,200);
+
+assert.equal(backendValidation({services:[{code:'am',name:'Projeto Hidráulico'}],commercial_terms:{scope:[{code:'am',deliverables:'Projeto de abastecimento de água fria'}]}}).status,200);
+
 assert.ok(source.includes('data-preview-correct')&&source.includes('CMECorrectCommercialServiceClassification'),'O bloqueio deve oferecer correção direta.');
 assert.ok(source.includes("disabled title="),'Confirmação deve ficar desabilitada enquanto houver inconsistências.');
 async function scenario({cancel=false,fail=false,deliveryFail=false}={}){

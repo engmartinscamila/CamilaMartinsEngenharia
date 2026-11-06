@@ -17,6 +17,9 @@ function validateContractScopeForPreview(record){
    if(!deliverables){
      issues.push({code,name:item.name||code,message:'Entregáveis específicos não cadastrados para esta atividade. Edite as condições comerciais antes de emitir.',kind:'terms'});continue;
    }
+   const waterSystems=deliverables.replace(/\b(?:sem|nao inclui|nao contempla|nao abrange|exclui)\b[^,.;\n]*(?:esgoto|hidrossanit)[^,.;\n]*/g,'');
+   if(code==='am'&&/hidrossanit|esgoto/.test(waterSystems))
+     issues.push({code,name:item.name||code,message:'Os entregáveis incluem esgoto, mas a atividade selecionada contempla somente água. Reclassifique como Projeto Hidrossanitário antes de emitir.',kind:'classification'});
    if(code==='aj'&&/projeto.*hidraulico|projeto.*hidrossanitario/.test(deliverables)&&!/rede externa|rede publica|saneamento externo|rede de abastecimento/.test(deliverables))
      issues.push({code,name:item.name||code,message:'Instalações prediais foram associadas a saneamento externo. Selecione a categoria hidráulica ou hidrossanitária adequada.',kind:'classification'});
    if(code==='u'&&/elaboracao de projeto arquitetonico|projeto arquitetonico para projeto executivo/.test(deliverables)&&!/levantamento geometrico|levantamento cadastral|medicao cadastral/.test(deliverables))

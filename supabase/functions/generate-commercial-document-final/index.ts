@@ -81,6 +81,10 @@ Deno.serve(async req => {
         const deliverables = text(row?.deliverables).toLowerCase();
         const normalized = deliverables.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         if (!normalized) return json({error: 'Preencha os entregáveis específicos do serviço '+text(item.name)+' antes de emitir.'},422);
+        const waterSystems = normalized.replace(/\b(?:sem|nao inclui|nao contempla|nao abrange|exclui)\b[^,.;\n]*(?:esgoto|hidrossanit)[^,.;\n]*/g, '');
+        if (code === 'am' && /hidrossanit|esgoto/.test(waterSystems)) {
+          return json({error: 'Inconsistência na classificação: Projeto Hidráulico contempla somente água, mas os entregáveis incluem esgoto. Reclassifique como Projeto Hidrossanitário antes de emitir.'},422);
+        }
         if (code === 'aj' && /projeto.*hidraulico|projeto.*hidrossanitario/.test(normalized) &&
             !/rede externa|rede publica|saneamento externo|rede de abastecimento/.test(normalized)) {
           return json({error: 'Inconsistência na classificação: Projeto de Saneamento / Redes de Água e Esgoto foi associado a pranchas de instalações prediais hidráulicas e hidrossanitárias. Corrija a atividade para Projeto Hidrossanitário Predial ou ajuste os entregáveis ao serviço realmente contratado antes de emitir.'},422);

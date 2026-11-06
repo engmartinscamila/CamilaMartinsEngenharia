@@ -21,6 +21,7 @@ create function public.admin_save_commercial_terms(uuid,jsonb) returns jsonb lan
 await db.exec(fs.readFileSync('supabase/migrations/20261102024600_reclassify_without_duplicate_catalog_codes.sql','utf8'));
 await db.exec(fs.readFileSync('supabase/migrations/20261105215025_commercial_closure_assistant.sql','utf8'));
 await db.exec(fs.readFileSync('supabase/migrations/20261105220500_commercial_closure_catalog_guard.sql','utf8'));
+await db.exec(fs.readFileSync('supabase/migrations/20261105232919_commercial_closure_semantic_revision.sql','utf8'));
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const record=id(10),client=id(20),otherClient=id(21),project=id(30),contract=id(40),otherContract=id(41),document=id(50);
 const services=[{code:'am',name:'Hidráulico',included:true,levelCode:'prata'},{code:'g',name:'Hidrossanitário',included:false},{code:'u',name:'Levantamento cadastral',included:true,levelCode:'prata'},{code:'d',name:'Executivo',included:true},{code:'j',name:'Maquete',included:true}];
@@ -38,6 +39,11 @@ await db.query("select set_config('test.uid',$1,false),set_config('test.admin','
 const plan=async()=>(await db.query('select admin_commercial_closure($1) result',[record])).rows[0].result;
 let p=await plan();assert.equal(p.issues.length,2);assert.equal(p.issues.find(i=>i.code==='am').targetCode,'g');assert.equal(p.issues.find(i=>i.code==='u').canRemove,true);
 assert.equal(p.emitted,true);assert.equal(p.annexCurrent,false);assert.equal(p.accessReady,false);
+const waterOnlyTerms={...terms,scope:terms.scope.map(s=>s.code==='am'?{...s,deliverables:'Projeto de água fria; não inclui projeto de esgoto sanitário'}:s)};
+await db.query('update commercial_records set commercial_terms=$1 where id=$2',[waterOnlyTerms,record]);
+assert.ok(!(await plan()).issues.some(i=>i.code==='am'),'Diagnóstico deve respeitar a exclusão explícita de esgoto');
+await db.query('update commercial_records set commercial_terms=$1 where id=$2',[terms,record]);p=await plan();
+
 await rejected('select admin_resolve_commercial_closure($1,$2,$3,$4,$5)',[record,'stale','reclassify','am','g'],/mudou/);
 await rejected('select admin_resolve_commercial_closure($1,$2,$3,$4,$5)',[record,p.token,'reclassify','am','u'],/sugestão/);
 const catalogToken=p.token;await db.exec("update service_level_scope_catalog set version=8 where service_code='u'");
@@ -50,6 +56,19 @@ assert.equal(p.issues.length,0);
 let saved=(await db.query('select commercial_terms,total_value from commercial_records where id=$1',[record])).rows[0];
 assert.equal(saved.total_value,'12000');assert.equal(saved.commercial_terms.overall_days,150);assert.equal(saved.commercial_terms.scope.find(s=>s.code==='u').days,'15');assert.equal(saved.commercial_terms.scope.find(s=>s.code==='u').revisions,'0');assert.equal(saved.commercial_terms.scope.find(s=>s.code==='g').deliverables,terms.scope[0].deliverables);
 assert.deepEqual((await db.query('select generated_data from documentos where id=$1',[document])).rows[0].generated_data,{untouched:true});
+// A real emission freezes business data before later bookkeeping updates updated_at.
+const issuedRecord=(await db.query('select to_jsonb(r) data from commercial_records r where id=$1',[record])).rows[0].data;
+await db.query('update documentos set generated_data=$1 where id=$2',[{commercial_record_snapshot:issuedRecord},document]);
+await db.query('update commercial_records set updated_at=clock_timestamp() where id=$1',[record]);
+assert.equal((await plan()).revisionRequired,false,'Bookkeeping timestamps alone must not request another revision');
+await db.query('update commercial_records set total_value=total_value+100 where id=$1',[record]);
+assert.equal((await plan()).revisionRequired,true,'A commercial value change must require a revision');
+await db.query('update commercial_records set total_value=total_value-100 where id=$1',[record]);
+assert.equal((await plan()).revisionRequired,false);
+await db.query("update commercial_records set commercial_terms=jsonb_set(commercial_terms,'{overall_days}','151') where id=$1",[record]);
+assert.equal((await plan()).revisionRequired,true,'A deadline change must require a revision');
+await db.query('update commercial_records set commercial_terms=$1 where id=$2',[saved.commercial_terms,record]);
+assert.equal((await plan()).revisionRequired,false);
 let projects=(await db.query('select admin_project_contract_closure() result')).rows[0].result;
 assert.equal(projects[0].candidates.length,1);assert.equal(projects[0].candidates[0].numberMatch,true);
 await rejected('select admin_link_existing_project_contract($1,$2,$3,true)',[project,otherContract,projects[0].token],/mesmo cliente/);

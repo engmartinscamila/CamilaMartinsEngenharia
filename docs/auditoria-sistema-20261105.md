@@ -95,3 +95,13 @@ A22 — Conferência final em sequência: resolver escopo → conferir vínculo 
 Validação: regressão PostgreSQL com casos sintéticos de conflitos reais de classificação, alteração concorrente, cliente incorreto, dupla aplicação, manutenção de 150 dias/parcelas e imutabilidade dos snapshots. Teste de interface desktop/celular integrado ao GitHub. As funções novas usam SECURITY INVOKER, RLS existente e verificação administrativa explícita; sem tabelas ou fontes de dados paralelas.
 
 A23 — Publicação sem espera indefinida: a execução anterior permaneceu na instalação de FFmpeg depois das auditorias aprovadas. O preparo passa a reutilizar a ferramenta quando já disponível, limitar tempo/tentativas de instalação e cancelar builds antigos quando chegar uma correção validada mais recente. Nenhuma animação ou geometria foi alterada.
+
+
+## Atualização de execução pelo GitHub
+
+- Publicação 7b94bf5938075ad42a669ee52e8fa968374102b0 concluída com sucesso: testes de navegação integrada, segurança, dez Word e um Excel gerados e reabertos. O workflow passou a usar as dependências do lockfile, sem reescrevê-las no deploy.
+- A17/A19/A21: aplicada correção no cadastro real da Tributino. O item de instalações de água e esgoto foi reenquadrado para hidrossanitário; o levantamento cadastral foi mantido com entregáveis do nível aprovado. O projeto com referência contratual já preenchida foi associado ao contrato do mesmo cliente. Endereços distintos e documentos emitidos foram preservados.
+- Conferência posterior: nove atividades selecionadas sem códigos repetidos, condições comerciais válidas, oito parcelas somando R$ 12 mil, 150 dias úteis mantidos e zero projetos da Tributino sem vínculo. Contrato e Anexo I foram gerados e reabertos em teste com os dados corrigidos. Isso não registra, por si só, uma nova emissão na produção.
+- A24 — Bloqueio coerente antes da emissão: a prévia e o servidor passam a impedir água/esgoto no item apenas hidráulico, antes de criar revisão. Menções expressas de exclusão de esgoto não são tratadas como contratação do serviço.
+- A25 — Eliminar pedido indevido de revisão: diagnóstico compara os dados comerciais com o snapshot emitido. Alteração isolada de updated_at não exige nova revisão; mudança efetiva de valor, prazo ou escopo exige.
+- Continuidade autorizada: correções e testes pelo GitHub. Acesso pelo navegador não é requisito para executar o plano técnico. Testes com sessão sintética e banco isolado são identificados como tal; não equivalem a aceite, assinatura, envio de convite ou emissão de documento real.
