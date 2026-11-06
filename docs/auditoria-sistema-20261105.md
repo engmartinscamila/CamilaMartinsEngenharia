@@ -105,3 +105,5 @@ A23 — Publicação sem espera indefinida: a execução anterior permaneceu na 
 - A24 — Bloqueio coerente antes da emissão: a prévia e o servidor passam a impedir água/esgoto no item apenas hidráulico, antes de criar revisão. Menções expressas de exclusão de esgoto não são tratadas como contratação do serviço.
 - A25 — Eliminar pedido indevido de revisão: diagnóstico compara os dados comerciais com o snapshot emitido. Alteração isolada de updated_at ou saved_at não exige nova revisão; mudança efetiva de valor, prazo ou escopo exige.
 - Continuidade autorizada: correções e testes pelo GitHub. Acesso pelo navegador não é requisito para executar o plano técnico. Testes com sessão sintética e banco isolado são identificados como tal; não equivalem a aceite, assinatura, envio de convite ou emissão de documento real.
+
+- A26 — Sequência de emissão protegida: o assistente mantém a preparação de Anexo I bloqueada enquanto houver divergência de escopo ou revisão contratual a emitir. Atualizar o diagnóstico não remove o bloqueio. Depois da emissão atual, a ação é liberada. Regressão desktop/celular verifica ambas as etapas sem emitir documentos reais.

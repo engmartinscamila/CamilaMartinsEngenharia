@@ -12,7 +12,7 @@ function openDialog(title){
  document.body.appendChild(root);active=root;root.querySelector('.closure-close').focus();return root;
 }
 function message(root,text,error=false){const node=root.querySelector('[data-closure-status]');node.textContent=text;node.className=error?'closure-error':'';}
-async function action(root,work){if(root.dataset.busy)return;root.dataset.busy='true';root.setAttribute('aria-busy','true');root.querySelectorAll('button').forEach(b=>b.disabled=true);try{await work();}catch(error){message(root,error.message||'Não foi possível concluir. Atualize o diagnóstico e tente novamente.',true);}finally{delete root.dataset.busy;root.removeAttribute('aria-busy');root.querySelectorAll('button').forEach(b=>b.disabled=false);}}
+async function action(root,work){if(root.dataset.busy)return;root.dataset.busy='true';root.setAttribute('aria-busy','true');root.querySelectorAll('button').forEach(b=>b.disabled=true);try{await work();}catch(error){message(root,error.message||'Não foi possível concluir. Atualize o diagnóstico e tente novamente.',true);}finally{delete root.dataset.busy;root.removeAttribute('aria-busy');root.querySelectorAll('button').forEach(b=>b.disabled=b.hasAttribute('data-closure-blocked'));}}
 function updated(recordId){window.dispatchEvent(new CustomEvent('cme:commercial-records-updated',{detail:{recordId}}));window.dispatchEvent(new CustomEvent('cme:commercial-terms-saved'));}
 function formatMoney(value){return Number(value??0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
 async function openCommercial(recordId){
@@ -32,7 +32,7 @@ async function openCommercial(recordId){
    ${plan.clientId&&!plan.accessReady?'<button type="button" data-invite>Enviar convite de acesso ao cliente</button>':''}
    <div class="closure-actions"><button type="button" data-projects>Resolver vínculos de projetos</button><button type="button" data-refresh>Atualizar diagnóstico</button>
     ${!issues.length?`<button type="button" data-emit>${plan.emitted?'Preparar nova revisão do contrato':'Preparar contrato Word'}</button>`:''}
-    ${plan.emitted&&plan.contractReady?'<button type="button" data-annex>Preparar Anexo I deste contrato</button>':''}</div>
+    ${plan.emitted&&plan.contractReady?`<button type="button" data-annex ${plan.revisionRequired||issues.length?'disabled data-closure-blocked title="Emita a revisão do contrato com as correções antes de preparar o Anexo I."':''}>Preparar Anexo I deste contrato</button>`:''}</div>
    <p>${issues.length?`${issues.length} pendência(s) de escopo. Resolva uma por vez; o diagnóstico será atualizado após cada ação.`:plan.revisionRequired?'Escopo conferido. As alterações precisam aparecer em uma nova revisão antes de atualizar o Anexo I.':'Escopo conferido. A emissão e o aceite do cliente são etapas próprias do fluxo.'}</p>`;
   root.querySelectorAll('[data-resolve]').forEach(button=>button.onclick=()=>void action(root,async()=>{
    const issue=issues[Number(button.dataset.index)],kind=button.dataset.resolve;

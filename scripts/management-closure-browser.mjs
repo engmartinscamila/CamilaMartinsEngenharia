@@ -11,6 +11,7 @@ try{for(const width of [1440,390]){
   const plan={recordId:'record-qa',projectId:'p-qa',number:'CON-QA',clientId:'client-qa',clientName:'Cliente sintético',token:'token-qa',version:'3.0',total:12000,emitted:true,contractReady:true,annexCurrent:false,accessReady:false,revisionRequired:true,
    issues:[{code:'am',name:'Hidráulico',kind:'classification',current:'Água e esgoto',targetCode:'g',targetName:'Projeto Hidrossanitário',targetIncluded:false,message:'Conferir enquadramento'},
     {code:'u',name:'Levantamento',kind:'scope',current:'Projeto executivo e maquete',suggestion:'Planta cadastral cotada dos ambientes medidos',canRemove:true,message:'Conferir entregáveis'}]};
+  window.closureMarkIssued=()=>{plan.revisionRequired=false;};
   let pending=[{id:'p-qa',name:'Projeto existente',clientName:'Cliente sintético',number:'CON-QA',address:'Rua original',token:'project-token',candidates:[{id:'contract-qa',number:'CON-QA',numberMatch:true,service:'Projeto contratado',address:'Endereço comercial diferente'}]}];
   window.CMEGenerateCommercialDocument=()=>window.closureEmissions++;
   window.supabaseClient={rpc:async(name,args)=>{
@@ -29,6 +30,14 @@ try{for(const width of [1440,390]){
  await page.getByRole('button',{name:'Reclassificar como Projeto Hidrossanitário',exact:true}).click();
  await page.getByRole('button',{name:'Usar esses entregáveis no levantamento',exact:true}).click();
  await page.getByRole('button',{name:'Preparar nova revisão do contrato',exact:true}).waitFor();
+ assert.equal(await page.getByRole('button',{name:'Preparar Anexo I deste contrato',exact:true}).isDisabled(),true,'Escopo corrigido precisa de nova emissão antes do Anexo I');
+ await page.getByRole('button',{name:'Atualizar diagnóstico',exact:true}).click();
+ assert.equal(await page.getByRole('button',{name:'Preparar Anexo I deste contrato',exact:true}).isDisabled(),true,'Finalizar ação não pode reabilitar avanço bloqueado');
+ await page.evaluate(()=>window.closureMarkIssued());
+ await page.getByRole('button',{name:'Atualizar diagnóstico',exact:true}).click();
+ await page.locator('[data-annex]:not([disabled])').waitFor();
+ assert.equal(await page.getByRole('button',{name:'Preparar Anexo I deste contrato',exact:true}).isEnabled(),true,'Emissão atual permite preparar o Anexo I');
+
  assert.equal(await page.evaluate(()=>window.closureEmissions),0,'Repairs never emit or sign a new contract automatically');
  const resolutions=await page.evaluate(()=>window.closureCalls.filter(c=>c.name==='admin_resolve_commercial_closure'));
  assert.equal(resolutions.length,2);assert.equal(resolutions[0].args.p_target_code,'g');assert.equal(resolutions[1].args.p_action,'use_approved_deliverables');
