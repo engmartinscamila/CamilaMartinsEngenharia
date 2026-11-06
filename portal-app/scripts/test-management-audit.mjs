@@ -46,3 +46,30 @@ assert.equal((bridge.match(/\['projectId','financialId','receiptId'/g)||[]).leng
 assert.ok(fs.readFileSync('src/components/admin-area.tsx','utf8').includes("?['financialId','receiptId']:"));
 assert.equal((fs.readFileSync('src/app/admin/document-archive.tsx','utf8').match(/batches\.map/g)||[]).length,1,'One batch list instead of duplicated history');
 console.log('PASS: receipt identity, finance subviews, notification routes, exact project history, 605-row pagination and repeated-generation grouping.');
+
+// Client documents must remain usable before a project exists, while the
+// selected-project list must not absorb documents from another project.
+const clientDocuments=[
+ {id:'standalone',projeto_id:null,nome:'Contrato sem projeto',created_at:'2026-11-06'},
+ {id:'selected',projeto_id:'project-a',nome:'Projeto selecionado',created_at:'2026-11-05'},
+ {id:'other',projeto_id:'project-b',nome:'Outro projeto',created_at:'2026-11-04'},
+];
+let standaloneFailure=false;
+const documentDb={from(){let project;const q={select(){return q},eq(_key,value){project=value;return q},is(_key,value){project=value;return q},order(){return q},async limit(){return standaloneFailure&&project===null?{data:null,error:{code:'503'}}:{data:clientDocuments.filter(r=>r.projeto_id===project),error:null}}};return q;}};
+const portal=load('src/services/portal-service.ts',{'@/lib/format':{},'@/lib/errors':{},'@/lib/env':{},'@/lib/supabase':{supabase:documentDb},'@/services/push-service':{}});
+assert.deepEqual(Array.from((await portal.listClientDocuments(null)).data,r=>r.id),['standalone']);
+assert.deepEqual(Array.from((await portal.listClientDocuments('project-a')).data,r=>r.id),['standalone','selected']);
+standaloneFailure=true;
+assert.ok((await portal.listClientDocuments('project-a')).error,'A failed standalone query must not be reported as a successful complete list');
+const htmlPanel={innerHTML:'',querySelectorAll:()=>[]},listeners={},timers=[],rpcCalls=[];
+vm.runInNewContext(fs.readFileSync('../js/document-acceptance-client.js','utf8'),{
+ window:{supabaseClient:{rpc:async(name,args)=>{rpcCalls.push({name,args});return {data:[{document_id:'standalone',document_name:'Contrato sem projeto',version:'1.0',lifecycle_status:'aguardando_aceite',acceptance_required:true}],error:null}}}},
+ document:{readyState:'complete',getElementById:name=>name==='clientDocumentGovernance'?htmlPanel:null,addEventListener:(name,fn)=>listeners[name]=fn},
+ location:{search:''},URLSearchParams,setTimeout:fn=>timers.push(fn),console,
+});
+for(const timer of timers)timer();
+await new Promise(resolve=>setImmediate(resolve));
+assert.equal(rpcCalls[0].args.p_project_id,null);
+assert.match(htmlPanel.innerHTML,/Contrato sem projeto/);
+assert.ok(listeners['cm:client-area-ready'],'The acceptance panel refreshes after client authentication and area loading');
+console.log('PASS: standalone document listing, selected-project filtering, failure reporting and acceptance panel without project.');

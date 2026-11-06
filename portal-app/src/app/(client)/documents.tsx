@@ -12,7 +12,7 @@ import {
   type ClientDocumentDecision,
   type ClientDocumentGovernanceItem,
 } from '@/services/document-governance-service';
-import { createDocumentSignedUrl, listDocuments } from '@/services/portal-service';
+import { createDocumentSignedUrl, listClientDocuments } from '@/services/portal-service';
 import { spacing, ThemeColors, typography } from '@/theme/tokens';
 import type { DocumentSummary } from '@/types/domain';
 
@@ -42,16 +42,11 @@ export default function DocumentsScreen() {
   const governanceByDocument = useMemo(() => new Map(governance.map((item) => [item.documentId, item])), [governance]);
 
   const load = useCallback(async () => {
-    if (!selectedProject) {
-      setDocuments([]);
-      setGovernance([]);
-      return;
-    }
     setLoading(true);
     setError(null);
     const [documentResult, governanceResult] = await Promise.all([
-      listDocuments(selectedProject.id),
-      listClientDocumentGovernance(selectedProject.id),
+      listClientDocuments(selectedProject?.id ?? null),
+      listClientDocumentGovernance(selectedProject?.id ?? null),
     ]);
     setDocuments(documentResult.data);
     setGovernance(governanceResult.data);
@@ -99,8 +94,8 @@ export default function DocumentsScreen() {
       {error ? <Notice tone="danger">{error}</Notice> : null}
       {success ? <Notice tone="success">{success}</Notice> : null}
       {loading ? <ActivityIndicator color={colors.gold600} /> : null}
-      {!loading && selectedProject && documents.length === 0 ? (
-        <StateView actionLabel="Atualizar" description="Os documentos publicados para este projeto aparecerão aqui." icon="document-text-outline" onAction={() => void load()} title="Nenhum documento publicado" />
+      {!loading && documents.length === 0 ? (
+        <StateView actionLabel="Atualizar" description="Os documentos liberados para você aparecerão aqui, inclusive contratos sem projeto vinculado." icon="document-text-outline" onAction={() => void load()} title="Nenhum documento publicado" />
       ) : null}
       {documents.map((document) => {
         const control = governanceByDocument.get(document.id);

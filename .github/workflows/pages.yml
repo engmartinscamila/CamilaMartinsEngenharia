@@ -73,6 +73,7 @@ jobs:
           node scripts/security/receipt-cash-regression.mjs
           node scripts/security/commercial-closure-regression.mjs
           node scripts/security/commercial-emission-leases-regression.mjs
+          node scripts/security/document-client-flow-regression.mjs
 
       - name: Regressões estruturais completas antes da publicação
         run: |

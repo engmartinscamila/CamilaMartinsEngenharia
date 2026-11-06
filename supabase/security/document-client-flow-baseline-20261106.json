@@ -1,0 +1,721 @@
+{
+  "columns": [
+    {
+      "table_name": "app_push_tokens",
+      "name": "id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "app_push_tokens",
+      "name": "user_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "app_push_tokens",
+      "name": "expo_push_token",
+      "type": "text"
+    },
+    {
+      "table_name": "app_push_tokens",
+      "name": "platform",
+      "type": "text"
+    },
+    {
+      "table_name": "app_push_tokens",
+      "name": "device_name",
+      "type": "text"
+    },
+    {
+      "table_name": "app_push_tokens",
+      "name": "active",
+      "type": "boolean"
+    },
+    {
+      "table_name": "app_push_tokens",
+      "name": "created_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "app_push_tokens",
+      "name": "updated_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "app_push_tokens",
+      "name": "last_seen_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "audit_log",
+      "name": "id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "audit_log",
+      "name": "user_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "audit_log",
+      "name": "action",
+      "type": "text"
+    },
+    {
+      "table_name": "audit_log",
+      "name": "entity_type",
+      "type": "text"
+    },
+    {
+      "table_name": "audit_log",
+      "name": "entity_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "audit_log",
+      "name": "details",
+      "type": "jsonb"
+    },
+    {
+      "table_name": "audit_log",
+      "name": "created_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "document_acceptances",
+      "name": "id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "document_acceptances",
+      "name": "document_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "document_acceptances",
+      "name": "project_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "document_acceptances",
+      "name": "client_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "document_acceptances",
+      "name": "user_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "document_acceptances",
+      "name": "document_version",
+      "type": "text"
+    },
+    {
+      "table_name": "document_acceptances",
+      "name": "snapshot_hash",
+      "type": "text"
+    },
+    {
+      "table_name": "document_acceptances",
+      "name": "decision",
+      "type": "text"
+    },
+    {
+      "table_name": "document_acceptances",
+      "name": "note",
+      "type": "text"
+    },
+    {
+      "table_name": "document_acceptances",
+      "name": "source",
+      "type": "text"
+    },
+    {
+      "table_name": "document_acceptances",
+      "name": "client_context",
+      "type": "jsonb"
+    },
+    {
+      "table_name": "document_acceptances",
+      "name": "consent_text_version",
+      "type": "text"
+    },
+    {
+      "table_name": "document_acceptances",
+      "name": "accepted_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "document_acceptances",
+      "name": "created_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "document_emission_snapshots",
+      "name": "id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "document_emission_snapshots",
+      "name": "document_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "document_emission_snapshots",
+      "name": "document_kind",
+      "type": "text"
+    },
+    {
+      "table_name": "document_emission_snapshots",
+      "name": "version",
+      "type": "text"
+    },
+    {
+      "table_name": "document_emission_snapshots",
+      "name": "version_reason",
+      "type": "text"
+    },
+    {
+      "table_name": "document_emission_snapshots",
+      "name": "snapshot",
+      "type": "jsonb"
+    },
+    {
+      "table_name": "document_emission_snapshots",
+      "name": "snapshot_hash",
+      "type": "text"
+    },
+    {
+      "table_name": "document_emission_snapshots",
+      "name": "emitted_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "document_emission_snapshots",
+      "name": "created_by",
+      "type": "uuid"
+    },
+    {
+      "table_name": "document_emission_snapshots",
+      "name": "hash_algorithm",
+      "type": "text"
+    },
+    {
+      "table_name": "document_emission_snapshots",
+      "name": "legacy_backfill",
+      "type": "boolean"
+    },
+    {
+      "table_name": "document_pending_alerts",
+      "name": "id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "document_pending_alerts",
+      "name": "project_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "document_pending_alerts",
+      "name": "alert_code",
+      "type": "text"
+    },
+    {
+      "table_name": "document_pending_alerts",
+      "name": "source_document_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "document_pending_alerts",
+      "name": "title",
+      "type": "text"
+    },
+    {
+      "table_name": "document_pending_alerts",
+      "name": "message",
+      "type": "text"
+    },
+    {
+      "table_name": "document_pending_alerts",
+      "name": "severity",
+      "type": "text"
+    },
+    {
+      "table_name": "document_pending_alerts",
+      "name": "due_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "document_pending_alerts",
+      "name": "created_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "document_pending_alerts",
+      "name": "resolved_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "document_pending_alerts",
+      "name": "resolution_note",
+      "type": "text"
+    },
+    {
+      "table_name": "documentos",
+      "name": "id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "documentos",
+      "name": "cliente_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "documentos",
+      "name": "projeto_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "documentos",
+      "name": "nome",
+      "type": "text"
+    },
+    {
+      "table_name": "documentos",
+      "name": "arquivo",
+      "type": "text"
+    },
+    {
+      "table_name": "documentos",
+      "name": "tipo",
+      "type": "text"
+    },
+    {
+      "table_name": "documentos",
+      "name": "created_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "documentos",
+      "name": "descricao",
+      "type": "text"
+    },
+    {
+      "table_name": "documentos",
+      "name": "arquivo_hash",
+      "type": "text"
+    },
+    {
+      "table_name": "documentos",
+      "name": "nome_original",
+      "type": "text"
+    },
+    {
+      "table_name": "documentos",
+      "name": "autoral",
+      "type": "boolean"
+    },
+    {
+      "table_name": "documentos",
+      "name": "storage_bucket",
+      "type": "text"
+    },
+    {
+      "table_name": "documentos",
+      "name": "categoria",
+      "type": "text"
+    },
+    {
+      "table_name": "documentos",
+      "name": "versao",
+      "type": "text"
+    },
+    {
+      "table_name": "documentos",
+      "name": "permitir_download",
+      "type": "boolean"
+    },
+    {
+      "table_name": "documentos",
+      "name": "protection_mode",
+      "type": "text"
+    },
+    {
+      "table_name": "documentos",
+      "name": "contract_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "documentos",
+      "name": "approval_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "documentos",
+      "name": "document_kind",
+      "type": "text"
+    },
+    {
+      "table_name": "documentos",
+      "name": "workflow_status",
+      "type": "text"
+    },
+    {
+      "table_name": "documentos",
+      "name": "generated_data",
+      "type": "jsonb"
+    },
+    {
+      "table_name": "documentos",
+      "name": "optional_document",
+      "type": "boolean"
+    },
+    {
+      "table_name": "documentos",
+      "name": "generated_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "documentos",
+      "name": "exported_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "documentos",
+      "name": "purged_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "documentos",
+      "name": "export_batch_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "documentos",
+      "name": "retain_online",
+      "type": "boolean"
+    },
+    {
+      "table_name": "documentos",
+      "name": "archived_storage_size",
+      "type": "bigint"
+    },
+    {
+      "table_name": "documentos",
+      "name": "archived_original_path",
+      "type": "text"
+    },
+    {
+      "table_name": "documentos",
+      "name": "restored_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "documentos",
+      "name": "archived_explicitly",
+      "type": "boolean"
+    },
+    {
+      "table_name": "documentos",
+      "name": "last_downloaded_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "documentos",
+      "name": "revision_of",
+      "type": "uuid"
+    },
+    {
+      "table_name": "documentos",
+      "name": "version_reason",
+      "type": "text"
+    },
+    {
+      "table_name": "documentos",
+      "name": "snapshot_frozen_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "documentos",
+      "name": "version",
+      "type": "text"
+    },
+    {
+      "table_name": "documentos",
+      "name": "client_visible",
+      "type": "boolean"
+    },
+    {
+      "table_name": "documentos",
+      "name": "exibir_cliente",
+      "type": "boolean"
+    },
+    {
+      "table_name": "documentos",
+      "name": "acceptance_required",
+      "type": "boolean"
+    },
+    {
+      "table_name": "documentos",
+      "name": "client_released_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "documentos",
+      "name": "client_released_by",
+      "type": "uuid"
+    },
+    {
+      "table_name": "documentos",
+      "name": "valid_from",
+      "type": "date"
+    },
+    {
+      "table_name": "documentos",
+      "name": "valid_until",
+      "type": "date"
+    },
+    {
+      "table_name": "documentos",
+      "name": "superseded_by",
+      "type": "uuid"
+    },
+    {
+      "table_name": "documentos",
+      "name": "superseded_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "documentos",
+      "name": "replacement_reason",
+      "type": "text"
+    },
+    {
+      "table_name": "notificacoes",
+      "name": "id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "notificacoes",
+      "name": "cliente_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "notificacoes",
+      "name": "projeto_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "notificacoes",
+      "name": "titulo",
+      "type": "text"
+    },
+    {
+      "table_name": "notificacoes",
+      "name": "mensagem",
+      "type": "text"
+    },
+    {
+      "table_name": "notificacoes",
+      "name": "tipo",
+      "type": "text"
+    },
+    {
+      "table_name": "notificacoes",
+      "name": "lida",
+      "type": "boolean"
+    },
+    {
+      "table_name": "notificacoes",
+      "name": "created_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "notificacoes",
+      "name": "link_path",
+      "type": "text"
+    },
+    {
+      "table_name": "notificacoes",
+      "name": "destinatario",
+      "type": "text"
+    },
+    {
+      "table_name": "notificacoes",
+      "name": "referencia_tipo",
+      "type": "text"
+    },
+    {
+      "table_name": "notificacoes",
+      "name": "referencia_id",
+      "type": "text"
+    },
+    {
+      "table_name": "notificacoes",
+      "name": "push_attempted_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "notificacoes",
+      "name": "push_sent_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "notificacoes",
+      "name": "scheduled_for",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "notificacoes",
+      "name": "sent_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "notificacoes",
+      "name": "delivery_status",
+      "type": "text"
+    },
+    {
+      "table_name": "projetos",
+      "name": "id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "projetos",
+      "name": "cliente_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "projetos",
+      "name": "nome",
+      "type": "text"
+    },
+    {
+      "table_name": "projetos",
+      "name": "tipo",
+      "type": "text"
+    },
+    {
+      "table_name": "projetos",
+      "name": "status",
+      "type": "text"
+    },
+    {
+      "table_name": "projetos",
+      "name": "descricao",
+      "type": "text"
+    },
+    {
+      "table_name": "projetos",
+      "name": "created_at",
+      "type": "timestamp with time zone"
+    },
+    {
+      "table_name": "projetos",
+      "name": "data_inicio",
+      "type": "date"
+    },
+    {
+      "table_name": "projetos",
+      "name": "data_fim",
+      "type": "date"
+    },
+    {
+      "table_name": "projetos",
+      "name": "numero_contrato",
+      "type": "text"
+    },
+    {
+      "table_name": "projetos",
+      "name": "numero_orcamento",
+      "type": "text"
+    },
+    {
+      "table_name": "projetos",
+      "name": "area_construida_m2",
+      "type": "numeric(12,2)"
+    },
+    {
+      "table_name": "projetos",
+      "name": "area_terreno_m2",
+      "type": "numeric(12,2)"
+    },
+    {
+      "table_name": "projetos",
+      "name": "cep_obra",
+      "type": "text"
+    },
+    {
+      "table_name": "projetos",
+      "name": "endereco_obra",
+      "type": "text"
+    },
+    {
+      "table_name": "projetos",
+      "name": "numero_obra",
+      "type": "text"
+    },
+    {
+      "table_name": "projetos",
+      "name": "complemento_obra",
+      "type": "text"
+    },
+    {
+      "table_name": "projetos",
+      "name": "bairro_obra",
+      "type": "text"
+    },
+    {
+      "table_name": "projetos",
+      "name": "cidade_obra",
+      "type": "text"
+    },
+    {
+      "table_name": "projetos",
+      "name": "estado_obra",
+      "type": "text"
+    },
+    {
+      "table_name": "projetos",
+      "name": "mesmo_endereco_cliente",
+      "type": "boolean"
+    },
+    {
+      "table_name": "projetos",
+      "name": "parceria",
+      "type": "boolean"
+    },
+    {
+      "table_name": "projetos",
+      "name": "contract_id",
+      "type": "uuid"
+    },
+    {
+      "table_name": "projetos",
+      "name": "progress_percent",
+      "type": "numeric"
+    }
+  ],
+  "functions": [
+    {
+      "signature": "admin_release_document_for_client(uuid,boolean,date,date)",
+      "proname": "admin_release_document_for_client",
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_release_document_for_client(p_document_id uuid, p_acceptance_required boolean DEFAULT true, p_valid_from date DEFAULT NULL::date, p_valid_until date DEFAULT NULL::date)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n  d public.documentos%rowtype;\n  v_client uuid;\n  v_version text;\nbegin\n  if not public.is_portal_admin() then raise exception 'Acesso administrativo necessário.'; end if;\n\n  select * into d from public.documentos where id=p_document_id;\n  if d.id is null then raise exception 'Documento não encontrado.'; end if;\n  if d.snapshot_frozen_at is null then raise exception 'Emita/congele o documento antes de liberá-lo.'; end if;\n  if d.superseded_by is not null then raise exception 'Versão substituída não pode ser liberada.'; end if;\n  if p_valid_until is not null and p_valid_from is not null and p_valid_until<p_valid_from then\n    raise exception 'Período de validade inválido.';\n  end if;\n\n  v_version:=coalesce(nullif(d.version,''),to_jsonb(d)->>'versao','1.0');\n\n  update public.documentos\n  set client_visible=true,\n      exibir_cliente=true,\n      acceptance_required=coalesce(p_acceptance_required,true),\n      client_released_at=now(),\n      client_released_by=auth.uid(),\n      valid_from=coalesce(p_valid_from,current_date),\n      valid_until=p_valid_until\n  where id=p_document_id;\n\n  select cliente_id into v_client from public.projetos where id=d.projeto_id;\n\n  if p_acceptance_required then\n    insert into public.document_pending_alerts(\n      project_id,alert_code,source_document_id,title,message,severity,due_at\n    )\n    values(\n      d.projeto_id,'awaiting_document_acceptance',d.id,'Aceite documental pendente',\n      coalesce(d.nome,'Documento')||' — versão '||v_version||' aguarda manifestação do cliente.',\n      'warning',now()+interval '5 days'\n    )\n    on conflict do nothing;\n  end if;\n\n  if p_valid_until is not null then\n    insert into public.document_pending_alerts(\n      project_id,alert_code,source_document_id,title,message,severity,due_at\n    )\n    values(\n      d.projeto_id,'document_expiring',d.id,'Validade documental',\n      coalesce(d.nome,'Documento')||' — versão '||v_version||' precisa de revisão de validade.',\n      'warning',p_valid_until::timestamptz\n    )\n    on conflict do nothing;\n  end if;\n\n  insert into public.notificacoes(\n    cliente_id,projeto_id,titulo,mensagem,tipo,lida,link_path,destinatario,\n    referencia_tipo,referencia_id\n  )\n  values(\n    v_client,d.projeto_id,\n    case when p_acceptance_required then 'Documento disponível para aceite' else 'Novo documento disponível' end,\n    coalesce(d.nome,'Documento')||' — versão '||v_version||' está disponível no portal.',\n    'document_release',false,\n    'documentos-cliente.html?projeto='||d.projeto_id::text,\n    'cliente','documento',d.id\n  );\nend\n$function$\n"
+    },
+    {
+      "signature": "admin_supersede_document(uuid,uuid,text)",
+      "proname": "admin_supersede_document",
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_supersede_document(p_old_document_id uuid, p_new_document_id uuid, p_reason text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$ declare o public.documentos%rowtype; n public.documentos%rowtype; begin if not public.is_portal_admin() then raise exception 'Acesso administrativo necessário.'; end if; if nullif(btrim(coalesce(p_reason,'')),'') is null then raise exception 'Informe o motivo da substituição.'; end if; select * into o from public.documentos where id=p_old_document_id; select * into n from public.documentos where id=p_new_document_id; if o.id is null or n.id is null or o.projeto_id is distinct from n.projeto_id or o.id=n.id then raise exception 'Substituição documental inválida.'; end if; update public.documentos set superseded_by=n.id,superseded_at=now(),replacement_reason=btrim(p_reason),client_visible=false,exibir_cliente=false where id=o.id; update public.document_pending_alerts set resolved_at=now(),resolution_note='Documento substituído.' where source_document_id=o.id and resolved_at is null; end $function$\n"
+    },
+    {
+      "signature": "client_accept_document(uuid,text,text,text,jsonb)",
+      "proname": "client_accept_document",
+      "definition": "CREATE OR REPLACE FUNCTION public.client_accept_document(p_document_id uuid, p_decision text, p_note text DEFAULT NULL::text, p_source text DEFAULT 'portal'::text, p_client_context jsonb DEFAULT '{}'::jsonb)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n  d public.documentos%rowtype;\n  v_client uuid;\n  v_hash text;\n  v_id uuid;\n  v_version text;\nbegin\n  if auth.uid() is null then raise exception 'Sessão do cliente necessária.'; end if;\n  if p_decision not in('accepted','accepted_with_notes','rejected') then raise exception 'Manifestação inválida.'; end if;\n  if p_decision in('accepted_with_notes','rejected') and nullif(btrim(coalesce(p_note,'')),'') is null then\n    raise exception 'Informe a observação desta manifestação.';\n  end if;\n\n  select * into d from public.documentos where id=p_document_id;\n  if d.id is null then raise exception 'Documento não encontrado.'; end if;\n  if public.is_portal_admin() or not public.user_has_project_access(d.projeto_id) then\n    raise exception 'Aceite permitido somente ao cliente vinculado.';\n  end if;\n  if not(coalesce(d.client_visible,false) or coalesce(d.exibir_cliente,false)) or d.client_released_at is null then\n    raise exception 'Documento ainda não foi liberado ao cliente.';\n  end if;\n  if not coalesce(d.acceptance_required,false) then raise exception 'Este documento não requer aceite.'; end if;\n  if d.snapshot_frozen_at is null then raise exception 'Documento ainda não está congelado para aceite.'; end if;\n  if d.superseded_by is not null then raise exception 'Esta versão foi substituída.'; end if;\n  if d.valid_until is not null and d.valid_until<current_date then raise exception 'Documento expirado.'; end if;\n\n  v_version:=coalesce(nullif(d.version,''),to_jsonb(d)->>'versao','1.0');\n  select cliente_id into v_client from public.projetos where id=d.projeto_id;\n  select snapshot_hash into v_hash\n  from public.document_emission_snapshots\n  where document_id=d.id\n  order by emitted_at desc\n  limit 1;\n\n  if nullif(v_hash,'') is null then\n    v_hash:=encode(digest(convert_to(coalesce(d.generated_data,'{}'::jsonb)::text||'|'||d.id::text||'|'||v_version,'UTF8'),'sha256'),'hex');\n  end if;\n\n  insert into public.document_acceptances(\n    document_id,project_id,client_id,user_id,document_version,snapshot_hash,\n    decision,note,source,client_context\n  )\n  values(\n    d.id,d.projeto_id,v_client,auth.uid(),v_version,v_hash,\n    p_decision,nullif(btrim(coalesce(p_note,'')),''),\n    case when p_source in('web','app','portal') then p_source else 'portal' end,\n    coalesce(p_client_context,'{}'::jsonb)\n  )\n  returning id into v_id;\n\n  update public.document_pending_alerts\n  set resolved_at=now(),resolution_note='Manifestação do cliente registrada.'\n  where source_document_id=d.id\n    and alert_code='awaiting_document_acceptance'\n    and resolved_at is null;\n\n  insert into public.notificacoes(\n    cliente_id,projeto_id,titulo,mensagem,tipo,lida,link_path,destinatario,\n    referencia_tipo,referencia_id\n  )\n  values(\n    v_client,d.projeto_id,'Manifestação documental do cliente',\n    'Manifestação registrada para '||coalesce(d.nome,'Documento')||' — versão '||v_version||'.',\n    'document_acceptance',false,'orcamentos-contratos.html','admin',\n    'document_acceptance',v_id\n  );\n\n  insert into public.audit_log(user_id,action,entity_type,entity_id,details)\n  values(\n    auth.uid(),'client_document_acceptance','documentos',d.id,\n    jsonb_build_object(\n      'acceptance_id',v_id,'decision',p_decision,'version',v_version,\n      'snapshot_hash',v_hash,'source',p_source\n    )\n  );\n\n  return v_id;\nexception when unique_violation then\n  raise exception 'Você já registrou uma manifestação para esta versão.';\nend\n$function$\n"
+    },
+    {
+      "signature": "register_own_push_token(text,text,text)",
+      "proname": "register_own_push_token",
+      "definition": "CREATE OR REPLACE FUNCTION public.register_own_push_token(p_token text, p_platform text, p_device_name text DEFAULT NULL::text)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$ BEGIN IF (SELECT auth.uid()) IS NULL THEN RAISE EXCEPTION 'Sessão necessária'; END IF; IF p_platform NOT IN ('android','ios') THEN RAISE EXCEPTION 'Plataforma inválida'; END IF; IF length(btrim(coalesce(p_token,''))) NOT BETWEEN 20 AND 300 OR btrim(p_token) !~ '^(Expo|Exponent)PushToken\\[[A-Za-z0-9_-]+\\]$' THEN RAISE EXCEPTION 'Token inválido'; END IF; INSERT INTO public.app_push_tokens(user_id,expo_push_token,platform,device_name) VALUES ((SELECT auth.uid()),btrim(p_token),p_platform,nullif(left(btrim(coalesce(p_device_name,'')),120),'')) ON CONFLICT (expo_push_token) DO UPDATE SET user_id=(SELECT auth.uid()),platform=EXCLUDED.platform,device_name=EXCLUDED.device_name,active=true,updated_at=now(),last_seen_at=now(); RETURN true; END; $function$\n"
+    }
+  ]
+}

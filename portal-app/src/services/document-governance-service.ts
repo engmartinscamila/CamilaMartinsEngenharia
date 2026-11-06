@@ -68,7 +68,7 @@ export interface AdminServiceLevelScopeReview {
   updatedAt: string;
 }
 
-export async function listClientDocumentGovernance(projectId: string) {
+export async function listClientDocumentGovernance(projectId: string | null) {
   const { data, error } = await supabase.rpc('client_document_map', { p_project_id: projectId });
   return {
     data: (data ?? []).map((row: any): ClientDocumentGovernanceItem => ({

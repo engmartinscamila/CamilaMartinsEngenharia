@@ -167,7 +167,9 @@ CAMILA MARTINS ENGENHARIA
             consulta = consulta.eq("cliente_id", clienteAtual.id);
         }
         if (projetoAtual?.id && opcoes.projeto !== false) {
-            consulta = consulta.eq("projeto_id", projetoAtual.id);
+            consulta = tabela === window.TABELAS.DOCUMENTOS
+                ? consulta.or(`projeto_id.eq.${projetoAtual.id},projeto_id.is.null`)
+                : consulta.eq("projeto_id", projetoAtual.id);
         }
 
         if (opcoes.ordem) {
@@ -741,6 +743,7 @@ CAMILA MARTINS ENGENHARIA
         });
 
         await carregarArea();
+        document.dispatchEvent(new Event("cm:client-area-ready"));
     }
 
     logout?.addEventListener("click", async () => {

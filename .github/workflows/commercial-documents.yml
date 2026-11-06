@@ -123,6 +123,7 @@ jobs:
         run: |
           npm ci --prefix scripts/security
           node scripts/security/commercial-emission-leases-regression.mjs
+          node scripts/security/document-client-flow-regression.mjs
       - name: Instalar dependências travadas do aplicativo
         run: npm ci --prefix portal-app
       - name: Verificar TypeScript do aplicativo

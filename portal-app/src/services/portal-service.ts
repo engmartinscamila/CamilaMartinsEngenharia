@@ -109,11 +109,11 @@ export async function listProjectContexts(clientId?: string): Promise<ServiceRes
   };
 }
 
-export async function listDocuments(projectId: string, clientPreview=false): Promise<ServiceResult<DocumentSummary[]>> {
-  const modern = await supabase
+export async function listDocuments(projectId: string | null, clientPreview=false): Promise<ServiceResult<DocumentSummary[]>> {
+  const modernQuery = supabase
     .from('documentos')
-    .select('id, projeto_id, nome, categoria, versao, created_at, storage_bucket, arquivo, permitir_download, protection_mode, document_kind, generated_at, client_visible, exibir_cliente, client_released_at')
-    .eq('projeto_id', projectId)
+    .select('id, projeto_id, nome, categoria, versao, created_at, storage_bucket, arquivo, permitir_download, protection_mode, document_kind, generated_at, client_visible, exibir_cliente, client_released_at');
+  const modern = await (projectId ? modernQuery.eq('projeto_id', projectId) : modernQuery.is('projeto_id', null))
     .order('created_at', { ascending: false })
     .limit(50);
 
@@ -140,10 +140,10 @@ export async function listDocuments(projectId: string, clientPreview=false): Pro
     return { data: [], error: 'Não foi possível carregar os documentos.' };
   }
 
-  const legacy = await supabase
+  const legacyQuery = supabase
     .from('documentos')
-    .select('id, projeto_id, nome, tipo, created_at, arquivo')
-    .eq('projeto_id', projectId)
+    .select('id, projeto_id, nome, tipo, created_at, arquivo');
+  const legacy = await (projectId ? legacyQuery.eq('projeto_id', projectId) : legacyQuery.is('projeto_id', null))
     .order('created_at', { ascending: false })
     .limit(50);
 
@@ -163,6 +163,15 @@ export async function listDocuments(projectId: string, clientPreview=false): Pro
     })),
     error: null,
   };
+}
+
+export async function listClientDocuments(projectId: string | null): Promise<ServiceResult<DocumentSummary[]>> {
+  const results = await Promise.all(projectId ? [listDocuments(projectId), listDocuments(null)] : [listDocuments(null)]);
+  const error = results.find(result => result.error)?.error ?? null;
+  if (error) return {data: [], error};
+  const data = [...new Map(results.flatMap(result => result.data).map(row => [row.id, row])).values()];
+  data.sort((a,b) => Date.parse(b.createdAt)-Date.parse(a.createdAt));
+  return {data,error:null};
 }
 
 export async function createDocumentSignedUrl(document: Pick<DocumentSummary, 'id' | 'allowDownload'>) {
