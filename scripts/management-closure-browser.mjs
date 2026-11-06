@@ -11,7 +11,8 @@ try{for(const width of [1440,390]){
   const plan={recordId:'record-qa',projectId:'p-qa',number:'CON-QA',clientId:'client-qa',clientName:'Cliente sintético',token:'token-qa',version:'3.0',total:12000,emitted:true,contractReady:true,annexCurrent:false,accessReady:false,revisionRequired:true,
    issues:[{code:'am',name:'Hidráulico',kind:'classification',current:'Água e esgoto',targetCode:'g',targetName:'Projeto Hidrossanitário',targetIncluded:false,message:'Conferir enquadramento'},
     {code:'u',name:'Levantamento',kind:'scope',current:'Projeto executivo e maquete',suggestion:'Planta cadastral cotada dos ambientes medidos',canRemove:true,message:'Conferir entregáveis'}]};
-  window.closureMarkIssued=()=>{plan.revisionRequired=false;};
+  window.closureMarkIssued=()=>{plan.revisionRequired=false;plan.emitted=true;};
+  window.closureMarkPending=()=>{plan.revisionRequired=false;plan.emitted=false;};
   let pending=[{id:'p-qa',name:'Projeto existente',clientName:'Cliente sintético',number:'CON-QA',address:'Rua original',token:'project-token',candidates:[{id:'contract-qa',number:'CON-QA',numberMatch:true,service:'Projeto contratado',address:'Endereço comercial diferente'}]}];
   window.CMEGenerateCommercialDocument=()=>window.closureEmissions++;
   window.supabaseClient={rpc:async(name,args)=>{
@@ -33,6 +34,11 @@ try{for(const width of [1440,390]){
  assert.equal(await page.getByRole('button',{name:'Preparar Anexo I deste contrato',exact:true}).isDisabled(),true,'Escopo corrigido precisa de nova emissão antes do Anexo I');
  await page.getByRole('button',{name:'Atualizar diagnóstico',exact:true}).click();
  assert.equal(await page.getByRole('button',{name:'Preparar Anexo I deste contrato',exact:true}).isDisabled(),true,'Finalizar ação não pode reabilitar avanço bloqueado');
+
+ await page.evaluate(()=>window.closureMarkPending());
+ await page.getByRole('button',{name:'Atualizar diagnóstico',exact:true}).click();
+ await page.getByRole('button',{name:'Preparar contrato Word',exact:true}).waitFor();
+ assert.equal(await page.locator('[data-annex]').count(),0,'Finalização pendente não permite preparar Anexo I');
  await page.evaluate(()=>window.closureMarkIssued());
  await page.getByRole('button',{name:'Atualizar diagnóstico',exact:true}).click();
  await page.locator('[data-annex]:not([disabled])').waitFor();

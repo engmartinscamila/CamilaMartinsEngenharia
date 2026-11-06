@@ -205,6 +205,7 @@ jobs:
           node --check js/document-function-routing-web.js
           node scripts/commercial-generator-preflight-regression.mjs
           node scripts/contract-emission-regression.mjs
+          node --experimental-strip-types scripts/commercial-emission-recovery-regression.mjs
           npm install --prefix "$RUNNER_TEMP/commercial-word-test" --no-save --ignore-scripts --no-audit @electric-sql/pglite@0.3.10
           CME_WORD_TEST_ROOT="$RUNNER_TEMP/commercial-word-test" node --experimental-strip-types scripts/commercial-word-download-regression.mjs
           node scripts/annex-context-regression.mjs

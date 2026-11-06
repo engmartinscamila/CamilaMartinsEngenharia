@@ -105,7 +105,9 @@ jobs:
           node --check js/contract-documents-web.js
           node scripts/anexo-aditivo-estrutura-regression.mjs
       - name: Verificar cadastro e emissão com condições comerciais
-        run: node scripts/contract-emission-regression.mjs
+        run: |
+          node scripts/contract-emission-regression.mjs
+          node --experimental-strip-types scripts/commercial-emission-recovery-regression.mjs
       - name: Validar editor comercial e condições estruturadas
         run: |
           node --check js/commercial-terms-web.js

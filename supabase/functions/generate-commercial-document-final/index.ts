@@ -44,6 +44,11 @@ async function sha256(value: unknown) {
   return Array.from(new Uint8Array(digest)).map(x => x.toString(16).padStart(2, '0')).join('');
 }
 
+async function wordHash(bytes: Uint8Array) {
+  const digest = await crypto.subtle.digest('SHA-256', new Uint8Array(bytes).buffer);
+  return Array.from(new Uint8Array(digest)).map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
 Deno.serve(async req => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return json({ error: 'Método não permitido.' }, 405);
@@ -63,6 +68,25 @@ Deno.serve(async req => {
     const source = await service.from('commercial_records').select('*').eq('id', recordId).maybeSingle();
     if (source.error) throw source.error;
     if (!source.data) return json({ error: 'Registro comercial não encontrado.' }, 404);
+    // A partial emission resumes its own persisted input and UUID. It is not a new revision.
+    let resumedDocument: Obj | null = null;
+    let resumeHasSnapshot = false;
+    let resumeWordHash = '';
+    const activePointer = kind === 'contrato' ? source.data.contract_document_id : source.data.quote_document_id;
+    if (activePointer) {
+      const pending = await service.from('documentos').select('*').eq('id', activePointer).maybeSingle();
+      if (pending.error) throw pending.error;
+      if (pending.data?.generated_at && pending.data.generated_data?.commercial_record_snapshot) {
+        const frozen = await service.from('document_emission_snapshots').select('id,snapshot').eq('document_id', activePointer).maybeSingle();
+        if (frozen.error) throw frozen.error;
+        if (!frozen.data || pending.data.generated_data.commercial_finalization_state === 'pending') {
+          resumedDocument = pending.data;
+          resumeHasSnapshot = Boolean(frozen.data);
+          resumeWordHash = text(frozen.data?.snapshot?.word_content_sha256 || pending.data.generated_data.word_content_sha256);
+          source.data = pending.data.generated_data.commercial_record_snapshot;
+        }
+      }
+    }
     if (kind === 'contrato' && !text(source.data.property_address)) return json({ error: 'Informe o endereço do imóvel / obra antes de gerar o contrato.' }, 422);
     const selected = selectedServices(source.data.services);
     if (!selected.length && !text(source.data.custom_service)) return json({ error: 'Nenhuma atividade foi selecionada para este documento.' }, 422);
@@ -96,8 +120,8 @@ Deno.serve(async req => {
       }
     }
     pointerField = kind === 'contrato' ? 'contract_document_id' : 'quote_document_id';
-    previousDocumentId = text(source.data[pointerField]) || null;
-    if (previousDocumentId) {
+    previousDocumentId = text(resumedDocument?.id || source.data[pointerField]) || null;
+    if (previousDocumentId && !resumedDocument) {
       const frozen = await service.from('document_emission_snapshots').select('id').eq('document_id', previousDocumentId).maybeSingle();
       if (frozen.error) throw frozen.error;
       if (frozen.data) {
@@ -137,12 +161,14 @@ Deno.serve(async req => {
         if (linked.error) throw linked.error;
       }
     }
-    const core = await proxyCore(url, anonKey, authorization, { recordId, kind });
+    const core = resumedDocument
+      ? { response: { ok: true, status: 200 }, data: { generated: true, documentId: resumedDocument.id,
+          version: resumedDocument.versao, contractNumber: source.data.contract_number, quoteNumber: source.data.quote_number,
+          emittedAt: resumedDocument.generated_at, documentDate: resumedDocument.generated_data?.document_date } as Obj }
+      : await proxyCore(url, anonKey, authorization, { recordId, kind });
     if (!core.response.ok) {
-      if (createdRevisionId && previousDocumentId) {
-        await service.from('commercial_records').update({ [pointerField]: previousDocumentId }).eq('id', recordId);
-        await service.from('documentos').delete().eq('id', createdRevisionId);
-      }
+      // The core may already have persisted the Word before returning an error.
+      // Never remove that version; it must remain linked for an explicit retry.
       return json(core.data, core.response.status);
     }
     const documentId = text(core.data.documentId);
@@ -154,7 +180,14 @@ Deno.serve(async req => {
     const downloaded = await service.storage.from(bucket).download(doc.data.arquivo);
     if (downloaded.error || !downloaded.data) throw downloaded.error ?? new Error('Não foi possível abrir o documento recém-gerado.');
     const originalBytes = new Uint8Array(await downloaded.data.arrayBuffer());
-    const finalBytes = kind === 'contrato'
+    if (resumeWordHash && await wordHash(originalBytes) !== resumeWordHash)
+      throw new Error('O Word arquivado não corresponde à emissão pendente. O original não foi substituído.');
+    const generatedData = doc.data.generated_data && typeof doc.data.generated_data === 'object' ? doc.data.generated_data as Obj : {};
+    const alreadyEnhanced = generatedData.commercial_finalization_state === 'pending';
+    const renderSource = generatedData.commercial_record_snapshot && typeof generatedData.commercial_record_snapshot === 'object'
+      ? generatedData.commercial_record_snapshot as Obj : source.data;
+    source.data = renderSource;
+    const finalBytes = resumeHasSnapshot || alreadyEnhanced ? originalBytes : kind === 'contrato'
       ? await enhanceContractDocument(originalBytes, source.data.property_address, source.data.services, source.data.custom_service, source.data.experience_level, source.data.commercial_terms)
       : await enhanceQuoteDocument(originalBytes, source.data.services, source.data.custom_service);
     if (finalBytes !== originalBytes) {
@@ -163,11 +196,11 @@ Deno.serve(async req => {
       });
       if (uploaded.error) throw uploaded.error;
     }
-    const generatedData = doc.data.generated_data && typeof doc.data.generated_data === 'object' ? doc.data.generated_data as Obj : {};
-    const finalData = { ...generatedData, commercial_record_snapshot: source.data, property_address: source.data.property_address,
+    const finalData: Obj = alreadyEnhanced ? generatedData : { ...generatedData, commercial_finalization_state: 'pending', word_content_sha256: await wordHash(finalBytes), commercial_record_snapshot: source.data, property_address: source.data.property_address,
       party_address: source.data.address, address_used_in_contract: kind === 'contrato' ? 'party_and_property_separate' : undefined,
       contract_scope_texts_injected: kind === 'contrato', quote_custom_scope_reconciled: kind === 'orcamento' && selected.some(isOther),
       version_reason: doc.data.version_reason || text(body.versionReason) || null };
+    if (!resumeHasSnapshot) {
     const updated = await service.from('documentos').update({ generated_data: finalData, snapshot_frozen_at: new Date().toISOString() }).eq('id', documentId);
     if (updated.error) throw updated.error;
     const snapshot = { ...finalData, document_id: documentId, document_kind: kind, version: doc.data.versao };
@@ -175,18 +208,36 @@ Deno.serve(async req => {
       version: doc.data.versao || '1.0', version_reason: doc.data.version_reason || text(body.versionReason) || null,
       snapshot, snapshot_hash: await sha256(snapshot), emitted_at: new Date().toISOString(), created_by: user.id });
     if (snap.error && !String(snap.error.message || '').toLowerCase().includes('duplicate')) throw snap.error;
+    }
     const issuedPath=`_issued_word/${documentId}.docx`;
     const retained=await service.storage.from(bucket).upload(issuedPath,finalBytes,{contentType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',upsert:false});
-    if(retained.error && !String(retained.error.message||'').toLowerCase().includes('already exists'))throw retained.error;
+    if(retained.error) {
+      const exists = ['409','Duplicate'].includes(String(retained.error.statusCode || retained.error.status || '')) || /already exists|duplicate/i.test(retained.error.message || '');
+      if (!exists) throw retained.error;
+      const existing = await service.storage.from(bucket).download(issuedPath);
+      if (existing.error || !existing.data) throw existing.error || new Error('Não foi possível conferir o Word arquivado.');
+      const retainedBytes = new Uint8Array(await existing.data.arrayBuffer());
+      if (retainedBytes.length !== finalBytes.length || !retainedBytes.every((value, index) => value === finalBytes[index]))
+        throw new Error('O Word arquivado não corresponde à emissão pendente. O original foi preservado.');
+    }
     const kept=await service.from('documentos').update({arquivo:issuedPath,archived_explicitly:true,archived_storage_size:finalBytes.byteLength}).eq('id',documentId);if(kept.error)throw kept.error;
     const history=await service.from('document_generation_history').select('id').eq('document_id',documentId).limit(1).maybeSingle();if(history.error)throw history.error;
     if(!history.data){const saved=await service.from('document_generation_history').insert({document_id:documentId,document_kind:kind,document_name:kind==='contrato'?`Contrato ${source.data.contract_number} — ${source.data.prospect_name}`:`Orçamento ${source.data.quote_number} — ${source.data.prospect_name}`,document_number:kind==='contrato'?source.data.contract_number:source.data.quote_number,version:doc.data.versao,workflow_status:'gerado',client_id:source.data.linked_client_id||null,project_id:source.data.linked_project_id||null,contract_id:source.data.linked_contract_id||null,commercial_record_id:recordId,party_name:source.data.prospect_name,storage_mode:'archived',archive_path:issuedPath,file_size_bytes:finalBytes.byteLength,generated_by:user.id,generated_at:core.data.emittedAt||new Date().toISOString()});if(saved.error)throw saved.error;}
+    const currentRecord = await service.from('commercial_records').select('status,contract_document_id,quote_document_id').eq('id', recordId).single();
+    if (currentRecord.error) throw currentRecord.error;
+    if (currentRecord.data[pointerField] === documentId && !['convertido','cancelado','arquivado'].includes(currentRecord.data.status)) {
+      const status = kind === 'contrato' || currentRecord.data.contract_document_id ? 'contrato_gerado' : 'orcamento_gerado';
+      const marked = await service.from('commercial_records').update({status,updated_at:new Date().toISOString()}).eq('id',recordId).eq(pointerField,documentId).eq('status',currentRecord.data.status);
+      if (marked.error) throw marked.error;
+    }
+    const completed = await service.from('documentos').update({ generated_data: { ...finalData, commercial_finalization_state: 'complete' } }).eq('id', documentId);
+    if (completed.error) throw completed.error;
     await service.from('audit_log').insert({ user_id: user.id, action: 'finalize_commercial_document_version', entity_type: 'commercial_records', entity_id: recordId,
       details: { document_id: documentId, document_kind: kind, version: doc.data.versao,
         version_reason: doc.data.version_reason || text(body.versionReason) || null,
         used_property_address: kind === 'contrato', contract_scope_texts_injected: kind === 'contrato',
         same_as_party_address: text(source.data.address) === text(source.data.property_address) } });
-    return json({ ...core.data, documentId, version: doc.data.versao,
+    return json({ ...core.data, documentId, version: doc.data.versao, resumed: Boolean(resumedDocument),
       addressUsed: kind === 'contrato' ? 'party_and_property_separate' : null,
       scopeTextsInjected: kind === 'contrato', quoteScopeReconciled: kind === 'orcamento' && selected.some(isOther), snapshotFrozen: true }, 200);
   } catch (error) {

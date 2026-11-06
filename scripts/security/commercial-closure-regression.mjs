@@ -10,6 +10,7 @@ create function public.is_portal_admin() returns boolean language sql as $$selec
 create table public.clientes(id uuid primary key,nome text,auth_id uuid);
 create table public.projetos(id uuid primary key,cliente_id uuid,nome text,numero_contrato text,endereco_obra text,numero_obra text,cidade_obra text,contract_id uuid);
 create table public.contratos(id uuid primary key default gen_random_uuid(),cliente_id uuid,contract_number text,service_type text,status text,contract_value numeric,currency text,notes text);
+create table public.document_emission_snapshots(document_id uuid primary key);
 create table public.documentos(id uuid primary key,contract_id uuid,document_kind text,generated_data jsonb,generated_at timestamptz,version text,versao text);
 create table public.commercial_records(id uuid primary key,record_kind text,services jsonb,commercial_terms jsonb,experience_level text,updated_at timestamptz,contract_document_id uuid,linked_client_id uuid,linked_contract_id uuid,contract_number text,prospect_name text,total_value numeric,payment_terms jsonb);
 create table public.service_catalog(code text primary key,name text,active boolean);
@@ -23,6 +24,7 @@ await db.exec(fs.readFileSync('supabase/migrations/20261105215025_commercial_clo
 await db.exec(fs.readFileSync('supabase/migrations/20261105220500_commercial_closure_catalog_guard.sql','utf8'));
 await db.exec(fs.readFileSync('supabase/migrations/20261105232919_commercial_closure_semantic_revision.sql','utf8'));
 await db.exec(fs.readFileSync('supabase/migrations/20261105232935_commercial_closure_semantic_revision.sql','utf8'));
+await db.exec(fs.readFileSync('supabase/migrations/20261106035808_commercial_closure_pending_finalization.sql','utf8'));
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const record=id(10),client=id(20),otherClient=id(21),project=id(30),contract=id(40),otherContract=id(41),document=id(50);
 const services=[{code:'am',name:'Hidráulico',included:true,levelCode:'prata'},{code:'g',name:'Hidrossanitário',included:false},{code:'u',name:'Levantamento cadastral',included:true,levelCode:'prata'},{code:'d',name:'Executivo',included:true},{code:'j',name:'Maquete',included:true}];
@@ -60,8 +62,15 @@ assert.deepEqual((await db.query('select generated_data from documentos where id
 // A real emission freezes business data before later bookkeeping updates updated_at.
 const issuedRecord=(await db.query('select to_jsonb(r) data from commercial_records r where id=$1',[record])).rows[0].data;
 await db.query('update documentos set generated_data=$1 where id=$2',[{commercial_record_snapshot:issuedRecord},document]);
+await db.query('insert into document_emission_snapshots values($1)',[document]);
 await db.query('update commercial_records set updated_at=clock_timestamp() where id=$1',[record]);
 assert.equal((await plan()).revisionRequired,false,'Bookkeeping timestamps alone must not request another revision');
+await db.query("update documentos set generated_data=jsonb_set(generated_data,'{commercial_finalization_state}','\"pending\"') where id=$1",[document]);
+assert.equal((await plan()).emissionPending,true);assert.equal((await plan()).emitted,false,'Arquivo ainda em finalização não pode aparecer como emissão concluída');
+assert.equal((await plan()).revisionRequired,false,'Finalização pendente pede retomada, não outra revisão');
+await db.query("update documentos set generated_data=jsonb_set(generated_data,'{commercial_finalization_state}','\"complete\"') where id=$1",[document]);
+assert.equal((await plan()).emitted,true);
+
 await db.query("update commercial_records set commercial_terms=jsonb_set(commercial_terms,'{saved_at}',to_jsonb(now()::text)) where id=$1",[record]);
 assert.equal((await plan()).revisionRequired,false,'Saving identical commercial terms must not request another revision');
 
