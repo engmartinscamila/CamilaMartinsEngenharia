@@ -19,7 +19,7 @@ Este arquivo é a fonte permanente de requisitos. Não contradiga, resuma de for
 9. Não refazer telas ou arquitetura corretas para corrigir um problema isolado.
 10. Não executar mudanças destrutivas no Supabase. Não usar `DROP`, truncar, apagar registros reais ou renomear estruturas existentes. Alterações devem ser aditivas, compatíveis e idempotentes.
 11. Se a estrutura real do Supabase divergir desta especificação, adaptar o app às tabelas existentes. Criar somente o que estiver comprovadamente ausente.
-12. Nenhum projeto pode existir sem contrato e nenhum registro operacional pode ficar órfão.
+12. Projetos podem ser cadastrados antes do contrato, sempre vinculados a um cliente. Nenhum registro operacional pode ficar órfão.
 
 ## Identidade do aplicativo
 
@@ -98,10 +98,10 @@ Não usar apenas `user_metadata` como fonte de autorização.
 
 ## Regra central de contratos e projetos
 
-O número do contrato é a referência comercial obrigatória.
+O número do contrato é a referência comercial obrigatória quando o contrato for elaborado. O cadastro inicial do projeto exige cliente e endereço da obra, sem número ou valor de contrato.
 
 - `contract_number` deve ser obrigatório e único;
-- todo projeto deve possuir `contract_id` obrigatório;
+- `contract_id` é opcional no cadastro inicial; a elaboração do contrato deve reutilizar e vincular o mesmo projeto;
 - um cliente pode ter vários contratos;
 - um contrato pode conter um ou vários projetos;
 - pessoas com o mesmo nome são permitidas;
@@ -109,7 +109,7 @@ O número do contrato é a referência comercial obrigatória.
 - o mesmo e-mail não pode gerar perfis duplicados;
 - novo contrato para cliente existente deve reutilizar o perfil;
 - documentos, fotos, biblioteca, agenda, cronograma, solicitações, aprovações e notificações devem estar vinculados a `project_id`, e por ele ao contrato e cliente;
-- formulários administrativos devem exigir seleção de contrato antes de criar projeto;
+- formulários administrativos devem permitir criar projeto antes do contrato; contrato existente é uma opção de vínculo;
 - listagens e pesquisas administrativas devem aceitar número do contrato como filtro principal.
 
 ## Entidades lógicas
@@ -222,7 +222,7 @@ Usar as mesmas entidades e serviços; não duplicar lógica. Layout responsivo p
 - dashboard com indicadores reais;
 - clientes: criar/convidar, editar, ativar/suspender, reenviar convite, recuperar senha, pesquisar e vincular perfil existente;
 - contratos: número único obrigatório, cliente, serviço, status, datas e observações;
-- projetos: somente dentro de contrato, responsáveis, usuários, progresso e status;
+- projetos: cliente e endereço da obra primeiro, contrato opcional nessa etapa, responsáveis, usuários, progresso e status;
 - documentos e versões;
 - fotos e álbuns;
 - biblioteca;
@@ -272,6 +272,6 @@ Se push remoto depender de projeto Expo/EAS ou credenciais externas ainda não f
 
 ## Critério final de pronto
 
-O app somente está pronto quando: autenticação funciona; cliente acessa apenas os próprios contratos; todo projeto possui contrato; documentos/fotos aparecem e abrem; módulos do cliente funcionam; admin gerencia o ecossistema; exclusões mantêm banco/Storage coerentes; armazenamento é real; isolamento A/B está validado; interface funciona em Android/iOS/web; testes passam; Expo Go/EAS abre o app; e não existem dados fictícios, páginas vazias ou botões falsos.
+O app somente está pronto quando: autenticação funciona; cliente acessa apenas os próprios contratos; projetos em preparação podem aguardar contrato, e contratos elaborados reutilizam o projeto selecionado; documentos/fotos aparecem e abrem; módulos do cliente funcionam; admin gerencia o ecossistema; exclusões mantêm banco/Storage coerentes; armazenamento é real; isolamento A/B está validado; interface funciona em Android/iOS/web; testes passam; Expo Go/EAS abre o app; e não existem dados fictícios, páginas vazias ou botões falsos.
 
 Publicação nas lojas exige contas e aprovações externas Apple/Google. Não declarar publicação nas lojas antes dessas etapas. A entrega gratuita validável é o app funcionando no Expo Go e a versão web de teste; depois gerar builds EAS quando as contas estiverem disponíveis.

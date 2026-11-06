@@ -237,6 +237,20 @@ export async function listAdminContracts(): Promise<ServiceResult<AdminContractS
   };
 }
 
+export async function createAdminProjectDraft(input: {
+  clientId: string; projectName: string; serviceType?: string; address: string;
+  number?: string; neighborhood?: string; quoteNumber?: string; city?: string; state?: string;
+}) {
+  const result = await supabase.rpc('admin_create_project_draft', {
+    p_client_id: input.clientId,
+    p_project: { name: input.projectName.trim(), service_type: input.serviceType?.trim() || null,
+      address: input.address.trim(), number: input.number?.trim() || null,
+      neighborhood: input.neighborhood?.trim() || null, quote_number: input.quoteNumber?.trim() || null,
+      city: input.city?.trim() || null, state: input.state?.trim().toUpperCase() || null },
+  });
+  return result.error ? 'Não foi possível cadastrar o projeto. Confira o cliente ativo, nome e endereço da obra.' : null;
+}
+
 export async function createAdminContractProject(input: {
   clientId: string;
   contractNumber: string;

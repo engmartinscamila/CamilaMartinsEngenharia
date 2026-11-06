@@ -26,6 +26,7 @@
   let serviceCatalogMeta = [];
   let levelCatalog = [];
   let clientCatalog = [];
+  let projectCatalog = [];
   let initialClientContextApplied=false;
 
   const paymentOptions = [
@@ -291,6 +292,27 @@
     msg('Cliente cadastrado selecionado. Revise o endereço da obra antes de continuar.', 'success');
   }
 
+  function renderContractProjectOptions() {
+    const select = $('contractProjectId');
+    if (!select) return;
+    const current = select.value;
+    const clientId = $('linkedClientId')?.value;
+    const items = projectCatalog.filter(item => String(item.cliente_id) === String(clientId) && !item.contract_id && !['cancelado','arquivado'].includes(item.status));
+    select.innerHTML = '<option value="">Sem projeto selecionado</option>' + items.map(item => `<option value="${esc(item.id)}">${esc(item.nome)} • ${esc(buildProjectAddress(item) || 'Endereço não informado')}</option>`).join('');
+    if (items.some(item => item.id === current)) select.value = current;
+    $('contractProjectField')?.classList.toggle('doc-hidden', mode() !== 'contrato');
+  }
+
+  function applyContractProject(id) {
+    const project = projectCatalog.find(item => item.id === id && String(item.cliente_id) === String($('linkedClientId')?.value) && !item.contract_id);
+    if (!project) return;
+    setField('propertyAddress', buildProjectAddress(project));
+    setField('propertyType', project.tipo);
+    setField('areaTerreno', project.area_terreno_m2);
+    setField('areaConstruida', project.area_construida_m2);
+    msg('Projeto selecionado. O contrato será vinculado a este mesmo cadastro após a emissão.', 'success');
+  }
+
   function ensureCommercialSelectors() {
     if ($('commercialContextFields')) return;
     const panel = $('panelCommercialCreate');
@@ -306,6 +328,7 @@
           <div class="doc-field"><label for="linkedClientId">Cliente cadastrado</label><select id="linkedClientId"><option value="">Novo cliente / prospect</option></select></div>
         </div>
       </details>
+      <div id="contractProjectField" class="doc-field doc-hidden"><label for="contractProjectId">Projeto deste cliente (opcional)</label><select id="contractProjectId"><option value="">Sem projeto selecionado</option></select><small>Selecione o projeto já cadastrado para vincular o contrato sem criar outro projeto.</small></div>
       <div class="doc-field doc-payment-compact">
         <label for="paymentMethod">Forma de pagamento</label>
         <select id="paymentMethod"><option value="">Selecione</option>${paymentOptions.map(([value,label]) => `<option value="${value}">${label}</option>`).join('')}</select>
@@ -315,8 +338,12 @@
       const selected = clientCatalog.find(item => String(item.id) === String(event.target.value));
       const summary = $('linkedClientSummary');
       if (summary) summary.textContent = selected?.nome || 'Novo cliente / prospect';
+      const previousProject = $('contractProjectId')?.value;
       if (event.target.value) applyClient(event.target.value);
+      renderContractProjectOptions();
+      if (previousProject) ['propertyAddress','propertyType','areaTerreno','areaConstruida'].forEach(id => setField(id, ''));
     });
+    $('contractProjectId')?.addEventListener('change', event => applyContractProject(event.target.value));
   }
 
   function optionalNumericFormValue(id) {
@@ -494,6 +521,7 @@
         : 'O orçamento pode ser criado mesmo sem cliente cadastrado.';
     }
     renderQuoteChoices();
+    renderContractProjectOptions();
     updateContractSourceUi();
     renderList();
   }
@@ -550,6 +578,8 @@
 
     if ($('experienceLevel')) $('experienceLevel').value = '';
     if ($('linkedClientId')) $('linkedClientId').value = '';
+    if ($('contractProjectId')) $('contractProjectId').value = '';
+    renderContractProjectOptions();
     if ($('paymentMethod')) $('paymentMethod').value = '';
     document.querySelectorAll('[data-service]').forEach(input => { input.checked = false; });
 
@@ -744,6 +774,8 @@
         : `Dados de ${numbers.join(', ')} importados: cliente, endereços, serviços, níveis, valor e condições. Revise apenas o necessário.`;
       summary.className = draft.length ? 'doc-status error' : 'doc-status success';
     }
+    renderContractProjectOptions();
+    if ($('contractProjectId')?.value) applyContractProject($('contractProjectId').value);
     msg(`${numbers.length} orçamento(s) importado(s). Confira os dados abaixo.`, 'success');
   }
 
@@ -827,7 +859,14 @@
     const quoteIds = sources
       .filter(item => item.sourceType === 'commercial')
       .map(item => item.sourceId);
-    const sourceProjectId = legacySources[0]?.sourceId || null;
+    const selectedProjectId = $('contractProjectId')?.value || null;
+    const sourceProjectId = legacySources[0]?.sourceId || selectedProjectId;
+    if (selectedProjectId && legacySources.length && legacySources[0].sourceId !== selectedProjectId) {
+      msg('O projeto selecionado difere do projeto do orçamento de origem.', 'error'); return;
+    }
+    if (selectedProjectId && !projectCatalog.some(item => item.id === selectedProjectId && String(item.cliente_id) === String(payload.linked_client_id) && !item.contract_id)) {
+      msg('Selecione um projeto deste cliente que ainda não possua contrato.', 'error'); return;
+    }
 
     if(isContract&&typeof window.CMEGenerateCommercialDocument!=='function'){msg('O gerador de Word não carregou. Atualize a página; nenhum cadastro foi criado.','error');return;}
     msg(isContract ? 'Preparando cadastro e emissão do contrato...' : 'Criando orçamento...');
@@ -1100,7 +1139,6 @@
         .limit(200),
       client().from('projetos')
         .select('id,nome,tipo,status,cliente_id,numero_orcamento,numero_contrato,contract_id,area_construida_m2,area_terreno_m2,cep_obra,endereco_obra,numero_obra,complemento_obra,bairro_obra,cidade_obra,estado_obra,created_at')
-        .not('numero_orcamento', 'is', null)
         .order('created_at', { ascending: false })
         .limit(200),
       client().from('service_catalog')
@@ -1138,6 +1176,7 @@
     }
 
     clientCatalog = clientsRes.error ? [] : (clientsRes.data || []);
+    projectCatalog = projectsRes.error ? [] : (projectsRes.data || []);
     ensureCommercialSelectors();
     renderClientOptions();
     ensureLevelInfo();
@@ -1174,6 +1213,15 @@
       if(clientId&&clientCatalog.some(item=>String(item.id)===clientId)){
         if($('linkedClientId'))$('linkedClientId').value=clientId;
         applyClient(clientId);initialClientContextApplied=true;
+        const projectId = new URLSearchParams(location.search).get('projectId');
+        if (projectId && projectCatalog.some(item => item.id === projectId && String(item.cliente_id) === clientId && !item.contract_id)) {
+          location.hash = '#contrato';
+          if ($('contractSourceManual')) $('contractSourceManual').checked = true;
+          if ($('contractSourceQuote')) $('contractSourceQuote').checked = false;
+          renderMode();
+          if ($('contractProjectId')) $('contractProjectId').value = projectId;
+          applyContractProject(projectId);
+        }
       }
     }
   }

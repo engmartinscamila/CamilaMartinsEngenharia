@@ -4,10 +4,11 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
-import { formatCurrency, parseBrazilianCurrency } from '@/lib/format';
+import { formatCurrency } from '@/lib/format';
 import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
-import { createAdminContractProject, createAdminProjectForContract, listAdminClients, listAdminContracts, listAdminProjects, updateAdminProject } from '@/services/admin-service';
+import { createAdminProjectDraft, createAdminProjectForContract, listAdminClients, listAdminContracts, listAdminProjects, updateAdminProject } from '@/services/admin-service';
 import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
+import { openWebsiteAdminSection, usesWebsiteAdminHome } from '@/lib/admin-navigation';
 import type { AdminClientSummary, AdminContractSummary, AdminProjectSummary } from '@/types/domain';
 
 type ProjectStatus = 'ativo' | 'pausado' | 'concluido' | 'arquivado';
@@ -19,10 +20,12 @@ export default function AdminProjectsScreen() {
   const [contracts, setContracts] = useState<AdminContractSummary[]>([]);
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  const [contractNumber, setContractNumber] = useState('');
   const [projectName, setProjectName] = useState('');
   const [serviceType, setServiceType] = useState('');
-  const [contractValue, setContractValue] = useState('');
+  const [address, setAddress] = useState('');
+  const [number, setNumber] = useState('');
+  const [neighborhood, setNeighborhood] = useState('');
+  const [quoteNumber, setQuoteNumber] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
@@ -59,18 +62,17 @@ export default function AdminProjectsScreen() {
   }, [projects, search]);
 
   const create = async () => {
-    const parsedValue = parseBrazilianCurrency(contractValue);
-    if (!selectedClientId || contractNumber.trim().length < 2 || projectName.trim().length < 3 || serviceType.trim().length < 3 || parsedValue === null || parsedValue <= 0) {
-      setError('Selecione o cliente e preencha contrato, valor contratado, projeto e serviço.');
+    if (!selectedClientId || projectName.trim().length < 3 || !address.trim()) {
+      setError('Selecione o cliente e informe o nome do projeto e o endereço da obra.');
       return;
     }
     setSaving(true); setError(null); setSuccess(null);
-    const result = await createAdminContractProject({ clientId: selectedClientId, contractNumber, projectName, serviceType, contractValue: parsedValue, city, state });
+    const result = await createAdminProjectDraft({ clientId: selectedClientId, projectName, serviceType, address, number, neighborhood, quoteNumber, city, state });
     setSaving(false);
     if (result) setError(result);
     else {
-      setSuccess('Contrato e projeto criados juntos.');
-      setContractNumber(''); setProjectName(''); setServiceType(''); setContractValue(''); setCity(''); setState('');
+      setSuccess('Projeto cadastrado. O contrato pode ser elaborado e vinculado depois.');
+      setProjectName(''); setServiceType(''); setAddress(''); setNumber(''); setNeighborhood(''); setQuoteNumber(''); setCity(''); setState('');
       await load();
     }
   };
@@ -107,22 +109,24 @@ export default function AdminProjectsScreen() {
 
   return (
     <Screen>
-      <AdminPageHeader description="Cada projeto nasce ligado a um contrato único e ao cliente correto." title="Contratos e projetos" />
+      <AdminPageHeader description="Cadastre o cliente e o endereço da obra. Elabore e vincule o contrato depois." title="Projetos" />
       {error ? <Notice tone="danger">{error}</Notice> : null}
       {success ? <Notice tone="success">{success}</Notice> : null}
       <Card>
-        <Text style={styles.sectionTitle}>Novo contrato com projeto</Text>
+        <Text style={styles.sectionTitle}>Novo projeto</Text>
         <Text style={styles.label}>Cliente</Text>
         <View style={styles.clientList}>
           {clients.map((client) => <Pressable key={client.id} onPress={() => setSelectedClientId(client.id)} style={[styles.clientChip, selectedClientId === client.id && styles.clientChipSelected]}><Text style={[styles.clientText, selectedClientId === client.id && styles.clientTextSelected]}>{client.name}</Text></Pressable>)}
         </View>
-        <Field autoCapitalize="characters" label="Número do contrato" onChangeText={setContractNumber} placeholder="Ex.: CME-2026-001" value={contractNumber} />
         <Field label="Nome do projeto" onChangeText={setProjectName} placeholder="Ex.: Residência Família Silva" value={projectName} />
         <Field label="Tipo de serviço" onChangeText={setServiceType} placeholder="Ex.: Projeto arquitetônico executivo" value={serviceType} />
-        <Field keyboardType="decimal-pad" label="Valor contratado (R$)" onChangeText={setContractValue} placeholder="Ex.: 25.000,00" value={contractValue} />
+        <Field label="Endereço da obra" onChangeText={setAddress} placeholder="Rua ou avenida" value={address} />
+        <Field label="Número da obra" onChangeText={setNumber} value={number} />
+        <Field label="Bairro da obra" onChangeText={setNeighborhood} value={neighborhood} />
+        <Field label="Número do orçamento (opcional)" onChangeText={setQuoteNumber} value={quoteNumber} />
         <View style={styles.row}><View style={styles.grow}><Field label="Cidade" onChangeText={setCity} value={city} /></View><View style={styles.state}><Field autoCapitalize="characters" label="UF" maxLength={2} onChangeText={setState} value={state} /></View></View>
-        <Button loading={saving} onPress={() => void create()} title="Criar contrato e projeto" />
-        <Notice tone="info">A operação é atômica: se o contrato não puder ser criado, o projeto também não será gravado.</Notice>
+        <Button loading={saving} onPress={() => void create()} title="Cadastrar projeto" />
+        <Notice tone="info">O contrato e seu número serão vinculados após a elaboração. Nenhum contrato é criado nesta etapa.</Notice>
       </Card>
       <Card>
         <Text style={styles.sectionTitle}>Adicionar projeto a contrato existente</Text>
@@ -139,8 +143,9 @@ export default function AdminProjectsScreen() {
       {!loading && filteredProjects.length === 0 ? <StateView description="Nenhum projeto corresponde à pesquisa." icon="briefcase-outline" title="Sem projetos" /> : null}
       {filteredProjects.map((project) => (
         <Card key={project.id}>
-          <View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.contract}>CONTRATO {project.contractNumber}</Text><Text style={styles.title}>{project.name}</Text><Text style={styles.meta}>{project.clientName} • {project.serviceType ?? 'Serviço não informado'}</Text></View><StatusPill label={project.status} tone={project.status === 'ativo' ? 'success' : 'neutral'} /></View>
+          <View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.contract}>{project.contractId ? `CONTRATO ${project.contractNumber}` : 'CONTRATO A ELABORAR'}</Text><Text style={styles.title}>{project.name}</Text><Text style={styles.meta}>{project.clientName} • {project.serviceType ?? 'Serviço não informado'}</Text></View><StatusPill label={project.status} tone={project.status === 'ativo' ? 'success' : 'neutral'} /></View>
           <Text style={styles.meta}>{[project.city, project.state].filter(Boolean).join(' • ') || 'Local não informado'} • Progresso: {project.progress === null ? 'não informado' : `${project.progress}%`}</Text>
+          {!project.contractId && usesWebsiteAdminHome() ? <Button onPress={() => openWebsiteAdminSection('commercial-documents', { clientId: project.clientId, projectId: project.id })} title="Elaborar contrato deste projeto" variant="secondary" /> : null}
           <Button onPress={() => { setEditing(project); setEditStatus(project.status as ProjectStatus); setEditProgress(project.progress?.toString() ?? ''); }} title="Editar andamento" variant="secondary" />
         </Card>
       ))}

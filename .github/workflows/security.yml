@@ -64,6 +64,9 @@ jobs:
       - name: Instalar ambiente isolado de testes SQL
         run: npm ci --prefix scripts/security
 
+      - name: Testar cadastro do projeto antes do contrato
+        run: node scripts/security/project-before-contract-regression.mjs
+
       - name: Testar isolamento real das policies em PostgreSQL
         run: node scripts/security/rls-regression.mjs
 
