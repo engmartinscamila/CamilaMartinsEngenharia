@@ -7,6 +7,18 @@ import ts from 'typescript';
 const original = fs.readFileSync('src/services/admin-service.ts', 'utf8');
 const content = fs.readFileSync('src/services/admin-content-service.ts', 'utf8');
 const financial = fs.readFileSync('src/services/admin-financial-service.ts', 'utf8');
+const relations = fs.readFileSync('src/services/admin-relationship-service.ts', 'utf8');
+for (const name of [
+  'listAdminClients', 'inviteAdminClient', 'updateAdminClientStatus',
+  'updateAdminClientProfile', 'resendAdminClientInvite', 'sendAdminClientRecovery',
+  'previewPermanentClientDeletion', 'requestPermanentClientDeletion',
+  'listAdminProjects', 'listAdminContracts', 'createAdminProjectDraft',
+  'createAdminContractProject', 'createAdminProjectForContract', 'updateAdminProject',
+]) {
+  assert.match(original, new RegExp('\\\\b' + name + '\\\\b'));
+  assert.match(relations, new RegExp('export async function ' + name + '\\\\('));
+}
+
 for (const name of [
   'listAdminContent', 'uploadAdminContent', 'createAdminContentSignedUrl', 'deleteAdminContent',
 ]) {
@@ -79,7 +91,7 @@ const stubs = {
     financialStatus: value => value,
     financialToday: () => '2026-11-07',
   },
-  '@/lib/format': { isValidIsoDate: value => /^\\d{4}-\\d{2}-\\d{2}$/.test(value) },
+  '@/lib/format': { isValidIsoDate: value => /^\d{4}-\d{2}-\d{2}$/.test(value) },
   '@/lib/paginated-query': { readAllRows },
   '@/lib/supabase': { supabase: {} },
 };
