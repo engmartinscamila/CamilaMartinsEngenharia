@@ -11,7 +11,15 @@ import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 import { openWebsiteAdminSection, usesWebsiteAdminHome } from '@/lib/admin-navigation';
 import type { AdminClientSummary, AdminContractSummary, AdminProjectSummary } from '@/types/domain';
 
-type ProjectStatus = 'ativo' | 'pausado' | 'concluido' | 'arquivado';
+const projectStatusOptions = [
+  { value: 'orcamento', label: 'Em orçamento' },
+  { value: 'ativo', label: 'Ativo' },
+  { value: 'em_andamento', label: 'Em andamento' },
+  { value: 'pausado', label: 'Pausado' },
+  { value: 'concluido', label: 'Concluído' },
+  { value: 'arquivado', label: 'Arquivado' },
+];
+const projectStatusLabel = (status: string) => projectStatusOptions.find(item => item.value === status)?.label ?? status;
 
 export default function AdminProjectsScreen() {
   const { colors } = useAppTheme();
@@ -34,7 +42,7 @@ export default function AdminProjectsScreen() {
   const [existingState, setExistingState] = useState('');
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<AdminProjectSummary | null>(null);
-  const [editStatus, setEditStatus] = useState<ProjectStatus>('ativo');
+  const [editStatus, setEditStatus] = useState('ativo');
   const [editProgress, setEditProgress] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -48,7 +56,7 @@ export default function AdminProjectsScreen() {
     setContracts(contractResult.data.filter((contract) => !['cancelado', 'arquivado'].includes(contract.status)));
     setProjects(projectResult.data);
     setSelectedClientId((current) => current ?? clientResult.data.find((client) => client.status === 'ativo')?.id ?? null);
-    setSelectedContractId((current) => current ?? contractResult.data.find((contract) => !['cancelado', 'arquivado'].includes(contract.status))?.id ?? null);
+    setSelectedContractId((current) => current && contractResult.data.some((contract) => contract.id === current && !['cancelado', 'arquivado'].includes(contract.status)) ? current : null);
     setError(clientResult.error ?? contractResult.error ?? projectResult.error);
     setLoading(false);
   }, []);
@@ -130,7 +138,7 @@ export default function AdminProjectsScreen() {
       </Card>
       <Card>
         <Text style={styles.sectionTitle}>Adicionar projeto a contrato existente</Text>
-        <Text style={styles.label}>Contrato obrigatório</Text>
+        <Text style={styles.label}>Selecione explicitamente o contrato ao qual deseja adicionar o projeto</Text>
         <View style={styles.clientList}>
           {contracts.map((contract) => <Pressable key={contract.id} onPress={() => setSelectedContractId(contract.id)} style={[styles.clientChip, selectedContractId === contract.id && styles.clientChipSelected]}><Text style={[styles.clientText, selectedContractId === contract.id && styles.clientTextSelected]}>{contract.contractNumber} • {contract.clientName} • {formatCurrency(contract.contractValue)}</Text></Pressable>)}
         </View>
@@ -143,16 +151,16 @@ export default function AdminProjectsScreen() {
       {!loading && filteredProjects.length === 0 ? <StateView description="Nenhum projeto corresponde à pesquisa." icon="briefcase-outline" title="Sem projetos" /> : null}
       {filteredProjects.map((project) => (
         <Card key={project.id}>
-          <View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.contract}>{project.contractId ? `CONTRATO ${project.contractNumber}` : 'CONTRATO A ELABORAR'}</Text><Text style={styles.title}>{project.name}</Text><Text style={styles.meta}>{project.clientName} • {project.serviceType ?? 'Serviço não informado'}</Text></View><StatusPill label={project.status} tone={project.status === 'ativo' ? 'success' : 'neutral'} /></View>
+          <View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.contract}>{project.contractId ? `CONTRATO ${project.contractNumber}` : 'CONTRATO A ELABORAR'}</Text><Text style={styles.title}>{project.name}</Text><Text style={styles.meta}>{project.clientName} • {project.serviceType ?? 'Serviço não informado'}</Text></View><StatusPill label={projectStatusLabel(project.status)} tone={['ativo', 'em_andamento', 'concluido'].includes(project.status) ? 'success' : 'neutral'} /></View>
           <Text style={styles.meta}>{[project.city, project.state].filter(Boolean).join(' • ') || 'Local não informado'} • Progresso: {project.progress === null ? 'não informado' : `${project.progress}%`}</Text>
           {!project.contractId && usesWebsiteAdminHome() ? <Button onPress={() => openWebsiteAdminSection('commercial-documents', { clientId: project.clientId, projectId: project.id })} title="Elaborar contrato deste projeto" variant="secondary" /> : null}
-          <Button onPress={() => { setEditing(project); setEditStatus(project.status as ProjectStatus); setEditProgress(project.progress?.toString() ?? ''); }} title="Editar andamento" variant="secondary" />
+          <Button onPress={() => { setEditing(project); setEditStatus(project.status); setEditProgress(project.progress?.toString() ?? ''); }} title="Editar andamento" variant="secondary" />
         </Card>
       ))}
       {editing ? (
         <Card>
           <Text style={styles.sectionTitle}>Editar {editing.name}</Text>
-          <SelectionChips<ProjectStatus> items={[{ value: 'ativo', label: 'Ativo' }, { value: 'pausado', label: 'Pausado' }, { value: 'concluido', label: 'Concluído' }, { value: 'arquivado', label: 'Arquivado' }]} label="Status" onChange={setEditStatus} value={editStatus} />
+          <SelectionChips<string> items={[...projectStatusOptions, ...(projectStatusOptions.some(item => item.value === editStatus) ? [] : [{ value: editStatus, label: `Situação existente: ${editStatus}` }])]} label="Status" onChange={setEditStatus} value={editStatus} />
           <Field keyboardType="decimal-pad" label="Progresso (%)" maxLength={5} onChangeText={setEditProgress} placeholder="0 a 100" value={editProgress} />
           <View style={styles.actions}><View style={styles.grow}><Button loading={saving} onPress={() => void saveEdit()} title="Salvar" /></View><View style={styles.grow}><Button onPress={() => setEditing(null)} title="Cancelar" variant="ghost" /></View></View>
         </Card>
