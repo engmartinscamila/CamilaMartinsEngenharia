@@ -177,6 +177,7 @@ export default function AdminFinancialScreen() {
   const filteredEntries=useMemo(()=>filterFinancialEntries(entries,{...filters,projectId:embedded?.projectId??filters.projectId}),[entries,filters,embedded?.projectId]);
   const statements=useMemo(()=>receivableStatements(contracts,projects,entries,clients,embedded?.projectId??filters.projectId),[contracts,projects,entries,clients,embedded?.projectId,filters.projectId]);
   const statementRows=statements.filter(row=>[row.clientName,row.contractNumber].join(' ').toLocaleLowerCase('pt-BR').includes(statementQuery.trim().toLocaleLowerCase('pt-BR')));
+  const missingContractValues=statements.filter(row=>!row.inactive&&row.contractValue===null&&contracts.some(contract=>contract.id===row.id)).length;
   const statementTotal=statements.filter(row=>!row.inactive).reduce((sum,row)=>sum+Math.round((row.remaining??row.pending)*100),0)/100;
   const monthTotals=financialTotals(entries.filter(entry=>(!embedded?.projectId||entry.projectId===embedded.projectId)&&entryDate(entry)?.startsWith(financialToday().slice(0,7))));
   const openReceipt=(id:string,projectId?:string|null)=>{const url='/recibos.html?financialId='+encodeURIComponent(id);if(embedded)embedded.onNavigate('receipts',{financialId:id,...(projectId?{projectId}:{})});else if(Platform.OS==='web')window.location.assign(url);else void Linking.openURL('https://camilamartinsengenharia.com.br'+url);};
@@ -321,6 +322,7 @@ export default function AdminFinancialScreen() {
           <Card style={styles.metric}><Text style={styles.metricLabel}>SALDO A RECEBER</Text><Text style={styles.metricValue}>{coreError?'Indisponível':loading?'Carregando…':formatCurrency(statementTotal)}</Text><Button title="Abrir extrato a receber" variant="ghost" onPress={()=>setSection('receivables')} /></Card>
           <Card style={styles.metric}><Text style={styles.metricLabel}>A PAGAR</Text><Text style={styles.metricValue}>{coreError?'Indisponível':formatCurrency(financialTotals(entries.filter(entry=>!embedded?.projectId||entry.projectId===embedded.projectId)).payable)}</Text><Button title="Ver pendências" variant="ghost" onPress={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'aberto',month:'',type:'saida'});setPage(0);setSection('entries');}} /></Card>
         </View>
+        {missingContractValues>0?<Notice tone="warning">{missingContractValues} contrato(s) sem valor contratado informado. O total a receber inclui apenas os saldos conhecidos e as parcelas já lançadas desses contratos. Confira os valores no extrato.</Notice>:null}
         <Text style={styles.sectionTitle}>Saldos das contas</Text>
         {embedded?.projectId?<Text style={styles.meta}>Os saldos bancários são globais. O saldo contratual considera todo o contrato do projeto selecionado.</Text>:null}
         {accounts.length===0?<StateView title="Nenhuma conta cadastrada" description="Cadastre uma conta em Mais opções → Contas e OFX." icon="wallet-outline" />:accounts.map(account=><Card key={account.id}><Text style={styles.title}>{account.name}</Text><Text style={styles.metricValue}>{coreError||bankError?'Indisponível':accountBalance(account,entries,transactions)===null?'Referência de saldo não informada':formatCurrency(accountBalance(account,entries,transactions))}</Text></Card>)}
@@ -330,6 +332,7 @@ export default function AdminFinancialScreen() {
         <Text style={styles.sectionTitle}>Extrato de saldo a receber</Text>
         <Text style={styles.meta}>Saldo restante = valor contratado menos recebimentos. Parcelas pendentes fazem parte desse saldo. Serviços sem contrato usam os lançamentos pendentes. Valores de contratos cancelados ou arquivados ficam fora do total.</Text>
         {embedded?.projectId?<Notice tone="info">Exibindo o contrato completo do projeto selecionado, incluindo recebimentos de seus outros projetos.</Notice>:null}
+        {missingContractValues>0?<Notice tone="warning">{missingContractValues} contrato(s) sem valor informado: o saldo completo desses contratos ainda não pode ser calculado. Use “Informar valor contratado” para completar.</Notice>:null}
         <Field label="Buscar cliente ou contrato no extrato" value={statementQuery} onChangeText={value=>{setStatementQuery(value);setStatementPage(0);}} />
         <Button title="Exportar extrato a receber (CSV)" variant="secondary" disabled={Boolean(coreError)||loading} onPress={()=>void perform(()=>exportReceivableCsv(statementRows))} />
         {loading?<ActivityIndicator color={colors.gold600} />:coreError?<Notice tone="danger">Extrato indisponível. Atualize os dados para conferir os saldos.</Notice>:<>
@@ -341,6 +344,7 @@ export default function AdminFinancialScreen() {
             <Text style={styles.meta}>Parcelas pendentes: {formatCurrency(row.pending)} • Em atraso: {formatCurrency(row.overdue)}</Text>
             {row.unscheduled!==null&&row.unscheduled>0?<Notice tone="warning">{formatCurrency(row.unscheduled)} do saldo ainda sem parcelas lançadas. Esse valor não foi lançado automaticamente.</Notice>:null}
             {row.remaining!==null&&row.pending>row.remaining?<Notice tone="warning">As parcelas pendentes excedem o saldo em {formatCurrency((Math.round(row.pending*100)-Math.round(row.remaining*100))/100)}. Confira os lançamentos.</Notice>:null}
+            {row.contractValue===null&&contracts.some(contract=>contract.id===row.id)?<Button title="Informar valor contratado" variant="secondary" onPress={()=>{setSelectedContractId(row.id);setContractValue('');setSection('hours');}} />:null}
             {row.credit>0?<Notice tone="warning">Recebimentos excedem o valor contratado em {formatCurrency(row.credit)}. Confira o contrato e os pagamentos.</Notice>:null}
             {row.inactive?<Notice tone="info">Contrato cancelado ou arquivado: preservado para conferência, fora do total a receber.</Notice>:null}
             <Button title={expandedStatement===row.id?'Recolher parcelas':'Ver parcelas e recebimentos'} variant="secondary" onPress={()=>setExpandedStatement(expandedStatement===row.id?null:row.id)} />
