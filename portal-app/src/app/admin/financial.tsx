@@ -129,7 +129,7 @@ export default function AdminFinancialScreen() {
   const editEntry=(entry:FinancialEntrySummary)=>{
     setEditing(entry);setEntryLink(entry.projectId?'project':'client');setEntryClientId(entry.clientId??projects.find(p=>p.id===entry.projectId)?.clientId??null);setEntryContractId(entry.contractId??null);setSelectedProjectId(entry.projectId);setType(entry.type as 'entrada'|'saida');setDescription(entry.description);
     setAmount(entry.amount.toFixed(2).replace('.',','));setDate(entry.date??financialToday());setDueDate(entry.dueDate??'');setNotes(entry.notes??'');
-    setCategory(financialCategory(entry.category));setEntryStatus(financialStatus(entry.status));setAccountId(entry.accountId);setPaidAt(entry.paidAt??entry.date??financialToday());
+    setCategory(financialCategory(entry.category));setEntryStatus(financialStatus(entry.status));setAccountId(entry.accountId);setPaidAt(entry.paidAt||entry.date||financialToday());
     setPaymentMethod(entry.paymentMethod??'');setFormOpen(true);setSection('entries');requestId.current=null;
   };
   const { colors } = useAppTheme();
@@ -223,7 +223,7 @@ export default function AdminFinancialScreen() {
     if(parsed===null||parsed<=0)invalid.amount='Informe um valor maior que zero. Exemplo: 500,00.';
     if(!isValidIsoDate(dateValue))invalid.date='Informe uma data válida para o lançamento (DD/MM/AAAA ou AAAA-MM-DD).';
     if(dueValue&&!isValidIsoDate(dueValue))invalid.dueDate='Informe uma data de vencimento válida ou deixe em branco.';
-    if(paidValue&&!isValidIsoDate(paidValue))invalid.paidAt='Informe uma data efetiva de pagamento válida.';
+    if(entryStatus==='pago'&&paidValue&&!isValidIsoDate(paidValue))invalid.paidAt='Informe uma data efetiva de pagamento válida.';
     if(entryStatus==='pago'&&(paidValue||dateValue)>financialToday())invalid.paidAt='A data efetiva de pagamento não pode estar no futuro.';
     setEntryErrors(invalid);
     if(Object.keys(invalid).length||parsed===null){setError(Object.values(invalid).join(' '));return;}
@@ -231,7 +231,7 @@ export default function AdminFinancialScreen() {
     const fingerprint=JSON.stringify({projectId,clientId,contractId,description,type,parsed,date,notes,category,entryStatus,dueDate,accountId,paidAt,paymentMethod});
     if(requestFingerprint.current!==fingerprint){requestId.current=null;requestFingerprint.current=fingerprint;}
     requestId.current ??= randomUUID();
-    const input={projectId,clientId,contractId,description,type,amount:parsed,date:dateValue,notes,category,status:entryStatus,dueDate:dueValue,accountId,paidAt:paidValue,paymentMethod,requestId:requestId.current};
+    const input={projectId,clientId,contractId,description,type,amount:parsed,date:dateValue,notes,category,status:entryStatus,dueDate:dueValue,accountId,paidAt:entryStatus==='pago'?paidValue:'',paymentMethod,requestId:requestId.current};
     const result=editing ? await updateAdminFinancialEntry(editing.id,input) : await createAdminFinancialEntry(input);
     setSaving(false);
     if (result) setError(result);

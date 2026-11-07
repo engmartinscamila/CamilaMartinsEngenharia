@@ -81,6 +81,9 @@ assert(text().includes('Preencha a descrição do lançamento'));assert(text().i
 await act(async()=>{field('Descrição').props.onChangeText('Serviço avulso a receber');field('Valor (R$)').props.onChangeText('125,00');field('Data').props.onChangeText('31/02/2026');});
 await act(async()=>button('Registrar no extrato administrativo').props.onPress());assert(text().includes('Informe uma data válida para o lançamento'));assert(!text().includes('Selecione um projeto da lista'));
 await act(async()=>field('Data').props.onChangeText(today.split('-').reverse().join('/')));
+await act(async()=>choices('Situação').props.onChange('pago'));
+await act(async()=>field('Data efetiva de pagamento / recebimento').props.onChangeText('31/02/2026'));
+await act(async()=>choices('Situação').props.onChange('pendente'));
 
 await act(async()=>button('Registrar no extrato administrativo').props.onPress());
 assert.equal(lastInput.clientId,'avulso');assert.equal(lastInput.projectId,null);assert.equal(lastInput.contractId,null);assert.equal(lastInput.status,'pendente');assert.equal(lastInput.date,today);

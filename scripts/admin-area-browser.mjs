@@ -52,6 +52,7 @@ try{for(const width of [1440,390]){
  for(const layoutWidth of [1920,1280,960,390,360]){
   await page.setViewportSize({width:layoutWidth,height:1000});
   await page.goto(new URL('/portal/admin/finance-center/?view=entries&projectId=p1',base).href);
+  await page.getByRole('button',{name:'Novo lançamento',exact:true}).click();
   const categories=page.locator('#financialEntryCategories:visible');
   await categories.waitFor();
   await categories.scrollIntoViewIfNeeded();
@@ -67,9 +68,11 @@ try{for(const width of [1440,390]){
  }
  await page.setViewportSize({width,height:1000});
  await page.goto(new URL('/portal/admin/finance-center/?view=entries&projectId=p1',base).href);
+ await page.getByRole('button',{name:'Novo lançamento',exact:true}).click();
  await description().fill('Lançamento não salvo');
+ await page.getByRole('button',{name:'Mais opções',exact:true}).click();
  await page.getByRole('button',{name:'Horas e margem',exact:true}).click();
- await page.getByRole('button',{name:'Lançamentos',exact:true}).click();
+ await page.getByRole('button',{name:'Movimentações',exact:true}).click();
  assert.equal(await description().inputValue(),'Lançamento não salvo');
  // Separate visits to a receipt must work even within the generic 500 ms button guard.
  await page.evaluate(()=>{const now=Date.now();Date.now=()=>now;});
@@ -79,20 +82,32 @@ try{for(const width of [1440,390]){
  assert.equal(await receipt.isDisabled(),true,'Recebimento vinculado não permite alterar o valor-base');
  assert.equal(new URL(await page.locator('iframe:visible').getAttribute('src'),base).searchParams.get('financialId'),'pay1');
  await page.getByRole('button',{name:'Novo recibo avulso',exact:true}).click();
+ await page.locator('iframe:visible').contentFrame().locator('#newStandaloneReceipt').click();
  receipt=page.locator('iframe:visible').contentFrame().locator('#receiptDescription').locator('visible=true');
  await receipt.fill('Recibo avulso não emitido');
- await page.getByRole('button',{name:'Lançamentos',exact:true}).click();
+ await page.getByRole('button',{name:'Movimentações',exact:true}).click();
  assert.equal(await description().inputValue(),'Lançamento não salvo');
  await page.getByRole('button',{name:'Recibos',exact:true}).click();
  assert.equal(await receipt.inputValue(),'Recibo avulso não emitido');
- await page.getByRole('button',{name:'Lançamentos',exact:true}).click();
+ await page.getByRole('button',{name:'Movimentações',exact:true}).click();
  await page.getByRole('button',{name:'Emitir / abrir recibo deste recebimento',exact:true}).click();
  await page.getByText('Recibo vinculado ao recebimento selecionado.',{exact:true}).waitFor();
- await page.getByRole('button',{name:'Lançamentos',exact:true}).click();
+ await page.getByRole('button',{name:'Movimentações',exact:true}).click();
  assert.equal(new URL(page.url()).searchParams.get('financialId'),null,'Vínculo antigo não acompanha outra visão/projeto');
  await page.getByRole('button',{name:'Recibos',exact:true}).click();
  assert.equal(await receipt.inputValue(),'Recibo avulso não emitido','Avulso preservado ao sair do vínculo');
  await page.goto(new URL('/portal/admin/finance-center/',base).href);
+ await page.getByText('Resumo financeiro',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'Abrir extrato a receber',exact:true}).click();
+ await page.getByText('Extrato de saldo a receber',{exact:true}).waitFor();
+ await page.getByLabel('Buscar cliente ou contrato no extrato',{exact:true}).fill('CT-001');
+ await page.getByText('Cliente Alfa • CT-001',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'Ver parcelas e recebimentos',exact:true}).click();
+ await page.getByRole('button',{name:'Emitir / abrir recibo',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2),false);
+ await page.screenshot({path:`/tmp/receivable-statement-${width}.png`});
+ await page.getByRole('button',{name:'Movimentações',exact:true}).click();
+ await page.getByRole('button',{name:'Novo lançamento',exact:true}).click();
  await page.getByLabel('Pesquisar cliente',{exact:true}).fill('Harison');
  await page.getByRole('button',{name:'Com contrato',exact:true}).click();
  await page.getByText('Nenhum cliente encontrado neste filtro.',{exact:true}).waitFor();
