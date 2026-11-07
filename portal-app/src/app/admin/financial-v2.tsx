@@ -26,7 +26,7 @@ export default function AdminFinanceV2Screen(){
  const router=useRouter();
  const {colors}=useAppTheme();
  const [data,setData]=useState<FinanceV2Snapshot|null>(null);
- const [loading,setLoading]=useState(false),[saving,setSaving]=useState(false);
+ const [loading,setLoading]=useState(financeV2HomologationEnabled),[saving,setSaving]=useState(false);
  const [error,setError]=useState<string|null>(null),[message,setMessage]=useState<string|null>(null);
  const [clientQuery,setClientQuery]=useState(''),[clientId,setClientId]=useState<string|null>(null);
  const [contractId,setContractId]=useState<string|null>(null),[projectId,setProjectId]=useState<string|null>(null);
