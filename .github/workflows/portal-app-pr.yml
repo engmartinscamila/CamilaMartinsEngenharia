@@ -84,6 +84,9 @@ jobs:
       - name: Testar navegação com projeto e aliases
         run: node scripts/test-admin-navigation-context.mjs
 
+      - name: Testar integridade do extrato e priorização das cobranças
+        run: node scripts/test-financial-model.mjs
+
       - name: Testar a interface financeira com dados sintéticos
         run: |
           npm install --prefix "$RUNNER_TEMP/financial-ui-test" --no-save --package-lock=false --ignore-scripts react@19.2.3 react-test-renderer@19.2.3
