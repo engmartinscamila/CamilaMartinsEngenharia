@@ -67,6 +67,7 @@ assert.match(projectScreen, /value: 'em_andamento'/);
 assert.match(projectScreen, /setEditStatus\(project\.status\)/);
 assert.match(projectScreen, /Situação existente:/);
 assert.match(projectScreen, /Selecione explicitamente o contrato/);
+assert.doesNotMatch(projectScreen, /setSelectedClientId\(\(current\) => current \?\? clientResult/);
 assert.doesNotMatch(projectScreen, /setSelectedContractId\(\(current\) => current \?\? contractResult/);
 
 console.log('PASS: integridade entre cliente/projeto/contrato, projeto pré-contratual, saldos preservados e estados reais na edição.');
