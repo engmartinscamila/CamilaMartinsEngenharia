@@ -20,6 +20,7 @@ try{for(const width of [1440,390]){
   window.supabaseClient={from:table=>{const chain={};for(const method of ['select','eq','not','order','limit','in'])chain[method]=()=>chain;chain.then=(resolve,reject)=>Promise.resolve({data:tables[table]||[],error:null}).then(resolve,reject);return chain;},rpc:async(name,args)=>{window.__projectCalls.push({name,args});return {data:'synthetic-contract',error:null};}};
   window.CMEEditCommercialTerms=async()=>false;window.CMEGenerateCommercialDocument=async()=>({ok:true});
  });
+ await page.addScriptTag({content:fs.readFileSync('js/commercial-documents-utils.js','utf8')});
  await page.addScriptTag({content:fs.readFileSync('js/commercial-documents-web.js','utf8')});
  await page.waitForFunction(()=>document.querySelector('#contractProjectId')?.value==='p1');
  assert.equal(await page.locator('#contractSourceManual').isChecked(),true);
