@@ -25,6 +25,8 @@ const removed = [
   'js/portfolio-live3d.js',
   'js/portfolio-motion-v1.js',
   'js/storage.js',
+  'scripts/build-frases-do-dia-fast.mjs',
+  'scripts/build-frases-do-dia.mjs',
 ];
 const removedPaths = new Set(removed);
 
