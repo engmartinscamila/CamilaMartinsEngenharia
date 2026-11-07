@@ -1,4 +1,5 @@
 import { FinancialSummary, FinancialReceivables } from '@/components/financial-overview';
+import { analyzeFinancialIntegrity } from '@/lib/financial-reconciliation';
 import { prioritizeReceivables, receivableOverview, type ReceivableFocus } from '@/lib/receivable-priorities';
 import { FinancialAccountSection, FinancialHistorySection } from '@/components/financial-detail-sections';
 import {useAdminModule} from '@/providers/admin-module-context';
@@ -182,6 +183,7 @@ export default function AdminFinancialScreen() {
   const statements=useMemo(()=>receivableStatements(contracts,projects,entries,clients,embedded?.projectId??filters.projectId),[contracts,projects,entries,clients,embedded?.projectId,filters.projectId]);
   const statementRows=useMemo(()=>prioritizeReceivables(statements,statementFocus,statementQuery),[statements,statementFocus,statementQuery]);
   const missingContractValues=statements.filter(row=>!row.inactive&&row.contractValue===null&&contracts.some(contract=>contract.id===row.id)).length;
+  const integrityIssues=useMemo(()=>analyzeFinancialIntegrity(entries,contracts,projects,clients,transactions),[entries,contracts,projects,clients,transactions]);
   const statementTotal=receivableOverview(statements).total;
   const monthTotals=financialTotals(entries.filter(entry=>(!embedded?.projectId||entry.projectId===embedded.projectId)&&entryDate(entry)?.startsWith(financialToday().slice(0,7))));
   const openReceipt=(id:string,projectId?:string|null)=>{const url='/recibos.html?financialId='+encodeURIComponent(id);if(embedded)embedded.onNavigate('receipts',{financialId:id,...(projectId?{projectId}:{})});else if(Platform.OS==='web')window.location.assign(url);else void Linking.openURL('https://camilamartinsengenharia.com.br'+url);};
@@ -323,7 +325,7 @@ export default function AdminFinancialScreen() {
         onMonthReceipts={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'pago',month:financialToday().slice(0,7),type:'entrada'});setPage(0);setSection('entries');}}
         onPendingPayables={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'aberto',month:'',type:'saida'});setPage(0);setSection('entries');}}
         onReceivables={()=>setSection('receivables')} onNewEntry={()=>{clearEntry();setFormOpen(true);setSection('entries');}} />:null}
-      {section==='receivables'?<FinancialReceivables styles={styles} embeddedProjectId={embedded?.projectId} missingContractValues={missingContractValues} statementQuery={statementQuery} setStatementQuery={setStatementQuery} statementFocus={statementFocus} setStatementFocus={setStatementFocus} statementPage={statementPage} setStatementPage={setStatementPage} expandedStatement={expandedStatement} setExpandedStatement={setExpandedStatement} statementRows={statementRows} contracts={contracts} loading={loading} coreError={coreError} saving={saving} goldColor={colors.gold600}
+      {section==='receivables'?<FinancialReceivables styles={styles} embeddedProjectId={embedded?.projectId} missingContractValues={missingContractValues} statementQuery={statementQuery} setStatementQuery={setStatementQuery} statementFocus={statementFocus} setStatementFocus={setStatementFocus} statementPage={statementPage} setStatementPage={setStatementPage} expandedStatement={expandedStatement} setExpandedStatement={setExpandedStatement} statementRows={statementRows} contracts={contracts} integrityIssues={integrityIssues} loading={loading} coreError={coreError} saving={saving} goldColor={colors.gold600}
         perform={perform} openReceipt={openReceipt} receiveEntry={receiveEntry} onContractEdit={id=>{setSelectedContractId(id);setContractValue('');setSection('hours');}} />:null}
       {section==='entries'?<>
       <Card><Text style={styles.sectionTitle}>Filtrar lançamentos e indicadores</Text>
