@@ -70,4 +70,8 @@ assert.match(projectScreen, /Selecione explicitamente o contrato/);
 assert.doesNotMatch(projectScreen, /setSelectedClientId\(\(current\) => current \?\? clientResult/);
 assert.doesNotMatch(projectScreen, /setSelectedContractId\(\(current\) => current \?\? contractResult/);
 
+const financialScreen = fs.readFileSync('src/app/admin/financial.tsx', 'utf8');
+assert.doesNotMatch(financialScreen, /current \?\? contractResult\.data\[0\]/,
+  'O financeiro não deve selecionar automaticamente o primeiro contrato');
+
 console.log('PASS: integridade entre cliente/projeto/contrato, projeto pré-contratual, saldos preservados e estados reais na edição.');
