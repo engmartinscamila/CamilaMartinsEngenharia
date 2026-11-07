@@ -12,7 +12,7 @@ import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
 import { DateField } from '@/components/date-field';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
 import { randomUUID } from 'expo-crypto';
-import { accountBalance, categoryLabel, effectiveStatus, entryDate, filterFinancialEntries, financialCategories, financialCategory, financialStatus, financialToday, financialTotals, receivableStatements, type BankTransaction } from '@/lib/financial-model';
+import { accountBalance, categoryLabel, effectiveStatus, entryDate, filterFinancialEntries, financialCategories, financialCategory, financialLinkIssues, financialStatus, financialToday, financialTotals, receivableStatements, type BankTransaction } from '@/lib/financial-model';
 import { exportFinancialCsv, exportFinancialExcel, exportReceivableCsv, listBankTransactions, updateAccountReference } from '@/services/financial-tools';
 import { supabase } from '@/lib/supabase';
 import { formatCurrency, formatDate, isValidIsoDate, parseBrazilianCurrency } from '@/lib/format';
@@ -176,6 +176,7 @@ export default function AdminFinancialScreen() {
 
   const filteredEntries=useMemo(()=>filterFinancialEntries(entries,{...filters,projectId:embedded?.projectId??filters.projectId}),[entries,filters,embedded?.projectId]);
   const statements=useMemo(()=>receivableStatements(contracts,projects,entries,clients,embedded?.projectId??filters.projectId),[contracts,projects,entries,clients,embedded?.projectId,filters.projectId]);
+  const linkIssues=useMemo(()=>financialLinkIssues(contracts,projects,entries),[contracts,projects,entries]);
   const statementRows=statements.filter(row=>[row.clientName,row.contractNumber].join(' ').toLocaleLowerCase('pt-BR').includes(statementQuery.trim().toLocaleLowerCase('pt-BR')));
   const missingContractValues=statements.filter(row=>!row.inactive&&row.contractValue===null&&contracts.some(contract=>contract.id===row.id)).length;
   const statementTotal=statements.filter(row=>!row.inactive).reduce((sum,row)=>sum+Math.round((row.remaining??row.pending)*100),0)/100;
@@ -311,6 +312,11 @@ export default function AdminFinancialScreen() {
       <AdminPageHeader title="Financeiro" description="Confira os saldos, registre recebimentos e emita seus recibos." />
       {error ? <Notice tone="danger">{error}</Notice> : null}
       {success ? <Notice tone="success">{success}</Notice> : null}
+      {!loading&&!coreError&&linkIssues.length>0?<Notice tone="warning">
+        {linkIssues.length} divergência(s) entre os vínculos de cliente, projeto, contrato e lançamento. Os saldos e registros foram preservados. Confira os cadastros antes de emitir um extrato definitivo.
+        {linkIssues.slice(0,3).map(issue=>` • ${issue.message}`).join('')}
+        {linkIssues.length>3?' • Há outras divergências a conferir.':''}
+      </Notice>:null}
       {loading ? <ActivityIndicator color={colors.gold600} /> : null}
       {!embedded ? <SelectionChips label="Área financeira" value={section} onChange={value=>{setSection(value);setError(null);setSuccess(null);}}
         items={[{value:'summary',label:'Resumo'},{value:'receivables',label:'A receber'},{value:'entries',label:'Movimentações'},{value:'accounts',label:'Contas e OFX'},{value:'hours',label:'Horas e margem'},{value:'history',label:'Histórico e exportações'},{value:'fiscal',label:'Rascunhos fiscais'}]} /> : null}
