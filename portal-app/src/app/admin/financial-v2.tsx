@@ -54,7 +54,17 @@ export default function AdminFinanceV2Screen(){
   if(result.error||!result.data){setData(null);setError(result.error??'Não foi possível conferir o extrato.');return;}
   setData(result.data);setError(null);
  }
- useEffect(()=>{void reload();},[]);
+ useEffect(()=>{
+  if(!financeV2HomologationEnabled)return;
+  let active=true;
+  void loadFinanceV2Snapshot().then(result=>{
+   if(!active)return;
+   setLoading(false);
+   if(result.error||!result.data){setData(null);setError(result.error??'Não foi possível conferir o extrato.');return;}
+   setData(result.data);setError(null);
+  });
+  return ()=>{active=false;};
+ },[]);
  async function perform(task:()=>Promise<void>){
   if(locked.current)return;
   locked.current=true;setSaving(true);setError(null);setMessage(null);
