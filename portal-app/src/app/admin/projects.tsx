@@ -55,7 +55,7 @@ export default function AdminProjectsScreen() {
     setClients(clientResult.data.filter((client) => client.status === 'ativo'));
     setContracts(contractResult.data.filter((contract) => !['cancelado', 'arquivado'].includes(contract.status)));
     setProjects(projectResult.data);
-    setSelectedClientId((current) => current ?? clientResult.data.find((client) => client.status === 'ativo')?.id ?? null);
+    setSelectedClientId((current) => current && clientResult.data.some((client) => client.id === current && client.status === 'ativo') ? current : null);
     setSelectedContractId((current) => current && contractResult.data.some((contract) => contract.id === current && !['cancelado', 'arquivado'].includes(contract.status)) ? current : null);
     setError(clientResult.error ?? contractResult.error ?? projectResult.error);
     setLoading(false);
