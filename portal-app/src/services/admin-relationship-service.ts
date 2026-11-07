@@ -1,4 +1,5 @@
 import { readAllRows } from '@/lib/paginated-query';
+import { numberOrNull } from '@/lib/format';
 import { isMissingRelationError } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 import { dispatchPendingPushNotifications } from '@/services/push-service';
@@ -15,11 +16,6 @@ function compatibilityError(error: { code?: string; message?: string } | null) {
   return Boolean(error && (isMissingRelationError(error) || ['42703', '42883', 'PGRST200', 'PGRST202', 'PGRST204'].includes(error.code ?? '')));
 }
 
-function numberOrNull(value: unknown) {
-  if (value === null || value === undefined || value === '') return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? Math.min(100, Math.max(0, parsed)) : null;
-}
 
 export async function listAdminClients(search = ''): Promise<ServiceResult<AdminClientSummary[]>> {
   let query = supabase.from('clientes').select('id, nome, email, telefone, status, auth_id, created_at').order('nome');
