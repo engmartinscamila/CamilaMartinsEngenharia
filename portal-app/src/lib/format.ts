@@ -1,3 +1,10 @@
+/** Percentual conhecido, limitado entre 0 e 100; ausência continua desconhecida. */
+export function numberOrNull(value: unknown) {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.min(100, Math.max(0, parsed)) : null;
+}
+
 export function normalizeStatus(value: string | null | undefined) {
   return String(value ?? '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[\s-]+/g, '_');
 }

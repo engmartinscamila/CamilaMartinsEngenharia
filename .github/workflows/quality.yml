@@ -33,6 +33,19 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Auditar código sem referências e gerar relatório
+        run: node scripts/audit-code-hygiene.mjs
+
+      - name: Confirmar limpeza e rotas preservadas
+        run: node scripts/verify-code-cleanup.mjs
+
+      - name: Arquivar auditoria de código
+        uses: actions/upload-artifact@v4
+        with:
+          name: auditoria-codigo-sem-uso
+          path: artifacts/code-hygiene-audit.*
+          if-no-files-found: error
+
       - name: Gerar e revisar acervo de frases
         run: node scripts/build-frases-do-dia-v7.mjs
 

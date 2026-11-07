@@ -39,7 +39,9 @@ import {
   importOfxTransactions,
   updateAdminFinancialPreferences,
 } from '@/services/operations-service';
-import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
+import { styleDefinitions } from '@/components/financial/financial-styles';
+import { FinancialReceivableCard } from '@/components/financial/receivable-card';
+import { FinancialEntryCard } from '@/components/financial/financial-entry-card';
 import type {
   AdminClientSummary,
   AdminContractSummary,
@@ -337,22 +339,15 @@ export default function AdminFinancialScreen() {
         <Button title="Exportar extrato a receber (CSV)" variant="secondary" disabled={Boolean(coreError)||loading} onPress={()=>void perform(()=>exportReceivableCsv(statementRows))} />
         {loading?<ActivityIndicator color={colors.gold600} />:coreError?<Notice tone="danger">Extrato indisponível. Atualize os dados para conferir os saldos.</Notice>:<>
           <Text style={styles.metricValue}>Saldo a receber: {formatCurrency(statementRows.filter(row=>!row.inactive).reduce((sum,row)=>sum+Math.round((row.remaining??row.pending)*100),0)/100)}</Text>
-          {statementRows.length===0?<StateView title="Nenhum contrato ou recebimento neste filtro" description="Confira o cliente selecionado ou registre os serviços avulsos." icon="receipt-outline" />:statementRows.slice(statementPage*25,statementPage*25+25).map(row=><Card key={row.id}>
-            <Text style={styles.title}>{row.clientName} • {row.contractNumber}</Text>
-            <Text style={styles.meta}>Contratado: {row.contractValue===null?'Não informado':formatCurrency(row.contractValue)} • Recebido: {formatCurrency(row.received)}</Text>
-            <Text style={styles.title}>Saldo restante: {row.remaining===null?'Valor contratado não informado':formatCurrency(row.remaining)}</Text>
-            <Text style={styles.meta}>Parcelas pendentes: {formatCurrency(row.pending)} • Em atraso: {formatCurrency(row.overdue)}</Text>
-            {row.unscheduled!==null&&row.unscheduled>0?<Notice tone="warning">{formatCurrency(row.unscheduled)} do saldo ainda sem parcelas lançadas. Esse valor não foi lançado automaticamente.</Notice>:null}
-            {row.remaining!==null&&row.pending>row.remaining?<Notice tone="warning">As parcelas pendentes excedem o saldo em {formatCurrency((Math.round(row.pending*100)-Math.round(row.remaining*100))/100)}. Confira os lançamentos.</Notice>:null}
-            {row.contractValue===null&&contracts.some(contract=>contract.id===row.id)?<Button title="Informar valor contratado" variant="secondary" onPress={()=>{setSelectedContractId(row.id);setContractValue('');setSection('hours');}} />:null}
-            {row.credit>0?<Notice tone="warning">Recebimentos excedem o valor contratado em {formatCurrency(row.credit)}. Confira o contrato e os pagamentos.</Notice>:null}
-            {row.inactive?<Notice tone="info">Contrato cancelado ou arquivado: preservado para conferência, fora do total a receber.</Notice>:null}
-            <Button title={expandedStatement===row.id?'Recolher parcelas':'Ver parcelas e recebimentos'} variant="secondary" onPress={()=>setExpandedStatement(expandedStatement===row.id?null:row.id)} />
-            {expandedStatement===row.id?(row.entries.length===0?<Text style={styles.meta}>Ainda não há parcelas lançadas para este contrato.</Text>:row.entries.map(entry=><View key={entry.id} style={styles.summary}>
-              <View style={{flex:1}}><Text style={styles.title}>{entry.description} • {formatCurrency(entry.amount)}</Text><Text style={styles.meta}>{effectiveStatus(entry)==='atrasado'?'Em atraso':financialStatus(entry.status)==='pago'?'Recebido':'Pendente'} • Vencimento: {formatDate(entry.dueDate)} • Recebimento: {formatDate(entry.paidAt)}</Text>
-              {financialStatus(entry.status)==='pago'?<Button title="Emitir / abrir recibo" variant="secondary" onPress={()=>openReceipt(entry.id,entry.projectId)} />:<Button title="Registrar recebimento" variant="secondary" disabled={saving} onPress={()=>receiveEntry(entry)} />}</View>
-            </View>)):null}
-          </Card>)}
+          {statementRows.length===0?<StateView title="Nenhum contrato ou recebimento neste filtro" description="Confira o cliente selecionado ou registre os serviços avulsos." icon="receipt-outline" />:statementRows.slice(statementPage*25,statementPage*25+25).map(row=><FinancialReceivableCard
+            key={row.id} row={row} styles={styles} saving={saving}
+            hasContract={contracts.some(contract=>contract.id===row.id)}
+            expanded={expandedStatement===row.id}
+            onInformContract={()=>{setSelectedContractId(row.id);setContractValue('');setSection('hours');}}
+            onToggle={()=>setExpandedStatement(expandedStatement===row.id?null:row.id)}
+            onOpenReceipt={entry=>openReceipt(entry.id,entry.projectId)}
+            onReceiveEntry={receiveEntry}
+          />)}
           <View style={styles.rowFields}><Button title="Contratos anteriores" variant="ghost" disabled={statementPage===0} onPress={()=>setStatementPage(value=>value-1)} /><Text style={styles.meta}>Página {statementPage+1} • {statementRows.length} registro(s)</Text><Button title="Próximos contratos" variant="ghost" disabled={(statementPage+1)*25>=statementRows.length} onPress={()=>setStatementPage(value=>value+1)} /></View>
         </>}
       </>:null}
@@ -400,13 +395,12 @@ export default function AdminFinancialScreen() {
       <Text style={styles.sectionTitle}>Lançamentos atuais • {filteredEntries.length} resultado(s)</Text>
       <Button title="Exportar CSV do filtro" variant="secondary" disabled={Boolean(coreError)} onPress={()=>void perform(()=>exportFinancialCsv(filteredEntries))} />
       {visibleEntries.length===0?<StateView title="Nenhum lançamento neste filtro" description="Ajuste os filtros ou registre um lançamento." icon="receipt-outline" />:null}
-      {visibleEntries.map(entry=><Card key={entry.id}><Text style={styles.title}>{entry.description}</Text><Text style={styles.meta}>{entry.clientName} • {entry.contractNumber} • {entry.projectName}</Text>
-        <Text style={styles.meta}>{entry.type==='saida'?'Saída':'Entrada'} • {formatCurrency(entry.amount)} • {effectiveStatus(entry)} • {categoryLabel(entry.category)} • {formatDate(entryDate(entry))}</Text>
-        <Text style={styles.meta}>{entry.notes}</Text>
-        {entry.type==='entrada'&&financialStatus(entry.status)==='pago'?<Button debounceMs={0} title="Emitir / abrir recibo deste recebimento" variant="secondary" onPress={()=>openReceipt(entry.id,entry.projectId)} />:null}
-        {entry.type==='entrada'&&financialStatus(entry.status)==='pendente'?<Button title="Registrar recebimento" variant="secondary" disabled={saving} onPress={()=>receiveEntry(entry)} />:null}
-        {entry.bankTransactionId?<Notice tone="info">Lançamento conciliado. O vínculo bancário foi preservado.</Notice>:<View style={styles.rowFields}><Button title="Editar lançamento" variant="secondary" disabled={saving} onPress={()=>editEntry(entry)} /><Button title="Excluir dos ativos" variant="ghost" disabled={saving} onPress={()=>setDeleteTarget(entry)} /></View>}
-      </Card>)}
+      {visibleEntries.map(entry=><FinancialEntryCard key={entry.id}
+          entry={entry} saving={saving} styles={styles}
+          onOpenReceipt={entry=>openReceipt(entry.id,entry.projectId)}
+          onReceiveEntry={receiveEntry} onEditEntry={editEntry}
+          onDeleteEntry={setDeleteTarget}
+        />)}
       <View style={styles.rowFields}><Button title="Página anterior" disabled={page===0} variant="ghost" onPress={()=>setPage(value=>value-1)} /><Text style={styles.meta}>Página {page+1}</Text><Button title="Próxima página" disabled={(page+1)*50>=filteredEntries.length} variant="ghost" onPress={()=>setPage(value=>value+1)} /></View>
       {deleteTarget?<Card><Notice tone="warning">Excluir “{deleteTarget.description}” dos ativos? O registro ficará no histórico preservado. Lançamentos conciliados não podem ser excluídos aqui.</Notice><Button title="Confirmar exclusão dos ativos" loading={saving} onPress={()=>void perform(deleteEntry)} /><Button title="Cancelar exclusão" variant="ghost" onPress={()=>setDeleteTarget(null)} /></Card>:null}
       </>:null}
@@ -491,24 +485,3 @@ export default function AdminFinancialScreen() {
   );
 }
 
-const styleDefinitions = (colors: ThemeColors) => ({
-  metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  metric: { flexGrow: 1, flexBasis: 190, minHeight: 105, justifyContent: 'space-between' },
-  metricLabel: { color: colors.gold600, fontSize: 11, letterSpacing: 1.3, fontWeight: '700', fontFamily: typography.family },
-  metricValue: { color: colors.ink, fontSize: 22, fontWeight: '700', fontFamily: typography.family },
-  sectionTitle: { color: colors.ink, fontSize: typography.size.bodyLarge, fontWeight: '700', fontFamily: typography.family },
-  label: { color: colors.ink, fontSize: 13, fontWeight: '700', fontFamily: typography.family },
-  selector: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  choice: { minWidth: 0, maxWidth: '100%', flexShrink: 1, minHeight: 44, justifyContent: 'center', borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, padding: spacing.sm, backgroundColor: colors.surfaceRaised },
-  choiceSelected: { borderColor: colors.gold500, backgroundColor: colors.warningSoft },
-  choiceText: { flexShrink: 1, lineHeight: 18, color: colors.slate, fontSize: 12, fontFamily: typography.family },
-  choiceTextSelected: { color: colors.gold600, fontWeight: '700' },
-  row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
-  rowFields: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  columns: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: spacing.sm },
-  column: { flex: 1, minWidth: 280 },
-  summary: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.sm },
-  valueColumn: { alignItems: 'flex-end', gap: spacing.xs },
-  title: { color: colors.ink, fontSize: 15, fontWeight: '700', fontFamily: typography.family },
-  meta: { color: colors.muted, fontSize: 11, marginTop: 5, fontFamily: typography.family },
-});
