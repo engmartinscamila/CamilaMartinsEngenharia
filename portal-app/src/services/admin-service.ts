@@ -1,20 +1,14 @@
 import { readAllRows } from '@/lib/paginated-query';
-import { financialCategory, financialStatus, financialToday } from '@/lib/financial-model';
-import { normalizeStatus, isValidIsoDate } from '@/lib/format';
-import { decode } from 'base64-arraybuffer';
-import type { DocumentPickerAsset } from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system/legacy';
-import { randomUUID } from 'expo-crypto';
-import { Platform } from 'react-native';
 
-import { isMissingRelationError, toUserMessage } from '@/lib/errors';
+import { normalizeStatus } from '@/lib/format';
+
+
+import { isMissingRelationError } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 import { dispatchPendingPushNotifications } from '@/services/push-service';
 import type {
   AdminClientSummary,
   AdminContractSummary,
-  AdminContentKind,
-  AdminContentSummary,
   AdminNotificationSummary,
   AdminProjectSummary,
   AdminRequestSummary,
@@ -22,8 +16,6 @@ import type {
   ApprovalSummary,
   AuditEntrySummary,
   ClientDeletionPreview,
-  FinancialArchiveSummary,
-  FinancialEntrySummary,
   ScheduleStageSummary,
   ServiceResult,
   StorageOverview,
@@ -38,41 +30,6 @@ function numberOrNull(value: unknown) {
   if (value === null || value === undefined || value === '') return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? Math.min(100, Math.max(0, parsed)) : null;
-}
-
-function safePathSegment(value: string) {
-  const normalized = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9._-]+/g, '-');
-  return normalized.replace(/-{2,}/g, '-').replace(/^-|-$/g, '').slice(0, 60).toLowerCase() || 'geral';
-}
-
-const blockedExtensions = new Set(['apk', 'app', 'bat', 'bin', 'cmd', 'com', 'dll', 'dmg', 'exe', 'hta', 'jar', 'js', 'jse', 'msi', 'ps1', 'scr', 'sh', 'vbs', 'wsf']);
-const imageExtensions = new Set(['avif', 'heic', 'heif', 'jpeg', 'jpg', 'png', 'webp']);
-
-function assetExtension(asset: DocumentPickerAsset) {
-  const match = asset.name.toLowerCase().match(/\.([a-z0-9]{1,10})$/);
-  return match?.[1] ?? '';
-}
-
-function validateAdminAsset(kind: AdminContentKind, asset: DocumentPickerAsset) {
-  if (asset.size && asset.size > 20 * 1024 * 1024) return 'O arquivo excede o limite de 20 MB do aplicativo.';
-  const extension = assetExtension(asset);
-  const mime = asset.mimeType?.toLowerCase() ?? '';
-  if (!extension || blockedExtensions.has(extension) || mime.includes('executable') || mime.includes('x-msdownload')) {
-    return 'Este tipo de arquivo não é permitido por segurança.';
-  }
-  if (kind === 'photo' && !mime.startsWith('image/') && !imageExtensions.has(extension)) {
-    return 'Selecione uma imagem válida para o registro fotográfico.';
-  }
-  return null;
-}
-
-function contentTable(kind: AdminContentKind) {
-  return kind === 'document' ? 'documentos' : kind === 'photo' ? 'fotos' : 'biblioteca';
-}
-
-function contentBucket(kind: AdminContentKind, protectionMode?: string) {
-  if (protectionMode === 'authored_pdf' || protectionMode === 'authored_photo') return 'materiais-protegidos';
-  return kind === 'document' ? 'documentos' : kind === 'photo' ? 'fotos' : 'materiais-protegidos';
 }
 
 export async function listAdminClients(search = ''): Promise<ServiceResult<AdminClientSummary[]>> {
@@ -293,133 +250,13 @@ export async function updateAdminProject(input: { projectId: string; status: str
   return legacy.error || !legacy.data ? 'Não foi possível atualizar o projeto.' : null;
 }
 
-export async function listAdminContent(): Promise<ServiceResult<AdminContentSummary[]>> {
-  async function allContent(table: string, columns: string) {
-    const data: any[] = [];
-    for (let offset=0;;offset+=500) {
-      const page=await supabase.from(table).select(columns).order('created_at',{ascending:false}).order('id').range(offset,offset+499);
-      if(page.error)return {data:[],error:page.error};
-      data.push(...(page.data??[]));
-      if((page.data??[]).length<500)return {data,error:null};
-      if(data.length>=100000)return {data:[],error:{message:'Catálogo excede o limite seguro.'}};
-    }
-  }
-  const [documents, photos, library] = await Promise.all([
-    allContent('documentos','id, cliente_id, projeto_id, nome, tipo, categoria, versao, created_at, storage_bucket, arquivo, permitir_download, protection_mode, autoral, clientes(nome), projetos(nome)'),
-    allContent('fotos','id, cliente_id, projeto_id, nome, categoria, created_at, storage_bucket, arquivo, protection_mode, clientes(nome), projetos(nome)'),
-    allContent('biblioteca','id, cliente_id, projeto_id, nome, categoria, created_at, storage_bucket, arquivo, autoral, clientes(nome), projetos(nome)'),
-  ]);
-  const failed = [documents, photos, library].filter((result) => result.error);
-  const rows: AdminContentSummary[] = [];
-  const append = (kind: AdminContentKind, data: any[] | null, fallbackBucket: string) => {
-    for (const row of data ?? []) {
-      const client = Array.isArray(row.clientes) ? row.clientes[0] : row.clientes;
-      const project = Array.isArray(row.projetos) ? row.projetos[0] : row.projetos;
-      rows.push({
-        id: String(row.id),
-        kind,
-        title: row.nome ?? 'Arquivo',
-        category: row.categoria ?? row.tipo ?? (kind === 'photo' ? 'Foto' : kind === 'library' ? 'Biblioteca' : 'Documento'),
-        version: row.versao ?? null,
-        clientId: row.cliente_id,
-        clientName: client?.nome ?? 'Geral',
-        projectId: row.projeto_id,
-        projectName: project?.nome ?? 'Sem projeto',
-        createdAt: row.created_at,
-        storageBucket: row.storage_bucket ?? fallbackBucket,
-        storagePath: row.arquivo,
-        allowDownload: kind === 'document' ? row.permitir_download !== false : kind === 'library',
-        protectionMode: kind === 'document'
-          ? (row.protection_mode === 'authored_pdf' || row.autoral === true ? 'authored_pdf' : 'administrative')
-          : kind === 'photo'
-            ? (row.protection_mode === 'administrative' ? 'administrative' : 'authored_photo')
-            : 'administrative',
-      });
-    }
-  };
-  append('document', documents.data as any[] | null, 'documentos');
-  append('photo', photos.data as any[] | null, 'fotos');
-  append('library', library.data as any[] | null, 'biblioteca');
-  rows.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  return { data: rows, error: failed.length ? 'Alguns tipos de arquivo estão indisponíveis.' : null };
-}
-
-async function assetBody(asset: DocumentPickerAsset) {
-  if (Platform.OS === 'web' && asset.file) return asset.file;
-  const base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: FileSystem.EncodingType.Base64 });
-  return decode(base64);
-}
-
-export async function uploadAdminContent(input: {
-  kind: AdminContentKind;
-  clientId: string;
-  projectId: string;
-  title: string;
-  category: string;
-  version?: string;
-  protectionMode: 'administrative' | 'authored_pdf' | 'authored_photo';
-  asset: DocumentPickerAsset;
-}) {
-  const validationError = validateAdminAsset(input.kind, input.asset);
-  if (validationError) return validationError;
-  if (input.protectionMode === 'authored_pdf' && assetExtension(input.asset) !== 'pdf') {
-    return 'Material técnico autoral deve ser enviado em PDF para receber identificação em todas as páginas.';
-  }
-  const bucket = contentBucket(input.kind, input.protectionMode);
-  const extension = assetExtension(input.asset);
-  const path = `${input.projectId}/${safePathSegment(input.category)}/${randomUUID()}.${extension}`;
-  try {
-    const upload = await supabase.storage.from(bucket).upload(path, await assetBody(input.asset), {
-      contentType: input.asset.mimeType ?? 'application/octet-stream',
-      upsert: false,
-    });
-    if (upload.error) return 'Não foi possível enviar o arquivo ao Storage.';
-
-    const common = { cliente_id: input.clientId, projeto_id: input.projectId, nome: input.title.trim(), arquivo: path, storage_bucket: bucket };
-    const payload = input.kind === 'document'
-      ? { ...common, categoria: input.category.trim() || 'Documento', tipo: input.asset.mimeType ?? 'Arquivo', versao: input.version?.trim() || '1.0', autoral: input.protectionMode !== 'administrative', protection_mode: input.protectionMode, permitir_download: input.protectionMode === 'administrative' }
-      : input.kind === 'photo'
-        ? { ...common, categoria: input.category.trim() || 'Registro da obra', protection_mode: input.protectionMode }
-        : { ...common, categoria: input.category.trim() || 'Material', tipo: input.asset.mimeType ?? 'Arquivo', tamanho: input.asset.size == null ? null : String(input.asset.size), autoral: false };
-    const insert = await supabase.from(contentTable(input.kind)).insert(payload as any).select('id').single();
-    if (insert.error || !insert.data) {
-      const check=await supabase.from(contentTable(input.kind)).select('id').eq('arquivo',path).eq('storage_bucket',bucket).maybeSingle();
-      if(check.error)return 'Não foi possível confirmar o cadastro. O arquivo físico foi preservado; confira o catálogo antes de repetir.';
-      if(!check.data){await supabase.storage.from(bucket).remove([path]);return 'O arquivo foi revertido porque os metadados não puderam ser registrados.';}
-    }
-    void dispatchPendingPushNotifications();
-    return null;
-  } catch (error) {
-    return toUserMessage(error, 'Não foi possível preparar o arquivo para envio.');
-  }
-}
-
-export async function createAdminContentSignedUrl(item: AdminContentSummary) {
-  if (!item.storagePath) return { url: null, error: 'Este registro não possui arquivo no Storage.' };
-  if (item.kind === 'document' || item.kind === 'photo') {
-    const issued = await supabase.functions.invoke('issue-protected-asset', {
-      body: { assetId: item.id, kind: item.kind, action: 'view', adminOriginal: true },
-    });
-    return { url: issued.data?.url ?? null, error: issued.error || !issued.data?.url ? 'Não foi possível registrar e abrir o original administrativo.' : null };
-  }
-  const result = await supabase.storage.from(item.storageBucket).createSignedUrl(item.storagePath, 300);
-  return { url: result.data?.signedUrl ?? null, error: result.error ? 'Não foi possível abrir o arquivo.' : null };
-}
-
-export async function deleteAdminContent(item: AdminContentSummary) {
-  const metadata = await supabase.from(contentTable(item.kind)).delete().eq('id', item.id).select('id').maybeSingle();
-  if (metadata.error || !metadata.data) return 'A exclusão foi interrompida porque o registro não pôde ser removido com segurança.';
-  if (item.storagePath) {
-    for (const table of ['documentos', 'fotos', 'biblioteca']) {
-      const references = await supabase.from(table).select('storage_bucket').eq('arquivo', item.storagePath);
-      if (references.error) return 'Cadastro removido. A limpeza física ficou pendente porque os vínculos do arquivo não puderam ser conferidos.';
-      if ((references.data ?? []).some((row) => (row.storage_bucket || table) === item.storageBucket)) return null;
-    }
-    const storage = await supabase.storage.from(item.storageBucket).remove([item.storagePath]);
-    if (storage.error) return 'O registro foi excluído, mas o arquivo físico ficou pendente para a limpeza de órfãos do Storage.';
-  }
-  return null;
-}
+// API pública mantida para todos os consumidores existentes.
+export {
+  listAdminContent,
+  uploadAdminContent,
+  createAdminContentSignedUrl,
+  deleteAdminContent,
+} from './admin-content-service';
 
 export async function listAdminAgenda(): Promise<ServiceResult<AgendaSummary[]>> {
   const result = await readAllRows(supabase.from('agenda').select('id, projeto_id, titulo, descricao, data, horario, horario_fim, tipo, status_convite, google_meet_url, cancelado').order('data', { ascending: true }));
@@ -659,119 +496,16 @@ export async function getAdminStorageOrphanDetails(): Promise<ServiceResult<Stor
   };
 }
 
-export async function listAdminFinancialEntries(): Promise<ServiceResult<FinancialEntrySummary[]>> {
-  const rows: any[] = [];
-  for (let offset=0; ; offset+=500) {
-    const result=await supabase.from('financeiro')
-      .select('*, projetos(id,cliente_id,nome,numero_contrato,contract_id,clientes(nome),contratos!contract_id(contract_number)),receipt_client:clientes!financeiro_cliente_id_fkey(nome),receipt_contract:contratos!financeiro_contract_id_fkey(contract_number)')
-      .order('data',{ascending:false}).order('id').range(offset,offset+499);
-    if(result.error)return {data:[],error:'Não foi possível carregar todos os lançamentos financeiros atuais.'};
-    rows.push(...(result.data??[]));
-    if((result.data??[]).length<500)break;
-    if(rows.length>=100000)return {data:[],error:'Há mais de 100 mil lançamentos; refine a consulta administrativa antes de calcular totais.'};
-  }
-  const result={data:rows};
-  return {
-    data: (result.data ?? []).map((row: any) => {
-      const project = Array.isArray(row.projetos) ? row.projetos[0] : row.projetos;
-      const client = Array.isArray(project?.clientes) ? project.clientes[0] : project?.clientes;
-      const contract = Array.isArray(project?.contratos) ? project.contratos[0] : project?.contratos;
-      return {
-        id: row.id,
-        projectId: row.projeto_id ?? null,
-        clientId: row.cliente_id ?? project?.cliente_id ?? null,
-        contractId: row.contract_id ?? project?.contract_id ?? null,
-        projectName: project?.nome ?? (row.cliente_id?'Serviço sem projeto':'Projeto não identificado'),
-        clientName: client?.nome ?? (Array.isArray(row.receipt_client)?row.receipt_client[0]?.nome:row.receipt_client?.nome) ?? 'Cliente não identificado',
-        contractNumber: contract?.contract_number ?? project?.numero_contrato ?? (Array.isArray(row.receipt_contract)?row.receipt_contract[0]?.contract_number:row.receipt_contract?.contract_number) ?? 'Sem contrato',
-        type: row.tipo ?? 'entrada',
-        description: row.descricao ?? 'Lançamento financeiro',
-        amount: Number(row.valor ?? 0),
-        date: row.data ?? null,
-        notes: row.observacoes ?? null,
-        category: financialCategory(row.categoria ?? 'outros'),
-        status: financialStatus(row.status ?? 'pendente'),
-        dueDate: row.data_vencimento ?? null,
-        paidAt: row.data_pagamento ?? null,
-        accountId: row.account_id ?? null,
-        bankTransactionId: row.bank_transaction_id ?? null,
-        paymentMethod: row.forma_pagamento ?? null,
-      } satisfies FinancialEntrySummary;
-    }),
-    error: null,
-  };
-}
-
-export async function listFinancialArchive(): Promise<ServiceResult<FinancialArchiveSummary[]>> {
-  const rows:any[]=[];
-  for(let offset=0;;offset+=500){
-    const page=await supabase.from('client_financial_archive').select('id, source_table, client_name_snapshot, contract_number_snapshot, service_type_snapshot, contract_value_snapshot, transaction_type, description, amount, occurred_on, archived_at, archived_reason')
-      .order('archived_at',{ascending:false}).order('id').range(offset,offset+499);
-    if(page.error)return {data:[],error:'Não foi possível carregar todo o histórico financeiro preservado.'};
-    rows.push(...(page.data??[]));if((page.data??[]).length<500)break;
-    if(rows.length>=100000)return {data:[],error:'O histórico excede 100 mil registros. Use a exportação administrativa para consulta completa.'};
-  }
-  const result={data:rows};
-  return {
-    data: (result.data ?? []).map((row: any) => ({
-      id: row.id,
-      sourceTable: row.source_table,
-      clientName: row.client_name_snapshot,
-      contractNumber: row.contract_number_snapshot ?? 'Sem contrato',
-      serviceType: row.service_type_snapshot ?? null,
-      contractValue: row.contract_value_snapshot === null ? null : Number(row.contract_value_snapshot),
-      type: row.transaction_type ?? null,
-      description: row.description ?? null,
-      amount: row.amount === null ? null : Number(row.amount),
-      date: row.occurred_on ?? null,
-      archivedAt: row.archived_at,
-      reason: row.archived_reason,
-    })),
-    error: null,
-  };
-}
-
-export type FinancialEntryInput={projectId:string|null;clientId?:string|null;contractId?:string|null;description:string;type:'entrada'|'saida';amount:number;date:string;notes?:string;category?:string;status?:string;dueDate?:string;accountId?:string|null;paidAt?:string;paymentMethod?:string;requestId?:string};
-export async function createAdminFinancialEntry(input: FinancialEntryInput) {
-  const payload=financialEntryPayload(input);
-  if(typeof payload==='string')return payload;
-  const result=await supabase.from('financeiro').insert({...payload,...(input.requestId?{client_request_id:input.requestId}:{})}).select('id').single();
-  if(result.error?.code==='23505' && input.requestId){
-    const prior=await supabase.from('financeiro').select('*').eq('client_request_id',input.requestId).maybeSingle();
-    if(!prior.error && prior.data && Object.entries(payload).every(([key,value])=>key==='valor'?Number(prior.data[key])===value:(prior.data[key]??null)===(value??null)))return null;
-    return 'Esta tentativa já foi registrada com outros dados. Atualize o extrato antes de tentar novamente.';
-  }
-  return result.error || !result.data ? 'Não foi possível confirmar o lançamento. Tente novamente sem alterar os dados.' : null;
-}
-export function financialEntryPayload(input:FinancialEntryInput) {
-  if((!input.projectId&&!input.clientId) || input.description.trim().length<2 || !Number.isFinite(input.amount) || input.amount<=0)return 'Informe cliente ou projeto, descrição e um valor maior que zero.';
-  if(!['entrada','saida'].includes(input.type) || !isValidIsoDate(input.date) || (input.dueDate && !isValidIsoDate(input.dueDate)) || (input.paidAt && !isValidIsoDate(input.paidAt)))return 'Informe datas e natureza válidas.';
-  const status=financialStatus(input.status??'pendente');
-  const paid=status==='pago' ? input.paidAt || input.date : null;
-  if(paid && paid>financialToday())return 'A data de recebimento/pagamento não pode estar no futuro.';
-  return {projeto_id:input.projectId??null,cliente_id:input.clientId??null,contract_id:input.contractId??null,descricao:input.description.trim(),tipo:input.type,valor:input.amount,data:input.date,
-    observacoes:input.notes?.trim()||null,categoria:financialCategory(input.category??'outros'),status,
-    data_vencimento:input.dueDate||input.date||null,data_pagamento:paid,account_id:input.accountId??null,forma_pagamento:input.paymentMethod?.trim()||null};
-}
-export async function updateAdminFinancialEntry(id:string,input:FinancialEntryInput) {
-  const payload=financialEntryPayload(input);if(typeof payload==='string')return payload;
-  const linked=await supabase.from('bank_transactions').select('id').eq('matched_financial_id',id).limit(1);
-  if(linked.error)return 'Não foi possível verificar a conciliação do lançamento.';
-  if(linked.data?.length)return 'Este lançamento está conciliado. Preserve o vínculo bancário; registre um ajuste separado.';
-  const result=await supabase.from('financeiro').update(payload).eq('id',id).is('bank_transaction_id',null).select('id').maybeSingle();
-  return result.error || !result.data ? 'Não foi possível atualizar. O lançamento pode ter sido conciliado ou removido.' : null;
-}
-export async function deleteAdminFinancialEntry(id:string) {
-  const linked=await supabase.from('bank_transactions').select('id').eq('matched_financial_id',id).limit(1);
-  if(linked.error || linked.data?.length)return 'A exclusão foi bloqueada: conciliação existente ou não confirmada.';
-  const result=await supabase.from('financeiro').delete().eq('id',id).is('bank_transaction_id',null).select('id').maybeSingle();
-  return result.error || !result.data ? 'Não foi possível excluir com segurança. O histórico foi preservado.' : null;
-}
-
-export async function updateAdminContractValue(contractId: string, value: number) {
-  const result = await supabase.rpc('admin_update_contract_value', { p_contract_id: contractId, p_value: value });
-  return result.error || result.data !== true ? 'Não foi possível atualizar o valor contratado.' : null;
-}
+export {
+  listAdminFinancialEntries,
+  listFinancialArchive,
+  createAdminFinancialEntry,
+  financialEntryPayload,
+  updateAdminFinancialEntry,
+  deleteAdminFinancialEntry,
+  updateAdminContractValue,
+} from './admin-financial-service';
+export type { FinancialEntryInput } from './admin-financial-service';
 
 export async function listAdminAudit(): Promise<ServiceResult<AuditEntrySummary[]>> {
   const result = await readAllRows(supabase.from('audit_log').select('id, action, entity_type, entity_id, user_id, details, created_at').order('created_at', { ascending: false }));
