@@ -1,3 +1,4 @@
+import { readAllRows } from '@/lib/paginated-query';
 import { financialCategory, financialStatus, financialToday } from '@/lib/financial-model';
 import { isValidIsoDate } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
@@ -5,17 +6,12 @@ import type { FinancialArchiveSummary, FinancialEntrySummary, ServiceResult } fr
 
 // Cadastros financeiros e histórico; preserva validações, limites e idempotência existentes.
 export async function listAdminFinancialEntries(): Promise<ServiceResult<FinancialEntrySummary[]>> {
-  const rows: any[] = [];
-  for (let offset=0; ; offset+=500) {
-    const result=await supabase.from('financeiro')
+  const result = await readAllRows(
+    supabase.from('financeiro')
       .select('*, projetos(id,cliente_id,nome,numero_contrato,contract_id,clientes(nome),contratos!contract_id(contract_number)),receipt_client:clientes!financeiro_cliente_id_fkey(nome),receipt_contract:contratos!financeiro_contract_id_fkey(contract_number)')
-      .order('data',{ascending:false}).order('id').range(offset,offset+499);
-    if(result.error)return {data:[],error:'Não foi possível carregar todos os lançamentos financeiros atuais.'};
-    rows.push(...(result.data??[]));
-    if((result.data??[]).length<500)break;
-    if(rows.length>=100000)return {data:[],error:'Há mais de 100 mil lançamentos; refine a consulta administrativa antes de calcular totais.'};
-  }
-  const result={data:rows};
+      .order('data', { ascending: false }),
+  );
+  if (result.error) return { data: [], error: 'Não foi possível carregar todos os lançamentos financeiros atuais.' };
   return {
     data: (result.data ?? []).map((row: any) => {
       const project = Array.isArray(row.projetos) ? row.projetos[0] : row.projetos;
@@ -48,15 +44,12 @@ export async function listAdminFinancialEntries(): Promise<ServiceResult<Financi
 }
 
 export async function listFinancialArchive(): Promise<ServiceResult<FinancialArchiveSummary[]>> {
-  const rows:any[]=[];
-  for(let offset=0;;offset+=500){
-    const page=await supabase.from('client_financial_archive').select('id, source_table, client_name_snapshot, contract_number_snapshot, service_type_snapshot, contract_value_snapshot, transaction_type, description, amount, occurred_on, archived_at, archived_reason')
-      .order('archived_at',{ascending:false}).order('id').range(offset,offset+499);
-    if(page.error)return {data:[],error:'Não foi possível carregar todo o histórico financeiro preservado.'};
-    rows.push(...(page.data??[]));if((page.data??[]).length<500)break;
-    if(rows.length>=100000)return {data:[],error:'O histórico excede 100 mil registros. Use a exportação administrativa para consulta completa.'};
-  }
-  const result={data:rows};
+  const result = await readAllRows(
+    supabase.from('client_financial_archive')
+      .select('id, source_table, client_name_snapshot, contract_number_snapshot, service_type_snapshot, contract_value_snapshot, transaction_type, description, amount, occurred_on, archived_at, archived_reason')
+      .order('archived_at', { ascending: false }),
+  );
+  if (result.error) return { data: [], error: 'Não foi possível carregar todo o histórico financeiro preservado.' };
   return {
     data: (result.data ?? []).map((row: any) => ({
       id: row.id,
