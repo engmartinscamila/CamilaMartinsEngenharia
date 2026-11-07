@@ -41,3 +41,11 @@
 - [ ] Cutover por feature flag com reversão rápida da interface; nenhuma exclusão do legado.
 
 **Observação:** aplicar novas funcionalidades com base em fluxos e práticas de mercado; não copiar código proprietário de outros aplicativos.
+
+## Continuidade: conciliação do legado e comprovante administrativo V2
+
+- **Execução:** painel de conciliação com conferência individual de recibos/contratos e serviços avulsos; falha de leitura impede concluir a conferência.
+- **Diagnóstico de produção, somente leitura:** quatro lançamentos financeiros (três recebidos e um pendente); três recibos relacionados, todos sem divergência de valor, data, cliente ou projeto; três lançamentos ainda não classificados como contratuais; quatro contratos sem valor cadastrado.
+- **Regra de negócio:** serviço avulso legítimo não recebe contrato fictício. Deve ser identificado e preservado como categoria distinta na reconciliação, sem somar duas vezes ao saldo.
+- **Homologação:** recibo interno V2 1:1 ao pagamento, com snapshot e histórico de estorno, nunca um recebimento financeiro adicional. Testes abrangem concorrência lógica por trava, idempotência, leitura RLS, reversão e interface de homologação.
+- **Não concluído:** recibo Word/PDF definitivo, cutover produtivo, reclassificação individual de serviço avulso, preenchimento de contratos sem valor e verificação de backup restaurável. Não declarar 100% operacional enquanto isso permanecer.
