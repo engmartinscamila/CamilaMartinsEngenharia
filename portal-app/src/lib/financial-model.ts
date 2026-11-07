@@ -35,6 +35,13 @@ export function filterFinancialEntries(entries:FinancialEntrySummary[],filters:F
     && (!filters.month || entryDate(entry)?.startsWith(filters.month))
     && (!query || normalized([entry.description,entry.clientName,entry.contractNumber,entry.projectName,categoryLabel(entry.category),entry.notes].join(' ')).includes(query)));
 }
+/** A missing contract price is unknown, never a fictional R$ 0,00. */
+export function financialAmountOrNull(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
 export function financialTotals(entries:FinancialEntrySummary[]) {
   const result={received:0,paid:0,receivable:0,payable:0,balance:0,forecast:0};
   for (const entry of entries) {
@@ -105,4 +112,57 @@ export function receivableStatements(contracts:AdminContractSummary[], projects:
       overdue:financialTotals(linked.filter(entry=>effectiveStatus(entry)==='atrasado')).receivable,credit:0,entries:linked,inactive:false});
   }
   return rows;
+}
+
+
+export type FinancialLinkIssueCode =
+  | 'project_missing'
+  | 'project_client_mismatch'
+  | 'project_contract_mismatch'
+  | 'contract_client_mismatch';
+export interface FinancialLinkIssue {
+  code: FinancialLinkIssueCode;
+  referenceId: string;
+  message: string;
+}
+
+/** Read-only integrity checks. Never correct or remove historical financial entries implicitly. */
+export function financialLinkIssues(
+  contracts: AdminContractSummary[],
+  projects: AdminProjectSummary[],
+  entries: FinancialEntrySummary[],
+): FinancialLinkIssue[] {
+  const contractsById = new Map(contracts.map(contract => [contract.id, contract]));
+  const projectsById = new Map(projects.map(project => [project.id, project]));
+  const issues: FinancialLinkIssue[] = [];
+  for (const project of projects) {
+    if (!project.contractId) continue; // Projects legitimately exist before contracts.
+    const contract = contractsById.get(project.contractId);
+    if (contract && project.clientId && contract.clientId && project.clientId !== contract.clientId) {
+      issues.push({ code: 'project_contract_mismatch', referenceId: project.id,
+        message: `O projeto "${project.name}" está associado a um contrato de outro cliente.` });
+    }
+  }
+  for (const entry of entries) {
+    const project = entry.projectId ? projectsById.get(entry.projectId) : null;
+    if (entry.projectId && !project) {
+      issues.push({ code: 'project_missing', referenceId: entry.id,
+        message: `O lançamento "${entry.description}" referencia um projeto indisponível na listagem.` });
+    }
+    if (project && entry.clientId && project.clientId && entry.clientId !== project.clientId) {
+      issues.push({ code: 'project_client_mismatch', referenceId: entry.id,
+        message: `O lançamento "${entry.description}" pertence a um cliente diferente do projeto.` });
+    }
+    if (project && entry.contractId && project.contractId && entry.contractId !== project.contractId) {
+      issues.push({ code: 'project_contract_mismatch', referenceId: entry.id,
+        message: `O lançamento "${entry.description}" aponta para um contrato diferente do projeto.` });
+    }
+    const linkedContractId = entry.contractId || project?.contractId;
+    const contract = linkedContractId ? contractsById.get(linkedContractId) : null;
+    if (contract && entry.clientId && contract.clientId && entry.clientId !== contract.clientId) {
+      issues.push({ code: 'contract_client_mismatch', referenceId: entry.id,
+        message: `O lançamento "${entry.description}" está vinculado ao contrato de outro cliente.` });
+    }
+  }
+  return issues;
 }

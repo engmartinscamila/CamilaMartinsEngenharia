@@ -9,7 +9,7 @@ export const adminSections = [
   { key: 'crm', href: '/admin/crm', icon: 'funnel-outline', title: 'Oportunidades comerciais', description: 'Acompanhe interessados, propostas e negociações.' },
   { key: 'commercial-documents', href: '/admin/commercial-documents', icon: 'calculator-outline', title: 'Contratos gerais', description: 'Ponto único para criar orçamento, contrato, Anexo I e documentos complementares.' },
   { key: 'clients', href: '/admin/clients', icon: 'people-outline', title: 'Clientes', description: 'Convidar, arquivar, reativar, revogar ou excluir com confirmação.' },
-  { key: 'projects', href: '/admin/projects', icon: 'briefcase-outline', title: 'Projetos', description: 'Cadastro inseparável pelo número do contrato e acompanhamento.' },
+  { key: 'projects', href: '/admin/projects', icon: 'briefcase-outline', title: 'Projetos', description: 'Cadastro por cliente e endereço, com contrato vinculado quando elaborado.' },
   { key: 'service-level-governance', href: '/admin/service-level-governance', icon: 'layers-outline', title: 'Revisar serviços × Bronze/Prata/Ouro', description: 'Aprove, rejeite ou ajuste individualmente os textos de orçamento, contrato e Anexo I.' },
   { key: 'document-archive', href: '/admin/document-archive', icon: 'archive-outline', title: 'Arquivos antigos e restauração', description: 'Consulte arquivos guardados e restaure quando necessário.' },
   { key: 'document-center', href: '/admin/document-center', icon: 'document-text-outline', title: 'Emissões e aprovações', description: 'Documentos gerados, aceites, aprovações e acompanhamento de versões em um só lugar.' },

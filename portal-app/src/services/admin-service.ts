@@ -1,5 +1,5 @@
 import { readAllRows } from '@/lib/paginated-query';
-import { financialCategory, financialStatus, financialToday } from '@/lib/financial-model';
+import { financialAmountOrNull, financialCategory, financialStatus, financialToday } from '@/lib/financial-model';
 import { normalizeStatus, isValidIsoDate } from '@/lib/format';
 import { decode } from 'base64-arraybuffer';
 import type { DocumentPickerAsset } from 'expo-document-picker';
@@ -181,7 +181,7 @@ export async function listAdminProjects(): Promise<ServiceResult<AdminProjectSum
           city: row.cidade_obra,
           state: row.estado_obra,
           contract: contract
-            ? { id: contract.id, contractNumber: contract.contract_number, clientId: contract.cliente_id, serviceType: contract.service_type, status: contract.status, contractValue: Number.isFinite(Number(contract.contract_value)) ? Number(contract.contract_value) : null, currency: contract.currency ?? 'BRL' }
+            ? { id: contract.id, contractNumber: contract.contract_number, clientId: contract.cliente_id, serviceType: contract.service_type, status: contract.status, contractValue: financialAmountOrNull(contract.contract_value), currency: contract.currency ?? 'BRL' }
             : null,
         } satisfies AdminProjectSummary;
       }),
@@ -230,7 +230,7 @@ export async function listAdminContracts(): Promise<ServiceResult<AdminContractS
       contractNumber: row.contract_number,
       serviceType: row.service_type,
       status: row.status,
-      contractValue: row.contract_value === null ? null : Number(row.contract_value),
+      contractValue: financialAmountOrNull(row.contract_value),
       currency: row.currency ?? 'BRL',
     })),
     error: null,

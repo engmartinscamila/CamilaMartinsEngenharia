@@ -9,8 +9,17 @@
     const texto = id => document.getElementById(id)?.value?.trim() || "";
     const valor = item => Number(item?.valor) || 0;
     const normalizar = value => String(value ?? "").toLocaleLowerCase("pt-BR");
-    const dataReferencia = item => item.data_vencimento || item.data || "";
-    const hojeIso = () => new Date().toISOString().slice(0, 10);
+    const dataReferencia = item => item.status === "pago"
+        ? (item.data_pagamento || item.data || "")
+        : (item.data_vencimento || item.data || "");
+    // Mesma referência de data do portal Expo; UTC pode mudar o dia no Brasil.
+    const hojeIso = () => new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit"
+    }).format(new Date());
+    const adicionarDiasIso = (iso, dias) => {
+        const [ano, mes, dia] = iso.split("-").map(Number);
+        return new Date(Date.UTC(ano, mes - 1, dia + dias)).toISOString().slice(0, 10);
+    };
 
     function clienteSupabase() {
         return window.supabaseClient || null;
@@ -113,9 +122,7 @@
         const ativos = itens.filter(item => situacaoEfetiva(item) !== "cancelado");
         const aReceber = ativos.filter(item => item.tipo === "entrada" && situacaoEfetiva(item) !== "pago");
         const atrasados = ativos.filter(item => situacaoEfetiva(item) === "atrasado");
-        const limite = new Date();
-        limite.setDate(limite.getDate() + 30);
-        const limiteIso = limite.toISOString().slice(0, 10);
+        const limiteIso = adicionarDiasIso(hojeIso(), 30);
         const proximos = ativos.filter(item => {
             const data = dataReferencia(item);
             return situacaoEfetiva(item) !== "pago" && data >= hojeIso() && data <= limiteIso;

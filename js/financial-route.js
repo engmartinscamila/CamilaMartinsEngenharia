@@ -1,2 +1,7 @@
-/* Compatibility only: no second financial controller or form. */
-(function(){'use strict';location.replace('/portal/admin/financial/'+location.search+location.hash);})();
+/* O financeiro antigo é somente um atalho para a área integrada (sem segundo controlador). */
+(function(){
+  'use strict';
+  const query = new URLSearchParams(location.search);
+  if (!query.has('view')) query.set('view', 'summary');
+  location.replace('/portal/admin/finance-center/?' + query.toString() + location.hash);
+})();
