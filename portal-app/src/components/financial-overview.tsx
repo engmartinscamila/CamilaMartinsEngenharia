@@ -6,6 +6,7 @@ import { accountBalance, effectiveStatus, financialStatus, financialToday, finan
 import { exportReceivableCsv } from '@/services/financial-tools';
 import { SelectionChips } from '@/components/admin-ui';
 import { receivableOverview, type ReceivableFocus } from '@/lib/receivable-priorities';
+import type { FinancialIntegrityIssue } from '@/lib/financial-reconciliation';
 import { formatCurrency, formatDate } from '@/lib/format';
 import type { AdminContractSummary, FinancialAccountSummary, FinancialEntrySummary } from '@/types/domain';
 
@@ -41,16 +42,22 @@ export type FinancialReceivablesProps = {
   statementFocus:ReceivableFocus; setStatementFocus:React.Dispatch<React.SetStateAction<ReceivableFocus>>;
   statementPage:number; setStatementPage:React.Dispatch<React.SetStateAction<number>>;
   expandedStatement:string|null; setExpandedStatement:React.Dispatch<React.SetStateAction<string|null>>;
-  statementRows:ReceivableStatement[]; contracts:AdminContractSummary[];
+  statementRows:ReceivableStatement[]; contracts:AdminContractSummary[]; integrityIssues:FinancialIntegrityIssue[];
   loading:boolean; coreError:string|null; saving:boolean; goldColor:string;
   perform:(task:()=>Promise<void>)=>Promise<void>;
   openReceipt:(id:string,projectId?:string|null)=>void; receiveEntry:(entry:FinancialEntrySummary)=>void;
   onContractEdit:(id:string)=>void;
 };
-export function FinancialReceivables({styles,embeddedProjectId,missingContractValues,statementQuery,setStatementQuery,statementFocus,setStatementFocus,statementPage,setStatementPage,expandedStatement,setExpandedStatement,statementRows,contracts,loading,coreError,saving,goldColor,perform,openReceipt,receiveEntry,onContractEdit}:FinancialReceivablesProps){
+export function FinancialReceivables({styles,embeddedProjectId,missingContractValues,statementQuery,setStatementQuery,statementFocus,setStatementFocus,statementPage,setStatementPage,expandedStatement,setExpandedStatement,statementRows,contracts,integrityIssues,loading,coreError,saving,goldColor,perform,openReceipt,receiveEntry,onContractEdit}:FinancialReceivablesProps){
   return (
 <>
         <Text style={styles.sectionTitle}>Extrato de saldo a receber</Text>
+        {!loading&&!coreError?<Card>
+          <Text style={styles.title}>Conferência automática de integridade</Text>
+          {integrityIssues.length?<Notice tone="warning">{integrityIssues.length} ponto(s) para conferir no financeiro. Este aviso não altera lançamentos nem confirma perda de saldo.</Notice>:<Text style={styles.meta}>Nenhuma divergência nas verificações básicas. A conciliação completa depende de extrato bancário e comprovantes.</Text>}
+          {integrityIssues.slice(0,5).map((issue,index)=><Text key={issue.code+'-'+(issue.entryId??'')+'-'+index} style={styles.meta}>• {issue.message}</Text>)}
+          {integrityIssues.length>5?<Text style={styles.meta}>Há mais {integrityIssues.length-5} ocorrência(s); exporte e confira os lançamentos antes de regularizar.</Text>:null}
+        </Card>:null}
         <Text style={styles.meta}>Saldo restante = valor contratado menos recebimentos. Parcelas pendentes fazem parte desse saldo. Serviços sem contrato usam os lançamentos pendentes. Valores de contratos cancelados ou arquivados ficam fora do total.</Text>
         {embeddedProjectId?<Notice tone="info">Exibindo o contrato completo do projeto selecionado, incluindo recebimentos de seus outros projetos.</Notice>:null}
         {missingContractValues>0?<Notice tone="warning">{missingContractValues} contrato(s) sem valor informado: o saldo completo desses contratos ainda não pode ser calculado. Use “Informar valor contratado” para completar.</Notice>:null}
