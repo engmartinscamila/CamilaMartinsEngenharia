@@ -74,7 +74,7 @@ export function auditLegacyReceivables(
   const project=entry.projectId?projectsById.get(entry.projectId):null;
   const resolvedClient=entry.clientId||project?.clientId||null;
   if(!resolvedClient||resolvedClient!==receipt.clientId)push('client_mismatch','Cliente do recibo difere do lançamento.');
-  if(entry.projectId&&receipt.projectId&&entry.projectId!==receipt.projectId)push('project_mismatch','Projeto do recibo difere do lançamento.');
+  if((entry.projectId??null)!==(receipt.projectId??null))push('project_mismatch','Projeto do recibo difere do lançamento.');
   if(!invalid)confirmedReceiptLinks+=1;
  }
  const paidWithoutReceipt=entries.filter(e=>e.type==='entrada'&&financialStatus(e.status)==='pago'&&!linkedToEntry.has(e.id)).length;
