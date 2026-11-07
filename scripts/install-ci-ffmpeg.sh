@@ -1,17 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if command -v ffmpeg >/dev/null 2>&1; then
-  ffmpeg -version
-  exit 0
-fi
-
 # Use the signed Ubuntu archives directly. The runner's Azure mirror can
 # stall large codec downloads even while the Ubuntu archives remain healthy.
 . /etc/os-release
 if [[ "${ID:-}" != ubuntu || ! "${VERSION_CODENAME:-}" =~ ^[a-z]+$ ]]; then
   echo 'This installer requires an Ubuntu CI runner.' >&2
   exit 1
+fi
+# Keep later APT calls (including Playwright's browser dependencies) on the
+# same official archives. Do not change the repositories' signing settings.
+if [[ -f /etc/apt/apt-mirrors.txt ]]; then
+  printf '%s\n' 'https://archive.ubuntu.com/ubuntu' | sudo tee /etc/apt/apt-mirrors.txt >/dev/null
+fi
+if [[ -f /etc/apt/apt-mirrors-security.txt ]]; then
+  printf '%s\n' 'https://security.ubuntu.com/ubuntu' | sudo tee /etc/apt/apt-mirrors-security.txt >/dev/null
+fi
+if command -v ffmpeg >/dev/null 2>&1; then
+  ffmpeg -version
+  exit 0
 fi
 keyring=/usr/share/keyrings/ubuntu-archive-keyring.gpg
 test -r "$keyring"
