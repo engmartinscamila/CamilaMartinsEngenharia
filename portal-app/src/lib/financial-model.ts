@@ -35,6 +35,13 @@ export function filterFinancialEntries(entries:FinancialEntrySummary[],filters:F
     && (!filters.month || entryDate(entry)?.startsWith(filters.month))
     && (!query || normalized([entry.description,entry.clientName,entry.contractNumber,entry.projectName,categoryLabel(entry.category),entry.notes].join(' ')).includes(query)));
 }
+/** A missing contract price is unknown, never a fictional R$ 0,00. */
+export function financialAmountOrNull(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
 export function financialTotals(entries:FinancialEntrySummary[]) {
   const result={received:0,paid:0,receivable:0,payable:0,balance:0,forecast:0};
   for (const entry of entries) {
