@@ -38,6 +38,22 @@ assert.match(financial, /const result = await readAllRows\(/);
 assert.doesNotMatch(financial, /for\s*\(let offset/);
 assert.doesNotMatch(content, /for\s*\(let offset/);
 
+// Formatação de percentuais agora é compartilhada entre projetos e cronograma.
+const formattedModule = { exports: {} };
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/format.ts', 'utf8'), {
+  compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
+}).outputText, { module: formattedModule, exports: formattedModule.exports, Date, Number });
+const percent = formattedModule.exports.numberOrNull;
+assert.equal(percent(null), null);
+assert.equal(percent(undefined), null);
+assert.equal(percent(''), null);
+assert.equal(percent('inválido'), null);
+assert.equal(percent(-8), 0);
+assert.equal(percent(125), 100);
+assert.equal(percent('37.5'), 37.5);
+assert.match(original, /import \{ normalizeStatus, numberOrNull \} from '@\/lib\/format'/);
+assert.match(relations, /import \{ numberOrNull \} from '@\/lib\/format'/);
+
 // Executa o paginador compartilhado com uma consulta simulada: nenhuma consulta real.
 const pageModule = { exports: {} };
 const pageJs = ts.transpileModule(fs.readFileSync('src/lib/paginated-query.ts', 'utf8'), {
