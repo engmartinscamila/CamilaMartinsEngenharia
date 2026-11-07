@@ -9,6 +9,7 @@ import {buildMonthlyInstallments,suggestPaymentDistribution} from '@/lib/finance
 import {financialToday} from '@/lib/financial-model';
 import {formatCurrency,parseBrazilianCurrency} from '@/lib/format';
 import {useAppTheme} from '@/providers/theme-provider';
+import {issueFinanceV2ReceiptReference,listFinanceV2ReceiptRecords,type FinanceV2ReceiptRecord} from '@/services/finance-v2-receipt-service';
 import {
  financeV2HomologationEnabled,loadFinanceV2Snapshot,createFinanceV2Title,recordFinanceV2Payment,
  reverseFinanceV2Payment,type FinanceV2Snapshot,
@@ -26,6 +27,8 @@ export default function AdminFinanceV2Screen(){
  const router=useRouter();
  const {colors}=useAppTheme();
  const [data,setData]=useState<FinanceV2Snapshot|null>(null);
+ const [receiptRecords,setReceiptRecords]=useState<FinanceV2ReceiptRecord[]|null>(null);
+ const [receiptError,setReceiptError]=useState<string|null>(null);
  const [loading,setLoading]=useState(financeV2HomologationEnabled),[saving,setSaving]=useState(false);
  const [error,setError]=useState<string|null>(null),[message,setMessage]=useState<string|null>(null);
  const [clientQuery,setClientQuery]=useState(''),[clientId,setClientId]=useState<string|null>(null);
@@ -37,7 +40,7 @@ export default function AdminFinanceV2Screen(){
  const [paymentMethod,setPaymentMethod]=useState('Pix'),[paymentAccount,setPaymentAccount]=useState<string|null>(null);
  const [allocation,setAllocation]=useState<Record<string,string>>({});
  const [reverseTarget,setReverseTarget]=useState<string|null>(null),[reverseReason,setReverseReason]=useState('');
- const titleRequest=useRef<RetryKey|null>(null),paymentRequest=useRef<RetryKey|null>(null),reversalRequest=useRef<RetryKey|null>(null);
+ const titleRequest=useRef<RetryKey|null>(null),paymentRequest=useRef<RetryKey|null>(null),reversalRequest=useRef<RetryKey|null>(null),receiptRequest=useRef<RetryKey|null>(null);
  const locked=useRef(false);
  const selected=data?.titles.find(t=>t.id===selectedTitle);
  const titleInstallments=useMemo(()=>[...(data?.installments??[])].filter(i=>i.receivableId===selectedTitle).sort((a,b)=>a.dueDate.localeCompare(b.dueDate)),[data,selectedTitle]);
@@ -49,17 +52,21 @@ export default function AdminFinanceV2Screen(){
  async function reload(){
   if(!financeV2HomologationEnabled)return;
   setLoading(true);
-  const result=await loadFinanceV2Snapshot();
+  const [result,referenceResult]=await Promise.all([loadFinanceV2Snapshot(),listFinanceV2ReceiptRecords()]);
   setLoading(false);
+  setReceiptError(referenceResult.error);
+  setReceiptRecords(referenceResult.data);
   if(result.error||!result.data){setData(null);setError(result.error??'Não foi possível conferir o extrato.');return;}
   setData(result.data);setError(null);
  }
  useEffect(()=>{
   if(!financeV2HomologationEnabled)return;
   let active=true;
-  void loadFinanceV2Snapshot().then(result=>{
+  void Promise.all([loadFinanceV2Snapshot(),listFinanceV2ReceiptRecords()]).then(([result,referenceResult])=>{
    if(!active)return;
    setLoading(false);
+   setReceiptError(referenceResult.error);
+   setReceiptRecords(referenceResult.data);
    if(result.error||!result.data){setData(null);setError(result.error??'Não foi possível conferir o extrato.');return;}
    setData(result.data);setError(null);
   });
@@ -111,6 +118,16 @@ export default function AdminFinanceV2Screen(){
   if(result.error)throw Error(result.error);
   paymentRequest.current=null;setPaymentAmount('');setAllocation({});
   setMessage('Recebimento confirmado no ledger de homologação, sem duplicar entrada de caixa no legado.');
+  await reload();
+ }
+ async function issueReceiptRecord(paymentId:string){
+  if(receiptError||receiptRecords===null)throw Error('É necessário confirmar a leitura de todo o histórico de comprovantes antes da emissão.');
+  const draft={paymentId};
+  const requestId=requestIdFor(receiptRequest,draft);
+  const result=await issueFinanceV2ReceiptReference(paymentId,requestId);
+  if(result.error)throw Error(result.error);
+  receiptRequest.current=null;
+  setMessage('Comprovante administrativo de homologação vinculado ao pagamento. Nenhum lançamento adicional foi criado no caixa.');
   await reload();
  }
  async function saveReversal(){
@@ -191,10 +208,16 @@ export default function AdminFinanceV2Screen(){
    </Card>
    <Card>
     <Text style={{fontWeight:'700',color:colors.ink,fontSize:16}}>3. Histórico de recebimentos e estornos</Text>
-    {data.payments.length===0?<Text style={{color:colors.muted}}>Ainda não há pagamentos V2.</Text>:data.payments.slice(-30).reverse().map(p=><View key={p.id} style={{gap:4,paddingVertical:6,borderBottomWidth:1,borderColor:colors.line}}>
-     <Text style={{color:colors.ink}}>{clientName(p.clientId)} • {formatCurrency(p.amount)} • {p.paidOn}{p.reversed?' • Estornado':''}</Text>
-     {!p.reversed?<Button title={reverseTarget===p.id?'Cancelar seleção de estorno':'Preparar estorno'} variant="secondary" onPress={()=>{setReverseTarget(reverseTarget===p.id?null:p.id);setReverseReason('');reversalRequest.current=null;}} />:null}
-    </View>)}
+    {receiptError?<Notice tone="danger">{receiptError}</Notice>:<Text style={{color:colors.muted}}>Comprovantes administrativos V2 não são recibos definitivos e não geram outra movimentação financeira.</Text>}
+    {data.payments.length===0?<Text style={{color:colors.muted}}>Ainda não há pagamentos V2.</Text>:data.payments.slice(-30).reverse().map(p=>{
+     const record=receiptRecords?.find(r=>r.paymentId===p.id);
+     return <View key={p.id} style={{gap:4,paddingVertical:6,borderBottomWidth:1,borderColor:colors.line}}>
+      <Text style={{color:colors.ink}}>{clientName(p.clientId)} • {formatCurrency(p.amount)} • {p.paidOn}{p.reversed?' • Estornado':''}</Text>
+      {record?<Text style={{color:colors.muted}}>Comprovante interno H-{record.referenceNumber} • {p.reversed?'pagamento estornado; histórico preservado':'vinculado ao pagamento'}</Text>:null}
+      {!p.reversed&&!record?<Button title="Registrar comprovante interno (homologação)" disabled={saving||receiptRecords===null||Boolean(receiptError)} variant="secondary" onPress={()=>void perform(()=>issueReceiptRecord(p.id))} />:null}
+      {!p.reversed?<Button title={reverseTarget===p.id?'Cancelar seleção de estorno':'Preparar estorno'} variant="secondary" onPress={()=>{setReverseTarget(reverseTarget===p.id?null:p.id);setReverseReason('');reversalRequest.current=null;}} />:null}
+     </View>;
+    })}
     {reverseTarget?<View style={{gap:spacing}}>
      <Notice tone="warning">O estorno preserva o registro do pagamento e devolve os valores às parcelas. Confirme a justificativa antes de prosseguir.</Notice>
      <Field label="Justificativa do estorno" multiline value={reverseReason} onChangeText={setReverseReason} />
