@@ -67,7 +67,7 @@ const button=title=>renderer.root.findAllByType('button').find(n=>n.props.title=
 assert(button('Registrar comprovante interno (homologação)'),'Pagamento V2 deve poder registrar comprovante');
 await act(async()=>button('Registrar comprovante interno (homologação)').props.onPress());
 assert.equal(issues,1,'Uma ação emite uma referência');
-assert(text().includes('Comprovante interno H-1'));
+assert(text().includes('Comprovante interno H-')&&text().includes('vinculado ao pagamento'),'A referência e o estado devem aparecer na interface');
 assert(!button('Registrar comprovante interno (homologação)'),'Pagamento com comprovante não oferece outra emissão');
 assert(loads>=2);
 await act(async()=>renderer.unmount());
