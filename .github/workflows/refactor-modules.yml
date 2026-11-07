@@ -1,0 +1,33 @@
+name: Refatoração modular de documentos financeiro e portfólio
+
+on:
+  pull_request:
+    paths:
+      - 'js/commercial-*.js'
+      - 'js/portfolio-*.js'
+      - 'portal-app/src/app/admin/financial.tsx'
+      - 'portal-app/src/components/financial-overview.tsx'
+      - 'orcamentos-contratos.html'
+      - 'protecao-pdf-admin.html'
+      - 'scripts/refactor-modules-regression.mjs'
+      - '.github/workflows/refactor-modules.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar sintaxe de todos os scripts extraídos
+        run: |
+          for file in js/commercial-*.js js/portfolio-*.js; do node --check "$file"; done
+          node --check scripts/refactor-modules-regression.mjs
+      - name: Exercitar regras comerciais e confirmar dependências
+        run: node scripts/refactor-modules-regression.mjs
