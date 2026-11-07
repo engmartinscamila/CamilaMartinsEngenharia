@@ -97,7 +97,7 @@ begin
   if v_request is null or v_client is null or v_total is null or v_total<=0 or v_total<>round(v_total,2) then
     raise exception 'Solicitação, cliente e valor com duas casas são obrigatórios';
   end if;
-  if jsonb_typeof(p_data->'installments')<>'array' then
+  if jsonb_typeof(p_data->'installments') is distinct from 'array' then
     raise exception 'Informe uma lista de parcelas (pode estar vazia)';
   end if;
   perform pg_advisory_xact_lock(hashtextextended('fin-rec-'||v_request::text,0));
@@ -156,7 +156,7 @@ begin
  v_items:=p_data->'allocations';
  if v_request is null or v_client is null or v_amount is null or v_amount<=0 or v_amount<>round(v_amount,2)
    or v_paid is null or v_paid>(now() at time zone 'America/Sao_Paulo')::date
-   or coalesce(length(trim(p_data->>'payment_method')),0)<2 or jsonb_typeof(v_items)<>'array'
+   or coalesce(length(trim(p_data->>'payment_method')),0)<2 or jsonb_typeof(v_items) is distinct from 'array'
  then raise exception 'Dados do recebimento incompletos ou inválidos'; end if;
  perform pg_advisory_xact_lock(hashtextextended('fin-pay-'||v_request::text,0));
  select id,request_payload into v_id,v_old from public.fin_v2_payments where request_id=v_request;
