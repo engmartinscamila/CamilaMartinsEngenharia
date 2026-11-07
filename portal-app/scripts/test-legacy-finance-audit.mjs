@@ -46,6 +46,8 @@ for(const code of ['amount_mismatch','date_mismatch','client_mismatch','project_
  assert(codes.includes(code),'Missing check '+code);
 }
 assert.equal(out.migrationReady,false);
+out=auditLegacyReceivables([contract],[project],[paid],[{...receipt,projectId:null}]);
+assert(out.receiptIssues.some(x=>x.code==='project_mismatch'),'Projeto omitido no recibo não pode parecer vínculo completo');
 out=auditLegacyReceivables([contract],[project],[{...paid,status:'pendente'}],[receipt]);
 assert(out.receiptIssues.some(x=>x.code==='not_paid'));
 const db=[
