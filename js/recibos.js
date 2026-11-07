@@ -29,6 +29,7 @@
     const issuedOn = new Date(row.created_at).toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});
     const number = `REC-${String(row.receipt_number).padStart(6,'0')}/${issuedOn.slice(0,4)}`;
     $('receiptPaper').innerHTML = `<header><div><strong>Camila Martins Engenharia</strong><br><span class="receipt-meta">${escape(s.issuer.title || 'Prestação de serviços')}</span></div><div><h1>RECIBO</h1><strong>${escape(number)}</strong></div></header><div class="receipt-value">${escape(money(row.amount))}</div><p>Recebi de <strong>${escape(s.payer_name)}</strong>${s.payer_document ? ', CPF/CNPJ ' + escape(s.payer_document) : ''}, a importância de <strong>${escape(money(row.amount))}</strong>, referente a:</p><p class="receipt-service">${escape(row.description)}</p><p><strong>Projeto:</strong> ${escape(s.project_name || 'Serviço sem projeto')}${s.contract_number ? '<br><strong>Contrato:</strong> ' + escape(s.contract_number) : ''}<br><strong>Recebimento:</strong> ${escape(date(row.paid_on))}<br><strong>Forma de pagamento:</strong> ${escape(row.payment_method)}</p><p>${escape(s.city)}, ${escape(date(issuedOn))}.</p><div class="receipt-signature"><strong>${escape(s.issuer.name)}</strong><br>CPF/CNPJ: ${escape(s.issuer.document)}</div><p class="receipt-meta">Emitido em ${escape(new Date(row.created_at).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}))} · ${escape(number)}</p>`;
+    if($('receiptEditor'))$('receiptEditor').hidden=true;
     $('receiptResult').hidden = false; $('receiptResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   async function loadHistory() {
@@ -111,6 +112,18 @@
         for(const id of ['receiptClient','receiptProject','receiptContract','receiptAmount','receiptDate','receiptDescription','receiptMethod'])$(id).disabled=true;
         message('Recibo vinculado ao recebimento. Se já houve emissão, será aberto o mesmo recibo, sem gerar outro número.');
       }
+      $('newStandaloneReceipt').disabled=false;
+      $('newStandaloneReceipt').addEventListener('click',()=>{
+        if(financialId){location.assign('recibos.html');return;}
+        $('receiptForm').reset();$('receiptDate').value=today; $('receiptCity').value=config.data?.cidade||'';selectProject();requestId=null;selectedReceipt=null;$('receiptResult').hidden=true;
+        $('receiptEditor').hidden=false;$('receiptEditor').scrollIntoView({behavior:'smooth',block:'start'});
+      });
+      if(financialId){
+        const existing=await supabaseClient.from('payment_receipts').select('*').eq('financial_entry_id',financialId).maybeSingle();
+        if(existing.error){message('Não foi possível conferir se este pagamento já possui recibo. Atualize antes de emitir.',true);return;}
+        if(existing.data){showReceipt(existing.data);message('Recibo já emitido para este recebimento. Use Word ou PDF para salvar a mesma emissão.');}
+        else $('receiptEditor').hidden=false;
+      }else if(contextualProject)$('receiptEditor').hidden=false;
       $('issueReceipt').disabled = false; await loadHistory();
       const receiptId=new URLSearchParams(location.search).get('receiptId');
       if(receiptId){const saved=await supabaseClient.from('payment_receipts').select('*').eq('id',receiptId).maybeSingle();if(saved.error||!saved.data)message('Não foi possível abrir o recibo solicitado.',true);else showReceipt(saved.data);}

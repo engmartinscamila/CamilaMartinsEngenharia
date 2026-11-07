@@ -63,3 +63,23 @@ const previewDb={from(){const q={select(){return q},eq(){return q},order(){retur
 const portal=load('src/services/portal-service.ts',{'@/lib/format':format,'@/lib/errors':{},'@/lib/env':{env:{}},'@/lib/supabase':{supabase:previewDb},'@/services/push-service':{}});
 const preview=await portal.listDocuments('synthetic-project',true);assert.equal(preview.error,null);assert.deepEqual(Array.from(preview.data,row=>row.id),['ordinary','released']);
 console.log('PASS: página incompleta não gera total parcial; prévia exclui rascunhos e documentos não liberados.');
+
+const contractRows=[{id:'contract-1',clientId:'client-1',clientName:'Cliente 1',contractNumber:'CON-1',contractValue:1000,status:'active'},
+ {id:'unknown-value',clientId:'client-1',clientName:'Cliente 1',contractNumber:'CON-2',contractValue:null,status:'active'},
+ {id:'inactive',clientId:'client-2',clientName:'Cliente 2',contractNumber:'CON-3',contractValue:800,status:'cancelled'}];
+const projectsForStatement=[{id:'p1',contractId:'contract-1',clientId:'client-1'},{id:'p2',contractId:'contract-1',clientId:'client-1'}];
+const statementEntries=[entry('first',{amount:100}),entry('second',{projectId:'p2',amount:200}),
+ entry('direct',{projectId:null,contractId:'contract-1',amount:50}),entry('future',{status:'pendente',amount:400}),
+ entry('cancelled',{amount:9000,status:'cancelado'}),entry('out',{type:'saida',amount:20}),
+ entry('unknown',{projectId:null,contractId:'unknown-value',status:'pendente',amount:25}),
+ entry('standalone',{projectId:null,clientId:'client-3',status:'pendente',amount:75})];
+let statement=m.receivableStatements(contractRows,projectsForStatement,statementEntries,[{id:'client-3',name:'Avulso'}]);
+let first=statement.find(row=>row.id==='contract-1');assert.equal(first.received,350);assert.equal(first.remaining,650);assert.equal(first.pending,400);assert.equal(first.unscheduled,250);
+assert.equal(first.entries.length,4,'Multiple projects and a direct contract entry count once; cancelled and expenses do not count');
+assert.equal(statement.find(row=>row.id==='unknown-value').remaining,null,'Unknown contract value is not zero');
+assert.equal(statement.find(row=>row.id==='client-3').pending,75);
+assert.equal(statement.filter(row=>!row.inactive).reduce((sum,row)=>sum+(row.remaining??row.pending),0),750,'Do not add pending installments to contract remainder');
+statement=m.receivableStatements(contractRows,projectsForStatement,statementEntries,[],'p2');assert.equal(statement.length,1);assert.equal(statement[0].received,350,'Project filter keeps the complete contract, not a duplicated contract value per project');
+first=m.receivableStatements(contractRows,projectsForStatement,[entry('overpaid',{amount:1100})],[])[0];assert.equal(first.remaining,0);assert.equal(first.credit,100);
+assert.equal(m.filterFinancialEntries(rows,{...empty,type:'saida'}).length,1,'Payables filter excludes income');
+console.log('PASS: extrato contratual, recebimento direto, múltiplos projetos, parcelas não lançadas, avulsos, cancelados, valor desconhecido e crédito sem dupla contagem.');

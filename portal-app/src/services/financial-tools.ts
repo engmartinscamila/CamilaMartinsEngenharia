@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import { isValidIsoDate } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import { downloadBase64File } from '@/lib/download-generated-file';
-import { categoryLabel, csvCell, financialToday, type BankTransaction } from '@/lib/financial-model';
+import { categoryLabel, csvCell, financialToday, type ReceivableStatement, type BankTransaction } from '@/lib/financial-model';
 import type { FinancialAccountSummary, FinancialArchiveSummary, FinancialEntrySummary, ServiceResult } from '@/types/domain';
 
 export async function listBankTransactions():Promise<ServiceResult<BankTransaction[]>> {
@@ -58,4 +58,12 @@ export async function exportFinancialExcel(entries:FinancialEntrySummary[],archi
   for(const [name,rows] of Object.entries(sheets))api.utils.book_append_sheet(book,api.utils.json_to_sheet(rows.length?rows:[{'Informação':'Nenhum registro.'}]),name);
   const content=api.write(book,{type:'base64',bookType:'xlsx',compression:true});
   await downloadBase64File(content,`financeiro-completo-${financialToday()}.xlsx`,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+}
+
+
+export async function exportReceivableCsv(statements:ReceivableStatement[]) {
+  const columns=['Cliente','Contrato','Contratado','Recebido','Saldo contratual','Parcelas pendentes','Em atraso','Saldo sem parcelas','Crédito / excedente','Fora do total'];
+  const rows=statements.map(row=>[row.clientName,row.contractNumber,row.contractValue??'',row.received,row.remaining??'',row.pending,row.overdue,row.unscheduled??'',row.credit,row.inactive?'Sim':'Não']);
+  const csv='\ufeff'+[columns,...rows].map(row=>row.map(csvCell).join(';')).join('\r\n');
+  await downloadBase64File(encode(new TextEncoder().encode(csv).buffer as ArrayBuffer),`saldo-a-receber-${financialToday()}.csv`,'text/csv;charset=utf-8');
 }

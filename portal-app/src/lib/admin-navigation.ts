@@ -84,7 +84,7 @@ export function openWebsiteAdminSection(key: string, params: Record<string,strin
   const aliasView=aliases[key];
   if(aliasView){params={...params,view:aliasView};key='document-center';}
   const grouped=groupedWebsiteAdminRoutes[key];
-  if(grouped){const view=key==='financial'&&['entries','accounts','hours','history','fiscal'].includes(params.view??'')?params.view!:grouped.view;params={...params,view};key=grouped.area;}
+  if(grouped){const view=key==='financial'&&['summary','receivables','entries','accounts','hours','history','fiscal'].includes(params.view??'')?params.view!:grouped.view;params={...params,view};key=grouped.area;}
   const query = new URLSearchParams(params);
   const suffix = query.size ? `?${query}` : '';
   if (!usesWebsiteAdminHome()) return false;

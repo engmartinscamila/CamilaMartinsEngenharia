@@ -12,8 +12,8 @@ import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
 import { DateField } from '@/components/date-field';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
 import { randomUUID } from 'expo-crypto';
-import { accountBalance, categoryLabel, effectiveStatus, entryDate, filterFinancialEntries, financialCategories, financialCategory, financialStatus, financialToday, financialTotals, type BankTransaction } from '@/lib/financial-model';
-import { exportFinancialCsv, exportFinancialExcel, listBankTransactions, updateAccountReference } from '@/services/financial-tools';
+import { accountBalance, categoryLabel, effectiveStatus, entryDate, filterFinancialEntries, financialCategories, financialCategory, financialStatus, financialToday, financialTotals, receivableStatements, type BankTransaction } from '@/lib/financial-model';
+import { exportFinancialCsv, exportFinancialExcel, exportReceivableCsv, listBankTransactions, updateAccountReference } from '@/services/financial-tools';
 import { supabase } from '@/lib/supabase';
 import { formatCurrency, formatDate, isValidIsoDate, parseBrazilianCurrency } from '@/lib/format';
 import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
@@ -104,10 +104,14 @@ export default function AdminFinancialScreen() {
   const [paymentMethod,setPaymentMethod]=useState('');
   const [openingDate,setOpeningDate]=useState(financialToday());
   const [referenceAccount,setReferenceAccount]=useState<string|null>(null);
-  const [localSection,setLocalSection]=useState('entries');
+  const [localSection,setLocalSection]=useState('summary');
+  const [formOpen,setFormOpen]=useState(false);
+  const [statementQuery,setStatementQuery]=useState('');
+  const [statementPage,setStatementPage]=useState(0);
+  const [expandedStatement,setExpandedStatement]=useState<string|null>(null);
   const section=embedded?.subview??localSection;
   const setSection=(value:string)=>{if(embedded)embedded.onNavigate('financial',{view:value});else setLocalSection(value);};
-  const [filters,setFilters]=useState({query:'',projectId:'',status:'',month:''});
+  const [filters,setFilters]=useState({query:'',projectId:'',status:'',month:'',type:''});
   const [coreError,setCoreError]=useState<string|null>(null);
   const [bankError,setBankError]=useState<string|null>(null);
   const [archiveError,setArchiveError]=useState<string|null>(null);
@@ -126,7 +130,7 @@ export default function AdminFinancialScreen() {
     setEditing(entry);setEntryLink(entry.projectId?'project':'client');setEntryClientId(entry.clientId??projects.find(p=>p.id===entry.projectId)?.clientId??null);setEntryContractId(entry.contractId??null);setSelectedProjectId(entry.projectId);setType(entry.type as 'entrada'|'saida');setDescription(entry.description);
     setAmount(entry.amount.toFixed(2).replace('.',','));setDate(entry.date??financialToday());setDueDate(entry.dueDate??'');setNotes(entry.notes??'');
     setCategory(financialCategory(entry.category));setEntryStatus(financialStatus(entry.status));setAccountId(entry.accountId);setPaidAt(entry.paidAt??entry.date??financialToday());
-    setPaymentMethod(entry.paymentMethod??'');setSection('entries');requestId.current=null;
+    setPaymentMethod(entry.paymentMethod??'');setFormOpen(true);setSection('entries');requestId.current=null;
   };
   const { colors } = useAppTheme();
   const styles = useThemeStyles(styleDefinitions);
@@ -170,13 +174,19 @@ export default function AdminFinancialScreen() {
 
   useLiveRefresh(load);
 
-  const filteredEntries=useMemo(()=>filterFinancialEntries(entries,filters),[entries,filters]);
+  const filteredEntries=useMemo(()=>filterFinancialEntries(entries,{...filters,projectId:embedded?.projectId??filters.projectId}),[entries,filters,embedded?.projectId]);
+  const statements=useMemo(()=>receivableStatements(contracts,projects,entries,clients,embedded?.projectId??filters.projectId),[contracts,projects,entries,clients,embedded?.projectId,filters.projectId]);
+  const statementRows=statements.filter(row=>[row.clientName,row.contractNumber].join(' ').toLocaleLowerCase('pt-BR').includes(statementQuery.trim().toLocaleLowerCase('pt-BR')));
+  const statementTotal=statements.filter(row=>!row.inactive).reduce((sum,row)=>sum+Math.round((row.remaining??row.pending)*100),0)/100;
+  const monthTotals=financialTotals(entries.filter(entry=>(!embedded?.projectId||entry.projectId===embedded.projectId)&&entryDate(entry)?.startsWith(financialToday().slice(0,7))));
+  const openReceipt=(id:string,projectId?:string|null)=>{const url='/recibos.html?financialId='+encodeURIComponent(id);if(embedded)embedded.onNavigate('receipts',{financialId:id,...(projectId?{projectId}:{})});else if(Platform.OS==='web')window.location.assign(url);else void Linking.openURL('https://camilamartinsengenharia.com.br'+url);};
+  const receiveEntry=(entry:FinancialEntrySummary)=>{editEntry(entry);setEntryStatus('pago');setPaidAt(financialToday());};
   const totals=useMemo(()=>financialTotals(filteredEntries),[filteredEntries]);
   const visibleEntries=filteredEntries.slice(page*50,page*50+50);
   const summaries=useMemo(()=>contracts.filter(contract=>!embedded?.projectId||projects.some(project=>project.id===embedded.projectId&&project.contractId===contract.id)).map(contract=>{
     const linkedProjects=projects.filter(project=>project.contractId===contract.id);
     const ids=new Set(linkedProjects.map(project=>project.id));
-    const values=financialTotals(entries.filter(entry=>entry.projectId&&ids.has(entry.projectId)));
+    const values=financialTotals(entries.filter(entry=>entry.contractId===contract.id||(!entry.contractId&&entry.projectId&&ids.has(entry.projectId))));
     const hours=timesheets.filter(item=>ids.has(item.projectId));
     return {projectId:contract.id,projectName:linkedProjects.map(project=>project.name).join(' • '),contractNumber:contract.contractNumber,
       contractValue:contract.contractValue,received:values.received,receivable:values.receivable,paidCosts:values.paid,payable:values.payable,
@@ -199,7 +209,7 @@ export default function AdminFinancialScreen() {
     if(result.error){setError('A limpeza não foi confirmada. Atualize os dados antes de tentar novamente.');return;}
     setResetReady(false);setResetPhrase('');await load();setSuccess('Lançamentos ativos arquivados. O histórico permanece disponível.');
   };
-  const saveEntry = async () => {
+  const saveEntry = async (withReceipt=false) => {
     setError(null); setSuccess(null);
     const parsed = parseBrazilianCurrency(amount);
     const dateValue=financialDateInput(date),dueValue=financialDateInput(dueDate),paidValue=financialDateInput(paidAt);
@@ -225,7 +235,7 @@ export default function AdminFinancialScreen() {
     const result=editing ? await updateAdminFinancialEntry(editing.id,input) : await createAdminFinancialEntry(input);
     setSaving(false);
     if (result) setError(result);
-    else { clearEntry(); setSuccess('Lançamento administrativo confirmado.'); await load(); }
+    else { const receiptEntry=withReceipt&&editing&&type==='entrada'&&entryStatus==='pago'?editing:null; clearEntry(); setFormOpen(false); setSuccess('Lançamento administrativo confirmado.'); await load(); if(receiptEntry)openReceipt(receiptEntry.id,receiptEntry.projectId); }
   };
 
   const saveAccount = async () => {
@@ -297,33 +307,72 @@ export default function AdminFinancialScreen() {
 
   return (
     <Screen>
-      <AdminPageHeader title="Financeiro" description="Lançamentos, contas, OFX, horas, recibos e histórico em uma única área." />
-      <Notice tone="info">Clientes não possuem permissão de banco nem rota para esta área. O histórico arquivado permanece somente administrativo mesmo após a exclusão do cliente.</Notice>
+      <AdminPageHeader title="Financeiro" description="Confira os saldos, registre recebimentos e emita seus recibos." />
       {error ? <Notice tone="danger">{error}</Notice> : null}
       {success ? <Notice tone="success">{success}</Notice> : null}
       {loading ? <ActivityIndicator color={colors.gold600} /> : null}
       {!embedded ? <SelectionChips label="Área financeira" value={section} onChange={value=>{setSection(value);setError(null);setSuccess(null);}}
-        items={[{value:'entries',label:'Visão e lançamentos'},{value:'accounts',label:'Contas e OFX'},{value:'hours',label:'Horas e margem'},{value:'history',label:'Histórico e exportações'},{value:'fiscal',label:'Rascunhos fiscais'}]} /> : null}
+        items={[{value:'summary',label:'Resumo'},{value:'receivables',label:'A receber'},{value:'entries',label:'Movimentações'},{value:'accounts',label:'Contas e OFX'},{value:'hours',label:'Horas e margem'},{value:'history',label:'Histórico e exportações'},{value:'fiscal',label:'Rascunhos fiscais'}]} /> : null}
       {!embedded ? <Button title="Emissão de recibos — Word e PDF" variant="secondary" onPress={()=>{if(Platform.OS==='web')window.location.assign('/recibos.html');else void Linking.openURL('https://camilamartinsengenharia.com.br/recibos.html');}} /> : null}
+      {section==='summary'?<>
+        <Text style={styles.sectionTitle}>Resumo financeiro</Text>
+        <View style={styles.metrics}>
+          <Card style={styles.metric}><Text style={styles.metricLabel}>RECEBIDO NO MÊS</Text><Text style={styles.metricValue}>{coreError?'Indisponível':formatCurrency(monthTotals.received)}</Text><Button title="Ver recebimentos do mês" variant="ghost" onPress={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'pago',month:financialToday().slice(0,7),type:'entrada'});setPage(0);setSection('entries');}} /></Card>
+          <Card style={styles.metric}><Text style={styles.metricLabel}>SALDO A RECEBER</Text><Text style={styles.metricValue}>{coreError?'Indisponível':loading?'Carregando…':formatCurrency(statementTotal)}</Text><Button title="Abrir extrato a receber" variant="ghost" onPress={()=>setSection('receivables')} /></Card>
+          <Card style={styles.metric}><Text style={styles.metricLabel}>A PAGAR</Text><Text style={styles.metricValue}>{coreError?'Indisponível':formatCurrency(financialTotals(entries.filter(entry=>!embedded?.projectId||entry.projectId===embedded.projectId)).payable)}</Text><Button title="Ver pendências" variant="ghost" onPress={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'pendente',month:'',type:'saida'});setPage(0);setSection('entries');}} /></Card>
+        </View>
+        <Text style={styles.sectionTitle}>Saldos das contas</Text>
+        {embedded?.projectId?<Text style={styles.meta}>Os saldos bancários são globais. O saldo contratual considera todo o contrato do projeto selecionado.</Text>:null}
+        {accounts.length===0?<StateView title="Nenhuma conta cadastrada" description="Cadastre uma conta em Mais opções → Contas e OFX." icon="wallet-outline" />:accounts.map(account=><Card key={account.id}><Text style={styles.title}>{account.name}</Text><Text style={styles.metricValue}>{coreError||bankError?'Indisponível':accountBalance(account,entries,transactions)===null?'Referência de saldo não informada':formatCurrency(accountBalance(account,entries,transactions))}</Text></Card>)}
+        <Button title="Novo lançamento" onPress={()=>{clearEntry();setFormOpen(true);setSection('entries');}} />
+      </>:null}
+      {section==='receivables'?<>
+        <Text style={styles.sectionTitle}>Extrato de saldo a receber</Text>
+        <Text style={styles.meta}>Saldo restante = valor contratado menos recebimentos. Parcelas pendentes fazem parte desse saldo. Serviços sem contrato usam os lançamentos pendentes. Valores de contratos cancelados ou arquivados ficam fora do total.</Text>
+        {embedded?.projectId?<Notice tone="info">Exibindo o contrato completo do projeto selecionado, incluindo recebimentos de seus outros projetos.</Notice>:null}
+        <Field label="Buscar cliente ou contrato no extrato" value={statementQuery} onChangeText={value=>{setStatementQuery(value);setStatementPage(0);}} />
+        <Button title="Exportar extrato a receber (CSV)" variant="secondary" disabled={Boolean(coreError)||loading} onPress={()=>void perform(()=>exportReceivableCsv(statementRows))} />
+        {loading?<ActivityIndicator color={colors.gold600} />:coreError?<Notice tone="danger">Extrato indisponível. Atualize os dados para conferir os saldos.</Notice>:<>
+          <Text style={styles.metricValue}>Saldo a receber: {formatCurrency(statementRows.filter(row=>!row.inactive).reduce((sum,row)=>sum+Math.round((row.remaining??row.pending)*100),0)/100)}</Text>
+          {statementRows.length===0?<StateView title="Nenhum contrato ou recebimento neste filtro" description="Confira o cliente selecionado ou registre os serviços avulsos." icon="receipt-outline" />:statementRows.slice(statementPage*25,statementPage*25+25).map(row=><Card key={row.id}>
+            <Text style={styles.title}>{row.clientName} • {row.contractNumber}</Text>
+            <Text style={styles.meta}>Contratado: {row.contractValue===null?'Não informado':formatCurrency(row.contractValue)} • Recebido: {formatCurrency(row.received)}</Text>
+            <Text style={styles.title}>Saldo restante: {row.remaining===null?'Valor contratado não informado':formatCurrency(row.remaining)}</Text>
+            <Text style={styles.meta}>Parcelas pendentes: {formatCurrency(row.pending)} • Em atraso: {formatCurrency(row.overdue)}</Text>
+            {row.unscheduled!==null&&row.unscheduled>0?<Notice tone="warning">{formatCurrency(row.unscheduled)} do saldo ainda sem parcelas lançadas. Esse valor não foi lançado automaticamente.</Notice>:null}
+            {row.remaining!==null&&row.pending>row.remaining?<Notice tone="warning">As parcelas pendentes excedem o saldo em {formatCurrency((Math.round(row.pending*100)-Math.round(row.remaining*100))/100)}. Confira os lançamentos.</Notice>:null}
+            {row.credit>0?<Notice tone="warning">Recebimentos excedem o valor contratado em {formatCurrency(row.credit)}. Confira o contrato e os pagamentos.</Notice>:null}
+            {row.inactive?<Notice tone="info">Contrato cancelado ou arquivado: preservado para conferência, fora do total a receber.</Notice>:null}
+            <Button title={expandedStatement===row.id?'Recolher parcelas':'Ver parcelas e recebimentos'} variant="secondary" onPress={()=>setExpandedStatement(expandedStatement===row.id?null:row.id)} />
+            {expandedStatement===row.id?(row.entries.length===0?<Text style={styles.meta}>Ainda não há parcelas lançadas para este contrato.</Text>:row.entries.map(entry=><View key={entry.id} style={styles.summary}>
+              <View style={{flex:1}}><Text style={styles.title}>{entry.description} • {formatCurrency(entry.amount)}</Text><Text style={styles.meta}>{effectiveStatus(entry)==='atrasado'?'Em atraso':financialStatus(entry.status)==='pago'?'Recebido':'Pendente'} • Vencimento: {formatDate(entry.dueDate)} • Recebimento: {formatDate(entry.paidAt)}</Text>
+              {financialStatus(entry.status)==='pago'?<Button title="Emitir / abrir recibo" variant="secondary" onPress={()=>openReceipt(entry.id,entry.projectId)} />:<Button title="Registrar recebimento" variant="secondary" disabled={saving} onPress={()=>receiveEntry(entry)} />}</View>
+            </View>)):null}
+          </Card>)}
+          <View style={styles.rowFields}><Button title="Contratos anteriores" variant="ghost" disabled={statementPage===0} onPress={()=>setStatementPage(value=>value-1)} /><Text style={styles.meta}>Página {statementPage+1} • {statementRows.length} registro(s)</Text><Button title="Próximos contratos" variant="ghost" disabled={(statementPage+1)*25>=statementRows.length} onPress={()=>setStatementPage(value=>value+1)} /></View>
+        </>}
+      </>:null}
       {section==='entries'?<>
       <Card><Text style={styles.sectionTitle}>Filtrar lançamentos e indicadores</Text>
         <Field label="Buscar cliente, contrato, projeto ou descrição" value={filters.query} onChangeText={value=>setFilter('query',value)} />
         {!embedded ? <SelectionChips label="Projeto / contrato" value={filters.projectId} onChange={value=>setFilter('projectId',value)} items={[{value:'',label:'Todos'},...projects.map(project=>({value:project.id,label:`${project.contractNumber} • ${project.clientName} • ${project.name}`}))]} /> : null}
+        <SelectionChips label="Tipo de movimentação" value={filters.type} onChange={value=>setFilter('type',value)} items={[{value:'',label:'Todas'},{value:'entrada',label:'Entradas'},{value:'saida',label:'Saídas'}]} />
         <SelectionChips label="Situação do lançamento" value={filters.status} onChange={value=>setFilter('status',value)} items={[{value:'',label:'Todas'},{value:'pago',label:'Recebidos / pagos'},{value:'pendente',label:'Pendentes a vencer'},{value:'atrasado',label:'Em atraso'},{value:'cancelado',label:'Cancelados'}]} />
         <Field label="Mês (AAAA-MM)" placeholder="Ex.: 2026-10" value={filters.month} onChangeText={value=>setFilter('month',value)} />
         <Text style={styles.meta}>O mês usa a data de pagamento para quitados e o vencimento para pendentes. Cancelados não entram nos totais.</Text>
-        <Button title="Limpar filtros" variant="ghost" onPress={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'',month:''});setPage(0);}} />
+        <Button title="Limpar filtros" variant="ghost" onPress={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'',month:'',type:''});setPage(0);}} />
       </Card>
       <View style={styles.metrics}>{[
         ['RECEBIDO',totals.received],['PAGO',totals.paid],['SALDO REALIZADO',totals.balance],
         ['A RECEBER',totals.receivable],['A PAGAR',totals.payable],['RESULTADO PREVISTO',totals.forecast],
       ].map(([label,value])=><Card key={String(label)} style={styles.metric}><Text style={styles.metricLabel}>{label}</Text><Text style={styles.metricValue}>{coreError?'Indisponível':formatCurrency(Number(value))}</Text></Card>)}</View>
-      <Card>
+      <Button title="Novo lançamento" onPress={()=>{clearEntry();setFormOpen(true);}} />
+      {formOpen?<Card>
         <Text style={styles.sectionTitle}>{editing?"Editar lançamento":"Novo lançamento"}</Text>
         <SelectionChips items={[{ value: 'entrada', label: 'Entrada' }, { value: 'saida', label: 'Saída' }]} label="Natureza" onChange={value=>{setType(value);requestId.current=null;}} value={type} />
         <SelectionChips items={[{ value: 'pendente', label: 'Pendente' }, { value: 'pago', label: type === 'entrada' ? 'Recebido' : 'Pago' },{value:'cancelado',label:'Cancelado'}]} label="Situação" onChange={value=>{setEntryStatus(value);requestId.current=null;}} value={entryStatus} />
         {!embedded?.projectId?<SelectionChips label="Vincular lançamento a" value={entryLink} onChange={value=>{setEntryLink(value);requestId.current=null;}} items={[{value:'client',label:'Cliente — contrato opcional'},{value:'project',label:'Contrato e projeto'}]} />:null}
-        {embedded?.projectId||entryLink==='project'?<AdminProjectPicker projects={projects.filter(project=>!embedded?.projectId||project.id===embedded.projectId)} value={selectedProjectId} onChange={id=>{setSelectedProjectId(id);requestId.current=null;}} />:<>
+        {embedded?.projectId||entryLink==='project'?<AdminProjectPicker projects={projects.filter(project=>!embedded?.projectId||project.id===embedded.projectId||project.id===editing?.projectId)} value={selectedProjectId} onChange={id=>{setSelectedProjectId(id);requestId.current=null;}} />:<>
           <AdminClientPicker clients={clients} contracts={contracts} value={entryClientId} onChange={id=>{setEntryLink('client');setEntryClientId(id);setEntryContractId(null);setEntryErrors({});requestId.current=null;}} />
           {entryClientId?<SelectionChips label="Contrato (opcional)" value={entryContractId??''} onChange={id=>{setEntryContractId(id||null);requestId.current=null;}} items={[{value:'',label:'Sem contrato — serviço avulso'},...contracts.filter(contract=>contract.clientId===entryClientId).map(contract=>({value:contract.id,label:contract.contractNumber}))]} />:null}
           {entryErrors.client?<Notice tone="warning">{entryErrors.client}</Notice>:null}
@@ -335,22 +384,23 @@ export default function AdminFinancialScreen() {
         <Field keyboardType="decimal-pad" label="Valor (R$)" error={entryErrors.amount} onChangeText={value=>{setAmount(value);setEntryErrors(current=>({...current,amount:''}));requestId.current=null;}} placeholder="Ex.: 2.500,00" value={amount} />
         <View style={styles.rowFields}><DateField label="Data" onChange={value=>{setDate(value);requestId.current=null;}} value={date} /><DateField label="Vencimento" optional onChange={value=>{setDueDate(value);requestId.current=null;}} value={dueDate} /></View>
         {accounts.length ? <><Text style={styles.label}>Conta</Text><View style={styles.selector}>{accounts.map((account) => <Pressable accessibilityRole="button" key={account.id} onPress={() => {setAccountId(account.id);requestId.current=null;}} style={[styles.choice, accountId === account.id && styles.choiceSelected]}><Text style={[styles.choiceText, accountId === account.id && styles.choiceTextSelected]}>{account.name} • {account.accountType}</Text></Pressable>)}</View></> : <Notice tone="warning">Cadastre uma conta para conciliar os lançamentos.</Notice>}
-        <DateField label="Data efetiva de pagamento / recebimento" optional={entryStatus!=='pago'} value={paidAt} onChange={value=>{setPaidAt(value);requestId.current=null;}} />
+        {entryStatus==='pago'?<DateField label="Data efetiva de pagamento / recebimento" optional={entryStatus!=='pago'} value={paidAt} onChange={value=>{setPaidAt(value);requestId.current=null;}} />:null}
         {entryErrors.date||entryErrors.dueDate||entryErrors.paidAt?<Notice tone="warning">{[entryErrors.date,entryErrors.dueDate,entryErrors.paidAt].filter(Boolean).join(' ')}</Notice>:null}
         <Field label="Forma de pagamento" value={paymentMethod} onChangeText={value=>{setPaymentMethod(value);requestId.current=null;}} />
         <Button title="Sem conta vinculada" variant="ghost" onPress={()=>{setAccountId(null);requestId.current=null;}} />
         <Field label="Observações (opcional)" multiline onChangeText={value=>{setNotes(value);requestId.current=null;}} value={notes} />
+        {editing&&type==='entrada'&&entryStatus==='pago'?<Button loading={saving} title="Confirmar recebimento e emitir recibo" variant="secondary" onPress={()=>void perform(()=>saveEntry(true))} />:null}
         <Button loading={saving} onPress={() => void perform(saveEntry)} title={editing?"Confirmar alterações":"Registrar no extrato administrativo"} />
-      </Card>
-
-      <Button title="Cancelar edição / limpar formulário" variant="ghost" onPress={clearEntry} />
+        <Button title="Cancelar edição / limpar formulário" variant="ghost" onPress={()=>{clearEntry();setFormOpen(false);}} />
+      </Card>:null}
       <Text style={styles.sectionTitle}>Lançamentos atuais • {filteredEntries.length} resultado(s)</Text>
       <Button title="Exportar CSV do filtro" variant="secondary" disabled={Boolean(coreError)} onPress={()=>void perform(()=>exportFinancialCsv(filteredEntries))} />
       {visibleEntries.length===0?<StateView title="Nenhum lançamento neste filtro" description="Ajuste os filtros ou registre um lançamento." icon="receipt-outline" />:null}
       {visibleEntries.map(entry=><Card key={entry.id}><Text style={styles.title}>{entry.description}</Text><Text style={styles.meta}>{entry.clientName} • {entry.contractNumber} • {entry.projectName}</Text>
         <Text style={styles.meta}>{entry.type==='saida'?'Saída':'Entrada'} • {formatCurrency(entry.amount)} • {effectiveStatus(entry)} • {categoryLabel(entry.category)} • {formatDate(entryDate(entry))}</Text>
         <Text style={styles.meta}>{entry.notes}</Text>
-        {entry.type==='entrada'&&financialStatus(entry.status)==='pago'?<Button debounceMs={0} title="Emitir / abrir recibo deste recebimento" variant="secondary" onPress={()=>{const url='/recibos.html?financialId='+encodeURIComponent(entry.id);if(embedded)embedded.onNavigate('receipts',{financialId:entry.id,...(entry.projectId?{projectId:entry.projectId}:{})});else if(Platform.OS==='web')window.location.assign(url);else void Linking.openURL('https://camilamartinsengenharia.com.br'+url);}} />:null}
+        {entry.type==='entrada'&&financialStatus(entry.status)==='pago'?<Button debounceMs={0} title="Emitir / abrir recibo deste recebimento" variant="secondary" onPress={()=>openReceipt(entry.id,entry.projectId)} />:null}
+        {entry.type==='entrada'&&financialStatus(entry.status)==='pendente'?<Button title="Registrar recebimento" variant="secondary" disabled={saving} onPress={()=>receiveEntry(entry)} />:null}
         {entry.bankTransactionId?<Notice tone="info">Lançamento conciliado. O vínculo bancário foi preservado.</Notice>:<View style={styles.rowFields}><Button title="Editar lançamento" variant="secondary" disabled={saving} onPress={()=>editEntry(entry)} /><Button title="Excluir dos ativos" variant="ghost" disabled={saving} onPress={()=>setDeleteTarget(entry)} /></View>}
       </Card>)}
       <View style={styles.rowFields}><Button title="Página anterior" disabled={page===0} variant="ghost" onPress={()=>setPage(value=>value-1)} /><Text style={styles.meta}>Página {page+1}</Text><Button title="Próxima página" disabled={(page+1)*50>=filteredEntries.length} variant="ghost" onPress={()=>setPage(value=>value+1)} /></View>

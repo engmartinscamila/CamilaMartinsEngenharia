@@ -7,9 +7,10 @@ import ts from 'typescript';
 const requireTest=createRequire(path.join(process.env.CME_FINANCIAL_TEST_ROOT??path.resolve('../../financial-qa'),'index.js'));
 const React=requireTest('react'),{create,act}=requireTest('react-test-renderer');
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+let receiptDestination;
 const e=React.createElement;
 function load(file,deps={}){
-  const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText,{exports,console,Date,Intl,window:{location:{assign(){}}},require:name=>{if(!(name in deps))throw Error(`Missing ${name}`);return deps[name];}});return exports;
+  const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText,{exports,console,Date,Intl,window:{location:{assign(value){receiptDestination=value;}}},require:name=>{if(!(name in deps))throw Error(`Missing ${name}`);return deps[name];}});return exports;
 }
 const format=load('src/lib/format.ts'),model=load('src/lib/financial-model.ts');
 const today=model.financialToday();
@@ -42,7 +43,7 @@ const component=load('src/app/admin/financial.tsx',{
  '@/components/ui':{Button:props=>e('button',props),Card:props=>e('div',props,props.children),Field:props=>e('field',props),Notice:props=>e('notice',props,props.children),Screen:props=>e('div',props,props.children),StateView:props=>e('state',props),StatusPill:props=>e('pill',props)},
  '@/lib/financial-model':model,'@/lib/format':format,'@/lib/supabase':{supabase:{}},
  '@/services/admin-service':admin,'@/services/operations-service':operations,
- '@/services/financial-tools':{listBankTransactions:()=>ok([]),exportFinancialCsv:async()=>{},exportFinancialExcel:async()=>{},updateAccountReference:async()=>null},
+ '@/services/financial-tools':{listBankTransactions:()=>ok([]),exportFinancialCsv:async()=>{},exportReceivableCsv:async()=>{},exportFinancialExcel:async()=>{},updateAccountReference:async()=>null},
  '@/providers/theme-provider':{useAppTheme:()=>({colors:{}}),useThemeStyles:()=>({})},
  '@/theme/tokens':{radius:{},spacing:{},typography:{}},
 }).default;
@@ -51,19 +52,29 @@ const field=label=>renderer.root.findAllByType('field').find(node=>node.props.la
 const choices=label=>renderer.root.findAllByType('choices').find(node=>node.props.label===label);
 const button=title=>renderer.root.findAllByType('button').find(node=>node.props.title===title);
 const text=()=>JSON.stringify(renderer.toJSON());
+assert(text().includes('SALDO A RECEBER'));assert(text().includes('400,00'),'Contract remainder must include unlaunched installments');
+await act(async()=>choices('Área financeira').props.onChange('receivables'));assert(text().includes('400,00'));
+await act(async()=>button('Ver parcelas e recebimentos').props.onPress());assert(button('Emitir / abrir recibo'));
+await act(async()=>choices('Área financeira').props.onChange('entries'));
+assert(!field('Descrição'),'New entry form starts closed');
 assert(text().includes('SALDO REALIZADO'));assert(text().includes('100,00'));assert(!text().includes('1.099,00'),'Cancelled value must not inflate cash totals');
 await act(async()=>{choices('Situação do lançamento').props.onChange('cancelado');});
 assert(text().includes('Cancelada'));assert(!text().includes('Parcela recebida'));
 await act(async()=>{button('Limpar filtros').props.onPress();choices('Contrato e projeto')?.props.onChange?.('p');});
-await act(async()=>{choices('Vincular lançamento a').props.onChange('project');field('Descrição').props.onChangeText('Nova parcela');field('Valor (R$)').props.onChangeText('250,00');});
+await act(async()=>{button('Novo lançamento').props.onPress();});
+await act(async()=>choices('Vincular lançamento a').props.onChange('project'));
+await act(async()=>{field('Descrição').props.onChangeText('Nova parcela');field('Valor (R$)').props.onChangeText('250,00');});
 await act(async()=>renderer.root.findByType('project-picker').props.onChange('p'));
 await act(async()=>{button('Registrar no extrato administrativo').props.onPress();button('Registrar no extrato administrativo').props.onPress();});
-assert.equal(calls,1,'Double-click must start one mutation');await act(async()=>release());assert.equal(field('Descrição').props.value,'');
+assert.equal(calls,1,'Double-click must start one mutation');await act(async()=>release());assert(!field('Descrição'),'Successful save closes form');
+await act(async()=>button('Novo lançamento').props.onPress());
 fail=true;
 await act(async()=>{field('Descrição').props.onChangeText('Preservar formulário');field('Valor (R$)').props.onChangeText('300,00');});
 await act(async()=>button('Registrar no extrato administrativo').props.onPress());await act(async()=>release());assert.equal(field('Descrição').props.value,'Preservar formulário');assert(text().includes('Falha simulada'));
 fail=false;
-await act(async()=>{button('Cancelar edição / limpar formulário').props.onPress();choices('Vincular lançamento a').props.onChange('client');});
+await act(async()=>{button('Cancelar edição / limpar formulário').props.onPress();});
+await act(async()=>button('Novo lançamento').props.onPress());
+await act(async()=>choices('Vincular lançamento a').props.onChange('client'));
 await act(async()=>renderer.root.findByType('client-picker').props.onChange('avulso'));
 await act(async()=>button('Registrar no extrato administrativo').props.onPress());
 assert(text().includes('Preencha a descrição do lançamento'));assert(text().includes('Informe um valor maior que zero'));assert(!text().includes('Selecione o cliente ou projeto'));
@@ -82,5 +93,12 @@ assert.equal(lastInput.clientId,'avulso');assert.equal(lastInput.projectId,null)
 await act(async()=>choices('Área financeira').props.onChange('accounts'));
 assert(text().includes('Saldo gerencial: '));assert(text().includes('1.100,00'),'Account must reflect opening plus paid entries');
 await act(async()=>choices('Área financeira').props.onChange('fiscal'));assert(text().includes('Não valida os requisitos municipais'));assert(choices('Projeto do rascunho fiscal'));
+await act(async()=>choices('Área financeira').props.onChange('entries'));
+const pendingBefore=entries.find(row=>row.status==='pendente'),entryCount=entries.length;
+assert(pendingBefore);await act(async()=>button('Registrar recebimento').props.onPress());
+assert.equal(choices('Situação').props.value,'pago');
+await act(async()=>button('Confirmar recebimento e emitir recibo').props.onPress());
+assert.equal(entries.length,entryCount,'Receiving an installment updates the original entry');
+assert.equal(lastInput.status,'pago');assert.equal(receiptDestination,'/recibos.html?financialId='+pendingBefore.id);
 await act(async()=>renderer.unmount());
 console.log('FINANCEIRO UI: filtros, cancelados, cadastro com clique duplo, preservação após erro, saldo e rascunho fiscal aprovados.');

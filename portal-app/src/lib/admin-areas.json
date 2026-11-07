@@ -111,39 +111,40 @@
     "description": "Recebimentos, contas e recibos no mesmo lugar.",
     "groups": [
       {
-        "key": "entries",
-        "label": "Lançamentos",
+        "key": "summary",
+        "label": "Resumo",
         "views": [
           {
-            "key": "entries",
-            "label": "Lançamentos",
+            "key": "summary",
+            "label": "Resumo",
             "module": "financial",
-            "subview": "entries",
+            "subview": "summary",
             "scope": true
           }
         ]
       },
       {
-        "key": "accounts",
-        "label": "Contas e OFX",
+        "key": "receivables",
+        "label": "A receber",
         "views": [
           {
-            "key": "accounts",
-            "label": "Contas e OFX",
+            "key": "receivables",
+            "label": "A receber",
             "module": "financial",
-            "subview": "accounts"
+            "subview": "receivables",
+            "scope": true
           }
         ]
       },
       {
-        "key": "hours",
-        "label": "Horas e margem",
+        "key": "entries",
+        "label": "Movimentações",
         "views": [
           {
-            "key": "hours",
-            "label": "Horas e margem",
+            "key": "entries",
+            "label": "Movimentações",
             "module": "financial",
-            "subview": "hours",
+            "subview": "entries",
             "scope": true
           }
         ]
@@ -161,27 +162,34 @@
         ]
       },
       {
-        "key": "fiscal",
-        "label": "Rascunhos fiscais",
+        "key": "more",
+        "label": "Mais opções",
         "views": [
+          {
+            "key": "accounts",
+            "label": "Contas e OFX",
+            "module": "financial",
+            "subview": "accounts"
+          },
+          {
+            "key": "hours",
+            "label": "Horas e margem",
+            "module": "financial",
+            "subview": "hours",
+            "scope": true
+          },
+          {
+            "key": "history",
+            "label": "Histórico e exportação",
+            "module": "financial",
+            "subview": "history"
+          },
           {
             "key": "fiscal",
             "label": "Rascunhos fiscais",
             "module": "financial",
             "subview": "fiscal",
             "scope": true
-          }
-        ]
-      },
-      {
-        "key": "history",
-        "label": "Histórico e exportação",
-        "views": [
-          {
-            "key": "history",
-            "label": "Histórico e exportação",
-            "module": "financial",
-            "subview": "history"
           }
         ]
       }
