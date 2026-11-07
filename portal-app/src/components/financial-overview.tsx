@@ -4,6 +4,8 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { Button, Card, Field, Notice, StateView } from '@/components/ui';
 import { accountBalance, effectiveStatus, financialStatus, financialToday, financialTotals, type BankTransaction, type ReceivableStatement } from '@/lib/financial-model';
 import { exportReceivableCsv } from '@/services/financial-tools';
+import { SelectionChips } from '@/components/admin-ui';
+import { receivableOverview, type ReceivableFocus } from '@/lib/receivable-priorities';
 import { formatCurrency, formatDate } from '@/lib/format';
 import type { AdminContractSummary, FinancialAccountSummary, FinancialEntrySummary } from '@/types/domain';
 
@@ -36,6 +38,7 @@ export function FinancialSummary({styles,coreError,bankError,loading,monthTotals
 export type FinancialReceivablesProps = {
   styles:Styles; embeddedProjectId?:string|null; missingContractValues:number;
   statementQuery:string; setStatementQuery:React.Dispatch<React.SetStateAction<string>>;
+  statementFocus:ReceivableFocus; setStatementFocus:React.Dispatch<React.SetStateAction<ReceivableFocus>>;
   statementPage:number; setStatementPage:React.Dispatch<React.SetStateAction<number>>;
   expandedStatement:string|null; setExpandedStatement:React.Dispatch<React.SetStateAction<string|null>>;
   statementRows:ReceivableStatement[]; contracts:AdminContractSummary[];
@@ -44,19 +47,22 @@ export type FinancialReceivablesProps = {
   openReceipt:(id:string,projectId?:string|null)=>void; receiveEntry:(entry:FinancialEntrySummary)=>void;
   onContractEdit:(id:string)=>void;
 };
-export function FinancialReceivables({styles,embeddedProjectId,missingContractValues,statementQuery,setStatementQuery,statementPage,setStatementPage,expandedStatement,setExpandedStatement,statementRows,contracts,loading,coreError,saving,goldColor,perform,openReceipt,receiveEntry,onContractEdit}:FinancialReceivablesProps){
+export function FinancialReceivables({styles,embeddedProjectId,missingContractValues,statementQuery,setStatementQuery,statementFocus,setStatementFocus,statementPage,setStatementPage,expandedStatement,setExpandedStatement,statementRows,contracts,loading,coreError,saving,goldColor,perform,openReceipt,receiveEntry,onContractEdit}:FinancialReceivablesProps){
   return (
 <>
         <Text style={styles.sectionTitle}>Extrato de saldo a receber</Text>
         <Text style={styles.meta}>Saldo restante = valor contratado menos recebimentos. Parcelas pendentes fazem parte desse saldo. Serviços sem contrato usam os lançamentos pendentes. Valores de contratos cancelados ou arquivados ficam fora do total.</Text>
         {embeddedProjectId?<Notice tone="info">Exibindo o contrato completo do projeto selecionado, incluindo recebimentos de seus outros projetos.</Notice>:null}
         {missingContractValues>0?<Notice tone="warning">{missingContractValues} contrato(s) sem valor informado: o saldo completo desses contratos ainda não pode ser calculado. Use “Informar valor contratado” para completar.</Notice>:null}
+        <SelectionChips label="Prioridade de cobrança" value={statementFocus} onChange={value=>{setStatementFocus(value);setStatementPage(0);}} items={[{value:'all',label:'Todos'},{value:'overdue',label:'Em atraso'},{value:'unplanned',label:'Sem parcelas'},{value:'credit',label:'Crédito excedente'},{value:'inactive',label:'Inativos'}]} />
         <Field label="Buscar cliente ou contrato no extrato" value={statementQuery} onChangeText={value=>{setStatementQuery(value);setStatementPage(0);}} />
-        <Button title="Exportar extrato a receber (CSV)" variant="secondary" disabled={Boolean(coreError)||loading} onPress={()=>void perform(()=>exportReceivableCsv(statementRows))} />
+        <Button title="Exportar resultado filtrado (CSV)" variant="secondary" disabled={Boolean(coreError)||loading} onPress={()=>void perform(()=>exportReceivableCsv(statementRows))} />
         {loading?<ActivityIndicator color={goldColor} />:coreError?<Notice tone="danger">Extrato indisponível. Atualize os dados para conferir os saldos.</Notice>:<>
-          <Text style={styles.metricValue}>Saldo a receber: {formatCurrency(statementRows.filter(row=>!row.inactive).reduce((sum,row)=>sum+Math.round((row.remaining??row.pending)*100),0)/100)}</Text>
+          <Text style={styles.metricValue}>Saldo a receber: {formatCurrency(receivableOverview(statementRows).total)}</Text>
+          <Text style={styles.meta}>Em atraso: {formatCurrency(receivableOverview(statementRows).overdue)} • Saldo sem parcelas: {formatCurrency(receivableOverview(statementRows).unplanned)} • Créditos a conferir: {formatCurrency(receivableOverview(statementRows).credit)}. Indicadores do filtro atual.</Text>
           {statementRows.length===0?<StateView title="Nenhum contrato ou recebimento neste filtro" description="Confira o cliente selecionado ou registre os serviços avulsos." icon="receipt-outline" />:statementRows.slice(statementPage*25,statementPage*25+25).map(row=><Card key={row.id}>
             <Text style={styles.title}>{row.clientName} • {row.contractNumber}</Text>
+            {row.overdue>0&&!row.inactive?<Notice tone="warning">Cobrança prioritária: {formatCurrency(row.overdue)} em atraso.</Notice>:null}
             <Text style={styles.meta}>Contratado: {row.contractValue===null?'Não informado':formatCurrency(row.contractValue)} • Recebido: {formatCurrency(row.received)}</Text>
             <Text style={styles.title}>Saldo restante: {row.remaining===null?'Valor contratado não informado':formatCurrency(row.remaining)}</Text>
             <Text style={styles.meta}>Parcelas pendentes: {formatCurrency(row.pending)} • Em atraso: {formatCurrency(row.overdue)}</Text>
