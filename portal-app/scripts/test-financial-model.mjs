@@ -87,5 +87,6 @@ console.log('PASS: extrato contratual, recebimento direto, múltiplos projetos, 
 assert.equal(m.filterFinancialEntries(rows,{...empty,status:'aberto'},'2026-10-29').length,1,'Open balance includes overdue installments');
 await import('./test-receivable-priorities.mjs');
 await import('./test-finance-v2-forms.mjs');
+await import('./test-finance-v2-service.mjs');
 await import('./test-payment-allocation-model.mjs');
 await import('./test-financial-reconciliation.mjs');
