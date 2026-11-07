@@ -106,3 +106,56 @@ export function receivableStatements(contracts:AdminContractSummary[], projects:
   }
   return rows;
 }
+
+
+export type FinancialLinkIssueCode =
+  | 'project_missing'
+  | 'project_client_mismatch'
+  | 'project_contract_mismatch'
+  | 'contract_client_mismatch';
+export interface FinancialLinkIssue {
+  code: FinancialLinkIssueCode;
+  referenceId: string;
+  message: string;
+}
+
+/** Read-only integrity checks. Never correct or remove historical financial entries implicitly. */
+export function financialLinkIssues(
+  contracts: AdminContractSummary[],
+  projects: AdminProjectSummary[],
+  entries: FinancialEntrySummary[],
+): FinancialLinkIssue[] {
+  const contractsById = new Map(contracts.map(contract => [contract.id, contract]));
+  const projectsById = new Map(projects.map(project => [project.id, project]));
+  const issues: FinancialLinkIssue[] = [];
+  for (const project of projects) {
+    if (!project.contractId) continue; // Projects legitimately exist before contracts.
+    const contract = contractsById.get(project.contractId);
+    if (contract && project.clientId && contract.clientId && project.clientId !== contract.clientId) {
+      issues.push({ code: 'project_contract_mismatch', referenceId: project.id,
+        message: `O projeto "${project.name}" está associado a um contrato de outro cliente.` });
+    }
+  }
+  for (const entry of entries) {
+    const project = entry.projectId ? projectsById.get(entry.projectId) : null;
+    if (entry.projectId && !project) {
+      issues.push({ code: 'project_missing', referenceId: entry.id,
+        message: `O lançamento "${entry.description}" referencia um projeto indisponível na listagem.` });
+    }
+    if (project && entry.clientId && project.clientId && entry.clientId !== project.clientId) {
+      issues.push({ code: 'project_client_mismatch', referenceId: entry.id,
+        message: `O lançamento "${entry.description}" pertence a um cliente diferente do projeto.` });
+    }
+    if (project && entry.contractId && project.contractId && entry.contractId !== project.contractId) {
+      issues.push({ code: 'project_contract_mismatch', referenceId: entry.id,
+        message: `O lançamento "${entry.description}" aponta para um contrato diferente do projeto.` });
+    }
+    const linkedContractId = entry.contractId || project?.contractId;
+    const contract = linkedContractId ? contractsById.get(linkedContractId) : null;
+    if (contract && entry.clientId && contract.clientId && entry.clientId !== contract.clientId) {
+      issues.push({ code: 'contract_client_mismatch', referenceId: entry.id,
+        message: `O lançamento "${entry.description}" está vinculado ao contrato de outro cliente.` });
+    }
+  }
+  return issues;
+}
