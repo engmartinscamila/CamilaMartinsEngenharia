@@ -7,7 +7,7 @@ Auditoria sobre a árvore completa do repositório, com varredura de nomes, tama
 
 **Critério para remoção:** o arquivo não tinha importação ou referência de execução identificada nas fontes, páginas e fluxos de publicação inspecionados, não era a fonte atual de funcionalidade, e a funcionalidade equivalente permanecia ativa em outro local. O processo de revisão inclui testes de links e navegador. Ausência de referência estática isoladamente não constitui prova de inutilidade; importações dinâmicas e URLs históricas continuam sendo riscos conhecidos.
 
-## Arquivos removidos nesta branch — 21 / 193.551 bytes
+## Arquivos removidos nesta branch — 23 / 218.105 bytes
 1. `css/contato.css` — comentários sem regra.
 2. `css/dashboard.css` — sem página carregando este CSS.
 3. `css/financeiro-avancado.css` — painel financeiro legado redirecionado.
@@ -29,6 +29,8 @@ Auditoria sobre a árvore completa do repositório, com varredura de nomes, tama
 19. `js/portfolio-live3d.js` — variante antiga, 3D atual permanece inline em `index.html`.
 20. `js/portfolio-motion-v1.js` — animação atual em CSS, JS não incluído.
 21. `js/storage.js` — implementação separada não importada.
+22. `scripts/build-frases-do-dia-fast.mjs` — gerador legado sem chamador; a geração em CI usa V7.
+23. `scripts/build-frases-do-dia.mjs` — gerador antigo sem chamador; preservados V7 e fixed.
 
 ## Recursos preservados deliberadamente
 - `js/admin-home-route.js`: compatibilidade documentada; requer verificar fluxo de geração/redirecionamento.
@@ -45,7 +47,7 @@ Auditoria sobre a árvore completa do repositório, com varredura de nomes, tama
 A pasta `previews/` contém 144 arquivos, incluindo aproximadamente 41,8 MB de arquivos. As versões de Casa Urben desde v9 até v16 guardam partes de modelos GLB de revisões anteriores. V16 é referenciada diretamente na home; versões v13 a v15 entram na preparação do site público. Outros links antigos podem ser abertos externamente. Excluir versões anteriores diretamente pode gerar 404 e perda de evidência das revisões. Só mover para armazenamento histórico se houver redirecionamento/compatibilidade comprovados.
 
 ## Riscos e verificação
-- O script `scripts/audit-code-hygiene.mjs` gera inventário e candidatos; não exclui nada automaticamente.
+- O script `scripts/audit-code-hygiene.mjs` gera inventário e candidatos, inclusive módulos Expo com resolução de variantes de plataforma, e scripts manuais sem chamador; não exclui nada automaticamente.
 - O teste `scripts/verify-code-cleanup.mjs` verifica que removidos não continuam referenciados, mantendo rotas essenciais.
 - Auditoria do portal inclui testes sintáticos, integrados e de navegador via Playwright.
 - Esta PR é **somente limpeza**, sem alteração de SQL, dados Supabase, recibos, contratos ou serviço comercial.
