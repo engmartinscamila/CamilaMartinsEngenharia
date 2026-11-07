@@ -33,16 +33,8 @@ jobs:
         with:
           node-version: "22"
 
-      # Export temporário para inspeção estática dos dois scripts ofuscados.
-      - name: Fonte privada para recuperação local de legibilidade
-        uses: actions/upload-artifact@v4
-        with:
-          name: fontes-clientes-portfolio-reversao
-          path: |
-            js/clientes.js
-            js/portfolio-admin.js
-          retention-days: 1
-          if-no-files-found: error
+      - name: Proteger código JavaScript legado do navegador
+        run: node scripts/verify-browser-code-protection.mjs
 
       - name: Auditar código sem referências e gerar relatório
         run: node scripts/audit-code-hygiene.mjs
