@@ -37,7 +37,6 @@ function validDate(value:string):boolean{
 function required(value:string,label:string){
   if(!value||!value.trim())throw new Error(label+' obrigatório.');
 }
-const reversedIds=(ledger:Ledger)=>new Set(ledger.reversals.map(item=>item.paymentId));
 const fingerprint=(draft:PaymentDraft)=>JSON.stringify({
   clientId:draft.clientId,amount:toCents(draft.amount),paidOn:draft.paidOn,
   allocations:draft.allocations.map(a=>[a.installmentId,toCents(a.amount)])
