@@ -8,6 +8,34 @@ const original = fs.readFileSync('src/services/admin-service.ts', 'utf8');
 const content = fs.readFileSync('src/services/admin-content-service.ts', 'utf8');
 const financial = fs.readFileSync('src/services/admin-financial-service.ts', 'utf8');
 const relations = fs.readFileSync('src/services/admin-relationship-service.ts', 'utf8');
+
+const secondaryModules = [
+  { path: 'admin-schedule-service.ts', names: [
+    'listAdminAgenda','createAdminAgenda','cancelAdminAgenda','listAdminSchedule',
+    'createAdminScheduleStage','updateAdminScheduleStage',
+  ] },
+  { path: 'admin-collaboration-service.ts', names: [
+    'listAdminApprovals','createAdminApproval','listAdminRequests','createAdminRequest',
+    'updateAdminRequest','listAdminNotifications','listAdminActivityNotifications',
+    'getAdminUnreadNotificationCount','markAdminNotificationRead','createAdminNotification',
+  ] },
+  { path: 'admin-storage-service.ts', names: [
+    'getAdminStorageOverview','getAdminStorageOrphanDetails',
+  ] },
+  { path: 'admin-audit-service.ts', names: ['listAdminAudit'] },
+];
+for (const group of secondaryModules) {
+  const moduleCode = fs.readFileSync('src/services/' + group.path, 'utf8');
+  for (const fn of group.names) {
+    assert.match(original, new RegExp('\\b' + fn + '\\b'),
+      'A fachada deve manter a função ' + fn);
+    assert.match(moduleCode, new RegExp('export async function ' + fn + '\\('),
+      'O módulo deve conter a implementação de ' + fn);
+  }
+}
+assert.doesNotMatch(original, /export async function/,
+  'A fachada não deve voltar a acumular regras de negócio');
+
 for (const name of [
   'listAdminClients', 'inviteAdminClient', 'updateAdminClientStatus',
   'updateAdminClientProfile', 'resendAdminClientInvite', 'sendAdminClientRecovery',
