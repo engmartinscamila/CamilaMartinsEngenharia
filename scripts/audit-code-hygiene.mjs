@@ -68,14 +68,15 @@ const expoFiles = [...source.keys()].filter(p => /^portal-app\/src\/.*\.(?:ts|ts
 const expoSet = new Set(expoFiles);
 const routeRoots = expoFiles.filter(p => p.startsWith('portal-app/src/app/'));
 const knownImports = new Map();
-function resolveExpoImport(parent, spec) {
+function resolveExpoImports(parent, spec) {
   const base = spec.startsWith('@/') ? 'portal-app/src/' + spec.slice(2)
     : spec.startsWith('.') ? path.posix.normalize(path.posix.join(path.posix.dirname(parent), spec)) : '';
-  if (!base) return null;
-  for (const candidate of [base, ...['.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.tsx', '/index.js'].map(x => base + x)]) {
-    if (expoSet.has(candidate)) return candidate;
-  }
-  return null;
+  if (!base) return [];
+  // Expo Metro pode escolher variantes por plataforma; todas são código útil.
+  const variants = ['.web.ts', '.web.tsx', '.native.ts', '.native.tsx',
+    '.ios.ts', '.ios.tsx', '.android.ts', '.android.tsx',
+    '.ts', '.tsx', '.js', '.jsx', '/index.ts', '/index.tsx', '/index.js'];
+  return [base, ...variants.map(x => base + x)].filter(x => expoSet.has(x));
 }
 for (const f of expoFiles) {
   const content = source.get(f) ?? '';
@@ -86,8 +87,7 @@ for (const f of expoFiles) {
   const imports = new Set();
   for (const expression of patterns) {
     for (const match of content.matchAll(expression)) {
-      const resolved = resolveExpoImport(f, match[1]);
-      if (resolved) imports.add(resolved);
+      for (const resolved of resolveExpoImports(f, match[1])) imports.add(resolved);
     }
   }
   knownImports.set(f, imports);
