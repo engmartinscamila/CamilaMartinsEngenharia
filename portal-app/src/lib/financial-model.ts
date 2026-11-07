@@ -31,7 +31,7 @@ export function filterFinancialEntries(entries:FinancialEntrySummary[],filters:F
   const query=normalized(filters.query);
   return entries.filter(entry=>(!filters.projectId || entry.projectId===filters.projectId)
     && (!filters.type || entry.type===filters.type)
-    && (!filters.status || effectiveStatus(entry,today)===filters.status)
+    && (!filters.status || (filters.status==='aberto'?financialStatus(entry.status)==='pendente':effectiveStatus(entry,today)===filters.status))
     && (!filters.month || entryDate(entry)?.startsWith(filters.month))
     && (!query || normalized([entry.description,entry.clientName,entry.contractNumber,entry.projectName,categoryLabel(entry.category),entry.notes].join(' ')).includes(query)));
 }

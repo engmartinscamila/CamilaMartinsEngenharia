@@ -125,7 +125,7 @@ export default function AdminFinancialScreen() {
     try{await task();}catch(reason){setError(reason instanceof Error?reason.message:'Não foi possível concluir. Seus campos foram preservados.');}
     finally{actionLock.current=false;setSaving(false);}
   }
-  const clearEntry=()=>{setEntryErrors({});setEditing(null);setDescription('');setAmount('');setNotes('');setCategory('outros');setEntryStatus('pendente');setPaidAt(financialToday());setPaymentMethod('');requestId.current=null;};
+  const clearEntry=()=>{setEntryErrors({});setEditing(null);setDescription('');setAmount('');setNotes('');setCategory('outros');setDate(financialToday());setDueDate(financialToday());setEntryStatus('pendente');setPaidAt(financialToday());setPaymentMethod('');requestId.current=null;};
   const editEntry=(entry:FinancialEntrySummary)=>{
     setEditing(entry);setEntryLink(entry.projectId?'project':'client');setEntryClientId(entry.clientId??projects.find(p=>p.id===entry.projectId)?.clientId??null);setEntryContractId(entry.contractId??null);setSelectedProjectId(entry.projectId);setType(entry.type as 'entrada'|'saida');setDescription(entry.description);
     setAmount(entry.amount.toFixed(2).replace('.',','));setDate(entry.date??financialToday());setDueDate(entry.dueDate??'');setNotes(entry.notes??'');
@@ -319,7 +319,7 @@ export default function AdminFinancialScreen() {
         <View style={styles.metrics}>
           <Card style={styles.metric}><Text style={styles.metricLabel}>RECEBIDO NO MÊS</Text><Text style={styles.metricValue}>{coreError?'Indisponível':formatCurrency(monthTotals.received)}</Text><Button title="Ver recebimentos do mês" variant="ghost" onPress={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'pago',month:financialToday().slice(0,7),type:'entrada'});setPage(0);setSection('entries');}} /></Card>
           <Card style={styles.metric}><Text style={styles.metricLabel}>SALDO A RECEBER</Text><Text style={styles.metricValue}>{coreError?'Indisponível':loading?'Carregando…':formatCurrency(statementTotal)}</Text><Button title="Abrir extrato a receber" variant="ghost" onPress={()=>setSection('receivables')} /></Card>
-          <Card style={styles.metric}><Text style={styles.metricLabel}>A PAGAR</Text><Text style={styles.metricValue}>{coreError?'Indisponível':formatCurrency(financialTotals(entries.filter(entry=>!embedded?.projectId||entry.projectId===embedded.projectId)).payable)}</Text><Button title="Ver pendências" variant="ghost" onPress={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'pendente',month:'',type:'saida'});setPage(0);setSection('entries');}} /></Card>
+          <Card style={styles.metric}><Text style={styles.metricLabel}>A PAGAR</Text><Text style={styles.metricValue}>{coreError?'Indisponível':formatCurrency(financialTotals(entries.filter(entry=>!embedded?.projectId||entry.projectId===embedded.projectId)).payable)}</Text><Button title="Ver pendências" variant="ghost" onPress={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'aberto',month:'',type:'saida'});setPage(0);setSection('entries');}} /></Card>
         </View>
         <Text style={styles.sectionTitle}>Saldos das contas</Text>
         {embedded?.projectId?<Text style={styles.meta}>Os saldos bancários são globais. O saldo contratual considera todo o contrato do projeto selecionado.</Text>:null}
@@ -357,7 +357,7 @@ export default function AdminFinancialScreen() {
         <Field label="Buscar cliente, contrato, projeto ou descrição" value={filters.query} onChangeText={value=>setFilter('query',value)} />
         {!embedded ? <SelectionChips label="Projeto / contrato" value={filters.projectId} onChange={value=>setFilter('projectId',value)} items={[{value:'',label:'Todos'},...projects.map(project=>({value:project.id,label:`${project.contractNumber} • ${project.clientName} • ${project.name}`}))]} /> : null}
         <SelectionChips label="Tipo de movimentação" value={filters.type} onChange={value=>setFilter('type',value)} items={[{value:'',label:'Todas'},{value:'entrada',label:'Entradas'},{value:'saida',label:'Saídas'}]} />
-        <SelectionChips label="Situação do lançamento" value={filters.status} onChange={value=>setFilter('status',value)} items={[{value:'',label:'Todas'},{value:'pago',label:'Recebidos / pagos'},{value:'pendente',label:'Pendentes a vencer'},{value:'atrasado',label:'Em atraso'},{value:'cancelado',label:'Cancelados'}]} />
+        <SelectionChips label="Situação do lançamento" value={filters.status} onChange={value=>setFilter('status',value)} items={[{value:'',label:'Todas'},{value:'pago',label:'Recebidos / pagos'},{value:'aberto',label:'Em aberto'},{value:'pendente',label:'Pendentes a vencer'},{value:'atrasado',label:'Em atraso'},{value:'cancelado',label:'Cancelados'}]} />
         <Field label="Mês (AAAA-MM)" placeholder="Ex.: 2026-10" value={filters.month} onChangeText={value=>setFilter('month',value)} />
         <Text style={styles.meta}>O mês usa a data de pagamento para quitados e o vencimento para pendentes. Cancelados não entram nos totais.</Text>
         <Button title="Limpar filtros" variant="ghost" onPress={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'',month:'',type:''});setPage(0);}} />

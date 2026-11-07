@@ -83,3 +83,5 @@ statement=m.receivableStatements(contractRows,projectsForStatement,statementEntr
 first=m.receivableStatements(contractRows,projectsForStatement,[entry('overpaid',{amount:1100})],[])[0];assert.equal(first.remaining,0);assert.equal(first.credit,100);
 assert.equal(m.filterFinancialEntries(rows,{...empty,type:'saida'}).length,1,'Payables filter excludes income');
 console.log('PASS: extrato contratual, recebimento direto, múltiplos projetos, parcelas não lançadas, avulsos, cancelados, valor desconhecido e crédito sem dupla contagem.');
+
+assert.equal(m.filterFinancialEntries(rows,{...empty,status:'aberto'},'2026-10-29').length,1,'Open balance includes overdue installments');
