@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const read=p=>fs.readFileSync(p,'utf8');
-const main=read('js/commercial-documents-web.js');
+const main=read('js/commercial-documents-web.js')+'\n'+read('js/commercial-record-view.js');
 const html=read('orcamentos-contratos.html');
 const terms=read('js/commercial-terms-web.js');
 const preview=read('js/commercial-document-preview-web.js');
