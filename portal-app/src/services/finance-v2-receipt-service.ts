@@ -9,7 +9,7 @@ export type FinanceV2ReceiptRecord={
 export type FinanceV2ReceiptResult<T>={data:T|null;error:string|null};
 const denied='Comprovante V2 disponível somente na homologação. Nenhum recibo de produção foi alterado.';
 function fail<T>(error:string):FinanceV2ReceiptResult<T>{return {data:null,error};}
-const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function listFinanceV2ReceiptRecords():Promise<FinanceV2ReceiptResult<FinanceV2ReceiptRecord[]>>{
  if(!financeV2HomologationEnabled)return fail(denied);
  const result=await readAllRows(supabase.from('fin_v2_receipt_records')
