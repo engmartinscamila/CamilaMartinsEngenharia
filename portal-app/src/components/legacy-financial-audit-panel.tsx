@@ -5,8 +5,8 @@ import {formatCurrency} from '@/lib/format';
 import type {LegacyAuditReport} from '@/lib/legacy-finance-audit';
 import {useAppTheme} from '@/providers/theme-provider';
 
-export function LegacyFinancialAuditPanel({report,error,loading,onContractEdit}:{
- report:LegacyAuditReport|null;error:string|null;loading:boolean;onContractEdit:(id:string)=>void;
+export function LegacyFinancialAuditPanel({report,error,loading,onContractEdit,onEntryEdit}:{
+ report:LegacyAuditReport|null;error:string|null;loading:boolean;onContractEdit:(id:string)=>void;onEntryEdit:(id:string)=>void;
 }){
  const {colors}=useAppTheme();
  const title={color:colors.ink,fontSize:16,fontWeight:'700' as const};
@@ -31,14 +31,18 @@ export function LegacyFinancialAuditPanel({report,error,loading,onContractEdit}:
     </View>:null}
     {report.unclassifiedEntries.length?<View style={{gap:6}}>
      <Text style={subtitle}>Lançamentos sem classificação contratual</Text>
-     {report.unclassifiedEntries.slice(0,20).map(entry=><Text style={details} key={entry.id}>
-      {entry.clientName} • {entry.projectName} • {formatCurrency(entry.amount)} • {entry.status} — confirmar se é serviço avulso
-     </Text>)}
+     {report.unclassifiedEntries.slice(0,20).map(entry=><View style={{gap:4}} key={entry.id}>
+      <Text style={details}>{entry.clientName} • {entry.projectName} • {formatCurrency(entry.amount)} • {entry.status} — confirmar se é serviço avulso</Text>
+      <Button title={'Revisar lançamento • '+entry.id.slice(0,8)} variant="secondary" onPress={()=>onEntryEdit(entry.id)} />
+     </View>)}
      {report.unclassifiedEntries.length>20?<Text style={details}>Há mais {report.unclassifiedEntries.length-20} lançamento(s) para conferir.</Text>:null}
     </View>:null}
     {report.receiptIssues.length?<View style={{gap:6}}>
      <Text style={subtitle}>Conferência de recibos</Text>
-     {report.receiptIssues.slice(0,15).map((issue,index)=><Text key={issue.receiptId+'-'+index} style={details}>{issue.message}</Text>)}
+     {report.receiptIssues.slice(0,15).map((issue,index)=><View key={issue.receiptId+'-'+index} style={{gap:4}}>
+      <Text style={details}>{issue.message}</Text>
+      {issue.financialEntryId?<Button title={'Conferir pagamento • '+issue.receiptId.slice(0,8)} variant="secondary" onPress={()=>onEntryEdit(issue.financialEntryId!)} />:null}
+     </View>)}
      {report.receiptIssues.length>15?<Text style={details}>Mais {report.receiptIssues.length-15} divergência(s) no histórico.</Text>:null}
     </View>:null}
    </>:<Notice tone="warning">Conciliação indisponível. Atualize o extrato para refazer as verificações.</Notice>}
