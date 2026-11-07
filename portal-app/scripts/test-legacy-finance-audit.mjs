@@ -31,15 +31,16 @@ out=auditLegacyReceivables([contract],[project],[paid],[]);
 assert.equal(out.paidWithoutReceipt,1);
 assert.equal(out.migrationReady,true,'Recibo não emitido não torna um pagamento não recebido');
 const problematic=[
- {...receipt,id:'wrong-amount',amount:220},
- {...receipt,id:'wrong-date',paidOn:'2026-11-04'},
- {...receipt,id:'other-client',clientId:'client-2'},
- {...receipt,id:'wrong-project',projectId:'p-other'},
+ {...receipt,id:'wrong-amount',financialEntryId:'pay-amount',amount:220},
+ {...receipt,id:'wrong-date',financialEntryId:'pay-date',paidOn:'2026-11-04'},
+ {...receipt,id:'other-client',financialEntryId:'pay-client',clientId:'client-2'},
+ {...receipt,id:'wrong-project',financialEntryId:'pay-project',projectId:'p-other'},
  {...receipt,id:'missing-entry',financialEntryId:'missing'},
  {...receipt,id:'no-link',financialEntryId:null},
- {...receipt,id:'duplicate-link'},
+ {...receipt,id:'duplicate-link',financialEntryId:'pay-amount'},
 ];
-out=auditLegacyReceivables([contract],[project],[paid],problematic);
+const paymentVariants=['pay-amount','pay-date','pay-client','pay-project'].map(id=>({...paid,id}));
+out=auditLegacyReceivables([contract],[project],paymentVariants,problematic);
 const codes=out.receiptIssues.map(x=>x.code);
 for(const code of ['amount_mismatch','date_mismatch','client_mismatch','project_mismatch','missing_entry','missing_payment_link','duplicate_receipt']){
  assert(codes.includes(code),'Missing check '+code);
