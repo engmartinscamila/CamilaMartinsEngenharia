@@ -65,6 +65,12 @@ assert.match(view,/Extrato de saldo a receber/);
 assert.match(view,/Saldo restante:/);
 assert.match(view,/Registrar recebimento/);
 assert.match(finance,/admin_reset_financial_data/);
+const financialDetails=read('portal-app/src/components/financial-detail-sections.tsx');
+assert.match(financialDetails,/Conta para importação OFX/);
+assert.match(financialDetails,/Histórico preservado e imutável/);
+assert.match(financialDetails,/RESETAR FINANCEIRO/);
+assert.match(finance,/section==='accounts'\?<FinancialAccountSection/);
+assert.match(finance,/section==='history'\?<FinancialHistorySection/);
 
 const receiptNodes={
  receiptPaper:{innerHTML:''},receiptEditor:{hidden:false},
