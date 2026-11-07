@@ -49,3 +49,7 @@
 - **Regra de negócio:** serviço avulso legítimo não recebe contrato fictício. Deve ser identificado e preservado como categoria distinta na reconciliação, sem somar duas vezes ao saldo.
 - **Homologação:** recibo interno V2 1:1 ao pagamento, com snapshot e histórico de estorno, nunca um recebimento financeiro adicional. Testes abrangem concorrência lógica por trava, idempotência, leitura RLS, reversão e interface de homologação.
 - **Não concluído:** recibo Word/PDF definitivo, cutover produtivo, reclassificação individual de serviço avulso, preenchimento de contratos sem valor e verificação de backup restaurável. Não declarar 100% operacional enquanto isso permanecer.
+
+## Complemento de execução — regularização guiada (07/11/2026)
+
+O painel de conciliação passa a ter botões **Informar valor** para contratos sem valor e **Revisar lançamento** para lançamentos sem vínculo contratual. O segundo botão abre o **mesmo registro financeiro** no editor já existente; não cria um lançamento nem atribui contrato presumido. Divergências de recibos com pagamento identificado também possuem atalho de revisão. O algoritmo acusa diferença de projeto mesmo quando o projeto está ausente em um dos lados do vínculo. O teste de interface comprova que abrir uma pendência não movimenta o caixa. A validação do vínculo avulso exige decisão administrativa; sem a confirmação, a migração automática permanece bloqueada.
