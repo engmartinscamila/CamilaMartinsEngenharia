@@ -4,7 +4,7 @@ import vm from 'node:vm';
 
 // Smoke tests without credentials, data access or writes.
 // These validate startup contracts; browser CRUD/upload flows require separate testing.
-function checkModule(file) {
+function checkModule(file, dependencies = []) {
   const source = readFileSync(file, 'utf8');
   const events = new Map();
   const errors = [];
@@ -28,6 +28,7 @@ function checkModule(file) {
     fetch: async () => ({ ok: true, json: async () => ({}) }),
     setTimeout() { return 1; },
   };
+  for (const dependency of dependencies) new vm.Script(readFileSync(dependency, 'utf8'), {filename:dependency}).runInNewContext(sandbox, {timeout:2000});
   new vm.Script(source, { filename: file }).runInNewContext(sandbox, { timeout: 2000 });
   assert.deepEqual(errors, [], file + ': startup reported errors');
   return { source, events, window };
@@ -41,7 +42,7 @@ assert.ok(clients.source.includes('salvarCliente'), 'Clients save flow must rema
 
 await clients.events.get('DOMContentLoaded')();
 
-const portfolio = checkModule('js/portfolio-admin.js');
+const portfolio = checkModule('js/portfolio-admin.js', ['js/portfolio-media-view.js','js/portfolio-media-storage.js']);
 assert.ok(portfolio.source.includes('portfolioProjectSlug'), 'Project slug editor must remain available');
 assert.ok(portfolio.source.includes('portfolioMediaPoster'), 'Media upload editor must remain available');
 assert.ok(!portfolio.source.includes('function a0_0x22eb'), 'Obfuscated string lookup table must not return');
