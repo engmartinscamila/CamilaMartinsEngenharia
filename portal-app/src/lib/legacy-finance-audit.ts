@@ -28,7 +28,7 @@ export function auditLegacyReceivables(
  const projectsById=new Map(projects.map(item=>[item.id,item]));
  const contractsById=new Map(contracts.map(item=>[item.id,item]));
  const entriesById=new Map(entries.map(item=>[item.id,item]));
- const contractsMissingValue=contracts.filter(c=>!['cancelado','arquivado','cancelled','archived'].includes(c.status.toLowerCase())&&
+ const contractsMissingValue=contracts.filter(c=>!['cancelado','arquivado','cancelled','archived'].includes((c.status??'').toLowerCase())&&
    (c.contractValue===null||!Number.isFinite(c.contractValue)||c.contractValue<0))
   .map(({id,clientId,clientName,contractNumber})=>({id,clientId,clientName,contractNumber}));
  const unclassifiedEntries:LegacyUnclassifiedEntry[]=[];
