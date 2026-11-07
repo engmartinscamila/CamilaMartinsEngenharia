@@ -1,4 +1,6 @@
 import { FinancialSummary, FinancialReceivables } from '@/components/financial-overview';
+import { financeV2HomologationEnabled } from '@/services/finance-v2-service';
+import { useRouter } from 'expo-router';
 import { analyzeFinancialIntegrity } from '@/lib/financial-reconciliation';
 import { prioritizeReceivables, receivableOverview, type ReceivableFocus } from '@/lib/receivable-priorities';
 import { FinancialAccountSection, FinancialHistorySection } from '@/components/financial-detail-sections';
@@ -58,6 +60,7 @@ import type {
 function financialDateInput(value:string){return value.trim().replace(/^(\d{2})\/(\d{2})\/(\d{4})$/, '$3-$2-$1');}
 
 export default function AdminFinancialScreen() {
+  const router=useRouter();
   const embedded=useAdminModule();
   const [clients,setClients]=useState<AdminClientSummary[]>([]);
   const [entryLink,setEntryLink]=useState('client');
@@ -427,6 +430,11 @@ export default function AdminFinancialScreen() {
       </Card>:null}
 
       {section==='history'?<FinancialHistorySection styles={styles} archive={archive} archiveError={archiveError} archivePage={archivePage} setArchivePage={setArchivePage} entries={entries} coreError={coreError} saving={saving} perform={perform} exportComplete={exportComplete} resetEntries={resetEntries} resetReady={resetReady} setResetReady={setResetReady} resetPhrase={resetPhrase} setResetPhrase={setResetPhrase} />:null}
+      {financeV2HomologationEnabled?<Card>
+        <Text style={styles.sectionTitle}>Financeiro V2 — homologação</Text>
+        <Text style={styles.meta}>Teste pagamentos parciais e distribuição de parcelas, sem incluir valores no caixa legado.</Text>
+        <Button title="Abrir operações V2 (homologação)" variant="secondary" onPress={()=>router.push('/admin/financial-v2')} />
+      </Card>:null}
       <Button loading={loading} onPress={() => void perform(load)} title="Atualizar extrato" variant="ghost" />
     </Screen>
   );
