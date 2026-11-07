@@ -29,9 +29,29 @@ let calls=0,release,fail=false,lastInput;
 const admin={listAdminClients:()=>ok([{id:'c',name:'Cliente'},{id:'avulso',name:'Harison sintético sem contrato'}]),listAdminContracts:()=>ok([{id:'contract',clientId:'c',contractNumber:'CON-1',clientName:'Cliente',contractValue:500}]),listAdminProjects:()=>ok([project]),listAdminFinancialEntries:()=>ok(entries),listFinancialArchive:()=>ok([]),
  createAdminFinancialEntry:async input=>{lastInput=input;calls++;await new Promise(resolve=>{release=resolve;});if(fail)return 'Falha simulada';entries=[...entries,{...entries[0],...input,id:'new-'+calls,description:input.description,amount:input.amount}];return null;},updateAdminFinancialEntry:async(id,input)=>{lastInput=input;entries=entries.map(row=>row.id===id?{...row,...input}:row);return null;},deleteAdminFinancialEntry:async()=>null,updateAdminContractValue:async()=>null};
 const operations={listFinancialAccounts:()=>ok([{id:'account',name:'Conta de teste',openingBalance:1000,openingBalanceDate:'2020-01-01',accountType:'bank'}]),listTimesheets:()=>ok([]),listFiscalDocuments:()=>ok([]),getAdminFinancialPreferences:()=>ok({defaultHourlyRate:null}),createFinancialAccount:async()=>null,updateAdminFinancialPreferences:async()=>null,createTimesheet:async()=>null,createFiscalDocument:async()=>null,importOfxTransactions:async()=>({imported:0,reconciled:0,error:null})};
+const financialViewUi={
+ Button:props=>e('button',props),Card:props=>e('div',props,props.children),
+ Field:props=>e('field',props),Notice:props=>e('notice',props,props.children),
+ StateView:props=>e('state',props),StatusPill:props=>e('pill',props)
+};
+const financialViewDeps={
+ react:React,
+ 'react-native':{View:'div',Text:'span',ActivityIndicator:()=>null},
+ '@/components/ui':financialViewUi,
+ '@/components/admin-ui':{SelectionChips:props=>e('choices',props)},
+ '@/components/date-field':{DateField:props=>e('field',{...props,onChangeText:props.onChange})},
+ '@/lib/financial-model':model,
+ '@/lib/format':format,
+ '@/services/financial-tools':{exportFinancialCsv:async()=>{},exportReceivableCsv:async()=>{}},
+};
+const financialOverview=load('src/components/financial-overview.tsx',financialViewDeps);
+const financialDetails=load('src/components/financial-detail-sections.tsx',financialViewDeps);
 const moduleContext=load('src/providers/admin-module-context.tsx',{react:React});
 const component=load('src/app/admin/financial.tsx',{
  '@/providers/admin-module-context':moduleContext,
+ '@/components/financial-overview':financialOverview,
+ '@/components/financial-detail-sections':financialDetails,
+ '@/components/financial-styles':{financialStyleDefinitions:()=>({})},
  '@/components/admin-client-picker':{AdminClientPicker:props=>e('client-picker',props)},
  '@/components/admin-project-picker':{AdminProjectPicker:props=>e('project-picker',props)},
  react:React,'react-native':{View:'div',Text:'span',Pressable:props=>e('button',{onPress:props.onPress},props.children),ActivityIndicator:()=>null,Platform:{OS:'web'},Linking:{}},
