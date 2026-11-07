@@ -21,7 +21,7 @@ export function FinancialSummary({styles,coreError,bankError,loading,monthTotals
         <View style={styles.metrics}>
           <Card style={styles.metric}><Text style={styles.metricLabel}>RECEBIDO NO MÊS</Text><Text style={styles.metricValue}>{coreError?'Indisponível':formatCurrency(monthTotals.received)}</Text><Button title="Ver recebimentos do mês" variant="ghost" onPress={onMonthReceipts} /></Card>
           <Card style={styles.metric}><Text style={styles.metricLabel}>SALDO A RECEBER</Text><Text style={styles.metricValue}>{coreError?'Indisponível':loading?'Carregando…':formatCurrency(statementTotal)}</Text><Button title="Abrir extrato a receber" variant="ghost" onPress={onReceivables} /></Card>
-          <Card style={styles.metric}><Text style={styles.metricLabel}>A PAGAR</Text><Text style={styles.metricValue}>{coreError?'Indisponível':formatCurrency(financialTotals(entries.filter(entry=>!embeddedProjectId||entry.projectId===embedded.projectId)).payable)}</Text><Button title="Ver pendências" variant="ghost" onPress={onPendingPayables} /></Card>
+          <Card style={styles.metric}><Text style={styles.metricLabel}>A PAGAR</Text><Text style={styles.metricValue}>{coreError?'Indisponível':formatCurrency(financialTotals(entries.filter(entry=>!embeddedProjectId||entry.projectId===embeddedProjectId)).payable)}</Text><Button title="Ver pendências" variant="ghost" onPress={onPendingPayables} /></Card>
         </View>
         {missingContractValues>0?<Notice tone="warning">{missingContractValues} contrato(s) sem valor contratado informado. O total a receber inclui apenas os saldos conhecidos e as parcelas já lançadas desses contratos. Confira os valores no extrato.</Notice>:null}
         <Text style={styles.sectionTitle}>Saldos das contas</Text>
