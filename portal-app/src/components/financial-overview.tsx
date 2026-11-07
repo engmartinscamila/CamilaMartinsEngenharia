@@ -1,5 +1,4 @@
 import React from 'react';
-import type { financialStyleDefinitions } from '@/components/financial-styles';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { Button, Card, Field, Notice, StateView } from '@/components/ui';
 import { accountBalance, effectiveStatus, financialStatus, financialToday, financialTotals, type BankTransaction, type ReceivableStatement } from '@/lib/financial-model';
@@ -7,7 +6,7 @@ import { exportReceivableCsv } from '@/services/financial-tools';
 import { formatCurrency, formatDate } from '@/lib/format';
 import type { AdminContractSummary, FinancialAccountSummary, FinancialEntrySummary } from '@/types/domain';
 
-type Styles = ReturnType<typeof financialStyleDefinitions>;
+type Styles = Record<string, any>; // O hook de tema entrega estilos RN já normalizados via StyleSheet.create.
 export type FinancialSummaryProps = {
   styles:Styles; coreError:string|null; bankError:string|null; loading:boolean;
   monthTotals:ReturnType<typeof financialTotals>; statementTotal:number; missingContractValues:number;
