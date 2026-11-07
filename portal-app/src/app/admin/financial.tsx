@@ -1,4 +1,7 @@
 import { FinancialSummary, FinancialReceivables } from '@/components/financial-overview';
+import { LegacyFinancialAuditPanel } from '@/components/legacy-financial-audit-panel';
+import { auditLegacyReceivables, type LegacyReceiptReference } from '@/lib/legacy-finance-audit';
+import { listAdminReceiptReferences } from '@/services/legacy-receipt-service';
 import { financeV2HomologationEnabled } from '@/services/finance-v2-service';
 import { useRouter } from 'expo-router';
 import { analyzeFinancialIntegrity } from '@/lib/financial-reconciliation';
@@ -70,6 +73,8 @@ export default function AdminFinancialScreen() {
   const [contracts, setContracts] = useState<AdminContractSummary[]>([]);
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
   const [entries, setEntries] = useState<FinancialEntrySummary[]>([]);
+  const [receiptReferences,setReceiptReferences]=useState<LegacyReceiptReference[]>([]);
+  const [receiptAuditError,setReceiptAuditError]=useState<string|null>(null);
   const [archive, setArchive] = useState<FinancialArchiveSummary[]>([]);
 
   const [accounts, setAccounts] = useState<FinancialAccountSummary[]>([]);
@@ -151,9 +156,9 @@ export default function AdminFinancialScreen() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-    const [contractResult, projectResult, entryResult, archiveResult, bankResult, accountResult, timeResult, fiscalResult, preferenceResult, clientResult] = await Promise.all([
+    const [contractResult, projectResult, entryResult, archiveResult, bankResult, accountResult, timeResult, fiscalResult, preferenceResult, clientResult, receiptResult] = await Promise.all([
       listAdminContracts(), listAdminProjects(), listAdminFinancialEntries(), listFinancialArchive(),
-      listBankTransactions(), listFinancialAccounts(), listTimesheets(), listFiscalDocuments(), getAdminFinancialPreferences(), listAdminClients(),
+      listBankTransactions(), listFinancialAccounts(), listTimesheets(), listFiscalDocuments(), getAdminFinancialPreferences(), listAdminClients(), listAdminReceiptReferences(),
     ]);
     setClients(clientResult.data);
     setContracts(contractResult.data);
@@ -161,6 +166,8 @@ export default function AdminFinancialScreen() {
     setEntries(entryResult.data);
     setArchive(archiveResult.data);
     setArchiveError(archiveResult.error);
+    setReceiptReferences(receiptResult.data);
+    setReceiptAuditError(receiptResult.error);
     setTransactions(bankResult.data);
     setCoreError(clientResult.error ?? contractResult.error ?? projectResult.error ?? entryResult.error ?? timeResult.error);
     setBankError(bankResult.error ?? accountResult.error);
@@ -176,7 +183,7 @@ export default function AdminFinancialScreen() {
     setSelectedContractId((current) => contextProjectId ? projectResult.data.find(project=>project.id===contextProjectId)?.contractId ?? null : current ?? contractResult.data[0]?.id ?? null);
     setAccountId((current) => current ?? null);
     setError(clientResult.error ?? contractResult.error ?? projectResult.error ?? entryResult.error ?? archiveResult.error ?? bankResult.error ?? accountResult.error ?? timeResult.error ?? fiscalResult.error ?? preferenceResult.error);
-    } catch { const message='Não foi possível atualizar os dados financeiros. Tente novamente.'; setError(message); setCoreError(message); setBankError(message); setArchiveError(message); }
+    } catch { const message='Não foi possível atualizar os dados financeiros. Tente novamente.'; setError(message); setCoreError(message); setBankError(message); setArchiveError(message); setReceiptAuditError(message); setReceiptReferences([]); }
     finally { setLoading(false); }
   }, [contextProjectId]);
 
@@ -187,6 +194,7 @@ export default function AdminFinancialScreen() {
   const statementRows=useMemo(()=>prioritizeReceivables(statements,statementFocus,statementQuery),[statements,statementFocus,statementQuery]);
   const missingContractValues=statements.filter(row=>!row.inactive&&row.contractValue===null&&contracts.some(contract=>contract.id===row.id)).length;
   const integrityIssues=useMemo(()=>analyzeFinancialIntegrity(entries,contracts,projects,clients,transactions),[entries,contracts,projects,clients,transactions]);
+  const legacyAudit=useMemo(()=>coreError||receiptAuditError?null:auditLegacyReceivables(contracts,projects,entries,receiptReferences),[coreError,receiptAuditError,contracts,projects,entries,receiptReferences]);
   const statementTotal=receivableOverview(statements).total;
   const monthTotals=financialTotals(entries.filter(entry=>(!embedded?.projectId||entry.projectId===embedded.projectId)&&entryDate(entry)?.startsWith(financialToday().slice(0,7))));
   const openReceipt=(id:string,projectId?:string|null)=>{const url='/recibos.html?financialId='+encodeURIComponent(id);if(embedded)embedded.onNavigate('receipts',{financialId:id,...(projectId?{projectId}:{})});else if(Platform.OS==='web')window.location.assign(url);else void Linking.openURL('https://camilamartinsengenharia.com.br'+url);};
@@ -328,8 +336,11 @@ export default function AdminFinancialScreen() {
         onMonthReceipts={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'pago',month:financialToday().slice(0,7),type:'entrada'});setPage(0);setSection('entries');}}
         onPendingPayables={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'aberto',month:'',type:'saida'});setPage(0);setSection('entries');}}
         onReceivables={()=>setSection('receivables')} onNewEntry={()=>{clearEntry();setFormOpen(true);setSection('entries');}} />:null}
-      {section==='receivables'?<FinancialReceivables styles={styles} embeddedProjectId={embedded?.projectId} missingContractValues={missingContractValues} statementQuery={statementQuery} setStatementQuery={setStatementQuery} statementFocus={statementFocus} setStatementFocus={setStatementFocus} statementPage={statementPage} setStatementPage={setStatementPage} expandedStatement={expandedStatement} setExpandedStatement={setExpandedStatement} statementRows={statementRows} contracts={contracts} integrityIssues={integrityIssues} bankError={bankError} loading={loading} coreError={coreError} saving={saving} goldColor={colors.gold600}
-        perform={perform} openReceipt={openReceipt} receiveEntry={receiveEntry} onContractEdit={id=>{setSelectedContractId(id);setContractValue('');setSection('hours');}} />:null}
+      {section==='receivables'?<>
+        <LegacyFinancialAuditPanel report={legacyAudit} loading={loading} error={coreError||receiptAuditError} onContractEdit={id=>{setSelectedContractId(id);setContractValue('');setSection('hours');}} />
+        <FinancialReceivables styles={styles} embeddedProjectId={embedded?.projectId} missingContractValues={missingContractValues} statementQuery={statementQuery} setStatementQuery={setStatementQuery} statementFocus={statementFocus} setStatementFocus={setStatementFocus} statementPage={statementPage} setStatementPage={setStatementPage} expandedStatement={expandedStatement} setExpandedStatement={setExpandedStatement} statementRows={statementRows} contracts={contracts} integrityIssues={integrityIssues} bankError={bankError} loading={loading} coreError={coreError} saving={saving} goldColor={colors.gold600}
+        perform={perform} openReceipt={openReceipt} receiveEntry={receiveEntry} onContractEdit={id=>{setSelectedContractId(id);setContractValue('');setSection('hours');}} />
+      </>:null}
       {section==='entries'?<>
       <Card><Text style={styles.sectionTitle}>Filtrar lançamentos e indicadores</Text>
         <Field label="Buscar cliente, contrato, projeto ou descrição" value={filters.query} onChangeText={value=>setFilter('query',value)} />
