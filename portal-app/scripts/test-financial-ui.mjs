@@ -46,6 +46,11 @@ const financialViewDeps={
  '@/services/financial-tools':{exportFinancialCsv:async()=>{},exportReceivableCsv:async()=>{}},
 };
 const reconciliation=load('src/lib/financial-reconciliation.ts',{'@/lib/financial-model':model});
+const legacyAudit=load('src/lib/legacy-finance-audit.ts',{'@/lib/financial-model':model});
+const legacyPanel=load('src/components/legacy-financial-audit-panel.tsx',{
+ ...financialViewDeps,
+ '@/providers/theme-provider':{useAppTheme:()=>({colors:{ink:'#000',muted:'#777'}})}
+});
 financialViewDeps['@/lib/financial-reconciliation']=reconciliation;
 const financialOverview=load('src/components/financial-overview.tsx',financialViewDeps);
 const financialDetails=load('src/components/financial-detail-sections.tsx',financialViewDeps);
@@ -55,6 +60,9 @@ const component=load('src/app/admin/financial.tsx',{
  '@/services/finance-v2-service':{financeV2HomologationEnabled:false},
  '@/providers/admin-module-context':moduleContext,
  '@/components/financial-overview':financialOverview,
+ '@/components/legacy-financial-audit-panel':legacyPanel,
+ '@/lib/legacy-finance-audit':legacyAudit,
+ '@/services/legacy-receipt-service':{listAdminReceiptReferences:()=>ok([{id:'synthetic-receipt',financialEntryId:'paid',clientId:'c',projectId:'p',amount:100,paidOn:today}])},
  '@/components/financial-detail-sections':financialDetails,
  '@/components/financial-styles':{financialStyleDefinitions:()=>({})},
  '@/components/admin-client-picker':{AdminClientPicker:props=>e('client-picker',props)},
@@ -80,6 +88,8 @@ const text=()=>JSON.stringify(renderer.toJSON());
 assert(text().includes('SALDO A RECEBER'));assert(text().includes('400,00'),'Contract remainder must include unlaunched installments');
 await act(async()=>choices('Área financeira').props.onChange('receivables'));assert(text().includes('400,00'));
 assert(text().includes('Conferência automática de integridade'),'Painel deve mostrar conferência não destrutiva');
+assert(text().includes('Conciliação de lançamentos e recibos'),'Painel deve identificar pagamento recebido e recibo emitido');
+assert(text().includes('Recibos conferidos: '),'Números do histórico devem ser visíveis');
 assert(choices('Prioridade de cobrança'),'Filtro operacional de cobranças presente');
 await act(async()=>choices('Prioridade de cobrança').props.onChange('overdue'));
 assert(text().includes('Nenhum contrato ou recebimento neste filtro'),'Não inventar vencimentos');

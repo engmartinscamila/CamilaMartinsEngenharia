@@ -91,11 +91,13 @@ jobs:
         run: |
           npm install --prefix "$RUNNER_TEMP/finance-v2-test" --no-save --ignore-scripts --no-audit @electric-sql/pglite@0.3.10
           CME_FIN_SQL_ROOT="$RUNNER_TEMP/finance-v2-test" node scripts/test-financial-v2-sql.mjs
+          CME_FIN_SQL_ROOT="$RUNNER_TEMP/finance-v2-test" node scripts/test-fin-v2-receipt-sql.mjs
 
       - name: Testar a interface financeira com dados sintéticos
         run: |
           npm install --prefix "$RUNNER_TEMP/financial-ui-test" --no-save --package-lock=false --ignore-scripts react@19.2.3 react-test-renderer@19.2.3
           CME_FINANCIAL_TEST_ROOT="$RUNNER_TEMP/financial-ui-test" node scripts/test-financial-ui.mjs
+          CME_FINANCIAL_TEST_ROOT="$RUNNER_TEMP/financial-ui-test" node scripts/test-fin-v2-receipt-ui.mjs
 
       - name: ESLint
         run: npm run lint

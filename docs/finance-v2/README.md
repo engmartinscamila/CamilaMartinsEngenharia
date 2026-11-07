@@ -39,3 +39,15 @@ A produção contém `financeiro`, `payment_receipts`, projetos e contratos com 
 6. Testar concorrência, falhas de rede, autenticação, PDFs e extratos reais em homologação; só então publicar.
 
 **Não foi executada nesta PR qualquer DDL/DML em produção ou homologação.** O SQL está versionado, e não aplicado.
+
+## Lote de reconciliação e comprovantes internos (07/11/2026)
+
+A conferência administrativa não destrutiva usa `legacy-finance-audit.ts`, `legacy-receipt-service.ts` e `legacy-financial-audit-panel.tsx`. Exibe contratos sem valor, lançamentos sem contrato para classificação manual, pagamentos sem recibo e erros de vínculo (número de recibos por pagamento, valor, data, cliente e projeto). Se a leitura de uma página do histórico falhar, todo o diagnóstico é marcado indisponível; nenhuma soma parcial é exibida. O sistema não assume que ausência de contrato é erro: pode se tratar de prestação de serviço avulsa.
+
+**Conferência SQL somente leitura na produção (estado observado):** 5 contratos, 4 sem valor, 4 lançamentos financeiros (3 pagos, 1 pendente), 3 sem contrato identificável, 3 recibos vinculados sem divergência de valor, data, cliente ou projeto. São dados de diagnóstico do momento, não devem virar valores fixos do código.
+
+### Registro interno de comprovante V2 — homologação
+
+`0002-receipt-evidence-candidate.sql` cria `fin_v2_receipt_records` e a RPC `admin_fin_v2_issue_receipt_reference`. Este registro é **comprovante administrativo de teste**, NÃO é recibo legal definitivo. A ligação é 1 pagamento V2 para no máximo 1 registro, com número interno de homologação, snapshot não reescrito, deduplicação por solicitação e histórico de estorno preservado. **Não insere em `financeiro` nem em `payment_receipts`.** A UI de homologação exibe o comprovante e não oferece reemissão para um pagamento já vinculado.
+
+Antes de gerar recibo definitivo em produção, é obrigatório validar identidade profissional, valor recebido, pagamento real e totalidade dos vínculos; não converter automaticamente os quatro lançamentos existentes. A migração de homologação deve permanecer fora de `supabase/migrations` enquanto os ambientes divergirem. A migração da prova interna só será aplicada à homologação após teste automatizado PGlite, auditoria de segurança e confirmação explícita de ausência de dados alterados na produção.

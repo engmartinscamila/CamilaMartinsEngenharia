@@ -60,7 +60,7 @@ assert.match(commercial,/function applyQuotesToContract/);
 assert.match(commercial,/window\.CMECorrectCommercialServiceClassification/);
 assert.match(portfolio,/window\.CMEPortfolioMediaStorage\.create/);
 const finance=read('portal-app/src/app/admin/financial.tsx'),view=read('portal-app/src/components/financial-overview.tsx');
-assert.match(finance,/section==='receivables'\?<FinancialReceivables/);
+assert.match(finance,/section==='receivables'\?<>[\s\S]*?<LegacyFinancialAuditPanel[\s\S]*?<FinancialReceivables/);
 assert.match(view,/Extrato de saldo a receber/);
 assert.match(view,/Saldo restante:/);
 assert.match(view,/Registrar recebimento/);

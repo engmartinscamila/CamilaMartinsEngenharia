@@ -90,3 +90,5 @@ await import('./test-finance-v2-forms.mjs');
 await import('./test-finance-v2-service.mjs');
 await import('./test-payment-allocation-model.mjs');
 await import('./test-financial-reconciliation.mjs');
+await import('./test-legacy-finance-audit.mjs');
+await import('./test-finance-v2-receipt-service.mjs');
