@@ -1,3 +1,5 @@
+import { FinancialSummary, FinancialReceivables } from '@/components/financial-overview';
+import { FinancialAccountSection, FinancialHistorySection } from '@/components/financial-detail-sections';
 import {useAdminModule} from '@/providers/admin-module-context';
 import { useUnsavedForm } from '@/hooks/use-unsaved-form';
 import { useNotificationProject } from '@/hooks/use-notification-project';
@@ -39,7 +41,7 @@ import {
   importOfxTransactions,
   updateAdminFinancialPreferences,
 } from '@/services/operations-service';
-import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
+import { financialStyleDefinitions } from '@/components/financial-styles';
 import type {
   AdminClientSummary,
   AdminContractSummary,
@@ -133,7 +135,7 @@ export default function AdminFinancialScreen() {
     setPaymentMethod(entry.paymentMethod??'');setFormOpen(true);setSection('entries');requestId.current=null;
   };
   const { colors } = useAppTheme();
-  const styles = useThemeStyles(styleDefinitions);
+  const styles = useThemeStyles(financialStyleDefinitions);
   useUnsavedForm(Boolean(description||amount||notes||accountName||timeHours||timeDescription||fiscalDescription||fiscalAmount||contractValue));
 
   const selectContext=useCallback((id:string)=>{setEntryLink('project');setSelectedProjectId(id);setFilters(current=>({...current,projectId:id}));setPage(0);},[]);
@@ -315,47 +317,12 @@ export default function AdminFinancialScreen() {
       {!embedded ? <SelectionChips label="Área financeira" value={section} onChange={value=>{setSection(value);setError(null);setSuccess(null);}}
         items={[{value:'summary',label:'Resumo'},{value:'receivables',label:'A receber'},{value:'entries',label:'Movimentações'},{value:'accounts',label:'Contas e OFX'},{value:'hours',label:'Horas e margem'},{value:'history',label:'Histórico e exportações'},{value:'fiscal',label:'Rascunhos fiscais'}]} /> : null}
       {!embedded ? <Button title="Emissão de recibos — Word e PDF" variant="secondary" onPress={()=>{if(Platform.OS==='web')window.location.assign('/recibos.html');else void Linking.openURL('https://camilamartinsengenharia.com.br/recibos.html');}} /> : null}
-      {section==='summary'?<>
-        <Text style={styles.sectionTitle}>Resumo financeiro</Text>
-        <View style={styles.metrics}>
-          <Card style={styles.metric}><Text style={styles.metricLabel}>RECEBIDO NO MÊS</Text><Text style={styles.metricValue}>{coreError?'Indisponível':formatCurrency(monthTotals.received)}</Text><Button title="Ver recebimentos do mês" variant="ghost" onPress={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'pago',month:financialToday().slice(0,7),type:'entrada'});setPage(0);setSection('entries');}} /></Card>
-          <Card style={styles.metric}><Text style={styles.metricLabel}>SALDO A RECEBER</Text><Text style={styles.metricValue}>{coreError?'Indisponível':loading?'Carregando…':formatCurrency(statementTotal)}</Text><Button title="Abrir extrato a receber" variant="ghost" onPress={()=>setSection('receivables')} /></Card>
-          <Card style={styles.metric}><Text style={styles.metricLabel}>A PAGAR</Text><Text style={styles.metricValue}>{coreError?'Indisponível':formatCurrency(financialTotals(entries.filter(entry=>!embedded?.projectId||entry.projectId===embedded.projectId)).payable)}</Text><Button title="Ver pendências" variant="ghost" onPress={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'aberto',month:'',type:'saida'});setPage(0);setSection('entries');}} /></Card>
-        </View>
-        {missingContractValues>0?<Notice tone="warning">{missingContractValues} contrato(s) sem valor contratado informado. O total a receber inclui apenas os saldos conhecidos e as parcelas já lançadas desses contratos. Confira os valores no extrato.</Notice>:null}
-        <Text style={styles.sectionTitle}>Saldos das contas</Text>
-        {embedded?.projectId?<Text style={styles.meta}>Os saldos bancários são globais. O saldo contratual considera todo o contrato do projeto selecionado.</Text>:null}
-        {accounts.length===0?<StateView title="Nenhuma conta cadastrada" description="Cadastre uma conta em Mais opções → Contas e OFX." icon="wallet-outline" />:accounts.map(account=><Card key={account.id}><Text style={styles.title}>{account.name}</Text><Text style={styles.metricValue}>{coreError||bankError?'Indisponível':accountBalance(account,entries,transactions)===null?'Referência de saldo não informada':formatCurrency(accountBalance(account,entries,transactions))}</Text></Card>)}
-        <Button title="Novo lançamento" onPress={()=>{clearEntry();setFormOpen(true);setSection('entries');}} />
-      </>:null}
-      {section==='receivables'?<>
-        <Text style={styles.sectionTitle}>Extrato de saldo a receber</Text>
-        <Text style={styles.meta}>Saldo restante = valor contratado menos recebimentos. Parcelas pendentes fazem parte desse saldo. Serviços sem contrato usam os lançamentos pendentes. Valores de contratos cancelados ou arquivados ficam fora do total.</Text>
-        {embedded?.projectId?<Notice tone="info">Exibindo o contrato completo do projeto selecionado, incluindo recebimentos de seus outros projetos.</Notice>:null}
-        {missingContractValues>0?<Notice tone="warning">{missingContractValues} contrato(s) sem valor informado: o saldo completo desses contratos ainda não pode ser calculado. Use “Informar valor contratado” para completar.</Notice>:null}
-        <Field label="Buscar cliente ou contrato no extrato" value={statementQuery} onChangeText={value=>{setStatementQuery(value);setStatementPage(0);}} />
-        <Button title="Exportar extrato a receber (CSV)" variant="secondary" disabled={Boolean(coreError)||loading} onPress={()=>void perform(()=>exportReceivableCsv(statementRows))} />
-        {loading?<ActivityIndicator color={colors.gold600} />:coreError?<Notice tone="danger">Extrato indisponível. Atualize os dados para conferir os saldos.</Notice>:<>
-          <Text style={styles.metricValue}>Saldo a receber: {formatCurrency(statementRows.filter(row=>!row.inactive).reduce((sum,row)=>sum+Math.round((row.remaining??row.pending)*100),0)/100)}</Text>
-          {statementRows.length===0?<StateView title="Nenhum contrato ou recebimento neste filtro" description="Confira o cliente selecionado ou registre os serviços avulsos." icon="receipt-outline" />:statementRows.slice(statementPage*25,statementPage*25+25).map(row=><Card key={row.id}>
-            <Text style={styles.title}>{row.clientName} • {row.contractNumber}</Text>
-            <Text style={styles.meta}>Contratado: {row.contractValue===null?'Não informado':formatCurrency(row.contractValue)} • Recebido: {formatCurrency(row.received)}</Text>
-            <Text style={styles.title}>Saldo restante: {row.remaining===null?'Valor contratado não informado':formatCurrency(row.remaining)}</Text>
-            <Text style={styles.meta}>Parcelas pendentes: {formatCurrency(row.pending)} • Em atraso: {formatCurrency(row.overdue)}</Text>
-            {row.unscheduled!==null&&row.unscheduled>0?<Notice tone="warning">{formatCurrency(row.unscheduled)} do saldo ainda sem parcelas lançadas. Esse valor não foi lançado automaticamente.</Notice>:null}
-            {row.remaining!==null&&row.pending>row.remaining?<Notice tone="warning">As parcelas pendentes excedem o saldo em {formatCurrency((Math.round(row.pending*100)-Math.round(row.remaining*100))/100)}. Confira os lançamentos.</Notice>:null}
-            {row.contractValue===null&&contracts.some(contract=>contract.id===row.id)?<Button title="Informar valor contratado" variant="secondary" onPress={()=>{setSelectedContractId(row.id);setContractValue('');setSection('hours');}} />:null}
-            {row.credit>0?<Notice tone="warning">Recebimentos excedem o valor contratado em {formatCurrency(row.credit)}. Confira o contrato e os pagamentos.</Notice>:null}
-            {row.inactive?<Notice tone="info">Contrato cancelado ou arquivado: preservado para conferência, fora do total a receber.</Notice>:null}
-            <Button title={expandedStatement===row.id?'Recolher parcelas':'Ver parcelas e recebimentos'} variant="secondary" onPress={()=>setExpandedStatement(expandedStatement===row.id?null:row.id)} />
-            {expandedStatement===row.id?(row.entries.length===0?<Text style={styles.meta}>Ainda não há parcelas lançadas para este contrato.</Text>:row.entries.map(entry=><View key={entry.id} style={styles.summary}>
-              <View style={{flex:1}}><Text style={styles.title}>{entry.description} • {formatCurrency(entry.amount)}</Text><Text style={styles.meta}>{effectiveStatus(entry)==='atrasado'?'Em atraso':financialStatus(entry.status)==='pago'?'Recebido':'Pendente'} • Vencimento: {formatDate(entry.dueDate)} • Recebimento: {formatDate(entry.paidAt)}</Text>
-              {financialStatus(entry.status)==='pago'?<Button title="Emitir / abrir recibo" variant="secondary" onPress={()=>openReceipt(entry.id,entry.projectId)} />:<Button title="Registrar recebimento" variant="secondary" disabled={saving} onPress={()=>receiveEntry(entry)} />}</View>
-            </View>)):null}
-          </Card>)}
-          <View style={styles.rowFields}><Button title="Contratos anteriores" variant="ghost" disabled={statementPage===0} onPress={()=>setStatementPage(value=>value-1)} /><Text style={styles.meta}>Página {statementPage+1} • {statementRows.length} registro(s)</Text><Button title="Próximos contratos" variant="ghost" disabled={(statementPage+1)*25>=statementRows.length} onPress={()=>setStatementPage(value=>value+1)} /></View>
-        </>}
-      </>:null}
+      {section==='summary'?<FinancialSummary styles={styles} coreError={coreError} bankError={bankError} loading={loading} monthTotals={monthTotals} statementTotal={statementTotal} missingContractValues={missingContractValues} embeddedProjectId={embedded?.projectId} entries={entries} accounts={accounts} transactions={transactions} goldColor={colors.gold600}
+        onMonthReceipts={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'pago',month:financialToday().slice(0,7),type:'entrada'});setPage(0);setSection('entries');}}
+        onPendingPayables={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'aberto',month:'',type:'saida'});setPage(0);setSection('entries');}}
+        onReceivables={()=>setSection('receivables')} onNewEntry={()=>{clearEntry();setFormOpen(true);setSection('entries');}} />:null}
+      {section==='receivables'?<FinancialReceivables styles={styles} embeddedProjectId={embedded?.projectId} missingContractValues={missingContractValues} statementQuery={statementQuery} setStatementQuery={setStatementQuery} statementPage={statementPage} setStatementPage={setStatementPage} expandedStatement={expandedStatement} setExpandedStatement={setExpandedStatement} statementRows={statementRows} contracts={contracts} loading={loading} coreError={coreError} saving={saving} goldColor={colors.gold600}
+        perform={perform} openReceipt={openReceipt} receiveEntry={receiveEntry} onContractEdit={id=>{setSelectedContractId(id);setContractValue('');setSection('hours');}} />:null}
       {section==='entries'?<>
       <Card><Text style={styles.sectionTitle}>Filtrar lançamentos e indicadores</Text>
         <Field label="Buscar cliente, contrato, projeto ou descrição" value={filters.query} onChangeText={value=>setFilter('query',value)} />
@@ -410,26 +377,7 @@ export default function AdminFinancialScreen() {
       <View style={styles.rowFields}><Button title="Página anterior" disabled={page===0} variant="ghost" onPress={()=>setPage(value=>value-1)} /><Text style={styles.meta}>Página {page+1}</Text><Button title="Próxima página" disabled={(page+1)*50>=filteredEntries.length} variant="ghost" onPress={()=>setPage(value=>value+1)} /></View>
       {deleteTarget?<Card><Notice tone="warning">Excluir “{deleteTarget.description}” dos ativos? O registro ficará no histórico preservado. Lançamentos conciliados não podem ser excluídos aqui.</Notice><Button title="Confirmar exclusão dos ativos" loading={saving} onPress={()=>void perform(deleteEntry)} /><Button title="Cancelar exclusão" variant="ghost" onPress={()=>setDeleteTarget(null)} /></Card>:null}
       </>:null}
-      {section==='accounts'?<Card>
-          <Text style={styles.sectionTitle}>{referenceAccount?'Conferir referência de saldo':'Contas e saldos'}</Text>
-          <SelectionChips label="Conta para importação OFX" value={accountId??''} onChange={value=>setAccountId(value||null)} items={[{value:'',label:'Selecione'},...accounts.map(account=>({value:account.id,label:account.name}))]} />
-          {!referenceAccount ? <SelectionChips items={[{ value: 'bank', label: 'Banco' }, { value: 'cash', label: 'Caixa' }, { value: 'credit', label: 'Cartão' }]} label="Tipo" onChange={setAccountType} value={accountType} /> : null}
-          <Field label="Nome da conta" editable={!referenceAccount} onChangeText={setAccountName} value={accountName} />
-          <Field keyboardType="decimal-pad" label="Saldo de referência (R$)" onChangeText={setOpeningBalance} value={openingBalance} />
-          <DateField label="Saldo ao final do dia" value={openingDate} onChange={setOpeningDate} />
-          <Text style={styles.meta}>O saldo gerencial soma apenas movimentos posteriores a essa data. Movimentos conciliados são contados uma única vez.</Text>
-          <Button onPress={() => void perform(saveAccount)} title={referenceAccount?"Salvar referência de saldo":"Cadastrar conta"} variant="secondary" />
-          <Text style={styles.meta}>A conciliação usa a mesma conta, valor exato e data próxima. Possibilidades ambíguas ficam sem vínculo automático.</Text><Button loading={importingOfx} onPress={() => void perform(importOfx)} title="Importar extrato OFX" variant="secondary" />
-          {accounts.map(account=><Card key={account.id}><Text style={styles.title}>{account.name}</Text><Text style={styles.meta}>Referência: {formatCurrency(account.openingBalance)} ao final de {formatDate(account.openingBalanceDate)}</Text>
-            <Text style={styles.title}>Saldo gerencial: {bankError||coreError?'Indisponível':accountBalance(account,entries,transactions)===null?'Informe a data do saldo inicial':formatCurrency(accountBalance(account,entries,transactions))}</Text>
-            <Button title="Conferir saldo de referência" variant="secondary" onPress={()=>{setReferenceAccount(account.id);setAccountName(account.name);setAccountType(account.accountType);setOpeningBalance(account.openingBalance.toFixed(2).replace('.',','));setOpeningDate(account.openingBalanceDate??'');}} />
-          </Card>)}
-          <Button title="Limpar formulário de conta" variant="ghost" onPress={()=>{setReferenceAccount(null);setAccountName('');setOpeningBalance('0');setOpeningDate(financialToday());}} />
-          {bankError?<Notice tone="danger">{bankError}</Notice>:null}
-          <Text style={styles.sectionTitle}>Movimentações OFX da conta selecionada</Text>
-          {transactions.filter(item=>item.accountId===accountId).slice(0,100).map(item=><View key={item.id}><Text style={styles.meta}>{formatDate(item.date)} • {item.description} • {formatCurrency(item.amount)} • {item.matchedFinancialId?'Conciliado':'Sem conciliação'}</Text></View>)}
-          <Text style={styles.meta}>Exibindo até 100 movimentos recentes; o saldo usa todos os movimentos carregados.</Text>
-      </Card>:null}
+      {section==='accounts'?<FinancialAccountSection styles={styles} referenceAccount={referenceAccount} setReferenceAccount={setReferenceAccount} accountId={accountId} setAccountId={setAccountId} accountType={accountType} setAccountType={setAccountType} accountName={accountName} setAccountName={setAccountName} openingBalance={openingBalance} setOpeningBalance={setOpeningBalance} openingDate={openingDate} setOpeningDate={setOpeningDate} accounts={accounts} transactions={transactions} entries={entries} bankError={bankError} coreError={coreError} importingOfx={importingOfx} perform={perform} saveAccount={saveAccount} importOfx={importOfx} />:null}
       {section==='hours'?<>
         <Card>
           <Text style={styles.sectionTitle}>Horas por projeto</Text>
@@ -474,41 +422,9 @@ export default function AdminFinancialScreen() {
         <Button loading={saving} onPress={() => void perform(saveContractValue)} title="Atualizar valor contratado" variant="secondary" />
       </Card>:null}
 
-      {section==='history'?<>
-      <Button title="Baixar Excel completo (.xlsx)" loading={saving} onPress={()=>void perform(exportComplete)} />
-      <Button title="Baixar CSV dos lançamentos ativos" disabled={Boolean(coreError)} variant="secondary" loading={saving} onPress={()=>void perform(()=>exportFinancialCsv(entries))} />
-      <Text style={styles.sectionTitle}>Histórico preservado e imutável</Text>
-      <Notice tone="warning">Estes registros não são apagados quando um cliente é excluído. Somente o administrador pode consultá-los.</Notice>
-      {archiveError?<Notice tone="danger">{archiveError}</Notice>:null}
-      {archive.slice(archivePage*50,archivePage*50+50).map((entry) => <Card key={entry.id}><View style={styles.row}><View style={{ flex: 1 }}><Text style={styles.title}>{entry.clientName} • {entry.contractNumber}</Text><Text style={styles.meta}>{entry.description ?? entry.sourceTable} • arquivado em {formatDate(entry.archivedAt)}</Text></View><StatusPill label={formatCurrency(entry.amount ?? entry.contractValue)} /></View></Card>)}
-      <View style={styles.rowFields}><Button title="Histórico anterior" variant="ghost" disabled={archivePage===0} onPress={()=>setArchivePage(value=>value-1)} /><Button title="Histórico seguinte" variant="ghost" disabled={(archivePage+1)*50>=archive.length} onPress={()=>setArchivePage(value=>value+1)} /></View>
-      <Card><Text style={styles.sectionTitle}>Arquivar todos os lançamentos ativos</Text><Notice tone="warning">Faça e confira uma exportação antes de limpar os ativos. Clientes, projetos e histórico preservado permanecem.</Notice>
-        <Button title="1. Preparar Excel antes da limpeza" variant="secondary" loading={saving} onPress={()=>void perform(async()=>{await exportComplete();setResetReady(true);})} />
-        {resetReady?<><Field label="Após conferir o download, digite RESETAR FINANCEIRO" value={resetPhrase} onChangeText={setResetPhrase} /><Button title="2. Confirmar arquivamento e limpar ativos" disabled={resetPhrase!=='RESETAR FINANCEIRO'||saving} onPress={()=>void perform(resetEntries)} /></>:null}
-      </Card></>:null}
+      {section==='history'?<FinancialHistorySection styles={styles} archive={archive} archiveError={archiveError} archivePage={archivePage} setArchivePage={setArchivePage} entries={entries} coreError={coreError} saving={saving} perform={perform} exportComplete={exportComplete} resetEntries={resetEntries} resetReady={resetReady} setResetReady={setResetReady} resetPhrase={resetPhrase} setResetPhrase={setResetPhrase} />:null}
       <Button loading={loading} onPress={() => void perform(load)} title="Atualizar extrato" variant="ghost" />
     </Screen>
   );
 }
 
-const styleDefinitions = (colors: ThemeColors) => ({
-  metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  metric: { flexGrow: 1, flexBasis: 190, minHeight: 105, justifyContent: 'space-between' },
-  metricLabel: { color: colors.gold600, fontSize: 11, letterSpacing: 1.3, fontWeight: '700', fontFamily: typography.family },
-  metricValue: { color: colors.ink, fontSize: 22, fontWeight: '700', fontFamily: typography.family },
-  sectionTitle: { color: colors.ink, fontSize: typography.size.bodyLarge, fontWeight: '700', fontFamily: typography.family },
-  label: { color: colors.ink, fontSize: 13, fontWeight: '700', fontFamily: typography.family },
-  selector: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  choice: { minWidth: 0, maxWidth: '100%', flexShrink: 1, minHeight: 44, justifyContent: 'center', borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, padding: spacing.sm, backgroundColor: colors.surfaceRaised },
-  choiceSelected: { borderColor: colors.gold500, backgroundColor: colors.warningSoft },
-  choiceText: { flexShrink: 1, lineHeight: 18, color: colors.slate, fontSize: 12, fontFamily: typography.family },
-  choiceTextSelected: { color: colors.gold600, fontWeight: '700' },
-  row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
-  rowFields: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  columns: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: spacing.sm },
-  column: { flex: 1, minWidth: 280 },
-  summary: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.sm },
-  valueColumn: { alignItems: 'flex-end', gap: spacing.xs },
-  title: { color: colors.ink, fontSize: 15, fontWeight: '700', fontFamily: typography.family },
-  meta: { color: colors.muted, fontSize: 11, marginTop: 5, fontFamily: typography.family },
-});

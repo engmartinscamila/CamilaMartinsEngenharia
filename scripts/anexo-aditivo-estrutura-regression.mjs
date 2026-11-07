@@ -12,7 +12,7 @@ const finalizer=read('portal-app/supabase/functions/generate-contract-document-f
 const addendumWord=read('portal-app/supabase/functions/generate-contract-document-final/native-options-docx.ts');
 const options=read('js/document-options-web.js');
 const contractUI=read('js/contract-documents-web.js');
-const commercialUI=read('js/commercial-documents-web.js');
+const commercialUI=read('js/commercial-documents-web.js')+'\n'+read('js/commercial-record-view.js');
 const master=read('supabase/functions/_shared/commercial-word-renderer.ts');
 
 assert.equal(annex,annexMirror,'Anexo I diverge entre a função canônica e o aplicativo.');
