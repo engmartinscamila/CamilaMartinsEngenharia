@@ -1,0 +1,28 @@
+name: Validate Clientes and Portfolio refactor
+
+on:
+  pull_request:
+    paths:
+      - 'js/clientes.js'
+      - 'js/portfolio-admin.js'
+      - 'scripts/clientes-portfolio-regression.mjs'
+      - '.github/workflows/clientes-portfolio-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify JavaScript syntax and startup contracts
+        run: |
+          node --check js/clientes.js
+          node --check js/portfolio-admin.js
+          node scripts/clientes-portfolio-regression.mjs
