@@ -230,8 +230,8 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
             }
             let notificacao;
             try{notificacao=await dbNotificarAtualizacao({tipo:dados.source==='biblioteca'?'biblioteca_atualizada':anterior?'documento_atualizado':'documento_publicado',cliente_id:dados.cliente_id,projeto_id:dados.projeto_id,titulo:dados.nome,mensagem:anterior?'Um arquivo do seu projeto foi atualizado.':'Novos arquivos foram disponibilizados no seu portal.'});}catch{notificacao={enviado:false,motivo:'Falha na solicitação de notificação.'};}
-            salvando=false;fecharModal();
             try{await recarregar();}catch{alert('Os arquivos foram salvos. Não foi possível atualizar a lista; recarregue a página.');}
+            salvando=false;fecharModal();
             alert('Arquivo(s) confirmado(s).'+avisoNotificacao(notificacao));
         } catch(error){tratarErro(`${publicados} arquivo(s) confirmado(s) nesta tentativa. O formulário foi preservado; repetir o envio ignora os arquivos já confirmados.`,error);}
         finally{salvando=false;alternarSalvamento(botaoSalvar,false);}

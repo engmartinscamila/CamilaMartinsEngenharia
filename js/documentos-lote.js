@@ -225,10 +225,8 @@
         });
 
         document.getElementById('novoDocumento')?.addEventListener('click', function () {
-            window.setTimeout(function () {
-                limparLote();
-                categoria.value = 'automatico';
-            }, 0);
+            limparLote();
+            categoria.value = 'automatico';
         });
 
 

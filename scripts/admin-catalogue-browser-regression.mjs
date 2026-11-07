@@ -29,10 +29,22 @@ try{
  await page.locator('[data-acao-documento="editar"][data-id="d1"]').first().click();assert.equal(await page.locator('#documentoAutoral').isChecked(),true,'Second record must load its own authorship');
  await page.locator('#formDocumento').evaluate(form=>form.requestSubmit());await page.locator('#modalDocumento').waitFor({state:'hidden'});
  const records=await page.evaluate(()=>window.__records);assert.equal(records.documentos[0].autoral,true);assert.equal(records.fotos[0].protection_mode,'authored_photo');
- await page.locator('#novoDocumento').click();await page.locator('#documentoCliente').selectOption('c1');await page.locator('#documentoProjeto').selectOption('p1');
- await page.locator('#documentoArquivo').setInputFiles([{name:'Primeiro arquivo.pdf',mimeType:'application/pdf',buffer:Buffer.from('Synthetic one')},{name:'Segundo arquivo.pdf',mimeType:'application/pdf',buffer:Buffer.from('Synthetic two')}]);
+ // File selection may complete before a pending timer from the "new" click.
+ // Exercise that ordering and require the batch preview to remain intact.
+ await page.evaluate(()=>{
+  document.getElementById('novoDocumento').click();
+  const client=document.getElementById('documentoCliente');client.value='c1';client.dispatchEvent(new Event('change',{bubbles:true}));
+  document.getElementById('documentoProjeto').value='p1';
+  const files=new DataTransfer();files.items.add(new File(['Synthetic one'],'Primeiro arquivo.pdf',{type:'application/pdf'}));files.items.add(new File(['Synthetic two'],'Segundo arquivo.pdf',{type:'application/pdf'}));
+  const input=document.getElementById('documentoArquivo');input.files=files.files;input.dispatchEvent(new Event('change',{bubbles:true}));
+ });
+ await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+ assert.deepEqual(await page.locator('.documento-nome-lote').evaluateAll(inputs=>inputs.map(input=>input.value)),['Primeiro arquivo','Segundo arquivo'],'A limpeza do formulário não pode apagar a prévia selecionada');
  await page.locator('#formDocumento').evaluate(form=>{form.requestSubmit();form.requestSubmit();});
- await page.waitForFunction(()=>window.__records.documentos.length===2&&document.getElementById('salvarDocumento').disabled===false);
+ try{await page.waitForFunction(()=>window.__records.documentos.length===2&&document.getElementById('salvarDocumento').disabled===false);}catch(error){
+  console.error('Estado sintético do lote:',await page.evaluate(()=>({records:window.__records,uploads:window.__uploads,names:[...document.querySelectorAll('.documento-nome-lote')].map(input=>input.value),disabled:document.getElementById('salvarDocumento').disabled})));
+  throw error;
+ }
  assert.equal(await page.locator('#modalDocumento').isVisible(),true,'Partial failure must preserve form');
  await page.locator('#formDocumento').evaluate(form=>form.requestSubmit());await page.locator('#modalDocumento').waitFor({state:'hidden'});
  assert.equal(await page.evaluate(()=>window.__records.documentos.length),3,'Retry must not duplicate the first confirmed file');

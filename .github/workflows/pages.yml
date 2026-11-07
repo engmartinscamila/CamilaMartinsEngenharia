@@ -55,6 +55,7 @@ jobs:
           node scripts/project-email-notice-regression.mjs
           node scripts/password-link-outbox-regression.mjs
           node scripts/project-files-receipts-regression.mjs
+          node scripts/document-batch-order-regression.mjs
           node scripts/receipt-names-regression.mjs
           node scripts/admin-priority-regression.mjs
 
