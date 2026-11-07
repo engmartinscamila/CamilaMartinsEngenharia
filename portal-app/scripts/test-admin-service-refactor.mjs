@@ -15,8 +15,8 @@ for (const name of [
   'listAdminProjects', 'listAdminContracts', 'createAdminProjectDraft',
   'createAdminContractProject', 'createAdminProjectForContract', 'updateAdminProject',
 ]) {
-  assert.match(original, new RegExp('\\\\b' + name + '\\\\b'));
-  assert.match(relations, new RegExp('export async function ' + name + '\\\\('));
+  assert.match(original, new RegExp('\\b' + name + '\\b'));
+  assert.match(relations, new RegExp('export async function ' + name + '\\('));
 }
 
 for (const name of [
