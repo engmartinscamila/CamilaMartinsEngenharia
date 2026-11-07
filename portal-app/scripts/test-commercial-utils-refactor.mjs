@@ -40,6 +40,28 @@ assert.equal(combined[2].included,false);
 assert.equal(combined[3].code,'custom');
 assert.equal(utils.buildProjectAddress({endereco_obra:'Rua A',numero_obra:'45',bairro_obra:'Centro',cidade_obra:'São Paulo'}),'Rua A, 45, Centro, São Paulo');
 
+// Carregador histórico: vínculo de cliente, contrato, endereço e escopo sem alterar snapshots.
+const tables = {
+  clientes: [{ id: 'c1', nome: 'Cliente 1', cpf_cnpj: '12345678900', email: 'cliente@example.com', telefone: '', endereco: 'Rua Cliente' }],
+  contratos: [{ id: 'k1', contract_number: 'CTR-01', contract_value: 5400, service_type: 'Projeto legal', notes: 'Prazo validado' }],
+  contract_scope_items: [{ contract_id: 'k1', service_code: 'c', service_name: 'Projeto legal', included: true, acceptance_required: true, display_order: 1, notes: 'Aprovado' }],
+};
+const db = { from(name) { return { select() { return { async in(field, ids) {
+  return { data: (tables[name] || []).filter(row => ids.includes(row[field])), error: null };
+} }; } }; } };
+const project = { id: 'p1', nome: 'Casa Cliente', cliente_id: 'c1', contract_id: 'k1',
+  numero_orcamento: 'ORC-12', endereco_obra: 'Rua Obra', numero_obra: '25', cidade_obra: 'São Paulo' };
+const legacy = await utils.loadLegacyQuoteSources([project], db);
+assert.equal(legacy.length, 1);
+assert.equal(legacy[0].key, 'project:p1');
+assert.equal(legacy[0].sourceType, 'project');
+assert.equal(legacy[0].cpf_cnpj, '12345678900');
+assert.equal(legacy[0].total_value, 5400);
+assert.equal(legacy[0].property_address, 'Rua Obra, 25, São Paulo');
+assert.equal(legacy[0].services[0].acceptanceRequired, true);
+assert.equal(legacy[0].services[0].notes, 'Aprovado');
+assert.deepEqual([...await utils.loadLegacyQuoteSources([], db)], []);
+
 const html=fs.readFileSync('../orcamentos-contratos.html','utf8');
 const main=fs.readFileSync('../js/commercial-documents-web.js','utf8');
 assert.ok(html.indexOf('commercial-documents-utils.js') < html.indexOf('commercial-documents-web.js'),
