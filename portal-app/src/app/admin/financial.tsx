@@ -1,4 +1,5 @@
 import { FinancialSummary, FinancialReceivables } from '@/components/financial-overview';
+import { FinancialAccountSection, FinancialHistorySection } from '@/components/financial-detail-sections';
 import {useAdminModule} from '@/providers/admin-module-context';
 import { useUnsavedForm } from '@/hooks/use-unsaved-form';
 import { useNotificationProject } from '@/hooks/use-notification-project';
@@ -376,26 +377,7 @@ export default function AdminFinancialScreen() {
       <View style={styles.rowFields}><Button title="Página anterior" disabled={page===0} variant="ghost" onPress={()=>setPage(value=>value-1)} /><Text style={styles.meta}>Página {page+1}</Text><Button title="Próxima página" disabled={(page+1)*50>=filteredEntries.length} variant="ghost" onPress={()=>setPage(value=>value+1)} /></View>
       {deleteTarget?<Card><Notice tone="warning">Excluir “{deleteTarget.description}” dos ativos? O registro ficará no histórico preservado. Lançamentos conciliados não podem ser excluídos aqui.</Notice><Button title="Confirmar exclusão dos ativos" loading={saving} onPress={()=>void perform(deleteEntry)} /><Button title="Cancelar exclusão" variant="ghost" onPress={()=>setDeleteTarget(null)} /></Card>:null}
       </>:null}
-      {section==='accounts'?<Card>
-          <Text style={styles.sectionTitle}>{referenceAccount?'Conferir referência de saldo':'Contas e saldos'}</Text>
-          <SelectionChips label="Conta para importação OFX" value={accountId??''} onChange={value=>setAccountId(value||null)} items={[{value:'',label:'Selecione'},...accounts.map(account=>({value:account.id,label:account.name}))]} />
-          {!referenceAccount ? <SelectionChips items={[{ value: 'bank', label: 'Banco' }, { value: 'cash', label: 'Caixa' }, { value: 'credit', label: 'Cartão' }]} label="Tipo" onChange={setAccountType} value={accountType} /> : null}
-          <Field label="Nome da conta" editable={!referenceAccount} onChangeText={setAccountName} value={accountName} />
-          <Field keyboardType="decimal-pad" label="Saldo de referência (R$)" onChangeText={setOpeningBalance} value={openingBalance} />
-          <DateField label="Saldo ao final do dia" value={openingDate} onChange={setOpeningDate} />
-          <Text style={styles.meta}>O saldo gerencial soma apenas movimentos posteriores a essa data. Movimentos conciliados são contados uma única vez.</Text>
-          <Button onPress={() => void perform(saveAccount)} title={referenceAccount?"Salvar referência de saldo":"Cadastrar conta"} variant="secondary" />
-          <Text style={styles.meta}>A conciliação usa a mesma conta, valor exato e data próxima. Possibilidades ambíguas ficam sem vínculo automático.</Text><Button loading={importingOfx} onPress={() => void perform(importOfx)} title="Importar extrato OFX" variant="secondary" />
-          {accounts.map(account=><Card key={account.id}><Text style={styles.title}>{account.name}</Text><Text style={styles.meta}>Referência: {formatCurrency(account.openingBalance)} ao final de {formatDate(account.openingBalanceDate)}</Text>
-            <Text style={styles.title}>Saldo gerencial: {bankError||coreError?'Indisponível':accountBalance(account,entries,transactions)===null?'Informe a data do saldo inicial':formatCurrency(accountBalance(account,entries,transactions))}</Text>
-            <Button title="Conferir saldo de referência" variant="secondary" onPress={()=>{setReferenceAccount(account.id);setAccountName(account.name);setAccountType(account.accountType);setOpeningBalance(account.openingBalance.toFixed(2).replace('.',','));setOpeningDate(account.openingBalanceDate??'');}} />
-          </Card>)}
-          <Button title="Limpar formulário de conta" variant="ghost" onPress={()=>{setReferenceAccount(null);setAccountName('');setOpeningBalance('0');setOpeningDate(financialToday());}} />
-          {bankError?<Notice tone="danger">{bankError}</Notice>:null}
-          <Text style={styles.sectionTitle}>Movimentações OFX da conta selecionada</Text>
-          {transactions.filter(item=>item.accountId===accountId).slice(0,100).map(item=><View key={item.id}><Text style={styles.meta}>{formatDate(item.date)} • {item.description} • {formatCurrency(item.amount)} • {item.matchedFinancialId?'Conciliado':'Sem conciliação'}</Text></View>)}
-          <Text style={styles.meta}>Exibindo até 100 movimentos recentes; o saldo usa todos os movimentos carregados.</Text>
-      </Card>:null}
+      {section==='accounts'?<FinancialAccountSection styles={styles} referenceAccount={referenceAccount} setReferenceAccount={setReferenceAccount} accountId={accountId} setAccountId={setAccountId} accountType={accountType} setAccountType={setAccountType} accountName={accountName} setAccountName={setAccountName} openingBalance={openingBalance} setOpeningBalance={setOpeningBalance} openingDate={openingDate} setOpeningDate={setOpeningDate} accounts={accounts} transactions={transactions} entries={entries} bankError={bankError} coreError={coreError} importingOfx={importingOfx} perform={perform} saveAccount={saveAccount} importOfx={importOfx} />:null}
       {section==='hours'?<>
         <Card>
           <Text style={styles.sectionTitle}>Horas por projeto</Text>
@@ -440,18 +422,7 @@ export default function AdminFinancialScreen() {
         <Button loading={saving} onPress={() => void perform(saveContractValue)} title="Atualizar valor contratado" variant="secondary" />
       </Card>:null}
 
-      {section==='history'?<>
-      <Button title="Baixar Excel completo (.xlsx)" loading={saving} onPress={()=>void perform(exportComplete)} />
-      <Button title="Baixar CSV dos lançamentos ativos" disabled={Boolean(coreError)} variant="secondary" loading={saving} onPress={()=>void perform(()=>exportFinancialCsv(entries))} />
-      <Text style={styles.sectionTitle}>Histórico preservado e imutável</Text>
-      <Notice tone="warning">Estes registros não são apagados quando um cliente é excluído. Somente o administrador pode consultá-los.</Notice>
-      {archiveError?<Notice tone="danger">{archiveError}</Notice>:null}
-      {archive.slice(archivePage*50,archivePage*50+50).map((entry) => <Card key={entry.id}><View style={styles.row}><View style={{ flex: 1 }}><Text style={styles.title}>{entry.clientName} • {entry.contractNumber}</Text><Text style={styles.meta}>{entry.description ?? entry.sourceTable} • arquivado em {formatDate(entry.archivedAt)}</Text></View><StatusPill label={formatCurrency(entry.amount ?? entry.contractValue)} /></View></Card>)}
-      <View style={styles.rowFields}><Button title="Histórico anterior" variant="ghost" disabled={archivePage===0} onPress={()=>setArchivePage(value=>value-1)} /><Button title="Histórico seguinte" variant="ghost" disabled={(archivePage+1)*50>=archive.length} onPress={()=>setArchivePage(value=>value+1)} /></View>
-      <Card><Text style={styles.sectionTitle}>Arquivar todos os lançamentos ativos</Text><Notice tone="warning">Faça e confira uma exportação antes de limpar os ativos. Clientes, projetos e histórico preservado permanecem.</Notice>
-        <Button title="1. Preparar Excel antes da limpeza" variant="secondary" loading={saving} onPress={()=>void perform(async()=>{await exportComplete();setResetReady(true);})} />
-        {resetReady?<><Field label="Após conferir o download, digite RESETAR FINANCEIRO" value={resetPhrase} onChangeText={setResetPhrase} /><Button title="2. Confirmar arquivamento e limpar ativos" disabled={resetPhrase!=='RESETAR FINANCEIRO'||saving} onPress={()=>void perform(resetEntries)} /></>:null}
-      </Card></>:null}
+      {section==='history'?<FinancialHistorySection styles={styles} archive={archive} archiveError={archiveError} archivePage={archivePage} setArchivePage={setArchivePage} entries={entries} coreError={coreError} saving={saving} perform={perform} exportComplete={exportComplete} resetEntries={resetEntries} resetReady={resetReady} setResetReady={setResetReady} resetPhrase={resetPhrase} setResetPhrase={setResetPhrase} />:null}
       <Button loading={loading} onPress={() => void perform(load)} title="Atualizar extrato" variant="ghost" />
     </Screen>
   );
