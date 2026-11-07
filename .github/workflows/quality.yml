@@ -33,6 +33,9 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Proteger código JavaScript legado do navegador
+        run: node scripts/verify-browser-code-protection.mjs
+
       - name: Auditar código sem referências e gerar relatório
         run: node scripts/audit-code-hygiene.mjs
 
