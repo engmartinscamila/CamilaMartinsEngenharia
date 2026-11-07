@@ -51,6 +51,8 @@ const financialOverview=load('src/components/financial-overview.tsx',financialVi
 const financialDetails=load('src/components/financial-detail-sections.tsx',financialViewDeps);
 const moduleContext=load('src/providers/admin-module-context.tsx',{react:React});
 const component=load('src/app/admin/financial.tsx',{
+ 'expo-router':{useRouter:()=>({push(){},replace(){}})},
+ '@/services/finance-v2-service':{financeV2HomologationEnabled:false},
  '@/providers/admin-module-context':moduleContext,
  '@/components/financial-overview':financialOverview,
  '@/components/financial-detail-sections':financialDetails,
