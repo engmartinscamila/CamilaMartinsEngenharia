@@ -26,7 +26,7 @@ await context.dbExcluirDocumento('foto:photo');assert.equal(writes.at(-1).table,
 await context.dbExcluirArquivoStorage('fotos','p/obra.jpg');assert.equal(removed.length,0,'Referenced blob must survive');
 await context.dbExcluirArquivoStorage('fotos','p/unreferenced.jpg');assert.equal(removed.length,1);
 const elements=new Map();const dom={getElementById(id){if(!elements.has(id))elements.set(id,{innerHTML:'',hidden:true,scrollIntoView(){}});return elements.get(id)},addEventListener(){}};
-const receiptCtx=vm.createContext({document:dom,window:{},console,URLSearchParams,location:{search:''}});vm.runInContext(readFileSync('js/receipt-identity.js','utf8'),receiptCtx);vm.runInContext(readFileSync('js/recibos.js','utf8'),receiptCtx);
+const receiptCtx=vm.createContext({document:dom,window:{},console,URLSearchParams,location:{search:''}});vm.runInContext(readFileSync('js/receipt-identity.js','utf8'),receiptCtx);vm.runInContext(readFileSync('js/receipt-view.js','utf8'),receiptCtx);vm.runInContext(readFileSync('js/recibos.js','utf8'),receiptCtx);
 const receipts=receiptCtx.window.CMEReceipts;assert.equal(receipts.parseAmount('1.234,56'),1234.56);assert.equal(receipts.parseAmount('100,50'),100.5);
 for(const v of ['','0','-10','1,234','12.34','NaN','1e6'])assert.throws(()=>receipts.parseAmount(v));
 receipts.showReceipt({receipt_number:17,amount:1234.56,created_at:'2026-10-29T01:00:00Z',paid_on:'2026-10-28',payment_method:'Pix',description:'Serviço <script>',snapshot:{issuer:{name:'Profissional',document:'Documento de teste'},payer_name:'Cliente <script>',project_name:'Projeto',city:'São Paulo'}});
