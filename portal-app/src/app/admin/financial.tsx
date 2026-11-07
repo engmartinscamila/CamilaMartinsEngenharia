@@ -165,7 +165,7 @@ export default function AdminFinancialScreen() {
     setHourlyRateReference(preferenceResult.data.referenceNote ?? '');
     setHourlyCost((current) => current || (configuredRate === null ? '' : String(configuredRate).replace('.', ',')));
     setSelectedProjectId((current) => current ?? null);
-    setSelectedContractId((current) => contextProjectId ? projectResult.data.find(project=>project.id===contextProjectId)?.contractId ?? null : current ?? contractResult.data[0]?.id ?? null);
+    setSelectedContractId((current) => contextProjectId ? projectResult.data.find(project=>project.id===contextProjectId)?.contractId ?? null : current && contractResult.data.some(contract=>contract.id===current) ? current : null);
     setAccountId((current) => current ?? null);
     setError(clientResult.error ?? contractResult.error ?? projectResult.error ?? entryResult.error ?? archiveResult.error ?? bankResult.error ?? accountResult.error ?? timeResult.error ?? fiscalResult.error ?? preferenceResult.error);
     } catch { const message='Não foi possível atualizar os dados financeiros. Tente novamente.'; setError(message); setCoreError(message); setBankError(message); setArchiveError(message); }
