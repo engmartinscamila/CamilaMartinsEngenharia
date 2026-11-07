@@ -23,3 +23,15 @@ assert.equal(dataReferencia({status:'pago',data_vencimento:'2026-10-01',data_pag
 assert.equal(dataReferencia({status:'pendente',data_vencimento:'2026-10-01',data_pagamento:null}), '2026-10-01');
 assert.equal(dataReferencia({status:'pago',data:'2026-10-01'}), '2026-10-01', 'Legado sem data de pagamento mantém fallback');
 console.log('PASS: datas e filtro mensal financeiro usam data efetiva e fuso de São Paulo.');
+
+let destination = '';
+const route = fs.readFileSync('js/financial-route.js', 'utf8');
+vm.runInNewContext(route, { URLSearchParams, location: {
+  search: '?projectId=project-1', hash: '', replace: value => { destination = value; },
+}});
+assert.equal(destination, '/portal/admin/finance-center/?projectId=project-1&view=summary');
+vm.runInNewContext(route, { URLSearchParams, location: {
+  search: '?view=receivables&projectId=project-1', hash: '', replace: value => { destination = value; },
+}});
+assert.equal(destination, '/portal/admin/finance-center/?view=receivables&projectId=project-1');
+console.log('PASS: URL financeira antiga encaminha ao módulo integrado preservando filtros.');
