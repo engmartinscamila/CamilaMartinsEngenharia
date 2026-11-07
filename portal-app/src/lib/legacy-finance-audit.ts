@@ -60,7 +60,7 @@ export function auditLegacyReceivables(
    continue;
   }
   linkedToEntry.set(entry.id,(linkedToEntry.get(entry.id)||0)+1);
-  if(linkedToEntry.get(entry.id)!>1){
+  if((linkedToEntry.get(entry.id)??0)>1){
    receiptIssues.push({code:'duplicate_receipt',receiptId:receipt.id,financialEntryId:entry.id,message:'Um recebimento tem mais de um recibo vinculado.'});
    continue;
   }
