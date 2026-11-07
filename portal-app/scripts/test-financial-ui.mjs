@@ -12,7 +12,7 @@ const e=React.createElement;
 function load(file,deps={}){
   const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText,{exports,console,Date,Intl,window:{location:{assign(value){receiptDestination=value;}}},require:name=>{if(!(name in deps))throw Error(`Missing ${name}`);return deps[name];}});return exports;
 }
-const format=load('src/lib/format.ts'),model=load('src/lib/financial-model.ts');
+const format=load('src/lib/format.ts'),model=load('src/lib/financial-model.ts'),priorities=load('src/lib/receivable-priorities.ts');
 const today=model.financialToday();
 const payloadSource=fs.readFileSync('src/services/admin-service.ts','utf8').match(/export function financialEntryPayload[\s\S]*?\n}/)[0];
 const payloadExports={};vm.runInNewContext(ts.transpileModule(payloadSource,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:payloadExports,...format,...model});
@@ -41,6 +41,7 @@ const financialViewDeps={
  '@/components/admin-ui':{SelectionChips:props=>e('choices',props)},
  '@/components/date-field':{DateField:props=>e('field',{...props,onChangeText:props.onChange})},
  '@/lib/financial-model':model,
+ '@/lib/receivable-priorities':priorities,
  '@/lib/format':format,
  '@/services/financial-tools':{exportFinancialCsv:async()=>{},exportReceivableCsv:async()=>{}},
 };
@@ -61,7 +62,7 @@ const component=load('src/app/admin/financial.tsx',{
  '@/components/admin-ui':{AdminPageHeader:()=>null,SelectionChips:props=>e('choices',props)},
  '@/components/date-field':{DateField:props=>e('field',{...props,onChangeText:props.onChange})},
  '@/components/ui':{Button:props=>e('button',props),Card:props=>e('div',props,props.children),Field:props=>e('field',props),Notice:props=>e('notice',props,props.children),Screen:props=>e('div',props,props.children),StateView:props=>e('state',props),StatusPill:props=>e('pill',props)},
- '@/lib/financial-model':model,'@/lib/format':format,'@/lib/supabase':{supabase:{}},
+ '@/lib/financial-model':model,'@/lib/receivable-priorities':priorities,'@/lib/format':format,'@/lib/supabase':{supabase:{}},
  '@/services/admin-service':admin,'@/services/operations-service':operations,
  '@/services/financial-tools':{listBankTransactions:()=>ok([]),exportFinancialCsv:async()=>{},exportReceivableCsv:async()=>{},exportFinancialExcel:async()=>{},updateAccountReference:async()=>null},
  '@/providers/theme-provider':{useAppTheme:()=>({colors:{}}),useThemeStyles:()=>({})},
@@ -74,6 +75,11 @@ const button=title=>renderer.root.findAllByType('button').find(node=>node.props.
 const text=()=>JSON.stringify(renderer.toJSON());
 assert(text().includes('SALDO A RECEBER'));assert(text().includes('400,00'),'Contract remainder must include unlaunched installments');
 await act(async()=>choices('Área financeira').props.onChange('receivables'));assert(text().includes('400,00'));
+assert(choices('Prioridade de cobrança'),'Filtro operacional de cobranças presente');
+await act(async()=>choices('Prioridade de cobrança').props.onChange('overdue'));
+assert(text().includes('Nenhum contrato ou recebimento neste filtro'),'Não inventar vencimentos');
+await act(async()=>choices('Prioridade de cobrança').props.onChange('all'));
+assert(text().includes('400,00'),'Restauração do extrato completo após filtro');
 await act(async()=>button('Ver parcelas e recebimentos').props.onPress());assert(button('Emitir / abrir recibo'));
 await act(async()=>choices('Área financeira').props.onChange('entries'));
 assert(!field('Descrição'),'New entry form starts closed');

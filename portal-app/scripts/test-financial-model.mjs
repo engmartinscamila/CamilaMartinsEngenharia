@@ -85,3 +85,4 @@ assert.equal(m.filterFinancialEntries(rows,{...empty,type:'saida'}).length,1,'Pa
 console.log('PASS: extrato contratual, recebimento direto, múltiplos projetos, parcelas não lançadas, avulsos, cancelados, valor desconhecido e crédito sem dupla contagem.');
 
 assert.equal(m.filterFinancialEntries(rows,{...empty,status:'aberto'},'2026-10-29').length,1,'Open balance includes overdue installments');
+await import('./test-receivable-priorities.mjs');
