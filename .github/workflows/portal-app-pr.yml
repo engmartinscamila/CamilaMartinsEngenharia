@@ -87,6 +87,11 @@ jobs:
       - name: Testar integridade do extrato e priorização das cobranças
         run: node scripts/test-financial-model.mjs
 
+      - name: Testar motor SQL de pagamentos em PostgreSQL isolado
+        run: |
+          npm install --prefix "$RUNNER_TEMP/finance-v2-test" --no-save --ignore-scripts --no-audit @electric-sql/pglite@0.3.10
+          CME_FIN_SQL_ROOT="$RUNNER_TEMP/finance-v2-test" node scripts/test-financial-v2-sql.mjs
+
       - name: Testar a interface financeira com dados sintéticos
         run: |
           npm install --prefix "$RUNNER_TEMP/financial-ui-test" --no-save --package-lock=false --ignore-scripts react@19.2.3 react-test-renderer@19.2.3

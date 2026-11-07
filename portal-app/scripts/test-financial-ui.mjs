@@ -45,6 +45,8 @@ const financialViewDeps={
  '@/lib/format':format,
  '@/services/financial-tools':{exportFinancialCsv:async()=>{},exportReceivableCsv:async()=>{}},
 };
+const reconciliation=load('src/lib/financial-reconciliation.ts',{'@/lib/financial-model':model});
+financialViewDeps['@/lib/financial-reconciliation']=reconciliation;
 const financialOverview=load('src/components/financial-overview.tsx',financialViewDeps);
 const financialDetails=load('src/components/financial-detail-sections.tsx',financialViewDeps);
 const moduleContext=load('src/providers/admin-module-context.tsx',{react:React});
@@ -62,7 +64,7 @@ const component=load('src/app/admin/financial.tsx',{
  '@/components/admin-ui':{AdminPageHeader:()=>null,SelectionChips:props=>e('choices',props)},
  '@/components/date-field':{DateField:props=>e('field',{...props,onChangeText:props.onChange})},
  '@/components/ui':{Button:props=>e('button',props),Card:props=>e('div',props,props.children),Field:props=>e('field',props),Notice:props=>e('notice',props,props.children),Screen:props=>e('div',props,props.children),StateView:props=>e('state',props),StatusPill:props=>e('pill',props)},
- '@/lib/financial-model':model,'@/lib/receivable-priorities':priorities,'@/lib/format':format,'@/lib/supabase':{supabase:{}},
+ '@/lib/financial-model':model,'@/lib/receivable-priorities':priorities,'@/lib/financial-reconciliation':reconciliation,'@/lib/format':format,'@/lib/supabase':{supabase:{}},
  '@/services/admin-service':admin,'@/services/operations-service':operations,
  '@/services/financial-tools':{listBankTransactions:()=>ok([]),exportFinancialCsv:async()=>{},exportReceivableCsv:async()=>{},exportFinancialExcel:async()=>{},updateAccountReference:async()=>null},
  '@/providers/theme-provider':{useAppTheme:()=>({colors:{}}),useThemeStyles:()=>({})},
@@ -75,6 +77,7 @@ const button=title=>renderer.root.findAllByType('button').find(node=>node.props.
 const text=()=>JSON.stringify(renderer.toJSON());
 assert(text().includes('SALDO A RECEBER'));assert(text().includes('400,00'),'Contract remainder must include unlaunched installments');
 await act(async()=>choices('Área financeira').props.onChange('receivables'));assert(text().includes('400,00'));
+assert(text().includes('Conferência automática de integridade'),'Painel deve mostrar conferência não destrutiva');
 assert(choices('Prioridade de cobrança'),'Filtro operacional de cobranças presente');
 await act(async()=>choices('Prioridade de cobrança').props.onChange('overdue'));
 assert(text().includes('Nenhum contrato ou recebimento neste filtro'),'Não inventar vencimentos');
