@@ -9,7 +9,15 @@ vm.runInNewContext(ts.transpileModule(source, {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
 }).outputText, { exports, Date, Intl });
 
-const { financialLinkIssues, receivableStatements } = exports;
+const { financialAmountOrNull, financialLinkIssues, receivableStatements } = exports;
+assert.equal(financialAmountOrNull(null), null);
+assert.equal(financialAmountOrNull(undefined), null);
+assert.equal(financialAmountOrNull(''), null);
+assert.equal(financialAmountOrNull('valor desconhecido'), null);
+assert.equal(financialAmountOrNull('12500.50'), 12500.50);
+assert.equal(financialAmountOrNull(0), 0, 'Contrato legítimo de valor zero permanece zero');
+assert.match(fs.readFileSync('src/services/admin-service.ts', 'utf8'), /contractValue: financialAmountOrNull\(contract\.contract_value\)/);
+assert.match(fs.readFileSync('src/services/admin-service.ts', 'utf8'), /contractValue: financialAmountOrNull\(row\.contract_value\)/);
 const contracts = [
   { id: 'contract-1', clientId: 'client-1', clientName: 'Cliente 1', contractNumber: 'C-1', contractValue: 1200, status: 'active' },
   { id: 'contract-2', clientId: 'client-2', clientName: 'Cliente 2', contractNumber: 'C-2', contractValue: 900, status: 'active' },
