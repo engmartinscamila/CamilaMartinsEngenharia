@@ -337,7 +337,9 @@ export default function AdminFinancialScreen() {
         onPendingPayables={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'aberto',month:'',type:'saida'});setPage(0);setSection('entries');}}
         onReceivables={()=>setSection('receivables')} onNewEntry={()=>{clearEntry();setFormOpen(true);setSection('entries');}} />:null}
       {section==='receivables'?<>
-        <LegacyFinancialAuditPanel report={legacyAudit} loading={loading} error={coreError||receiptAuditError} onContractEdit={id=>{setSelectedContractId(id);setContractValue('');setSection('hours');}} />
+        <LegacyFinancialAuditPanel report={legacyAudit} loading={loading} error={coreError||receiptAuditError}
+          onContractEdit={id=>{setSelectedContractId(id);setContractValue('');setSection('hours');}}
+          onEntryEdit={id=>{const entry=entries.find(row=>row.id===id);if(entry)editEntry(entry);else setError('Lançamento não localizado entre os registros ativos. Confira o histórico.');}} />
         <FinancialReceivables styles={styles} embeddedProjectId={embedded?.projectId} missingContractValues={missingContractValues} statementQuery={statementQuery} setStatementQuery={setStatementQuery} statementFocus={statementFocus} setStatementFocus={setStatementFocus} statementPage={statementPage} setStatementPage={setStatementPage} expandedStatement={expandedStatement} setExpandedStatement={setExpandedStatement} statementRows={statementRows} contracts={contracts} integrityIssues={integrityIssues} bankError={bankError} loading={loading} coreError={coreError} saving={saving} goldColor={colors.gold600}
         perform={perform} openReceipt={openReceipt} receiveEntry={receiveEntry} onContractEdit={id=>{setSelectedContractId(id);setContractValue('');setSection('hours');}} />
       </>:null}
