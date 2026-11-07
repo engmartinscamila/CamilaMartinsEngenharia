@@ -65,4 +65,30 @@ assert.match(view,/Extrato de saldo a receber/);
 assert.match(view,/Saldo restante:/);
 assert.match(view,/Registrar recebimento/);
 assert.match(finance,/admin_reset_financial_data/);
+
+const receiptNodes={
+ receiptPaper:{innerHTML:''},receiptEditor:{hidden:false},
+ receiptResult:{hidden:true,scrollIntoView(){}},
+};
+const receiptDoc={getElementById:id=>receiptNodes[id]??null,title:'Recibos'};
+const receipt=loadHelpers(['receipt-view.js'],receiptDoc).window.CMEReceiptView;
+assert.equal(receipt.parseAmount('1.250,00'),1250);
+assert.throws(()=>receipt.parseAmount('0,00'),/maior que zero/);
+assert.throws(()=>receipt.parseAmount('1,234'),/formato brasileiro/);
+const receiptRow={
+ receipt_number:7,created_at:'2026-11-06T12:00:00Z',amount:1250,
+ paid_on:'2026-11-06',description:'Serviço <teste>',payment_method:'Pix',
+ snapshot:{issuer:{name:'Engenharia QA',title:'Engenheira Civil',document:'123'},
+ payer_name:'Cliente <Teste>',payer_document:'456',project_name:'Sem projeto',contract_number:null,city:'São Paulo'},
+};
+const showReceiptWindow=loadHelpers(['receipt-view.js'],receiptDoc).window;
+showReceiptWindow.CMEReceiptIdentity={fileStem:()=> 'recibo-teste'};
+let savedReceipt=null;
+showReceiptWindow.CMEReceiptView.showReceipt(receiptRow,value=>{savedReceipt=value;});
+assert.equal(savedReceipt,receiptRow);
+assert.match(receiptNodes.receiptPaper.innerHTML,/Cliente &lt;Teste&gt;/);
+assert.doesNotMatch(receiptNodes.receiptPaper.innerHTML,/Cliente <Teste>/);
+assert.equal(receiptNodes.receiptResult.hidden,false);
+assert.ok(read('recibos.html').indexOf('js/receipt-view.js')<read('recibos.html').indexOf('js/recibos.js'));
+
 console.log('Refatoração: 5 módulos comerciais, 2 do Portfólio, Financeiro e extrato validados com dados sintéticos.');
