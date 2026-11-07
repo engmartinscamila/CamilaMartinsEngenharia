@@ -11,7 +11,7 @@ const setup=`
 create schema auth;
 create role authenticated;
 create role anon;
-create function auth.uid() returns uuid language sql stable as 'select '\''${user}'\''::uuid';
+create function auth.uid() returns uuid language sql stable as $$ select '${user}'::uuid $$;
 create function public.is_portal_admin() returns boolean language sql stable as 'select true';
 create table public.clientes (id uuid primary key);
 create table public.contratos (id uuid primary key,cliente_id uuid not null references public.clientes(id));
