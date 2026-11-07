@@ -4,6 +4,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { randomUUID } from 'expo-crypto';
 import { Platform } from 'react-native';
 
+import { readAllRows } from '@/lib/paginated-query';
 import { toUserMessage } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 import { dispatchPendingPushNotifications } from '@/services/push-service';
@@ -46,16 +47,8 @@ function contentBucket(kind: AdminContentKind, protectionMode?: string) {
 }
 
 export async function listAdminContent(): Promise<ServiceResult<AdminContentSummary[]>> {
-  async function allContent(table: string, columns: string) {
-    const data: any[] = [];
-    for (let offset=0;;offset+=500) {
-      const page=await supabase.from(table).select(columns).order('created_at',{ascending:false}).order('id').range(offset,offset+499);
-      if(page.error)return {data:[],error:page.error};
-      data.push(...(page.data??[]));
-      if((page.data??[]).length<500)return {data,error:null};
-      if(data.length>=100000)return {data:[],error:{message:'Catálogo excede o limite seguro.'}};
-    }
-  }
+  const allContent = (table: string, columns: string) =>
+    readAllRows(supabase.from(table).select(columns).order('created_at', { ascending: false }));
   const [documents, photos, library] = await Promise.all([
     allContent('documentos','id, cliente_id, projeto_id, nome, tipo, categoria, versao, created_at, storage_bucket, arquivo, permitir_download, protection_mode, autoral, clientes(nome), projetos(nome)'),
     allContent('fotos','id, cliente_id, projeto_id, nome, categoria, created_at, storage_bucket, arquivo, protection_mode, clientes(nome), projetos(nome)'),
