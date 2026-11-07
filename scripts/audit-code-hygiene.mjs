@@ -55,7 +55,7 @@ for (const f of all.filter(f => codeExt.has(f.ext) && f.size > 0 && f.size < 400
 }
 const sameContent = [...duplicates.values()].filter(names => names.length >= 2);
 
-const manualScripts = all.filter(f => /^scripts\\/.*\\.(?:mjs|js|sh|py|ts)$/.test(f.path)).map(f => {
+const manualScripts = all.filter(f => /^scripts\/.*\.(?:mjs|js|sh|py|ts)$/.test(f.path)).map(f => {
   const refs = references(f.path);
   return { path: f.path, size: f.size,
     workflowRefs: refs.filter(x => x.startsWith('.github/workflows/')),
@@ -64,7 +64,7 @@ const manualScripts = all.filter(f => /^scripts\\/.*\\.(?:mjs|js|sh|py|ts)$/.tes
 const scriptsWithoutStaticCaller = manualScripts.filter(f => f.workflowRefs.length === 0 && f.otherRefs.length === 0);
 
 // Expo Router makes all src/app/* route files entrypoints without a textual import.
-const expoFiles = [...source.keys()].filter(p => /^portal-app\\/src\\/.*\\.(?:ts|tsx|js|jsx)$/.test(p));
+const expoFiles = [...source.keys()].filter(p => /^portal-app\/src\/.*\.(?:ts|tsx|js|jsx)$/.test(p));
 const expoSet = new Set(expoFiles);
 const routeRoots = expoFiles.filter(p => p.startsWith('portal-app/src/app/'));
 const knownImports = new Map();
@@ -80,8 +80,8 @@ function resolveExpoImport(parent, spec) {
 for (const f of expoFiles) {
   const content = source.get(f) ?? '';
   const patterns = [
-    /\\b(?:from\\s*|import\\s*|require\\s*\\()\\s*['"]([^'"]+)['"]/g,
-    /\\bimport\\s*\\(\\s*['"]([^'"]+)['"]/g,
+    /\b(?:from\s*|import\s*|require\s*\()\s*['"]([^'"]+)['"]/g,
+    /\bimport\s*\(\s*['"]([^'"]+)['"]/g,
   ];
   const imports = new Set();
   for (const expression of patterns) {
