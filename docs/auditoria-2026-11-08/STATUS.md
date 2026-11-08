@@ -93,7 +93,7 @@ Pendentes da proprietária: token `SUPABASE_ACCESS_TOKEN` (funções `download-c
 |---|---|---|
 | Parcelas do contrato emitido viram contas a receber (uma por parcela, sem duplicar; revisão atualiza só as em aberto; pagas nunca mudam; contrato cancelado cancela as em aberto; soma ≠ total ou lançamento manual prévio não gera nada e registra pendência) | **No ar** (migração `20261108140000` aplicada; testada antes em transação desfeita). CON-2026-10-0002: 8 parcelas de R$ 1.500 geradas | commit `6f8af58` |
 | Anexo I exigido só com Serviço Adicional (não recusado) ou aditivo aceito | **No ar** (migração `20261108141000`; mapa documental e conferência de fechamento) | commit `6f8af58` |
-| Tarefa de revisão documental sem Anexo I quando não há adicional | **Código pronto**; depende do token `SUPABASE_ACCESS_TOKEN` para publicar `process-commercial-document-job` | commit `6f8af58` |
+| Tarefa de revisão documental sem Anexo I quando não há adicional | **No ar** (`process-commercial-document-job` v3 publicada pelo CI em 08/11) | commit `6f8af58` |
 | Contrato Mestre v8, textos padronizados, gerador e 123 escopos reescritos | **Aguardando “ok” da proprietária** (nada aplicado). Dados prontos em `docs/contrato-mestre-v8/revisao-v8.json` | — |
 | Revisão jurídica do Contrato Mestre v8 | **Recomendada** antes do uso com clientes (5.2, 6.1, 21.5) | — |
 
