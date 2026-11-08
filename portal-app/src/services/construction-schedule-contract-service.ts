@@ -175,6 +175,33 @@ export async function previewScheduleTemplateFromAdditionalService(projectId: st
   return { data: preview, error: null };
 }
 
+// Uso interno: obra sem o cronograma completo contratado (serviço "s"). O banco
+// nunca publica este cronograma ao cliente; custos e medições ficam internos.
+export async function previewScheduleTemplateWithoutContract(projectId: string, templateCode: string): Promise<{ data: ScheduleTemplatePreview | null; error: string | null }> {
+  const result = await supabase.rpc('admin_preview_full_schedule_template_without_contract', {
+    p_project_id: projectId,
+    p_template_code: templateCode,
+  });
+  if (result.error || !result.data) return { data: null, error: result.error?.message ?? 'O projeto não pôde ser liberado para cronograma interno.' };
+  const preview = result.data as ScheduleTemplatePreview;
+  if (!preview.requires_scope_confirmation || !Array.isArray(preview.items)) return { data: null, error: 'Modelo inválido: falta revisão individual das atividades.' };
+  return { data: preview, error: null };
+}
+
+export async function saveVerifiedScheduleWithoutContract(
+  projectId: string,
+  plan: Record<string, unknown>,
+  reason: string,
+): Promise<{ scheduleId: string | null; error: string | null }> {
+  const result = await supabase.rpc('admin_initialize_and_save_full_schedule_without_contract', {
+    p_project_id: projectId,
+    p_plan: plan,
+    p_reason: reason,
+  });
+  if (result.error || !result.data) return { scheduleId: null, error: result.error?.message ?? 'Cronograma interno não foi criado: confira o motivo e o planejamento.' };
+  return { scheduleId: String(result.data), error: null };
+}
+
 export async function saveVerifiedScheduleFromAdditionalService(
   projectId: string,
   documentId: string,

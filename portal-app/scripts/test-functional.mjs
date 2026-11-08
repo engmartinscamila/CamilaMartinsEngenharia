@@ -76,6 +76,7 @@ eq(finalGenerator.includes("if(!text(o.additional_service_code))")&&finalGenerat
 const scheduleScreen=fs.readFileSync('src/app/admin/construction-schedule.tsx','utf8');
 eq(scheduleScreen.includes("router.push('/admin/construction-schedule-new')"),true,'schedule consultation points new contracted schedules to the commercial creation flow');
 const scheduleNew=fs.readFileSync('src/app/admin/construction-schedule-new.tsx','utf8');
+eq(scheduleNew.includes('previewScheduleTemplateWithoutContract')&&scheduleNew.includes('saveVerifiedScheduleWithoutContract')&&scheduleNew.includes('nunca é publicado ao cliente'),true,'full schedule offers an internal-only option for works without the contracted full-schedule service');
 eq(scheduleNew.includes('previewScheduleTemplateFromAdditionalService')&&scheduleNew.includes('saveVerifiedScheduleFromAdditionalService'),true,'full schedule supports an accepted additional-service authorization without replacing the base contract');
 eq(scheduleNew.includes('Contratação posterior por Serviço Adicional aceito'),true,'schedule UI exposes the explicit post-contract authorization path');
 const additionalScheduleMigration=fs.readFileSync('supabase/migrations/20260924012000_schedule_from_accepted_additional_service.sql','utf8');
