@@ -21,17 +21,15 @@ Base: dossiê de auditoria de 07/11/2026 (commit de referência `22328fb`). Cada
 | A15 | P2 | **Aguarda decisão D04** (escopo de compras: pedido, compromisso, conta a pagar). Nada foi inventado | — |
 | A16 | P2 | **Aguarda decisão D04** (SINAPI, BDI, curva ABC). Nenhuma integração falsa foi criada | — |
 | A17 | P2 | **Aguarda decisão D05** (SS/FF/lag). O FS atual foi preservado | — |
-| A18 | P1 | **Implementado**: aceite de aditivo gera uma única obrigação prevista e soma ao total de referência. **Migração pendente na produção** | PR #74 + migração `20261108060000` |
-| A19 | P1 | **Diagnóstico e procedimento entregues**. Lacuna corrigida: a exportação passa a incluir as revisões financeiras e os aditivos (migração pendente). Plano Free: sem backup restaurável | `A19-backup-e-restauracao.md` |
+| A18 | P1 | **Implementado e publicado no site**: aceite de aditivo gera uma única obrigação prevista e soma ao total de referência. **Migração do banco pendente da sua confirmação** (o site funciona sem ela) | PR #74 + migração `20261108060000` |
+| A19 | P1 | **Diagnóstico e procedimento entregues**. Lacuna corrigida e **aplicada na produção**: a exportação passa a incluir as revisões financeiras e as tarefas (os aditivos entram quando a migração do A18 for aplicada). Plano Free: sem backup restaurável | `A19-backup-e-restauracao.md` |
 | A20 | P2 | **Corrigido** (fixture, critérios rígidos e o mesmo arquivo no local e no CI) | PR #73 |
 | A21 | P2 | **Verificado na produção**: todas as funções `admin_*` conferem a administradora; nenhuma função privilegiada é executável sem login; sem permissão de CREATE no esquema `public`; nenhum bucket público; as funções de push conferem o dono. As 2 tabelas com RLS e sem política são de uso exclusivo do servidor (negam tudo ao cliente, o que é correto) | — |
 | A22 | P2 | **Verificado**: os 32 envios têm `provider_id` do Resend, e a consulta de entrega por ID existe em `dispatch-client-emails` | — |
 
 ## Pendências que dependem de você
 
-1. **Confirmar duas migrações na produção.** A produção recusa a aplicação automática sem a sua confirmação. Elas são aditivas e não alteram dados existentes:
-   - `supabase/migrations/20261108060000_accepted_addendum_financial_obligation.sql` (A18)
-   - `supabase/migrations/20261108070000_backup_include_financial_reviews.sql` (A19)
+1. **Confirmar uma migração na produção** (aditiva, não altera dados existentes): `supabase/migrations/20261108060000_accepted_addendum_financial_obligation.sql` (A18). Depois dela, reaplicar `20261108070000_backup_include_financial_reviews.sql` para incluir os aditivos no backup.
 2. **Criar o token de implantação das Edge Functions** (implanta A11 e A12 e as correções futuras):
    - Supabase → Account → Access Tokens → *Generate new token*;
    - GitHub → repositório → Settings → Secrets and variables → Actions → *New repository secret* com o nome `SUPABASE_ACCESS_TOKEN`;
@@ -40,3 +38,17 @@ Base: dossiê de auditoria de 07/11/2026 (commit de referência `22328fb`). Cada
 4. **Decisões D04 e D05** (A15, A16, A17): definir se o sistema deve ter pedido de compra e conta a pagar, base SINAPI e BDI, e dependências SS/FF no cronograma.
 5. **Backup**: avaliar o plano Pro do Supabase e fazer uma cópia dos arquivos (cerca de 150 MB).
 6. **Opcional (A21)**: ativar a proteção contra senhas vazadas (Supabase → Authentication → Policies), se disponível no plano.
+
+
+## Além da auditoria (pedidos diretos de 08/11)
+
+| Item | Situação | Onde |
+|---|---|---|
+| Cadastro de cliente já cria o projeto (sem número de contrato) | **Publicado** | PR #76 |
+| Painel de espaço do Supabase (usado/livre, alerta e atalho para limpeza) | **Publicado** | PR #76 |
+| Revisões de contrato: a versão anterior passa a ser substituída; motivo obrigatório real | **Código pronto**; dados do CON-2026-10-0002 já corrigidos na produção (vigentes: contrato 4.0 e Anexo I 1.1) | PR #77 |
+| Emissão de documentos unificada (site e portal usam o mesmo gerador; documento emitido não é sobrescrito) | **Código pronto** | PR #77 |
+| Escopo do contrato com limites objetivos (quantidade, revisões, visitas, prazo, exclusões e cláusula de itens não listados) | **Código pronto** | PR #77 |
+| Cronograma: o único cronograma de produção está como "legacy" e por isso não aceita orçamento nem revisão | **Em andamento** | — |
+
+> As mudanças do PR #77 ficam nas Edge Functions: entram no ar quando o segredo `SUPABASE_ACCESS_TOKEN` estiver configurado (item 2 das pendências).
