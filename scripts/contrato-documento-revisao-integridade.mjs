@@ -16,7 +16,9 @@ const migration=read('docs/VALIDACAO_REPRESENTANTE_ESCOMPO_PUBLICO_20261101.sql'
 assert.ok(core.includes('docVersion')&&core.includes('documentId}.docx'),'Cada versão deve ter caminho de armazenamento próprio');
 assert.ok(core.includes('document_version:docVersion'),'Versão deve ser armazenada no snapshot');
 assert.ok(!core.includes("contract_signed_at:documentDate"),'Não forjar data de assinatura');
-assert.ok(annex.includes("Versão do Anexo I: v"),'Anexo deve identificar versão');
+assert.ok(annex.includes("anexo_i:'do Anexo I'")&&annex.includes('${versionLabel(kind)}: v'),'Anexo deve identificar versão');
+assert.ok(!annex.includes('Versão do Anexo I: v')&&annex.includes("estudo_preliminar:'do Estudo Preliminar'")&&annex.includes("notificacao_formal:'da Notificação Formal'"),'A11: demais documentos não usam o rótulo de versão do Anexo I');
+assert.equal((annex.match(/\.\.\.identity\(d,profile,generatedAt,kind\)/g)||[]).length,(annex.match(/\.\.\.identity\(/g)||[]).length,'A11: todo documento informa seu tipo ao bloco de identificação');
 assert.ok(annex.includes('a CONTRATADA entrega o serviço técnico-administrativo'), 'A Prefeitura deve continuar responsável pelo alvará e Habite-se');
 assert.ok(editor.includes('representative_name')&&editor.includes('representative_powers'),'Cadastro do signatário completo');
 assert.ok(migration.includes('assert_commercial_party_ready')&&migration.includes("v_code IN ('k','l','m')"),'Validação obrigatória também no servidor');

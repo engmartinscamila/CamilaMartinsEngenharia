@@ -33,6 +33,7 @@ const clientMock = {
 };
 const dependencies = {
   '@/lib/format': load('src/lib/format.ts', {}),
+  '@/lib/paginated-query': load('src/lib/paginated-query.ts', {}),
   '@/lib/supabase': {supabase:clientMock},
   '@/lib/errors': {toUserMessage:()=> 'Não foi possível conectar.',isMissingRelationError:()=>false},
   '@/lib/env':{env:{supabaseUrl:'https://project.supabase.co'}},
