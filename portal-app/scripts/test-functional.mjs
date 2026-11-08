@@ -21,7 +21,11 @@ let response={data:null,error:null}, payload, rpcResult={data:0,error:null}, ins
 const db={from(table){ const chain={ update(value){payload=value;return chain;},select(){return chain;},eq(){return chain;},in(){return chain;},maybeSingle:async()=>response,then(resolve){return Promise.resolve(table==='bank_transactions'?{data:[],error:null}:response).then(resolve);},upsert:async(value)=>{inserted=value;return {error:null};} };return chain;},rpc:async(name,args)=>{invoked={name,args};return rpcResult;}};
 const deps={'@/lib/supabase':{supabase:db},'@/lib/format':format,'expo-file-system/legacy':{},'react-native':{Platform:{OS:'web'}}};
 const operations=load('src/services/operations-service.ts',deps);
-for(const action of [()=>operations.updateCrmRecord({id:'missing',stage:'novo'}),()=>operations.updateProjectTask({id:'missing',status:'done'}),()=>operations.selectSupplierBid('missing','supplier')]){eq(typeof await action(),'string','zero affected rows must show error');}
+for(const action of [()=>operations.updateCrmRecord({id:'missing',stage:'novo'}),()=>operations.updateProjectTask({id:'missing',status:'done'})]){eq(typeof await action(),'string','zero affected rows must show error');}
+rpcResult={data:null,error:{message:'Proposta não localizada'}};
+eq(typeof await operations.selectSupplierBid('missing','supplier'),'string','RPC de aprovação deve relatar fornecedor ou cotação não localizada');
+eq(invoked.name,'admin_approve_supplier_bid','Aprovação deve ocorrer somente pela transação no banco');
+rpcResult={data:0,error:null};
 response={data:{id:'ok'},error:null};eq(await operations.updateCrmRecord({id:'ok',stage:'novo',nextActionAt:null}),null,'successful change');eq(payload.next_action_at,null,'clear scheduled next action');
 eq(typeof await operations.updateCrmRecord({id:'ok',stage:'perdido',lostReason:''}),'string','lost reason required');
 eq(typeof await operations.updateCrmRecord({id:'ok',stage:'novo',nextActionAt:'invalid'}),'string','invalid next date rejected');
