@@ -1,3 +1,4 @@
+import { optionalNumber } from '@/lib/format';
 import { readAllRows } from '@/lib/paginated-query';
 import { downloadBase64File } from '@/lib/download-generated-file';
 import { toUserMessage } from '@/lib/errors';
@@ -174,7 +175,7 @@ export async function previewContractDocument(input: { projectId: string; kind: 
     projectName: row.project_name ?? null,
     propertyAddress: row.property_address ?? null,
     clientAddress: row.client_address ?? null,
-    contractValue: Number.isFinite(Number(row.contract_value)) ? Number(row.contract_value) : null,
+    contractValue: optionalNumber(row.contract_value),
     scopeItems: Array.isArray(row.scope_items) ? row.scope_items.map((item: any) => ({ code: String(item.code ?? ''), name: String(item.name ?? '') })) : [],
   }, error: null };
 }

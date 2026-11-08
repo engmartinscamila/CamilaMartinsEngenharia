@@ -1,3 +1,4 @@
+import { readAllRows } from '@/lib/paginated-query';
 import { normalizeStatus } from '@/lib/format';
 import { isMissingRelationError } from '@/lib/errors';
 import { env } from '@/lib/env';
@@ -113,9 +114,8 @@ export async function listDocuments(projectId: string | null, clientPreview=fals
   const modernQuery = supabase
     .from('documentos')
     .select('id, projeto_id, nome, categoria, versao, created_at, storage_bucket, arquivo, permitir_download, protection_mode, document_kind, generated_at, client_visible, exibir_cliente, client_released_at');
-  const modern = await (projectId ? modernQuery.eq('projeto_id', projectId) : modernQuery.is('projeto_id', null))
-    .order('created_at', { ascending: false })
-    .limit(50);
+  const modern = await readAllRows((projectId ? modernQuery.eq('projeto_id', projectId) : modernQuery.is('projeto_id', null))
+    .order('created_at', { ascending: false }));
 
   if (!modern.error) {
     return {
@@ -143,9 +143,8 @@ export async function listDocuments(projectId: string | null, clientPreview=fals
   const legacyQuery = supabase
     .from('documentos')
     .select('id, projeto_id, nome, tipo, created_at, arquivo');
-  const legacy = await (projectId ? legacyQuery.eq('projeto_id', projectId) : legacyQuery.is('projeto_id', null))
-    .order('created_at', { ascending: false })
-    .limit(50);
+  const legacy = await readAllRows((projectId ? legacyQuery.eq('projeto_id', projectId) : legacyQuery.is('projeto_id', null))
+    .order('created_at', { ascending: false }));
 
   if (legacy.error) return { data: [], error: 'Não foi possível carregar os documentos.' };
   return {
@@ -208,12 +207,11 @@ export async function createStorageSignedUrl(storageBucket: string, storagePath:
 }
 
 export async function listPhotos(projectId: string): Promise<ServiceResult<PhotoSummary[]>> {
-  const modern = await supabase
+  const modern = await readAllRows(supabase
     .from('fotos')
     .select('id, projeto_id, nome, descricao, categoria, created_at, storage_bucket, arquivo, protection_mode')
     .eq('projeto_id', projectId)
-    .order('created_at', { ascending: false })
-    .limit(48);
+    .order('created_at', { ascending: false }));
 
   if (!modern.error) {
     return {
@@ -233,12 +231,11 @@ export async function listPhotos(projectId: string): Promise<ServiceResult<Photo
   }
 
   if (!isCompatibilityError(modern.error)) return { data: [], error: 'Não foi possível carregar as fotos.' };
-  const legacy = await supabase
+  const legacy = await readAllRows(supabase
     .from('fotos')
     .select('id, projeto_id, nome, descricao, created_at, arquivo')
     .eq('projeto_id', projectId)
-    .order('created_at', { ascending: false })
-    .limit(48);
+    .order('created_at', { ascending: false }));
 
   if (legacy.error) return { data: [], error: 'Não foi possível carregar as fotos.' };
   return {
@@ -259,12 +256,11 @@ export async function listPhotos(projectId: string): Promise<ServiceResult<Photo
 
 export async function listLibraryItems(projectId: string, clientId: string): Promise<ServiceResult<LibraryItemSummary[]>> {
   const scope = `projeto_id.eq.${projectId},and(projeto_id.is.null,cliente_id.eq.${clientId}),and(projeto_id.is.null,cliente_id.is.null)`;
-  const modern = await supabase
+  const modern = await readAllRows(supabase
     .from('biblioteca')
     .select('id, projeto_id, nome, descricao, categoria, tipo, tamanho, created_at, storage_bucket, arquivo')
     .or(scope)
-    .order('created_at', { ascending: false })
-    .limit(60);
+    .order('created_at', { ascending: false }));
 
   if (!modern.error) {
     return {
@@ -285,12 +281,11 @@ export async function listLibraryItems(projectId: string, clientId: string): Pro
   }
 
   if (!isCompatibilityError(modern.error)) return { data: [], error: 'Não foi possível carregar a biblioteca.' };
-  const legacy = await supabase
+  const legacy = await readAllRows(supabase
     .from('biblioteca')
     .select('id, projeto_id, nome, descricao, categoria, tipo, tamanho, created_at, arquivo')
     .or(scope)
-    .order('created_at', { ascending: false })
-    .limit(60);
+    .order('created_at', { ascending: false }));
 
   if (legacy.error) return { data: [], error: 'Não foi possível carregar a biblioteca.' };
   return {

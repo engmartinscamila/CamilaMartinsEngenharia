@@ -1,6 +1,6 @@
 import { readAllRows } from '@/lib/paginated-query';
 import { financialCategory, financialStatus, financialToday } from '@/lib/financial-model';
-import { normalizeStatus, isValidIsoDate } from '@/lib/format';
+import { normalizeStatus, isValidIsoDate, optionalNumber, monetaryCents } from '@/lib/format';
 import { decode } from 'base64-arraybuffer';
 import type { DocumentPickerAsset } from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -181,7 +181,7 @@ export async function listAdminProjects(): Promise<ServiceResult<AdminProjectSum
           city: row.cidade_obra,
           state: row.estado_obra,
           contract: contract
-            ? { id: contract.id, contractNumber: contract.contract_number, clientId: contract.cliente_id, serviceType: contract.service_type, status: contract.status, contractValue: Number.isFinite(Number(contract.contract_value)) ? Number(contract.contract_value) : null, currency: contract.currency ?? 'BRL' }
+            ? { id: contract.id, contractNumber: contract.contract_number, clientId: contract.cliente_id, serviceType: contract.service_type, status: contract.status, contractValue: optionalNumber(contract.contract_value), currency: contract.currency ?? 'BRL' }
             : null,
         } satisfies AdminProjectSummary;
       }),
@@ -230,7 +230,7 @@ export async function listAdminContracts(): Promise<ServiceResult<AdminContractS
       contractNumber: row.contract_number,
       serviceType: row.service_type,
       status: row.status,
-      contractValue: row.contract_value === null ? null : Number(row.contract_value),
+      contractValue: optionalNumber(row.contract_value),
       currency: row.currency ?? 'BRL',
     })),
     error: null,
@@ -746,10 +746,12 @@ export async function createAdminFinancialEntry(input: FinancialEntryInput) {
 export function financialEntryPayload(input:FinancialEntryInput) {
   if((!input.projectId&&!input.clientId) || input.description.trim().length<2 || !Number.isFinite(input.amount) || input.amount<=0)return 'Informe cliente ou projeto, descrição e um valor maior que zero.';
   if(!['entrada','saida'].includes(input.type) || !isValidIsoDate(input.date) || (input.dueDate && !isValidIsoDate(input.dueDate)) || (input.paidAt && !isValidIsoDate(input.paidAt)))return 'Informe datas e natureza válidas.';
+  const cents=monetaryCents(input.amount);
+  if(cents===null||cents>999999999999)return 'Informe um valor em reais com no máximo duas casas decimais, dentro do limite permitido.';
   const status=financialStatus(input.status??'pendente');
   const paid=status==='pago' ? input.paidAt || input.date : null;
   if(paid && paid>financialToday())return 'A data de recebimento/pagamento não pode estar no futuro.';
-  return {projeto_id:input.projectId??null,cliente_id:input.clientId??null,contract_id:input.contractId??null,descricao:input.description.trim(),tipo:input.type,valor:input.amount,data:input.date,
+  return {projeto_id:input.projectId??null,cliente_id:input.clientId??null,contract_id:input.contractId??null,descricao:input.description.trim(),tipo:input.type,valor:cents/100,data:input.date,
     observacoes:input.notes?.trim()||null,categoria:financialCategory(input.category??'outros'),status,
     data_vencimento:input.dueDate||input.date||null,data_pagamento:paid,account_id:input.accountId??null,forma_pagamento:input.paymentMethod?.trim()||null};
 }

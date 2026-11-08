@@ -25,29 +25,26 @@ export function formatCurrency(value: number | null | undefined, currency = 'BRL
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(value);
 }
 
+/** Convert monetary numbers to exact cents; reject meaningful fractional cents. */
+export function monetaryCents(value: number): number | null {
+  if (!Number.isFinite(value)) return null;
+  const scaled=value*100, cents=Math.round(scaled);
+  if (!Number.isSafeInteger(cents) || Math.abs(scaled-cents)>Number.EPSILON*Math.max(1,Math.abs(scaled))*2) return null;
+  return cents;
+}
+
 export function parseBrazilianCurrency(value: string) {
-  const compact = value.trim().replace(/\s/g, '').replace(/R\$/gi, '');
-  if (!compact || !/^-?[\d.,]+$/.test(compact)) return null;
-
-  const commaCount = (compact.match(/,/g) ?? []).length;
-  const dotCount = (compact.match(/\./g) ?? []).length;
-  if (commaCount > 1) return null;
-
-  const lastComma = compact.lastIndexOf(',');
-  const lastDot = compact.lastIndexOf('.');
-  let normalized = compact;
-
-  if (lastComma >= 0) {
-    normalized = compact.replace(/\./g, '').replace(',', '.');
-  } else if (lastDot >= 0) {
-    const decimalDigits = compact.length - lastDot - 1;
-    normalized = dotCount === 1 && decimalDigits > 0 && decimalDigits <= 2
-      ? compact
-      : compact.replace(/\./g, '');
-  }
-
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : null;
+  const compact=value.trim().replace(/\s/g,'').replace(/^R\$/i,'');
+  // Brazilian grouped integers, optionally followed by one or two decimal digits.
+  // A single dot with one/two trailing digits remains compatible with decimal input.
+  let normalized:string;
+  if (/^-?(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d{1,2})?$/.test(compact)) {
+    normalized=compact.replace(/\./g,'').replace(',','.');
+  } else if (/^-?\d+\.\d{1,2}$/.test(compact)) {
+    normalized=compact;
+  } else return null;
+  const parsed=Number(normalized), cents=monetaryCents(parsed);
+  return cents===null?null:cents/100;
 }
 
 export function isValidIsoDate(value: string) {
@@ -80,6 +77,9 @@ export function humanizeStatus(value: string) {
     rejeitado: 'Recusado',
     pendente: 'Pendente',
     em_andamento: 'Em andamento',
+    orcamento: 'Em orçamento',
+    ativo: 'Ativo',
+    arquivado: 'Arquivado',
     concluido: 'Concluído',
     concluida: 'Concluída',
     pausado: 'Pausado',
@@ -87,4 +87,12 @@ export function humanizeStatus(value: string) {
     cancelada: 'Cancelada',
   };
   return labels[value] ?? labels[normalizeStatus(value)] ?? value.replaceAll('_', ' ');
+}
+
+/** Preserve unknown database values separately from explicit zero. */
+export function optionalNumber(value: unknown): number | null {
+  if (value === null || value === undefined || (typeof value === 'string' && value.trim() === '')) return null;
+  if (typeof value !== 'number' && typeof value !== 'string') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }
