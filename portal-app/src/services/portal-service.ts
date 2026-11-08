@@ -1,3 +1,4 @@
+import { readAllRows } from '@/lib/paginated-query';
 import { normalizeStatus } from '@/lib/format';
 import { isMissingRelationError } from '@/lib/errors';
 import { env } from '@/lib/env';
@@ -109,13 +110,19 @@ export async function listProjectContexts(clientId?: string): Promise<ServiceRes
   };
 }
 
+
+/** A10: listas completas (sem corte silencioso), da mais recente para a mais antiga, com desempate por ID. */
+function newestFirst<T extends { data: any[]; error: any }>(result: T): T {
+  if (result.error) return result;
+  result.data.sort((a: any, b: any) => (Date.parse(b.created_at ?? '') || 0) - (Date.parse(a.created_at ?? '') || 0) || String(b.id).localeCompare(String(a.id)));
+  return result;
+}
+
 export async function listDocuments(projectId: string | null, clientPreview=false): Promise<ServiceResult<DocumentSummary[]>> {
   const modernQuery = supabase
     .from('documentos')
     .select('id, projeto_id, nome, categoria, versao, created_at, storage_bucket, arquivo, permitir_download, protection_mode, document_kind, generated_at, client_visible, exibir_cliente, client_released_at');
-  const modern = await (projectId ? modernQuery.eq('projeto_id', projectId) : modernQuery.is('projeto_id', null))
-    .order('created_at', { ascending: false })
-    .limit(50);
+  const modern = newestFirst(await readAllRows(projectId ? modernQuery.eq('projeto_id', projectId) : modernQuery.is('projeto_id', null)));
 
   if (!modern.error) {
     return {
@@ -143,9 +150,7 @@ export async function listDocuments(projectId: string | null, clientPreview=fals
   const legacyQuery = supabase
     .from('documentos')
     .select('id, projeto_id, nome, tipo, created_at, arquivo');
-  const legacy = await (projectId ? legacyQuery.eq('projeto_id', projectId) : legacyQuery.is('projeto_id', null))
-    .order('created_at', { ascending: false })
-    .limit(50);
+  const legacy = newestFirst(await readAllRows(projectId ? legacyQuery.eq('projeto_id', projectId) : legacyQuery.is('projeto_id', null)));
 
   if (legacy.error) return { data: [], error: 'Não foi possível carregar os documentos.' };
   return {
@@ -208,12 +213,10 @@ export async function createStorageSignedUrl(storageBucket: string, storagePath:
 }
 
 export async function listPhotos(projectId: string): Promise<ServiceResult<PhotoSummary[]>> {
-  const modern = await supabase
+  const modern = newestFirst(await readAllRows(supabase
     .from('fotos')
     .select('id, projeto_id, nome, descricao, categoria, created_at, storage_bucket, arquivo, protection_mode')
-    .eq('projeto_id', projectId)
-    .order('created_at', { ascending: false })
-    .limit(48);
+    .eq('projeto_id', projectId)));
 
   if (!modern.error) {
     return {
@@ -233,12 +236,10 @@ export async function listPhotos(projectId: string): Promise<ServiceResult<Photo
   }
 
   if (!isCompatibilityError(modern.error)) return { data: [], error: 'Não foi possível carregar as fotos.' };
-  const legacy = await supabase
+  const legacy = newestFirst(await readAllRows(supabase
     .from('fotos')
     .select('id, projeto_id, nome, descricao, created_at, arquivo')
-    .eq('projeto_id', projectId)
-    .order('created_at', { ascending: false })
-    .limit(48);
+    .eq('projeto_id', projectId)));
 
   if (legacy.error) return { data: [], error: 'Não foi possível carregar as fotos.' };
   return {
@@ -259,12 +260,10 @@ export async function listPhotos(projectId: string): Promise<ServiceResult<Photo
 
 export async function listLibraryItems(projectId: string, clientId: string): Promise<ServiceResult<LibraryItemSummary[]>> {
   const scope = `projeto_id.eq.${projectId},and(projeto_id.is.null,cliente_id.eq.${clientId}),and(projeto_id.is.null,cliente_id.is.null)`;
-  const modern = await supabase
+  const modern = newestFirst(await readAllRows(supabase
     .from('biblioteca')
     .select('id, projeto_id, nome, descricao, categoria, tipo, tamanho, created_at, storage_bucket, arquivo')
-    .or(scope)
-    .order('created_at', { ascending: false })
-    .limit(60);
+    .or(scope)));
 
   if (!modern.error) {
     return {
@@ -285,12 +284,10 @@ export async function listLibraryItems(projectId: string, clientId: string): Pro
   }
 
   if (!isCompatibilityError(modern.error)) return { data: [], error: 'Não foi possível carregar a biblioteca.' };
-  const legacy = await supabase
+  const legacy = newestFirst(await readAllRows(supabase
     .from('biblioteca')
     .select('id, projeto_id, nome, descricao, categoria, tipo, tamanho, created_at, arquivo')
-    .or(scope)
-    .order('created_at', { ascending: false })
-    .limit(60);
+    .or(scope)));
 
   if (legacy.error) return { data: [], error: 'Não foi possível carregar a biblioteca.' };
   return {
