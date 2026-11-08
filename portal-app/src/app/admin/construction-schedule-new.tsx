@@ -6,7 +6,7 @@ import { AdminPageHeader } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView } from '@/components/ui';
 import { analyzeConstructionCriticalPath } from '@/lib/construction-schedule-critical-path';
 import { isValidIsoDate } from '@/lib/format';
-import { planConstructionSchedule, type WorkCalendar } from '@/lib/construction-schedule-engine';
+import { planConstructionSchedule, type DependencyType, type WorkCalendar } from '@/lib/construction-schedule-engine';
 import {
   approveVerifiedSchedule, exportApprovedScheduleXlsx, loadScheduleCommercialOptions,
   previewScheduleTemplate, previewScheduleTemplateFromAdditionalService, previewScheduleTemplateWithoutContract,
@@ -23,7 +23,9 @@ const templates = [
 type DraftRow = ScheduleTemplateItem & {
   selected: boolean; confirmed: boolean; duration: string; cost: string; weight: string;
   sourceCode: string; predecessor: string; physicalWeight: string; physicalBasis: string;
+  dependencyType: DependencyType; lag: string;
 };
+const dependencyLabels: Record<DependencyType, string> = { FS: 'Término → início', SS: 'Início → início', FF: 'Término → término' };
 const numeric = (value: string) => Number(value.replace(',', '.'));
 
 export default function NewConstructionScheduleScreen() {
@@ -94,11 +96,16 @@ export default function NewConstructionScheduleScreen() {
         throw new Error('Informe até 366 feriados distintos no formato AAAA-MM-DD, separados por vírgula.');
       }
       if (selected.some((row) => !row.confirmed)) throw new Error('Revise e confirme individualmente cada atividade selecionada.');
+      if (selected.some((row) => row.lag.trim() && !/^-?\d{1,3}$/.test(row.lag.trim()))) {
+        throw new Error('Defasagem deve ser um número inteiro de dias (negativo = antecipação).');
+      }
       if (selected.some((row) => !allowedCodes.includes(row.sourceCode.trim()))) {
         throw new Error('Cada atividade precisa corresponder a um código de serviço da contratação selecionada.');
       }
       const activities = selected.map((row) => ({
         code: row.code, activity: row.activity.trim(), predecessorCode: row.predecessor.trim() || null,
+        dependencyType: row.predecessor.trim() ? row.dependencyType : 'FS' as DependencyType,
+        lagDays: row.predecessor.trim() && row.lag.trim() ? Number(row.lag.trim()) : 0,
         durationDays: numeric(row.duration), plannedCost: row.cost.trim() ? numeric(row.cost) : null,
         weightPercent: row.weight.trim() ? numeric(row.weight) : null, actualProgress: 0,
       }));
@@ -130,6 +137,7 @@ export default function NewConstructionScheduleScreen() {
           code: activity.code, category: source.category, activity: activity.activity,
           display_order: index + 1, weight_percent: activity.assignedWeightPercent,
           planned_duration_days: activity.durationDays, predecessor_code: activity.predecessorCode,
+          dependency_type: activity.dependencyType ?? 'FS', lag_days: activity.lagDays ?? 0,
           planned_start: activity.plannedStart, planned_finish: activity.plannedFinish,
           planned_cost: activity.plannedCost, cost_source: 'Custo da execução informado e confirmado pela administradora',
           source_service_code: source.sourceCode.trim(),
@@ -164,7 +172,8 @@ export default function NewConstructionScheduleScreen() {
         code: `M${index}`, category: 'Escopo específico', activity: '', display_order: current.length + 1,
         reference_weight_percent: null, reference_duration_days: null, predecessor_code: null,
         requires_scope_confirmation: true, selected: true, confirmed: false,
-        duration: '', cost: '', weight: '', sourceCode: '', predecessor: '', physicalWeight: '', physicalBasis: '',
+        duration: '', cost: '', weight: '', sourceCode: internalMode ? 'obra' : '', predecessor: '', physicalWeight: '', physicalBasis: '',
+        dependencyType: 'FS', lag: '',
       }];
     });
     setSaveConfirmed(false); setPhysicalWeightsApproved(false);
@@ -186,6 +195,7 @@ export default function NewConstructionScheduleScreen() {
       ...item, selected: false, confirmed: false,
       duration: item.reference_duration_days === null ? '' : String(item.reference_duration_days),
       weight: '', cost: '', sourceCode: internalMode ? 'obra' : '', predecessor: item.predecessor_code ?? '', physicalWeight: '', physicalBasis: '',
+      dependencyType: 'FS' as DependencyType, lag: '',
     })));
     setPhysicalWeightsApproved(false);
   };
@@ -280,6 +290,11 @@ export default function NewConstructionScheduleScreen() {
               <Field label="Custo da execução (R$, sem honorários)" value={row.cost} keyboardType="decimal-pad" onChangeText={(cost) => updateRow(row.code, { cost })} />
               {advancedMode?<>
                 <Field label="Código da predecessora selecionada (opcional)" value={row.predecessor} onChangeText={(predecessor) => updateRow(row.code, { predecessor })} />
+                {row.predecessor.trim() ? <>
+                  <Text>Tipo de vínculo com a predecessora</Text>
+                  {(['FS', 'SS', 'FF'] as DependencyType[]).map((type) => <Button key={type} title={`${dependencyLabels[type]}${row.dependencyType === type ? ' ✓' : ''}`} variant={row.dependencyType === type ? 'primary' : 'secondary'} onPress={() => updateRow(row.code, { dependencyType: type })} />)}
+                  <Field label="Defasagem em dias da obra (negativo = antecipação; vazio = 0)" value={row.lag} keyboardType="numbers-and-punctuation" onChangeText={(lag) => updateRow(row.code, { lag })} />
+                </> : null}
                 <Field label="Peso manual FINANCEIRO (%) — somente se validado" value={row.weight} keyboardType="decimal-pad" onChangeText={(weight) => updateRow(row.code, { weight })} />
                 <Field label="Peso FÍSICO independente (%) — se houver critério técnico" value={row.physicalWeight} keyboardType="decimal-pad" onChangeText={(physicalWeight) => updateRow(row.code, { physicalWeight })} />
                 <Field label="Critério do peso físico (quantitativo, unidade ou evidência)" value={row.physicalBasis} multiline onChangeText={(physicalBasis) => updateRow(row.code, { physicalBasis })} />
@@ -304,7 +319,7 @@ export default function NewConstructionScheduleScreen() {
             {calculated.data ? <>
               <Notice tone="info">Período: {calculated.data.planned_start} a {calculated.data.planned_finish}; {calculated.data.items.length} atividades; {calculated.data.holidays.length} feriado(s); pesos físicos {calculated.data.physical_weights.length ? 'conferidos' : 'não informados'}.</Notice>
               {calculated.critical?<Notice tone="info">Caminho crítico: {calculated.critical.criticalCodes.join(' → ')||'nenhuma atividade marcada como crítica'}. Folga total é exibida abaixo e deve ser revisada antes de aprovar.</Notice>:null}
-              {calculated.data.items.map((item) => {const cpm=calculated.critical?.activities.find(entry=>entry.code===item.code);return <Text key={item.code}>{item.code}: {item.planned_start} → {item.planned_finish}; peso financeiro {item.weight_percent}%; custo R$ {item.planned_cost}; {cpm?.isCritical?'CRÍTICA':`folga ${cpm?.totalFloatDays??0} dia(s)`}</Text>;})}
+              {calculated.data.items.map((item) => {const cpm=calculated.critical?.activities.find(entry=>entry.code===item.code);return <Text key={item.code}>{item.code}: {item.planned_start} → {item.planned_finish}; peso financeiro {item.weight_percent}%; custo R$ {item.planned_cost}; {item.predecessor_code?` ${item.dependency_type}${item.lag_days?` ${item.lag_days>0?'+':''}${item.lag_days}d`:''} de ${item.predecessor_code};`:''} {cpm?.isCritical?'CRÍTICA':`folga ${cpm?.totalFloatDays??0} dia(s)`}</Text>;})}
               <Button title={saveConfirmed ? 'Planejamento revisado ✓' : 'Confirmo planejamento, custos, caminho crítico e escopo acima'} variant="secondary" onPress={() => setSaveConfirmed((current) => !current)} />
               <Button title="Salvar rascunho, feriados e pesos com vínculo verificado" loading={busy} disabled={!saveConfirmed || busy} onPress={() => void save()} />
             </> : null}

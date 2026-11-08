@@ -2,10 +2,18 @@
  * Pesos financeiros só derivam de CUSTOS DA OBRA, nunca de honorários comerciais.
  * O calendário deve ser informado; não inferir um prazo contratual universal. */
 export type WorkCalendar = 'weekdays' | 'calendar_days';
+/** FS = término-início (padrão), SS = início-início, FF = término-término. */
+export type DependencyType = 'FS' | 'SS' | 'FF';
+export const MIN_LAG_DAYS = -30;
+export const MAX_LAG_DAYS = 365;
 export interface PlanningActivity {
   code: string;
   activity: string;
   predecessorCode: string | null;
+  /** Ausente = FS, comportamento anterior. */
+  dependencyType?: DependencyType;
+  /** Defasagem em dias do calendário da obra; negativo = antecipação. Ausente = 0. */
+  lagDays?: number;
   durationDays: number;
   plannedCost: number | null;
   weightPercent: number | null;
@@ -49,6 +57,9 @@ export function planConstructionSchedule(
     if (activity.plannedCost!==null && (!Number.isFinite(activity.plannedCost) || activity.plannedCost<0)) throw new Error(`Custo inválido em ${activity.code}.`);
     if (activity.weightPercent!==null && (!Number.isFinite(activity.weightPercent) || activity.weightPercent<0 || activity.weightPercent>100)) throw new Error(`Peso inválido em ${activity.code}.`);
     if (activity.requestedStart) asDate(activity.requestedStart);
+    if (activity.dependencyType!==undefined && !['FS','SS','FF'].includes(activity.dependencyType)) throw new Error(`Tipo de dependência inválido em ${activity.code}.`);
+    if (activity.lagDays!==undefined && (!Number.isSafeInteger(activity.lagDays) || activity.lagDays<MIN_LAG_DAYS || activity.lagDays>MAX_LAG_DAYS)) throw new Error(`Defasagem inválida em ${activity.code} (use dias inteiros entre ${MIN_LAG_DAYS} e ${MAX_LAG_DAYS}).`);
+    if (!activity.predecessorCode && ((activity.lagDays ?? 0)!==0 || (activity.dependencyType ?? 'FS')!=='FS')) throw new Error(`A atividade ${activity.code} tem tipo/defasagem sem predecessora.`);
     byCode.set(activity.code,activity);
   }
   const costsComplete = activities.every(a=>a.plannedCost!==null);
@@ -81,6 +92,23 @@ export function planConstructionSchedule(
     }
     return {start:first,finish:cursor};
   };
+  const previousDay = (s: string) => { const d=asDate(s);d.setUTCDate(d.getUTCDate()-1);return asISO(d); };
+  // Desloca n dias do calendário da obra (n<0 volta), sempre terminando em dia válido.
+  const shiftWorkdays = (day: string, n: number): string => {
+    let cursor=day;
+    if (n===0) { while (!workday(cursor)) cursor=nextDay(cursor); return cursor; }
+    for (let remaining=Math.abs(n);remaining>0;) {
+      cursor=n>0?nextDay(cursor):previousDay(cursor);
+      if (workday(cursor)) remaining--;
+    }
+    return cursor;
+  };
+  const startForFinish = (finish: string, duration: number): string => {
+    let cursor=finish;
+    while (!workday(cursor)) cursor=previousDay(cursor);
+    for (let remaining=duration-1;remaining>0;) { cursor=previousDay(cursor); if (workday(cursor)) remaining--; }
+    return cursor;
+  };
   const resolve = (code: string): PlannedActivity => {
     const previous=planned.get(code);
     if (previous) return previous;
@@ -92,7 +120,12 @@ export function planConstructionSchedule(
     if (source.predecessorCode) {
       if (source.predecessorCode===code) throw new Error(`Atividade ${code} depende de si mesma.`);
       const predecessor=resolve(source.predecessorCode);
-      earliest=nextDay(predecessor.plannedFinish);
+      const lag=source.lagDays ?? 0;
+      const type=source.dependencyType ?? 'FS';
+      if (type==='FS') earliest=lag===0?nextDay(predecessor.plannedFinish):shiftWorkdays(predecessor.plannedFinish,1+lag);
+      else if (type==='SS') earliest=shiftWorkdays(predecessor.plannedStart,lag);
+      else earliest=startForFinish(shiftWorkdays(predecessor.plannedFinish,lag),source.durationDays);
+      if (earliest<options.startDate) earliest=options.startDate;
     }
     if (source.requestedStart && source.requestedStart>earliest) earliest=source.requestedStart;
     const dates=advance(earliest,source.durationDays);

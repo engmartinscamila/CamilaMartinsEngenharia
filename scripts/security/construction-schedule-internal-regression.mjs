@@ -165,4 +165,27 @@ ok(Boolean(await scalar(`select public.admin_publish_full_schedule_to_client('${
 
 await sql(`select set_config('cme.uid','',false)`);
 await fails(`select public.assert_full_schedule_without_contract('${project}')`, /administrativo/i);
+// D05: SS/FF/defasagem (migração seguinte), sobre o mesmo banco efêmero.
+await sql(`select set_config('cme.uid','${admin}',false)`);
+await sql(fs.readFileSync(new URL('supabase/migrations/20261108120000_full_schedule_ss_ff_lag.sql', root), 'utf8'));
+ok(await scalar(`select count(*)::int value from public.construction_schedule_items where dependency_type='FS' and lag_days=0`) >= 1, 'Itens existentes ficam FS sem defasagem');
+const project2 = '30000000-0000-4000-8000-000000000021';
+await sql(`insert into public.projetos values('${project2}','${client}','${contract}','Obra D05',null)`);
+const typedPlan = { ...plan, planned_finish: '2026-11-20', items: [
+  { code: 'A', activity: 'Estrutura', planned_duration_days: 5, planned_start: '2026-11-09', planned_finish: '2026-11-13', planned_cost: 600, weight_percent: 60, cost_source: 'Custo interno', source_service_code: 'obra' },
+  { code: 'B', activity: 'Instalações', predecessor_code: 'A', dependency_type: 'SS', lag_days: 2, planned_duration_days: 3, planned_start: '2026-11-11', planned_finish: '2026-11-13', planned_cost: 300, weight_percent: 30, cost_source: 'Custo interno', source_service_code: 'obra' },
+  { code: 'C', activity: 'Limpeza', predecessor_code: 'A', dependency_type: 'FS', lag_days: 4, planned_duration_days: 2, planned_start: '2026-11-19', planned_finish: '2026-11-20', planned_cost: 100, weight_percent: 10, cost_source: 'Custo interno', source_service_code: 'obra' },
+] };
+const typedId = await scalar(`select public.admin_initialize_and_save_full_schedule_without_contract('${project2}',${json(typedPlan)},'Teste de dependências SS e FS com defasagem')::text value`);
+ok(await scalar(`select string_agg(code||dependency_type||lag_days,',' order by code) value from public.construction_schedule_items where schedule_id='${typedId}'`) === 'AFS0,BSS2,CFS4', 'Tipos e defasagens gravados');
+await sql(`update public.construction_schedules set activation_status='approved' where id='${typedId}'`);
+ok(await scalar(`select activation_status value from public.construction_schedules where id='${typedId}'`) === 'approved', 'Aprovação aceita SS e FS com defasagem coerentes');
+const project3 = '30000000-0000-4000-8000-000000000022';
+await sql(`insert into public.projetos values('${project3}','${client}','${contract}','Obra D05 inválida',null)`);
+const wrong = { ...typedPlan, items: typedPlan.items.map((i) => i.code === 'B' ? { ...i, planned_start: '2026-11-09', planned_finish: '2026-11-11' } : i) };
+await fails(`select public.admin_initialize_and_save_full_schedule_without_contract('${project3}',${json({ ...wrong, planned_start: '2026-11-09' })},'Teste de dependências SS e FS com defasagem')`, /Predecessora inexistente ou data conflitante/i);
+await fails(`select public.admin_initialize_and_save_full_schedule_without_contract('${project3}',${json({ ...typedPlan, items: typedPlan.items.map((i) => i.code === 'A' ? { ...i, lag_days: 3 } : i) })},'Teste de dependências SS e FS com defasagem')`, /defasagem/i);
+await fails(`select public.admin_initialize_and_save_full_schedule_without_contract('${project3}',${json({ ...typedPlan, items: typedPlan.items.map((i) => i.code === 'B' ? { ...i, dependency_type: 'XX' } : i) })},'Teste de dependências SS e FS com defasagem')`, /dependência/i);
+await sql(`select set_config('cme.uid','',false)`);
+
 console.log(`CRONOGRAMA INTERNO (OBRA SEM CONTRATO): ${checks} verificações passaram em PostgreSQL efêmero.`);

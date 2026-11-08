@@ -41,4 +41,21 @@ bad(() => analyze([row('A', null, 1, '2026-09-21', '2026-09-21'), row('A', null,
 bad(() => analyze([row('A', null, 1, '2026-09-21', '2026-09-21'), row('B', 'A', 1, '2026-09-21', '2026-09-21')], {calendar:'weekdays'}), /inconsistentes/);
 bad(() => analyze([row('A', null, 1, '2026-09-22', '2026-09-22')], {calendar:'weekdays',holidays:['2026-09-22']}), /calendário/);
 bad(() => analyze([row('A', null, 3, '2026-09-21', '2026-09-22')], {calendar:'weekdays'}), /Duração e datas/);
+// D05: caminho crítico com SS/FF/defasagem.
+const link = (code, predecessorCode, dependencyType, lagDays, durationDays, plannedStart, plannedFinish) => ({ code, predecessorCode, dependencyType, lagDays, durationDays, plannedStart, plannedFinish });
+const typed = analyze([
+  link('A', null, undefined, undefined, 5, '2026-09-21', '2026-09-25'),
+  link('B', 'A', 'SS', 2, 3, '2026-09-23', '2026-09-25'),
+  link('C', 'A', 'FF', 0, 2, '2026-09-24', '2026-09-25'),
+], { calendar: 'weekdays' });
+test(typed.criticalCodes, ['A', 'B', 'C'], 'SS e FF alinhados ao término são críticos');
+const slack = analyze([
+  link('A', null, undefined, undefined, 5, '2026-09-21', '2026-09-25'),
+  link('B', 'A', 'SS', 0, 2, '2026-09-21', '2026-09-22'),
+], { calendar: 'weekdays' });
+test(slack.activities.find(a => a.code === 'B').totalFloatDays, 3, 'SS curto tem folga até o término da obra');
+bad(() => analyze([
+  link('A', null, undefined, undefined, 5, '2026-09-21', '2026-09-25'),
+  link('B', 'A', 'SS', 2, 2, '2026-09-21', '2026-09-22'),
+], { calendar: 'weekdays' }), /inconsistentes/);
 console.log(`CPM isolado: ${checks} verificações passaram.`);
