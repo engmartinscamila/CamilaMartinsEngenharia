@@ -2,6 +2,7 @@ import { FinancialSummary, FinancialReceivables } from '@/components/financial-o
 import { LegacyFinancialAuditPanel } from '@/components/legacy-financial-audit-panel';
 import { auditLegacyReceivables, type LegacyReceiptReference } from '@/lib/legacy-finance-audit';
 import { listAdminReceiptReferences } from '@/services/legacy-receipt-service';
+import { listFinancialOriginReviews,recordFinancialOriginReview,type LegacyOriginReview,type LegacyOriginClassification } from '@/services/financial-origin-review-service';
 import { financeV2HomologationEnabled } from '@/services/finance-v2-service';
 import { useRouter } from 'expo-router';
 import { analyzeFinancialIntegrity } from '@/lib/financial-reconciliation';
@@ -74,6 +75,8 @@ export default function AdminFinancialScreen() {
   const [projects, setProjects] = useState<AdminProjectSummary[]>([]);
   const [entries, setEntries] = useState<FinancialEntrySummary[]>([]);
   const [receiptReferences,setReceiptReferences]=useState<LegacyReceiptReference[]>([]);
+  const [originReviews,setOriginReviews]=useState<LegacyOriginReview[]>([]);
+  const [originReviewError,setOriginReviewError]=useState<string|null>(null);
   const [receiptAuditError,setReceiptAuditError]=useState<string|null>(null);
   const [archive, setArchive] = useState<FinancialArchiveSummary[]>([]);
 
@@ -133,6 +136,7 @@ export default function AdminFinancialScreen() {
   const [resetPhrase,setResetPhrase]=useState('');
   const [resetReady,setResetReady]=useState(false);
   const actionLock=useRef(false), requestId=useRef<string|null>(null), requestFingerprint=useRef('');
+  const originReviewRequest=useRef<{fingerprint:string;id:string}|null>(null);
   async function perform(task:()=>Promise<void>){
     if(actionLock.current)return;actionLock.current=true;setSaving(true);
     try{await task();}catch(reason){setError(reason instanceof Error?reason.message:'Não foi possível concluir. Seus campos foram preservados.');}
@@ -156,9 +160,9 @@ export default function AdminFinancialScreen() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-    const [contractResult, projectResult, entryResult, archiveResult, bankResult, accountResult, timeResult, fiscalResult, preferenceResult, clientResult, receiptResult] = await Promise.all([
+    const [contractResult, projectResult, entryResult, archiveResult, bankResult, accountResult, timeResult, fiscalResult, preferenceResult, clientResult, receiptResult, originResult] = await Promise.all([
       listAdminContracts(), listAdminProjects(), listAdminFinancialEntries(), listFinancialArchive(),
-      listBankTransactions(), listFinancialAccounts(), listTimesheets(), listFiscalDocuments(), getAdminFinancialPreferences(), listAdminClients(), listAdminReceiptReferences(),
+      listBankTransactions(), listFinancialAccounts(), listTimesheets(), listFiscalDocuments(), getAdminFinancialPreferences(), listAdminClients(), listAdminReceiptReferences(), listFinancialOriginReviews(),
     ]);
     setClients(clientResult.data);
     setContracts(contractResult.data);
@@ -168,6 +172,8 @@ export default function AdminFinancialScreen() {
     setArchiveError(archiveResult.error);
     setReceiptReferences(receiptResult.data);
     setReceiptAuditError(receiptResult.error);
+    setOriginReviews(originResult.data??[]);
+    setOriginReviewError(originResult.error);
     setTransactions(bankResult.data);
     setCoreError(clientResult.error ?? contractResult.error ?? projectResult.error ?? entryResult.error ?? timeResult.error);
     setBankError(bankResult.error ?? accountResult.error);
@@ -183,7 +189,7 @@ export default function AdminFinancialScreen() {
     setSelectedContractId((current) => contextProjectId ? projectResult.data.find(project=>project.id===contextProjectId)?.contractId ?? null : current ?? contractResult.data[0]?.id ?? null);
     setAccountId((current) => current ?? null);
     setError(clientResult.error ?? contractResult.error ?? projectResult.error ?? entryResult.error ?? archiveResult.error ?? bankResult.error ?? accountResult.error ?? timeResult.error ?? fiscalResult.error ?? preferenceResult.error);
-    } catch { const message='Não foi possível atualizar os dados financeiros. Tente novamente.'; setError(message); setCoreError(message); setBankError(message); setArchiveError(message); setReceiptAuditError(message); setReceiptReferences([]); }
+    } catch { const message='Não foi possível atualizar os dados financeiros. Tente novamente.'; setError(message); setCoreError(message); setBankError(message); setArchiveError(message); setReceiptAuditError(message); setReceiptReferences([]); setOriginReviews([]); setOriginReviewError(message); }
     finally { setLoading(false); }
   }, [contextProjectId]);
 
@@ -194,9 +200,20 @@ export default function AdminFinancialScreen() {
   const statementRows=useMemo(()=>prioritizeReceivables(statements,statementFocus,statementQuery),[statements,statementFocus,statementQuery]);
   const missingContractValues=statements.filter(row=>!row.inactive&&row.contractValue===null&&contracts.some(contract=>contract.id===row.id)).length;
   const integrityIssues=useMemo(()=>analyzeFinancialIntegrity(entries,contracts,projects,clients,transactions),[entries,contracts,projects,clients,transactions]);
-  const legacyAudit=useMemo(()=>coreError||receiptAuditError?null:auditLegacyReceivables(contracts,projects,entries,receiptReferences),[coreError,receiptAuditError,contracts,projects,entries,receiptReferences]);
+  const legacyAudit=useMemo(()=>coreError||receiptAuditError||originReviewError?null:auditLegacyReceivables(contracts,projects,entries,receiptReferences,originReviews),[coreError,receiptAuditError,originReviewError,contracts,projects,entries,receiptReferences,originReviews]);
   const statementTotal=receivableOverview(statements).total;
   const monthTotals=financialTotals(entries.filter(entry=>(!embedded?.projectId||entry.projectId===embedded.projectId)&&entryDate(entry)?.startsWith(financialToday().slice(0,7))));
+  async function saveOriginReview(id:string,classification:LegacyOriginClassification,reason:string):Promise<string|null>{
+    const fingerprint=JSON.stringify({id,classification,reason:reason.trim()});
+    if(originReviewRequest.current?.fingerprint!==fingerprint)
+      originReviewRequest.current={fingerprint,id:randomUUID()};
+    const result=await recordFinancialOriginReview({financialEntryId:id,classification,reason,requestId:originReviewRequest.current.id});
+    if(result.error){setError(result.error);return result.error;}
+    originReviewRequest.current=null;
+    setError(null);setSuccess('Classificação registrada no histórico administrativo.');
+    await load();
+    return null;
+  }
   const openReceipt=(id:string,projectId?:string|null)=>{const url='/recibos.html?financialId='+encodeURIComponent(id);if(embedded)embedded.onNavigate('receipts',{financialId:id,...(projectId?{projectId}:{})});else if(Platform.OS==='web')window.location.assign(url);else void Linking.openURL('https://camilamartinsengenharia.com.br'+url);};
   const receiveEntry=(entry:FinancialEntrySummary)=>{editEntry(entry);setEntryStatus('pago');setPaidAt(financialToday());};
   const totals=useMemo(()=>financialTotals(filteredEntries),[filteredEntries]);
@@ -337,9 +354,10 @@ export default function AdminFinancialScreen() {
         onPendingPayables={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'aberto',month:'',type:'saida'});setPage(0);setSection('entries');}}
         onReceivables={()=>setSection('receivables')} onNewEntry={()=>{clearEntry();setFormOpen(true);setSection('entries');}} />:null}
       {section==='receivables'?<>
-        <LegacyFinancialAuditPanel report={legacyAudit} loading={loading} error={coreError||receiptAuditError}
+        <LegacyFinancialAuditPanel report={legacyAudit} loading={loading} error={coreError||receiptAuditError||originReviewError}
           onContractEdit={id=>{setSelectedContractId(id);setContractValue('');setSection('hours');}}
-          onEntryEdit={id=>{const entry=entries.find(row=>row.id===id);if(entry)editEntry(entry);else setError('Lançamento não localizado entre os registros ativos. Confira o histórico.');}} />
+          onEntryEdit={id=>{const entry=entries.find(row=>row.id===id);if(entry)editEntry(entry);else setError('Lançamento não localizado entre os registros ativos. Confira o histórico.');}}
+          onOriginReview={saveOriginReview} />
         <FinancialReceivables styles={styles} embeddedProjectId={embedded?.projectId} missingContractValues={missingContractValues} statementQuery={statementQuery} setStatementQuery={setStatementQuery} statementFocus={statementFocus} setStatementFocus={setStatementFocus} statementPage={statementPage} setStatementPage={setStatementPage} expandedStatement={expandedStatement} setExpandedStatement={setExpandedStatement} statementRows={statementRows} contracts={contracts} integrityIssues={integrityIssues} bankError={bankError} loading={loading} coreError={coreError} saving={saving} goldColor={colors.gold600}
         perform={perform} openReceipt={openReceipt} receiveEntry={receiveEntry} onContractEdit={id=>{setSelectedContractId(id);setContractValue('');setSection('hours');}} />
       </>:null}
