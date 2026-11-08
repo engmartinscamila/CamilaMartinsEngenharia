@@ -7,10 +7,16 @@ on:
     paths:
       - 'portal-app/**'
       - '.github/workflows/portal-app-pr.yml'
+      - 'scripts/security/contract-receivables-regression.mjs'
+      - 'supabase/migrations/20261108140000_contract_installments_receivables.sql'
+      - 'supabase/migrations/20261108141000_annex_only_with_additional_service.sql'
   pull_request:
     paths:
       - 'portal-app/**'
       - '.github/workflows/portal-app-pr.yml'
+      - 'scripts/security/contract-receivables-regression.mjs'
+      - 'supabase/migrations/20261108140000_contract_installments_receivables.sql'
+      - 'supabase/migrations/20261108141000_annex_only_with_additional_service.sql'
   workflow_dispatch:
 
 permissions:
@@ -105,6 +111,7 @@ jobs:
           CME_PGLITE_ROOT="$RUNNER_TEMP/finance-v2-test" node ../scripts/security/project-tasks-integrity-regression.mjs
           CME_PGLITE_ROOT="$RUNNER_TEMP/finance-v2-test" node ../scripts/security/financial-receipt-origin-guards-regression.mjs
           CME_PGLITE_ROOT="$RUNNER_TEMP/finance-v2-test" node ../scripts/security/addendum-financial-regression.mjs
+          CME_PGLITE_ROOT="$RUNNER_TEMP/finance-v2-test" node ../scripts/security/contract-receivables-regression.mjs
 
       - name: Testar comparativo de preços e RPCs de compras
         run: |

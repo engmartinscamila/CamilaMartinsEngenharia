@@ -39,7 +39,7 @@ async function fixture(failure){
    if(!job.annex_document_id){preparationCount++;job.annex_document_id=id(21);docs.push({id:id(21),versao:'2.0',arquivo:null,contract_id:id(4),document_kind:'anexo_i',generated_data:{...record,maintenance_job_id:job.id,source_contract_document_id:job.contract_document_id}});}
    return ok(job.annex_document_id);
   }
-  if(args.p_name==='admin_commercial_closure')return ok({revisionRequired:false,annexCurrent:docs.find(d=>d.id===job.annex_document_id)?.generated_data.source_contract_document_id===record.contract_document_id,issues:[],emissionPending:false});
+  if(args.p_name==='admin_commercial_closure')return ok({revisionRequired:false,...(failure==='noAnnex'?{annexRequired:false}:{}),annexCurrent:docs.find(d=>d.id===job.annex_document_id)?.generated_data.source_contract_document_id===record.contract_document_id,issues:[],emissionPending:false});
   return {data:null,error:{message:'Denied internal details',code:'42501'}};
  }};
  const word=async(text)=>{const z=new JSZip();z.file('[Content_Types].xml','<Types/>');z.file('word/document.xml','<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>'+text+'</w:t></w:r></w:p></w:body></w:document>');return z.generateAsync({type:'uint8array'});};
@@ -67,6 +67,9 @@ for(const failure of [null,'checkpoint','annex','archive']){
  assert.deepEqual(f.counts(),{commercialCount:1,preparationCount:1,archiveCount:1});
  console.log('PASS protected workflow: '+(failure||'success')+' preserves one contract/revision, one annex and unchanged originals.');
 }
+{const f=await fixture('noAnnex');const result=await f.run();assert.equal(f.job.status,'completed');assert.equal(result.annex,null);assert.equal(result.annexRequired,false);
+ assert.deepEqual(f.counts(),{commercialCount:1,preparationCount:0,archiveCount:0});
+ console.log('PASS protected workflow: without additional service the job completes with the main contract only (no Anexo I).');}
 for(const failure of ['scope','original']){const f=await fixture(failure);await assert.rejects(()=>f.run(),/divergentes|anterior foi alterada/);assert.notEqual(f.job.status,'completed');}
 const f=await fixture(null);
 assert.equal((await f.publicHandler(new Request('https://qa.invalid',{method:'GET'}))).status,405);

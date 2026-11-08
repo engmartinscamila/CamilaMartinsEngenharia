@@ -81,6 +81,11 @@ export async function runDocumentJob(service:any,job:Obj,token:string,settings:O
  const oldContract=await read('documentos',job.original_contract_document_id);
  if(newContract.versao===oldContract.versao)fail('A revisão anterior não foi preservada.');
 
+ // Anexo I só é exigido quando há serviço adicional; sem adicional, o contrato principal basta.
+ const pre=await jobRpc('admin_commercial_closure');
+ const annexRequired=pre?.annexRequired!==false;
+ let annexCheck:Obj|null=null;
+ if(annexRequired){
  if(!job.annex_document_id){
   const id=await jobRpc('admin_prepare_contract_document');
   if(!uuid(id))fail('Preparação do Anexo I não retornou um documento válido.');
@@ -93,12 +98,14 @@ export async function runDocumentJob(service:any,job:Obj,token:string,settings:O
  await call(deliver,{documentId:annexRow.id,archive:true,expectedDocumentKind:'anexo_i'});
  annexRow=await read('documentos',annexRow.id);
  if(!same(annexRow.generated_data?.commercial_terms,agreed.commercial_terms)||!same(annexRow.generated_data?.services,agreed.services)||!same(annexRow.generated_data?.payment_terms,agreed.payment_terms))fail('Escopo ou condições divergentes entre contrato e Anexo I.');
- const contractCheck=await inspect(job.contract_document_id);const annexCheck=await inspect(annexRow.id);
+ annexCheck=await inspect(annexRow.id);
+ }
+ const contractCheck=await inspect(job.contract_document_id);
  if(newContract.generated_data.word_content_sha256!==contractCheck.sha256)fail('Hash do contrato não corresponde ao arquivo armazenado.');
  if(!same(job.original_manifest,await manifest(job.original_manifest.map((m:Obj)=>m.id))))fail('Uma versão anterior foi alterada.');
  const diagnosis=await jobRpc('admin_commercial_closure');
- if(diagnosis.revisionRequired||!diagnosis.annexCurrent||diagnosis.emissionPending||diagnosis.issues?.length)fail('A conferência final apontou pendência documental.');
- const result={contract:contractCheck,annex:annexCheck,originalVersionsPreserved:true,scopeAndPaymentsConsistent:true,revisionRequired:false,annexCurrent:true};
+ if(diagnosis.revisionRequired||(annexRequired&&!diagnosis.annexCurrent)||diagnosis.emissionPending||diagnosis.issues?.length)fail('A conferência final apontou pendência documental.');
+ const result={contract:contractCheck,annex:annexCheck,originalVersionsPreserved:true,scopeAndPaymentsConsistent:true,revisionRequired:false,annexRequired,annexCurrent:annexRequired?true:null};
  await checkpoint({phase:'completed',status:'completed',lease_until:null,result});
  return result;
 }
@@ -119,7 +126,7 @@ Deno.serve(async(req:Request)=>{
   if(job!.status==='completed'){
    if(body.action==='review'){
     const files=[];
-    for(const id of [job!.contract_document_id,job!.annex_document_id]){
+    for(const id of [job!.contract_document_id,job!.annex_document_id].filter(Boolean)){
      const d=await service.from('documentos').select('id,arquivo,storage_bucket,versao,document_kind').eq('id',id).single();if(d.error)throw d.error;
      const f=await service.storage.from(d.data.storage_bucket||'documentos').download(d.data.arquivo);if(f.error||!f.data)throw f.error||new Error('Arquivo indisponível.');
      const bytes=new Uint8Array(await f.data.arrayBuffer());if(bytes.length>20*1024*1024)throw new Error('Arquivo acima do limite de revisão.');
