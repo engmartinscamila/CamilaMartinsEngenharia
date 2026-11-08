@@ -43,7 +43,7 @@ assert.equal(issued.calls[0].body.recover, false);
 assert.equal(issued.calls[1].download.bytes, 'QUJD');
 assert.ok(!issued.calls.some(call => /generate|deliver|revision/.test(call.fn || '')), 'Download não pode gerar documento/revisão.');
 
-const missing = await scenario({error:{message:'non-2xx'},data:{code:'ORIGINAL_WORD_MISSING',error:'Original ausente'}});
+const missing = await scenario({error:{message:'non-2xx',context:{json:async()=>({code:'ORIGINAL_WORD_MISSING',error:'Original ausente'})}},data:null});
 assert.equal(missing.response.missingOriginal, true);
 assert.equal(missing.calls.length, 1);
 assert.equal(missing.calls[0].body.recover, false);
