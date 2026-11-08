@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { analyzeExecutionBudget } from '@/lib/construction-budget-validation';
 
 export interface ScheduleBudgetItem {
   code: string;
@@ -64,26 +65,14 @@ export async function loadCurrentScheduleBudget(projectId: string): Promise<{dat
   };
 }
 
-const decimal = (value: string) => {
-  const normalized = value.trim().replace(',', '.');
-  return normalized ? Number(normalized) : null;
-};
-
 export async function saveCurrentScheduleBudget(draft: ScheduleBudgetDraft): Promise<{total: number | null; error: string | null}> {
-  const payload = draft.items.map((item) => {
-    const quantity = decimal(item.quantity);
-    const unitCost = decimal(item.unitCost);
-    const direct = decimal(item.plannedCost);
-    const hasComposition = item.quantity.trim() !== '' || item.unit.trim() !== '' || item.unitCost.trim() !== '';
-    return {
-      code: item.code,
-      quantity: hasComposition ? quantity : null,
-      unit: hasComposition ? item.unit.trim() : null,
-      unit_cost: hasComposition ? unitCost : null,
-      planned_cost: hasComposition ? null : direct,
-      cost_source: item.costSource.trim(),
-    };
-  });
+  const validation=analyzeExecutionBudget(draft.items);
+  if(!validation.valid||validation.total===null){
+    return {total:null,error:validation.errors.slice(0,4).join(' ')||'Revise os quantitativos e os custos antes de salvar.'};
+  }
+  const payload=validation.lines.map(({code,quantity,unit,unit_cost,planned_cost,cost_source})=>({
+    code,quantity,unit,unit_cost,planned_cost,cost_source,
+  }));
   const result = await supabase.rpc('admin_set_full_schedule_execution_budget', {
     p_schedule_id: draft.scheduleId,
     p_items: payload,
@@ -92,8 +81,8 @@ export async function saveCurrentScheduleBudget(draft: ScheduleBudgetDraft): Pro
     return { total: null, error: result.error?.message ?? 'Não foi possível salvar o orçamento de execução.' };
   }
   const data = result.data as Record<string, unknown>;
-  return {
-    total: data.total_construction_cost === undefined ? null : Number(data.total_construction_cost),
-    error: null,
-  };
+  const savedTotal=Number(data.total_construction_cost);
+  if(!Number.isFinite(savedTotal)||Math.abs(savedTotal-validation.total)>0.011)
+    return {total:null,error:'O banco devolveu um total diferente do orçamento enviado. Atualize para conferir antes de usar os pesos financeiros.'};
+  return {total:savedTotal,error:null};
 }
