@@ -65,6 +65,8 @@ jobs:
 
       - name: Testar motor de cronograma físico-financeiro
         run: node scripts/test-construction-schedule-engine.mjs
+      - name: Testar parcelas de pedido de compra
+        run: node scripts/test-purchase-installments.mjs
 
       - name: Testar controle de custos por projeto
         run: node scripts/test-project-cost-control.mjs

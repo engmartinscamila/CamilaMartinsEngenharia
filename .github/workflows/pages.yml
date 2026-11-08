@@ -68,6 +68,7 @@ jobs:
           node scripts/security/ofx-regression.mjs
           node scripts/security/admin-receipt-financial-regression.mjs
           node scripts/security/receipt-cash-regression.mjs
+          node scripts/security/purchase-order-regression.mjs
           node scripts/portfolio-r2-delete-guard-regression.mjs
           node scripts/security/commercial-closure-regression.mjs
           node scripts/security/project-before-contract-regression.mjs
@@ -183,6 +184,7 @@ jobs:
           node scripts/test-commercial-service-levels.mjs
           node scripts/test-construction-schedule-pagination.mjs
           node scripts/test-construction-schedule-engine.mjs
+          node scripts/test-purchase-installments.mjs
           node scripts/test-construction-schedule-critical-path.mjs
           node scripts/test-construction-schedule-client-gantt.mjs
           node scripts/test-construction-schedule-progress.mjs

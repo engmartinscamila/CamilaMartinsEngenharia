@@ -12,6 +12,7 @@ import type {
   ProjectFinancialSummary,
   ProjectPortalSettings,
   ProjectTaskSummary,
+  PurchaseOrderSummary,
   PurchaseQuoteSummary,
   ServiceResult,
   SupplierSummary,
@@ -347,6 +348,56 @@ export async function selectSupplierBid(quoteId: string, supplierId: string) {
   });
   return result.error || typeof result.data !== 'string' || !result.data
     ? 'Aprovação não confirmada: confira a proposta e o estado atual da cotação. Nenhum pedido foi emitido.' : null;
+}
+
+/** D04: pedido de compra a partir da proposta aprovada; parcelas viram contas a pagar no Financeiro. */
+export async function listPurchaseOrders(projectId?: string): Promise<ServiceResult<PurchaseOrderSummary[]>> {
+  let query = supabase.from('purchase_orders')
+    .select('id,order_number,quote_id,project_id,total_amount,status,expected_delivery,received_on,suppliers(name),financeiro(valor,status)')
+    .order('created_at', { ascending: false });
+  if (projectId) query = query.eq('project_id', projectId);
+  const result = await readAllRows(query);
+  if (result.error) return failure([], 'Não foi possível carregar os pedidos de compra.');
+  return {
+    data: (result.data ?? []).map((row: any) => {
+      const payables = Array.isArray(row.financeiro) ? row.financeiro : [];
+      const sum = (status: string) => payables.filter((p: any) => p.status === status).reduce((total: number, p: any) => total + Number(p.valor), 0);
+      return {
+        id: row.id, orderNumber: row.order_number, quoteId: row.quote_id, projectId: row.project_id,
+        supplierName: (Array.isArray(row.suppliers) ? row.suppliers[0] : row.suppliers)?.name ?? 'Fornecedor',
+        totalAmount: Number(row.total_amount), status: row.status, expectedDelivery: row.expected_delivery, receivedOn: row.received_on,
+        payablesPending: sum('pendente') + sum('atrasado') + sum('previsto'), payablesPaid: sum('pago'),
+      };
+    }),
+    error: null,
+  };
+}
+
+export async function createPurchaseOrder(input: {
+  quoteId: string; requestId: string; installments: { dueDate: string; amount: number }[]; expectedDelivery?: string; notes?: string;
+}) {
+  if (!input.quoteId || !input.requestId || !input.installments.length || input.installments.some((item) => !isValidIsoDate(item.dueDate) || !(item.amount > 0)) ||
+    (input.expectedDelivery && !isValidIsoDate(input.expectedDelivery))) {
+    return 'Confira as parcelas e as datas do pedido.';
+  }
+  const result = await supabase.rpc('admin_create_purchase_order', {
+    p_quote_id: input.quoteId, p_request_id: input.requestId,
+    p_installments: input.installments.map((item) => ({ due_date: item.dueDate, amount: item.amount })),
+    p_expected_delivery: input.expectedDelivery || null, p_notes: input.notes?.trim() || null,
+  });
+  return result.error ? (result.error.message || 'Pedido não emitido. Nenhuma conta a pagar foi criada.') : null;
+}
+
+export async function markPurchaseOrderReceived(orderId: string, receivedOn: string) {
+  if (!orderId || !isValidIsoDate(receivedOn)) return 'Informe a data de recebimento.';
+  const result = await supabase.rpc('admin_mark_purchase_order_received', { p_order_id: orderId, p_received_on: receivedOn });
+  return result.error ? (result.error.message || 'Recebimento não registrado.') : null;
+}
+
+export async function cancelPurchaseOrder(orderId: string, reason: string) {
+  if (!orderId || reason.trim().length < 5) return 'Descreva o motivo do cancelamento (mínimo de 5 caracteres).';
+  const result = await supabase.rpc('admin_cancel_purchase_order', { p_order_id: orderId, p_reason: reason.trim() });
+  return result.error ? (result.error.message || 'Cancelamento não confirmado.') : null;
 }
 
 export async function listProjectFinancialSummaries(): Promise<ServiceResult<ProjectFinancialSummary[]>> {

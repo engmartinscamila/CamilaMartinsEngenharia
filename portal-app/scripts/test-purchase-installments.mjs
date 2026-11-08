@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import ts from 'typescript';
+const source = fs.readFileSync(new URL('../src/lib/purchase-installments.ts', import.meta.url), 'utf8');
+const out = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } });
+const { splitPurchaseInstallments: split } = await import(`data:text/javascript,${encodeURIComponent(out.outputText)}`);
+let checks = 0; const t = (v, m) => { assert.ok(v, m); checks++; };
+const three = split(1000, 3, '2026-01-31');
+t(three.map(i => i.amount).join() === '333.33,333.33,333.34', 'Centavos exatos, resto na última');
+t(Math.round(three.reduce((s, i) => s + i.amount, 0) * 100) === 100000, 'Soma igual ao total');
+t(three.map(i => i.dueDate).join() === '2026-01-31,2026-02-28,2026-03-31', 'Fim de mês respeitado');
+t(split(1000.5, 1, '2026-12-10')[0].amount === 1000.5, 'Parcela única');
+assert.throws(() => split(100, 0, '2026-12-10')); checks++;
+assert.throws(() => split(10.005, 1, '2026-12-10')); checks++;
+assert.throws(() => split(100, 2, '2026-02-30')); checks++;
+console.log(`PARCELAS DE PEDIDO: ${checks} verificações passaram.`);

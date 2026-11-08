@@ -19,3 +19,11 @@ Base funcional: fluxo de suprimentos/orçamento comparativo estudado em **Sienge
 5. Confirmar orçamento/escopo/cotação com o profissional; a escolha de fornecedor não gera contrato, pedido de compra ou lançamento financeiro automaticamente.
 
 **Fora do escopo desta entrega:** BOM/BOQ multinível, geração automática de pedido de compra, empenhos financeiros, importação SINAPI/SICRO, faturamento fiscal e controles de entrega. Esses fluxos exigem registros e permissões próprios; não devem ser simulados com objetos incompletos.
+
+## Pedido de compra e contas a pagar (D04, 08/11/2026)
+Decisão da proprietária: **proposta aprovada → pedido de compra → contas a pagar**.
+- `admin_create_purchase_order`: um pedido por cotação aprovada, valor igual à proposta escolhida (centavos exatos), parcelas com vencimento; idempotente pela chave de solicitação.
+- As parcelas são lançamentos `financeiro` (`saida`, `pendente`, categoria `compras`, `purchase_order_id`), a mesma fonte do Financeiro e do Controle de custos: nada é contado duas vezes.
+- Parcela de pedido não muda valor, tipo, projeto nem vínculo e não é excluída; o pagamento segue normal pelo Financeiro.
+- `admin_mark_purchase_order_received` registra o recebimento; `admin_cancel_purchase_order` só cancela sem parcela paga e marca as pendentes como `cancelado` (nada é apagado).
+- Teste: `scripts/security/purchase-order-regression.mjs`.
