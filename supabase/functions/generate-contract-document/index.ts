@@ -246,6 +246,7 @@ const legalRepresentativeInfo=(d:Data)=>{
 const kindLabels:Record<string,string>={anexo_i:'do Anexo I',notificacao_formal:'da Notificação Formal',termo_aceite:'do Termo de Aceite',servico_adicional:'do Serviço Adicional',autorizacao_imagem:'da Autorização de Uso de Imagem',quitacao_encerramento:'do Termo de Quitação e Encerramento',levantamento_tecnico:'do Levantamento Técnico',estudo_preliminar:'do Estudo Preliminar'};
 const versionLabel=(kind:string)=>`Versão ${kindLabels[kind]??'do documento'}`;
 const identity=(d:Data,profile:ProfessionalIdentity,generatedAt:Date,kind='anexo_i')=>[
+ ...(d.historical_reconstitution?[p(`CÓPIA RECONSTITUÍDA — documento gerado novamente em ${generatedDatePt(new Date(String(d.reconstituted_at||'')))} a partir dos dados congelados da emissão original de ${generatedDatePt(generatedAt)}. Não é o arquivo original; número, data e versão foram preservados.`)]:[]),
  h('1. IDENTIFICAÇÃO'),
  p(`Data de emissão: ${generatedDatePt(generatedAt)}`),
  p(`Contrato: ${value(d,'contract_number')} • ${versionLabel(kind)}: v${String(d.document_version||'1.0')} • Data de assinatura: ${d.contract_signed_at?datePt(d.contract_signed_at):'A CONFIRMAR NO ATO DA ASSINATURA'}`),
@@ -642,7 +643,7 @@ Deno.serve(async(req)=>{
   const {caller,service,user}=await requireAdmin(req);
   const body=await req.json();
   const documentId=typeof body.documentId==='string'?body.documentId:'';
-  const action=body.action==='send'?'send':'generate';
+  const action=body.action==='send'?'send':body.action==='reconstitute'?'reconstitute':'generate';
   const expectedDocumentKind=typeof body.expectedDocumentKind==='string'?body.expectedDocumentKind:'';
   const scheduledForRaw=typeof body.scheduledFor==='string'?body.scheduledFor.trim():'';
   const scheduledFor=scheduledForRaw?new Date(scheduledForRaw):null;
@@ -651,7 +652,7 @@ Deno.serve(async(req)=>{
   }
   const isScheduled=scheduledFor!==null;
   if(!/^[0-9a-f-]{36}$/i.test(documentId))return json({error:'Documento inválido.'},400);
-  const {error:rateError}=await caller.rpc('consume_admin_rate_limit',{p_action:`contract-document-${action}`});
+  const {error:rateError}=await caller.rpc('consume_admin_rate_limit',{p_action:`contract-document-${action==='reconstitute'?'generate':action}`});
   if(rateError)return json({error:'Muitas tentativas. Aguarde antes de repetir a operação.'},429);
 
   const {data:row,error}=await service.from('documentos')
@@ -710,6 +711,31 @@ Deno.serve(async(req)=>{
    const email=await sendClientDocumentEmail(service,row);
    await service.from('audit_log').insert({user_id:user.id,action:'send_contract_document',entity_type:'documentos',entity_id:row.id,details:{document_kind:row.document_kind,email_sent:email.emailSent}});
    return json({sent:true,scheduled:false,documentKind:row.document_kind,emailSent:email.emailSent,emailWarning:email.emailReason,notificationId});
+  }
+
+  // A12: documento emitido cujo arquivo se perdeu. Reconstitui a partir dos
+  // dados congelados da emissão (número, data e versão originais), em caminho
+  // próprio e identificado como CÓPIA RECONSTITUÍDA — nunca como original.
+  if(action==='reconstitute'){
+   if(row.arquivo)return json({reconstituted:false,alreadyAvailable:true,documentId:row.id,documentKind:row.document_kind,path:row.arquivo});
+   const snapshot=(row.generated_data&&typeof row.generated_data==='object'?row.generated_data:null) as Data|null;
+   const emittedRaw=snapshot?String(snapshot.emitted_at||''):'';
+   const emittedAt=new Date(emittedRaw);
+   if(!snapshot||!emittedRaw||Number.isNaN(emittedAt.getTime()))return json({error:'Não há dados congelados da emissão para reconstituir este documento com segurança.'},422);
+   const profile=await loadProfessionalIdentity(service);
+   const missing=missingProfessionalFields(profile);
+   if(missing.length)return json({error:`Complete a identificação profissional em Configurações antes de reconstituir. Campos pendentes: ${missing.join(', ')}.`},422);
+   const reconstitutedData={...snapshot,historical_reconstitution:true,reconstituted_at:new Date().toISOString()};
+   const bytes=await Packer.toBuffer(build(row.document_kind,reconstitutedData,profile,emittedAt));
+   const version=String(row.versao??snapshot.document_version??'1.0').replace(/[^0-9.]/g,'')||'1.0';
+   const path=`${row.projeto_id||row.contract_id||'sem-vinculo'}/contratual/${row.id}/reconstituted/${names[row.document_kind]}-v${version}-reconstituido.docx`;
+   const upload=await service.storage.from('documentos').upload(path,bytes,{contentType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',upsert:false});
+   if(upload.error&&!/exist/i.test(upload.error.message||''))throw upload.error;
+   const linked=await service.from('documentos').update({arquivo:path,storage_bucket:'documentos'}).eq('id',row.id).is('arquivo',null).select('id').maybeSingle();
+   if(linked.error)throw linked.error;
+   await service.from('audit_log').insert({user_id:user.id,action:'reconstitute_contract_document_from_snapshot',entity_type:'documentos',entity_id:row.id,
+    details:{document_kind:row.document_kind,version,original_emitted_at:emittedRaw,path,linked:Boolean(linked.data)}});
+   return json({reconstituted:true,documentId:row.id,documentKind:row.document_kind,path,version,originalEmittedAt:emittedRaw});
   }
 
   if(row.workflow_status==='enviado'||row.workflow_status==='assinado'||row.workflow_status==='aceito'){

@@ -56,7 +56,11 @@ Deno.serve(async (req) => {
     if (!actualDocumentKind || actualDocumentKind !== expectedDocumentKind) {
       return json({ error: 'O arquivo preparado não corresponde ao tipo solicitado. Atualize a tela e gere novamente.' }, 409);
     }
-    if (!row.arquivo) return json({ error: 'O Word ainda não foi gerado para entrega.' }, 409);
+    if (!row.arquivo) {
+      // A12: emissão registrada sem arquivo — o cliente pode pedir a cópia reconstituída.
+      const emitted = generatedData && typeof (generatedData as Record<string, unknown>).emitted_at === 'string';
+      return json({ error: emitted ? 'O arquivo original desta emissão não está disponível. É possível gerar uma cópia reconstituída a partir dos dados congelados da emissão.' : 'O Word ainda não foi gerado para entrega.', missingOriginal: emitted, canReconstitute: emitted }, 409);
+    }
 
     const bucket = row.storage_bucket || 'documentos';
     const downloaded = await service.storage.from(bucket).download(row.arquivo);
