@@ -40,6 +40,18 @@ with zipfile.ZipFile(sys.argv[1]) as z:
   assert.equal(await page.locator('#receiptEditor').isVisible(),false);assert.match(await page.locator('#receiptPaper').innerText(),/REC-000017\/2026/);
   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('qa-receipt')).receipt_number),17,'Opening the payment reuses its issued receipt');
   assert.deepEqual(errors,[]);
+  // A02: recibo estornado continua acessível, mas identificado como estornado na tela, no histórico e no Word.
+  await page.evaluate(()=>{const r=JSON.parse(localStorage.getItem('qa-receipt'));r.reversed_at='2026-11-02T15:00:00Z';r.reversal_reason='Valor lançado em duplicidade';localStorage.setItem('qa-receipt',JSON.stringify(r));});
+  await page.goto('http://127.0.0.1:4175/recibos.html?financialId=paid');
+  await page.getByText('posteriormente estornado',{exact:false}).waitFor();
+  assert.match(await page.locator('#receiptPaper').innerText(),/RECIBO ESTORNADO em 02\/11\/2026 — motivo: Valor lançado em duplicidade/);
+  assert.match(await page.locator('#receiptHistory').innerText(),/ESTORNADO/);
+  const reversedDownload=page.waitForEvent('download');await page.locator('#wordReceipt').click();const reversedFile=await reversedDownload;
+  assert.equal(reversedFile.suggestedFilename(),'Recibo-TESTE-REC-000017-2026-ESTORNADO.docx');const reversedPath=path.join(qaDir,'receipt-reversed.docx');await reversedFile.saveAs(reversedPath);
+  execFileSync(process.env.CODEX_PRIMARY_RUNTIME_PYTHON || 'python3',['-c',`import sys,zipfile
+t=zipfile.ZipFile(sys.argv[1]).read('word/document.xml').decode()
+assert 'RECIBO ESTORNADO' in t and 'REC-000017/2026' in t`,reversedPath]);
+  assert.deepEqual(errors,[]);
   await context.close();console.log('PASS: recibo '+width+'px — emissão, histórico após reload, reimpressão, PDF, Word válido e sem exceções.');
  }
 }finally{await browser.close();server.close();}
