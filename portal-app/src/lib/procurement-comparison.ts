@@ -24,8 +24,8 @@ export function analyzeSupplierQuote(
 ):QuoteComparison {
  const valid=bids.filter(bid=>Number.isFinite(bid.totalAmount)&&bid.totalAmount>=0);
  const ordered=[...valid].sort((a,b)=>a.totalAmount-b.totalAmount||a.supplierName.localeCompare(b.supplierName)||a.id.localeCompare(b.id));
- const lowestPrice=ordered.length?ordered[0].totalAmount:null;
- const highestPrice=ordered.length?ordered[ordered.length-1].totalAmount:null;
+ const lowestPrice=ordered[0]?.totalAmount??null;
+ const highestPrice=ordered.at(-1)?.totalAmount??null;
  const times=valid.map(bid=>bid.leadTimeDays).filter((n):n is number=>n!==null&&Number.isInteger(n)&&n>=0);
  const fastestKnownDays=times.length?Math.min(...times):null;
  const bidsCompared=ordered.map((bid,index)=>({
