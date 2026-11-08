@@ -1,7 +1,7 @@
 import { FinancialSummary, FinancialReceivables } from '@/components/financial-overview';
 import { LegacyFinancialAuditPanel } from '@/components/legacy-financial-audit-panel';
 import { auditLegacyReceivables, type LegacyReceiptReference } from '@/lib/legacy-finance-audit';
-import { listAdminReceiptReferences } from '@/services/legacy-receipt-service';
+import { listAdminReceiptReferences, listReceiptLocks, receiptLabel, reverseReceiptedPayment, type ReceiptLock } from '@/services/legacy-receipt-service';
 import { listFinancialOriginReviews,recordFinancialOriginReview,type LegacyOriginReview,type LegacyOriginClassification } from '@/services/financial-origin-review-service';
 import { financeV2HomologationEnabled } from '@/services/finance-v2-service';
 import { useRouter } from 'expo-router';
@@ -115,6 +115,10 @@ export default function AdminFinancialScreen() {
   const [transactions,setTransactions]=useState<BankTransaction[]>([]);
   const [editing,setEditing]=useState<FinancialEntrySummary|null>(null);
   const [deleteTarget,setDeleteTarget]=useState<FinancialEntrySummary|null>(null);
+  const [receiptLocks,setReceiptLocks]=useState<Record<string,ReceiptLock>>({});
+  const [receiptLockError,setReceiptLockError]=useState<string|null>(null);
+  const [reverseTarget,setReverseTarget]=useState<FinancialEntrySummary|null>(null);
+  const [reverseReason,setReverseReason]=useState('');
   const [paidAt,setPaidAt]=useState(financialToday());
   const [paymentMethod,setPaymentMethod]=useState('');
   const [openingDate,setOpeningDate]=useState(financialToday());
@@ -160,10 +164,12 @@ export default function AdminFinancialScreen() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-    const [contractResult, projectResult, entryResult, archiveResult, bankResult, accountResult, timeResult, fiscalResult, preferenceResult, clientResult, receiptResult, originResult] = await Promise.all([
+    const [contractResult, projectResult, entryResult, archiveResult, bankResult, accountResult, timeResult, fiscalResult, preferenceResult, clientResult, receiptResult, originResult, lockResult] = await Promise.all([
       listAdminContracts(), listAdminProjects(), listAdminFinancialEntries(), listFinancialArchive(),
-      listBankTransactions(), listFinancialAccounts(), listTimesheets(), listFiscalDocuments(), getAdminFinancialPreferences(), listAdminClients(), listAdminReceiptReferences(), listFinancialOriginReviews(),
+      listBankTransactions(), listFinancialAccounts(), listTimesheets(), listFiscalDocuments(), getAdminFinancialPreferences(), listAdminClients(), listAdminReceiptReferences(), listFinancialOriginReviews(), listReceiptLocks(),
     ]);
+    setReceiptLocks(lockResult.data);
+    setReceiptLockError(lockResult.error);
     setClients(clientResult.data);
     setContracts(contractResult.data);
     setProjects(projectResult.data);
@@ -231,6 +237,14 @@ export default function AdminFinancialScreen() {
   const exportComplete=async()=>{
     if(coreError||bankError||archiveError)throw new Error('Atualize os dados e resolva as falhas de leitura antes de exportar o conjunto completo.');
     await exportFinancialExcel(entries,archive,accounts);setSuccess('Excel completo preparado para download, incluindo o histórico preservado.');
+  };
+  const reverseEntry=async()=>{
+    if(!reverseTarget)return;
+    const result=await reverseReceiptedPayment(reverseTarget.id,reverseReason);
+    if(result){setError(result);return;}
+    setReverseTarget(null);setReverseReason('');
+    setSuccess('Estorno registrado. O recibo original foi preservado e um lançamento de estorno equivalente foi criado no extrato.');
+    await load();
   };
   const deleteEntry=async()=>{
     if(!deleteTarget)return;
@@ -406,14 +420,22 @@ export default function AdminFinancialScreen() {
       <Text style={styles.sectionTitle}>Lançamentos atuais • {filteredEntries.length} resultado(s)</Text>
       <Button title="Exportar CSV do filtro" variant="secondary" disabled={Boolean(coreError)} onPress={()=>void perform(()=>exportFinancialCsv(filteredEntries))} />
       {visibleEntries.length===0?<StateView title="Nenhum lançamento neste filtro" description="Ajuste os filtros ou registre um lançamento." icon="receipt-outline" />:null}
-      {visibleEntries.map(entry=><Card key={entry.id}><Text style={styles.title}>{entry.description}</Text><Text style={styles.meta}>{entry.clientName} • {entry.contractNumber} • {entry.projectName}</Text>
+      {visibleEntries.map(entry=>{const lock=receiptLocks[entry.id];return <Card key={entry.id}><Text style={styles.title}>{entry.description}</Text><Text style={styles.meta}>{entry.clientName} • {entry.contractNumber} • {entry.projectName}</Text>
         <Text style={styles.meta}>{entry.type==='saida'?'Saída':'Entrada'} • {formatCurrency(entry.amount)} • {effectiveStatus(entry)} • {categoryLabel(entry.category)} • {formatDate(entryDate(entry))}</Text>
         <Text style={styles.meta}>{entry.notes}</Text>
         {entry.type==='entrada'&&financialStatus(entry.status)==='pago'?<Button debounceMs={0} title="Emitir / abrir recibo deste recebimento" variant="secondary" onPress={()=>openReceipt(entry.id,entry.projectId)} />:null}
         {entry.type==='entrada'&&financialStatus(entry.status)==='pendente'?<Button title="Registrar recebimento" variant="secondary" disabled={saving} onPress={()=>receiveEntry(entry)} />:null}
-        {entry.bankTransactionId?<Notice tone="info">Lançamento conciliado. O vínculo bancário foi preservado.</Notice>:<View style={styles.rowFields}><Button title="Editar lançamento" variant="secondary" disabled={saving} onPress={()=>editEntry(entry)} /><Button title="Excluir dos ativos" variant="ghost" disabled={saving} onPress={()=>setDeleteTarget(entry)} /></View>}
-      </Card>)}
+        {lock?<>
+          <Notice tone={lock.reversedAt?'warning':'info'}>{lock.reversedAt
+            ?`Recibo ${receiptLabel(lock.receiptNumber)} estornado em ${formatDate(lock.reversedAt)}${lock.reversalReason?` — ${lock.reversalReason}`:''}. O documento original permanece preservado.`
+            :`Recibo ${receiptLabel(lock.receiptNumber)} emitido. Valor, data, cliente, projeto e descrição ficam bloqueados para manter o recibo válido. Para corrigir, estorne e registre o lançamento correto.`}</Notice>
+          {!lock.reversedAt&&!entry.bankTransactionId?<View style={styles.rowFields}><Button title="Editar observações e categoria" variant="secondary" disabled={saving} onPress={()=>editEntry(entry)} /><Button title="Estornar recebimento" variant="ghost" disabled={saving} onPress={()=>{setReverseTarget(entry);setReverseReason('');}} /></View>:null}
+        </>:entry.bankTransactionId?<Notice tone="info">Lançamento conciliado. O vínculo bancário foi preservado.</Notice>:receiptLockError&&entry.type==='entrada'&&financialStatus(entry.status)==='pago'?<Notice tone="warning">{receiptLockError}</Notice>:<View style={styles.rowFields}><Button title="Editar lançamento" variant="secondary" disabled={saving} onPress={()=>editEntry(entry)} /><Button title="Excluir dos ativos" variant="ghost" disabled={saving} onPress={()=>setDeleteTarget(entry)} /></View>}
+      </Card>;})}
       <View style={styles.rowFields}><Button title="Página anterior" disabled={page===0} variant="ghost" onPress={()=>setPage(value=>value-1)} /><Text style={styles.meta}>Página {page+1}</Text><Button title="Próxima página" disabled={(page+1)*50>=filteredEntries.length} variant="ghost" onPress={()=>setPage(value=>value+1)} /></View>
+      {reverseTarget?<Card><Notice tone="warning">Estornar “{reverseTarget.description}” ({formatCurrency(reverseTarget.amount)})? O recibo {receiptLabel(receiptLocks[reverseTarget.id]?.receiptNumber??0)} continua preservado e será marcado como estornado. Um lançamento de saída equivalente entra no extrato hoje.</Notice>
+        <Field label="Motivo do estorno *" value={reverseReason} onChangeText={setReverseReason} />
+        <Button title="Confirmar estorno" loading={saving} disabled={reverseReason.trim().length<5} onPress={()=>void perform(reverseEntry)} /><Button title="Cancelar estorno" variant="ghost" onPress={()=>setReverseTarget(null)} /></Card>:null}
       {deleteTarget?<Card><Notice tone="warning">Excluir “{deleteTarget.description}” dos ativos? O registro ficará no histórico preservado. Lançamentos conciliados não podem ser excluídos aqui.</Notice><Button title="Confirmar exclusão dos ativos" loading={saving} onPress={()=>void perform(deleteEntry)} /><Button title="Cancelar exclusão" variant="ghost" onPress={()=>setDeleteTarget(null)} /></Card>:null}
       </>:null}
       {section==='accounts'?<FinancialAccountSection styles={styles} referenceAccount={referenceAccount} setReferenceAccount={setReferenceAccount} accountId={accountId} setAccountId={setAccountId} accountType={accountType} setAccountType={setAccountType} accountName={accountName} setAccountName={setAccountName} openingBalance={openingBalance} setOpeningBalance={setOpeningBalance} openingDate={openingDate} setOpeningDate={setOpeningDate} accounts={accounts} transactions={transactions} entries={entries} bankError={bankError} coreError={coreError} importingOfx={importingOfx} perform={perform} saveAccount={saveAccount} importOfx={importOfx} />:null}
