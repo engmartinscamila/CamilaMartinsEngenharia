@@ -12,8 +12,8 @@ export type BudgetValidation={
 
 type DecimalResult={scaled:number;value:number};
 function localizedDecimal(text:string,decimals:2|4):DecimalResult|null{
- const value=text.trim().replace(/\s/g,'');
- if(!value)return null;
+ const value=text.trim();
+ if(!value||/\s/.test(value))return null;
  // Entrada brasileira com vírgula (ex.: 1.234,56) ou decimal do banco com ponto (1234.56).
  const brazilian=new RegExp('^(?:\\d{1,3}(?:\\.\\d{3})+|\\d+)(?:,\\d{1,'+decimals+'})?$');
  const decimal=new RegExp('^\\d+(?:\\.\\d{1,'+decimals+'})?$');
@@ -34,7 +34,7 @@ function localizedDecimal(text:string,decimals:2|4):DecimalResult|null{
 export function analyzeExecutionBudget(items:ScheduleBudgetItem[]):BudgetValidation{
  const errors:string[]=[];
  const lines:ValidatedBudgetLine[]=[];
- const lineCosts:Record<string,number>={};
+ const lineCosts=Object.create(null) as Record<string,number>;
  let totalCents=0;
  const codes=new Set<string>();
  for(const item of items){
