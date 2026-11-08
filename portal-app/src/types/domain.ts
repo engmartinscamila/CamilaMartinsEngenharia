@@ -396,6 +396,20 @@ export interface SupplierBidSummary {
   notes: string | null;
 }
 
+export interface PurchaseOrderSummary {
+  id: string;
+  orderNumber: string;
+  quoteId: string;
+  projectId: string;
+  supplierName: string;
+  totalAmount: number;
+  status: 'emitido' | 'recebido' | 'cancelado';
+  expectedDelivery: string | null;
+  receivedOn: string | null;
+  payablesPending: number;
+  payablesPaid: number;
+}
+
 export interface PurchaseQuoteSummary {
   id: string;
   projectId: string;

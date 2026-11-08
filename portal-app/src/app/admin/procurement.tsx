@@ -8,14 +8,15 @@ import { DateField } from '@/components/date-field';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
 import { formatCurrency, formatDate, isValidIsoDate, parseBrazilianCurrency } from '@/lib/format';
 import { analyzeSupplierQuote } from '@/lib/procurement-comparison';
+import { splitPurchaseInstallments } from '@/lib/purchase-installments';
 import { useThemeStyles } from '@/providers/theme-provider';
 import { listAdminProjects } from '@/services/admin-service';
 import {
   addSupplierBid, createPurchaseQuote, createSupplier, listPurchaseQuotes,
-  listSuppliers, selectSupplierBid,
+  listSuppliers, selectSupplierBid, listPurchaseOrders, createPurchaseOrder, markPurchaseOrderReceived, cancelPurchaseOrder,
 } from '@/services/operations-service';
 import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
-import type { AdminProjectSummary, PurchaseQuoteSummary, SupplierSummary } from '@/types/domain';
+import type { AdminProjectSummary, PurchaseOrderSummary, PurchaseQuoteSummary, SupplierSummary } from '@/types/domain';
 
 const SUPPLIER_CATEGORIES = ['Material de construção','Elétrica','Hidráulica','Estrutura','Acabamento','Pintura','Esquadrias','Equipamentos','Serviços terceirizados','Outros'];
 const MEASURE_UNITS = ['un','m','m linear','m²','m³','kg','t','L','h','diária','pacote','Outra'];
@@ -28,6 +29,13 @@ export default function AdminProcurementScreen() {
   const [projectId, setProjectId] = useAdminProjectSelection(null);
   const [suppliers, setSuppliers] = useState<SupplierSummary[]>([]);
   const [quotes, setQuotes] = useState<PurchaseQuoteSummary[]>([]);
+  const [orders, setOrders] = useState<PurchaseOrderSummary[]>([]);
+  const [orderQuoteId, setOrderQuoteId] = useState<string | null>(null);
+  const [installmentCount, setInstallmentCount] = useState('1');
+  const [firstDue, setFirstDue] = useState('');
+  const [expectedDelivery, setExpectedDelivery] = useState('');
+  const [cancelReason, setCancelReason] = useState('');
+  const orderRequest = useRef<{quoteId:string;id:string}|null>(null);
   const [supplierName, setSupplierName] = useState('');
   const [supplierCategory, setSupplierCategory] = useState('');
   const [customSupplierCategory, setCustomSupplierCategory] = useState('');
@@ -61,8 +69,8 @@ export default function AdminProcurementScreen() {
   }, [setProjectId]);
   const loadQuotes = useCallback(async () => {
     if (!projectId) { setQuotes([]);setQuoteId(null); return; }
-    setLoading(true); const result = await listPurchaseQuotes(projectId);
-    setQuotes(result.data); setError(result.error); setLoading(false);
+    setLoading(true); const [result, orderResult] = await Promise.all([listPurchaseQuotes(projectId), listPurchaseOrders(projectId)]);
+    setQuotes(result.data); setOrders(orderResult.data); setError(result.error ?? orderResult.error); setLoading(false);
   }, [projectId]);
   useEffect(() => { const task = setTimeout(() => void loadBase(), 0); return () => clearTimeout(task); }, [loadBase]);
   useEffect(() => { const task = setTimeout(() => void loadQuotes(), 0); return () => clearTimeout(task); }, [loadQuotes]);
@@ -117,6 +125,34 @@ export default function AdminProcurementScreen() {
     }finally{mutationInFlight.current=false;setSaving(false);}
   };
 
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  const orderPreview = (quote: PurchaseQuoteSummary) => {
+    const bid = quote.bids.find((item) => item.supplierId === quote.selectedSupplierId);
+    if (!bid || orderQuoteId !== quote.id || !firstDue) return { items: null, error: null };
+    try { return { items: splitPurchaseInstallments(bid.totalAmount, Number(installmentCount), firstDue), error: null }; }
+    catch (failure) { return { items: null, error: failure instanceof Error ? failure.message : 'Parcelas inválidas.' }; }
+  };
+  const issueOrder = async (quote: PurchaseQuoteSummary) => {
+    const preview = orderPreview(quote);
+    if (mutationInFlight.current || !preview.items) return;
+    mutationInFlight.current = true; setSaving(true); setError(null); setSuccess(null);
+    if (!orderRequest.current || orderRequest.current.quoteId !== quote.id) orderRequest.current = { quoteId: quote.id, id: randomUUID() };
+    try {
+      const actionError = await createPurchaseOrder({ quoteId: quote.id, requestId: orderRequest.current.id, installments: preview.items, expectedDelivery: expectedDelivery || undefined });
+      if (actionError) setError(actionError);
+      else { orderRequest.current = null; setOrderQuoteId(null); setFirstDue(''); setInstallmentCount('1'); setExpectedDelivery(''); setSuccess('Pedido emitido. As parcelas estão em Financeiro como contas a pagar pendentes.'); await loadQuotes(); }
+    } finally { mutationInFlight.current = false; setSaving(false); }
+  };
+  const orderAction = async (order: PurchaseOrderSummary, action: 'receive' | 'cancel') => {
+    if (mutationInFlight.current) return;
+    mutationInFlight.current = true; setSaving(true); setError(null); setSuccess(null);
+    try {
+      const actionError = action === 'receive' ? await markPurchaseOrderReceived(order.id, today) : await cancelPurchaseOrder(order.id, cancelReason);
+      if (actionError) setError(actionError);
+      else { setCancelReason(''); setSuccess(action === 'receive' ? `Pedido ${order.orderNumber} recebido.` : `Pedido ${order.orderNumber} cancelado; contas a pagar pendentes canceladas, nada foi apagado.`); await loadQuotes(); }
+    } finally { mutationInFlight.current = false; setSaving(false); }
+  };
+
   return (
     <Screen>
       <AdminPageHeader title="Fornecedores e cotações" description="Compare preço, prazo e condição de pagamento por projeto." />
@@ -144,7 +180,29 @@ export default function AdminProcurementScreen() {
             <View style={styles.header}><View style={{flex:1}}>
               <Text style={styles.title}>{quote.title}</Text>
               <Text style={styles.meta}>{quote.itemCount} item(ns) • limite {quote.dueDate?formatDate(quote.dueDate):'sem data'}</Text>
-            </View><StatusPill label={quote.status} tone={quote.status==='approved'?'success':'warning'} /></View>
+            </View><StatusPill label={quote.status==='ordered'?'pedido emitido':quote.status} tone={quote.status==='approved'||quote.status==='ordered'?'success':'warning'} /></View>
+            {quote.status==='approved'?<View style={{gap:spacing.xs}}>
+              <Text style={styles.label}>Emitir pedido de compra (gera contas a pagar no Financeiro)</Text>
+              {orderQuoteId!==quote.id?<Button title="Preparar pedido" variant="secondary" disabled={saving} onPress={()=>{setOrderQuoteId(quote.id);setFirstDue('');setInstallmentCount('1');}} />:<>
+                <Field keyboardType="number-pad" label="Número de parcelas (mensais)" onChangeText={setInstallmentCount} value={installmentCount} />
+                <DateField label="Primeiro vencimento" onChange={setFirstDue} value={firstDue} />
+                <DateField label="Entrega prevista" optional onChange={setExpectedDelivery} value={expectedDelivery} />
+                {(()=>{const preview=orderPreview(quote);return <>
+                  {preview.error?<Text style={styles.meta}>{preview.error}</Text>:null}
+                  {preview.items?.map((item,index)=><Text key={item.dueDate+index} style={styles.meta}>Parcela {index+1}: {formatCurrency(item.amount)} • vence {formatDate(item.dueDate)}</Text>)}
+                  <Button title="Emitir pedido e gerar contas a pagar" loading={saving} disabled={saving||!preview.items} onPress={()=>void issueOrder(quote)} />
+                </>;})()}
+              </>}
+            </View>:null}
+            {orders.filter(order=>order.quoteId===quote.id).map(order=><View key={order.id} style={[styles.bid,{flexDirection:'column',alignItems:'stretch'}]}>
+              <Text style={styles.title}>{order.orderNumber} • {order.supplierName} • {formatCurrency(order.totalAmount)} • {order.status}</Text>
+              <Text style={styles.meta}>A pagar: {formatCurrency(order.payablesPending)} • pago: {formatCurrency(order.payablesPaid)}{order.expectedDelivery?` • entrega prevista ${formatDate(order.expectedDelivery)}`:''}{order.receivedOn?` • recebido em ${formatDate(order.receivedOn)}`:''}</Text>
+              {order.status==='emitido'?<>
+                <Button title="Registrar recebimento hoje" variant="secondary" disabled={saving} onPress={()=>void orderAction(order,'receive')} />
+                <Field label="Motivo para cancelar o pedido" onChangeText={setCancelReason} value={cancelReason} />
+                <Button title="Cancelar pedido" variant="ghost" disabled={saving||cancelReason.trim().length<5} onPress={()=>void orderAction(order,'cancel')} />
+              </>:null}
+            </View>)}
             {comparison.lowestPrice!==null?<View style={{gap:4}}>
               <Text style={styles.meta}>Menor proposta: {formatCurrency(comparison.lowestPrice)} • maior diferença entre valores: {formatCurrency(comparison.potentialPriceGap)} • menor prazo conhecido: {comparison.fastestKnownDays??'não informado'} dia(s)</Text>
               {comparison.incompleteTerms>0?<Text style={styles.meta}>{comparison.incompleteTerms} proposta(s) sem prazo ou condição de pagamento completa. Confirme antes de aprovar.</Text>:null}
