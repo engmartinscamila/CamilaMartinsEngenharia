@@ -1,0 +1,50 @@
+{
+  "preflight": [
+    {
+      "candidate_preflight": {
+        "parent_cycles": 0,
+        "dependency_cycles": 0,
+        "cross_project_parents": 0,
+        "cross_project_dependencies": 0,
+        "financial_origin_conflicts": 0,
+        "receipt_equivalence_conflicts": 1
+      }
+    }
+  ],
+  "receiptDetails": [
+    {
+      "receipt_id": "0c105143-2342-4cad-a97d-96c0b1b2cecf",
+      "missing_entry": false,
+      "wrong_type": false,
+      "wrong_status": false,
+      "amount_diff": false,
+      "date_diff": false,
+      "project_diff": false,
+      "client_diff": false,
+      "description_diff": true
+    },
+    {
+      "receipt_id": "45e1464a-ac62-4771-8667-a781d1516538",
+      "missing_entry": false,
+      "wrong_type": false,
+      "wrong_status": false,
+      "amount_diff": false,
+      "date_diff": false,
+      "project_diff": false,
+      "client_diff": false,
+      "description_diff": false
+    },
+    {
+      "receipt_id": "6bcb117e-15a7-4ef8-8aa8-edd8909b4e49",
+      "missing_entry": false,
+      "wrong_type": false,
+      "wrong_status": false,
+      "amount_diff": false,
+      "date_diff": false,
+      "project_diff": false,
+      "client_diff": false,
+      "description_diff": false
+    }
+  ],
+  "interpretation": "One historical description mismatch only; amount, date, client, project, status and type agree. No real data changed. Preflight is not all-zero; remote candidate application remains blocked."
+}

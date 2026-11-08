@@ -1,0 +1,46 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+FAIL A01 context loads, discards late reads/saves, clears on deselection, retries errors AssertionError [ERR_ASSERTION]: Main workspace context must trigger automatic read
+
+0 !== 1
+
+    at file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:45:9
+    at async test (file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:26:34)
+    at async file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:28:1
+FAIL A04 decimal precision, Brazilian thousands and retry after lost response AssertionError [ERR_ASSERTION]: 100,005
+
+100.005 !== null
+
+    at file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:73:200
+    at test (file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:26:40)
+    at file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:72:7
+FAIL A05 unknown money stays null in projects and document previews; explicit zero preserved AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+0 !== null
+
+    at file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:94:10
+    at async test (file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:26:34)
+    at async file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:88:1
+FAIL A10 all portal pages, original scopes, legacy fallback and fail closed on page 2 AssertionError [ERR_ASSERTION]: listDocuments
+
+50 !== 1201
+
+    at file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:110:96
+    at async test (file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:26:34)
+    at async file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:99:1
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+FAIL A09 persisted statuses remain selectable and percentage edits preserve status AssertionError [ERR_ASSERTION]: Persisted status must have a visible option
+    at file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:137:3
+    at async test (file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:26:34)
+    at async file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:120:1
+FAIL A06 service uses one RPC and preserves request identity after a timeout Error: Task creation must never issue split table writes or compensating DELETE
+    at Object.from (file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:147:25)
+    at Object.createProjectTask (evalmachine.<anonymous>:121:48)
+    at file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:157:31
+    at test (file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:26:40)
+    at file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:145:7
+FAIL A02 UI service blocks receipted edits/deletes and fails closed on lookup error Error: invalid update
+    at Object.update (file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:167:241)
+    at Object.updateAdminFinancialEntry (evalmachine.<anonymous>:800:65)
+    at async file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:169:10
+    at async test (file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:26:34)
+    at async file:///workspace/scratch/109ad1f3fbfb/repository/portal-app/scripts/test-audit-corrections.mjs:164:1

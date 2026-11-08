@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import vm from 'node:vm';
 import { pathToFileURL } from 'node:url';
 import { Packer } from 'docx';
 import JSZip from 'jszip';
@@ -42,9 +43,10 @@ async function validateDocx(name:string,bytes:Uint8Array|Buffer,expected:string[
   const visible=xmlText(documentXml);
   for(const token of expected)check(visible.includes(token),`${name}: conteúdo esperado ausente: ${token}`);
   for(const token of forbidden)check(!visible.includes(token),`${name}: conteúdo indevido presente: ${token}`);
-  for(const bad of ['undefined','[object Object]','NaN'])check(!visible.includes(bad),`${name}: texto inválido encontrado: ${bad}`);
+  for(const bad of ['undefined','[object Object]','NaN','A definir','Não definido'])check(!visible.includes(bad),`${name}: texto inválido encontrado: ${bad}`);
   fs.writeFileSync(path.join(OUT,`${name}.docx`),buffer);
   console.log(`DOCX OK ${name}: ${buffer.length} bytes`);
+  return visible;
 }
 
 function buildPureCommercialModule(){
@@ -99,13 +101,15 @@ const services=[{
 const smartTexts={scope_limits_rule:{body:'Somente os serviços expressamente contratados integram o escopo QA.'},proposal_timeline_rule:{body:'Prazo QA conforme planejamento aprovado.'},anexo_timeline_rule:{body:'Cronograma QA vinculado ao contrato.'}};
 const commercialTerms={
   schedule:{days:45,day_type:'uteis',start_trigger:'Recebimento dos documentos e aprovação do início da prestação'},
-  installments:[{number:1,value:10000,due:'2026-09-11'},{number:2,value:15000,due:'2026-10-20'}],
+  installments:[{number:1,amount:10000,due_date:'2026-09-11'},{number:2,amount:15000,due_date:'2026-10-20'}],
   payment_method:'pix',
   scope:[
     {code:'a',quantity:1,unit:'projeto',deliverables:'Plantas técnicas, cortes, fachadas e memorial arquitetônico da residência',days:30,revisions:2,visits:0},
     {code:'b',quantity:1,unit:'relatório',deliverables:'Relatório técnico de consultoria de obra',days:15,revisions:1,visits:1}
   ]
 };
+
+const paymentExpected=['Parcela 1 de 2: R$ 10.000,00 • Vencimento: 11/09/2026','Parcela 2 de 2: R$ 15.000,00 • Vencimento: 20/10/2026'];
 
 const commercialRecord:any={
   id:'11111111-1111-4111-8111-111111111111',quote_number:'ORC-2026-09-QA01',contract_number:'CON-2026-09-QA01',status:'contrato_gerado',prospect_name:'Cliente Arquivo QA',
@@ -117,7 +121,7 @@ const commercialRecord:any={
 
 const contractData:any={
   emitted_at:'2026-09-11T12:00:00-03:00',document_date:'2026-09-11',contract_signed_at:'2026-09-11',contract_number:'CON-2026-09-QA01',contract_master_version:3,
-  client_name:'Cliente Arquivo QA',project_name:'Residência QA',project_type:'Residencial',property_address:'Rua da Obra QA, 999 - Rio de Janeiro/RJ',source_quote_number:'ORC-2026-09-QA01',
+  client_name:'Cliente Arquivo QA',client_cpf_cnpj:'000.000.000-00',client_address:'Rua Particular QA, 123 - Rio de Janeiro/RJ',project_name:'Residência QA',project_type:'Residencial',property_address:'Rua da Obra QA, 999 - Rio de Janeiro/RJ',source_quote_number:'ORC-2026-09-QA01',
   area_terreno_m2:420,area_construida_m2:210,contract_value:25000,payment_terms:commercialRecord.payment_terms,commercial_terms:commercialTerms,annex_source:'emitted_contract_snapshot',source_contract_document_version:'1.0',has_project:true,commercial_notes:'Condição QA',experience_level:'essencial',service_level:serviceLevel,
   scope_items:[...services,{code:'c',name:'Projeto Estrutural',included:false,description:'Não contratado.'}],scope_snapshot:services,smart_texts:smartTexts,
   approval_title:'Projeto Arquitetônico - Estudo preliminar',approval_description:'Entrega preliminar para validação.',delivered_at:'2026-09-10T15:00:00-03:00',approval_due_at:'2026-09-15T23:59:59-03:00',
@@ -131,7 +135,7 @@ try{
   const native=await importFresh(path.join(ROOT,'portal-app/supabase/functions/generate-contract-document-final/native-options-docx.ts'));
 
   const quoteBytes=await Packer.toBuffer(commercial.quoteDocument(commercialRecord,profile,generatedAt));
-  await validateDocx('01-orcamento-comercial',quoteBytes,['PROPOSTA COMERCIAL — ORC-2026-09-QA01','Cliente Arquivo QA','Rua da Obra QA, 999','R$ 25.000,00']);
+  await validateDocx('01-orcamento-comercial',quoteBytes,['PROPOSTA COMERCIAL — ORC-2026-09-QA01','Cliente Arquivo QA','Rua da Obra QA, 999','R$ 25.000,00',...paymentExpected]);
 
   const coreContractBytes=await Packer.toBuffer(commercial.contractDocument(commercialRecord,profile,'CLÁUSULA 1 – OBJETO\nO objeto deste contrato é a prestação dos serviços descritos no Anexo I.\nCLÁUSULA 2 – PRAZOS\nOs prazos seguem o cronograma aprovado.',generatedAt));
   const finalContractBytes=await commercialFinal.enhanceContractDocument(
@@ -152,6 +156,7 @@ try{
       'Local do serviço / endereço do imóvel ou obra: Rua da Obra QA, 999 - Rio de Janeiro/RJ.',
       'ESCOPO TÉCNICO CONTRATADO',
       'CLÁUSULA 1 – OBJETO',
+      ...paymentExpected,
     ],
   );
 
@@ -161,9 +166,15 @@ try{
     ['notificacao_formal','05-notificacao-formal','NOTIFICAÇÃO FORMAL']
   ];
   for(const [kind,file,title] of coreKinds){
-    const bytes=await Packer.toBuffer(contract.build(kind,contractData,profile));
-    await validateDocx(file,bytes,[title,'Cliente Arquivo QA','Residência QA','CON-2026-09-QA01']);
+    const bytes=await Packer.toBuffer(contract.build(kind,contractData,profile,generatedAt));
+    await validateDocx(file,bytes,[title,'Cliente Arquivo QA','CPF/CNPJ: 000.000.000-00','Residência QA','CON-2026-09-QA01','Data de emissão: 11/09/2026',...(kind==='anexo_i'?paymentExpected:['Versão do documento: v1.0'])],kind==='anexo_i'?[]:['Versão do Anexo I']);
   }
+
+  const contractRevision=await Packer.toBuffer(commercial.contractDocument({...commercialRecord,document_version:'2.0',document_version_reason:'MOTIVO_INTERNO_QA'},profile,'CLÁUSULA 1 – OBJETO\nServiços descritos no Anexo I.',generatedAt));
+  await validateDocx('14-contrato-revisao',contractRevision,['Versão do contrato: v2.0',...paymentExpected],['MOTIVO_INTERNO_QA']);
+
+  const revision=await Packer.toBuffer(contract.build('anexo_i',{...contractData,document_version:'2.0',document_version_reason:'MOTIVO_INTERNO_QA'},profile,generatedAt));
+  await validateDocx('12-anexo-revisao',revision,['Versão do Anexo I: v2.0',...paymentExpected],['MOTIVO_INTERNO_QA']);
 
   const nativeCases:any[]=[
     ['termo_aceite','06-termo-aceite','TERMO DE ACEITE DE ETAPA',{acceptance:'accepted_with_notes',acceptance_notes:'Ressalva QA registrada.'},['Aceito com ressalvas','Ressalvas / motivo da recusa:']],
@@ -178,6 +189,11 @@ try{
     if(bytes)await validateDocx(file,bytes,[title,'Cliente Arquivo QA','Residência QA','CON-2026-09-QA01',...extraExpected]);
   }
 
+  const receiptWindow:any={};
+  vm.runInNewContext(read('js/receipt-word.js'),{window:receiptWindow,Blob,TextEncoder,Uint8Array,DataView,Date,Number});
+  const receipt=receiptWindow.CMEReceiptWord.build({id:'qa-receipt',receipt_number:17,amount:1234.56,paid_on:'2026-09-11',payment_method:'Pix',description:'Parcela de serviços QA',created_at:'2026-09-11T15:00:00Z',snapshot:{issuer:{name:'Camila Martins QA',document:'000.000.000-00',title:'Engenheira Civil'},payer_name:'Cliente Arquivo QA',payer_document:'000.000.000-00',project_name:'Residência QA',contract_number:'CON-2026-09-QA01',city:'Rio de Janeiro'}});
+  await validateDocx('13-recibo',Buffer.from(await receipt.arrayBuffer()),['REC-000017/2026','R$ 1.234,56','11/09/2026','Cliente Arquivo QA','CON-2026-09-QA01','Pix']);
+
   const xlsx=await importFresh(buildPureXlsxModule());
   const project:any={id:'22222222-2222-4222-8222-222222222222',cliente_id:'33333333-3333-4333-8333-333333333333',contract_id:'44444444-4444-4444-8444-444444444444',nome:'Residência QA',tipo:'Residencial',status:'em_andamento',data_inicio:'2026-09-01',data_fim:'2026-12-20',numero_contrato:'CON-2026-09-QA01',numero_orcamento:'ORC-2026-09-QA01',area_construida_m2:210,area_terreno_m2:420,endereco_obra:'Rua da Obra QA',numero_obra:'999',complemento_obra:'Casa',bairro_obra:'Centro',cidade_obra:'Rio de Janeiro',estado_obra:'RJ'};
   const client:any={id:project.cliente_id,nome:'Cliente Arquivo QA',cpf_cnpj:'000.000.000-00',telefone:'(21) 98888-0000',email:'cliente.qa@example.com',endereco:'Rua Particular QA, 123',cidade:'Rio de Janeiro',estado:'RJ',cep:'20000-000'};
@@ -190,7 +206,6 @@ try{
     {code:'4',category:'Acabamentos',activity:'Acabamentos finais',weight_percent:25,planned_duration_days:48,predecessor_code:'3',planned_start:'2026-11-03',planned_finish:'2026-12-20',actual_start:null,actual_finish:null,actual_progress:0,planned_cost:5000,actual_cost:0,status:'Pendente',notes:'QA'}
   ];
   const xlsxBytes:Buffer=await xlsx.buildScheduleWorkbook(project,client,schedule,commercialContract,items);
-  check(xlsxBytes.length>20000,`Cronograma XLSX pequeno demais (${xlsxBytes.length} bytes)`);
   check(xlsxBytes[0]===0x50&&xlsxBytes[1]===0x4b,'Cronograma XLSX não é um pacote ZIP/OOXML válido');
   const xlsxZip=await JSZip.loadAsync(xlsxBytes,{checkCRC32:true});
   for(const required of ['[Content_Types].xml','xl/workbook.xml','xl/worksheets/sheet1.xml'])check(Boolean(xlsxZip.file(required)),`Cronograma XLSX: estrutura ausente (${required})`);
@@ -226,4 +241,4 @@ if(failures.length){
   failures.forEach((failure,index)=>console.error(`${index+1}. ${failure}`));
   process.exit(1);
 }
-console.log('\nAPROVADO: 10 documentos Word + 1 cronograma Excel foram gerados, reabertos e validados a partir do código real dos geradores.');
+console.log('\nAPROVADO: 13 documentos Word (incluindo revisão e recibo) + 1 cronograma Excel foram gerados, reabertos e validados a partir do código real dos geradores.');

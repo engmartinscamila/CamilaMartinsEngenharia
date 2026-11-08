@@ -1,0 +1,17 @@
+[
+  {
+    "script": "portal-app/scripts/test-construction-schedule-xlsx-runtime.mjs",
+    "exit": 0,
+    "reason": "Dependências isoladas resolvidas por RUNNER_TEMP/schedule-xlsx-test"
+  },
+  {
+    "script": "portal-app/scripts/test-issued-commercial-word-download.mjs",
+    "exit": 0,
+    "reason": "Executado pela raiz, conforme contrato do script"
+  },
+  {
+    "script": "portal-app/scripts/test-issued-commercial-version-history.mjs",
+    "exit": 0,
+    "reason": "Executado pela raiz, conforme contrato do script"
+  }
+]

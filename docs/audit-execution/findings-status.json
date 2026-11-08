@@ -1,0 +1,222 @@
+[
+  {
+    "id": "A01",
+    "priority": "P1",
+    "title": "Orçamento de execução não carrega no módulo integrado",
+    "audit_status": "FALHA CONFIRMADA",
+    "execution_status": "LOCAL_VALIDATED",
+    "evidence_or_test": "portal-app/scripts/test-audit-corrections.mjs",
+    "result": "Carregamento pelo contexto, descarte de respostas atrasadas, retry e proteção de gravação duplicada testados em componente. E2E autenticado pendente.",
+    "production_resolved": false
+  },
+  {
+    "id": "A02",
+    "priority": "P1",
+    "title": "Pagamento com recibo pode mudar sem preservar a equivalência documental",
+    "audit_status": "FALHA CONFIRMADA",
+    "execution_status": "CANDIDATE_VALIDATED",
+    "evidence_or_test": "scripts/security/audit-financial-integrity-regression.mjs",
+    "result": "Interface bloqueia edição/exclusão com recibo. Trigger candidato preserva recibo e recebimento. Sem aplicação remota, estorno controlado ou concorrência de sessões homologados. Preflight vivo identificou uma divergência histórica só na descrição; valores/datas/cliente/projeto conferentes. Preservada sem alteração.",
+    "production_resolved": false
+  },
+  {
+    "id": "A03",
+    "priority": "P1",
+    "title": "Lançamento aceita cliente contrato e projeto de origens diferentes",
+    "audit_status": "FALHA CONFIRMADA",
+    "execution_status": "CANDIDATE_VALIDATED",
+    "evidence_or_test": "scripts/security/audit-financial-integrity-regression.mjs",
+    "result": "Candidato valida origem e alteração dos pais; casos avulso/contrato direto/projeto pré-contrato testados. Não aplicado remotamente.",
+    "production_resolved": false
+  },
+  {
+    "id": "A04",
+    "priority": "P1",
+    "title": "Terceira casa decimal entra no financeiro e quebra equivalência de reenvio",
+    "audit_status": "FALHA CONFIRMADA",
+    "execution_status": "CLIENT_VALIDATED",
+    "evidence_or_test": "portal-app/scripts/test-audit-corrections.mjs",
+    "result": "Parser rejeita terceira casa e agrupamento inválido; payload usa centavos normalizados; retry após resposta perdida testado. Precisão direta no SQL ainda depende de migração revisada: numeric(12,2) arredonda antes do trigger.",
+    "production_resolved": false
+  },
+  {
+    "id": "A05",
+    "priority": "P2",
+    "title": "Contrato sem valor vira zero na consulta por projetos",
+    "audit_status": "FALHA CONFIRMADA",
+    "execution_status": "LOCAL_VALIDATED",
+    "evidence_or_test": "portal-app/scripts/test-audit-corrections.mjs",
+    "result": "Null, undefined e vazio permanecem desconhecidos; zero explícito preservado em projeto, contrato e prévia.",
+    "production_resolved": false
+  },
+  {
+    "id": "A06",
+    "priority": "P2",
+    "title": "Compensação de tarefa falha e a mensagem afirma reversão",
+    "audit_status": "FALHA CONFIRMADA",
+    "execution_status": "CANDIDATE_VALIDATED",
+    "evidence_or_test": "scripts/security/audit-task-integrity-regression.mjs",
+    "result": "RPC candidato transacional e idempotente, UI preserva requestId e impede duplo clique. Não publicar a UI antes de aplicar e homologar a RPC.",
+    "production_resolved": false
+  },
+  {
+    "id": "A07",
+    "priority": "P2",
+    "title": "Dependências de tarefas permitem ciclos e projetos diferentes no banco",
+    "audit_status": "FALHA CONFIRMADA",
+    "execution_status": "CANDIDATE_VALIDATED",
+    "evidence_or_test": "scripts/security/audit-task-integrity-regression.mjs",
+    "result": "Candidato rejeita ciclos e relações de projetos diferentes, incluindo hierarquia e mudança de projeto. Concorrência PostgREST ainda não homologada.",
+    "production_resolved": false
+  },
+  {
+    "id": "A08",
+    "priority": "P2",
+    "title": "Excluir última tarefa mantém progresso antigo no projeto",
+    "audit_status": "FALHA CONFIRMADA",
+    "execution_status": "PENDING_D05",
+    "evidence_or_test": "",
+    "result": "Sem alteração do percentual histórico ou de medições; origem e política do progresso ainda exigem decisão D05 e implementação.",
+    "production_resolved": false
+  },
+  {
+    "id": "A09",
+    "priority": "P2",
+    "title": "Editor não representa estados já usados na produção",
+    "audit_status": "FALHA CONFIRMADA",
+    "execution_status": "LOCAL_VALIDATED",
+    "evidence_or_test": "portal-app/scripts/test-audit-corrections.mjs",
+    "result": "Editor representa estados conhecidos e desconhecidos preservando o status ao alterar percentual.",
+    "production_resolved": false
+  },
+  {
+    "id": "A10",
+    "priority": "P2",
+    "title": "Documentos fotos e biblioteca possuem cortes sem continuação",
+    "audit_status": "FALHA CONFIRMADA",
+    "execution_status": "LOCAL_VALIDATED",
+    "evidence_or_test": "portal-app/scripts/test-audit-corrections.mjs",
+    "result": "Serviços modernos/legados recuperam 1201 itens, preservam filtros e descartam leitura parcial em erro. RLS ao vivo passou; teste REST com usuários sintéticos A/B pendente.",
+    "production_resolved": false
+  },
+  {
+    "id": "A11",
+    "priority": "P2",
+    "title": "Outros documentos usam rótulo de versão do Anexo I",
+    "audit_status": "FALHA CONFIRMADA",
+    "execution_status": "LOCAL_VALIDATED",
+    "evidence_or_test": "scripts/generated-file-smoke.mts",
+    "result": "Identificação de versão corrigida por instrumento; DOCX reabertos e versões verificadas.",
+    "production_resolved": false
+  },
+  {
+    "id": "A12",
+    "priority": "P1",
+    "title": "Seis documentos marcados gerados não têm arquivo referenciado",
+    "audit_status": "FALHA CONFIRMADA",
+    "execution_status": "ORIGINALS_UNAVAILABLE",
+    "evidence_or_test": "docs/audit-execution/evidence/live-checks.json",
+    "result": "Seis casos individualizados: histórico download_only, sem caminhos/hash/objeto correspondente pelo UUID; snapshots presentes, dois com legacy_backfill. Não recuperados nem reconstituídos. Backup externo/downloads anteriores ainda precisam ser examinados.",
+    "production_resolved": false
+  },
+  {
+    "id": "A13",
+    "priority": "P1",
+    "title": "Homologação não reproduz a arquitetura atual de produção",
+    "audit_status": "PARCIAL",
+    "execution_status": "PARITY_BLOCKED",
+    "evidence_or_test": "docs/audit-execution/evidence/live-checks.json",
+    "result": "Catálogo atual comparado: 198/161 funções e 57 diferenças de corpo. Financeiro V2 intencional; demais diferenças ainda requerem classificação semântica e reconstrução segura. Nenhuma cópia indiscriminada aplicada.",
+    "production_resolved": false
+  },
+  {
+    "id": "A14",
+    "priority": "P1",
+    "title": "Dados de referência impedem conferir saldo contratual e bancário",
+    "audit_status": "PARCIAL",
+    "execution_status": "BUSINESS_DATA_REQUIRED",
+    "evidence_or_test": "portal-app/scripts/test-financial-model.mjs",
+    "result": "Extrato preservado; modelo já distingue saldo bancário desconhecido e valor contratual desconhecido. D01/D02 exigem fontes legítimas, sem preencher valores ou vínculos presumidos.",
+    "production_resolved": false
+  },
+  {
+    "id": "A15",
+    "priority": "P2",
+    "title": "Cotação aprovada ainda não é compromisso de compra nem custo realizado",
+    "audit_status": "PARCIAL",
+    "execution_status": "PENDING_D04",
+    "evidence_or_test": "portal-app/scripts/test-procurement-service.mjs",
+    "result": "Escopo de pedidos/compromissos/entregas não confirmado. Cotação existente preservada sem convertê-la em despesa paga.",
+    "production_resolved": false
+  },
+  {
+    "id": "A16",
+    "priority": "P2",
+    "title": "Base SINAPI composições completas BDI e ABC não estão integrados",
+    "audit_status": "NÃO IMPLEMENTADO",
+    "execution_status": "PENDING_D04",
+    "evidence_or_test": "portal-app/scripts/test-construction-budget-validation.mjs",
+    "result": "Orçamento de composição direta preservado; não foi criada integração SINAPI fictícia nem escopo avançado presumido.",
+    "production_resolved": false
+  },
+  {
+    "id": "A17",
+    "priority": "P2",
+    "title": "Motor de planejamento cobre FS simples e não relações completas",
+    "audit_status": "PARCIAL",
+    "execution_status": "PENDING_D04_D05",
+    "evidence_or_test": "portal-app/scripts/test-construction-schedule-engine.mjs",
+    "result": "FS/calendário/CPM preservados e regressões executadas. SS/FF/lag e marcos zero dependem de abrangência aprovada.",
+    "production_resolved": false
+  },
+  {
+    "id": "A18",
+    "priority": "P1",
+    "title": "Aditivo documental não comprova atualização financeira integrada",
+    "audit_status": "PARCIAL",
+    "execution_status": "PENDING_D03",
+    "evidence_or_test": "",
+    "result": "Evento de exigibilidade ainda não definido; nenhuma cobrança de aditivo criada automaticamente ou valor original alterado.",
+    "production_resolved": false
+  },
+  {
+    "id": "A19",
+    "priority": "P1",
+    "title": "Backup restaurável e recuperação de Storage não foram comprovados",
+    "audit_status": "NÃO VERIFICÁVEL",
+    "execution_status": "RESTORE_BLOCKED",
+    "evidence_or_test": "scripts/admin-priority-regression.mjs",
+    "result": "Exportador e testes existentes de ZIP/CRC/hashes examinados. Sem dump restaurável e bytes do Storage disponíveis nesta sessão; login administrativo observado sem sessão. Não houve restauração completa de produção nem migração remota.",
+    "production_resolved": false
+  },
+  {
+    "id": "A20",
+    "priority": "P2",
+    "title": "Teste de arquivos aprova conteúdo comercial incompleto e muda critério durante CI",
+    "audit_status": "FALHA CONFIRMADA",
+    "execution_status": "LOCAL_VALIDATED",
+    "evidence_or_test": "scripts/document-fixture-mutation-regression.mjs",
+    "result": "Fixtures corrigidas; parcelas, datas, revisões e recibo reabertos; teste de mutação rejeita a estrutura incorreta auditada; CI executa o arquivo versionado sem editar limite. Homologação visual integral em Word nativo pendente.",
+    "production_resolved": false
+  },
+  {
+    "id": "A21",
+    "priority": "P2",
+    "title": "Controles presentes ainda precisam de prova autenticada por papel",
+    "audit_status": "PARCIAL",
+    "execution_status": "SQL_ROLE_CHECK_PASSED",
+    "evidence_or_test": "supabase/security/verify-live.sql",
+    "result": "Verificação somente leitura no banco produtivo aprovou RLS anônimo/cliente/admin e documentos liberados. Não substitui sessões JWT sintéticas, REST, Storage e E2E autenticado.",
+    "production_resolved": false
+  },
+  {
+    "id": "A22",
+    "priority": "P2",
+    "title": "Envio registrado não comprova entrega de e-mail ou push",
+    "audit_status": "NÃO VERIFICÁVEL",
+    "execution_status": "DELIVERY_UNVERIFIED",
+    "evidence_or_test": "",
+    "result": "Provider-id e consulta de last_event existem no dispatcher protegido. Sem credencial do provedor ou destino/dispositivo de teste autenticado para comprovar entrega/falha/retry. Nenhuma mensagem enviada.",
+    "production_resolved": false
+  }
+]

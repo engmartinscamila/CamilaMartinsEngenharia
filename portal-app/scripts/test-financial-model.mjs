@@ -54,13 +54,13 @@ console.log('FINANCEIRO: status, categorias, filtros, caixa/previsão, referênc
 const paging=load('src/lib/paginated-query.ts');let pageCalls=0;
 const failingPage={order(){return this},async range(start){pageCalls++;return start===0?{data:Array.from({length:500},(_,id)=>({id})),error:null}:{data:null,error:{message:'read failed'}};}};
 const failedRead=await paging.readAllRows(failingPage);assert.equal(failedRead.data.length,0,'Partial pages cannot become a complete total');assert.equal(pageCalls,2);assert(failedRead.error);
-const previewDb={from(){const q={select(){return q},eq(){return q},order(){return q},limit(){return q},then(resolve){resolve({data:[
+const previewDb={from(){const q={select(){return q},eq(){return q},order(){return q},limit(){return q},range(){return q},then(resolve){resolve({data:[
 {id:'ordinary',nome:'Arquivo normal',document_kind:null,generated_at:null},
 {id:'draft',nome:'Rascunho interno',document_kind:'contrato',generated_at:'2026-10-01',client_visible:false,exibir_cliente:false,client_released_at:null},
 {id:'released',nome:'Documento liberado',document_kind:'contrato',generated_at:'2026-10-01',client_visible:true,exibir_cliente:false,client_released_at:'2026-10-02'},
 {id:'not-released',nome:'Sem liberação',document_kind:'contrato',generated_at:'2026-10-01',client_visible:true,client_released_at:null},
 ],error:null});}};return q;}};
-const portal=load('src/services/portal-service.ts',{'@/lib/format':format,'@/lib/errors':{},'@/lib/env':{env:{}},'@/lib/supabase':{supabase:previewDb},'@/services/push-service':{}});
+const portal=load('src/services/portal-service.ts',{'@/lib/paginated-query':paging,'@/lib/format':format,'@/lib/errors':{},'@/lib/env':{env:{}},'@/lib/supabase':{supabase:previewDb},'@/services/push-service':{}});
 const preview=await portal.listDocuments('synthetic-project',true);assert.equal(preview.error,null);assert.deepEqual(Array.from(preview.data,row=>row.id),['ordinary','released']);
 console.log('PASS: página incompleta não gera total parcial; prévia exclui rascunhos e documentos não liberados.');
 

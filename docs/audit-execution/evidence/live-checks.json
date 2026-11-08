@@ -1,0 +1,1947 @@
+{
+  "parity": {
+    "baseline": "22328fb626c152e79518ba1451646e2ce85e6698",
+    "productionFunctions": 198,
+    "homologationFunctions": 161,
+    "missingInHomologation": [
+      "private|archive_client_contracts|p_client_id uuid, p_reason text, p_archived_by uuid",
+      "private|archive_financial_rows|p_client_id uuid, p_project_id uuid, p_finance_id uuid, p_reason text, p_archived_by uuid",
+      "private|cliente_atual_id|",
+      "private|eh_administradora|",
+      "private|link_receipt_cash|p_receipt_id uuid, p_existing_entry uuid",
+      "private|preencher_cliente_auth_id|",
+      "private|prevent_finance_truncate|",
+      "private|prevent_financial_archive_mutation|",
+      "private|queue_client_portal_email|",
+      "private|trg_archive_client_finance_before_delete|",
+      "private|trg_archive_financeiro_before_delete|",
+      "private|trg_archive_project_finance_before_delete|",
+      "private|validar_cliente_projeto|",
+      "private|vincular_cliente_por_auth|",
+      "public|admin_client_email_history|p_client_id uuid, p_status text, p_offset integer, p_limit integer",
+      "public|admin_client_email_status|p_client_id uuid",
+      "public|admin_commercial_closure|p_record_id uuid",
+      "public|admin_create_project_draft|p_client_id uuid, p_project jsonb",
+      "public|admin_export_application_backup|",
+      "public|admin_formalize_service_contract|p_record_id uuid",
+      "public|admin_issue_payment_receipt|p_data jsonb",
+      "public|admin_issue_receipt_for_payment|p_financial_id uuid, p_request_id uuid, p_city text",
+      "public|admin_link_existing_project_contract|p_project_id uuid, p_contract_id uuid, p_expected_token text, p_acknowledge boolean",
+      "public|admin_mark_exported_documents_purged|p_batch_id uuid",
+      "public|admin_project_contract_closure|",
+      "public|admin_reclassify_commercial_service|p_record_id uuid, p_old_code text, p_new_code text",
+      "public|admin_register_existing_project_contract|p_project_id uuid, p_expected_token text, p_number text, p_service text, p_value numeric",
+      "public|admin_reply_request|p_solicitacao_id bigint, p_mensagem text, p_status text",
+      "public|admin_reset_financial_data|p_confirmation text, p_reason text",
+      "public|admin_resolve_commercial_closure|p_record_id uuid, p_expected_token text, p_action text, p_code text, p_target_code text",
+      "public|admin_save_commercial_terms|p_record_id uuid, p_terms jsonb",
+      "public|admin_update_request_status|p_solicitacao_id bigint, p_status text",
+      "public|assert_commercial_party_ready|p_document text, p_terms jsonb",
+      "public|assert_commercial_terms_ready|p_terms jsonb, p_total numeric, p_services jsonb",
+      "public|claim_client_email_jobs|p_limit integer, p_job_id uuid",
+      "public|desativar_push_token|p_token text",
+      "public|enqueue_client_invitation|p_client_id uuid",
+      "public|finish_client_email_job|p_job_id uuid, p_lease_token uuid, p_provider_id text, p_error text",
+      "public|google_calendar_secret_get|p_name text",
+      "public|google_calendar_secret_set|p_name text, p_value text, p_description text",
+      "public|is_pdf_admin|check_user_id uuid",
+      "public|listar_armazenamento_portal|",
+      "public|prepare_client_update_email|p_client_id uuid, p_project_id uuid, p_source_table text, p_source_id text, p_email jsonb",
+      "public|reconcile_imported_ofx|p_account_id uuid, p_external_ids text[]",
+      "public|registrar_push_diagnostico|p_cliente_id uuid, p_etapa text, p_codigo text, p_mensagem text, p_permissao text, p_navegador text",
+      "public|registrar_push_token|p_cliente_id uuid, p_token text, p_plataforma text, p_user_agent text",
+      "public|reply_to_own_request|p_solicitacao_id bigint, p_mensagem text",
+      "public|rls_auto_enable|",
+      "public|service_acquire_commercial_emission|p_record_id uuid, p_kind text, p_lane text, p_token uuid, p_parent_token uuid",
+      "public|service_claim_commercial_document_job|p_id uuid, p_token text",
+      "public|service_commercial_document_job_rpc|p_id uuid, p_token text, p_name text, p_args jsonb",
+      "public|service_internal_secret_get|p_name text",
+      "public|service_release_commercial_emission|p_record_id uuid, p_kind text, p_lane text, p_token uuid",
+      "public|service_validate_commercial_document_job|p_id uuid, p_token text",
+      "public|touch_protected_site_pdf|",
+      "public|uso_armazenamento_portal|"
+    ],
+    "homologationOnly": [
+      "public|admin_create_contract_project|p_cliente_id uuid, p_contract_number text, p_project_name text, p_service_type text, p_city text, p_state text",
+      "public|admin_fin_v2_create_receivable|p_data jsonb",
+      "public|admin_fin_v2_issue_receipt_reference|p_payment_id uuid, p_request_id uuid",
+      "public|admin_fin_v2_record_payment|p_data jsonb",
+      "public|admin_fin_v2_reverse_payment|p_payment_id uuid, p_request_id uuid, p_reason text",
+      "public|admin_reply_request|p_solicitacao_id uuid, p_mensagem text, p_status text",
+      "public|admin_update_request_status|p_solicitacao_id uuid, p_status text",
+      "public|app_foundation_status|",
+      "public|app_security_status|",
+      "public|archive_json_date|p_value text",
+      "public|archive_json_numeric|p_value text",
+      "public|can_read_portal_object|p_bucket text, p_name text",
+      "public|can_read_storage_object|p_bucket text, p_name text",
+      "public|enforce_project_contract_client|",
+      "public|is_admin|",
+      "public|portal_audit_change|",
+      "public|prevent_financial_archive_mutation|",
+      "public|reply_to_own_request|p_solicitacao_id uuid, p_mensagem text",
+      "public|update_updated_at|"
+    ],
+    "changed": [
+      "public|accept_current_legal_documents|p_terms_version text, p_privacy_version text, p_app_version text, p_platform text",
+      "public|admin_archive_client_financial_history|p_cliente_id uuid, p_reason text",
+      "public|admin_client_deletion_preview|p_cliente_id uuid",
+      "public|admin_confirm_document_rule_review|p_review_id uuid",
+      "public|admin_contract_master_current|",
+      "public|admin_convert_commercial_record|p_record_id uuid",
+      "public|admin_create_commercial_record|p_data jsonb",
+      "public|admin_create_contract_project_v2|p_cliente_id uuid, p_contract_number text, p_project_name text, p_service_type text, p_contract_value numeric, p_city text, p_state text",
+      "public|admin_create_independent_contract|p_data jsonb, p_quote_ids uuid[], p_source_project_id uuid",
+      "public|admin_create_project_for_contract|p_contract_id uuid, p_project_name text, p_city text, p_state text",
+      "public|admin_create_request|p_cliente_id uuid, p_projeto_id uuid, p_categoria text, p_titulo text, p_mensagem text",
+      "public|admin_document_attention|",
+      "public|admin_document_governance_status|",
+      "public|admin_prepare_commercial_scope_for_generation|p_record_id uuid",
+      "public|admin_prepare_contract_document|p_project_id uuid, p_document_kind text, p_approval_id uuid, p_extra_data jsonb",
+      "public|admin_preview_contract_document|p_project_id uuid, p_document_kind text, p_approval_id uuid, p_extra_data jsonb",
+      "public|admin_project_document_map|p_project_id uuid",
+      "public|admin_purge_client_database|p_cliente_id uuid",
+      "public|admin_release_document_for_client|p_document_id uuid, p_acceptance_required boolean, p_valid_from date, p_valid_until date",
+      "public|admin_set_client_status|p_cliente_id uuid, p_status text",
+      "public|admin_storage_orphan_details|",
+      "public|admin_storage_overview|",
+      "public|admin_supersede_document|p_old_document_id uuid, p_new_document_id uuid, p_reason text",
+      "public|admin_system_health|",
+      "public|admin_update_contract_value|p_contract_id uuid, p_value numeric",
+      "public|assert_commercial_contract_quote_consistency|p_contract_record_id uuid",
+      "public|assert_document_governance_ready|",
+      "public|assign_document_revision_version|",
+      "public|can_access_contract|p_contract_id uuid",
+      "public|can_access_project|p_project_id uuid",
+      "public|client_accept_document|p_document_id uuid, p_decision text, p_note text, p_source text, p_client_context jsonb",
+      "public|client_document_map|p_project_id uuid",
+      "public|current_client_id|",
+      "public|current_document_text_snapshot|p_document_kind text",
+      "public|current_document_text_snapshot_all|",
+      "public|document_governance_on_document_change|",
+      "public|enforce_annex_contract_emission_snapshot|",
+      "public|enqueue_document_text_reviews|p_contract_master_version integer, p_reason text, p_document_kinds text[]",
+      "public|enrich_commercial_services|p_services jsonb, p_level text",
+      "public|is_portal_admin|",
+      "public|mark_admin_notification_read|p_notificacao_id uuid",
+      "public|mark_own_notification_read|p_notificacao_id uuid",
+      "public|mark_received_notification_read|p_notificacao_id uuid",
+      "public|normalize_commercial_other_scope|",
+      "public|notify_agenda_event|",
+      "public|notify_approval_event|",
+      "public|notify_content_created|",
+      "public|notify_project_update|",
+      "public|notify_request_created|",
+      "public|notify_request_reply|",
+      "public|notify_schedule_event|",
+      "public|register_own_push_token|p_token text, p_platform text, p_device_name text",
+      "public|respond_to_own_agenda|p_agenda_id uuid, p_status text",
+      "public|service_consume_password_link_rate_limit|p_key_hash text",
+      "public|set_approval_contractual_deadline|",
+      "public|user_has_project_access|p_project_id uuid",
+      "public|validate_active_contract_master_final_text|"
+    ],
+    "productionOnlyColumns": [
+      {
+        "name": "titulo",
+        "type": "text",
+        "table": "agenda",
+        "nullable": "YES"
+      },
+      {
+        "name": "data",
+        "type": "date",
+        "table": "agenda",
+        "nullable": "YES"
+      },
+      {
+        "name": "google_meet_link",
+        "type": "text",
+        "table": "agenda",
+        "nullable": "YES"
+      },
+      {
+        "name": "google_sync_status",
+        "type": "text",
+        "table": "agenda",
+        "nullable": "YES"
+      },
+      {
+        "name": "google_sync_error",
+        "type": "text",
+        "table": "agenda",
+        "nullable": "YES"
+      },
+      {
+        "name": "google_synced_at",
+        "type": "timestamptz",
+        "table": "agenda",
+        "nullable": "YES"
+      },
+      {
+        "name": "cancelado",
+        "type": "bool",
+        "table": "agenda",
+        "nullable": "NO"
+      },
+      {
+        "name": "criado_por_admin",
+        "type": "bool",
+        "table": "agenda",
+        "nullable": "NO"
+      },
+      {
+        "name": "id",
+        "type": "int8",
+        "table": "biblioteca",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "biblioteca",
+        "nullable": "NO"
+      },
+      {
+        "name": "tamanho",
+        "type": "text",
+        "table": "biblioteca",
+        "nullable": "YES"
+      },
+      {
+        "name": "storage_bucket",
+        "type": "text",
+        "table": "biblioteca",
+        "nullable": "YES"
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "client_email_queue",
+        "nullable": "NO"
+      },
+      {
+        "name": "client_id",
+        "type": "uuid",
+        "table": "client_email_queue",
+        "nullable": "NO"
+      },
+      {
+        "name": "project_id",
+        "type": "uuid",
+        "table": "client_email_queue",
+        "nullable": "YES"
+      },
+      {
+        "name": "kind",
+        "type": "text",
+        "table": "client_email_queue",
+        "nullable": "NO"
+      },
+      {
+        "name": "source_table",
+        "type": "text",
+        "table": "client_email_queue",
+        "nullable": "NO"
+      },
+      {
+        "name": "source_id",
+        "type": "text",
+        "table": "client_email_queue",
+        "nullable": "YES"
+      },
+      {
+        "name": "payload",
+        "type": "jsonb",
+        "table": "client_email_queue",
+        "nullable": "NO"
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "table": "client_email_queue",
+        "nullable": "NO"
+      },
+      {
+        "name": "attempts",
+        "type": "int4",
+        "table": "client_email_queue",
+        "nullable": "NO"
+      },
+      {
+        "name": "available_at",
+        "type": "timestamptz",
+        "table": "client_email_queue",
+        "nullable": "NO"
+      },
+      {
+        "name": "lease_until",
+        "type": "timestamptz",
+        "table": "client_email_queue",
+        "nullable": "YES"
+      },
+      {
+        "name": "lease_token",
+        "type": "uuid",
+        "table": "client_email_queue",
+        "nullable": "YES"
+      },
+      {
+        "name": "provider_id",
+        "type": "text",
+        "table": "client_email_queue",
+        "nullable": "YES"
+      },
+      {
+        "name": "last_error",
+        "type": "text",
+        "table": "client_email_queue",
+        "nullable": "YES"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "client_email_queue",
+        "nullable": "NO"
+      },
+      {
+        "name": "sent_at",
+        "type": "timestamptz",
+        "table": "client_email_queue",
+        "nullable": "YES"
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "client_retention_event_archive",
+        "nullable": "NO"
+      },
+      {
+        "name": "event_type",
+        "type": "text",
+        "table": "client_retention_event_archive",
+        "nullable": "NO"
+      },
+      {
+        "name": "source_id",
+        "type": "uuid",
+        "table": "client_retention_event_archive",
+        "nullable": "NO"
+      },
+      {
+        "name": "original_client_id",
+        "type": "uuid",
+        "table": "client_retention_event_archive",
+        "nullable": "NO"
+      },
+      {
+        "name": "original_user_id",
+        "type": "uuid",
+        "table": "client_retention_event_archive",
+        "nullable": "YES"
+      },
+      {
+        "name": "payload",
+        "type": "jsonb",
+        "table": "client_retention_event_archive",
+        "nullable": "NO"
+      },
+      {
+        "name": "archived_at",
+        "type": "timestamptz",
+        "table": "client_retention_event_archive",
+        "nullable": "NO"
+      },
+      {
+        "name": "archived_reason",
+        "type": "text",
+        "table": "client_retention_event_archive",
+        "nullable": "NO"
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "table": "clientes",
+        "nullable": "YES"
+      },
+      {
+        "name": "id",
+        "type": "int8",
+        "table": "clientes_camila",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "clientes_camila",
+        "nullable": "NO"
+      },
+      {
+        "name": "auth_id",
+        "type": "uuid",
+        "table": "clientes_camila",
+        "nullable": "YES"
+      },
+      {
+        "name": "nome",
+        "type": "text",
+        "table": "clientes_camila",
+        "nullable": "YES"
+      },
+      {
+        "name": "email",
+        "type": "text",
+        "table": "clientes_camila",
+        "nullable": "YES"
+      },
+      {
+        "name": "telefone",
+        "type": "text",
+        "table": "clientes_camila",
+        "nullable": "YES"
+      },
+      {
+        "name": "projeto",
+        "type": "text",
+        "table": "clientes_camila",
+        "nullable": "YES"
+      },
+      {
+        "name": "etapa",
+        "type": "text",
+        "table": "clientes_camila",
+        "nullable": "YES"
+      },
+      {
+        "name": "progresso",
+        "type": "int4",
+        "table": "clientes_camila",
+        "nullable": "YES"
+      },
+      {
+        "name": "mensagem",
+        "type": "text",
+        "table": "clientes_camila",
+        "nullable": "YES"
+      },
+      {
+        "name": "ativo",
+        "type": "bool",
+        "table": "clientes_camila",
+        "nullable": "YES"
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "commercial_document_jobs",
+        "nullable": "NO"
+      },
+      {
+        "name": "record_id",
+        "type": "uuid",
+        "table": "commercial_document_jobs",
+        "nullable": "NO"
+      },
+      {
+        "name": "requested_by",
+        "type": "uuid",
+        "table": "commercial_document_jobs",
+        "nullable": "NO"
+      },
+      {
+        "name": "token_hash",
+        "type": "text",
+        "table": "commercial_document_jobs",
+        "nullable": "NO"
+      },
+      {
+        "name": "expected_source_token",
+        "type": "text",
+        "table": "commercial_document_jobs",
+        "nullable": "NO"
+      },
+      {
+        "name": "original_contract_document_id",
+        "type": "uuid",
+        "table": "commercial_document_jobs",
+        "nullable": "NO"
+      },
+      {
+        "name": "contract_document_id",
+        "type": "uuid",
+        "table": "commercial_document_jobs",
+        "nullable": "YES"
+      },
+      {
+        "name": "annex_document_id",
+        "type": "uuid",
+        "table": "commercial_document_jobs",
+        "nullable": "YES"
+      },
+      {
+        "name": "phase",
+        "type": "text",
+        "table": "commercial_document_jobs",
+        "nullable": "NO"
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "table": "commercial_document_jobs",
+        "nullable": "NO"
+      },
+      {
+        "name": "attempts",
+        "type": "int4",
+        "table": "commercial_document_jobs",
+        "nullable": "NO"
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamptz",
+        "table": "commercial_document_jobs",
+        "nullable": "NO"
+      },
+      {
+        "name": "lease_until",
+        "type": "timestamptz",
+        "table": "commercial_document_jobs",
+        "nullable": "YES"
+      },
+      {
+        "name": "original_manifest",
+        "type": "jsonb",
+        "table": "commercial_document_jobs",
+        "nullable": "YES"
+      },
+      {
+        "name": "result",
+        "type": "jsonb",
+        "table": "commercial_document_jobs",
+        "nullable": "YES"
+      },
+      {
+        "name": "last_error",
+        "type": "text",
+        "table": "commercial_document_jobs",
+        "nullable": "YES"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "commercial_document_jobs",
+        "nullable": "NO"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "table": "commercial_document_jobs",
+        "nullable": "NO"
+      },
+      {
+        "name": "commercial_terms",
+        "type": "jsonb",
+        "table": "commercial_records",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "cronograma",
+        "nullable": "NO"
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "table": "cronograma",
+        "nullable": "NO"
+      },
+      {
+        "name": "percentual_conclusao",
+        "type": "int4",
+        "table": "cronograma",
+        "nullable": "YES"
+      },
+      {
+        "name": "project_id",
+        "type": "uuid",
+        "table": "document_acceptances",
+        "nullable": "YES"
+      },
+      {
+        "name": "nome",
+        "type": "text",
+        "table": "documentos",
+        "nullable": "YES"
+      },
+      {
+        "name": "arquivo_hash",
+        "type": "text",
+        "table": "documentos",
+        "nullable": "YES"
+      },
+      {
+        "name": "nome_original",
+        "type": "text",
+        "table": "documentos",
+        "nullable": "YES"
+      },
+      {
+        "name": "storage_bucket",
+        "type": "text",
+        "table": "documentos",
+        "nullable": "YES"
+      },
+      {
+        "name": "protection_mode",
+        "type": "text",
+        "table": "documentos",
+        "nullable": "YES"
+      },
+      {
+        "name": "opening_balance_date",
+        "type": "date",
+        "table": "financial_accounts",
+        "nullable": "YES"
+      },
+      {
+        "name": "nome",
+        "type": "text",
+        "table": "fotos",
+        "nullable": "YES"
+      },
+      {
+        "name": "arquivo_hash",
+        "type": "text",
+        "table": "fotos",
+        "nullable": "YES"
+      },
+      {
+        "name": "nome_original",
+        "type": "text",
+        "table": "fotos",
+        "nullable": "YES"
+      },
+      {
+        "name": "storage_bucket",
+        "type": "text",
+        "table": "fotos",
+        "nullable": "YES"
+      },
+      {
+        "name": "protection_mode",
+        "type": "text",
+        "table": "fotos",
+        "nullable": "YES"
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "google_calendar_oauth_states",
+        "nullable": "NO"
+      },
+      {
+        "name": "state",
+        "type": "text",
+        "table": "google_calendar_oauth_states",
+        "nullable": "NO"
+      },
+      {
+        "name": "user_id",
+        "type": "uuid",
+        "table": "google_calendar_oauth_states",
+        "nullable": "NO"
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamptz",
+        "table": "google_calendar_oauth_states",
+        "nullable": "NO"
+      },
+      {
+        "name": "used_at",
+        "type": "timestamptz",
+        "table": "google_calendar_oauth_states",
+        "nullable": "YES"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "google_calendar_oauth_states",
+        "nullable": "NO"
+      },
+      {
+        "name": "referencia_id",
+        "type": "text",
+        "table": "notificacoes",
+        "nullable": "YES"
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "payment_receipts",
+        "nullable": "NO"
+      },
+      {
+        "name": "receipt_number",
+        "type": "int8",
+        "table": "payment_receipts",
+        "nullable": "NO"
+      },
+      {
+        "name": "request_id",
+        "type": "uuid",
+        "table": "payment_receipts",
+        "nullable": "NO"
+      },
+      {
+        "name": "client_id",
+        "type": "uuid",
+        "table": "payment_receipts",
+        "nullable": "NO"
+      },
+      {
+        "name": "project_id",
+        "type": "uuid",
+        "table": "payment_receipts",
+        "nullable": "YES"
+      },
+      {
+        "name": "amount",
+        "type": "numeric",
+        "table": "payment_receipts",
+        "nullable": "NO"
+      },
+      {
+        "name": "paid_on",
+        "type": "date",
+        "table": "payment_receipts",
+        "nullable": "NO"
+      },
+      {
+        "name": "payment_method",
+        "type": "text",
+        "table": "payment_receipts",
+        "nullable": "NO"
+      },
+      {
+        "name": "description",
+        "type": "text",
+        "table": "payment_receipts",
+        "nullable": "NO"
+      },
+      {
+        "name": "snapshot",
+        "type": "jsonb",
+        "table": "payment_receipts",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_by",
+        "type": "uuid",
+        "table": "payment_receipts",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "payment_receipts",
+        "nullable": "NO"
+      },
+      {
+        "name": "financial_entry_id",
+        "type": "uuid",
+        "table": "payment_receipts",
+        "nullable": "YES"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "pdf_admins",
+        "nullable": "NO"
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "table": "projetos",
+        "nullable": "YES"
+      },
+      {
+        "name": "issue_code",
+        "type": "text",
+        "table": "protected_pdf_issues",
+        "nullable": "NO"
+      },
+      {
+        "name": "source_type",
+        "type": "text",
+        "table": "protected_pdf_issues",
+        "nullable": "NO"
+      },
+      {
+        "name": "source_record_id",
+        "type": "text",
+        "table": "protected_pdf_issues",
+        "nullable": "YES"
+      },
+      {
+        "name": "source_bucket",
+        "type": "text",
+        "table": "protected_pdf_issues",
+        "nullable": "NO"
+      },
+      {
+        "name": "source_path",
+        "type": "text",
+        "table": "protected_pdf_issues",
+        "nullable": "NO"
+      },
+      {
+        "name": "licensed_to",
+        "type": "text",
+        "table": "protected_pdf_issues",
+        "nullable": "NO"
+      },
+      {
+        "name": "request_fingerprint",
+        "type": "text",
+        "table": "protected_pdf_issues",
+        "nullable": "NO"
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "table": "protected_pdf_issues",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "protected_pdf_issues",
+        "nullable": "NO"
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamptz",
+        "table": "protected_pdf_issues",
+        "nullable": "NO"
+      },
+      {
+        "name": "active",
+        "type": "bool",
+        "table": "protected_site_pdfs",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "protected_site_pdfs",
+        "nullable": "NO"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "table": "protected_site_pdfs",
+        "nullable": "NO"
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "push_diagnosticos",
+        "nullable": "NO"
+      },
+      {
+        "name": "cliente_id",
+        "type": "uuid",
+        "table": "push_diagnosticos",
+        "nullable": "NO"
+      },
+      {
+        "name": "auth_user_id",
+        "type": "uuid",
+        "table": "push_diagnosticos",
+        "nullable": "NO"
+      },
+      {
+        "name": "etapa",
+        "type": "text",
+        "table": "push_diagnosticos",
+        "nullable": "NO"
+      },
+      {
+        "name": "codigo",
+        "type": "text",
+        "table": "push_diagnosticos",
+        "nullable": "YES"
+      },
+      {
+        "name": "mensagem",
+        "type": "text",
+        "table": "push_diagnosticos",
+        "nullable": "YES"
+      },
+      {
+        "name": "permissao",
+        "type": "text",
+        "table": "push_diagnosticos",
+        "nullable": "YES"
+      },
+      {
+        "name": "navegador",
+        "type": "text",
+        "table": "push_diagnosticos",
+        "nullable": "YES"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "push_diagnosticos",
+        "nullable": "NO"
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "push_dispositivos",
+        "nullable": "NO"
+      },
+      {
+        "name": "cliente_id",
+        "type": "uuid",
+        "table": "push_dispositivos",
+        "nullable": "NO"
+      },
+      {
+        "name": "auth_user_id",
+        "type": "uuid",
+        "table": "push_dispositivos",
+        "nullable": "NO"
+      },
+      {
+        "name": "token",
+        "type": "text",
+        "table": "push_dispositivos",
+        "nullable": "NO"
+      },
+      {
+        "name": "plataforma",
+        "type": "text",
+        "table": "push_dispositivos",
+        "nullable": "YES"
+      },
+      {
+        "name": "user_agent",
+        "type": "text",
+        "table": "push_dispositivos",
+        "nullable": "YES"
+      },
+      {
+        "name": "ativo",
+        "type": "bool",
+        "table": "push_dispositivos",
+        "nullable": "NO"
+      },
+      {
+        "name": "ultimo_uso",
+        "type": "timestamptz",
+        "table": "push_dispositivos",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "push_dispositivos",
+        "nullable": "NO"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "table": "push_dispositivos",
+        "nullable": "NO"
+      },
+      {
+        "name": "id",
+        "type": "int8",
+        "table": "solicitacao_respostas",
+        "nullable": "NO"
+      },
+      {
+        "name": "solicitacao_id",
+        "type": "int8",
+        "table": "solicitacao_respostas",
+        "nullable": "NO"
+      },
+      {
+        "name": "cliente_id",
+        "type": "uuid",
+        "table": "solicitacao_respostas",
+        "nullable": "NO"
+      },
+      {
+        "name": "autor",
+        "type": "text",
+        "table": "solicitacao_respostas",
+        "nullable": "NO"
+      },
+      {
+        "name": "mensagem",
+        "type": "text",
+        "table": "solicitacao_respostas",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "solicitacao_respostas",
+        "nullable": "NO"
+      },
+      {
+        "name": "id",
+        "type": "int8",
+        "table": "solicitacoes",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "solicitacoes",
+        "nullable": "NO"
+      },
+      {
+        "name": "titulo",
+        "type": "text",
+        "table": "solicitacoes",
+        "nullable": "YES"
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "table": "solicitacoes",
+        "nullable": "YES"
+      },
+      {
+        "name": "categoria",
+        "type": "text",
+        "table": "solicitacoes",
+        "nullable": "YES"
+      },
+      {
+        "name": "id",
+        "type": "int8",
+        "table": "usuarios",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "usuarios",
+        "nullable": "NO"
+      },
+      {
+        "name": "tipo",
+        "type": "text",
+        "table": "usuarios",
+        "nullable": "YES"
+      }
+    ],
+    "homologationOnlyColumns": [
+      {
+        "name": "titulo",
+        "type": "text",
+        "table": "agenda",
+        "nullable": "NO"
+      },
+      {
+        "name": "data",
+        "type": "date",
+        "table": "agenda",
+        "nullable": "NO"
+      },
+      {
+        "name": "duracao_minutos",
+        "type": "int4",
+        "table": "agenda",
+        "nullable": "YES"
+      },
+      {
+        "name": "criado_por_admin",
+        "type": "bool",
+        "table": "agenda",
+        "nullable": "YES"
+      },
+      {
+        "name": "cancelado",
+        "type": "bool",
+        "table": "agenda",
+        "nullable": "YES"
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "biblioteca",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "biblioteca",
+        "nullable": "YES"
+      },
+      {
+        "name": "tamanho",
+        "type": "int8",
+        "table": "biblioteca",
+        "nullable": "YES"
+      },
+      {
+        "name": "storage_bucket",
+        "type": "text",
+        "table": "biblioteca",
+        "nullable": "NO"
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "table": "clientes",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "cronograma",
+        "nullable": "YES"
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "table": "cronograma",
+        "nullable": "YES"
+      },
+      {
+        "name": "percentual_conclusao",
+        "type": "numeric",
+        "table": "cronograma",
+        "nullable": "YES"
+      },
+      {
+        "name": "project_id",
+        "type": "uuid",
+        "table": "document_acceptances",
+        "nullable": "NO"
+      },
+      {
+        "name": "nome",
+        "type": "text",
+        "table": "documentos",
+        "nullable": "NO"
+      },
+      {
+        "name": "storage_bucket",
+        "type": "text",
+        "table": "documentos",
+        "nullable": "NO"
+      },
+      {
+        "name": "protection_mode",
+        "type": "text",
+        "table": "documentos",
+        "nullable": "NO"
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "extrato_financeiro",
+        "nullable": "NO"
+      },
+      {
+        "name": "cliente_id",
+        "type": "uuid",
+        "table": "extrato_financeiro",
+        "nullable": "YES"
+      },
+      {
+        "name": "projeto_id",
+        "type": "uuid",
+        "table": "extrato_financeiro",
+        "nullable": "YES"
+      },
+      {
+        "name": "cliente_nome_snapshot",
+        "type": "text",
+        "table": "extrato_financeiro",
+        "nullable": "NO"
+      },
+      {
+        "name": "projeto_nome_snapshot",
+        "type": "text",
+        "table": "extrato_financeiro",
+        "nullable": "YES"
+      },
+      {
+        "name": "servico_snapshot",
+        "type": "text",
+        "table": "extrato_financeiro",
+        "nullable": "YES"
+      },
+      {
+        "name": "numero_contrato_snapshot",
+        "type": "text",
+        "table": "extrato_financeiro",
+        "nullable": "YES"
+      },
+      {
+        "name": "numero_orcamento_snapshot",
+        "type": "text",
+        "table": "extrato_financeiro",
+        "nullable": "YES"
+      },
+      {
+        "name": "valor_contratado",
+        "type": "numeric",
+        "table": "extrato_financeiro",
+        "nullable": "NO"
+      },
+      {
+        "name": "valor_recebido",
+        "type": "numeric",
+        "table": "extrato_financeiro",
+        "nullable": "NO"
+      },
+      {
+        "name": "saldo",
+        "type": "numeric",
+        "table": "extrato_financeiro",
+        "nullable": "NO"
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "table": "extrato_financeiro",
+        "nullable": "NO"
+      },
+      {
+        "name": "data_contratacao",
+        "type": "date",
+        "table": "extrato_financeiro",
+        "nullable": "YES"
+      },
+      {
+        "name": "data_ultimo_recebimento",
+        "type": "date",
+        "table": "extrato_financeiro",
+        "nullable": "YES"
+      },
+      {
+        "name": "observacoes",
+        "type": "text",
+        "table": "extrato_financeiro",
+        "nullable": "YES"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "extrato_financeiro",
+        "nullable": "YES"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "table": "extrato_financeiro",
+        "nullable": "YES"
+      },
+      {
+        "name": "payment_id",
+        "type": "uuid",
+        "table": "fin_v2_allocations",
+        "nullable": "NO"
+      },
+      {
+        "name": "installment_id",
+        "type": "uuid",
+        "table": "fin_v2_allocations",
+        "nullable": "NO"
+      },
+      {
+        "name": "amount",
+        "type": "numeric",
+        "table": "fin_v2_allocations",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "fin_v2_allocations",
+        "nullable": "NO"
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "fin_v2_installment_balances",
+        "nullable": "YES"
+      },
+      {
+        "name": "receivable_id",
+        "type": "uuid",
+        "table": "fin_v2_installment_balances",
+        "nullable": "YES"
+      },
+      {
+        "name": "due_date",
+        "type": "date",
+        "table": "fin_v2_installment_balances",
+        "nullable": "YES"
+      },
+      {
+        "name": "amount",
+        "type": "numeric",
+        "table": "fin_v2_installment_balances",
+        "nullable": "YES"
+      },
+      {
+        "name": "received",
+        "type": "numeric",
+        "table": "fin_v2_installment_balances",
+        "nullable": "YES"
+      },
+      {
+        "name": "remaining",
+        "type": "numeric",
+        "table": "fin_v2_installment_balances",
+        "nullable": "YES"
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "fin_v2_installments",
+        "nullable": "NO"
+      },
+      {
+        "name": "receivable_id",
+        "type": "uuid",
+        "table": "fin_v2_installments",
+        "nullable": "NO"
+      },
+      {
+        "name": "installment_no",
+        "type": "int4",
+        "table": "fin_v2_installments",
+        "nullable": "NO"
+      },
+      {
+        "name": "amount",
+        "type": "numeric",
+        "table": "fin_v2_installments",
+        "nullable": "NO"
+      },
+      {
+        "name": "due_date",
+        "type": "date",
+        "table": "fin_v2_installments",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "fin_v2_installments",
+        "nullable": "NO"
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "fin_v2_payments",
+        "nullable": "NO"
+      },
+      {
+        "name": "request_id",
+        "type": "uuid",
+        "table": "fin_v2_payments",
+        "nullable": "NO"
+      },
+      {
+        "name": "request_payload",
+        "type": "jsonb",
+        "table": "fin_v2_payments",
+        "nullable": "NO"
+      },
+      {
+        "name": "client_id",
+        "type": "uuid",
+        "table": "fin_v2_payments",
+        "nullable": "NO"
+      },
+      {
+        "name": "account_id",
+        "type": "uuid",
+        "table": "fin_v2_payments",
+        "nullable": "YES"
+      },
+      {
+        "name": "amount",
+        "type": "numeric",
+        "table": "fin_v2_payments",
+        "nullable": "NO"
+      },
+      {
+        "name": "paid_on",
+        "type": "date",
+        "table": "fin_v2_payments",
+        "nullable": "NO"
+      },
+      {
+        "name": "payment_method",
+        "type": "text",
+        "table": "fin_v2_payments",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "fin_v2_payments",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_by",
+        "type": "uuid",
+        "table": "fin_v2_payments",
+        "nullable": "NO"
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "fin_v2_receipt_records",
+        "nullable": "NO"
+      },
+      {
+        "name": "reference_number",
+        "type": "int8",
+        "table": "fin_v2_receipt_records",
+        "nullable": "NO"
+      },
+      {
+        "name": "payment_id",
+        "type": "uuid",
+        "table": "fin_v2_receipt_records",
+        "nullable": "NO"
+      },
+      {
+        "name": "request_id",
+        "type": "uuid",
+        "table": "fin_v2_receipt_records",
+        "nullable": "NO"
+      },
+      {
+        "name": "immutable_snapshot",
+        "type": "jsonb",
+        "table": "fin_v2_receipt_records",
+        "nullable": "NO"
+      },
+      {
+        "name": "issued_at",
+        "type": "timestamptz",
+        "table": "fin_v2_receipt_records",
+        "nullable": "NO"
+      },
+      {
+        "name": "issued_by",
+        "type": "uuid",
+        "table": "fin_v2_receipt_records",
+        "nullable": "NO"
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "fin_v2_receivables",
+        "nullable": "NO"
+      },
+      {
+        "name": "request_id",
+        "type": "uuid",
+        "table": "fin_v2_receivables",
+        "nullable": "NO"
+      },
+      {
+        "name": "request_payload",
+        "type": "jsonb",
+        "table": "fin_v2_receivables",
+        "nullable": "NO"
+      },
+      {
+        "name": "client_id",
+        "type": "uuid",
+        "table": "fin_v2_receivables",
+        "nullable": "NO"
+      },
+      {
+        "name": "contract_id",
+        "type": "uuid",
+        "table": "fin_v2_receivables",
+        "nullable": "YES"
+      },
+      {
+        "name": "project_id",
+        "type": "uuid",
+        "table": "fin_v2_receivables",
+        "nullable": "YES"
+      },
+      {
+        "name": "amount",
+        "type": "numeric",
+        "table": "fin_v2_receivables",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "fin_v2_receivables",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_by",
+        "type": "uuid",
+        "table": "fin_v2_receivables",
+        "nullable": "NO"
+      },
+      {
+        "name": "payment_id",
+        "type": "uuid",
+        "table": "fin_v2_reversals",
+        "nullable": "NO"
+      },
+      {
+        "name": "request_id",
+        "type": "uuid",
+        "table": "fin_v2_reversals",
+        "nullable": "NO"
+      },
+      {
+        "name": "reason",
+        "type": "text",
+        "table": "fin_v2_reversals",
+        "nullable": "NO"
+      },
+      {
+        "name": "reversed_at",
+        "type": "timestamptz",
+        "table": "fin_v2_reversals",
+        "nullable": "NO"
+      },
+      {
+        "name": "reversed_by",
+        "type": "uuid",
+        "table": "fin_v2_reversals",
+        "nullable": "NO"
+      },
+      {
+        "name": "nome",
+        "type": "text",
+        "table": "fotos",
+        "nullable": "NO"
+      },
+      {
+        "name": "storage_bucket",
+        "type": "text",
+        "table": "fotos",
+        "nullable": "NO"
+      },
+      {
+        "name": "protection_mode",
+        "type": "text",
+        "table": "fotos",
+        "nullable": "NO"
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "google_calendar_tokens",
+        "nullable": "NO"
+      },
+      {
+        "name": "user_id",
+        "type": "uuid",
+        "table": "google_calendar_tokens",
+        "nullable": "NO"
+      },
+      {
+        "name": "access_token",
+        "type": "text",
+        "table": "google_calendar_tokens",
+        "nullable": "YES"
+      },
+      {
+        "name": "refresh_token",
+        "type": "text",
+        "table": "google_calendar_tokens",
+        "nullable": "YES"
+      },
+      {
+        "name": "expiry_date",
+        "type": "int8",
+        "table": "google_calendar_tokens",
+        "nullable": "YES"
+      },
+      {
+        "name": "scope",
+        "type": "text",
+        "table": "google_calendar_tokens",
+        "nullable": "YES"
+      },
+      {
+        "name": "token_type",
+        "type": "text",
+        "table": "google_calendar_tokens",
+        "nullable": "YES"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "google_calendar_tokens",
+        "nullable": "YES"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "table": "google_calendar_tokens",
+        "nullable": "YES"
+      },
+      {
+        "name": "referencia_id",
+        "type": "uuid",
+        "table": "notificacoes",
+        "nullable": "YES"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "pdf_admins",
+        "nullable": "YES"
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "table": "projetos",
+        "nullable": "NO"
+      },
+      {
+        "name": "issue_code",
+        "type": "text",
+        "table": "protected_pdf_issues",
+        "nullable": "YES"
+      },
+      {
+        "name": "source_type",
+        "type": "text",
+        "table": "protected_pdf_issues",
+        "nullable": "YES"
+      },
+      {
+        "name": "source_record_id",
+        "type": "uuid",
+        "table": "protected_pdf_issues",
+        "nullable": "YES"
+      },
+      {
+        "name": "source_bucket",
+        "type": "text",
+        "table": "protected_pdf_issues",
+        "nullable": "YES"
+      },
+      {
+        "name": "source_path",
+        "type": "text",
+        "table": "protected_pdf_issues",
+        "nullable": "YES"
+      },
+      {
+        "name": "licensed_to",
+        "type": "text",
+        "table": "protected_pdf_issues",
+        "nullable": "YES"
+      },
+      {
+        "name": "request_fingerprint",
+        "type": "text",
+        "table": "protected_pdf_issues",
+        "nullable": "YES"
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "table": "protected_pdf_issues",
+        "nullable": "YES"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "protected_pdf_issues",
+        "nullable": "YES"
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamptz",
+        "table": "protected_pdf_issues",
+        "nullable": "YES"
+      },
+      {
+        "name": "active",
+        "type": "bool",
+        "table": "protected_site_pdfs",
+        "nullable": "YES"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "protected_site_pdfs",
+        "nullable": "YES"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "table": "protected_site_pdfs",
+        "nullable": "YES"
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "solicitacao_respostas",
+        "nullable": "NO"
+      },
+      {
+        "name": "solicitacao_id",
+        "type": "uuid",
+        "table": "solicitacao_respostas",
+        "nullable": "YES"
+      },
+      {
+        "name": "cliente_id",
+        "type": "uuid",
+        "table": "solicitacao_respostas",
+        "nullable": "YES"
+      },
+      {
+        "name": "autor",
+        "type": "text",
+        "table": "solicitacao_respostas",
+        "nullable": "YES"
+      },
+      {
+        "name": "mensagem",
+        "type": "text",
+        "table": "solicitacao_respostas",
+        "nullable": "YES"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "solicitacao_respostas",
+        "nullable": "YES"
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "solicitacoes",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "solicitacoes",
+        "nullable": "YES"
+      },
+      {
+        "name": "titulo",
+        "type": "text",
+        "table": "solicitacoes",
+        "nullable": "NO"
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "table": "solicitacoes",
+        "nullable": "NO"
+      },
+      {
+        "name": "categoria",
+        "type": "text",
+        "table": "solicitacoes",
+        "nullable": "NO"
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "usuarios",
+        "nullable": "NO"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "table": "usuarios",
+        "nullable": "YES"
+      },
+      {
+        "name": "tipo",
+        "type": "text",
+        "table": "usuarios",
+        "nullable": "NO"
+      }
+    ],
+    "classification": "Financeiro V2 differences are intentional; other differences remain pending semantic validation. No schema copied or migrated."
+  },
+  "a12": [
+    {
+      "id": "09aaae52-0238-4aec-9007-59d952ede998",
+      "document_kind": "estudo_preliminar",
+      "workflow_status": "gerado",
+      "versao": "1.1",
+      "version": null,
+      "generated_at": "2026-09-23 20:30:33.078+00",
+      "storage_bucket": "documentos",
+      "arquivo_hash": null,
+      "archived_original_path": null,
+      "purged_at": null,
+      "archived_explicitly": false,
+      "snapshots": 1,
+      "history_entries": 1,
+      "storage_matches": 0
+    },
+    {
+      "id": "c79f60c2-a528-4f8c-9233-d78e8ff86ac3",
+      "document_kind": null,
+      "workflow_status": "gerado",
+      "versao": "1.0",
+      "version": null,
+      "generated_at": "2026-10-29 23:20:21.194+00",
+      "storage_bucket": "documentos",
+      "arquivo_hash": null,
+      "archived_original_path": null,
+      "purged_at": null,
+      "archived_explicitly": false,
+      "snapshots": 1,
+      "history_entries": 1,
+      "storage_matches": 0
+    },
+    {
+      "id": "9977e886-c689-421c-a949-eb8ebfd192a8",
+      "document_kind": "estudo_preliminar",
+      "workflow_status": "gerado",
+      "versao": "1.0",
+      "version": "1.0",
+      "generated_at": "2026-09-02 18:36:24.608+00",
+      "storage_bucket": "documentos",
+      "arquivo_hash": null,
+      "archived_original_path": null,
+      "purged_at": null,
+      "archived_explicitly": false,
+      "snapshots": 1,
+      "history_entries": 8,
+      "storage_matches": 0
+    },
+    {
+      "id": "4097c6de-e21d-4c9e-bee3-5350e62abd02",
+      "document_kind": "levantamento_tecnico",
+      "workflow_status": "gerado",
+      "versao": "1.0",
+      "version": null,
+      "generated_at": "2026-09-23 20:57:08.925+00",
+      "storage_bucket": "documentos",
+      "arquivo_hash": null,
+      "archived_original_path": null,
+      "purged_at": null,
+      "archived_explicitly": false,
+      "snapshots": 1,
+      "history_entries": 1,
+      "storage_matches": 0
+    },
+    {
+      "id": "a1e28eff-a6b6-424b-af08-e601b0563fcc",
+      "document_kind": "autorizacao_imagem",
+      "workflow_status": "gerado",
+      "versao": "1.0",
+      "version": "1.0",
+      "generated_at": "2026-09-03 03:29:22.579+00",
+      "storage_bucket": "documentos",
+      "arquivo_hash": null,
+      "archived_original_path": null,
+      "purged_at": null,
+      "archived_explicitly": false,
+      "snapshots": 1,
+      "history_entries": 1,
+      "storage_matches": 0
+    },
+    {
+      "id": "2ccbe40a-37f8-4a91-b6de-bea35562b1ed",
+      "document_kind": null,
+      "workflow_status": "gerado",
+      "versao": "1.0",
+      "version": null,
+      "generated_at": "2026-09-16 02:07:01.895+00",
+      "storage_bucket": "documentos",
+      "arquivo_hash": null,
+      "archived_original_path": null,
+      "purged_at": null,
+      "archived_explicitly": false,
+      "snapshots": 1,
+      "history_entries": 1,
+      "storage_matches": 0
+    }
+  ],
+  "a12History": [
+    {
+      "id": "09aaae52-0238-4aec-9007-59d952ede998",
+      "storage_mode": "download_only",
+      "version": "1.1",
+      "history_entries": 1,
+      "paths": 0,
+      "generated_bytes": 11904,
+      "legacy_snapshot": false
+    },
+    {
+      "id": "2ccbe40a-37f8-4a91-b6de-bea35562b1ed",
+      "storage_mode": "download_only",
+      "version": "1.0",
+      "history_entries": 1,
+      "paths": 0,
+      "generated_bytes": 12638,
+      "legacy_snapshot": false
+    },
+    {
+      "id": "4097c6de-e21d-4c9e-bee3-5350e62abd02",
+      "storage_mode": "download_only",
+      "version": "1.0",
+      "history_entries": 1,
+      "paths": 0,
+      "generated_bytes": 11378,
+      "legacy_snapshot": false
+    },
+    {
+      "id": "9977e886-c689-421c-a949-eb8ebfd192a8",
+      "storage_mode": "download_only",
+      "version": "1.0",
+      "history_entries": 8,
+      "paths": 0,
+      "generated_bytes": 11855,
+      "legacy_snapshot": true
+    },
+    {
+      "id": "a1e28eff-a6b6-424b-af08-e601b0563fcc",
+      "storage_mode": "download_only",
+      "version": "1.0",
+      "history_entries": 1,
+      "paths": 0,
+      "generated_bytes": 11293,
+      "legacy_snapshot": true
+    },
+    {
+      "id": "c79f60c2-a528-4f8c-9233-d78e8ff86ac3",
+      "storage_mode": "download_only",
+      "version": "1.0",
+      "history_entries": 1,
+      "paths": 0,
+      "generated_bytes": 25640,
+      "legacy_snapshot": false
+    }
+  ],
+  "rls": [
+    {
+      "result": "PASS: live RLS, anonymous access, client isolation, document release, private buckets and administrator access"
+    }
+  ]
+}

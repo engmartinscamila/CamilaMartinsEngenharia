@@ -78,6 +78,7 @@ export async function listProjectTasks(projectId: string): Promise<ServiceResult
 }
 
 export async function createProjectTask(input: {
+  requestId: string;
   projectId: string;
   title: string;
   description?: string;
@@ -90,30 +91,20 @@ export async function createProjectTask(input: {
   parentTaskId?: string | null;
   dependencyId?: string | null;
 }) {
-  const inserted = await supabase.from('project_tasks').insert({
-    project_id: input.projectId,
-    parent_task_id: input.parentTaskId || null,
-    title: input.title.trim(),
-    description: input.description?.trim() || null,
-    priority: input.priority,
-    start_date: input.startDate || null,
-    due_date: input.dueDate || null,
-    estimated_hours: input.estimatedHours ?? null,
-    weight: input.weight ?? 1,
-    client_visible: input.clientVisible,
-  }).select('id').single();
-  if (inserted.error || !inserted.data) return 'Não foi possível criar a tarefa.';
-  if (input.dependencyId) {
-    const dependency = await supabase.from('project_task_dependencies').insert({
-      task_id: inserted.data.id,
-      depends_on_task_id: input.dependencyId,
+  try {
+    const result=await supabase.rpc('admin_create_project_task',{
+      p_request_id:input.requestId,
+      p_data:{project_id:input.projectId,parent_task_id:input.parentTaskId||null,
+        dependency_id:input.dependencyId||null,title:input.title.trim(),
+        description:input.description?.trim()||null,priority:input.priority,
+        start_date:input.startDate||null,due_date:input.dueDate||null,
+        estimated_hours:input.estimatedHours??null,weight:input.weight??1,client_visible:input.clientVisible},
     });
-    if (dependency.error) {
-      await supabase.from('project_tasks').delete().eq('id', inserted.data.id);
-      return 'A tarefa foi revertida porque a dependência não pôde ser registrada.';
-    }
+    return result.error||typeof result.data!=='string'||!result.data
+      ? 'Não foi possível confirmar a tarefa e suas dependências. Atualize a lista ou repita a mesma tentativa sem alterar os dados.' : null;
+  } catch {
+    return 'A conexão falhou antes da confirmação. Atualize a lista ou repita a mesma tentativa sem alterar os dados.';
   }
-  return null;
 }
 
 export async function updateProjectTask(input: {

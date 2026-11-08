@@ -1,0 +1,1 @@
+PASS A06/A07 candidate SQL: atomic task/dependency, normalized retry, no false compensation, authorization, direct/indirect cycles, parent graph and cross-project edits. Concurrent PostgREST sessions still require homologation.

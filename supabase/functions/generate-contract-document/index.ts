@@ -242,10 +242,10 @@ const legalRepresentativeInfo=(d:Data)=>{
  const cpf=String(r.cpf||'').replace(/\D/g,'');
  return {name:String(r.name||'').trim(),cpf:cpf.length===11?cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4'):cpf,role:String(r.role||'').trim(),powers:String(r.powers||'').trim()};
 };
-const identity=(d:Data,profile:ProfessionalIdentity,generatedAt:Date)=>[
+const identity=(d:Data,profile:ProfessionalIdentity,generatedAt:Date,kind:string)=>[
  h('1. IDENTIFICAÇÃO'),
  p(`Data de emissão: ${generatedDatePt(generatedAt)}`),
- p(`Contrato: ${value(d,'contract_number')} • Versão do Anexo I: v${String(d.document_version||'1.0')} • Data de assinatura: ${d.contract_signed_at?datePt(d.contract_signed_at):'A CONFIRMAR NO ATO DA ASSINATURA'}`),
+ p(`Contrato: ${value(d,'contract_number')} • ${kind==='anexo_i'?'Versão do Anexo I: v':'Versão do documento: v'}${String(d.document_version||'1.0')} • Data de assinatura: ${d.contract_signed_at?datePt(d.contract_signed_at):'A CONFIRMAR NO ATO DA ASSINATURA'}`),
  p(`CONTRATADO(A): ${professionalLabel(profile)}`),
  p(`CONTRATANTE: ${value(d,'client_name')} • CPF/CNPJ: ${clientIdentity(d)}`),
  ...(String(clientIdentity(d)).replace(/\D/g,'').length===14?[p('Representante legal da pessoa jurídica: '+legalRepresentativeInfo(d).name+' • CPF: '+legalRepresentativeInfo(d).cpf+' • Cargo: '+legalRepresentativeInfo(d).role+' • Poderes: '+legalRepresentativeInfo(d).powers+'.')]:[]),
@@ -318,7 +318,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
    const reason=value(d,'notification_reason','Ausência de manifestação sobre etapa entregue dentro do prazo contratual.');
    return doc([
      ...t('NOTIFICAÇÃO FORMAL','Pendência contratual • comunicação objetiva e rastreável'),
-     ...identity(d,profile,generatedAt),
+     ...identity(d,profile,generatedAt,kind),
      h('2. MOTIVO DA NOTIFICAÇÃO'),
      p(reason,true),
      h('3. REGISTRO DO FATO'),
@@ -347,7 +347,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
    const acceptanceLabel=acceptanceTypes[acceptanceType]||String(d.approval_type??'').trim().toUpperCase()||'ENTREGA / ETAPA';
    return doc([
      ...t(`TERMO DE ACEITE — ${acceptanceLabel}`,'Manifestação a ser registrada pelo(a) CONTRATANTE no Portal do Cliente'),
-     ...identity(d,profile,generatedAt),
+     ...identity(d,profile,generatedAt,kind),
      h('2. OBJETO DO ACEITE'),
      p(`Referência: ${value(d,'approval_title')}`,true,GOLD),
      ...(d.acceptance_subject?[p(`Objeto específico informado para este termo: ${String(d.acceptance_subject)}`)]:[]),
@@ -376,7 +376,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
    const pricingLabels:Record<string,string>={hour:'Hora técnica',percentage:'Percentual sobre etapa afetada',fixed:'Valor fechado para esta atividade'};
    return doc([
      ...t('TERMO DE SERVIÇO ADICIONAL','Aditivo de escopo vinculado ao contrato vigente • sujeito ao aceite do cliente'),
-     ...identity(d,profile,generatedAt),
+     ...identity(d,profile,generatedAt,kind),
      h('2. VÍNCULO COM O CONTRATO VIGENTE'),
      p('Este documento integra o histórico do contrato identificado acima. Não cria um contrato paralelo e não apaga, substitui ou reescreve o escopo originalmente contratado.'),
      ...(base.length?base.map(bullet):[p('Nenhum item de escopo foi localizado no snapshot contratual; revisar antes da emissão.')]),
@@ -403,7 +403,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
  if(kind==='autorizacao_imagem'){
    return doc([
      ...t('AUTORIZAÇÃO DE USO DE IMAGEM E DIVULGAÇÃO','Permissões específicas para portfólio e comunicação profissional'),
-     ...identity(d,profile,generatedAt),
+     ...identity(d,profile,generatedAt,kind),
      h('2. MATERIAIS QUE PODERÃO SER UTILIZADOS'),
      p('Marque somente os materiais autorizados:'),
      p('☐ Fotografias externas / fachada.'),
@@ -433,7 +433,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
    const base=contractedScopeLines(d);
    return doc([
      ...t('TERMO DE QUITAÇÃO E ENCERRAMENTO','Consolidação documental do término da relação contratual'),
-     ...identity(d,profile,generatedAt),
+     ...identity(d,profile,generatedAt,kind),
      h('2. MOTIVO DO ENCERRAMENTO'),
      p('☐ Conclusão integral do escopo contratado.'),
      p('☐ Rescisão antecipada por iniciativa do(a) CONTRATANTE.'),
@@ -471,7 +471,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
    const responsible=value(d,'technical_responsible',profileValue(profile,'full_name')||'Responsável técnico não informado');
    return doc([
      ...t('FICHA DE LEVANTAMENTO TÉCNICO / VISTORIA','Registro editável das condições verificadas no local'),
-     ...identity(d,profile,generatedAt),
+     ...identity(d,profile,generatedAt,kind),
      p(`Data e horário da vistoria: ${dateTimePt(d.survey_datetime??d.visit_datetime)}`),
      p(`Responsável pelo acompanhamento no local: ${value(d,'site_companion',value(d,'accompanying_person','Não informado'))}`),
      p(`Responsável técnico pelo registro: ${responsible}`),
@@ -504,7 +504,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
    const outside=d.outside_contracted_scope===true;
    return doc([
      ...t('ESTUDO PRELIMINAR',outside?'Documento auxiliar • não altera automaticamente o escopo contratado':'Etapa prevista no escopo contratual'),
-     ...identity(d,profile,generatedAt),
+     ...identity(d,profile,generatedAt,kind),
      ...(outside?[p('ATENÇÃO: o Estudo Preliminar não é obrigatório por padrão. Se for contratado pelo cliente, deverá ser remunerado e registrado no orçamento/Serviço Adicional e no Anexo I. Esta versão foi preparada apenas como documento auxiliar e, sozinha, não altera o valor nem o escopo do contrato.',true,GOLD)]:[]),
      compactH('2. OBJETIVO DA ETAPA'),
      p(study?serviceDescription(study):'Consolidar necessidades, condicionantes e diretrizes iniciais para orientar o desenvolvimento do projeto.'),
@@ -577,7 +577,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
 
    return doc([
      ...t('ANEXO I','ESCOPO DE SERVIÇOS • PROPOSTA COMERCIAL • CRONOGRAMA'),
-     ...identity(d,profile,generatedAt),
+     ...identity(d,profile,generatedAt,kind),
      h('2. FUNÇÃO DESTE ANEXO'),
      p(`Origem documental: contrato ${value(d,'contract_number')} — versão v${value(d,'source_contract_document_version','1.0')}. Dados comerciais reproduzidos da emissão oficial correspondente.`,true,GOLD),
      p(smartRule(d,'anexo_scope_governance','Este Anexo I integra o Contrato e constitui a referência específica para o escopo, entregáveis, revisões, formatos, valores e planejamento da contratação. Somente os itens expressamente indicados como incluídos integram o objeto.')),

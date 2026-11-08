@@ -68,6 +68,8 @@ jobs:
           node scripts/security/ofx-regression.mjs
           node scripts/security/admin-receipt-financial-regression.mjs
           node scripts/security/receipt-cash-regression.mjs
+          node scripts/security/audit-financial-integrity-regression.mjs
+          node scripts/security/audit-task-integrity-regression.mjs
           node scripts/security/commercial-closure-regression.mjs
           node scripts/security/project-before-contract-regression.mjs
           node scripts/security/commercial-emission-leases-regression.mjs
@@ -191,6 +193,7 @@ jobs:
           node scripts/test-admin-navigation-context.mjs
           npm install --prefix "$RUNNER_TEMP/financial-ui-test" --no-save --package-lock=false --ignore-scripts react@19.2.3 react-test-renderer@19.2.3
           CME_FINANCIAL_TEST_ROOT="$RUNNER_TEMP/financial-ui-test" node scripts/test-financial-ui.mjs
+          CME_FINANCIAL_TEST_ROOT="$RUNNER_TEMP/financial-ui-test" node scripts/test-audit-corrections.mjs
           npm run lint
           npm run security:test
           npm run security:audit
@@ -309,9 +312,8 @@ jobs:
 
       - name: Gerar, reabrir e validar todos os arquivos finais
         run: |
-          cp scripts/generated-file-smoke.ts scripts/generated-file-smoke.mts
-          sed -i 's/xlsxBytes.length>20000/xlsxBytes.length>15000/' scripts/generated-file-smoke.mts
-          npx tsx scripts/generated-file-smoke.mts
+          node --import tsx scripts/generated-file-smoke.mts
+          node scripts/document-fixture-mutation-regression.mjs
 
       - name: Guardar amostras geradas pela auditoria
         uses: actions/upload-artifact@v4
