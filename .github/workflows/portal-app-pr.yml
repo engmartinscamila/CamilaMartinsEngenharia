@@ -92,6 +92,7 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/finance-v2-test" --no-save --ignore-scripts --no-audit @electric-sql/pglite@0.3.10
           CME_FIN_SQL_ROOT="$RUNNER_TEMP/finance-v2-test" node scripts/test-financial-v2-sql.mjs
           CME_FIN_SQL_ROOT="$RUNNER_TEMP/finance-v2-test" node scripts/test-fin-v2-receipt-sql.mjs
+          CME_FIN_SQL_ROOT="$RUNNER_TEMP/finance-v2-test" node scripts/test-financial-origin-sql.mjs
 
       - name: Testar a interface financeira com dados sintéticos
         run: |
