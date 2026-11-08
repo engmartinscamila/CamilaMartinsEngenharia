@@ -1,5 +1,6 @@
--- CANDIDATO DE MIGRAÇÃO, NÃO APLICAR DIRETAMENTE EM PRODUÇÃO.
--- Pré-requisitos: backup restaurado em ambiente isolado, aprovação e teste A/B de RLS.
+-- Atualização da função aplicada em homologação e produção em 08/11/2026.
+-- Homologada com dados sintéticos em transações ROLLBACK, sem alterar registros reais.
+-- Reversão isolada disponível em docs/project-task/rollback-template-pre-contract.sql.
 -- Conserva a assinatura existente, a autorização admin e a inserção transacional.
 -- Mudança específica: projeto com cliente e SEM contrato pode receber modelo de tarefas.
 BEGIN;
