@@ -68,3 +68,20 @@ Base: dossiê de auditoria de 07/11/2026 (commit de referência `22328fb`). Cada
 - O cronograma simples do Vitalle (4 linhas) continua funcionando.
 
 > PR #77: `generate-contract-document`, `generate-commercial-document-final` e `deliver-generated-document` já estão no ar. Ainda dependem do token (item 2): `download-commercial-word` (usa o mesmo módulo de escopo detalhado) e `process-commercial-document-job` (embute cópias dos geradores).
+
+
+## Atualização 08/11 (tarde) — decisões D04/D05 e obra sem contrato
+
+| Item | Situação | PR |
+|---|---|---|
+| Cronograma interno para obra **sem cronograma completo contratado** (uso interno, nunca publicado ao cliente; migração formal do legado) | **No ar** (banco + tela, opção 2C) | #85 |
+| D05: dependências SS/FF, defasagem e caminho crítico | **No ar** | #86 |
+| D04: pedido de compra → contas a pagar no Financeiro | **No ar** (tela Compras) | #87 |
+| D04: BDI, curva ABC e importação SINAPI | **Suspenso a pedido da proprietária** (não iniciado) | — |
+| Acompanhamento simples dos serviços contratados (perfil do cliente) | Mantido como está | — |
+
+Regra registrada: o cronograma completo só é oferecido ao cliente quando o serviço "s" estiver no contrato (ou Serviço Adicional aceito).
+
+**Vitalle:** usar Gestão de obras → Novo cronograma → opção 2C, informando motivo, datas e custos. O legado fica preservado como histórico.
+
+Pendentes da proprietária: token `SUPABASE_ACCESS_TOKEN` (funções `download-commercial-word` e `process-commercial-document-job`) e `npx wrangler deploy` do Worker de mídia.
