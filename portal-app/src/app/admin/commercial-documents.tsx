@@ -206,7 +206,7 @@ export default function AdminCommercialDocumentsScreen() {
   const downloadIssuedWord=async(record:CommercialRecord,kind:'orcamento'|'contrato',recover=false,versionDocumentId?:string)=>{
     const documentId=versionDocumentId??(kind==='contrato'?record.contractDocumentId:record.quoteDocumentId);
     if(!documentId){setError('Não existe uma emissão anterior deste documento para baixar.');return;}
-    setLoadingKey(`download-${kind}-${record.id}`);setError(null);setSuccess(null);
+    setLoadingKey(`download-${kind}-${record.id}`);setError(null);setSuccess(null);setPendingWordRecovery(null);
     try {
       const result=await downloadIssuedCommercialWord(documentId,recover);
       if(result.missingOriginal){
