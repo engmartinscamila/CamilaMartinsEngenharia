@@ -410,6 +410,43 @@ export async function previewCommercialDocument(record: CommercialRecord, kind: 
   }, error: null };
 }
 
+/** Histórico por versão efetivamente emitida, usando a mesma origem do portal web legado. */
+export interface IssuedCommercialVersion {
+  id: string;
+  name: string;
+  version: string;
+  generatedAt: string;
+}
+
+export async function listIssuedCommercialVersions(
+  recordId: string,
+  kind: 'orcamento' | 'contrato',
+): Promise<ServiceResult<IssuedCommercialVersion[]>> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(recordId)) {
+    return { data: [], error: 'Registro comercial inválido.' };
+  }
+  const pageSize = 100;
+  const versions: IssuedCommercialVersion[] = [];
+  for (let offset = 0; offset < 1000; offset += pageSize) {
+    const result = await supabase.from('documentos')
+      .select('id,nome,versao,generated_at')
+      .contains('generated_data', { commercial_record_id: recordId, commercial_document_kind: kind })
+      .not('generated_at', 'is', null)
+      .order('generated_at', { ascending: false })
+      .order('id', { ascending: false })
+      .range(offset, offset + pageSize - 1);
+    if (result.error) return { data: [], error: 'Não foi possível consultar todas as versões emitidas.' };
+    versions.push(...(result.data ?? []).map((row) => ({
+      id: row.id,
+      name: row.nome ?? 'Documento comercial',
+      version: String(row.versao ?? '1.0'),
+      generatedAt: row.generated_at,
+    })));
+    if ((result.data ?? []).length < pageSize) return { data: versions, error: null };
+  }
+  return { data: [], error: 'Mais de 1.000 versões localizadas. Refine a consulta antes de conferir o histórico.' };
+}
+
 /** Baixa o Word efetivamente emitido, sem invocar gerador nem criar revisão. */
 export interface IssuedWordDownloadResult {
   error: string | null;
