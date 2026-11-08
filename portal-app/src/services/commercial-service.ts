@@ -410,6 +410,57 @@ export async function previewCommercialDocument(record: CommercialRecord, kind: 
   }, error: null };
 }
 
+/** Baixa o Word efetivamente emitido, sem invocar gerador nem criar revisão. */
+export interface IssuedWordDownloadResult {
+  error: string | null;
+  missingOriginal: boolean;
+  version: string | null;
+  reconstituted: boolean;
+}
+
+export async function downloadIssuedCommercialWord(documentId: string, recover = false): Promise<IssuedWordDownloadResult> {
+  const failed = (error: string, missingOriginal = false): IssuedWordDownloadResult =>
+    ({ error, missingOriginal, version: null, reconstituted: false });
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(documentId)) {
+    return failed('O documento emitido não possui identificador válido.');
+  }
+
+  // Endpoint somente de download: não cria uma versão e não altera o escopo congelado.
+  // Reconstituição histórica exige confirmação expressa na interface antes de recover=true.
+  const response = await supabase.functions.invoke('download-commercial-word', {
+    body: { documentId, recover },
+  });
+  let payload = response.data as Record<string, unknown> | null;
+  if (response.error && !payload) {
+    const context = (response.error as { context?: { json?: () => Promise<unknown> } }).context;
+    if (context && typeof context.json === 'function') {
+      try {
+        const body = await context.json();
+        if (body && typeof body === 'object') payload = body as Record<string, unknown>;
+      } catch { /* o corpo de erro pode não ser JSON */ }
+    }
+  }
+  if (response.error || payload?.delivered !== true) {
+    const error = typeof payload?.error === 'string' ? payload.error
+      : response.error?.message ?? 'Não foi possível baixar o Word emitido.';
+    return failed(error, payload?.code === 'ORIGINAL_WORD_MISSING' && !recover);
+  }
+  if (typeof payload.contentBase64 !== 'string' || !payload.contentBase64) {
+    return failed('O servidor não entregou o conteúdo do Word emitido.');
+  }
+  try {
+    await downloadBase64File(payload.contentBase64, typeof payload.fileName === 'string' ? payload.fileName : 'documento-emitido.docx');
+    return {
+      error: null,
+      missingOriginal: false,
+      version: typeof payload.version === 'string' ? payload.version : null,
+      reconstituted: payload.reconstituted === true,
+    };
+  } catch (error) {
+    return failed(error instanceof Error ? error.message : 'Não foi possível salvar o Word no dispositivo.');
+  }
+}
+
 export async function generateCommercialDocument(recordId: string, kind: 'orcamento' | 'contrato', archive = false, version?: { reason: string }) {
   const generated = await supabase.functions.invoke('generate-commercial-document-final', { body: { recordId, kind, versionReason: version?.reason ?? '' } });
   if (generated.error || !generated.data?.generated || !generated.data?.documentId) return generated.data?.error ?? generated.error?.message ?? `Não foi possível gerar o ${kind}.`;
