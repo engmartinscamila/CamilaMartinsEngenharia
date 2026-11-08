@@ -8,6 +8,7 @@ const requireTest=createRequire(path.join(process.env.CME_FINANCIAL_TEST_ROOT??p
 const React=requireTest('react'),{create,act}=requireTest('react-test-renderer');
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 let receiptDestination;
+const receiptLocksFixture={};const reversals=[];
 const e=React.createElement;
 function load(file,deps={}){
   const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText,{exports,console,Date,Intl,window:{location:{assign(value){receiptDestination=value;}}},require:name=>{if(!(name in deps))throw Error(`Missing ${name}`);return deps[name];}});return exports;
@@ -63,7 +64,7 @@ const component=load('src/app/admin/financial.tsx',{
  '@/components/financial-overview':financialOverview,
  '@/components/legacy-financial-audit-panel':legacyPanel,
  '@/lib/legacy-finance-audit':legacyAudit,
- '@/services/legacy-receipt-service':{listAdminReceiptReferences:()=>ok([{id:'synthetic-receipt',financialEntryId:'paid',clientId:'c',projectId:'p',amount:100,paidOn:today}])},
+ '@/services/legacy-receipt-service':{listAdminReceiptReferences:()=>ok([{id:'synthetic-receipt',financialEntryId:'paid',clientId:'c',projectId:'p',amount:100,paidOn:today}]),listReceiptLocks:async()=>({data:receiptLocksFixture,error:null}),receiptLabel:n=>`REC-${String(n).padStart(6,'0')}`,reverseReceiptedPayment:async(id,reason)=>{reversals.push([id,reason]);return null;}},
  '@/services/financial-origin-review-service':{
   listFinancialOriginReviews:()=>ok(originReviews),
   recordFinancialOriginReview:async input=>{
@@ -176,5 +177,17 @@ assert.equal(originReviewCalls,1);
 assert.equal(entries.reduce((sum,x)=>sum+x.amount,0),amountBefore,'Classificação não altera saldo financeiro');
 assert(text().includes('Serviços avulsos confirmados: '),'Painel deve apresentar a contagem dos avulsos confirmados');
 assert.equal(legacyAudit.auditLegacyReceivables(admin.listAdminContracts? (await admin.listAdminContracts()).data:[],[project],entries,[],originReviews).confirmedStandaloneEntries,1,'Motor deve confirmar o avulso após a revisão');
+await act(async()=>renderer.unmount());
+// A02: recebimento com recibo mostra a trava e oferece estorno com motivo.
+receiptLocksFixture.paid={receiptNumber:7,reversedAt:null,reversalReason:null};
+await act(async()=>{renderer=create(e(component));});
+await act(async()=>choices('Área financeira').props.onChange('entries'));
+assert(text().includes('REC-000007'),'Recebimento com recibo deve exibir o número do recibo');
+const reverse=button('Estornar recebimento');assert(reverse,'Recebimento com recibo deve oferecer estorno');
+await act(async()=>reverse.props.onPress());
+assert.equal(button('Confirmar estorno').props.disabled,true,'Estorno exige motivo');
+await act(async()=>field('Motivo do estorno *').props.onChangeText('Valor lançado em duplicidade'));
+await act(async()=>button('Confirmar estorno').props.onPress());
+assert.deepEqual(reversals,[['paid','Valor lançado em duplicidade']]);
 await act(async()=>renderer.unmount());
 console.log('FINANCEIRO UI: filtros, cancelados, cadastro com clique duplo, preservação após erro, saldo e rascunho fiscal aprovados.');
