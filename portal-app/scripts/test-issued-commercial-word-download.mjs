@@ -66,6 +66,8 @@ assert.match(screen, /Criar nova revisão do contrato/);
 assert.match(screen, /Criar nova revisão do orçamento/);
 assert.match(screen, /downloadIssuedCommercialWord\(documentId,recover\)/);
 assert.match(screen, /pendingWordRecovery/);
+assert.match(screen, /identificação profissional não estava registrada no snapshot/);
+assert.match(screen, /setError\(result.error \|\| 'O Word original não está disponível/);
 assert.match(screen, /downloadIssuedWord\(record,pendingWordRecovery.kind,true,pendingWordRecovery.documentId\)/);
 const isolatedHandler = screen.split('const downloadIssuedWord=async')[1]?.split('const requestGenerate = async')[0] ?? '';
 assert.ok(!isolatedHandler.includes('generateCommercialDocument'), 'Download não pode chamar gerador.');
