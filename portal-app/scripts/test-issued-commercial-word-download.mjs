@@ -24,7 +24,7 @@ async function scenario({data, error = null, recover = false, downloadFails = fa
     downloadBase64File: async (bytes, name) => {
       calls.push({download: {bytes, name}});
       if (downloadFails) throw new Error('Falha ao salvar no dispositivo');
-    }},
+    },
     Error,
   };
   vm.runInNewContext(`${executable}\nthis.downloadIssuedCommercialWord=downloadIssuedCommercialWord;`, context);
