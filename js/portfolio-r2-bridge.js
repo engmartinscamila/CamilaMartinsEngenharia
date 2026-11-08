@@ -45,6 +45,12 @@ PONTE DA GALERIA: painel existente -> Cloudflare R2 + GitHub
         const manifest = await readJsonBody(body);
         const token = await adminToken();
 
+        // Nunca apagar arquivo que o catálogo salvo ainda usa (foto compartilhada entre projetos).
+        const stillReferenced = manifestReferencedKeys(manifest);
+        Array.from(pendingDeletes).forEach(function(key){
+          if (stillReferenced.has(key)) pendingDeletes.delete(key);
+        });
+
         if (pendingDeletes.size) {
           const response = await fetch(API + "/api/delete-batch", {
             method: "POST",
@@ -334,6 +340,21 @@ PONTE DA GALERIA: painel existente -> Cloudflare R2 + GitHub
     if (ext === "jpg" || ext === "jpeg") return "image/jpeg";
     if (ext === "png") return "image/png";
     return "image/webp";
+  }
+
+  function manifestReferencedKeys(manifest){
+    const keys = new Set();
+    (function visit(value){
+      if (typeof value === "string") {
+        const key = normalizePath(value.replace(/^https?:\/\/[^/]+\/media\//i, "").split("?")[0]);
+        if (key.indexOf("portfolio/") === 0) keys.add(key);
+      } else if (Array.isArray(value)) {
+        value.forEach(visit);
+      } else if (value && typeof value === "object") {
+        Object.keys(value).forEach(function(k){ visit(value[k]); });
+      }
+    })(manifest);
+    return keys;
   }
 
   function normalizePath(path){

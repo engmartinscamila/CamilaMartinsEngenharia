@@ -299,6 +299,13 @@ async function deleteBatchWithRollback(request, env) {
     }
   }
 
+  // Nunca apagar um arquivo que o novo catálogo ainda usa (ex.: foto compartilhada entre projetos).
+  const stillReferenced = manifestReferencedKeys(manifest);
+  const blocked = keys.filter((key) => stillReferenced.has(key));
+  if (blocked.length) {
+    throw httpError(409, "Exclusão recusada: " + blocked.length + " arquivo(s) ainda aparecem no catálogo. Nada foi removido.");
+  }
+
   const tx = crypto.randomUUID();
   const backups = [];
 
@@ -512,6 +519,23 @@ function publicUrl(request, key) {
     "/media/" +
     key.split("/").map(encodeURIComponent).join("/")
   );
+}
+
+export function manifestReferencedKeys(manifest) {
+  const keys = new Set();
+  const visit = (value) => {
+    if (typeof value === "string") {
+      const path = value.replace(/^https?:\/\/[^/]+\/media\//i, "").split("?")[0];
+      const key = normalizeKey(path);
+      if (key && key.startsWith(PUBLIC_PREFIX)) keys.add(key);
+    } else if (Array.isArray(value)) {
+      value.forEach(visit);
+    } else if (value && typeof value === "object") {
+      Object.values(value).forEach(visit);
+    }
+  };
+  visit(manifest);
+  return keys;
 }
 
 function normalizeKey(value) {
