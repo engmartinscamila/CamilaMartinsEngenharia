@@ -741,7 +741,7 @@ export async function createAdminFinancialEntry(input: FinancialEntryInput) {
     if(!prior.error && prior.data && Object.entries(payload).every(([key,value])=>key==='valor'?moneyToCents(Number(prior.data[key]))===moneyToCents(value as number):(prior.data[key]??null)===(value??null)))return null;
     return 'Esta tentativa já foi registrada com outros dados. Atualize o extrato antes de tentar novamente.';
   }
-  return result.error || !result.data ? 'Não foi possível confirmar o lançamento. Tente novamente sem alterar os dados.' : null;
+  return guardedDatabaseMessage(result.error) ?? (result.error || !result.data ? 'Não foi possível confirmar o lançamento. Tente novamente sem alterar os dados.' : null);
 }
 export function financialEntryPayload(input:FinancialEntryInput) {
   if((!input.projectId&&!input.clientId) || input.description.trim().length<2 || !Number.isFinite(input.amount) || input.amount<=0)return 'Informe cliente ou projeto, descrição e um valor maior que zero.';
@@ -755,19 +755,26 @@ export function financialEntryPayload(input:FinancialEntryInput) {
     observacoes:input.notes?.trim()||null,categoria:financialCategory(input.category??'outros'),status,
     data_vencimento:input.dueDate||input.date||null,data_pagamento:paid,account_id:input.accountId??null,forma_pagamento:input.paymentMethod?.trim()||null};
 }
+
+/** Mensagens do servidor que a administradora precisa ler (A02/A03). */
+function guardedDatabaseMessage(error:{message?:string;hint?:string}|null|undefined){
+  if(!error)return null;
+  if(error.hint==='receipt_locked'||error.hint==='financial_origin_mismatch')return error.message??null;
+  return null;
+}
 export async function updateAdminFinancialEntry(id:string,input:FinancialEntryInput) {
   const payload=financialEntryPayload(input);if(typeof payload==='string')return payload;
   const linked=await supabase.from('bank_transactions').select('id').eq('matched_financial_id',id).limit(1);
   if(linked.error)return 'Não foi possível verificar a conciliação do lançamento.';
   if(linked.data?.length)return 'Este lançamento está conciliado. Preserve o vínculo bancário; registre um ajuste separado.';
   const result=await supabase.from('financeiro').update(payload).eq('id',id).is('bank_transaction_id',null).select('id').maybeSingle();
-  return result.error || !result.data ? 'Não foi possível atualizar. O lançamento pode ter sido conciliado ou removido.' : null;
+  return guardedDatabaseMessage(result.error) ?? (result.error || !result.data ? 'Não foi possível atualizar. O lançamento pode ter sido conciliado ou removido.' : null);
 }
 export async function deleteAdminFinancialEntry(id:string) {
   const linked=await supabase.from('bank_transactions').select('id').eq('matched_financial_id',id).limit(1);
   if(linked.error || linked.data?.length)return 'A exclusão foi bloqueada: conciliação existente ou não confirmada.';
   const result=await supabase.from('financeiro').delete().eq('id',id).is('bank_transaction_id',null).select('id').maybeSingle();
-  return result.error || !result.data ? 'Não foi possível excluir com segurança. O histórico foi preservado.' : null;
+  return guardedDatabaseMessage(result.error) ?? (result.error || !result.data ? 'Não foi possível excluir com segurança. O histórico foi preservado.' : null);
 }
 
 export async function updateAdminContractValue(contractId: string, value: number) {

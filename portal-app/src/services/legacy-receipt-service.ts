@@ -17,3 +17,29 @@ export async function listAdminReceiptReferences():Promise<LegacyReceiptRead>{
  }
  return {data:rows,error:null};
 }
+
+/** A02: recibos que travam o recebimento de origem (com situação de estorno). */
+export type ReceiptLock={receiptNumber:number;reversedAt:string|null;reversalReason:string|null};
+export async function listReceiptLocks():Promise<{data:Record<string,ReceiptLock>;error:string|null}>{
+ let result=await readAllRows(supabase.from('payment_receipts').select('id,financial_entry_id,receipt_number,reversed_at,reversal_reason'));
+ // Compatível com bancos ainda sem as colunas de estorno.
+ if(result.error)result=await readAllRows(supabase.from('payment_receipts').select('id,financial_entry_id,receipt_number'));
+ if(result.error)return {data:{},error:'Não foi possível conferir os recibos emitidos. Edições de recebimentos ficam bloqueadas até atualizar.'};
+ const data:Record<string,ReceiptLock>={};
+ for(const r of result.data as any[]){
+  if(!r.financial_entry_id)continue;
+  data[r.financial_entry_id]={receiptNumber:Number(r.receipt_number),reversedAt:r.reversed_at??null,reversalReason:r.reversal_reason??null};
+ }
+ return {data,error:null};
+}
+
+/** A02: estorno rastreável de recebimento com recibo (idempotente no servidor). */
+export async function reverseReceiptedPayment(financialId:string,reason:string):Promise<string|null>{
+ const text=reason.trim();
+ if(text.length<5)return 'Descreva o motivo do estorno (mínimo de 5 caracteres).';
+ const result=await supabase.rpc('admin_reverse_receipted_payment',{p_financial_id:financialId,p_reason:text});
+ if(result.error)return result.error.message||'Não foi possível registrar o estorno.';
+ return null;
+}
+
+export const receiptLabel=(n:number)=>`REC-${String(n).padStart(6,'0')}`;
