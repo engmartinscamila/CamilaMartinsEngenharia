@@ -750,7 +750,7 @@
       .filter(item => item.sourceType === 'commercial')
       .map(item => item.sourceId);
     const pickedProjectId = $('contractProjectId')?.value || null;
-    const pickedProject = projectCatalog.find(item => item.id === pickedProjectId);
+    const pickedProject = pickedProjectId ? projectCatalog.find(item => item.id === pickedProjectId) : null;
     // Projeto que já tem contrato fornece os dados, mas o vínculo dele não é alterado.
     const selectedProjectId = pickedProject && !pickedProject.contract_id ? pickedProjectId : null;
     const sourceProjectId = legacySources[0]?.sourceId || selectedProjectId;
