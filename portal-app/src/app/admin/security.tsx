@@ -7,12 +7,15 @@ import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/co
 import { formatBytes, formatDate } from '@/lib/format';
 import { env } from '@/lib/env';
 import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
+import { openWebsiteAdminSection } from '@/lib/admin-navigation';
 import { getAdminStorageOrphanDetails, getAdminStorageOverview, listAdminAudit } from '@/services/admin-service';
 import { spacing, ThemeColors, typography } from '@/theme/tokens';
 import type { AuditEntrySummary, StorageOrphanDetails, StorageOverview } from '@/types/domain';
 
 const emptyOverview: StorageOverview = { buckets: [], projects: [], totalObjects: 0, totalBytes: 0, orphanMetadata: 0, orphanObjects: 0 };
 const emptyOrphans: StorageOrphanDetails = { orphanMetadata: [], orphanObjects: [] };
+// Limite de arquivos do plano atual do Supabase (Free = 1 GB). Ajuste se mudar de plano (Pro = 100 GB).
+const STORAGE_PLAN_LIMIT_BYTES = Number(process.env.EXPO_PUBLIC_STORAGE_LIMIT_BYTES) > 0 ? Number(process.env.EXPO_PUBLIC_STORAGE_LIMIT_BYTES) : 1024 ** 3;
 
 export default function AdminSecurityScreen() {
   const [overview, setOverview] = useState(emptyOverview);
@@ -83,6 +86,21 @@ export default function AdminSecurityScreen() {
       {storageError ? <Notice tone="warning">{storageError}</Notice> : null}
       {auditError ? <Notice tone="warning">{auditError}</Notice> : null}
       {loading ? <ActivityIndicator color={colors.gold600} /> : null}
+      {!storageError && !loading ? (() => {
+        const used = overview.totalBytes;
+        const free = Math.max(0, STORAGE_PLAN_LIMIT_BYTES - used);
+        const percent = Math.min(100, Math.round((used / STORAGE_PLAN_LIMIT_BYTES) * 100));
+        return <Card>
+          <Text style={styles.sectionTitle}>Espaço disponível no Supabase</Text>
+          <Text style={styles.body}><Text style={styles.strong}>{formatBytes(used)}</Text> usados de {formatBytes(STORAGE_PLAN_LIMIT_BYTES)} • <Text style={styles.strong}>{formatBytes(free)} livres</Text> ({percent}% ocupado)</Text>
+          <View style={{ height: 10, borderRadius: 5, backgroundColor: colors.line, overflow: 'hidden', marginTop: 8 }}>
+            <View style={{ width: `${percent}%`, height: 10, backgroundColor: percent >= 85 ? colors.danger : percent >= 65 ? colors.gold600 : colors.success }} />
+          </View>
+          {overview.buckets.length ? <Text style={[styles.body, { marginTop: 8 }]}>{overview.buckets.map((bucket) => `${bucket.bucketId}: ${formatBytes(bucket.bytes)}`).join(' • ')}</Text> : null}
+          {percent >= 65 ? <Notice tone={percent >= 85 ? 'danger' : 'warning'}>O espaço está ficando cheio. Use “Acervo do projeto → Arquivo documental” para exportar o ZIP dos Word arquivados e depois liberar o espaço.</Notice> : null}
+          <Button title="Abrir limpeza de documentos arquivados" variant="secondary" onPress={() => openWebsiteAdminSection('document-archive')} />
+        </Card>;
+      })() : null}
       <View style={styles.metrics}>
         <Card style={styles.metric}><Text style={styles.metricLabel}>ARMAZENAMENTO REAL</Text><Text style={styles.metricValue}>{storageError ? 'Indisponível' : formatBytes(overview.totalBytes)}</Text></Card>
         <Card style={styles.metric}><Text style={styles.metricLabel}>OBJETOS</Text><Text style={styles.metricValue}>{storageError ? '—' : overview.totalObjects}</Text></Card>

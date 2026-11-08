@@ -95,20 +95,39 @@ export async function listAdminClients(search = ''): Promise<ServiceResult<Admin
   };
 }
 
-async function sendClientAccess(input: { clientId?: string; name?: string; email?: string; phone?: string }) {
+async function sendClientAccessDetailed(input: { clientId?: string; name?: string; email?: string; phone?: string }): Promise<{ error: string | null; clientId: string | null }> {
   const { data, error } = await supabase.functions.invoke('admin-invite-client', { body: input });
   if (error) {
     try {
       const details = await error.context?.json();
-      if (details?.error) return String(details.error);
+      // O cadastro pode ter sido criado mesmo quando o e-mail ficou na fila.
+      if (details?.error) return { error: String(details.error), clientId: typeof details.clientId === 'string' ? details.clientId : null };
     } catch { /* No structured response available. */ }
-    return 'Não foi possível enviar o e-mail de acesso. Tente novamente.';
+    return { error: 'Não foi possível enviar o e-mail de acesso. Tente novamente.', clientId: null };
   }
-  return data?.invitationSent === true ? null : String(data?.error || data?.message || 'O envio não foi confirmado.');
+  const clientId = typeof data?.clientId === 'string' ? data.clientId : null;
+  return { error: data?.invitationSent === true ? null : String(data?.error || data?.message || 'O envio não foi confirmado.'), clientId };
+}
+
+async function sendClientAccess(input: { clientId?: string; name?: string; email?: string; phone?: string }) {
+  return (await sendClientAccessDetailed(input)).error;
 }
 
 export async function inviteAdminClient(input: { name: string; email: string; phone?: string }) {
   return sendClientAccess(input);
+}
+
+/**
+ * Cadastro integrado: cria o cliente e, opcionalmente, o primeiro projeto
+ * (antes do contrato — sem exigir número de contrato).
+ */
+export async function inviteAdminClientWithProject(input: { name: string; email: string; phone?: string },
+  project: { projectName: string; serviceType?: string; address: string; number?: string; neighborhood?: string; city?: string; state?: string } | null) {
+  const invited = await sendClientAccessDetailed(input);
+  if (!project) return { clientError: invited.error, projectError: null, clientId: invited.clientId };
+  if (!invited.clientId) return { clientError: invited.error ?? 'O cadastro do cliente não foi confirmado.', projectError: 'O projeto não foi criado porque o cliente não foi confirmado.', clientId: null };
+  const projectError = await createAdminProjectDraft({ clientId: invited.clientId, ...project });
+  return { clientError: invited.error, projectError, clientId: invited.clientId };
 }
 
 export async function updateAdminClientStatus(clientId: string, status: 'ativo' | 'arquivado' | 'acesso_revogado') {
