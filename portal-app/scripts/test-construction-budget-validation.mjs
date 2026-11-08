@@ -20,6 +20,7 @@ out=analyze([item('A','0,125','2,00'),item('B','','','1.000,00','')]);
 assert.equal(out.total,1000.25);assert.equal(out.lines[1].planned_cost,1000);
 assert.equal(out.lines[1].quantity,null,'Custo direto não gera quantidade artificial');
 out=analyze([item('A','1e3','12')]);assert(!out.valid,'Não aceitar notação exponencial');
+out=analyze([item('A','1 2','12')]);assert(!out.valid,'Espaços internos não podem alterar quantidades silenciosamente');
 out=analyze([item('A','2','1.000.00')]);assert(!out.valid,'Separadores ambíguos bloqueados');
 out=analyze([item('A','2','','3')]);assert(!out.valid,'Composição incompleta bloqueada');
 out=analyze([item('A','2','10'),item('A','3','20')]);assert(!out.valid,'Códigos repetidos bloqueados');
