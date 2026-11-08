@@ -1,4 +1,6 @@
 (function(){'use strict';
+// generate-contract-document v29 (com reconstituição identificada, A12) publicado em 08/11/2026.
+if(window.CME_RECONSTITUTION_READY===undefined)window.CME_RECONSTITUTION_READY=true;
 const $=id=>document.getElementById(id), client=()=>window.supabaseClient; const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
 let scopePresets=[['a','Estudo Preliminar'],['b','Anteprojeto'],['c','Projeto Legal'],['d','Projeto Executivo / detalhamento'],['e','Projeto Estrutural'],['f','Projeto Elétrico'],['am','Projeto Hidráulico'],['g','Projeto Hidrossanitário'],['an','Elaboração de Book de Vendas'],['ao','Emissão e Regularização de ART'],['q','Consultoria Técnica'],['h','Projeto de Interiores'],['i','Paisagismo'],['j','Render 3D / Maquete eletrônica'],['k','Legalização / Aprovação Prefeitura'],['l','Alvará de Construção'],['m','Habite-se'],['n','Acompanhamento técnico de obra'],['o','Laudo técnico / avaliação / vistoria'],['p','Outro']];
 let serviceCatalogMeta=[];
