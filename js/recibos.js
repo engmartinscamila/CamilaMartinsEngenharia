@@ -22,7 +22,7 @@
     $('receiptHistoryState').textContent = history.length ? `${offset + 1} a ${offset + history.length} · Clique em Abrir para reimprimir a mesma emissão.` : 'Nenhum recibo nesta página.';
     for (const row of history) {
       const entry = document.createElement('div'); entry.className = 'item-lista';
-      const copy = document.createElement('span'); copy.textContent = `REC-${String(row.receipt_number).padStart(6,'0')} · ${row.snapshot.payer_name} · ${money(row.amount)} · ${date(row.paid_on)}`;
+      const copy = document.createElement('span'); copy.textContent = `REC-${String(row.receipt_number).padStart(6,'0')} · ${row.snapshot.payer_name} · ${money(row.amount)} · ${date(row.paid_on)}${row.reversed_at ? ' · ESTORNADO' : ''}`;
       const open = document.createElement('button'); open.type = 'button'; open.textContent = 'Abrir recibo'; open.addEventListener('click', () => showReceipt(row)); entry.append(copy, open); $('receiptHistory').append(entry);
     }
     $('receiptPrevious').disabled = offset === 0; $('receiptNext').disabled = history.length < 50;
@@ -57,7 +57,8 @@
       const contractResult=await supabaseClient.from('contratos').select('id,cliente_id,contract_number').order('contract_number');
       if(contractResult.error)throw contractResult.error; contracts=contractResult.data||[];
       clients.sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR')); projects.sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt-BR')||String(a.numero_contrato).localeCompare(String(b.numero_contrato),'pt-BR'));
-      $('receiptProject').addEventListener('change',()=>{const p=projects.find(p=>String(p.id)===value('receiptProject'));if(p?.contract_id)$('receiptContract').value=p.contract_id;});
+      // O contrato do projeto é o único aceito pelo servidor; projeto sem contrato aceita qualquer contrato do mesmo cliente.
+      $('receiptProject').addEventListener('change',()=>{const p=projects.find(p=>String(p.id)===value('receiptProject'));if(p?.contract_id)$('receiptContract').value=p.contract_id;if(!financialId)$('receiptContract').disabled=Boolean(p?.contract_id);});
       options('receiptClient',clients,'Selecione o cliente');
       const config = await supabaseClient.from('configuracoes').select('cidade').limit(1).maybeSingle(); $('receiptCity').value = config.data?.cidade || '';
       const today = new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'}); $('receiptDate').value = today; $('receiptDate').max = today;
@@ -81,7 +82,7 @@
       if(financialId){
         const payment=await supabaseClient.from('financeiro').select('id,projeto_id,cliente_id,contract_id,descricao,valor,tipo,status,data,data_pagamento,forma_pagamento').eq('id',financialId).maybeSingle();
         linkedPayment=payment.data;
-        if(payment.error||!linkedPayment||linkedPayment.tipo!=='entrada'||!['pago','recebido','quitado'].includes(linkedPayment.status)){message('Recebimento não encontrado ou ainda não quitado. Abra um lançamento recebido no Financeiro.',true);return;}
+        if(payment.error||!linkedPayment||linkedPayment.tipo!=='entrada'||!['pago','recebido','quitado'].includes(String(linkedPayment.status||'').toLocaleLowerCase('pt-BR'))){message('Recebimento não encontrado ou ainda não quitado. Abra um lançamento recebido no Financeiro.',true);return;}
         const project=projects.find(p=>String(p.id)===linkedPayment.projeto_id);
         const payer=project?.cliente_id||linkedPayment.cliente_id;
         if(!payer||!clients.some(c=>String(c.id)===payer)){message('O recebimento não possui cliente acessível.',true);return;}
@@ -97,13 +98,13 @@
       $('newStandaloneReceipt').disabled=false;
       $('newStandaloneReceipt').addEventListener('click',()=>{
         if(financialId){location.assign('recibos.html');return;}
-        $('receiptForm').reset();$('receiptDate').value=today; $('receiptCity').value=config.data?.cidade||'';selectProject();requestId=null;selectedReceipt=null;$('receiptResult').hidden=true;
+        $('receiptForm').reset();$('receiptContract').disabled=false;$('receiptDate').value=today; $('receiptCity').value=config.data?.cidade||'';selectProject();requestId=null;selectedReceipt=null;$('receiptResult').hidden=true;
         $('receiptEditor').hidden=false;$('receiptEditor').scrollIntoView({behavior:'smooth',block:'start'});
       });
       if(financialId){
         const existing=await supabaseClient.from('payment_receipts').select('*').eq('financial_entry_id',financialId).maybeSingle();
         if(existing.error){message('Não foi possível conferir se este pagamento já possui recibo. Atualize antes de emitir.',true);return;}
-        if(existing.data){showReceipt(existing.data);message('Recibo já emitido para este recebimento. Use Word ou PDF para salvar a mesma emissão.');}
+        if(existing.data){showReceipt(existing.data);message(existing.data.reversed_at?'Recibo já emitido para este recebimento e posteriormente estornado. O documento continua disponível, identificado como estornado.':'Recibo já emitido para este recebimento. Use Word ou PDF para salvar a mesma emissão.');}
         else $('receiptEditor').hidden=false;
       }else if(contextualProject)$('receiptEditor').hidden=false;
       $('issueReceipt').disabled = false; await loadHistory();
