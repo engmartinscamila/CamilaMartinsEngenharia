@@ -26,8 +26,19 @@ assert.equal(calls[1].name,'admin_register_supplier_bid');
 assert.equal(await selectSupplierBid('q','s'),null);
 assert.equal(calls[2].name,'admin_approve_supplier_bid');
 failure={message:'Não autorizado'};
-assert((await selectSupplierBid('q','s'))?.includes('não concluída'));
+assert((await selectSupplierBid('q','s'))?.includes('não confirmada'));
 assert((await createPurchaseQuote(quote))?.includes('Não foi possível'));
+failure=null;
+const priorRpc=supabase.rpc;
+supabase.rpc=async()=>({data:null,error:null});
+assert((await createPurchaseQuote(quote))?.includes('não foi possível confirmar')||
+ (await createPurchaseQuote(quote))?.includes('Não foi possível confirmar'),
+ 'Cotação sem ID não deve simular sucesso');
+assert((await addSupplierBid({quoteId:'q',supplierId:'s',totalAmount:200,paymentTerms:'Pix'}))?.includes('não confirmada'),
+ 'Proposta sem ID não deve simular sucesso');
+assert((await selectSupplierBid('q','s'))?.includes('não confirmada'),
+ 'Aprovação sem ID não deve simular sucesso');
+supabase.rpc=priorRpc;
 const ui=fs.readFileSync('src/app/admin/procurement.tsx','utf8');
 assert(ui.includes("projectResult.data;"),'Projetos sem contrato precisam ser listados');
 assert(ui.includes("project.contractNumber??'Sem contrato'"),'Projeto sem contrato visível na tela');
