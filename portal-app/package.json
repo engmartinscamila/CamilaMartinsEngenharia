@@ -22,7 +22,7 @@
     "export:web": "expo export --platform web",
     "verify:web-export": "node scripts/verify-web-export.mjs",
     "build:web:cloudflare": "npm run check:production:cloudflare && expo export --platform web && npm run verify:web-export",
-    "test:integration": "node scripts/test-integration.mjs && node scripts/test-protected-issuance.mjs && node scripts/test-functional.mjs && node scripts/test-auth-lifecycle.mjs && node scripts/test-auth-return-path.mjs && node scripts/test-document-center.mjs && node scripts/test-management-audit.mjs && node scripts/test-project-task-triage.mjs"
+    "test:integration": "node scripts/test-integration.mjs && node scripts/test-protected-issuance.mjs && node scripts/test-functional.mjs && node scripts/test-auth-lifecycle.mjs && node scripts/test-auth-return-path.mjs && node scripts/test-document-center.mjs && node scripts/test-management-audit.mjs && node scripts/test-project-task-triage.mjs && node scripts/test-construction-budget-embedded-load.mjs"
   },
   "dependencies": {
     "@expo/ui": "57.0.17",
@@ -66,6 +66,7 @@
     "eslint": "^9.35.0",
     "eslint-config-expo": "~57.0.2",
     "expo-doctor": "^1.18.0",
+    "react-test-renderer": "^19.2.3",
     "typescript": "~6.0.3"
   },
   "overrides": {
