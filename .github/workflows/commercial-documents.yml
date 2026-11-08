@@ -21,6 +21,8 @@ on:
       - 'portal-app/supabase/functions/generate-contract-document/**'
       - 'portal-app/supabase/functions/generate-contract-document-final/**'
       - 'portal-app/src/services/commercial-service.ts'
+      - 'portal-app/scripts/test-issued-commercial-word-download.mjs'
+      - 'portal-app/scripts/test-issued-commercial-version-history.mjs'
       - 'portal-app/src/services/document-workflow-service.ts'
       - 'portal-app/src/app/admin/commercial-documents.tsx'
       - 'portal-app/src/app/admin/contract-documents.tsx'
@@ -67,6 +69,8 @@ on:
       - 'portal-app/supabase/functions/generate-contract-document/**'
       - 'portal-app/supabase/functions/generate-contract-document-final/**'
       - 'portal-app/src/services/commercial-service.ts'
+      - 'portal-app/scripts/test-issued-commercial-word-download.mjs'
+      - 'portal-app/scripts/test-issued-commercial-version-history.mjs'
       - 'portal-app/src/services/document-workflow-service.ts'
       - 'portal-app/src/app/admin/commercial-documents.tsx'
       - 'portal-app/src/app/admin/contract-documents.tsx'
@@ -133,6 +137,12 @@ jobs:
           node scripts/security/commercial-emission-leases-regression.mjs
           node scripts/security/document-client-flow-regression.mjs
           node scripts/security/commercial-document-job-regression.mjs
+      - name: Testar endpoint original de download com snapshots históricos
+        run: node --experimental-strip-types scripts/commercial-word-download-regression.mjs
+      - name: Download do Word original sem revisão (T43)
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types portal-app/scripts/test-issued-commercial-word-download.mjs
+      - name: Versões emitidas com download por UUID (T48)
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types portal-app/scripts/test-issued-commercial-version-history.mjs
       - name: Instalar dependências travadas do aplicativo
         run: npm ci --prefix portal-app
       - name: Verificar TypeScript do aplicativo

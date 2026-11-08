@@ -410,6 +410,94 @@ export async function previewCommercialDocument(record: CommercialRecord, kind: 
   }, error: null };
 }
 
+/** Histórico por versão efetivamente emitida, usando a mesma origem do portal web legado. */
+export interface IssuedCommercialVersion {
+  id: string;
+  name: string;
+  version: string;
+  generatedAt: string;
+}
+
+export async function listIssuedCommercialVersions(
+  recordId: string,
+  kind: 'orcamento' | 'contrato',
+): Promise<ServiceResult<IssuedCommercialVersion[]>> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(recordId)) {
+    return { data: [], error: 'Registro comercial inválido.' };
+  }
+  const pageSize = 100;
+  const versions: IssuedCommercialVersion[] = [];
+  for (let offset = 0; offset < 1000; offset += pageSize) {
+    const result = await supabase.from('documentos')
+      .select('id,nome,versao,generated_at')
+      .contains('generated_data', { commercial_record_id: recordId, commercial_document_kind: kind })
+      .not('generated_at', 'is', null)
+      .order('generated_at', { ascending: false })
+      .order('id', { ascending: false })
+      .range(offset, offset + pageSize - 1);
+    if (result.error) return { data: [], error: 'Não foi possível consultar todas as versões emitidas.' };
+    versions.push(...(result.data ?? []).map((row) => ({
+      id: row.id,
+      name: row.nome ?? 'Documento comercial',
+      version: String(row.versao ?? '1.0'),
+      generatedAt: row.generated_at,
+    })));
+    if ((result.data ?? []).length < pageSize) return { data: versions, error: null };
+  }
+  return { data: [], error: 'Mais de 1.000 versões localizadas. Refine a consulta antes de conferir o histórico.' };
+}
+
+/** Baixa o Word efetivamente emitido, sem invocar gerador nem criar revisão. */
+export interface IssuedWordDownloadResult {
+  error: string | null;
+  missingOriginal: boolean;
+  version: string | null;
+  reconstituted: boolean;
+}
+
+export async function downloadIssuedCommercialWord(documentId: string, recover = false): Promise<IssuedWordDownloadResult> {
+  const failed = (error: string, missingOriginal = false): IssuedWordDownloadResult =>
+    ({ error, missingOriginal, version: null, reconstituted: false });
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(documentId)) {
+    return failed('O documento emitido não possui identificador válido.');
+  }
+
+  // Endpoint somente de download: não cria uma versão e não altera o escopo congelado.
+  // Reconstituição histórica exige confirmação expressa na interface antes de recover=true.
+  const response = await supabase.functions.invoke('download-commercial-word', {
+    body: { documentId, recover },
+  });
+  let payload = response.data as Record<string, unknown> | null;
+  if (response.error && !payload) {
+    const context = (response.error as { context?: { json?: () => Promise<unknown> } }).context;
+    if (context && typeof context.json === 'function') {
+      try {
+        const body = await context.json();
+        if (body && typeof body === 'object') payload = body as Record<string, unknown>;
+      } catch { /* o corpo de erro pode não ser JSON */ }
+    }
+  }
+  if (response.error || payload?.delivered !== true) {
+    const error = typeof payload?.error === 'string' ? payload.error
+      : response.error?.message ?? 'Não foi possível baixar o Word emitido.';
+    return failed(error, payload?.code === 'ORIGINAL_WORD_MISSING' && !recover);
+  }
+  if (typeof payload.contentBase64 !== 'string' || !payload.contentBase64) {
+    return failed('O servidor não entregou o conteúdo do Word emitido.');
+  }
+  try {
+    await downloadBase64File(payload.contentBase64, typeof payload.fileName === 'string' ? payload.fileName : 'documento-emitido.docx');
+    return {
+      error: null,
+      missingOriginal: false,
+      version: typeof payload.version === 'string' ? payload.version : null,
+      reconstituted: payload.reconstituted === true,
+    };
+  } catch (error) {
+    return failed(error instanceof Error ? error.message : 'Não foi possível salvar o Word no dispositivo.');
+  }
+}
+
 export async function generateCommercialDocument(recordId: string, kind: 'orcamento' | 'contrato', archive = false, version?: { reason: string }) {
   const generated = await supabase.functions.invoke('generate-commercial-document-final', { body: { recordId, kind, versionReason: version?.reason ?? '' } });
   if (generated.error || !generated.data?.generated || !generated.data?.documentId) return generated.data?.error ?? generated.error?.message ?? `Não foi possível gerar o ${kind}.`;
