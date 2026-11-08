@@ -1,4 +1,5 @@
 import {financialStatus} from '@/lib/financial-model';
+import type {LegacyOriginReview} from '@/services/financial-origin-review-service';
 import type {AdminContractSummary,AdminProjectSummary,FinancialEntrySummary} from '@/types/domain';
 
 /** Relatório somente de leitura para classificar a origem de cada obrigação antes do cutover. */
@@ -14,7 +15,7 @@ export type LegacyUnclassifiedEntry={
  id:string;clientName:string;contractNumber:string;amount:number;status:string;projectName:string;
 };
 export type LegacyAuditReport={
- countEntries:number;countReceipts:number;confirmedReceiptLinks:number;
+ countEntries:number;countReceipts:number;confirmedReceiptLinks:number;confirmedStandaloneEntries:number;
  paidWithoutReceipt:number;contractsMissingValue:Pick<AdminContractSummary,'id'|'clientId'|'clientName'|'contractNumber'>[];
  unclassifiedEntries:LegacyUnclassifiedEntry[];receiptIssues:LegacyReceiptIssue[];
  migrationReady:boolean;reasons:string[];
@@ -23,7 +24,7 @@ const cents=(value:number)=>Number.isFinite(value)?Math.round(value*100):NaN;
 const moneyEqual=(left:number,right:number)=>Number.isFinite(left)&&Number.isFinite(right)&&cents(left)===cents(right);
 export function auditLegacyReceivables(
  contracts:AdminContractSummary[],projects:AdminProjectSummary[],
- entries:FinancialEntrySummary[],receipts:LegacyReceiptReference[]
+ entries:FinancialEntrySummary[],receipts:LegacyReceiptReference[],reviews:LegacyOriginReview[]=[]
 ):LegacyAuditReport {
  const projectsById=new Map(projects.map(item=>[item.id,item]));
  const contractsById=new Map(contracts.map(item=>[item.id,item]));
@@ -32,11 +33,25 @@ export function auditLegacyReceivables(
    (c.contractValue===null||!Number.isFinite(c.contractValue)||c.contractValue<0))
   .map(({id,clientId,clientName,contractNumber})=>({id,clientId,clientName,contractNumber}));
  const unclassifiedEntries:LegacyUnclassifiedEntry[]=[];
+ const reviewByEntry=new Map<string,LegacyOriginReview>();
+ for(const review of reviews){
+  const current=reviewByEntry.get(review.financialEntryId);
+  if(!current||review.id>current.id)reviewByEntry.set(review.financialEntryId,review);
+ }
+ let confirmedStandaloneEntries=0;
  for(const entry of entries){
   if(financialStatus(entry.status)==='cancelado')continue;
   const project=entry.projectId?projectsById.get(entry.projectId):null;
   const contractId=entry.contractId||project?.contractId||null;
   if(!contractId||!contractsById.has(contractId)){
+   const review=reviewByEntry.get(entry.id);
+   const sameSnapshot=review?.classification==='servico_avulso'&&
+    !entry.projectId&&!entry.contractId&&Boolean(entry.clientId)&&
+    review.snapshot.clientId===entry.clientId&&
+    !review.snapshot.projectId&&!review.snapshot.contractId&&
+    review.snapshot.status===entry.status&&review.snapshot.type===entry.type&&
+    moneyEqual(review.snapshot.amount,entry.amount);
+   if(sameSnapshot){confirmedStandaloneEntries+=1;continue;}
    unclassifiedEntries.push({id:entry.id,clientName:entry.clientName,contractNumber:entry.contractNumber,projectName:entry.projectName,amount:entry.amount,status:entry.status});
   }
  }
@@ -82,7 +97,7 @@ export function auditLegacyReceivables(
  if(contractsMissingValue.length)reasons.push('Contratos sem valor definido exigem conferência individual.');
  if(unclassifiedEntries.length)reasons.push('Existem lançamentos sem contrato classificado: confirme se são serviços avulsos.');
  if(receiptIssues.length)reasons.push('Há divergências em recibos que devem ser resolvidas antes do corte.');
- return {countEntries:entries.length,countReceipts:receipts.length,confirmedReceiptLinks,
+ return {countEntries:entries.length,countReceipts:receipts.length,confirmedReceiptLinks,confirmedStandaloneEntries,
   paidWithoutReceipt,contractsMissingValue,unclassifiedEntries,receiptIssues,
   migrationReady:reasons.length===0,reasons};
 }
