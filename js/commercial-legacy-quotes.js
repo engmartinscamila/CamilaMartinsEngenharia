@@ -7,7 +7,8 @@
       project.complemento_obra,
       project.bairro_obra,
       project.cidade_obra,
-      project.estado_obra
+      project.estado_obra,
+      project.cep_obra ? `CEP ${project.cep_obra}` : ''
     ].filter(Boolean).join(', ');
   }
 
