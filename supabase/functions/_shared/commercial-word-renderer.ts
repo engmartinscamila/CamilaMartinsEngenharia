@@ -334,13 +334,13 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
    const particular=Array.isArray(terms.scope)?(terms.scope as Array<Record<string,unknown>>).find(row=>String(row.code||'')===String(item.code||'')):null;
    const revisions=particular?String(particular.revisions??''):serviceRevisions(item);
    const prazo=particular?.deadline_type==='municipal'?'Análise/expedição da Prefeitura sem prazo garantido':particular?.days?String(particular.days)+' '+(String((terms.schedule as Record<string,unknown>|undefined)?.day_type)==='uteis'?'dias úteis':'dias corridos'):'PENDENTE de definição na ficha da atividade';
-   serviceBlocks.push(small(`Revisões desta atividade: ${revisions} • Formatos: ${arrStrings(item.deliveryFormats).join(', ')||'conforme Anexo I'} • Prazo: ${prazo}`));
+   serviceBlocks.push(small(`Revisões desta atividade: ${revisions} • Formatos: ${arrStrings(item.deliveryFormats).join(', ')||'conforme contrato'} • Prazo: ${prazo}`));
  });
 
  if(record.custom_service){
    serviceBlocks.push(serviceHeading('Serviço adicional descrito no orçamento'));
    serviceBlocks.push(p(record.custom_service));
-   serviceBlocks.push(small('Este item somente integra o escopo nos limites expressamente descritos nesta proposta e no Anexo I.'));
+   serviceBlocks.push(small('Este item somente integra o escopo nos limites expressamente descritos nesta proposta e no contrato.'));
  }
 
  return makeDoc([
@@ -351,7 +351,7 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
   small(`Emissão: ${today} • Validade: ${datePt(record.valid_until)} • Documento vinculado ao orçamento ${record.quote_number}`),
 
   h('1. VISÃO GERAL DA PROPOSTA'),
-  p(smartRule(record,'proposal_scope_governance','Esta proposta organiza o escopo e as condições comerciais sem ampliar, por si só, as obrigações contratuais. Após a formalização, o Contrato e o Anexo I passam a reger definitivamente a relação entre as partes.')),
+  p(smartRule(record,'proposal_scope_governance','Esta proposta organiza o escopo e as condições comerciais sem ampliar, por si só, as obrigações contratuais. Após a formalização, o Contrato passa a reger definitivamente a relação entre as partes.')),
   p(`Cliente / prospect: ${record.prospect_name}`),
   p(`CPF/CNPJ: ${text(record.cpf_cnpj)} • E-mail: ${text(record.email)} • Telefone: ${text(record.phone)}`),
   p(`Tipo de imóvel: ${text(record.property_type)} • Padrão construtivo: ${text(record.construction_standard)}`),
@@ -375,17 +375,17 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
   ...(selected.length?serviceBlocks:[p('Nenhum serviço foi selecionado. Revise o orçamento antes da emissão definitiva.')]),
 
   h('4. LIMITES E EXCLUSÕES CONSOLIDADAS'),
-  p(smartRule(record,'scope_limits_rule','Somente os itens expressamente incluídos nesta proposta e posteriormente confirmados no Anexo I integram o escopo. Solicitações posteriores ou itens não previstos serão tratados como serviço adicional, mediante aprovação prévia.')),
+  p(smartRule(record,'scope_limits_rule','Somente os itens expressamente incluídos nesta proposta e posteriormente confirmados no contrato integram o escopo. Solicitações posteriores ou itens não previstos serão tratados como serviço adicional, mediante aprovação prévia.')),
   ...consolidatedExclusions.map(value=>bullet(value)),
   bullet('Taxas, emolumentos e despesas de órgãos públicos, cartórios, concessionárias ou entidades de classe não integram os honorários, salvo previsão expressa em contrário.'),
   bullet('ART/RRT e demais despesas vinculadas a registros profissionais somente integram o valor quando expressamente discriminadas.'),
 
   h('5. PROCESSO DE DESENVOLVIMENTO E REVISÕES'),
-  p(smartRule(record,'proposal_revision_rule','Na ausência de indicação específica no Anexo I, aplicam-se até 2 (duas) rodadas de revisão por etapa para ajustes dentro do escopo original. Alterações de programa, metragem, layout, partido ou premissas já aprovadas podem caracterizar alteração de escopo.')),
+  p(smartRule(record,'proposal_revision_rule','Na ausência de indicação específica no contrato, não se presume rodada de revisão de preferência. Alterações de programa, metragem, layout, partido ou premissas já aprovadas podem caracterizar alteração de escopo.')),
   p(smartRule(record,'proposal_client_inputs_rule','O cliente deverá fornecer documentos, respostas de briefing, medidas, aprovações e demais definições necessárias. A falta desses insumos pode suspender ou repercutir no cronograma, nos termos do Contrato.')),
 
   h('6. PRAZO E CRONOGRAMA'),
-  p(smartRule(record,'proposal_timeline_rule','O prazo técnico será exclusivamente o preenchido nas condições comerciais aprovadas e no Anexo I, com indicação de dias úteis ou corridos e do marco inicial da contagem. Não há prazo técnico presumido nem limite padrão aplicável a todas as contratações. Prazos de análise de órgãos públicos e terceiros não são prazos técnicos controlados pela contratada.')),
+  p(smartRule(record,'proposal_timeline_rule','O prazo técnico será exclusivamente o preenchido nas condições comerciais aprovadas e reproduzido no contrato, com indicação de dias úteis ou corridos e do marco inicial da contagem. Não há prazo técnico presumido nem limite padrão aplicável a todas as contratações. Prazos de análise de órgãos públicos e terceiros não são prazos técnicos controlados pela contratada.')),
 
   h('7. INVESTIMENTO'),
   p(`Valor total dos honorários: ${money(record.total_value)}`,true,GOLD),
@@ -396,14 +396,14 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
 
   h('8. PRÓXIMOS PASSOS'),
   bullet('Aprovação desta proposta pelo cliente, por escrito.'),
-  bullet('Formalização do Contrato de Prestação de Serviços e do Anexo I com o escopo definitivo.'),
+  bullet('Formalização do Contrato de Prestação de Serviços com o escopo, valores e parcelas definitivos.'),
   bullet('Pagamento da condição inicial pactuada, quando aplicável.'),
   bullet('Entrega dos documentos, briefings e informações necessários ao início dos trabalhos.'),
   bullet('Agendamento de levantamento ou vistoria somente quando esse serviço estiver incluído.'),
 
   h('9. VALIDADE E ACEITE'),
   p(`Esta proposta permanece válida até ${datePt(record.valid_until)}. Após essa data, valores, disponibilidade e condições poderão ser revistos antes da formalização.`),
-  p('O aceite desta proposta não substitui o Contrato e o Anexo I definitivos quando esses instrumentos forem aplicáveis à contratação.'),
+  p('O aceite desta proposta não substitui o Contrato definitivo.'),
   quoteSignatureBlock(signaturePlaceAndDate(record.city,generatedAt),`${profileValue(profile,'full_name')||'Camila Martins'} — proponente`)
  ],profile,record.quote_number);
 }
@@ -433,7 +433,7 @@ function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,c
    h('RESUMO COMERCIAL VINCULADO'),
    p(`Valor total dos honorários: ${money(record.total_value)}.`,true,GOLD),
    p(`Nível de prestação: ${contractLevelSummary}.`),
-   p('As condições comerciais, os quantitativos e os prazos individualizados são especificados abaixo e reproduzidos no Anexo I. A versão emitida preserva os dados aprovados no momento da emissão.'),
+   p('As condições comerciais, os quantitativos, os prazos individualizados, as parcelas e a forma de pagamento constam do quadro abaixo (Quadro de Condições Comerciais), que integra este contrato. A versão emitida preserva os dados aprovados no momento da emissão.'),
    h('PARCELAMENTO E VENCIMENTOS'),
    ...paymentLines(record),
    h('PRAZOS E QUANTITATIVOS CONTRATADOS'),

@@ -166,6 +166,6 @@ assert.ok(coreGenerator.includes('2. NÍVEIS DE PRESTAÇÃO POR ATIVIDADE'), 'Or
 assert.ok(coreGenerator.includes('Nível desta atividade:'), 'Bloco individual do serviço não informa o próprio nível');
 assert.ok(coreGenerator.includes('definidos individualmente por atividade no escopo técnico vinculado'), 'Contrato não possui resumo seguro para níveis mistos');
 assert.ok(!coreGenerator.includes('levelFromServices('), 'Gerador voltou a usar o primeiro nível como nível global');
-assert.ok(coreGenerator.includes("||'conforme Anexo I'"), 'Orçamento ainda presume PDF sem formato');
+assert.ok(coreGenerator.includes("||'conforme contrato'"), 'Orçamento ainda presume PDF sem formato');
 assert.ok(!coreGenerator.includes("String(level.subtitle??'').trim()].filter(Boolean).join(' — ')"), 'Gerador voltou a compor nome do nível com subtítulo');
 console.log('PASS: históricos preservados; níveis por atividade isolados; consultoria avulsa com pacote; sem prazos e revisões presumidos; escopo, endereços e Word válidos.');

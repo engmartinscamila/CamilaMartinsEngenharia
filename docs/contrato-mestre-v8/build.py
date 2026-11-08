@@ -142,15 +142,17 @@ nav.idx a:focus-visible, a:focus-visible {{ outline:2px solid var(--accent); out
 <div class="wrap">
 <div class="lede">
 <h1>Revisão do Contrato Mestre v8 e dos escopos</h1>
-<p>Preparada em 08/11/2026 para aprovação. Nada abaixo foi aplicado ainda. Layout, cores e fontes dos documentos não mudam; só o conteúdo.</p>
+<p><strong>Publicado em 08/11/2026</strong> com autorização da titular. Vale para novas emissões; documentos já emitidos não mudam. Layout, cores e fontes dos documentos não mudaram.</p>
 </div>
-<div class="box ok"><strong>Como aprovar</strong>
-<ul><li>Responda <strong>“ok”</strong> no chat. Eu aplico tudo de uma vez: Contrato Mestre v8 (substitui a v7 como vigente; a v7 fica no histórico), textos padronizados, textos fixos do gerador e os 123 escopos (41 atividades × 3 níveis), e libero a trava do Contrato Mestre no mesmo passo.</li>
-<li>Para mudar algo, diga o número da cláusula ou o código da atividade e o texto desejado.</li>
-<li>Documentos já emitidos não mudam (cláusula 21.7): a v8 vale só para novas emissões.</li></ul></div>
+<div class="box ok"><strong>Base legal aplicada</strong>
+<ul><li>Código Civil: arts. 184, 389, 395, 421-A, 476 e 944 (invalidade parcial, correção, honorários, contrato paritário, exceção do contrato não cumprido, indenização).</li>
+<li>CPC: art. 784, III e § 4º (título executivo e assinatura eletrônica) e art. 63, § 1º, com a Lei 14.879/2024 (foro).</li>
+<li>CDC: arts. 26, 43 § 2º, 49 e 51 (vícios, aviso de negativação, arrependimento, cláusulas abusivas). As proteções do consumidor foram mantidas para a cláusula não ser anulada.</li>
+<li>Trabalhista: CLT arts. 2º e 3º e tese do TST sobre a OJ 191 da SDI-1 (dono da obra); NR-18 nas visitas.</li>
+<li>Lei 9.610/1998 (projeto como obra protegida, repúdio de autoria), Lei 10.192/2001 (reajuste anual), Lei 14.063/2020 e MP 2.200-2/2001 (assinatura eletrônica), Lei 14.905/2024 (correção pelo IPCA).</li></ul></div>
 <div class="box"><strong>O que muda, em resumo</strong>
 <ul><li>Escopo, valores, parcelas e forma de pagamento ficam no próprio contrato, no “Quadro de Condições Comerciais”. O Anexo I passa a existir só para serviço adicional, com valor e parcelas próprios.</li>
-<li>Brechas fechadas: soma das parcelas diferente do total (5.2); prevalência do orçamento sobre o contrato (21.5); atividade sem número de revisões ou visitas (6.1: sem número, não há).</li>
+<li>Brechas fechadas: soma das parcelas diferente do total (5.2); prevalência do orçamento (21.5); atividade sem número de revisões ou visitas (6.1); cobrança sem título executivo (5.7 e 5.8); pagamento estornado (5.10); aceite por silêncio indefinido (6.3); vínculo trabalhista e dívidas de empreiteiro do cliente (10.7 a 10.9); contratante sem poder sobre o imóvel (11.8); entrega de arquivos com parcela em atraso (12.2); alteração do projeto por terceiros (13.5); abandono do contrato (16.6 e 16.7); responsabilidade ilimitada entre empresas (17.4); correção por terceiro sem chance de corrigir (17.5); foro (23.1).</li>
 <li>Escopos reescritos num padrão único e curto: objeto, entregas numeradas, revisões, visitas e formato, o que o cliente fornece e o que não inclui, terminando com “qualquer item não listado é serviço adicional”.</li>
 <li>Ao todo: {len(CLAUSES)} cláusulas, {len(TEXTS)} textos padronizados, {len(GENERATOR)} textos do gerador e {len(out['scopes'])} escopos.</li></ul></div>
 <div class="box"><strong>Revisão jurídica</strong>

@@ -13,7 +13,7 @@ const serviceLevelLabel = (item: Obj) => {
 const xmlEsc = (value: unknown) => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 const sentencePart = (value: unknown) => text(value).replace(/[.!?]+\s*$/u, '');
 const wordParagraph = (value: string, bold = false) => `<w:p><w:pPr><w:spacing w:after="120" w:line="300" w:lineRule="auto"/></w:pPr><w:r><w:rPr>${bold ? '<w:b/>' : ''}<w:rFonts w:ascii="Century Gothic" w:hAnsi="Century Gothic"/></w:rPr><w:t xml:space="preserve">${xmlEsc(value)}</w:t></w:r></w:p>`;
-const customScopeDescription = (specification: string) => `Atividade específica solicitada: ${specification}. A prestação abrange exclusivamente esta atividade e os resultados expressamente descritos e aprovados no orçamento e no Anexo I. Quantidades, formato de entrega, visitas, revisões, prazo e etapas somente serão considerados incluídos quando definidos expressamente; acréscimos exigem aprovação e contratação prévias.`;
+const customScopeDescription = (specification: string) => `Atividade específica solicitada: ${specification}. A prestação abrange exclusivamente esta atividade e os resultados expressamente descritos e aprovados no orçamento e no contrato. Quantidades, formato de entrega, visitas, revisões, prazo e etapas somente serão considerados incluídos quando definidos expressamente; acréscimos exigem aprovação e contratação prévias.`;
 function selectedServices(services: unknown) {
   return Array.isArray(services) ? services.filter(item => item && typeof item === 'object' && (item as Obj).included !== false) as Obj[] : [];
 }
@@ -34,7 +34,7 @@ function activityLimits(item: Obj, row: Obj, terms: Obj) {
   if (visits !== null) lines.push(visits === 0 ? 'Visitas técnicas incluídas: nenhuma.' : `Visitas técnicas incluídas: ${visits}. Visitas adicionais serão orçadas à parte.`);
   const schedule = terms.schedule && typeof terms.schedule === 'object' ? terms.schedule as Obj : {};
   const days = positiveInt(row.days);
-  if (text(row.deadline_type) === 'municipal') lines.push('Prazo: a preparação técnica segue o cronograma do Anexo I; análise, aprovação e expedição dependem exclusivamente do órgão público, sem prazo garantido pela CONTRATADA.');
+  if (text(row.deadline_type) === 'municipal') lines.push('Prazo: a preparação técnica segue o prazo do Quadro do contrato; análise, aprovação e expedição dependem exclusivamente do órgão público, sem prazo garantido pela CONTRATADA.');
   else if (days) lines.push(`Prazo desta atividade: ${days} ${text(schedule.day_type) === 'uteis' ? 'dias úteis' : 'dias corridos'}, contados conforme o início definido no contrato e suspensos enquanto houver pendência de informações, documentos ou aprovações do contratante.`);
   const formats = listOf(item.deliveryFormats);
   if (formats.length) lines.push(`Formato de entrega: ${formats.join(', ')}.`);
@@ -92,7 +92,7 @@ function contractScopeXml(services: unknown, customService: unknown, experienceL
   if (text(customService) && !otherSelected) {
     parts.push(wordParagraph('Serviço adicional / especificação complementar', true));
     parts.push(wordParagraph(text(customService)));
-    parts.push(wordParagraph('Este item fica restrito às atividades, entregáveis, premissas e condições expressamente descritas no orçamento e no Anexo I. Qualquer ampliação depende de aprovação e contratação prévias.'));
+    parts.push(wordParagraph('Este item fica restrito às atividades, entregáveis, premissas e condições expressamente descritas no orçamento e no contrato. Qualquer ampliação depende de aprovação e contratação prévias.'));
   }
   return parts.join('');
 }
@@ -115,7 +115,7 @@ async function enhanceContractDocument(bytes: Uint8Array, propertyAddress: strin
     // Snapshot histórico sem nível aplicável: não atribuir pacote retroativamente.
     xml = xml.replace(/<w:p(?=[\s>])[\s\S]*?<\/w:p>/g, paragraph =>
       /^Nível de (experiência|prestação):/.test(paragraphText(paragraph))
-        ? wordParagraph('Níveis Bronze/Prata/Ouro: não aplicáveis às atividades desta contratação; prevalece o escopo aprovado no Anexo I.')
+        ? wordParagraph('Níveis Bronze/Prata/Ouro: não aplicáveis às atividades desta contratação; prevalece o escopo aprovado no contrato.')
         : paragraph);
   } else if (selectedLevelCodes.length > 1) {
     xml = xml.replace(/<w:p(?=[\s>])[\s\S]*?<\/w:p>/g, paragraph =>
@@ -158,7 +158,7 @@ async function enhanceQuoteDocument(bytes: Uint8Array, services: unknown, custom
     replacement.set(descriptionIndex, wordParagraph(customScopeDescription(specification)));
     for (let index = descriptionIndex + 1; index < values.length && index < descriptionIndex + 12; index += 1) {
       if (values[index].startsWith('Revisões incluídas:')) {
-        replacement.set(index, wordParagraph('Revisões, formato de entrega e prazo desta atividade: somente os que forem discriminados no escopo específico e no Anexo I; nenhum pacote adicional é presumido.'));
+        replacement.set(index, wordParagraph('Revisões, formato de entrega e prazo desta atividade: somente os que forem discriminados no escopo específico do contrato; nenhum pacote adicional é presumido.'));
         break;
       }
       if (/^\d+\. /.test(values[index]) || values[index].includes('LIMITES E EXCLUSÕES')) break;
@@ -178,7 +178,7 @@ async function enhanceQuoteDocument(bytes: Uint8Array, services: unknown, custom
       if (!/^\d+\. Consultoria Técnica$/.test(value)) return;
       for (let next = index + 1; next < values.length && next < index + 12; next += 1) {
         if (values[next].startsWith('Revisões incluídas:')) {
-          replacement.set(next, wordParagraph('Revisões, formato de entrega e prazo da consultoria: somente conforme condições expressas no orçamento e no Anexo I.'));
+          replacement.set(next, wordParagraph('Revisões, formato de entrega e prazo da consultoria: somente conforme condições expressas no contrato.'));
           break;
         }
         if (/^\d+\. /.test(values[next]) || values[next].includes('LIMITES E EXCLUSÕES')) break;
@@ -191,15 +191,15 @@ async function enhanceQuoteDocument(bytes: Uint8Array, services: unknown, custom
     const levelStart = values.findIndex(value => value === '2. NÍVEL DE PRESTAÇÃO DE SERVIÇO');
     const scopeStart = values.findIndex((value, index) => index > levelStart && value === '3. ESCOPO INTELIGENTE DE SERVIÇOS');
     if (levelStart >= 0 && scopeStart > levelStart + 1) {
-      replacement.set(levelStart + 1, wordParagraph('O registro anterior não contém pacote válido no snapshot; prevalecem as condições específicas aprovadas no orçamento e no Anexo I, sem atribuição retroativa de nível.'));
+      replacement.set(levelStart + 1, wordParagraph('O registro anterior não contém pacote válido no snapshot; prevalecem as condições específicas aprovadas no contrato, sem atribuição retroativa de nível.'));
       for (let index = levelStart + 2; index < scopeStart; index += 1) replacement.set(index, '');
     }
     values.forEach((value, index) => {
-      if (value.startsWith('Na ausência de indicação específica no Anexo I, aplicam-se até 2')) {
-        replacement.set(index, wordParagraph('Para os serviços selecionados, o regime de revisões e as condições de aceite devem ser definidos por atividade no Anexo I. Não se presumem rodadas de alterações de escopo para consultorias, vistorias ou atividades personalizadas; correções técnicas seguem o contrato.'));
+      if ((value.startsWith('Na ausência de indicação específica no Anexo I, aplicam-se até 2') || value.startsWith('Na ausência de indicação específica no contrato, não se presume'))) {
+        replacement.set(index, wordParagraph('Para os serviços selecionados, o regime de revisões e as condições de aceite devem ser definidos por atividade no contrato. Não se presumem rodadas de alterações de escopo para consultorias, vistorias ou atividades personalizadas; correções técnicas seguem o contrato.'));
       }
       if (value.startsWith('O prazo geral de referência é de 45')) {
-        replacement.set(index, wordParagraph('O prazo técnico de cada serviço será definido no cronograma aprovado no Anexo I, conforme sua natureza e os insumos necessários. Prazos de análise de órgãos públicos ou terceiros não são prazos de elaboração técnica.'));
+        replacement.set(index, wordParagraph('O prazo técnico de cada serviço será definido no prazo aprovado no contrato, conforme sua natureza e os insumos necessários. Prazos de análise de órgãos públicos ou terceiros não são prazos de elaboração técnica.'));
       }
     });
   } else if (selected.some(isProjectTierEligible) && selected.some(item => !isProjectTierEligible(item))) {
@@ -215,11 +215,11 @@ async function enhanceQuoteDocument(bytes: Uint8Array, services: unknown, custom
   if (onlyStandaloneService && !onlyNonProject) {
     // A contratação avulsa pode ter pacote, mas não herda prazos/revisões de projeto.
     values.forEach((value, index) => {
-      if (value.startsWith('Na ausência de indicação específica no Anexo I, aplicam-se até 2')) {
-        replacement.set(index, wordParagraph('Revisões e condições de aceite deste serviço avulso são as expressamente aprovadas para a atividade no Anexo I; erros técnicos continuam sujeitos a correção.'));
+      if ((value.startsWith('Na ausência de indicação específica no Anexo I, aplicam-se até 2') || value.startsWith('Na ausência de indicação específica no contrato, não se presume'))) {
+        replacement.set(index, wordParagraph('Revisões e condições de aceite deste serviço avulso são as expressamente aprovadas para a atividade no contrato; erros técnicos continuam sujeitos a correção.'));
       }
       if (value.startsWith('O prazo geral de referência é de 45')) {
-        replacement.set(index, wordParagraph('O prazo do serviço avulso é o cronograma específico aprovado no Anexo I, sem aplicação automática de prazo de projeto ou de análise de terceiros.'));
+        replacement.set(index, wordParagraph('O prazo do serviço avulso é o prazo específico aprovado no contrato, sem aplicação automática de prazo de projeto ou de análise de terceiros.'));
       }
     });
   }
