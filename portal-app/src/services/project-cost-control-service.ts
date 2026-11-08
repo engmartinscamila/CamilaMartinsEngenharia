@@ -84,7 +84,7 @@ export async function loadProjectCostReport(projectId: string): Promise<CostRepo
           id: String(quote.id), title: String(quote.title ?? ''),
           status: String(quote.status ?? ''),
           selectedSupplierId: quote.selected_supplier_id,
-          selectedAmount: matches.length === 1 ? Number(matches[0].total_amount) : null,
+          selectedAmount: matches[0] ? Number(matches[0].total_amount) : null,
         });
       }
       if ((page.data ?? []).length < PAGE) break;
