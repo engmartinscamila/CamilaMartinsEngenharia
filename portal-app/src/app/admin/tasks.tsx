@@ -1,6 +1,7 @@
 import {useAdminModule,useAdminProjectSelection} from '@/providers/admin-module-context';
 import { useNotificationProject } from '@/hooks/use-notification-project';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { randomUUID } from 'expo-crypto';
 import { Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
@@ -81,21 +82,25 @@ export default function AdminTasksScreen() {
   const triage = useMemo(() => getProjectTaskTriage(tasks, todayInSaoPaulo()), [tasks]);
   const attentionLabel = { overdue: 'Em atraso', blocked: 'Aguardando liberação', due_soon: 'Vence em até 7 dias', urgent: 'Urgente' };
 
+  const createRequest = useRef<{ fingerprint: string; id: string } | null>(null);
   const create = async () => {
     if (!projectId || title.trim().length < 3) { setError('Selecione o projeto e informe uma tarefa válida.'); return; }
     if (startDate && !isValidIsoDate(startDate)) { setError('A data inicial deve usar AAAA-MM-DD.'); return; }
     if (dueDate && !isValidIsoDate(dueDate)) { setError('O prazo deve usar AAAA-MM-DD.'); return; }
     if (startDate && dueDate && dueDate < startDate) { setError('O prazo não pode ser anterior ao início.'); return; }
     setLoading(true); setError(null); setSuccess(null);
-    const actionError = await createProjectTask({
-      projectId, title, description, priority, startDate, dueDate,
+    const draft = { projectId, title, description, priority, startDate, dueDate,
       estimatedHours: hours ? Number(hours.replace(',', '.')) : null,
-      clientVisible, parentTaskId, dependencyId,
-    });
+      clientVisible, parentTaskId, dependencyId };
+    // A06: o mesmo rascunho reenviado (duplo clique, timeout) reutiliza a solicitação.
+    const fingerprint = JSON.stringify(draft);
+    if (createRequest.current?.fingerprint !== fingerprint) createRequest.current = { fingerprint, id: randomUUID() };
+    const actionError = await createProjectTask({ ...draft, requestId: createRequest.current.id });
     if (actionError) setError(actionError);
     else {
       setSuccess('Tarefa criada e progresso do projeto recalculado automaticamente.');
       setTitle(''); setDescription(''); setStartDate(''); setDueDate(''); setHours('');
+      createRequest.current = null;
       setParentTaskId(null); setDependencyId(null); setClientVisible(false); await loadTasks();
     }
     setLoading(false);

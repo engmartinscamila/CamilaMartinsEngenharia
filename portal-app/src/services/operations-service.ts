@@ -89,29 +89,29 @@ export async function createProjectTask(input: {
   clientVisible: boolean;
   parentTaskId?: string | null;
   dependencyId?: string | null;
+  requestId: string;
 }) {
-  const inserted = await supabase.from('project_tasks').insert({
-    project_id: input.projectId,
-    parent_task_id: input.parentTaskId || null,
-    title: input.title.trim(),
-    description: input.description?.trim() || null,
-    priority: input.priority,
-    start_date: input.startDate || null,
-    due_date: input.dueDate || null,
-    estimated_hours: input.estimatedHours ?? null,
-    weight: input.weight ?? 1,
-    client_visible: input.clientVisible,
-  }).select('id').single();
-  if (inserted.error || !inserted.data) return 'Não foi possível criar a tarefa.';
-  if (input.dependencyId) {
-    const dependency = await supabase.from('project_task_dependencies').insert({
-      task_id: inserted.data.id,
-      depends_on_task_id: input.dependencyId,
-    });
-    if (dependency.error) {
-      await supabase.from('project_tasks').delete().eq('id', inserted.data.id);
-      return 'A tarefa foi revertida porque a dependência não pôde ser registrada.';
-    }
+  // A06: tarefa e dependência na mesma transação, idempotente por requestId.
+  const result = await supabase.rpc('admin_create_project_task', {
+    p_request_id: input.requestId,
+    p_data: {
+      project_id: input.projectId,
+      parent_task_id: input.parentTaskId || null,
+      title: input.title.trim(),
+      description: input.description?.trim() || null,
+      priority: input.priority,
+      start_date: input.startDate || null,
+      due_date: input.dueDate || null,
+      estimated_hours: input.estimatedHours ?? null,
+      weight: input.weight ?? 1,
+      client_visible: input.clientVisible,
+      dependency_id: input.dependencyId || null,
+    },
+  });
+  if (result.error || !result.data) {
+    const hint = (result.error as { hint?: string } | null)?.hint;
+    if (hint === 'task_dependency_invalid') return result.error?.message ?? 'Dependência inválida.';
+    return 'Não foi possível criar a tarefa. Nada foi gravado parcialmente; tente novamente sem alterar os dados.';
   }
   return null;
 }
