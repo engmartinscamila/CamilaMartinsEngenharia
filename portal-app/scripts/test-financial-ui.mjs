@@ -25,7 +25,8 @@ let entries=[{id:'paid',projectId:'p',projectName:'Obra',clientName:'Cliente',co
  {id:'cancel',projectId:'p',projectName:'Obra',clientName:'Cliente',contractNumber:'CON-1',description:'Cancelada',amount:999,type:'entrada',status:'cancelado',date:today,paidAt:null,dueDate:today,category:'outros',accountId:null,notes:null}];
 const project={id:'p',clientId:'c',clientName:'Cliente',contractId:'contract',contractNumber:'CON-1',name:'Obra'};
 const ok=data=>Promise.resolve({data,error:null});
-let calls=0,release,fail=false,lastInput;
+let calls=0,release,fail=false,lastInput,originReviewCalls=0;
+let originReviews=[];
 const admin={listAdminClients:()=>ok([{id:'c',name:'Cliente'},{id:'avulso',name:'Harison sintético sem contrato'}]),listAdminContracts:()=>ok([{id:'contract',clientId:'c',contractNumber:'CON-1',clientName:'Cliente',contractValue:500}]),listAdminProjects:()=>ok([project]),listAdminFinancialEntries:()=>ok(entries),listFinancialArchive:()=>ok([]),
  createAdminFinancialEntry:async input=>{lastInput=input;calls++;await new Promise(resolve=>{release=resolve;});if(fail)return 'Falha simulada';entries=[...entries,{...entries[0],...input,id:'new-'+calls,description:input.description,amount:input.amount}];return null;},updateAdminFinancialEntry:async(id,input)=>{lastInput=input;entries=entries.map(row=>row.id===id?{...row,...input}:row);return null;},deleteAdminFinancialEntry:async()=>null,updateAdminContractValue:async()=>null};
 const operations={listFinancialAccounts:()=>ok([{id:'account',name:'Conta de teste',openingBalance:1000,openingBalanceDate:'2020-01-01',accountType:'bank'}]),listTimesheets:()=>ok([]),listFiscalDocuments:()=>ok([]),getAdminFinancialPreferences:()=>ok({defaultHourlyRate:null}),createFinancialAccount:async()=>null,updateAdminFinancialPreferences:async()=>null,createTimesheet:async()=>null,createFiscalDocument:async()=>null,importOfxTransactions:async()=>({imported:0,reconciled:0,error:null})};
@@ -63,6 +64,17 @@ const component=load('src/app/admin/financial.tsx',{
  '@/components/legacy-financial-audit-panel':legacyPanel,
  '@/lib/legacy-finance-audit':legacyAudit,
  '@/services/legacy-receipt-service':{listAdminReceiptReferences:()=>ok([{id:'synthetic-receipt',financialEntryId:'paid',clientId:'c',projectId:'p',amount:100,paidOn:today}])},
+ '@/services/financial-origin-review-service':{
+  listFinancialOriginReviews:()=>ok(originReviews),
+  recordFinancialOriginReview:async input=>{
+   const entry=entries.find(x=>x.id===input.financialEntryId);
+   assert(entry);originReviewCalls++;
+   originReviews=[...originReviews,{id:originReviewCalls,financialEntryId:entry.id,classification:input.classification,
+    reason:input.reason,snapshot:{clientId:entry.clientId??null,projectId:entry.projectId??null,
+     contractId:entry.contractId??null,amount:entry.amount,type:entry.type,status:entry.status}}];
+   return {data:originReviewCalls,error:null};
+  }
+ },
  '@/components/financial-detail-sections':financialDetails,
  '@/components/financial-styles':{financialStyleDefinitions:()=>({})},
  '@/components/admin-client-picker':{AdminClientPicker:props=>e('client-picker',props)},
@@ -152,5 +164,17 @@ await act(async()=>toReview.props.onPress());
 assert(field('Descrição'),'Ação deve abrir o editor do registro existente');
 assert(button('Confirmar alterações'),'Editor deve alterar o registro, nunca gerar novo lançamento');
 assert.equal(calls,createsBeforeReview,'Abrir revisão não pode gerar uma entrada financeira');
+await act(async()=>choices('Área financeira').props.onChange('receivables'));
+const classify=renderer.root.findAllByType('button').find(node=>node.props.title?.startsWith('Classificar origem • '));
+assert(classify,'Classificação de origem deve estar visível para lançamentos sem vínculo');
+await act(async()=>classify.props.onPress());
+assert(field('Justificativa da classificação'));
+await act(async()=>field('Justificativa da classificação').props.onChangeText('Serviço avulso realizado sem contrato'));
+const amountBefore=entries.reduce((sum,x)=>sum+x.amount,0);
+await act(async()=>button('Confirmar como serviço avulso').props.onPress());
+assert.equal(originReviewCalls,1);
+assert.equal(entries.reduce((sum,x)=>sum+x.amount,0),amountBefore,'Classificação não altera saldo financeiro');
+assert(text().includes('Serviços avulsos confirmados: '),'Painel deve apresentar a contagem dos avulsos confirmados');
+assert.equal(legacyAudit.auditLegacyReceivables(admin.listAdminContracts? (await admin.listAdminContracts()).data:[],[project],entries,[],originReviews).confirmedStandaloneEntries,1,'Motor deve confirmar o avulso após a revisão');
 await act(async()=>renderer.unmount());
 console.log('FINANCEIRO UI: filtros, cancelados, cadastro com clique duplo, preservação após erro, saldo e rascunho fiscal aprovados.');

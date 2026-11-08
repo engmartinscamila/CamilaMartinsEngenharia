@@ -53,3 +53,9 @@
 ## Complemento de execução — regularização guiada (07/11/2026)
 
 O painel de conciliação passa a ter botões **Informar valor** para contratos sem valor e **Revisar lançamento** para lançamentos sem vínculo contratual. O segundo botão abre o **mesmo registro financeiro** no editor já existente; não cria um lançamento nem atribui contrato presumido. Divergências de recibos com pagamento identificado também possuem atalho de revisão. O algoritmo acusa diferença de projeto mesmo quando o projeto está ausente em um dos lados do vínculo. O teste de interface comprova que abrir uma pendência não movimenta o caixa. A validação do vínculo avulso exige decisão administrativa; sem a confirmação, a migração automática permanece bloqueada.
+
+## Classificação explícita de serviços avulsos — 08/11/2026
+
+Os três lançamentos registrados somente em nome de cliente devem receber uma classificação **confirmada por administrador** antes da migração. Não há atribuição automática de contratos nem alteração de valor/caixa. A tabela aditiva `financial_origin_review_events` armazena versões imutáveis da decisão, justificativa, responsável e snapshot (cliente, projeto, contrato, natureza, valor, status), por `request_id` idempotente. O relatório utiliza **a revisão mais recente** e volta a exigir conferência se qualquer característica do snapshot mudar. Excluir o contrato ou alterar os valores de origem não é uma consequência desta classificação. O recibo é uma entidade independente e já possui conferência individual.
+
+`docs/finance-v2/0003-legacy-origin-review-candidate.sql` só pode ser aplicado em produção depois dos testes PostgreSQL/RLS e da verificação em homologação; não migra V2 nem modifica lançamentos financeiros. A classificação depende de confirmação fundamentada na interface administrativa — não preencher esses dados por suposição.
