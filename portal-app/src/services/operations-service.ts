@@ -309,7 +309,8 @@ export async function createPurchaseQuote(input: {
     p_description:input.description?.trim() || null,p_due_date:input.dueDate || null,
     p_item_description:input.itemDescription.trim(),p_quantity:input.quantity,p_unit:input.unit.trim(),
   });
-  return result.error ? 'Não foi possível salvar a cotação com seu item. Confira os dados e tente novamente; o reenvio não cria duplicata.' : null;
+  return result.error || typeof result.data !== 'string' || !result.data
+    ? 'Não foi possível confirmar a cotação com seu item. Confira os dados e tente novamente; o reenvio não cria duplicata.' : null;
 }
 
 /** Não permite adicionar/alterar proposta após a aprovação de uma cotação. */
@@ -333,7 +334,8 @@ export async function addSupplierBid(input: {
     p_lead_time_days:input.leadTimeDays??null,p_payment_terms:input.paymentTerms.trim(),
     p_notes:input.notes?.trim() || null,
   });
-  return result.error ? 'Proposta não registrada. Confira se a cotação ainda aceita propostas e se o fornecedor está ativo.' : null;
+  return result.error || typeof result.data !== 'string' || !result.data
+    ? 'Proposta não confirmada. Confira se a cotação ainda aceita propostas e se o fornecedor está ativo.' : null;
 }
 
 /** Aprova somente fornecedor com proposta vinculada, preservando a escolha já concluída. */
@@ -342,7 +344,8 @@ export async function selectSupplierBid(quoteId: string, supplierId: string) {
   const result = await supabase.rpc('admin_approve_supplier_bid',{
     p_quote_id:quoteId,p_supplier_id:supplierId,
   });
-  return result.error ? 'Aprovação não concluída: confirme a proposta e o estado atual da cotação. Nenhum pedido foi emitido.' : null;
+  return result.error || typeof result.data !== 'string' || !result.data
+    ? 'Aprovação não confirmada: confira a proposta e o estado atual da cotação. Nenhum pedido foi emitido.' : null;
 }
 
 export async function listProjectFinancialSummaries(): Promise<ServiceResult<ProjectFinancialSummary[]>> {
