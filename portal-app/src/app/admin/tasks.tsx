@@ -121,7 +121,8 @@ export default function AdminTasksScreen() {
     if (!projectId) return;
     const baseDate = startDate && isValidIsoDate(startDate) ? startDate : new Date().toISOString().slice(0, 10);
     const actionError = await applyTaskTemplate(templateId, projectId, baseDate);
-    if (actionError) setError(actionError); else { setSuccess('Modelo aplicado e cronograma operacional criado.'); await loadTasks(); }
+    if (actionError) setError(selectedProject?.contractId ? actionError : 'Modelos automáticos para projetos sem contrato aguardam a atualização segura do banco. Você já pode cadastrar tarefas manualmente.');
+    else { setSuccess('Modelo aplicado e cronograma operacional criado.'); await loadTasks(); }
   };
 
   return (
