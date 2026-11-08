@@ -288,6 +288,7 @@ export async function listPurchaseQuotes(projectId?: string): Promise<ServiceRes
   };
 }
 
+/** Cotação e item inicial persistidos na mesma transação, idempotente por solicitação. */
 export async function createPurchaseQuote(input: {
   projectId: string;
   title: string;
@@ -296,23 +297,22 @@ export async function createPurchaseQuote(input: {
   itemDescription: string;
   quantity: number;
   unit: string;
+  requestId: string;
 }) {
-  const quote = await supabase.from('purchase_quotes').insert({
-    project_id: input.projectId, title: input.title.trim(), description: input.description?.trim() || null,
-    due_date: input.dueDate || null, status: 'collecting',
-  }).select('id').single();
-  if (quote.error || !quote.data) return 'Não foi possível abrir a cotação.';
-  const item = await supabase.from('purchase_quote_items').insert({
-    quote_id: quote.data.id, description: input.itemDescription.trim(),
-    quantity: input.quantity, unit: input.unit.trim() || 'un',
-  });
-  if (item.error) {
-    await supabase.from('purchase_quotes').delete().eq('id', quote.data.id);
-    return 'A cotação foi revertida porque o item não pôde ser salvo.';
+  if (!input.projectId || !input.requestId || !input.title.trim() || !input.itemDescription.trim() ||
+    !Number.isFinite(input.quantity) || input.quantity <= 0 || input.quantity > 1000000000 ||
+    !input.unit.trim() || (input.dueDate && !isValidIsoDate(input.dueDate))) {
+    return 'Preencha os dados da cotação e confira a quantidade e a data.';
   }
-  return null;
+  const result = await supabase.rpc('admin_create_purchase_quote',{
+    p_request_id:input.requestId, p_project_id:input.projectId, p_title:input.title.trim(),
+    p_description:input.description?.trim() || null,p_due_date:input.dueDate || null,
+    p_item_description:input.itemDescription.trim(),p_quantity:input.quantity,p_unit:input.unit.trim(),
+  });
+  return result.error ? 'Não foi possível salvar a cotação com seu item. Confira os dados e tente novamente; o reenvio não cria duplicata.' : null;
 }
 
+/** Não permite adicionar/alterar proposta após a aprovação de uma cotação. */
 export async function addSupplierBid(input: {
   quoteId: string;
   supplierId: string;
@@ -321,19 +321,28 @@ export async function addSupplierBid(input: {
   paymentTerms?: string;
   notes?: string;
 }) {
-  const result = await supabase.from('supplier_bids').upsert({
-    quote_id: input.quoteId, supplier_id: input.supplierId, total_amount: input.totalAmount,
-    lead_time_days: input.leadTimeDays ?? null, payment_terms: input.paymentTerms?.trim() || null,
-    notes: input.notes?.trim() || null,
-  }, { onConflict: 'quote_id,supplier_id' });
-  return result.error ? 'Não foi possível registrar a proposta do fornecedor.' : null;
+  if (!input.quoteId || !input.supplierId || !Number.isFinite(input.totalAmount) ||
+    input.totalAmount<0 || input.totalAmount>1000000000000 ||
+    (input.leadTimeDays!==null && input.leadTimeDays!==undefined &&
+     (!Number.isInteger(input.leadTimeDays) || input.leadTimeDays<0)) ||
+    !input.paymentTerms?.trim()) {
+    return 'Confira fornecedor, valor, prazo e condição de pagamento.';
+  }
+  const result = await supabase.rpc('admin_register_supplier_bid',{
+    p_quote_id:input.quoteId,p_supplier_id:input.supplierId,p_total_amount:input.totalAmount,
+    p_lead_time_days:input.leadTimeDays??null,p_payment_terms:input.paymentTerms.trim(),
+    p_notes:input.notes?.trim() || null,
+  });
+  return result.error ? 'Proposta não registrada. Confira se a cotação ainda aceita propostas e se o fornecedor está ativo.' : null;
 }
 
+/** Aprova somente fornecedor com proposta vinculada, preservando a escolha já concluída. */
 export async function selectSupplierBid(quoteId: string, supplierId: string) {
-  const result = await supabase.from('purchase_quotes').update({
-    selected_supplier_id: supplierId, status: 'approved',
-  }).eq('id', quoteId).select('id').maybeSingle();
-  return result.error || !result.data ? 'Não foi possível aprovar a proposta. Atualize a lista e confira seu acesso.' : null;
+  if (!quoteId || !supplierId) return 'Selecione a cotação e a proposta do fornecedor.';
+  const result = await supabase.rpc('admin_approve_supplier_bid',{
+    p_quote_id:quoteId,p_supplier_id:supplierId,
+  });
+  return result.error ? 'Aprovação não concluída: confirme a proposta e o estado atual da cotação. Nenhum pedido foi emitido.' : null;
 }
 
 export async function listProjectFinancialSummaries(): Promise<ServiceResult<ProjectFinancialSummary[]>> {
