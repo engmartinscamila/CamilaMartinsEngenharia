@@ -102,6 +102,7 @@ jobs:
         run: |
           node scripts/test-procurement-comparison.mjs
           node scripts/test-procurement-service.mjs
+          node scripts/test-procurement-pagination.mjs
 
       - name: Testar a interface financeira com dados sintéticos
         run: |
