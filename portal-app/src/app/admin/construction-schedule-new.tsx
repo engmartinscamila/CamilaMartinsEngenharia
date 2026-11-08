@@ -248,7 +248,7 @@ export default function NewConstructionScheduleScreen() {
         </Card> : null}
         {project ? <Card>
           <Text>2C. Obra sem cronograma completo contratado — uso interno</Text>
-          <Notice tone="info">Para obras em que o cliente não contratou o cronograma completo (serviço "s"), como uma obra sem contrato. Você controla custos, medições e linha de base internamente. Este cronograma nunca é publicado ao cliente; o andamento dos serviços contratados continua no acompanhamento simples. Se o projeto tiver um cronograma legado, ele é preservado como histórico.</Notice>
+          <Notice tone="info">Para obras em que o cliente não contratou o cronograma completo (serviço &quot;s&quot;), como uma obra sem contrato. Você controla custos, medições e linha de base internamente. Este cronograma nunca é publicado ao cliente; o andamento dos serviços contratados continua no acompanhamento simples. Se o projeto tiver um cronograma legado, ele é preservado como histórico.</Notice>
           <Button title={`Usar cronograma interno${internalMode ? ' ✓' : ''}`} variant={internalMode ? 'primary' : 'secondary'} onPress={() => { setInternalMode(true); setQuoteId(''); setContractId(''); setAdditionalAuthorizationId(''); clearPlan(); }} />
           {internalMode ? <Field label="Motivo do cronograma interno (fica registrado)" value={internalReason} multiline onChangeText={setInternalReason} /> : null}
         </Card> : null}
