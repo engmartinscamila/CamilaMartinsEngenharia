@@ -32,16 +32,19 @@ export default function ProjectCostControlScreen() {
 
   useEffect(() => {
     let live = true;
-    if (!projectId) {
-      setReport(null);
-      return () => {live = false;};
-    }
-    setReport(null); setBusy(true); setError(null);
-    void loadProjectCostReport(projectId).then(result => {
+    const task = setTimeout(() => {
       if (!live) return;
-      setReport(result.data); setError(result.error); setBusy(false);
-    });
-    return () => {live = false;};
+      if (!projectId) {
+        setReport(null); setBusy(false);
+        return;
+      }
+      setReport(null); setBusy(true); setError(null);
+      void loadProjectCostReport(projectId).then(result => {
+        if (!live) return;
+        setReport(result.data); setError(result.error); setBusy(false);
+      });
+    }, 0);
+    return () => {live = false; clearTimeout(task);};
   }, [projectId, refresh]);
 
   const values = report?.evidence;
