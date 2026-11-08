@@ -3,7 +3,7 @@ import fs from 'node:fs';
 
 const source = fs.readFileSync(new URL('../../cloudflare/media-worker/src/index.js', import.meta.url), 'utf8');
 const moduleUrl = 'data:text/javascript;base64,' + Buffer.from(source).toString('base64');
-const { default: worker } = await import(moduleUrl);
+const { default: worker, manifestReferencedKeys } = await import(moduleUrl);
 
 const evilPreflight = await worker.fetch(new Request('https://media.invalid/api/upload', {
   method: 'OPTIONS',
@@ -41,3 +41,9 @@ assert.match(source, /status >= 500[\s\S]*"Erro interno\."/,
   'Falhas internas precisam de resposta pública genérica');
 
 console.log('PASS: Worker bloqueia origem indevida, preserva CORS legítimo, sanitiza 5xx e rejeita travessia de chave.');
+
+// Exclusão nunca remove arquivo ainda referenciado pelo catálogo novo.
+const refs = manifestReferencedKeys({ projetos: [{ imagens: ['portfolio/a/imagem/01.webp', { src: 'https://cme-public-media.example.workers.dev/media/portfolio/a/video/v.mp4?x=1' }] }, { capa: '/portfolio/b/imagem/01.webp' }] });
+assert.deepEqual([...refs].sort(), ['portfolio/a/imagem/01.webp', 'portfolio/a/video/v.mp4', 'portfolio/b/imagem/01.webp']);
+assert.match(source, /stillReferenced\.has\(key\)[\s\S]*Nada foi removido/, 'delete-batch deve recusar arquivos ainda referenciados');
+console.log('PASS: exclusão de mídia recusa arquivos ainda usados no catálogo.');

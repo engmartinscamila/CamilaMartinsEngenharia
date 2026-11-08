@@ -68,6 +68,7 @@ jobs:
           node scripts/security/ofx-regression.mjs
           node scripts/security/admin-receipt-financial-regression.mjs
           node scripts/security/receipt-cash-regression.mjs
+          node scripts/portfolio-r2-delete-guard-regression.mjs
           node scripts/security/commercial-closure-regression.mjs
           node scripts/security/project-before-contract-regression.mjs
           node scripts/security/commercial-emission-leases-regression.mjs
