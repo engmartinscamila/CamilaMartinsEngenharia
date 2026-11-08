@@ -1,5 +1,5 @@
 import {useAdminModule,useAdminProjectSelection} from '@/providers/admin-module-context';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { AdminPageHeader } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView } from '@/components/ui';
@@ -33,14 +33,31 @@ export default function ConstructionScheduleBudgetScreen() {
     total:null,valid:false,errors:[],lineCosts:{} as Record<string,number>,
   },[draft]);
 
-  const load=async(id:string, preserveSuccess=false)=>{
-    setProjectId(id);setDraft(null);setLoading(true);setError(null);
+  // A01: cada carregamento recebe um número; respostas de projetos anteriores
+  // que cheguem atrasadas são descartadas em vez de sobrescrever o projeto atual.
+  const requestSeq=useRef(0);
+  const fetchDraft=useCallback(async(id:string, preserveSuccess=false)=>{
+    const seq=++requestSeq.current;
+    setDraft(null);setError(null);
     if(!preserveSuccess)setSuccess(null);
-    const result=await loadCurrentScheduleBudget(id);
+    if(!id){setLoading(false);return;}
+    setLoading(true);
+    let result:Awaited<ReturnType<typeof loadCurrentScheduleBudget>>;
+    try{result=await loadCurrentScheduleBudget(id);}
+    catch(cause){result={data:null,error:cause instanceof Error?cause.message:'Falha de conexão ao carregar o orçamento.'};}
+    if(seq!==requestSeq.current)return;
     setLoading(false);
     if(result.error||!result.data){setError(result.error??'Orçamento indisponível.');return;}
+    if(result.data.projectId!==id){setError('O orçamento recebido não pertence ao projeto selecionado. Atualize a página.');return;}
     setDraft(result.data);
-  };
+  },[]);
+
+  // Carrega automaticamente sempre que o projeto selecionado mudar — inclusive
+  // quando a seleção vem do painel principal (modo incorporado).
+  useEffect(()=>{const task=setTimeout(()=>void fetchDraft(projectId??''),0);return()=>clearTimeout(task);},[projectId,fetchDraft]);
+  useEffect(()=>()=>{requestSeq.current++;},[]);
+
+  const load=(id:string)=>{ if(id===projectId)void fetchDraft(id); else setProjectId(id); };
 
   const change=(code:string,key:'quantity'|'unit'|'unitCost'|'plannedCost'|'costSource',value:string)=>{
     setDraft(current=>current?{...current,items:current.items.map(item=>item.code===code?{...item,[key]:value}:item)}:current);
@@ -53,7 +70,7 @@ export default function ConstructionScheduleBudgetScreen() {
     const result=await saveCurrentScheduleBudget(draft);
     setLoading(false);
     if(result.error){setError(result.error);return;}
-    await load(projectId, true);
+    await fetchDraft(projectId, true);
     setSuccess(`Orçamento de execução salvo. Custo total: ${(result.total??0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}. Os pesos financeiros foram recalculados a partir destes custos.`);
   };
 
