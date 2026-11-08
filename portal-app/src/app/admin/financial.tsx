@@ -25,7 +25,7 @@ import { randomUUID } from 'expo-crypto';
 import { accountBalance, categoryLabel, effectiveStatus, entryDate, filterFinancialEntries, financialCategories, financialCategory, financialStatus, financialToday, financialTotals, receivableStatements, type BankTransaction } from '@/lib/financial-model';
 import { exportFinancialCsv, exportFinancialExcel, exportReceivableCsv, listBankTransactions, updateAccountReference } from '@/services/financial-tools';
 import { supabase } from '@/lib/supabase';
-import { formatCurrency, formatDate, isValidIsoDate, parseBrazilianCurrency } from '@/lib/format';
+import { formatCurrency, formatDate, isValidIsoDate, moneyToCents, parseBrazilianCurrency } from '@/lib/format';
 import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
 import {
   createAdminFinancialEntry,
@@ -255,7 +255,8 @@ export default function AdminFinancialScreen() {
     const invalid:Record<string,string>={};
     if(!clientId)invalid.client=(embedded?.projectId||entryLink==='project')?'Selecione um projeto da lista ou use Cliente — contrato opcional para um serviço avulso.':'Selecione o cliente na lista. Contrato e projeto são opcionais neste modo.';
     if(description.trim().length<2)invalid.description='Preencha a descrição do lançamento com pelo menos 2 caracteres.';
-    if(parsed===null||parsed<=0)invalid.amount='Informe um valor maior que zero. Exemplo: 500,00.';
+    if(parsed!==null&&moneyToCents(parsed)===null)invalid.amount=`Use no máximo duas casas decimais (ex.: 100,01). O valor ${amount.trim()} não será arredondado automaticamente.`;
+    else if(parsed===null||parsed<=0)invalid.amount='Informe um valor maior que zero. Exemplo: 500,00.';
     if(!isValidIsoDate(dateValue))invalid.date='Informe uma data válida para o lançamento (DD/MM/AAAA ou AAAA-MM-DD).';
     if(dueValue&&!isValidIsoDate(dueValue))invalid.dueDate='Informe uma data de vencimento válida ou deixe em branco.';
     if(entryStatus==='pago'&&paidValue&&!isValidIsoDate(paidValue))invalid.paidAt='Informe uma data efetiva de pagamento válida.';
