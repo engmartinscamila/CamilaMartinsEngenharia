@@ -54,8 +54,13 @@ export default function AdminTasksScreen() {
     setProjects(projectResult.data);
     setTemplates(templateResult.data);
     setError(projectResult.error ?? templateResult.error);
-    setProjectId((current) => current && projectResult.data.some((item) => item.id === current) ? current : projectResult.data[0]?.id ?? null);
-  }, [setProjectId]);
+
+  }, []);
+  useEffect(() => {
+    if (projects.length && !projects.some((project) => project.id === projectId)) {
+      setProjectId(projects[0].id);
+    }
+  }, [projectId, projects, setProjectId]);
   const loadTasks = useCallback(async () => {
     if (!projectId) { setTasks([]); return; }
     setLoading(true);
