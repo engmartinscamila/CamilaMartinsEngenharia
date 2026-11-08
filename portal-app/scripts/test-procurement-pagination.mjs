@@ -6,7 +6,7 @@ import ts from 'typescript';
 const moduleLoad=(src,deps={})=>{
  const exports={};
  const js=ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
- vm.runInNewContext(js,{exports,console,Number,Math,Date,require:name=>{if(!(name in deps))throw Error('Dependência inesperada '+name);return deps[name];}});
+ vm.runInNewContext(js,{exports,console,Number,Math,Date,...deps,require:name=>{if(!(name in deps))throw Error('Dependência inesperada '+name);return deps[name];}});
  return exports;
 };
 const {readAllRows}=moduleLoad(fs.readFileSync('src/lib/paginated-query.ts','utf8'));
@@ -44,8 +44,7 @@ const db={from(table){
  return query;
 }};
 const {listSuppliers,listPurchaseQuotes}=moduleLoad(src.slice(a,b)+src.slice(c,d),{
- '@/lib/paginated-query':{readAllRows},
- '@/lib/supabase':{supabase:db},
+ readAllRows,supabase:db,failure:(data,error)=>({data,error}),
 });
 let r=await listSuppliers();
 assert.equal(r.error,null);assert.equal(r.data.length,625);
