@@ -1,11 +1,13 @@
 import {useAdminModule,useAdminProjectSelection} from '@/providers/admin-module-context';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { randomUUID } from 'expo-crypto';
 import { Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
 import { DateField } from '@/components/date-field';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
 import { formatCurrency, formatDate, isValidIsoDate, parseBrazilianCurrency } from '@/lib/format';
+import { analyzeSupplierQuote } from '@/lib/procurement-comparison';
 import { useThemeStyles } from '@/providers/theme-provider';
 import { listAdminProjects } from '@/services/admin-service';
 import {
@@ -44,17 +46,21 @@ export default function AdminProcurementScreen() {
   const [paymentTerms, setPaymentTerms] = useState('');
   const [customPaymentTerms, setCustomPaymentTerms] = useState('');
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const quoteRequest = useRef<{fingerprint:string;id:string}|null>(null);
+  const mutationInFlight = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   const loadBase = useCallback(async () => {
     const [projectResult, supplierResult] = await Promise.all([listAdminProjects(), listSuppliers()]);
-    const valid = projectResult.data.filter((project) => project.contractId);
-    setProjects(valid); setProjectId((current) => current ?? valid[0]?.id ?? null);
+    // Um projeto de execução pode existir antes do contrato formal.
+    const valid = projectResult.data;
+    setProjects(valid); setProjectId((current) => current && valid.some(row=>row.id===current)?current:valid[0]?.id??null);
     setSuppliers(supplierResult.data); setError(projectResult.error ?? supplierResult.error);
   }, [setProjectId]);
   const loadQuotes = useCallback(async () => {
-    if (!projectId) return;
+    if (!projectId) { setQuotes([]);setQuoteId(null); return; }
     setLoading(true); const result = await listPurchaseQuotes(projectId);
     setQuotes(result.data); setError(result.error); setLoading(false);
   }, [projectId]);
@@ -74,31 +80,51 @@ export default function AdminProcurementScreen() {
     if (!projectId || title.trim().length < 3 || itemDescription.trim().length < 2 || !Number.isFinite(parsedQuantity) || parsedQuantity <= 0) { setError('Preencha projeto, título, item e quantidade válida.'); return; }
     if (dueDate && !isValidIsoDate(dueDate)) { setError('Selecione uma data limite válida.'); return; }
     if (!finalUnit) { setError('Selecione ou especifique a unidade de medida.'); return; }
-    const actionError = await createPurchaseQuote({ projectId, title, description, dueDate, itemDescription, quantity: parsedQuantity, unit: finalUnit });
-    if (actionError) setError(actionError); else { setTitle(''); setDescription(''); setDueDate(''); setItemDescription(''); setQuantity('1'); setUnit('un'); setCustomUnit(''); setSuccess('Cotação aberta para comparação de fornecedores.'); await loadQuotes(); }
+    if(mutationInFlight.current)return;
+    const fingerprint=JSON.stringify({projectId,title:title.trim(),description:description.trim(),dueDate,itemDescription:itemDescription.trim(),quantity:parsedQuantity,unit:finalUnit});
+    if(quoteRequest.current?.fingerprint!==fingerprint)quoteRequest.current={fingerprint,id:randomUUID()};
+    mutationInFlight.current=true;setSaving(true);setError(null);
+    try{
+      const actionError = await createPurchaseQuote({ projectId, title, description, dueDate, itemDescription, quantity: parsedQuantity, unit: finalUnit, requestId:quoteRequest.current.id });
+      if (actionError) setError(actionError);
+      else {
+        quoteRequest.current=null;
+        setTitle(''); setDescription(''); setDueDate(''); setItemDescription(''); setQuantity('1'); setUnit('un'); setCustomUnit('');
+        setSuccess('Cotação e item salvos na mesma operação.'); await loadQuotes();
+      }
+    }finally{mutationInFlight.current=false;setSaving(false);}
   };
   const saveBid = async () => {
     const amount = parseBrazilianCurrency(bidAmount);
     const days = leadTime ? Number(leadTime) : null;
     if (!quoteId || !supplierId || amount === null || amount < 0 || (days !== null && (!Number.isInteger(days) || days < 0))) { setError('Selecione cotação e fornecedor; informe valor e prazo válidos.'); return; }
+    if(mutationInFlight.current)return;
     const finalPayment = paymentTerms === 'Outro' ? customPaymentTerms.trim() : paymentTerms;
     if (!finalPayment) { setError('Selecione ou especifique a condição de pagamento.'); return; }
-    const actionError = await addSupplierBid({ quoteId, supplierId, totalAmount: amount, leadTimeDays: days, paymentTerms: finalPayment });
-    if (actionError) setError(actionError); else { setBidAmount(''); setLeadTime(''); setPaymentTerms(''); setCustomPaymentTerms(''); setSuccess('Proposta registrada e ranking atualizado.'); await loadQuotes(); }
+    mutationInFlight.current=true;setSaving(true);setError(null);
+    try{
+      const actionError = await addSupplierBid({ quoteId, supplierId, totalAmount: amount, leadTimeDays: days, paymentTerms: finalPayment });
+      if (actionError) setError(actionError);
+      else { setBidAmount(''); setLeadTime(''); setPaymentTerms(''); setCustomPaymentTerms(''); setSuccess('Proposta registrada e mapa comparativo atualizado.'); await loadQuotes(); }
+    }finally{mutationInFlight.current=false;setSaving(false);}
   };
   const chooseBid = async (quote: PurchaseQuoteSummary, supplier: string) => {
-    const actionError = await selectSupplierBid(quote.id, supplier);
-    if (actionError) setError(actionError); else { setSuccess('Fornecedor escolhido e cotação aprovada.'); await loadQuotes(); }
+    if(mutationInFlight.current||!quote.bids.some(bid=>bid.supplierId===supplier))return;
+    mutationInFlight.current=true;setSaving(true);setError(null);
+    try{
+      const actionError = await selectSupplierBid(quote.id, supplier);
+      if (actionError) setError(actionError); else { setSuccess('Fornecedor escolhido e cotação aprovada, com registro de auditoria.'); await loadQuotes(); }
+    }finally{mutationInFlight.current=false;setSaving(false);}
   };
 
   return (
     <Screen>
       <AdminPageHeader title="Fornecedores e cotações" description="Compare preço, prazo e condição de pagamento por projeto." />
       {error ? <Notice tone="danger">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}
-      {!embedded ? <Card><Text style={styles.sectionTitle}>Projeto</Text><View style={styles.chips}>{projects.map((project) => <Pressable key={project.id} onPress={() => setProjectId(project.id)} style={[styles.chip, projectId === project.id && styles.selected]}><Text style={styles.chipText}>{project.contractNumber} • {project.name}</Text></Pressable>)}</View></Card> : null}
+      {!embedded ? <Card><Text style={styles.sectionTitle}>Projeto</Text><View style={styles.chips}>{projects.map((project) => <Pressable key={project.id} onPress={() => setProjectId(project.id)} style={[styles.chip, projectId === project.id && styles.selected]}><Text style={styles.chipText}>{project.contractNumber??'Sem contrato'} • {project.name}</Text></Pressable>)}</View></Card> : null}
       <View style={styles.columns}>
         <Card style={styles.column}><Text style={styles.sectionTitle}>Novo fornecedor</Text><Field label="Nome *" onChangeText={setSupplierName} value={supplierName} /><Text style={styles.label}>Categoria predefinida</Text><View style={styles.chips}>{SUPPLIER_CATEGORIES.map((item) => <Pressable key={item} onPress={() => setSupplierCategory(item)} style={[styles.chip, supplierCategory === item && styles.selected]}><Text style={styles.chipText}>{item}</Text></Pressable>)}</View>{supplierCategory === 'Outros' ? <Field label="Especifique a categoria" onChangeText={setCustomSupplierCategory} value={customSupplierCategory} /> : null}<Field label="Telefone / WhatsApp" onChangeText={setSupplierPhone} value={supplierPhone} /><Button onPress={() => void saveSupplier()} title="Cadastrar fornecedor" /></Card>
-        <Card style={styles.column}><Text style={styles.sectionTitle}>Abrir cotação</Text><Field label="Título do pedido *" onChangeText={setTitle} value={title} /><Field label="Descrição" multiline onChangeText={setDescription} value={description} /><DateField label="Prazo para receber propostas" optional onChange={setDueDate} value={dueDate} /><Field label="Item ou material cotado *" onChangeText={setItemDescription} value={itemDescription} /><View style={styles.row}><Field keyboardType="decimal-pad" label="Quantidade" onChangeText={setQuantity} value={quantity} /></View><Text style={styles.label}>Unidade de medida</Text><View style={styles.chips}>{MEASURE_UNITS.map((item) => <Pressable key={item} onPress={() => setUnit(item)} style={[styles.chip, unit === item && styles.selected]}><Text style={styles.chipText}>{item}</Text></Pressable>)}</View>{unit === 'Outra' ? <Field label="Outra unidade" onChangeText={setCustomUnit} value={customUnit} placeholder="Ex.: caixa, rolo, conjunto" /> : null}<Button onPress={() => void saveQuote()} title="Abrir cotação" /></Card>
+        <Card style={styles.column}><Text style={styles.sectionTitle}>Abrir cotação</Text><Field label="Título do pedido *" onChangeText={setTitle} value={title} /><Field label="Descrição" multiline onChangeText={setDescription} value={description} /><DateField label="Prazo para receber propostas" optional onChange={setDueDate} value={dueDate} /><Field label="Item ou material cotado *" onChangeText={setItemDescription} value={itemDescription} /><View style={styles.row}><Field keyboardType="decimal-pad" label="Quantidade" onChangeText={setQuantity} value={quantity} /></View><Text style={styles.label}>Unidade de medida</Text><View style={styles.chips}>{MEASURE_UNITS.map((item) => <Pressable key={item} onPress={() => setUnit(item)} style={[styles.chip, unit === item && styles.selected]}><Text style={styles.chipText}>{item}</Text></Pressable>)}</View>{unit === 'Outra' ? <Field label="Outra unidade" onChangeText={setCustomUnit} value={customUnit} placeholder="Ex.: caixa, rolo, conjunto" /> : null}<Button onPress={() => void saveQuote()} title="Abrir cotação" loading={saving} disabled={saving} /></Card>
       </View>
       <Card>
         <Text style={styles.sectionTitle}>Registrar proposta recebida</Text>
@@ -107,11 +133,36 @@ export default function AdminProcurementScreen() {
         <View style={styles.row}><Field keyboardType="decimal-pad" label="Valor total (R$)" onChangeText={setBidAmount} value={bidAmount} /><Field keyboardType="number-pad" label="Prazo (dias)" onChangeText={setLeadTime} value={leadTime} /></View>
         <Text style={styles.label}>Condição de pagamento</Text><View style={styles.chips}>{PAYMENT_OPTIONS.map((item) => <Pressable key={item} onPress={() => setPaymentTerms(item)} style={[styles.chip, paymentTerms === item && styles.selected]}><Text style={styles.chipText}>{item}</Text></Pressable>)}</View>
         {paymentTerms === 'Outro' ? <Field label="Outra condição de pagamento" onChangeText={setCustomPaymentTerms} value={customPaymentTerms} /> : null}
-        <Button onPress={() => void saveBid()} title="Registrar proposta" />
+        <Button onPress={() => void saveBid()} title="Registrar proposta" loading={saving} disabled={saving} />
       </Card>
       <Card>
         <Text style={styles.sectionTitle}>Mapa comparativo</Text>
-        {quotes.length === 0 ? <StateView icon="cart-outline" title="Nenhuma cotação" description="Abra uma cotação e registre as propostas recebidas." /> : quotes.map((quote) => <View key={quote.id} style={styles.quote}><View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.title}>{quote.title}</Text><Text style={styles.meta}>{quote.itemCount} item(ns) • limite {quote.dueDate ? formatDate(quote.dueDate) : 'sem data'}</Text></View><StatusPill label={quote.status} tone={quote.status === 'approved' ? 'success' : 'warning'} /></View>{quote.bids.length === 0 ? <Text style={styles.meta}>Aguardando propostas.</Text> : quote.bids.map((bid, index) => <View key={bid.id} style={[styles.bid, quote.selectedSupplierId === bid.supplierId && styles.winner]}><View style={{ flex: 1 }}><Text style={styles.title}>{index + 1}º • {bid.supplierName}</Text><Text style={styles.meta}>{formatCurrency(bid.totalAmount)} • {bid.leadTimeDays ?? '—'} dia(s) • {bid.paymentTerms || 'condição não informada'}</Text></View><Button disabled={quote.selectedSupplierId === bid.supplierId} onPress={() => void chooseBid(quote, bid.supplierId)} title={quote.selectedSupplierId === bid.supplierId ? 'Escolhido' : 'Escolher'} variant="ghost" /></View>)}</View>)}
+        {quotes.length === 0 ? <StateView icon="cart-outline" title="Nenhuma cotação" description="Abra uma cotação e registre as propostas recebidas." /> : quotes.map((quote) => {
+          const comparison=analyzeSupplierQuote(quote.bids,quote.selectedSupplierId);
+          const canApprove=['draft','collecting','analysis'].includes(quote.status);
+          return <View key={quote.id} style={styles.quote}>
+            <View style={styles.header}><View style={{flex:1}}>
+              <Text style={styles.title}>{quote.title}</Text>
+              <Text style={styles.meta}>{quote.itemCount} item(ns) • limite {quote.dueDate?formatDate(quote.dueDate):'sem data'}</Text>
+            </View><StatusPill label={quote.status} tone={quote.status==='approved'?'success':'warning'} /></View>
+            {comparison.lowestPrice!==null?<View style={{gap:4}}>
+              <Text style={styles.meta}>Menor proposta: {formatCurrency(comparison.lowestPrice)} • maior diferença entre valores: {formatCurrency(comparison.potentialPriceGap)} • menor prazo conhecido: {comparison.fastestKnownDays??'não informado'} dia(s)</Text>
+              {comparison.incompleteTerms>0?<Text style={styles.meta}>{comparison.incompleteTerms} proposta(s) sem prazo ou condição de pagamento completa. Confirme antes de aprovar.</Text>:null}
+              {comparison.selectedPricePremium!==null?<Text style={styles.meta}>Diferença da proposta escolhida para a menor: {formatCurrency(comparison.selectedPricePremium)}.</Text>:null}
+              <Text style={styles.meta}>Comparativo informativo: o menor preço não dispensa análise de prazo, especificações e condições.</Text>
+            </View>:null}
+            {comparison.bids.length===0?<Text style={styles.meta}>Aguardando propostas.</Text>:comparison.bids.map(({bid,priceRank,isLowestPrice,isFastestKnown})=>
+              <View key={bid.id} style={[styles.bid,quote.selectedSupplierId===bid.supplierId&&styles.winner]}>
+                <View style={{flex:1}}>
+                  <Text style={styles.title}>{priceRank}º por preço • {bid.supplierName}</Text>
+                  <Text style={styles.meta}>{formatCurrency(bid.totalAmount)} • {bid.leadTimeDays===null?'prazo não informado':bid.leadTimeDays+' dia(s)'} • {bid.paymentTerms||'condição não informada'}</Text>
+                  <Text style={styles.meta}>{isLowestPrice?'Menor valor • ':''}{isFastestKnown?'Menor prazo conhecido':''}</Text>
+                </View>
+                <Button disabled={saving||!canApprove||quote.selectedSupplierId===bid.supplierId} onPress={()=>void chooseBid(quote,bid.supplierId)}
+                  title={quote.selectedSupplierId===bid.supplierId?'Escolhido':canApprove?'Escolher':'Encerrada'} variant="ghost" />
+              </View>)}
+          </View>;
+        })}
       </Card>
       <Button loading={loading} onPress={() => void loadQuotes()} title="Atualizar cotações" variant="secondary" />
     </Screen>
