@@ -1,6 +1,8 @@
 /** Pure CPM analysis of an already calculated, approved or draft schedule.
  * Do not infer costs, physical weights, delays or historical measurements.
- * All links are finish-to-start, with no invented lag. Requested-start constraints
+ * Links are FS (default), SS or FF with an optional lag in work-calendar days
+ * (negative = lead). Absent type/lag behave exactly as before (FS, zero lag).
+ * Requested-start constraints
  * already reflected in the input dates remain visible as float in earlier tasks.
  */
 import type { PlannedActivity, WorkCalendar } from './construction-schedule-engine';
@@ -52,6 +54,22 @@ export function analyzeConstructionCriticalPath(
     while (!isWorkday(cursor)) cursor = shiftDay(cursor, -1);
     return cursor;
   };
+  const nextWorkday = (day: string): string => {
+    let cursor = shiftDay(day, 1);
+    while (!isWorkday(cursor)) cursor = shiftDay(cursor, 1);
+    return cursor;
+  };
+  const shiftWorkdays = (day: string, n: number): string => {
+    let cursor = day;
+    if (n === 0) { while (!isWorkday(cursor)) cursor = shiftDay(cursor, 1); return cursor; }
+    for (let remaining = Math.abs(n); remaining > 0; remaining--) cursor = n > 0 ? nextWorkday(cursor) : previousWorkday(cursor);
+    return cursor;
+  };
+  const finishOfDuration = (start: string, duration: number): string => {
+    let cursor = start;
+    for (let remaining = duration - 1; remaining > 0; remaining--) cursor = nextWorkday(cursor);
+    return cursor;
+  };
   const startOfDuration = (finish: string, duration: number): string => {
     let cursor = finish;
     for (let remaining = duration - 1; remaining > 0; remaining--) cursor = previousWorkday(cursor);
@@ -67,6 +85,7 @@ export function analyzeConstructionCriticalPath(
   };
   const byCode = new Map<string, PlannedActivity>();
   const successors = new Map<string, string[]>();
+  const linkOf = (task: PlannedActivity) => ({ type: task.dependencyType ?? 'FS', lag: task.lagDays ?? 0 });
   for (const task of activities) {
     if (!task.code.trim() || byCode.has(task.code)) throw new Error('Código de atividade vazio ou duplicado no CPM.');
     if (!Number.isSafeInteger(task.durationDays) || task.durationDays < 1) throw new Error(`Duração inválida em ${task.code}.`);
@@ -85,7 +104,13 @@ export function analyzeConstructionCriticalPath(
     if (!task.predecessorCode) continue;
     const predecessor = byCode.get(task.predecessorCode);
     if (!predecessor) throw new Error(`Dependência inexistente em ${task.code}.`);
-    if (predecessor.code === task.code || predecessor.plannedFinish >= task.plannedStart) {
+    const { type, lag } = linkOf(task);
+    const violates = type === 'FS'
+      ? task.plannedStart < shiftWorkdays(predecessor.plannedFinish, 1 + lag)
+      : type === 'SS'
+        ? task.plannedStart < shiftWorkdays(predecessor.plannedStart, lag)
+        : task.plannedFinish < shiftWorkdays(predecessor.plannedFinish, lag);
+    if (predecessor.code === task.code || violates || (type === 'FS' && lag >= 0 && predecessor.plannedFinish >= task.plannedStart)) {
       throw new Error(`Dependência ou datas inconsistentes em ${task.code}.`);
     }
     successors.get(predecessor.code)!.push(task.code);
@@ -99,11 +124,18 @@ export function analyzeConstructionCriticalPath(
     if (visiting.has(code)) throw new Error(`Dependências circulares em ${code}.`);
     visiting.add(code);
     const next = successors.get(code) ?? [];
+    const duration = byCode.get(code)!.durationDays;
     const latestFinish = next.length
-      ? next.map(successorCode => previousWorkday(resolve(successorCode).start))
-        .reduce((minimum, candidate) => candidate < minimum ? candidate : minimum)
+      ? next.map(successorCode => {
+        const successor = byCode.get(successorCode)!;
+        const late = resolve(successorCode);
+        const { type, lag } = linkOf(successor);
+        if (type === 'FS') return shiftWorkdays(late.start, -(1 + lag));
+        if (type === 'SS') return finishOfDuration(shiftWorkdays(late.start, -lag), duration);
+        return shiftWorkdays(late.finish, -lag);
+      }).reduce((minimum, candidate) => candidate < minimum ? candidate : minimum)
       : plannedFinish;
-    const latestStart = startOfDuration(latestFinish, byCode.get(code)!.durationDays);
+    const latestStart = startOfDuration(latestFinish, duration);
     if (latestStart < byCode.get(code)!.plannedStart) throw new Error(`Planejamento inviável em ${code}.`);
     const result = { start: latestStart, finish: latestFinish };
     latest.set(code, result);

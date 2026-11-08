@@ -35,4 +35,26 @@ bad(()=>plan(initial.map(a=>({...a,plannedCost:null,weightPercent:40})),{startDa
 bad(()=>plan(initial.map(a=>({...a,predecessorCode:a.code==='01'?'02':'01'})),{startDate:'2026-09-21',calendar:'weekdays'}),/circulares/);
 bad(()=>plan([{...initial[0],predecessorCode:'99'}],{startDate:'2026-09-21',calendar:'weekdays'}),/inexistente/);
 bad(()=>plan(initial,{startDate:'2026-02-30',calendar:'weekdays'}),/Data inválida/);
+// D05: SS, FF e defasagem (dias úteis). Seg 21/09/2026.
+const base={activity:'X',plannedCost:100,weightPercent:null,actualProgress:0};
+const linked=plan([
+ {...base,code:'A',predecessorCode:null,durationDays:5},
+ {...base,code:'B',predecessorCode:'A',dependencyType:'SS',lagDays:2,durationDays:3},
+ {...base,code:'C',predecessorCode:'A',dependencyType:'FF',lagDays:0,durationDays:2},
+ {...base,code:'D',predecessorCode:'A',dependencyType:'FS',lagDays:2,durationDays:1},
+ {...base,code:'E',predecessorCode:'A',dependencyType:'FS',lagDays:-1,durationDays:2},
+],{startDate:'2026-09-21',calendar:'weekdays'});
+const at=c=>linked.activities.find(a=>a.code===c);
+test(at('A').plannedFinish==='2026-09-25','A seg-sex');
+test(at('B').plannedStart==='2026-09-23'&&at('B').plannedFinish==='2026-09-25','SS+2: começa 2 dias úteis após o início da predecessora');
+test(at('C').plannedStart==='2026-09-24'&&at('C').plannedFinish==='2026-09-25','FF: termina junto com a predecessora');
+test(at('D').plannedStart==='2026-09-30','FS+2: pula fim de semana e 2 dias úteis de espera');
+test(at('E').plannedStart==='2026-09-25','FS-1: antecipação de 1 dia (sobreposição)');
+const ffClamp=plan([{...base,code:'A',predecessorCode:null,durationDays:1},{...base,code:'B',predecessorCode:'A',dependencyType:'FF',durationDays:5}],{startDate:'2026-09-21',calendar:'weekdays'});
+test(ffClamp.activities[1].plannedStart==='2026-09-21','FF nunca começa antes do início da obra');
+const legacy=plan(initial.map(a=>({...a,dependencyType:'FS',lagDays:0})),{startDate:'2026-09-21',calendar:'weekdays'});
+test(JSON.stringify(legacy.activities.map(a=>[a.plannedStart,a.plannedFinish]))===JSON.stringify(result.activities.map(a=>[a.plannedStart,a.plannedFinish])),'FS sem defasagem = comportamento anterior');
+bad(()=>plan([{...base,code:'A',predecessorCode:null,durationDays:1,lagDays:2}],{startDate:'2026-09-21',calendar:'weekdays'}),/sem predecessora/);
+bad(()=>plan([{...base,code:'A',predecessorCode:null,durationDays:1},{...base,code:'B',predecessorCode:'A',dependencyType:'XX',durationDays:1}],{startDate:'2026-09-21',calendar:'weekdays'}),/Tipo de dependência/);
+bad(()=>plan([{...base,code:'A',predecessorCode:null,durationDays:1},{...base,code:'B',predecessorCode:'A',lagDays:1.5,durationDays:1}],{startDate:'2026-09-21',calendar:'weekdays'}),/Defasagem/);
 console.log(`MOTOR DE CRONOGRAMA: ${checks} checks passaram.`);
