@@ -39,6 +39,7 @@ jobs:
       - name: Validar migrações candidatas somente em PostgreSQL isolado
         run: |
           node scripts/security/audit-financial-integrity-regression.mjs
+          node scripts/security/audit-money-precision-regression.mjs
           node scripts/security/audit-task-integrity-regression.mjs
       - name: Gerar e reabrir Word e Excel e rejeitar dados de parcelas ausentes
         run: |
