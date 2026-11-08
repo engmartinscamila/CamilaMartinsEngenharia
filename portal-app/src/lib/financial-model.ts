@@ -68,7 +68,7 @@ export function csvCell(value:unknown) {
 
 
 export interface ReceivableStatement {
-  id: string; clientName: string; contractNumber: string; contractValue: number | null;
+  id: string; clientName: string; contractNumber: string; contractValue: number | null; addendumValue?: number;
   received: number; pending: number; remaining: number | null; unscheduled: number | null;
   overdue: number; credit: number; entries: FinancialEntrySummary[]; inactive: boolean;
 }
@@ -80,10 +80,12 @@ export function receivableStatements(contracts:AdminContractSummary[], projects:
   const contractOf=(entry:FinancialEntrySummary)=>entry.contractId || (entry.projectId?projectMap.get(entry.projectId)?.contractId:null);
   const rows:ReceivableStatement[]=contracts.filter(contract=>!projectId || projectMap.get(projectId)?.contractId===contract.id).map(contract=>{
     const linked=entries.filter(entry=>entry.type==='entrada'&&contractOf(entry)===contract.id&&financialStatus(entry.status)!=='cancelado');
-    const totals=financialTotals(linked), value=contract.contractValue;
+    // A18: total de referência = valor original + aditivos aceitos (valor desconhecido continua desconhecido).
+    const addendum=contract.addendumValue??0;
+    const totals=financialTotals(linked), value=contract.contractValue===null?null:(Math.round(contract.contractValue*100)+Math.round(addendum*100))/100;
     const balance=value===null?null:(Math.round(value*100)-Math.round(totals.received*100))/100;
     const inactive=['cancelled','archived','cancelado','arquivado'].includes(contract.status);
-    return {id:contract.id,clientName:contract.clientName,contractNumber:contract.contractNumber,contractValue:value,
+    return {id:contract.id,clientName:contract.clientName,contractNumber:contract.contractNumber,contractValue:value,addendumValue:addendum,
       received:totals.received,pending:totals.receivable,remaining:balance===null?null:Math.max(0,balance),
       unscheduled:balance===null?null:Math.max(0,(Math.round(balance*100)-Math.round(totals.receivable*100))/100),
       overdue:financialTotals(linked.filter(entry=>effectiveStatus(entry)==='atrasado')).receivable,

@@ -102,6 +102,7 @@ jobs:
           CME_FIN_SQL_ROOT="$RUNNER_TEMP/finance-v2-test" node scripts/test-procurement-transaction-sql.mjs
           CME_PGLITE_ROOT="$RUNNER_TEMP/finance-v2-test" node ../scripts/security/project-tasks-integrity-regression.mjs
           CME_PGLITE_ROOT="$RUNNER_TEMP/finance-v2-test" node ../scripts/security/financial-receipt-origin-guards-regression.mjs
+          CME_PGLITE_ROOT="$RUNNER_TEMP/finance-v2-test" node ../scripts/security/addendum-financial-regression.mjs
 
       - name: Testar comparativo de preços e RPCs de compras
         run: |

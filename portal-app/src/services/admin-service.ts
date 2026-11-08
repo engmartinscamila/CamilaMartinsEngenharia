@@ -222,9 +222,17 @@ export async function listAdminContracts(): Promise<ServiceResult<AdminContractS
     .order('contract_number')
     );
   if (result.error) return { data: [], error: 'Não foi possível carregar os contratos.' };
+  // A18: aditivos aceitos somam-se ao total de referência sem alterar o valor original.
+  const addenda = await readAllRows(supabase.from('contract_addenda').select('id, contract_id, amount, status'));
+  const addendumByContract = new Map<string, number>();
+  if (!addenda.error) for (const row of addenda.data as any[]) {
+    if (!row.contract_id || row.status !== 'accepted') continue;
+    addendumByContract.set(row.contract_id, (addendumByContract.get(row.contract_id) ?? 0) + Math.round(Number(row.amount) * 100));
+  }
   return {
     data: (result.data ?? []).map((row: any) => ({
       id: row.id,
+      addendumValue: (addendumByContract.get(row.id) ?? 0) / 100,
       clientId: row.cliente_id,
       clientName: (Array.isArray(row.clientes) ? row.clientes[0] : row.clientes)?.nome ?? 'Cliente não informado',
       contractNumber: row.contract_number,
