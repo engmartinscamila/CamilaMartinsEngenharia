@@ -1,6 +1,6 @@
 import { readAllRows } from '@/lib/paginated-query';
 import { financialCategory, financialStatus, financialToday } from '@/lib/financial-model';
-import { normalizeStatus, isValidIsoDate } from '@/lib/format';
+import { normalizeStatus, isValidIsoDate, moneyToCents, optionalMoney } from '@/lib/format';
 import { decode } from 'base64-arraybuffer';
 import type { DocumentPickerAsset } from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -181,7 +181,7 @@ export async function listAdminProjects(): Promise<ServiceResult<AdminProjectSum
           city: row.cidade_obra,
           state: row.estado_obra,
           contract: contract
-            ? { id: contract.id, contractNumber: contract.contract_number, clientId: contract.cliente_id, serviceType: contract.service_type, status: contract.status, contractValue: Number.isFinite(Number(contract.contract_value)) ? Number(contract.contract_value) : null, currency: contract.currency ?? 'BRL' }
+            ? { id: contract.id, contractNumber: contract.contract_number, clientId: contract.cliente_id, serviceType: contract.service_type, status: contract.status, contractValue: optionalMoney(contract.contract_value), currency: contract.currency ?? 'BRL' }
             : null,
         } satisfies AdminProjectSummary;
       }),
@@ -738,7 +738,7 @@ export async function createAdminFinancialEntry(input: FinancialEntryInput) {
   const result=await supabase.from('financeiro').insert({...payload,...(input.requestId?{client_request_id:input.requestId}:{})}).select('id').single();
   if(result.error?.code==='23505' && input.requestId){
     const prior=await supabase.from('financeiro').select('*').eq('client_request_id',input.requestId).maybeSingle();
-    if(!prior.error && prior.data && Object.entries(payload).every(([key,value])=>key==='valor'?Number(prior.data[key])===value:(prior.data[key]??null)===(value??null)))return null;
+    if(!prior.error && prior.data && Object.entries(payload).every(([key,value])=>key==='valor'?moneyToCents(Number(prior.data[key]))===moneyToCents(value as number):(prior.data[key]??null)===(value??null)))return null;
     return 'Esta tentativa já foi registrada com outros dados. Atualize o extrato antes de tentar novamente.';
   }
   return result.error || !result.data ? 'Não foi possível confirmar o lançamento. Tente novamente sem alterar os dados.' : null;
@@ -746,10 +746,12 @@ export async function createAdminFinancialEntry(input: FinancialEntryInput) {
 export function financialEntryPayload(input:FinancialEntryInput) {
   if((!input.projectId&&!input.clientId) || input.description.trim().length<2 || !Number.isFinite(input.amount) || input.amount<=0)return 'Informe cliente ou projeto, descrição e um valor maior que zero.';
   if(!['entrada','saida'].includes(input.type) || !isValidIsoDate(input.date) || (input.dueDate && !isValidIsoDate(input.dueDate)) || (input.paidAt && !isValidIsoDate(input.paidAt)))return 'Informe datas e natureza válidas.';
+  const cents=moneyToCents(input.amount);
+  if(cents===null)return 'O valor tem mais de duas casas decimais. Use centavos, por exemplo 100,01.';
   const status=financialStatus(input.status??'pendente');
   const paid=status==='pago' ? input.paidAt || input.date : null;
   if(paid && paid>financialToday())return 'A data de recebimento/pagamento não pode estar no futuro.';
-  return {projeto_id:input.projectId??null,cliente_id:input.clientId??null,contract_id:input.contractId??null,descricao:input.description.trim(),tipo:input.type,valor:input.amount,data:input.date,
+  return {projeto_id:input.projectId??null,cliente_id:input.clientId??null,contract_id:input.contractId??null,descricao:input.description.trim(),tipo:input.type,valor:cents/100,data:input.date,
     observacoes:input.notes?.trim()||null,categoria:financialCategory(input.category??'outros'),status,
     data_vencimento:input.dueDate||input.date||null,data_pagamento:paid,account_id:input.accountId??null,forma_pagamento:input.paymentMethod?.trim()||null};
 }
