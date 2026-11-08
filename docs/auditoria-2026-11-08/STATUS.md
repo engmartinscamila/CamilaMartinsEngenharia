@@ -21,15 +21,15 @@ Base: dossiê de auditoria de 07/11/2026 (commit de referência `22328fb`). Cada
 | A15 | P2 | **Aguarda decisão D04** (escopo de compras: pedido, compromisso, conta a pagar). Nada foi inventado | — |
 | A16 | P2 | **Aguarda decisão D04** (SINAPI, BDI, curva ABC). Nenhuma integração falsa foi criada | — |
 | A17 | P2 | **Aguarda decisão D05** (SS/FF/lag). O FS atual foi preservado | — |
-| A18 | P1 | **Implementado e publicado no site**: aceite de aditivo gera uma única obrigação prevista e soma ao total de referência. **Migração do banco pendente da sua confirmação** (o site funciona sem ela) | PR #74 + migração `20261108060000` |
-| A19 | P1 | **Diagnóstico e procedimento entregues**. Lacuna corrigida e **aplicada na produção**: a exportação passa a incluir as revisões financeiras e as tarefas (os aditivos entram quando a migração do A18 for aplicada). Plano Free: sem backup restaurável | `A19-backup-e-restauracao.md` |
+| A18 | P1 | **Concluído**: site publicado e migração aplicada na produção (08/11, com confirmação da proprietária) | PR #74 + migração `20261108060000` |
+| A19 | P1 | **Diagnóstico e procedimento entregues**. Lacuna corrigida e **aplicada na produção**: a exportação passa a incluir as revisões financeiras e as tarefas (inclusive aditivos, reaplicado após o A18). Plano Free: sem backup restaurável | `A19-backup-e-restauracao.md` |
 | A20 | P2 | **Corrigido** (fixture, critérios rígidos e o mesmo arquivo no local e no CI) | PR #73 |
 | A21 | P2 | **Verificado na produção**: todas as funções `admin_*` conferem a administradora; nenhuma função privilegiada é executável sem login; sem permissão de CREATE no esquema `public`; nenhum bucket público; as funções de push conferem o dono. As 2 tabelas com RLS e sem política são de uso exclusivo do servidor (negam tudo ao cliente, o que é correto) | — |
 | A22 | P2 | **Verificado**: os 32 envios têm `provider_id` do Resend, e a consulta de entrega por ID existe em `dispatch-client-emails` | — |
 
 ## Pendências que dependem de você
 
-1. **Confirmar uma migração na produção** (aditiva, não altera dados existentes): `supabase/migrations/20261108060000_accepted_addendum_financial_obligation.sql` (A18). Depois dela, reaplicar `20261108070000_backup_include_financial_reviews.sql` para incluir os aditivos no backup.
+1. ~~Confirmar a migração do A18~~ — **feito em 08/11**.
 2. **Criar o token de implantação das Edge Functions** (implanta A11 e A12 e as correções futuras):
    - Supabase → Account → Access Tokens → *Generate new token*;
    - GitHub → repositório → Settings → Secrets and variables → Actions → *New repository secret* com o nome `SUPABASE_ACCESS_TOKEN`;
@@ -49,6 +49,15 @@ Base: dossiê de auditoria de 07/11/2026 (commit de referência `22328fb`). Cada
 | Revisões de contrato: a versão anterior passa a ser substituída; motivo obrigatório real | **Código pronto**; dados do CON-2026-10-0002 já corrigidos na produção (vigentes: contrato 4.0 e Anexo I 1.1) | PR #77 |
 | Emissão de documentos unificada (site e portal usam o mesmo gerador; documento emitido não é sobrescrito) | **Código pronto** | PR #77 |
 | Escopo do contrato com limites objetivos (quantidade, revisões, visitas, prazo, exclusões e cláusula de itens não listados) | **Código pronto** | PR #77 |
-| Cronograma: o único cronograma de produção está como "legacy" e por isso não aceita orçamento nem revisão | **Em andamento** | — |
+| Cronograma: o único cronograma de produção (Empreendimento Vitalle) está como "legacy" | **Diagnosticado** — ver abaixo | — |
+| Edge Functions publicadas pelo conector (sem token): `deliver-generated-document` v6 e `generate-commercial-document-final` v13 (revisões, escopo detalhado) | **Publicado e testado** (inicializa e recusa chamada sem sessão administrativa) | — |
+| `generate-contract-document` (A11, A12, proteção de documento emitido) | **Aguardando o token** — arquivo grande demais para publicar com segurança pelo conector. Enquanto isso, a tela não pede cópia reconstituída (evita gerar por cima de uma emissão) | PR #79 |
+
+### Cronograma do Empreendimento Vitalle (legacy)
+
+- O cronograma completo (com orçamento de execução, medições e revisões) exige que **cada atividade esteja ligada a um serviço contratado e tenha custo informado** — é isso que permite medir e cobrar com segurança.
+- As 20 atividades do cronograma do Vitalle foram criadas antes dessa regra: **nenhuma tem serviço de origem nem custo**, e o projeto não tem orçamento/contrato no módulo comercial (só o contrato cadastrado). Converter automaticamente exigiria inventar esses dados.
+- Caminho recomendado: (1) registrar o orçamento/contrato do Vitalle no módulo comercial (ou vincular o contrato existente); (2) em Gestão de obras → Cronograma completo → **Novo cronograma**, escolher o modelo e reaproveitar as atividades; (3) informar custo por atividade; (4) aprovar a linha de base. O cronograma legado continua visível como histórico e não é apagado.
+- O **cronograma simples** (38 linhas) segue funcionando normalmente.
 
 > As mudanças do PR #77 ficam nas Edge Functions: entram no ar quando o segredo `SUPABASE_ACCESS_TOKEN` estiver configurado (item 2 das pendências).
