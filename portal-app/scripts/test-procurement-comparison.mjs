@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import ts from 'typescript';
+const exports={};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/procurement-comparison.ts','utf8'),
+ {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,Math,Number});
+const analyze=exports.analyzeSupplierQuote;
+const bid=(id,amount,days,terms='Pix')=>({id,quoteId:'q',supplierId:id,supplierName:id,totalAmount:amount,leadTimeDays:days,paymentTerms:terms,notes:null});
+let out=analyze([],null);
+assert.equal(out.lowestPrice,null);assert.equal(out.fastestKnownDays,null);
+out=analyze([bid('A',120,8),bid('B',90,12),bid('C',120,4),bid('D',90,null,'')],'A');
+assert.deepEqual(Array.from(out.bids.map(x=>x.bid.id)),['B','D','A','C']);
+assert.deepEqual(Array.from(out.bids.map(x=>x.priceRank)),[1,1,3,3]);
+assert.equal(out.lowestPrice,90);assert.equal(out.highestPrice,120);
+assert.equal(out.fastestKnownDays,4);assert.equal(out.bids.find(x=>x.bid.id==='C').isFastestKnown,true);
+assert.equal(out.selectedPricePremium,30);assert.equal(out.potentialPriceGap,30);assert.equal(out.incompleteTerms,1);
+const swapped=analyze([bid('C',120,4),bid('B',90,12),bid('A',120,8)],'B');
+assert.equal(swapped.selectedPricePremium,0);
+out=analyze([bid('BAD',NaN,-1),bid('X',0,null)],'X');
+assert.equal(out.bids.length,1);assert.equal(out.fastestKnownDays,null);
+console.log('PASS: comparativo de fornecedores — empates, preço, prazo, lacunas e seleção manual sem alterar propostas.');
