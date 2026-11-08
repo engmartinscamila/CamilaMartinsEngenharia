@@ -20,6 +20,10 @@ assert.ok(annex.includes("anexo_i:'do Anexo I'")&&annex.includes('${versionLabel
 assert.ok(!annex.includes('Versão do Anexo I: v')&&annex.includes("estudo_preliminar:'do Estudo Preliminar'")&&annex.includes("notificacao_formal:'da Notificação Formal'"),'A11: demais documentos não usam o rótulo de versão do Anexo I');
 assert.equal((annex.match(/\.\.\.identity\(d,profile,generatedAt,kind\)/g)||[]).length,(annex.match(/\.\.\.identity\(/g)||[]).length,'A11: todo documento informa seu tipo ao bloco de identificação');
 assert.ok(annex.includes('a CONTRATADA entrega o serviço técnico-administrativo'), 'A Prefeitura deve continuar responsável pelo alvará e Habite-se');
+assert.ok(annex.includes("action==='reconstitute'")&&annex.includes('historical_reconstitution:true')&&annex.includes('/reconstituted/')&&annex.includes("upsert:false")&&annex.includes(".is('arquivo',null)"),'A12: reconstituição usa caminho próprio, não sobrescreve arquivo existente e só vincula documento sem arquivo');
+assert.ok(annex.includes('CÓPIA RECONSTITUÍDA')&&annex.includes('build(row.document_kind,reconstitutedData,profile,emittedAt)'),'A12: cópia reconstituída é identificada e preserva a data original da emissão');
+assert.ok(!/action==='reconstitute'[\s\S]{0,2500}generated_at:/.test(annex),'A12: reconstituição não altera generated_at nem os dados congelados');
+assert.ok(read('js/contract-documents-web.js').includes("action:'reconstitute'"),'A12: tela oferece a cópia reconstituída quando falta o original');
 assert.ok(editor.includes('representative_name')&&editor.includes('representative_powers'),'Cadastro do signatário completo');
 assert.ok(migration.includes('assert_commercial_party_ready')&&migration.includes("v_code IN ('k','l','m')"),'Validação obrigatória também no servidor');
 const record={
