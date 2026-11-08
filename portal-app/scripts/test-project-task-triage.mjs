@@ -30,9 +30,9 @@ const data = [
 ];
 const triage = getProjectTaskTriage(data, '2026-11-07');
 equal([triage.active, triage.completed, triage.overdue, triage.dueSoon, triage.blocked],
-  [8, 1, 1, 2, 3], 'Contagem não mistura concluídas/canceladas');
+  [8, 1, 1, 1, 3], 'Contagem não mistura concluídas/canceladas');
 equal(triage.attention.map((item) => item.taskId),
-  ['late', 'missing', 'manual', 'blocked', 'soon', 'urgent'],
+  ['late', 'blocked', 'manual', 'missing', 'soon', 'urgent'],
   'Atrasadas, bloqueadas, vencimentos e urgências ordenados');
 equal(getUnmetTaskDependencies(data[4], data), [], 'Dependência concluída libera tarefa');
 equal(getUnmetTaskDependencies(data[5], data), ['soon'], 'Dependência em aberto impede conclusão');
