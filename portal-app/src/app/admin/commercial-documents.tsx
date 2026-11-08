@@ -211,7 +211,7 @@ export default function AdminCommercialDocumentsScreen() {
       const result=await downloadIssuedCommercialWord(documentId,recover);
       if(result.missingOriginal){
         setPendingWordRecovery({recordId:record.id,kind,documentId});
-        setError('O Word original não está disponível. A reconstituição cria uma cópia identificada a partir do histórico congelado, sem alterar a versão; confira o conteúdo antes de usar.');
+        setError(result.error || 'O Word original não está disponível; confirme a reconstituição e confira a cópia antes de usar.');
       } else if(result.error) setError(result.error);
       else {
         setPendingWordRecovery(null);
@@ -328,7 +328,7 @@ export default function AdminCommercialDocumentsScreen() {
 
       {pendingWordRecovery?<Card>
          <Text style={styles.sectionTitle}>Original indisponível — recuperação histórica opcional</Text>
-         <Notice tone="warning">Uma cópia reconstituída pode diferir da aparência do Word original. Os dados contratuais são recuperados do snapshot da emissão e a versão não muda. Confirme somente se desejar essa cópia e confira antes de utilizar.</Notice>
+         <Notice tone="warning">A cópia reconstituída pode diferir do Word original. Ela utiliza o escopo e a data congelados; se a identificação profissional não estava registrada no snapshot, o servidor usa o cadastro profissional atual. A versão não muda. Confirme somente após avaliar essa diferença e confira o conteúdo antes de enviar.</Notice>
          <View style={styles.actions}>
            <Button loading={Boolean(loadingKey?.startsWith('download-'))} onPress={()=>{
              const record=records.find(item=>item.id===pendingWordRecovery.recordId);
