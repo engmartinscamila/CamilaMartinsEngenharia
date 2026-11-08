@@ -1,7 +1,8 @@
 import {useAdminModule,useAdminProjectSelection} from '@/providers/admin-module-context';
 import { useNotificationProject } from '@/hooks/use-notification-project';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { randomUUID } from 'expo-crypto';
 
 import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
@@ -46,6 +47,10 @@ export default function AdminTasksScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const creating=useRef(false);
+  const attempt=useRef<{fingerprint:string;id:string}|null>(null);
+  const activeProject=useRef(projectId);
+  useLayoutEffect(()=>{activeProject.current=projectId;},[projectId]);
 
   useNotificationProject(projects, setProjectId);
 
@@ -86,19 +91,28 @@ export default function AdminTasksScreen() {
     if (startDate && !isValidIsoDate(startDate)) { setError('A data inicial deve usar AAAA-MM-DD.'); return; }
     if (dueDate && !isValidIsoDate(dueDate)) { setError('O prazo deve usar AAAA-MM-DD.'); return; }
     if (startDate && dueDate && dueDate < startDate) { setError('O prazo não pode ser anterior ao início.'); return; }
-    setLoading(true); setError(null); setSuccess(null);
-    const actionError = await createProjectTask({
-      projectId, title, description, priority, startDate, dueDate,
-      estimatedHours: hours ? Number(hours.replace(',', '.')) : null,
-      clientVisible, parentTaskId, dependencyId,
-    });
-    if (actionError) setError(actionError);
-    else {
-      setSuccess('Tarefa criada e progresso do projeto recalculado automaticamente.');
-      setTitle(''); setDescription(''); setStartDate(''); setDueDate(''); setHours('');
-      setParentTaskId(null); setDependencyId(null); setClientVisible(false); await loadTasks();
+    if(hours&&(!Number.isFinite(Number(hours.replace(',','.')))||Number(hours.replace(',','.'))<0)){setError('Informe uma estimativa de horas válida e não negativa.');return;}
+    if(creating.current)return;
+    const input={projectId,title,description,priority,startDate,dueDate,
+      estimatedHours:hours?Number(hours.replace(',','.')):null,clientVisible,parentTaskId,dependencyId};
+    const fingerprint=JSON.stringify(input);
+    if(attempt.current?.fingerprint!==fingerprint)attempt.current={fingerprint,id:randomUUID()};
+    creating.current=true;
+    setLoading(true);setError(null);setSuccess(null);
+    try {
+      const actionError=await createProjectTask({...input,requestId:attempt.current.id});
+      if(activeProject.current!==projectId)return;
+      if(actionError)setError(actionError);
+      else {
+        attempt.current=null;
+        setSuccess('Tarefa e dependências registradas juntas.');
+        setTitle('');setDescription('');setStartDate('');setDueDate('');setHours('');
+        setParentTaskId(null);setDependencyId(null);setClientVisible(false);await loadTasks();
+      }
+    } finally {
+      creating.current=false;
+      if(activeProject.current===projectId)setLoading(false);
     }
-    setLoading(false);
   };
 
   const changeStatus = async (task: ProjectTaskSummary, status: TaskStatus) => {

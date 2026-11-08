@@ -68,6 +68,8 @@ jobs:
           node scripts/security/ofx-regression.mjs
           node scripts/security/admin-receipt-financial-regression.mjs
           node scripts/security/receipt-cash-regression.mjs
+          node scripts/security/audit-financial-integrity-regression.mjs
+          node scripts/security/audit-task-integrity-regression.mjs
           node scripts/security/commercial-closure-regression.mjs
           node scripts/security/project-before-contract-regression.mjs
           node scripts/security/commercial-emission-leases-regression.mjs
@@ -311,6 +313,7 @@ jobs:
       - name: Gerar, reabrir e validar todos os arquivos finais
         run: |
           node --import tsx scripts/generated-file-smoke.mts
+          node scripts/document-fixture-mutation-regression.mjs
 
       - name: Guardar amostras geradas pela auditoria
         uses: actions/upload-artifact@v4

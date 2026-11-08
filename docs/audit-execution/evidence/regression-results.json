@@ -1,0 +1,462 @@
+[
+  {
+    "script": "portal-app/scripts/test-admin-navigation-context.mjs",
+    "exit": 0,
+    "seconds": 0.29
+  },
+  {
+    "script": "portal-app/scripts/test-auth-lifecycle.mjs",
+    "exit": 0,
+    "seconds": 0.37
+  },
+  {
+    "script": "portal-app/scripts/test-auth-return-path.mjs",
+    "exit": 0,
+    "seconds": 0.29
+  },
+  {
+    "script": "portal-app/scripts/test-commercial-catalog-source.mjs",
+    "exit": 0,
+    "seconds": 0.05
+  },
+  {
+    "script": "portal-app/scripts/test-commercial-service-levels.mjs",
+    "exit": 0,
+    "seconds": 0.05
+  },
+  {
+    "script": "portal-app/scripts/test-commercial-service-match.mjs",
+    "exit": 0,
+    "seconds": 0.29
+  },
+  {
+    "script": "portal-app/scripts/test-construction-budget-validation.mjs",
+    "exit": 0,
+    "seconds": 0.29
+  },
+  {
+    "script": "portal-app/scripts/test-construction-schedule-client-gantt.mjs",
+    "exit": 0,
+    "seconds": 0.27
+  },
+  {
+    "script": "portal-app/scripts/test-construction-schedule-critical-path.mjs",
+    "exit": 0,
+    "seconds": 0.28
+  },
+  {
+    "script": "portal-app/scripts/test-construction-schedule-engine.mjs",
+    "exit": 0,
+    "seconds": 0.28
+  },
+  {
+    "script": "portal-app/scripts/test-construction-schedule-excel.mjs",
+    "exit": 0,
+    "seconds": 0.34
+  },
+  {
+    "script": "portal-app/scripts/test-construction-schedule-pagination.mjs",
+    "exit": 0,
+    "seconds": 0.33
+  },
+  {
+    "script": "portal-app/scripts/test-construction-schedule-progress.mjs",
+    "exit": 0,
+    "seconds": 0.37
+  },
+  {
+    "script": "portal-app/scripts/test-construction-schedule-xlsx-runtime.mjs",
+    "exit": 1,
+    "seconds": 0.24
+  },
+  {
+    "script": "portal-app/scripts/test-document-center.mjs",
+    "exit": 0,
+    "seconds": 0.3
+  },
+  {
+    "script": "portal-app/scripts/test-fin-v2-receipt-sql.mjs",
+    "exit": 0,
+    "seconds": 0.96
+  },
+  {
+    "script": "portal-app/scripts/test-fin-v2-receipt-ui.mjs",
+    "exit": 0,
+    "seconds": 0.39
+  },
+  {
+    "script": "portal-app/scripts/test-finance-v2-forms.mjs",
+    "exit": 0,
+    "seconds": 0.32
+  },
+  {
+    "script": "portal-app/scripts/test-finance-v2-receipt-service.mjs",
+    "exit": 0,
+    "seconds": 0.29
+  },
+  {
+    "script": "portal-app/scripts/test-finance-v2-service.mjs",
+    "exit": 0,
+    "seconds": 0.36
+  },
+  {
+    "script": "portal-app/scripts/test-financial-model.mjs",
+    "exit": 0,
+    "seconds": 0.53
+  },
+  {
+    "script": "portal-app/scripts/test-financial-origin-service.mjs",
+    "exit": 0,
+    "seconds": 0.27
+  },
+  {
+    "script": "portal-app/scripts/test-financial-origin-sql.mjs",
+    "exit": 0,
+    "seconds": 0.98
+  },
+  {
+    "script": "portal-app/scripts/test-financial-reconciliation.mjs",
+    "exit": 0,
+    "seconds": 0.28
+  },
+  {
+    "script": "portal-app/scripts/test-financial-ui.mjs",
+    "exit": 0,
+    "seconds": 0.83
+  },
+  {
+    "script": "portal-app/scripts/test-financial-v2-sql.mjs",
+    "exit": 0,
+    "seconds": 0.88
+  },
+  {
+    "script": "portal-app/scripts/test-functional.mjs",
+    "exit": 0,
+    "seconds": 0.35
+  },
+  {
+    "script": "portal-app/scripts/test-integration.mjs",
+    "exit": 0,
+    "seconds": 0.39
+  },
+  {
+    "script": "portal-app/scripts/test-issued-commercial-version-history.mjs",
+    "exit": 1,
+    "seconds": 0.06
+  },
+  {
+    "script": "portal-app/scripts/test-issued-commercial-word-download.mjs",
+    "exit": 1,
+    "seconds": 0.05
+  },
+  {
+    "script": "portal-app/scripts/test-legacy-finance-audit.mjs",
+    "exit": 0,
+    "seconds": 0.32
+  },
+  {
+    "script": "portal-app/scripts/test-management-audit.mjs",
+    "exit": 0,
+    "seconds": 0.39
+  },
+  {
+    "script": "portal-app/scripts/test-payment-allocation-model.mjs",
+    "exit": 0,
+    "seconds": 0.3
+  },
+  {
+    "script": "portal-app/scripts/test-procurement-comparison.mjs",
+    "exit": 0,
+    "seconds": 0.28
+  },
+  {
+    "script": "portal-app/scripts/test-procurement-pagination.mjs",
+    "exit": 0,
+    "seconds": 0.27
+  },
+  {
+    "script": "portal-app/scripts/test-procurement-service.mjs",
+    "exit": 0,
+    "seconds": 0.27
+  },
+  {
+    "script": "portal-app/scripts/test-procurement-transaction-sql.mjs",
+    "exit": 0,
+    "seconds": 0.96
+  },
+  {
+    "script": "portal-app/scripts/test-project-cost-control.mjs",
+    "exit": 0,
+    "seconds": 0.29
+  },
+  {
+    "script": "portal-app/scripts/test-project-task-triage.mjs",
+    "exit": 0,
+    "seconds": 0.3
+  },
+  {
+    "script": "portal-app/scripts/test-protected-issuance.mjs",
+    "exit": 0,
+    "seconds": 0.31
+  },
+  {
+    "script": "portal-app/scripts/test-receivable-priorities.mjs",
+    "exit": 0,
+    "seconds": 0.28
+  },
+  {
+    "script": "scripts/site-audit.mjs",
+    "exit": 0,
+    "seconds": 4.98
+  },
+  {
+    "script": "scripts/admin-functional-audit.mjs",
+    "exit": 0,
+    "seconds": 0.06
+  },
+  {
+    "script": "scripts/document-generation-audit.mjs",
+    "exit": 0,
+    "seconds": 0.05
+  },
+  {
+    "script": "scripts/document-governance-audit.mjs",
+    "exit": 0,
+    "seconds": 0.05
+  },
+  {
+    "script": "scripts/annex-context-regression.mjs",
+    "exit": 0,
+    "seconds": 0.05
+  },
+  {
+    "script": "scripts/commercial-custom-scope-regression.mjs",
+    "exit": 0,
+    "seconds": 0.06
+  },
+  {
+    "script": "scripts/commercial-word-regression.mjs",
+    "exit": 0,
+    "seconds": 0.42
+  },
+  {
+    "script": "scripts/finalization-word-regression.mjs",
+    "exit": 0,
+    "seconds": 0.34
+  },
+  {
+    "script": "scripts/commercial-generator-preflight-regression.mjs",
+    "exit": 0,
+    "seconds": 0.06
+  },
+  {
+    "script": "scripts/contract-emission-regression.mjs",
+    "exit": 0,
+    "seconds": 0.08
+  },
+  {
+    "script": "scripts/commercial-emission-recovery-regression.mjs",
+    "exit": 0,
+    "seconds": 0.26
+  },
+  {
+    "script": "scripts/commercial-document-job-regression.mjs",
+    "exit": 0,
+    "seconds": 0.47
+  },
+  {
+    "script": "scripts/contrato-documento-revisao-integridade.mjs",
+    "exit": 0,
+    "seconds": 0.25
+  },
+  {
+    "script": "scripts/contratos-anexo-revisao-regression.mjs",
+    "exit": 0,
+    "seconds": 0.06
+  },
+  {
+    "script": "scripts/anexo-aditivo-estrutura-regression.mjs",
+    "exit": 0,
+    "seconds": 0.05
+  },
+  {
+    "script": "scripts/clientes-portfolio-regression.mjs",
+    "exit": 0,
+    "seconds": 0.06
+  },
+  {
+    "script": "scripts/refactor-modules-regression.mjs",
+    "exit": 0,
+    "seconds": 0.07
+  },
+  {
+    "script": "scripts/receipt-names-regression.mjs",
+    "exit": 0,
+    "seconds": 0.08
+  },
+  {
+    "script": "scripts/document-batch-order-regression.mjs",
+    "exit": 0,
+    "seconds": 0.06
+  },
+  {
+    "script": "scripts/catalogo-escopos-especificos-regression.mjs",
+    "exit": 0,
+    "seconds": 0.05
+  },
+  {
+    "script": "scripts/condicoes-comerciais-estruturadas-regression.mjs",
+    "exit": 0,
+    "seconds": 0.06
+  },
+  {
+    "script": "scripts/commercial-word-download-regression.mjs",
+    "exit": 0,
+    "seconds": 0.1
+  },
+  {
+    "script": "scripts/security/admin-receipt-financial-regression.mjs",
+    "exit": 0,
+    "seconds": 0.92
+  },
+  {
+    "script": "scripts/security/browser-security-regression.mjs",
+    "exit": 0,
+    "seconds": 0.07
+  },
+  {
+    "script": "scripts/security/commercial-closure-regression.mjs",
+    "exit": 0,
+    "seconds": 0.93
+  },
+  {
+    "script": "scripts/security/commercial-document-job-regression.mjs",
+    "exit": 0,
+    "seconds": 0.92
+  },
+  {
+    "script": "scripts/security/commercial-emission-leases-regression.mjs",
+    "exit": 0,
+    "seconds": 0.89
+  },
+  {
+    "script": "scripts/security/commercial-existing-client-regression.mjs",
+    "exit": 0,
+    "seconds": 0.05
+  },
+  {
+    "script": "scripts/security/commercial-service-level-per-item-regression.mjs",
+    "exit": 0,
+    "seconds": 0.05
+  },
+  {
+    "script": "scripts/security/construction-schedule-actual-write-guard-regression.mjs",
+    "exit": 0,
+    "seconds": 0.92
+  },
+  {
+    "script": "scripts/security/construction-schedule-additional-service-regression.mjs",
+    "exit": 0,
+    "seconds": 0.94
+  },
+  {
+    "script": "scripts/security/construction-schedule-approval-regression.mjs",
+    "exit": 0,
+    "seconds": 0.94
+  },
+  {
+    "script": "scripts/security/construction-schedule-baseline-archive-regression.mjs",
+    "exit": 0,
+    "seconds": 0.9
+  },
+  {
+    "script": "scripts/security/construction-schedule-budget-regression.mjs",
+    "exit": 0,
+    "seconds": 0.05
+  },
+  {
+    "script": "scripts/security/construction-schedule-contract-regression.mjs",
+    "exit": 0,
+    "seconds": 0.93
+  },
+  {
+    "script": "scripts/security/construction-schedule-holiday-regression.mjs",
+    "exit": 0,
+    "seconds": 0.89
+  },
+  {
+    "script": "scripts/security/construction-schedule-measurement-regression.mjs",
+    "exit": 0,
+    "seconds": 0.95
+  },
+  {
+    "script": "scripts/security/construction-schedule-publication-regression.mjs",
+    "exit": 0,
+    "seconds": 0.92
+  },
+  {
+    "script": "scripts/security/construction-schedule-revision-regression.mjs",
+    "exit": 0,
+    "seconds": 0.05
+  },
+  {
+    "script": "scripts/security/construction-schedule-revision-request-regression.mjs",
+    "exit": 0,
+    "seconds": 0.05
+  },
+  {
+    "script": "scripts/security/construction-schedule-template-regression.mjs",
+    "exit": 0,
+    "seconds": 0.91
+  },
+  {
+    "script": "scripts/security/document-client-flow-regression.mjs",
+    "exit": 0,
+    "seconds": 1.01
+  },
+  {
+    "script": "scripts/security/media-worker-hardening-regression.mjs",
+    "exit": 0,
+    "seconds": 0.06
+  },
+  {
+    "script": "scripts/security/migration-timestamp-regression.mjs",
+    "exit": 0,
+    "seconds": 0.06
+  },
+  {
+    "script": "scripts/security/ofx-regression.mjs",
+    "exit": 0,
+    "seconds": 0.93
+  },
+  {
+    "script": "scripts/security/password-link-abuse-regression.mjs",
+    "exit": 0,
+    "seconds": 0.05
+  },
+  {
+    "script": "scripts/security/project-before-contract-regression.mjs",
+    "exit": 0,
+    "seconds": 0.98
+  },
+  {
+    "script": "scripts/security/public-edge-functions-regression.mjs",
+    "exit": 0,
+    "seconds": 0.06
+  },
+  {
+    "script": "scripts/security/receipt-cash-regression.mjs",
+    "exit": 0,
+    "seconds": 0.98
+  },
+  {
+    "script": "scripts/security/rls-regression.mjs",
+    "exit": 0,
+    "seconds": 1.22
+  },
+  {
+    "script": "scripts/security/service-level-scope-matrix-regression.mjs",
+    "exit": 0,
+    "seconds": 0.05
+  }
+]

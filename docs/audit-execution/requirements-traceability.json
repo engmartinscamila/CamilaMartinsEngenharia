@@ -1,0 +1,1226 @@
+[
+  {
+    "id": "FR-001",
+    "title": "Cadastro único por cliente",
+    "acceptance": "Mesmo CPF/CNPJ identificado; histórico preservado sem duplicar pessoa.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-002",
+    "title": "Lead até cliente/projeto sem recadastro",
+    "acceptance": "Conversão reutiliza identificador, escopo e dados autorizados.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-003",
+    "title": "Funil de oportunidades com estágios",
+    "acceptance": "Mudança de estágio com usuário/data e histórico.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-004",
+    "title": "Follow-up e próximos contatos",
+    "acceptance": "Alerta dispara uma vez e permite reagendamento.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-005",
+    "title": "Ficha integrada de cliente",
+    "acceptance": "Abrir contratos, projetos, documentos, financeiro e solicitações em uma ficha.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-006",
+    "title": "Endereço da obra distinto do cliente",
+    "acceptance": "CEP/cidade/UF de obra persistem e são reutilizados.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-007",
+    "title": "Cliente sem identidade Auth",
+    "acceptance": "Convite explícito, sem criar usuário automaticamente ou expor dados.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-008",
+    "title": "CRM com histórico de alterações",
+    "acceptance": "Cada transição gera evento auditável sem apagar histórico.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-009",
+    "title": "Criar projeto sem contrato",
+    "acceptance": "Projeto salvo com cliente+endereço, contract_id nulo.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "APROVADO",
+    "related_findings": [
+      "A03",
+      "A05",
+      "A08",
+      "A09"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-010",
+    "title": "Criar contrato sem projeto",
+    "acceptance": "Contrato avulso emitido sem projeto fictício.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A03",
+      "A05",
+      "A08",
+      "A09"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-011",
+    "title": "Criar contrato com/sem orçamento",
+    "acceptance": "Escolha explicitamente origem e escopo sem recopiar dados.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A03",
+      "A05",
+      "A08",
+      "A09"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-012",
+    "title": "Vincular depois orçamento, contrato e projeto",
+    "acceptance": "IDs vinculados somente a mesmo cliente, sem mudar documentos emitidos.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A03",
+      "A05",
+      "A08",
+      "A09"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-013",
+    "title": "Status consistente de projetos",
+    "acceptance": "Mesma enumeração banco, API, interface, filtros e relatórios.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "FALHA CONFIRMADA",
+    "related_findings": [
+      "A03",
+      "A05",
+      "A08",
+      "A09"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-014",
+    "title": "Etapas por tipo de serviço",
+    "acceptance": "Só atividades contratadas; sem padrões de duração ocultos.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A03",
+      "A05",
+      "A08",
+      "A09"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-015",
+    "title": "Progresso por medições",
+    "acceptance": "Não editar percentual livremente se contrato exige medição comprovada.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "FALHA CONFIRMADA",
+    "related_findings": [
+      "A03",
+      "A05",
+      "A08",
+      "A09"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-016",
+    "title": "Serviço técnico sem projeto formal",
+    "acceptance": "Emite documento, recibo e cobrança com projeto nulo.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A03",
+      "A05",
+      "A08",
+      "A09"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-017",
+    "title": "EAP e etapas/subetapas",
+    "acceptance": "Código hierárquico, totalizações sem duplicar itens.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A01",
+      "A15",
+      "A16"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-018",
+    "title": "Itens e composições",
+    "acceptance": "Preço direto calculado a partir de coeficientes e insumos.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "FALHA CONFIRMADA",
+    "related_findings": [
+      "A01",
+      "A15",
+      "A16"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-019",
+    "title": "Bases SINAPI identificadas por UF/mês",
+    "acceptance": "Fonte, mês, UF e regime desonerado fixados na versão.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "NÃO IMPLEMENTADO",
+    "related_findings": [
+      "A01",
+      "A15",
+      "A16"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-020",
+    "title": "Composições próprias versionadas",
+    "acceptance": "Alterar base não muda orçamento já aprovado.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "NÃO IMPLEMENTADO",
+    "related_findings": [
+      "A01",
+      "A15",
+      "A16"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-021",
+    "title": "Memória de cálculo de quantitativos",
+    "acceptance": "Expressão, unidade, origem e revisão rastreáveis.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A01",
+      "A15",
+      "A16"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-022",
+    "title": "BDI e encargos explícitos",
+    "acceptance": "Detalhes, arredondamento e método apresentados ao usuário.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "NÃO IMPLEMENTADO",
+    "related_findings": [
+      "A01",
+      "A15",
+      "A16"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-023",
+    "title": "Curva ABC insumos e serviços",
+    "acceptance": "Participação acumulada soma 100%; critério editável.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "NÃO IMPLEMENTADO",
+    "related_findings": [
+      "A01",
+      "A15",
+      "A16"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-024",
+    "title": "Importação Excel com relatório de erros",
+    "acceptance": "Importação em prévia, linhas inválidas não gravadas.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A01",
+      "A15",
+      "A16"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-025",
+    "title": "Orçamento com revisão imutável",
+    "acceptance": "Versão emitida congelada, nova revisão mantém anterior.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A01",
+      "A15",
+      "A16"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-026",
+    "title": "Orçado x comprometido x realizado",
+    "acceptance": "Três naturezas não somadas duas vezes.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A01",
+      "A15",
+      "A16"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-027",
+    "title": "Cotações comparadas por item",
+    "acceptance": "Valor/prazo/fornecedor por item, aceite documentado.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A01",
+      "A15",
+      "A16"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-028",
+    "title": "Integração com quantitativos BIM/IFC",
+    "acceptance": "Importar em sandbox, comparar unidade e evitar sobrescrita cega.",
+    "scope": "Possibilidade condicionada do estudo; não compromisso de implantação recuperado",
+    "audit_status": "NÃO IMPLEMENTADO",
+    "related_findings": [
+      "A01",
+      "A15",
+      "A16"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "Conditional research scope not activated"
+  },
+  {
+    "id": "FR-029",
+    "title": "Proposta usa dados do orçamento",
+    "acceptance": "Cliente, obra, escopo e valores preenchidos por snapshot de origem.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A11",
+      "A12",
+      "A18",
+      "A20"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-030",
+    "title": "Contrato parametrizado sem texto genérico",
+    "acceptance": "Cláusulas técnicas adequadas e campos opcionais explícitos.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A11",
+      "A12",
+      "A18",
+      "A20"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-031",
+    "title": "Anexo I sem redigitação",
+    "acceptance": "Escopo/valor/prazo herdados, adicional cria novo instrumento.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A11",
+      "A12",
+      "A18",
+      "A20"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-032",
+    "title": "Aditivo contratual independente",
+    "acceptance": "Aditivo autorizado altera saldo vigente sem reescrever original.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A11",
+      "A12",
+      "A18",
+      "A20"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-033",
+    "title": "Word inicial baixado sem revisão",
+    "acceptance": "Baixar não altera revision, hash, status ou razão da revisão.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A11",
+      "A12",
+      "A18",
+      "A20"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-034",
+    "title": "Revisões com histórico e snapshot",
+    "acceptance": "Hash SHA-256, arquivo intacto e vínculo anterior mantidos.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "FALHA CONFIRMADA",
+    "related_findings": [
+      "A11",
+      "A12",
+      "A18",
+      "A20"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-035",
+    "title": "Emissão idempotente na falha de rede",
+    "acceptance": "Retry simultâneo usa mesmo UUID/versão.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A11",
+      "A12",
+      "A18",
+      "A20"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-036",
+    "title": "Aprovação/aceite por versão",
+    "acceptance": "Apenas destinatário autorizado aceita a revisão atual.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A11",
+      "A12",
+      "A18",
+      "A20"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-037",
+    "title": "Motivo da revisão apenas interno",
+    "acceptance": "Campo interno não aparece no Word/PDF final.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "APROVADO",
+    "related_findings": [
+      "A11",
+      "A12",
+      "A18",
+      "A20"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-038",
+    "title": "Arquivamento e restauração",
+    "acceptance": "Versão e metadados restauram sem substituir emitidos.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "NÃO VERIFICÁVEL",
+    "related_findings": [
+      "A11",
+      "A12",
+      "A18",
+      "A20"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-039",
+    "title": "Marcas d’água estáveis em Word",
+    "acceptance": "Páginas e marca d’água conferidas renderizando DOCX real.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A11",
+      "A12",
+      "A18",
+      "A20"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-040",
+    "title": "Documentos não repetidos nas abas",
+    "acceptance": "Central única por cliente e tipo, filtros por status.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A11",
+      "A12",
+      "A18",
+      "A20"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-041",
+    "title": "Extrato de saldo a receber",
+    "acceptance": "Rastrear contrato, valor, recebido, saldo e avulsos; nunca",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A14",
+      "A18"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-042",
+    "title": "Valor de contrato desconhecido",
+    "acceptance": "Exibir \"valor não informado\", não zero fingido.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "FALHA CONFIRMADA",
+    "related_findings": [
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A14",
+      "A18"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-043",
+    "title": "Parcelas individuais com vencimento",
+    "acceptance": "Soma de parcelas rastreável; não somar a saldo contratual de novo.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A14",
+      "A18"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-044",
+    "title": "Pagamento parcial",
+    "acceptance": "Parcela 1000 paga 300 → residual 700.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A14",
+      "A18"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-045",
+    "title": "Um pagamento em várias parcelas",
+    "acceptance": "Alocações <= pagamento; cada parcela recebe montante único.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A14",
+      "A18"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-046",
+    "title": "Adiantamento/crédito não alocado",
+    "acceptance": "Pagamento sem parcela permanece como crédito, sem alocação fictícia.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A14",
+      "A18"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-047",
+    "title": "Estorno/devolução auditável",
+    "acceptance": "Estorno compensado, trilha original imutável.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A14",
+      "A18"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-048",
+    "title": "Banco e caixa com data base",
+    "acceptance": "Saldo só exibido quando referência validada.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A14",
+      "A18"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-049",
+    "title": "Conciliação OFX sem dupla contagem",
+    "acceptance": "Movimento bancário casado não soma novamente lançamento manual.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A14",
+      "A18"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-050",
+    "title": "Recibo por pagamento existente",
+    "acceptance": "Emitir recibo mantém total de lançamentos inalterado.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "FALHA CONFIRMADA",
+    "related_findings": [
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A14",
+      "A18"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-051",
+    "title": "Recibo avulso sem projeto",
+    "acceptance": "Só cliente requerido; lança uma vez e vincula recibo.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A14",
+      "A18"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-052",
+    "title": "Reimprimir Word/PDF de recibo",
+    "acceptance": "Baixar/imprimir não emite novo número.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A14",
+      "A18"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-053",
+    "title": "Fluxo de caixa previsto x realizado",
+    "acceptance": "Datas distintas e filtros consistentes por competência/caixa.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A14",
+      "A18"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-054",
+    "title": "Margem por projeto e hora técnica",
+    "acceptance": "Não misturar honorários com custos de obra.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A14",
+      "A18"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-055",
+    "title": "Reset/arquivar seguro",
+    "acceptance": "Exportar/validar antes de arquivar; ação não apagar auditabilidade.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A14",
+      "A18"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-056",
+    "title": "Recebimentos sem contrato/projeto",
+    "acceptance": "Cliente obrigatório, vínculos opcionais coerentes.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A14",
+      "A18"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-057",
+    "title": "EAP de atividades contratadas",
+    "acceptance": "Não gerar etapas genéricas fora do escopo.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A01",
+      "A06",
+      "A07",
+      "A08",
+      "A17"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-058",
+    "title": "Dependências FS/SS/FF e lag",
+    "acceptance": "Ciclos proibidos, rede determinística e datas consistentes.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A01",
+      "A06",
+      "A07",
+      "A08",
+      "A17"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-059",
+    "title": "Calendário dias úteis e feriados",
+    "acceptance": "Feriados aprovados e calendário por obra.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A01",
+      "A06",
+      "A07",
+      "A08",
+      "A17"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-060",
+    "title": "Caminho crítico e folgas",
+    "acceptance": "CPM ES/EF/LS/LF e folga zero conferidos.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A01",
+      "A06",
+      "A07",
+      "A08",
+      "A17"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-061",
+    "title": "Linha de base imutável",
+    "acceptance": "Aprovação cria snapshot, revisão não reescreve anterior.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A01",
+      "A06",
+      "A07",
+      "A08",
+      "A17"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-062",
+    "title": "Medição física independente do custo",
+    "acceptance": "Quantidades físicas têm sua própria regra e evidência.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A01",
+      "A06",
+      "A07",
+      "A08",
+      "A17"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-063",
+    "title": "Curva S prevista x medida",
+    "acceptance": "Séries cumulativas coerentes e corte por data.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A01",
+      "A06",
+      "A07",
+      "A08",
+      "A17"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-064",
+    "title": "Valor agregado PV/EV/AC",
+    "acceptance": "CPI/SPI somente se PV/AC válidos; custo de obra separado.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A01",
+      "A06",
+      "A07",
+      "A08",
+      "A17"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-065",
+    "title": "Reprogramação com rastreabilidade",
+    "acceptance": "Consequência de predecessores exibida antes de confirmar.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A01",
+      "A06",
+      "A07",
+      "A08",
+      "A17"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-066",
+    "title": "Linha de Balanço por localização",
+    "acceptance": "Se aplicável, relacionar ritmo por bloco/pavimento/trecho.",
+    "scope": "Possibilidade condicionada do estudo; não compromisso de implantação recuperado",
+    "audit_status": "NÃO IMPLEMENTADO",
+    "related_findings": [
+      "A01",
+      "A06",
+      "A07",
+      "A08",
+      "A17"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "Conditional research scope not activated"
+  },
+  {
+    "id": "FR-067",
+    "title": "Diário de obra com fotos",
+    "acceptance": "Autor, data, clima, anexos e publicação controlados.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A01",
+      "A06",
+      "A07",
+      "A08",
+      "A17"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-068",
+    "title": "Compras e cotações ligadas a obra",
+    "acceptance": "Comparar fornecedor e produzir custo comprometido.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A01",
+      "A06",
+      "A07",
+      "A08",
+      "A17"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-069",
+    "title": "Exportação Excel reaberta",
+    "acceptance": "Arquivo abre e mantém valores, datas e fórmulas.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "APROVADO",
+    "related_findings": [
+      "A01",
+      "A06",
+      "A07",
+      "A08",
+      "A17"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-070",
+    "title": "Portal exibe somente snapshot publicado",
+    "acceptance": "Nunca expor valores internos em publicação ao cliente.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A01",
+      "A06",
+      "A07",
+      "A08",
+      "A17"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-071",
+    "title": "Timesheet manual por atividade",
+    "acceptance": "Tempo e custo por técnico; alterar horas deixa histórico.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-072",
+    "title": "Horas automáticas Revit/AutoCAD",
+    "acceptance": "Exige app Windows opt-in; nunca monitorar tela/teclado.",
+    "scope": "Possibilidade condicionada do estudo; não compromisso de implantação recuperado",
+    "audit_status": "NÃO IMPLEMENTADO",
+    "related_findings": [],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "Conditional research scope not activated"
+  },
+  {
+    "id": "FR-073",
+    "title": "Permissões por usuário e projeto",
+    "acceptance": "Cliente nunca acessa projeto de terceiro nem centro de custos.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A10",
+      "A13",
+      "A19",
+      "A21",
+      "A22"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-074",
+    "title": "Aprovação de pranchas e renders",
+    "acceptance": "Aceite aponta versão/hash e comentário.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A10",
+      "A13",
+      "A19",
+      "A21",
+      "A22"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-075",
+    "title": "Notificações por evento com tentativa",
+    "acceptance": "Fila enviado ≠ entregue; evento de provedor preservado.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "NÃO VERIFICÁVEL",
+    "related_findings": [
+      "A10",
+      "A13",
+      "A19",
+      "A21",
+      "A22"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-076",
+    "title": "Agenda compartilhada",
+    "acceptance": "Fusos corretos e eventos por permissão.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A10",
+      "A13",
+      "A19",
+      "A21",
+      "A22"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-077",
+    "title": "Dashboard somente KPIs confiáveis",
+    "acceptance": "Card indisponível em leitura falha; nunca número 0 substituto.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "FALHA CONFIRMADA",
+    "related_findings": [
+      "A10",
+      "A13",
+      "A19",
+      "A21",
+      "A22"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-078",
+    "title": "Exportação de dados e portabilidade",
+    "acceptance": "CSV XLSX com proteção de fórmula e conferência de totais.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A10",
+      "A13",
+      "A19",
+      "A21",
+      "A22"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-079",
+    "title": "Backup externo e restore verificável",
+    "acceptance": "Backup do banco + Storage + teste de restauração, sem PII em homologação.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "NÃO VERIFICÁVEL",
+    "related_findings": [
+      "A10",
+      "A13",
+      "A19",
+      "A21",
+      "A22"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-080",
+    "title": "Rastreabilidade total de ações",
+    "acceptance": "Auditoria não editável por usuário comum.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A10",
+      "A13",
+      "A19",
+      "A21",
+      "A22"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-081",
+    "title": "Log de erros e observabilidade",
+    "acceptance": "Diagnóstico de falha e correlação de solicitação sem vazar segredos.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A10",
+      "A13",
+      "A19",
+      "A21",
+      "A22"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  },
+  {
+    "id": "FR-082",
+    "title": "Controle de licenças OSS",
+    "acceptance": "Registro de licença, dependência e atribuições em cada entrega.",
+    "scope": "Requisito do inventário de pesquisa; compromisso por fase deve ser lido com PR/plano",
+    "audit_status": "PARCIAL",
+    "related_findings": [
+      "A10",
+      "A13",
+      "A19",
+      "A21",
+      "A22"
+    ],
+    "production_status": "UNCHANGED_NOT_E2E_HOMOLOGATED",
+    "execution": "See linked finding evidence; no whole-module approval inferred from local tests"
+  }
+]

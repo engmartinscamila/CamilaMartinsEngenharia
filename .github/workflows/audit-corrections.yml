@@ -1,0 +1,58 @@
+name: Validar correções da auditoria
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependências versionadas
+        run: |
+          npm ci --prefix portal-app
+          npm ci --prefix scripts/security
+          npm install --no-save --package-lock=false tsx@4.20.5 docx@9.5.1 jszip@3.10.1 exceljs@4.4.0 pngjs@7.0.0 react@19.2.3 react-test-renderer@19.2.3
+      - name: Verificar tipos e lint
+        working-directory: portal-app
+        run: |
+          npm run typecheck
+          npm run lint
+      - name: Regressão integrada de componentes e serviços
+        working-directory: portal-app
+        env:
+          CME_FINANCIAL_TEST_ROOT: ${{ github.workspace }}
+          CME_FIN_SQL_ROOT: ${{ github.workspace }}/scripts/security
+        run: |
+          npm run test:integration
+          node scripts/test-audit-corrections.mjs
+          node scripts/test-financial-model.mjs
+          node scripts/test-financial-ui.mjs
+          node scripts/test-construction-budget-validation.mjs
+          node scripts/test-procurement-pagination.mjs
+      - name: Validar migrações candidatas somente em PostgreSQL isolado
+        run: |
+          node scripts/security/audit-financial-integrity-regression.mjs
+          node scripts/security/audit-task-integrity-regression.mjs
+      - name: Gerar e reabrir Word e Excel e rejeitar dados de parcelas ausentes
+        run: |
+          node --import tsx scripts/generated-file-smoke.mts
+          node scripts/document-fixture-mutation-regression.mjs
+          node scripts/commercial-word-download-regression.mjs
+          node portal-app/scripts/test-issued-commercial-word-download.mjs
+          node portal-app/scripts/test-issued-commercial-version-history.mjs
+      - name: Exportar portal
+        working-directory: portal-app
+        run: npm run export:web
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: audit-generated-fixtures
+          path: qa-generated-files/
+          retention-days: 3

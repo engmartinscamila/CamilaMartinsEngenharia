@@ -13,3 +13,7 @@ portal-app/.expo/
 ARQUIVO_ENV_LOCAL.zip
 CamilaMartinsEngenharia-melhorias-completas.zip
 supabase/.temp/
+
+# Local generated-document QA outputs
+.qa-generated-modules/
+qa-generated-files/

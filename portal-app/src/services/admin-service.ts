@@ -760,12 +760,17 @@ export async function updateAdminFinancialEntry(id:string,input:FinancialEntryIn
   const linked=await supabase.from('bank_transactions').select('id').eq('matched_financial_id',id).limit(1);
   if(linked.error)return 'Não foi possível verificar a conciliação do lançamento.';
   if(linked.data?.length)return 'Este lançamento está conciliado. Preserve o vínculo bancário; registre um ajuste separado.';
+  const receipt=await supabase.from('payment_receipts').select('id').eq('financial_entry_id',id).limit(1);
+  if(receipt.error)return 'Não foi possível conferir os recibos deste recebimento. A alteração foi bloqueada.';
+  if(receipt.data?.length)return 'Este recebimento possui recibo emitido. Preserve o original e use uma correção rastreável.';
   const result=await supabase.from('financeiro').update(payload).eq('id',id).is('bank_transaction_id',null).select('id').maybeSingle();
   return result.error || !result.data ? 'Não foi possível atualizar. O lançamento pode ter sido conciliado ou removido.' : null;
 }
 export async function deleteAdminFinancialEntry(id:string) {
   const linked=await supabase.from('bank_transactions').select('id').eq('matched_financial_id',id).limit(1);
   if(linked.error || linked.data?.length)return 'A exclusão foi bloqueada: conciliação existente ou não confirmada.';
+  const receipt=await supabase.from('payment_receipts').select('id').eq('financial_entry_id',id).limit(1);
+  if(receipt.error||receipt.data?.length)return 'A exclusão foi bloqueada: recibo emitido ou conferência indisponível. Preserve o recebimento original.';
   const result=await supabase.from('financeiro').delete().eq('id',id).is('bank_transaction_id',null).select('id').maybeSingle();
   return result.error || !result.data ? 'Não foi possível excluir com segurança. O histórico foi preservado.' : null;
 }

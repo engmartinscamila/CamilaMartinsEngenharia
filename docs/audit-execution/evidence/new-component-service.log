@@ -1,0 +1,12 @@
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS A01 context loads, discards late reads/saves, clears on deselection, retries errors
+PASS A04 decimal precision, Brazilian thousands and retry after lost response
+PASS A05 unknown money stays null in projects and document previews; explicit zero preserved
+PASS A10 all portal pages, original scopes, legacy fallback and fail closed on page 2
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+react-test-renderer is deprecated. See https://react.dev/warnings/react-test-renderer
+PASS A09 persisted statuses remain selectable and percentage edits preserve status
+PASS A06 service uses one RPC and preserves request identity after a timeout
+PASS A02 UI service blocks receipted edits/deletes and fails closed on lookup error

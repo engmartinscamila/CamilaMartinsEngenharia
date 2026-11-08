@@ -1,0 +1,1 @@
+PASS A02/A03 candidate SQL: valid standalone/direct/precontract origins, incompatible IDs and parent edits rejected; receipt and payment immutable; no public trigger execution grants. Not a production/concurrency homologation.

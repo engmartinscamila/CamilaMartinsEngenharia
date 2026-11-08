@@ -1,0 +1,38 @@
+[
+  {
+    "log": "new-component-service.log",
+    "exit": 0,
+    "expected_exit": 0,
+    "passed": true
+  },
+  {
+    "log": "baseline-reproduction.log",
+    "exit": 1,
+    "expected_exit": 1,
+    "passed": true
+  },
+  {
+    "log": "candidate-financial.log",
+    "exit": 0,
+    "expected_exit": 0,
+    "passed": true
+  },
+  {
+    "log": "candidate-tasks.log",
+    "exit": 0,
+    "expected_exit": 0,
+    "passed": true
+  },
+  {
+    "log": "document-fixtures.log",
+    "exit": 0,
+    "expected_exit": 0,
+    "passed": true
+  },
+  {
+    "log": "document-mutation.log",
+    "exit": 0,
+    "expected_exit": 0,
+    "passed": true
+  }
+]

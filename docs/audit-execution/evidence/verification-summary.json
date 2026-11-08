@@ -1,0 +1,22 @@
+{
+  "baseline_sha": "22328fb626c152e79518ba1451646e2ce85e6698",
+  "existing_regression_scripts": 92,
+  "immediate_passes": 89,
+  "preparation_failures": 3,
+  "successful_focused_reruns": 3,
+  "final_passes": 92,
+  "typecheck": "passed",
+  "lint": {
+    "errors": 0,
+    "preexisting_warnings": 6
+  },
+  "dependency_security_audit": "passed",
+  "source_secret_scan": "passed",
+  "production_sql_rls_check": "passed_read_only",
+  "remote_migrations_applied": 0,
+  "authenticated_six_flow_e2e": "not_executed",
+  "restore_with_storage": "not_proven",
+  "deployed_sha": null,
+  "web_export": "passed",
+  "candidate_preflight": "blocked_by_one_historical_description_difference"
+}

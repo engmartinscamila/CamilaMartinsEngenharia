@@ -121,7 +121,7 @@ const commercialRecord:any={
 
 const contractData:any={
   emitted_at:'2026-09-11T12:00:00-03:00',document_date:'2026-09-11',contract_signed_at:'2026-09-11',contract_number:'CON-2026-09-QA01',contract_master_version:3,
-  client_name:'Cliente Arquivo QA',project_name:'Residência QA',project_type:'Residencial',property_address:'Rua da Obra QA, 999 - Rio de Janeiro/RJ',source_quote_number:'ORC-2026-09-QA01',
+  client_name:'Cliente Arquivo QA',client_cpf_cnpj:'000.000.000-00',client_address:'Rua Particular QA, 123 - Rio de Janeiro/RJ',project_name:'Residência QA',project_type:'Residencial',property_address:'Rua da Obra QA, 999 - Rio de Janeiro/RJ',source_quote_number:'ORC-2026-09-QA01',
   area_terreno_m2:420,area_construida_m2:210,contract_value:25000,payment_terms:commercialRecord.payment_terms,commercial_terms:commercialTerms,annex_source:'emitted_contract_snapshot',source_contract_document_version:'1.0',has_project:true,commercial_notes:'Condição QA',experience_level:'essencial',service_level:serviceLevel,
   scope_items:[...services,{code:'c',name:'Projeto Estrutural',included:false,description:'Não contratado.'}],scope_snapshot:services,smart_texts:smartTexts,
   approval_title:'Projeto Arquitetônico - Estudo preliminar',approval_description:'Entrega preliminar para validação.',delivered_at:'2026-09-10T15:00:00-03:00',approval_due_at:'2026-09-15T23:59:59-03:00',
@@ -166,11 +166,14 @@ try{
     ['notificacao_formal','05-notificacao-formal','NOTIFICAÇÃO FORMAL']
   ];
   for(const [kind,file,title] of coreKinds){
-    const bytes=await Packer.toBuffer(contract.build(kind,contractData,profile));
-    await validateDocx(file,bytes,[title,'Cliente Arquivo QA','Residência QA','CON-2026-09-QA01',...(kind==='anexo_i'?paymentExpected:['Versão do documento: v1.0'])],kind==='anexo_i'?[]:['Versão do Anexo I']);
+    const bytes=await Packer.toBuffer(contract.build(kind,contractData,profile,generatedAt));
+    await validateDocx(file,bytes,[title,'Cliente Arquivo QA','CPF/CNPJ: 000.000.000-00','Residência QA','CON-2026-09-QA01','Data de emissão: 11/09/2026',...(kind==='anexo_i'?paymentExpected:['Versão do documento: v1.0'])],kind==='anexo_i'?[]:['Versão do Anexo I']);
   }
 
-  const revision=await Packer.toBuffer(contract.build('anexo_i',{...contractData,document_version:'2.0',document_version_reason:'MOTIVO_INTERNO_QA'},profile));
+  const contractRevision=await Packer.toBuffer(commercial.contractDocument({...commercialRecord,document_version:'2.0',document_version_reason:'MOTIVO_INTERNO_QA'},profile,'CLÁUSULA 1 – OBJETO\nServiços descritos no Anexo I.',generatedAt));
+  await validateDocx('14-contrato-revisao',contractRevision,['Versão do contrato: v2.0',...paymentExpected],['MOTIVO_INTERNO_QA']);
+
+  const revision=await Packer.toBuffer(contract.build('anexo_i',{...contractData,document_version:'2.0',document_version_reason:'MOTIVO_INTERNO_QA'},profile,generatedAt));
   await validateDocx('12-anexo-revisao',revision,['Versão do Anexo I: v2.0',...paymentExpected],['MOTIVO_INTERNO_QA']);
 
   const nativeCases:any[]=[
@@ -238,4 +241,4 @@ if(failures.length){
   failures.forEach((failure,index)=>console.error(`${index+1}. ${failure}`));
   process.exit(1);
 }
-console.log('\nAPROVADO: 12 documentos Word (incluindo revisão e recibo) + 1 cronograma Excel foram gerados, reabertos e validados a partir do código real dos geradores.');
+console.log('\nAPROVADO: 13 documentos Word (incluindo revisão e recibo) + 1 cronograma Excel foram gerados, reabertos e validados a partir do código real dos geradores.');

@@ -142,4 +142,34 @@ await test('A09 persisted statuses remain selectable and percentage edits preser
  }
 });
 
+await test('A06 service uses one RPC and preserves request identity after a timeout',async()=>{
+ let calls=[],lost=true;
+ const db={from(){throw Error('Task creation must never issue split table writes or compensating DELETE');},rpc:async(name,args)=>{
+  calls.push({name,args});
+  if(lost){lost=false;throw Error('lost response after commit');}
+  return {data:'00000000-0000-4000-8000-000000000001',error:null};
+ }};
+ const operations=load('src/services/operations-service.ts',{
+  '@/lib/format':format,'@/lib/paginated-query':{readAllRows},'@/lib/supabase':{supabase:db},
+  'expo-file-system/legacy':{},'react-native':native,
+ });
+ const input={requestId:'request-1',projectId:'project-A',title:'Task QA',priority:'normal',clientVisible:false,dependencyId:'parent-QA'};
+ const first=await operations.createProjectTask(input);assert(first);assert(!first.includes('foi revertida'));
+ assert.equal(await operations.createProjectTask(input),null);
+ assert.equal(calls.length,2);assert.equal(calls[0].name,'admin_create_project_task');
+ assert.equal(calls[0].args.p_request_id,calls[1].args.p_request_id);
+ assert.equal(calls[1].args.p_data.dependency_id,'parent-QA');
+});
+
+await test('A02 UI service blocks receipted edits/deletes and fails closed on lookup error',async()=>{
+ for(const unavailable of [false,true]){
+  let writes=0;
+  const db={from(table){const q={select(){return q;},eq(){return q;},limit:async()=>table==='payment_receipts'?{data:unavailable?null:[{id:'receipt'}],error:unavailable?{message:'offline'}:null}:{data:[],error:null},update(){writes++;throw Error('invalid update');},delete(){writes++;throw Error('invalid delete');}};return q;}};
+  const admin=load('src/services/admin-service.ts',adminDeps(db));
+  assert(await admin.updateAdminFinancialEntry('payment',{projectId:null,clientId:'client',description:'QA payment',type:'entrada',amount:100,date:'2026-10-01'}));
+  assert(await admin.deleteAdminFinancialEntry('payment'));
+  assert.equal(writes,0);
+ }
+});
+
 if(failures)process.exit(1);
