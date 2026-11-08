@@ -56,6 +56,11 @@ jobs:
               names="$names $shared"
             fi
           fi
+          # O job assíncrono embute cópias geradas dos geradores e do _shared.
+          if echo " $names " | grep -qE ' (generate-commercial-document|generate-commercial-document-final|generate-contract-document|deliver-generated-document) ' \
+             || git diff --name-only HEAD~1 HEAD -- supabase/functions/_shared | grep -q .; then
+            names="$names process-commercial-document-job"
+          fi
           names=$(echo $names | tr ' ' '\n' | sort -u | tr '\n' ' ')
           echo "names=$names" >> "$GITHUB_OUTPUT"
           echo "Funções: $names"
@@ -69,6 +74,7 @@ jobs:
         if: steps.token.outputs.ok == 'true' && steps.list.outputs.names != ''
         run: |
           set -euo pipefail
+          node scripts/build-commercial-document-job.mjs
           # Funções que hoje rodam sem verificação de JWT (fazem a própria autenticação).
           # Mantê-las assim evita quebrar webhooks, cron e links públicos.
           no_jwt=" proteger-pdf agenda-ics prospect-document-access cleanup-expired-assets client-password-link dispatch-document-notifications dispatch-client-emails process-commercial-document-job "
