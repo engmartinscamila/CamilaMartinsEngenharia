@@ -80,6 +80,8 @@ export function getProjectTaskTriage(
   attention.sort((a, b) => severity[a.kind] - severity[b.kind]
     || (a.dueDate ?? '9999-12-31').localeCompare(b.dueDate ?? '9999-12-31')
     || a.priority - b.priority || a.title.localeCompare(b.title, 'pt-BR'));
-  results.attention = attention.map(({ priority: _priority, ...entry }) => entry);
+  results.attention = attention.map((entry) => ({
+    taskId: entry.taskId, title: entry.title, kind: entry.kind, dueDate: entry.dueDate,
+  }));
   return results;
 }
