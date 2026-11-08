@@ -159,6 +159,13 @@ try{
       'Parcela 2 de 2: R$ 15.000,00',
       '11/09/2026',
       '20/10/2026',
+      // Escopo do contrato com limites objetivos por atividade.
+      'Quantidade contratada: 1 projeto',
+      'Revisões incluídas: 2 (duas) rodadas de ajustes',
+      'Visitas técnicas incluídas: 1',
+      'Prazo desta atividade: 30 dias úteis',
+      'Não incluído nesta atividade: Projeto estrutural',
+      'Integram este contrato somente as atividades',
     ],
   );
 

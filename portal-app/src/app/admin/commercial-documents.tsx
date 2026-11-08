@@ -244,7 +244,7 @@ export default function AdminCommercialDocumentsScreen() {
 
   const confirmGenerate=async()=>{
     if(!pending)return;
-    if(pending.preview.frozen&&!pending.reason.trim()){setError('Informe o motivo da nova versão.');return;}
+    if(pending.preview.frozen&&pending.reason.replace(/[^\p{L}\p{N}]/gu,'').length<10){setError('Descreva o motivo da nova versão com pelo menos 10 letras (ex.: Alteração do prazo de entrega).');return;}
     const key = `${pending.kind}-${pending.archive ? 'archive' : 'download'}-${pending.record.id}`;
     setLoadingKey(key); setError(null); setSuccess(null);
     const actionError = await generateCommercialDocument(pending.record.id, pending.kind, pending.archive,{reason:pending.reason.trim()});

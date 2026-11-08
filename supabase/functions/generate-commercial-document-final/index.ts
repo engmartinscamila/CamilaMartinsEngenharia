@@ -133,7 +133,8 @@ Deno.serve(async req => {
       if (frozen.error) throw frozen.error;
       if (frozen.data) {
         const reason = text(body.versionReason);
-        if (!reason) return json({ error: 'Informe o motivo da nova versão antes de gerar novamente.' }, 422);
+        // Motivo precisa explicar a revisão (ex.: "Alteração do valor da 2ª parcela").
+        if (reason.replace(/[^\p{L}\p{N}]/gu, '').length < 10) return json({ error: 'Descreva o motivo da nova versão com pelo menos 10 letras (ex.: "Alteração do prazo de entrega").' }, 422);
         const old = await service.from('documentos').select('*').eq('id', previousDocumentId).single();
         if (old.error) throw old.error;
         const oldPath = text(old.data.arquivo);
@@ -247,6 +248,12 @@ Deno.serve(async req => {
         version_reason: doc.data.version_reason || text(body.versionReason) || null,
         used_property_address: kind === 'contrato', contract_scope_texts_injected: kind === 'contrato',
         same_as_party_address: text(source.data.address) === text(source.data.property_address) } });
+    // A versão anterior deixa de ser vigente assim que a nova é emitida com sucesso.
+    if (previousDocumentId && previousDocumentId !== documentId) {
+      const superseded = await service.from('documentos').update({ superseded_by: documentId })
+        .eq('id', previousDocumentId).is('superseded_by', null);
+      if (superseded.error) console.error('superseded_by não atualizado', superseded.error.message);
+    }
     return json({ ...core.data, documentId, version: doc.data.versao, resumed: Boolean(resumedDocument),
       addressUsed: kind === 'contrato' ? 'party_and_property_separate' : null,
       scopeTextsInjected: kind === 'contrato', quoteScopeReconciled: kind === 'orcamento' && selected.some(isOther), snapshotFrozen: true }, 200);

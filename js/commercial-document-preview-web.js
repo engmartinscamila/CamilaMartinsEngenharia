@@ -41,7 +41,7 @@ wrap.querySelectorAll('[data-preview-correct]').forEach(button=>button.onclick=(
  else if(kind==='terms'&&typeof window.CMEEditCommercialTerms==='function')
    window.CMEEditCommercialTerms(recordId);
 });
-wrap.querySelector('[data-preview-confirm]').onclick=()=>{const reason=wrap.querySelector('[data-preview-reason]')?.value.trim()||'';if(frozen&&!reason){const e=wrap.querySelector('[data-preview-error]');e.textContent='Informe o motivo da nova versão.';e.classList.remove('doc-hidden');return}wrap.remove();resolve({versionReason:reason,version})}};render()})}
+wrap.querySelector('[data-preview-confirm]').onclick=()=>{const reason=wrap.querySelector('[data-preview-reason]')?.value.trim()||'';if(frozen&&reason.replace(/[^\p{L}\p{N}]/gu,'').length<10){const e=wrap.querySelector('[data-preview-error]');e.textContent='Descreva o motivo da nova versão com pelo menos 10 letras (ex.: Alteração do prazo de entrega).';e.classList.remove('doc-hidden');return}wrap.remove();resolve({versionReason:reason,version})}};render()})}
 async function formalizeServiceContract(recordId){
   const {data,error}=await client().rpc('admin_formalize_service_contract',{p_record_id:recordId});
   if(error) return {ok:false,error:error.message||'Não foi possível habilitar o contrato'};

@@ -20,6 +20,31 @@ function selectedServices(services: unknown) {
 function paragraphText(paragraph: string) {
   return [...paragraph.matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g)].map(match => match[1]).join('');
 }
+const listOf = (value: unknown) => Array.isArray(value) ? value.map(entry => text(entry)).filter(Boolean) : text(value) ? [text(value)] : [];
+const positiveInt = (value: unknown) => { const n = Number(String(value ?? '').replace(',', '.')); return Number.isFinite(n) && n >= 0 && Number.isInteger(n) ? n : null; };
+function activityLimits(item: Obj, row: Obj, terms: Obj) {
+  const lines: string[] = [];
+  const quantity = text(row.quantity), unit = text(row.unit);
+  if (quantity) lines.push(`Quantidade contratada: ${quantity}${unit ? ' ' + unit : ''}.`);
+  const revisions = positiveInt(row.revisions ?? item.revisions);
+  if (revisions !== null) lines.push(revisions === 0
+    ? 'Revisões incluídas: nenhuma. Alterações solicitadas após a entrega serão orçadas à parte.'
+    : `Revisões incluídas: ${revisions} (${['zero','uma','duas','três','quatro','cinco','seis'][revisions] ?? revisions}) rodada${revisions === 1 ? '' : 's'} de ajustes sobre a entrega, a partir de solicitação consolidada por escrito do contratante. Novas revisões, mudanças de programa ou de premissas já aprovadas serão orçadas à parte.`);
+  const visits = positiveInt(row.visits);
+  if (visits !== null) lines.push(visits === 0 ? 'Visitas técnicas incluídas: nenhuma.' : `Visitas técnicas incluídas: ${visits}. Visitas adicionais serão orçadas à parte.`);
+  const schedule = terms.schedule && typeof terms.schedule === 'object' ? terms.schedule as Obj : {};
+  const days = positiveInt(row.days);
+  if (text(row.deadline_type) === 'municipal') lines.push('Prazo: a preparação técnica segue o cronograma do Anexo I; análise, aprovação e expedição dependem exclusivamente do órgão público, sem prazo garantido pela CONTRATADA.');
+  else if (days) lines.push(`Prazo desta atividade: ${days} ${text(schedule.day_type) === 'uteis' ? 'dias úteis' : 'dias corridos'}, contados conforme o início definido no contrato e suspensos enquanto houver pendência de informações, documentos ou aprovações do contratante.`);
+  const formats = listOf(item.deliveryFormats);
+  if (formats.length) lines.push(`Formato de entrega: ${formats.join(', ')}.`);
+  const inputs = listOf(item.clientInputs);
+  if (inputs.length) lines.push(`Cabe ao contratante fornecer: ${inputs.map(sentencePart).join('; ')}.`);
+  const exclusions = listOf(item.exclusions);
+  if (exclusions.length) lines.push(`Não incluído nesta atividade: ${exclusions.map(sentencePart).join('; ')}.`);
+  if (item.acceptanceRequired === true) lines.push('A entrega desta atividade será submetida à manifestação formal de aceite do contratante pelo portal ou por escrito.');
+  return lines;
+}
 function contractScopeXml(services: unknown, customService: unknown, experienceLevel: unknown, propertyAddress: string, commercialTerms: unknown, historicalReconstitution = false) {
   const selected = selectedServices(services);
   if (!selected.length && !text(customService)) return '';
@@ -58,7 +83,12 @@ function contractScopeXml(services: unknown, customService: unknown, experienceL
       parts.push(wordParagraph(`Nível desta atividade: ${serviceLevelLabel(item)}.`));
     }
     parts.push(wordParagraph(description));
+    // Limites objetivos da atividade, a partir dos dados já registrados nas
+    // condições comerciais e no catálogo versionado. Nada é presumido: campo não
+    // registrado não é impresso.
+    for (const line of activityLimits(item, row, terms)) parts.push(wordParagraph(line));
   });
+  parts.push(wordParagraph('Integram este contrato somente as atividades, quantidades, revisões, visitas e entregáveis expressamente listados acima. Qualquer item não listado — inclusive novas alternativas, revisões ou visitas além das quantidades indicadas, outras disciplinas, aprovações de terceiros, taxas e execução de obra — não está incluído e depende de orçamento e aditivo prévios.'));
   if (text(customService) && !otherSelected) {
     parts.push(wordParagraph('Serviço adicional / especificação complementar', true));
     parts.push(wordParagraph(text(customService)));
