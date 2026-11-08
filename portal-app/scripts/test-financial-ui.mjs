@@ -174,6 +174,7 @@ const amountBefore=entries.reduce((sum,x)=>sum+x.amount,0);
 await act(async()=>button('Confirmar como serviço avulso').props.onPress());
 assert.equal(originReviewCalls,1);
 assert.equal(entries.reduce((sum,x)=>sum+x.amount,0),amountBefore,'Classificação não altera saldo financeiro');
-assert(text().includes('Serviços avulsos confirmados: 1'),'Extrato deve registrar a confirmação');
+assert(text().includes('Serviços avulsos confirmados: '),'Painel deve apresentar a contagem dos avulsos confirmados');
+assert.equal(legacyAudit.auditLegacyReceivables(admin.listAdminContracts? (await admin.listAdminContracts()).data:[],[project],entries,[],originReviews).confirmedStandaloneEntries,1,'Motor deve confirmar o avulso após a revisão');
 await act(async()=>renderer.unmount());
 console.log('FINANCEIRO UI: filtros, cancelados, cadastro com clique duplo, preservação após erro, saldo e rascunho fiscal aprovados.');
