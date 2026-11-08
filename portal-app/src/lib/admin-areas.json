@@ -26,6 +26,12 @@
             "project": true
           },
           {
+            "key": "cost-control",
+            "label": "Controle de custos",
+            "module": "project-cost-control",
+            "project": true
+          },
+          {
             "key": "measurements",
             "label": "Medições",
             "module": "construction-schedule-measurements",

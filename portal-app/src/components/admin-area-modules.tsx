@@ -9,6 +9,7 @@ import Complete from '@/app/admin/construction-schedule';
 import Simple from '@/app/admin/schedule';
 import NewSchedule from '@/app/admin/construction-schedule-new';
 import Budget from '@/app/admin/construction-schedule-budget';
+import CostControl from '@/app/admin/project-cost-control';
 import Measurements from '@/app/admin/construction-schedule-measurements';
 import Revision from '@/app/admin/construction-schedule-revision';
 import Baselines from '@/app/admin/construction-schedule-baselines';
@@ -31,7 +32,7 @@ import Workspace from '@/app/admin/workspace';
 const components:Record<string,React.ComponentType>={
  clients:Clients,projects:Projects,documents:Content,photos:Content,'document-archive':Archive,
  'construction-schedule':Complete,schedule:Simple,'construction-schedule-new':NewSchedule,
- 'construction-schedule-budget':Budget,'construction-schedule-measurements':Measurements,
+ 'construction-schedule-budget':Budget,'project-cost-control':CostControl,'construction-schedule-measurements':Measurements,
  'construction-schedule-revision':Revision,'construction-schedule-baselines':Baselines,'construction-schedule-test':TestSchedule,
  tasks:Tasks,'work-diary':Diary,procurement:Procurement,financial:Financial,receipts:Receipts,
  agenda:Agenda,requests:Requests,notifications:Notifications,settings:Settings,'portal-control':Portal,
