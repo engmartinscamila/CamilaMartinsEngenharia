@@ -19,7 +19,7 @@ eq(route('/admin/tasks','admin','project-a'),{pathname:'/admin/tasks',params:{pr
 for(const value of ['https://evil.invalid','javascript:alert(1)','//evil.invalid','/admin/tasks','/(client)/unknown','\\evil.invalid'])eq(route(value,'client'),null,`unsafe or unauthorized destination ${value}`);
 let response={data:null,error:null}, payload, rpcResult={data:0,error:null}, inserted, invoked;
 const db={from(table){ const chain={ update(value){payload=value;return chain;},select(){return chain;},eq(){return chain;},in(){return chain;},maybeSingle:async()=>response,then(resolve){return Promise.resolve(table==='bank_transactions'?{data:[],error:null}:response).then(resolve);},upsert:async(value)=>{inserted=value;return {error:null};} };return chain;},rpc:async(name,args)=>{invoked={name,args};return rpcResult;}};
-const deps={'@/lib/supabase':{supabase:db},'@/lib/format':format,'expo-file-system/legacy':{},'react-native':{Platform:{OS:'web'}}};
+const deps={'@/lib/supabase':{supabase:db},'@/lib/format':format,'@/lib/paginated-query':load('src/lib/paginated-query.ts'),'expo-file-system/legacy':{},'react-native':{Platform:{OS:'web'}}};
 const operations=load('src/services/operations-service.ts',deps);
 for(const action of [()=>operations.updateCrmRecord({id:'missing',stage:'novo'}),()=>operations.updateProjectTask({id:'missing',status:'done'})]){eq(typeof await action(),'string','zero affected rows must show error');}
 rpcResult={data:null,error:{message:'Proposta não localizada'}};
