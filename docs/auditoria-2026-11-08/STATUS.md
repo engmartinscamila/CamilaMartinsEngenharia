@@ -14,8 +14,8 @@ Base: dossiê de auditoria de 07/11/2026 (commit de referência `22328fb`). Cada
 | A08 | P2 | **Corrigido e publicado** (banco aplicado em produção) | PR #71 |
 | A09 | P2 | **Corrigido e publicado** | PR #70 |
 | A10 | P2 | **Corrigido e publicado** | PR #70 |
-| A11 | P2 | **Código publicado; falta implantar a Edge Function** `generate-contract-document` | PR #70. Implantação automática via workflow (ver "Pendências") |
-| A12 | P1 | **Causa já eliminada no código atual (bb98f81); recuperação implementada**. Os 6 documentos são identificados e podem ser reconstituídos como "CÓPIA RECONSTITUÍDA", preservando número, data e versão | PR #72. Requer a implantação das Edge Functions |
+| A11 | P2 | **Corrigido e publicado** (`generate-contract-document` v29 publicada pelo conector em 08/11) | PR #70 |
+| A12 | P1 | **Corrigido e publicado**. Gerador v29 no ar; o botão de cópia reconstituída volta a funcionar para os 6 documentos emitidos sem arquivo (só adiciona um arquivo identificado como "CÓPIA RECONSTITUÍDA", com número, data e versão originais) | PR #72 + PR #83 |
 | A13 | P1 | **Mapa objeto a objeto entregue**; diferenças do V2 classificadas como intencionais | `A13-homologacao-x-producao.md` |
 | A14 | P1 | **Mecanismos técnicos prontos**: valor desconhecido ≠ zero (A05), classificação auditável de avulso, campo para informar o valor do contrato, saldo bancário só com conta e referência. **Depende de dados seus**: valor de 4 contratos, contas bancárias e natureza de 3 lançamentos | Tela Financeiro → Recebíveis |
 | A15 | P2 | **Aguarda decisão D04** (escopo de compras: pedido, compromisso, conta a pagar). Nada foi inventado | — |
@@ -30,14 +30,16 @@ Base: dossiê de auditoria de 07/11/2026 (commit de referência `22328fb`). Cada
 ## Pendências que dependem de você
 
 1. ~~Confirmar a migração do A18~~ — **feito em 08/11**.
-2. **Criar o token de implantação das Edge Functions** (implanta A11 e A12 e as correções futuras):
+2. **Criar o token de implantação das Edge Functions** (A11 e A12 já publicados pelo conector; o token mantém `download-commercial-word`, `process-commercial-document-job` e as próximas correções em dia):
    - Supabase → Account → Access Tokens → *Generate new token*;
    - GitHub → repositório → Settings → Secrets and variables → Actions → *New repository secret* com o nome `SUPABASE_ACCESS_TOKEN`;
-   - Depois: GitHub → Actions → "Publicar Edge Functions no Supabase" → *Run workflow* com `generate-contract-document deliver-generated-document`.
+   - Depois: GitHub → Actions → "Publicar Edge Functions no Supabase" → *Run workflow* com `download-commercial-word process-commercial-document-job`.
 3. **Dados do negócio (A14)**: informar o valor dos contratos sem valor e cadastrar as contas bancárias, se quiser saldo bancário.
 4. **Decisões D04 e D05** (A15, A16, A17): definir se o sistema deve ter pedido de compra e conta a pagar, base SINAPI e BDI, e dependências SS/FF no cronograma.
 5. **Backup**: avaliar o plano Pro do Supabase e fazer uma cópia dos arquivos (cerca de 150 MB).
-6. **Opcional (A21)**: ativar a proteção contra senhas vazadas (Supabase → Authentication → Policies), se disponível no plano.
+6. **Republicar o Worker de mídia do portfólio** (PR #82): na pasta `cloudflare/media-worker`, `npx wrangler deploy` (conta Cloudflare). Até lá, a proteção já vale pelo site.
+7. **Cronograma do Vitalle**: dizer qual contrato cobre a obra (ver seção do Vitalle abaixo).
+8. **Opcional (A21)**: ativar a proteção contra senhas vazadas (Supabase → Authentication → Policies), se disponível no plano.
 
 
 ## Além da auditoria (pedidos diretos de 08/11)
@@ -51,13 +53,18 @@ Base: dossiê de auditoria de 07/11/2026 (commit de referência `22328fb`). Cada
 | Escopo do contrato com limites objetivos (quantidade, revisões, visitas, prazo, exclusões e cláusula de itens não listados) | **Código pronto** | PR #77 |
 | Cronograma: o único cronograma de produção (Empreendimento Vitalle) está como "legacy" | **Diagnosticado** — ver abaixo | — |
 | Edge Functions publicadas pelo conector (sem token): `deliver-generated-document` v6 e `generate-commercial-document-final` v13 (revisões, escopo detalhado) | **Publicado e testado** (inicializa e recusa chamada sem sessão administrativa) | — |
-| `generate-contract-document` (A11, A12, proteção de documento emitido) | **Aguardando o token** — arquivo grande demais para publicar com segurança pelo conector. Enquanto isso, a tela não pede cópia reconstituída (evita gerar por cima de uma emissão) | PR #79 |
+| `generate-contract-document` (A11, A12, proteção de documento emitido) | **Publicado pelo conector (v29) e testado**: dependências conferidas na produção; inicializa e recusa chamada sem sessão administrativa com a própria mensagem | PR #79 → PR #83 |
 
-### Cronograma do Empreendimento Vitalle (legacy)
+| Fluxo de recibos revisado: recibo **estornado** agora aparece como ESTORNADO (tela, impressão, histórico, Word e nome do arquivo); emissão para **projeto sem contrato** aceita contrato do mesmo cliente (antes falhava com "Contrato incompatível") | **Publicado** (função do banco aplicada na produção; 3 recibos conferidos, nenhum divergente) | PR #81 |
+| Upload autoral com marca d'água: conferido (23 documentos e 37 fotos autorais, todos com arquivo; marca diagonal + rodapé rastreável testados) | **Conferido, sem alterações** | — |
+| Portfólio: exclusão de mídia nunca apaga arquivo ainda usado no catálogo | **Publicado no site**; o Worker do Cloudflare precisa ser republicado (ver pendências) | PR #82 |
 
-- O cronograma completo (com orçamento de execução, medições e revisões) exige que **cada atividade esteja ligada a um serviço contratado e tenha custo informado** — é isso que permite medir e cobrar com segurança.
-- As 20 atividades do cronograma do Vitalle foram criadas antes dessa regra: **nenhuma tem serviço de origem nem custo**, e o projeto não tem orçamento/contrato no módulo comercial (só o contrato cadastrado). Converter automaticamente exigiria inventar esses dados.
-- Caminho recomendado: (1) registrar o orçamento/contrato do Vitalle no módulo comercial (ou vincular o contrato existente); (2) em Gestão de obras → Cronograma completo → **Novo cronograma**, escolher o modelo e reaproveitar as atividades; (3) informar custo por atividade; (4) aprovar a linha de base. O cronograma legado continua visível como histórico e não é apagado.
-- O **cronograma simples** (38 linhas) segue funcionando normalmente.
+### Cronograma do Empreendimento Vitalle (legacy) — conferido em 08/11
 
-> As mudanças do PR #77 ficam nas Edge Functions: entram no ar quando o segredo `SUPABASE_ACCESS_TOKEN` estiver configurado (item 2 das pendências).
+- **Nada se perde na migração**: as 20 atividades são o modelo padrão (`residencial_v1`), todas com **0% de avanço**, sem medições, sem custos e sem linha de base. Atenção: as datas previstas estão desatualizadas (ex.: Estrutura prevista até 14/10, sem avanço registrado).
+- **Por que não foi convertido automaticamente**: o cronograma completo só nasce de um orçamento + contrato do módulo comercial (ou de um serviço adicional aceito). O Vitalle não tem nenhum: o contrato `MIG-C5272F21` veio da migração, sem valor e sem serviços. O contrato comercial `CON-2026-10-0002` da Tributino está ligado aos projetos **Cléos** e **Residencial**, não ao Vitalle. Usar esse contrato no Vitalle seria inventar o vínculo.
+- **O que falta de você** (uma decisão): o Vitalle tem contrato de execução de obra próprio? Se sim, registre-o em Orçamentos e contratos (valor e serviços) vinculado ao projeto Vitalle. Se a obra estiver coberta pelo CON-2026-10-0002, diga isso e eu faço o vínculo.
+- **Depois disso** (posso fazer na próxima sessão): Gestão de obras → Cronograma completo → Novo cronograma com o modelo residencial (recria as mesmas 20 atividades), ajustar datas reais e custo por atividade, e aprovar a linha de base. O legado fica como histórico; nada é apagado.
+- O cronograma simples do Vitalle (4 linhas) continua funcionando.
+
+> PR #77: `generate-contract-document`, `generate-commercial-document-final` e `deliver-generated-document` já estão no ar. Ainda dependem do token (item 2): `download-commercial-word` (usa o mesmo módulo de escopo detalhado) e `process-commercial-document-job` (embute cópias dos geradores).
