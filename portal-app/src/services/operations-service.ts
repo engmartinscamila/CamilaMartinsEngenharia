@@ -1,4 +1,5 @@
 import { isValidIsoDate } from '@/lib/format';
+import {readAllRows} from '@/lib/paginated-query';
 import { supabase } from '@/lib/supabase';
 import type { DocumentPickerAsset } from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -241,8 +242,8 @@ export async function createWorkDiaryEntry(input: {
 }
 
 export async function listSuppliers(): Promise<ServiceResult<SupplierSummary[]>> {
-  const result = await supabase.from('suppliers').select('*').order('name');
-  if (result.error) return failure([], 'Não foi possível carregar os fornecedores.');
+  const result = await readAllRows(supabase.from('suppliers').select('*').order('name'));
+  if (result.error) return failure([], 'Não foi possível carregar a lista completa de fornecedores. Atualize para tentar novamente.');
   return {
     data: (result.data ?? []).map((row) => ({
       id: row.id, name: row.name, cpfCnpj: row.cpf_cnpj, email: row.email,
@@ -264,8 +265,8 @@ export async function createSupplier(input: { name: string; cpfCnpj?: string; em
 export async function listPurchaseQuotes(projectId?: string): Promise<ServiceResult<PurchaseQuoteSummary[]>> {
   let query = supabase.from('purchase_quotes').select('*,purchase_quote_items(count),supplier_bids(id,quote_id,supplier_id,total_amount,lead_time_days,payment_terms,notes,suppliers(name))').order('created_at', { ascending: false });
   if (projectId) query = query.eq('project_id', projectId);
-  const result = await query;
-  if (result.error) return failure([], 'Não foi possível carregar as cotações.');
+  const result = await readAllRows(query);
+  if (result.error) return failure([], 'Não foi possível carregar todas as cotações. A consulta parcial foi descartada.');
   return {
     data: (result.data ?? []).map((row: any) => ({
       id: row.id,
