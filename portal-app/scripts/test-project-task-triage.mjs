@@ -44,4 +44,8 @@ const screen = fs.readFileSync(new URL('../src/app/admin/tasks.tsx', import.meta
 assert.ok(!screen.includes('projectResult.data.filter((item) => item.contractId)'), 'Projetos sem contrato não podem ficar ocultos'); checks++;
 assert.ok(screen.includes('getProjectTaskTriage'), 'Indicadores operacionais estão na tela'); checks++;
 assert.ok(screen.includes('getUnmetTaskDependencies'), 'Dependências são verificadas antes de concluir'); checks++;
+const candidate = fs.readFileSync(new URL('../../docs/project-task/0001-templates-pre-contract-candidate.sql', import.meta.url), 'utf8');
+assert.ok(candidate.includes('AND cliente_id IS NOT NULL'), 'Projeto precisa manter cliente vinculado'); checks++;
+assert.ok(!candidate.includes('AND contract_id IS NOT NULL'), 'Contrato opcional na aplicação de modelos'); checks++;
+assert.ok(candidate.includes('public.is_portal_admin()'), 'Autorização administrativa preservada'); checks++;
 console.log(`TRIAGEM DE TAREFAS: ${checks} verificações passaram.`);
