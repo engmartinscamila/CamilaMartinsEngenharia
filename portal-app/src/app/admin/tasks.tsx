@@ -6,6 +6,7 @@ import { Pressable, Text, View } from 'react-native';
 import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
 import { formatDate, isValidIsoDate } from '@/lib/format';
+import { getProjectTaskTriage, getUnmetTaskDependencies, todayInSaoPaulo } from '@/lib/project-task-triage';
 import { useThemeStyles } from '@/providers/theme-provider';
 import { listAdminProjects } from '@/services/admin-service';
 import {
@@ -50,16 +51,22 @@ export default function AdminTasksScreen() {
 
   const loadProjects = useCallback(async () => {
     const [projectResult, templateResult] = await Promise.all([listAdminProjects(), listTaskTemplates()]);
-    setProjects(projectResult.data.filter((item) => item.contractId));
+    setProjects(projectResult.data);
     setTemplates(templateResult.data);
     setError(projectResult.error ?? templateResult.error);
-    setProjectId((current) => current ?? projectResult.data.find((item) => item.contractId)?.id ?? null);
-  }, [setProjectId]);
+
+  }, []);
+  useEffect(() => {
+    const firstProject = projects[0];
+    if (firstProject && !projects.some((project) => project.id === projectId)) {
+      setProjectId(firstProject.id);
+    }
+  }, [projectId, projects, setProjectId]);
   const loadTasks = useCallback(async () => {
     if (!projectId) { setTasks([]); return; }
     setLoading(true);
     const result = await listProjectTasks(projectId);
-    setTasks(result.data); setError(result.error); setLoading(false);
+    setTasks(result.error ? [] : result.data); setError(result.error); setLoading(false);
   }, [projectId]);
   useEffect(() => { const task = setTimeout(() => void loadProjects(), 0); return () => clearTimeout(task); }, [loadProjects]);
   useEffect(() => { const task = setTimeout(() => void loadTasks(), 0); return () => clearTimeout(task); }, [loadTasks]);
@@ -70,6 +77,9 @@ export default function AdminTasksScreen() {
     const total = active.reduce((sum, task) => sum + task.weight, 0);
     return total ? Math.round(100 * active.filter((task) => task.status === 'done').reduce((sum, task) => sum + task.weight, 0) / total) : 0;
   }, [tasks]);
+
+  const triage = useMemo(() => getProjectTaskTriage(tasks, todayInSaoPaulo()), [tasks]);
+  const attentionLabel = { overdue: 'Em atraso', blocked: 'Aguardando liberação', due_soon: 'Vence em até 7 dias', urgent: 'Urgente' };
 
   const create = async () => {
     if (!projectId || title.trim().length < 3) { setError('Selecione o projeto e informe uma tarefa válida.'); return; }
@@ -92,6 +102,10 @@ export default function AdminTasksScreen() {
   };
 
   const changeStatus = async (task: ProjectTaskSummary, status: TaskStatus) => {
+    if (status === 'done' && getUnmetTaskDependencies(task, tasks).length > 0) {
+      setError('Conclua primeiro as tarefas predecessoras. Atualize a lista se uma dependência já foi finalizada.');
+      return;
+    }
     setError(null); const actionError = await updateProjectTask({ id: task.id, status });
     if (actionError) setError(actionError); else await loadTasks();
   };
@@ -108,7 +122,8 @@ export default function AdminTasksScreen() {
     if (!projectId) return;
     const baseDate = startDate && isValidIsoDate(startDate) ? startDate : new Date().toISOString().slice(0, 10);
     const actionError = await applyTaskTemplate(templateId, projectId, baseDate);
-    if (actionError) setError(actionError); else { setSuccess('Modelo aplicado e cronograma operacional criado.'); await loadTasks(); }
+    if (actionError) setError(actionError);
+    else { setSuccess('Modelo aplicado e cronograma operacional criado.'); await loadTasks(); }
   };
 
   return (
@@ -117,8 +132,23 @@ export default function AdminTasksScreen() {
       {error ? <Notice tone="danger">{error}</Notice> : null}{success ? <Notice tone="success">{success}</Notice> : null}
       {!embedded ? <Card>
         <Text style={styles.sectionTitle}>Projeto</Text>
-        <View style={styles.chips}>{projects.map((project) => <Pressable key={project.id} onPress={() => setProjectId(project.id)} style={[styles.chip, projectId === project.id && styles.selected]}><Text style={[styles.chipText, projectId === project.id && styles.selectedText]}>{project.contractNumber} • {project.name}</Text></Pressable>)}</View>
+        <View style={styles.chips}>{projects.map((project) => <Pressable key={project.id} onPress={() => setProjectId(project.id)} style={[styles.chip, projectId === project.id && styles.selected]}><Text style={[styles.chipText, projectId === project.id && styles.selectedText]}>{project.contractNumber || 'Sem contrato'} • {project.name}</Text></Pressable>)}</View>
         {selectedProject ? <View style={styles.progressRow}><Text style={styles.title}>{selectedProject.name}</Text><StatusPill label={`${progress}% concluído`} tone={progress === 100 ? 'success' : 'warning'} /></View> : null}
+      </Card> : null}
+
+      {projectId ? <Card>
+        <Text style={styles.sectionTitle}>Prazos e prioridades</Text>
+        <Text style={styles.meta}>
+          {triage.active} em aberto • {triage.overdue} em atraso • {triage.dueSoon} vencem em 7 dias • {triage.blocked} bloqueadas
+        </Text>
+        {triage.attention.length ? triage.attention.slice(0, 5).map((item) => (
+          <View key={item.taskId} style={styles.template}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.meta}>{attentionLabel[item.kind]}{item.dueDate ? ` • ${formatDate(item.dueDate)}` : ''}</Text>
+            </View>
+          </View>
+        )) : <Text style={styles.meta}>Nenhum prazo crítico ou bloqueio identificado nas tarefas cadastradas.</Text>}
       </Card> : null}
 
       <Card>
@@ -143,10 +173,11 @@ export default function AdminTasksScreen() {
       <Card>
         <Text style={styles.sectionTitle}>Quadro e linha do tempo</Text>
         {tasks.length === 0 ? <StateView icon="checkbox-outline" title="Nenhuma tarefa" description="Crie tarefas manualmente ou aplique um modelo." /> : tasks.map((task) => {
-          const blocked = task.dependencyIds.some((id) => tasks.find((item) => item.id === id)?.status !== 'done');
+          const unmetDependencies = getUnmetTaskDependencies(task, tasks);
+          const blocked = task.status === 'blocked' || unmetDependencies.length > 0;
           return <View key={task.id} style={[styles.task, task.parentTaskId && styles.subtask]}>
-            <View style={styles.progressRow}><View style={{ flex: 1 }}><Text style={styles.title}>{task.parentTaskId ? '↳ ' : ''}{task.title}</Text><Text style={styles.meta}>{task.startDate ? formatDate(task.startDate) : 'Sem início'} → {task.dueDate ? formatDate(task.dueDate) : 'Sem prazo'} • {task.estimatedHours ?? '—'} h</Text><Text style={styles.meta}>{task.dependencyIds.length ? `${task.dependencyIds.length} dependência(s)` : 'Sem dependência'} • {task.clientVisible ? 'cliente acompanha' : 'interno'}</Text></View><StatusPill label={blocked && task.status !== 'done' ? 'aguarda dependência' : statuses.find((item) => item.value === task.status)?.label ?? task.status} tone={task.status === 'done' ? 'success' : blocked ? 'danger' : 'warning'} /></View>
-            <View style={styles.actions}>{statuses.filter((status) => status.value !== task.status).map((status) => <Button key={status.value} onPress={() => void changeStatus(task, status.value)} title={status.label} variant="ghost" />)}</View>
+            <View style={styles.progressRow}><View style={{ flex: 1 }}><Text style={styles.title}>{task.parentTaskId ? '↳ ' : ''}{task.title}</Text><Text style={styles.meta}>{task.startDate ? formatDate(task.startDate) : 'Sem início'} → {task.dueDate ? formatDate(task.dueDate) : 'Sem prazo'} • {task.estimatedHours ?? '—'} h</Text><Text style={styles.meta}>{task.dependencyIds.length ? `${task.dependencyIds.length} dependência(s)` : 'Sem dependência'} • {task.clientVisible ? 'cliente acompanha' : 'interno'}</Text>{unmetDependencies.length ? <Text style={styles.meta}>A conclusão exige finalizar {unmetDependencies.length} predecessora(s).</Text> : null}</View><StatusPill label={unmetDependencies.length > 0 && task.status !== 'done' ? 'Aguarda dependência' : statuses.find((item) => item.value === task.status)?.label ?? task.status} tone={task.status === 'done' ? 'success' : blocked ? 'danger' : 'warning'} /></View>
+            <View style={styles.actions}>{statuses.filter((status) => status.value !== task.status).map((status) => <Button key={status.value} disabled={status.value === 'done' && unmetDependencies.length > 0} onPress={() => void changeStatus(task, status.value)} title={status.label} variant="ghost" />)}</View>
             <Button onPress={() => void toggleVisible(task)} title={task.clientVisible ? 'Ocultar do cliente' : 'Compartilhar com cliente'} variant="secondary" />
           </View>;
         })}
