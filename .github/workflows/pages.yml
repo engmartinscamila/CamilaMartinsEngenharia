@@ -12,8 +12,9 @@ permissions:
 
 concurrency:
   group: "pages"
-  # Only the latest validated source should publish; cancel stale or stalled builds.
-  cancel-in-progress: true
+  # Deixe a execução em andamento concluir: commits paralelos não podem cancelar
+  # indefinidamente a publicação. O GitHub mantém apenas o último pendente.
+  cancel-in-progress: false
 
 jobs:
   auditoria:
