@@ -242,20 +242,28 @@
     if (!select) return;
     const current = select.value;
     const clientId = $('linkedClientId')?.value;
-    const items = projectCatalog.filter(item => String(item.cliente_id) === String(clientId) && !item.contract_id && !['cancelado','arquivado'].includes(item.status));
-    select.innerHTML = '<option value="">Sem projeto selecionado</option>' + items.map(item => `<option value="${esc(item.id)}">${esc(item.nome)} • ${esc(buildProjectAddress(item) || 'Endereço não informado')}</option>`).join('');
+    // Todos os projetos ativos do cliente aparecem; os que já têm contrato ficam identificados.
+    const items = projectCatalog.filter(item => String(item.cliente_id) === String(clientId) && !['cancelado','arquivado'].includes(item.status));
+    select.innerHTML = '<option value="">Sem projeto selecionado</option>' + items.map(item => `<option value="${esc(item.id)}">${esc(item.nome)} • ${esc(buildProjectAddress(item) || 'Endereço não informado')}${item.contract_id ? ' • já no contrato ' + esc(item.numero_contrato || 'existente') : ''}</option>`).join('');
     if (items.some(item => item.id === current)) select.value = current;
     $('contractProjectField')?.classList.toggle('doc-hidden', mode() !== 'contrato');
   }
 
   function applyContractProject(id) {
-    const project = projectCatalog.find(item => item.id === id && String(item.cliente_id) === String($('linkedClientId')?.value) && !item.contract_id);
+    const project = projectCatalog.find(item => item.id === id && String(item.cliente_id) === String($('linkedClientId')?.value));
     if (!project) return;
-    setField('propertyAddress', buildProjectAddress(project));
+    const address = buildProjectAddress(project);
+    setField('propertyAddress', [project.nome, address].filter(Boolean).join(' — '));
     setField('propertyType', project.tipo);
     setField('areaTerreno', project.area_terreno_m2);
     setField('areaConstruida', project.area_construida_m2);
-    msg('Projeto selecionado. O contrato será vinculado a este mesmo cadastro após a emissão.', 'success');
+    if (!project.numero_obra || !project.cep_obra) {
+      msg('Projeto selecionado, mas faltam número e/ou CEP da obra no cadastro do projeto. Complete o cadastro ou o campo de endereço da obra antes de emitir.', 'error');
+    } else if (project.contract_id) {
+      msg(`Dados do projeto copiados para o contrato. Este projeto já pertence ao contrato ${project.numero_contrato || 'existente'}, que continua sendo o vínculo dele.`, 'success');
+    } else {
+      msg('Projeto selecionado. O contrato será vinculado a este mesmo cadastro após a emissão.', 'success');
+    }
   }
 
   function ensureCommercialSelectors() {
@@ -741,7 +749,10 @@
     const quoteIds = sources
       .filter(item => item.sourceType === 'commercial')
       .map(item => item.sourceId);
-    const selectedProjectId = $('contractProjectId')?.value || null;
+    const pickedProjectId = $('contractProjectId')?.value || null;
+    const pickedProject = projectCatalog.find(item => item.id === pickedProjectId);
+    // Projeto que já tem contrato fornece os dados, mas o vínculo dele não é alterado.
+    const selectedProjectId = pickedProject && !pickedProject.contract_id ? pickedProjectId : null;
     const sourceProjectId = legacySources[0]?.sourceId || selectedProjectId;
     if (selectedProjectId && legacySources.length && legacySources[0].sourceId !== selectedProjectId) {
       msg('O projeto selecionado difere do projeto do orçamento de origem.', 'error'); return;
