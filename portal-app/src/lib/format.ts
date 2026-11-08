@@ -50,6 +50,36 @@ export function parseBrazilianCurrency(value: string) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/**
+ * A04: converte um valor monetário para centavos inteiros. Retorna null quando o
+ * valor não é finito ou tem mais de duas casas decimais (ex.: 100,005), para que
+ * a tela peça correção explícita em vez de o banco arredondar silenciosamente.
+ */
+export function moneyToCents(value: number | null | undefined) {
+  if (value === null || value === undefined || !Number.isFinite(value)) return null;
+  const cents = Math.round(value * 100);
+  return Math.abs(value * 100 - cents) < 1e-6 ? cents : null;
+}
+
+/** A04: valor em reais com no máximo duas casas; null se inválido ou com mais casas. */
+export function parseBrazilianMoney(value: string) {
+  const parsed = parseBrazilianCurrency(value);
+  const cents = moneyToCents(parsed);
+  return cents === null ? null : cents / 100;
+}
+
+/**
+ * A05: valor monetário opcional vindo do banco. null, undefined e texto vazio
+ * continuam desconhecidos (null) — Number(null) seria 0 e mascararia a ausência.
+ */
+export function optionalMoney(value: unknown) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'string' && value.trim() === '') return null;
+  if (typeof value !== 'number' && typeof value !== 'string') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export function isValidIsoDate(value: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const year = Number(value.slice(0, 4));
