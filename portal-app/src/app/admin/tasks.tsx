@@ -57,8 +57,9 @@ export default function AdminTasksScreen() {
 
   }, []);
   useEffect(() => {
-    if (projects.length && !projects.some((project) => project.id === projectId)) {
-      setProjectId(projects[0].id);
+    const firstProject = projects[0];
+    if (firstProject && !projects.some((project) => project.id === projectId)) {
+      setProjectId(firstProject.id);
     }
   }, [projectId, projects, setProjectId]);
   const loadTasks = useCallback(async () => {
