@@ -60,7 +60,7 @@ export default function AdminTasksScreen() {
     if (!projectId) { setTasks([]); return; }
     setLoading(true);
     const result = await listProjectTasks(projectId);
-    setTasks(result.data); setError(result.error); setLoading(false);
+    setTasks(result.error ? [] : result.data); setError(result.error); setLoading(false);
   }, [projectId]);
   useEffect(() => { const task = setTimeout(() => void loadProjects(), 0); return () => clearTimeout(task); }, [loadProjects]);
   useEffect(() => { const task = setTimeout(() => void loadTasks(), 0); return () => clearTimeout(task); }, [loadTasks]);
@@ -169,7 +169,7 @@ export default function AdminTasksScreen() {
           const unmetDependencies = getUnmetTaskDependencies(task, tasks);
           const blocked = task.status === 'blocked' || unmetDependencies.length > 0;
           return <View key={task.id} style={[styles.task, task.parentTaskId && styles.subtask]}>
-            <View style={styles.progressRow}><View style={{ flex: 1 }}><Text style={styles.title}>{task.parentTaskId ? '↳ ' : ''}{task.title}</Text><Text style={styles.meta}>{task.startDate ? formatDate(task.startDate) : 'Sem início'} → {task.dueDate ? formatDate(task.dueDate) : 'Sem prazo'} • {task.estimatedHours ?? '—'} h</Text><Text style={styles.meta}>{task.dependencyIds.length ? `${task.dependencyIds.length} dependência(s)` : 'Sem dependência'} • {task.clientVisible ? 'cliente acompanha' : 'interno'}</Text>{unmetDependencies.length ? <Text style={styles.meta}>A conclusão exige finalizar {unmetDependencies.length} predecessora(s).</Text> : null}</View><StatusPill label={blocked && task.status !== 'done' ? 'aguarda dependência' : statuses.find((item) => item.value === task.status)?.label ?? task.status} tone={task.status === 'done' ? 'success' : blocked ? 'danger' : 'warning'} /></View>
+            <View style={styles.progressRow}><View style={{ flex: 1 }}><Text style={styles.title}>{task.parentTaskId ? '↳ ' : ''}{task.title}</Text><Text style={styles.meta}>{task.startDate ? formatDate(task.startDate) : 'Sem início'} → {task.dueDate ? formatDate(task.dueDate) : 'Sem prazo'} • {task.estimatedHours ?? '—'} h</Text><Text style={styles.meta}>{task.dependencyIds.length ? `${task.dependencyIds.length} dependência(s)` : 'Sem dependência'} • {task.clientVisible ? 'cliente acompanha' : 'interno'}</Text>{unmetDependencies.length ? <Text style={styles.meta}>A conclusão exige finalizar {unmetDependencies.length} predecessora(s).</Text> : null}</View><StatusPill label={unmetDependencies.length > 0 && task.status !== 'done' ? 'Aguarda dependência' : statuses.find((item) => item.value === task.status)?.label ?? task.status} tone={task.status === 'done' ? 'success' : blocked ? 'danger' : 'warning'} /></View>
             <View style={styles.actions}>{statuses.filter((status) => status.value !== task.status).map((status) => <Button key={status.value} disabled={status.value === 'done' && unmetDependencies.length > 0} onPress={() => void changeStatus(task, status.value)} title={status.label} variant="ghost" />)}</View>
             <Button onPress={() => void toggleVisible(task)} title={task.clientVisible ? 'Ocultar do cliente' : 'Compartilhar com cliente'} variant="secondary" />
           </View>;
