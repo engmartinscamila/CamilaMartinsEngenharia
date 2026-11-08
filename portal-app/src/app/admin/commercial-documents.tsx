@@ -14,6 +14,7 @@ import {
   downloadIssuedCommercialWord,
   listCommercialRecords,
   listCommercialServiceCatalog,
+  listIssuedCommercialVersions,
   lookupCommercialCep,
   lookupCommercialCnpj,
   previewCommercialDocument,
@@ -25,6 +26,7 @@ import {
   type CommercialServiceLevelCode,
   type CommercialServiceSelection,
   type ExistingCommercialClient,
+  type IssuedCommercialVersion,
 } from '@/services/commercial-service';
 import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 
@@ -49,7 +51,8 @@ export default function AdminCommercialDocumentsScreen() {
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
   const [records, setRecords] = useState<CommercialRecord[]>([]);
   const [pending,setPending]=useState<PendingGeneration|null>(null);
-  const [pendingWordRecovery,setPendingWordRecovery]=useState<{recordId:string;kind:'orcamento'|'contrato'}|null>(null);
+  const [pendingWordRecovery,setPendingWordRecovery]=useState<{recordId:string;kind:'orcamento'|'contrato';documentId:string}|null>(null);
+  const [versionHistory,setVersionHistory]=useState<{recordId:string;kind:'orcamento'|'contrato';items:IssuedCommercialVersion[]}|null>(null);
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -200,14 +203,14 @@ export default function AdminCommercialDocumentsScreen() {
     setLoadingKey(null);
   };
 
-  const downloadIssuedWord=async(record:CommercialRecord,kind:'orcamento'|'contrato',recover=false)=>{
-    const documentId=kind==='contrato'?record.contractDocumentId:record.quoteDocumentId;
+  const downloadIssuedWord=async(record:CommercialRecord,kind:'orcamento'|'contrato',recover=false,versionDocumentId?:string)=>{
+    const documentId=versionDocumentId??(kind==='contrato'?record.contractDocumentId:record.quoteDocumentId);
     if(!documentId){setError('Não existe uma emissão anterior deste documento para baixar.');return;}
     setLoadingKey(`download-${kind}-${record.id}`);setError(null);setSuccess(null);
     try {
       const result=await downloadIssuedCommercialWord(documentId,recover);
       if(result.missingOriginal){
-        setPendingWordRecovery({recordId:record.id,kind});
+        setPendingWordRecovery({recordId:record.id,kind,documentId});
         setError('O Word original não está disponível. A reconstituição cria uma cópia identificada a partir do histórico congelado, sem alterar a versão; confira o conteúdo antes de usar.');
       } else if(result.error) setError(result.error);
       else {
@@ -216,6 +219,16 @@ export default function AdminCommercialDocumentsScreen() {
           ? 'Cópia histórica reconstituída e baixada, sem criar revisão. Confira os dados antes de enviar.'
           : `${kind==='contrato'?'Contrato':'Orçamento'} emitido v${result.version??'?'} baixado sem criar nova revisão.`);
       }
+    } finally {setLoadingKey(null);}
+  };
+
+  const showVersionHistory=async(record:CommercialRecord,kind:'orcamento'|'contrato')=>{
+    if(versionHistory?.recordId===record.id&&versionHistory.kind===kind){setVersionHistory(null);return;}
+    setLoadingKey(`versions-${kind}-${record.id}`);setError(null);setVersionHistory(null);
+    try {
+      const result=await listIssuedCommercialVersions(record.id,kind);
+      if(result.error)setError(result.error);
+      else setVersionHistory({recordId:record.id,kind,items:result.data});
     } finally {setLoadingKey(null);}
   };
 
@@ -237,7 +250,7 @@ export default function AdminCommercialDocumentsScreen() {
     const actionError = await generateCommercialDocument(pending.record.id, pending.kind, pending.archive,{reason:pending.reason.trim()});
     if (actionError) setError(actionError);
     else setSuccess(`${pending.kind==='contrato'?'Contrato':'Orçamento'} v${pending.preview.nextVersion} gerado${pending.archive?', baixado e arquivado':' para download'}. A emissão ficou vinculada ao snapshot desta versão.`);
-    setPending(null);await load(); setLoadingKey(null);
+    setPending(null);setVersionHistory(null);await load(); setLoadingKey(null);
   };
 
   const convert = async (record: CommercialRecord) => {
@@ -319,7 +332,7 @@ export default function AdminCommercialDocumentsScreen() {
          <View style={styles.actions}>
            <Button loading={Boolean(loadingKey?.startsWith('download-'))} onPress={()=>{
              const record=records.find(item=>item.id===pendingWordRecovery.recordId);
-             if(record)void downloadIssuedWord(record,pendingWordRecovery.kind,true);
+             if(record)void downloadIssuedWord(record,pendingWordRecovery.kind,true,pendingWordRecovery.documentId);
              else {setPendingWordRecovery(null);setError('Registro não encontrado. Atualize a tela.');}
            }} title="Reconstituir cópia e baixar" />
            <Button onPress={()=>{setPendingWordRecovery(null);setError(null);}} title="Cancelar recuperação" variant="ghost" />
@@ -334,8 +347,12 @@ export default function AdminCommercialDocumentsScreen() {
             <View style={styles.recordHeader}><View style={{ flex: 1 }}><Text style={styles.recordTitle}>{record.quoteNumber} • {record.prospectName}</Text><Text style={styles.meta}>{record.contractNumber ? `Contrato ${record.contractNumber} • ` : ''}{record.propertyType ?? 'Serviço de engenharia'} • {formatDate(record.createdAt)}</Text><Text style={styles.meta}>Obra: {record.propertyAddress||'endereço ainda não informado'}</Text></View><StatusPill label={record.status.replaceAll('_', ' ')} tone={record.status === 'convertido' ? 'success' : record.status === 'cancelado' ? 'danger' : 'neutral'} /></View>
             <Text style={styles.subTitle}>Orçamento</Text>
             <View style={styles.actions}>{record.quoteDocumentId?<Button loading={loadingKey === `download-orcamento-${record.id}`} onPress={() => void downloadIssuedWord(record,'orcamento')} title="Baixar Word já emitido (sem revisão)" variant="secondary" />:null}<Button loading={loadingKey === `preview-orcamento-${record.id}`} onPress={() => void requestGenerate(record, 'orcamento', false)} title={record.quoteDocumentId?'Criar nova revisão do orçamento':'Prévia + gerar orçamento'} variant="secondary" /><Button onPress={() => void requestGenerate(record, 'orcamento', true)} title={record.quoteDocumentId?'Prévia + arquivar nova revisão':'Prévia + arquivar orçamento'} variant="ghost" /></View>
+            {record.quoteDocumentId?<Button loading={loadingKey === `versions-orcamento-${record.id}`} onPress={() => void showVersionHistory(record,'orcamento')} title="Consultar versões emitidas do orçamento" variant="ghost" />:null}
+            {versionHistory?.recordId===record.id&&versionHistory.kind==='orcamento'?<View style={styles.serviceList}><Text style={styles.help}>Versões emitidas — cada arquivo permanece vinculado à sua versão.</Text>{versionHistory.items.length===0?<Text style={styles.help}>Nenhuma versão emitida localizada.</Text>:versionHistory.items.map(version=><View key={version.id} style={styles.matchRow}><View style={{flex:1}}><Text style={styles.serviceText}>{version.name} • v{version.version}</Text><Text style={styles.meta}>Emissão: {formatDate(version.generatedAt)}</Text></View><Button loading={loadingKey === `download-orcamento-${record.id}`} onPress={()=>void downloadIssuedWord(record,'orcamento',false,version.id)} title={`Baixar v${version.version}`} variant="secondary" /></View>)}</View>:null}
             <Text style={styles.subTitle}>Contrato</Text>
             <View style={styles.actions}>{record.contractDocumentId?<Button loading={loadingKey === `download-contrato-${record.id}`} onPress={() => void downloadIssuedWord(record,'contrato')} title="Baixar Word já emitido (sem revisão)" variant="secondary" />:null}<Button disabled={record.status === 'convertido'} loading={loadingKey === `preview-contrato-${record.id}`} onPress={() => void requestGenerate(record, 'contrato', false)} title={record.contractDocumentId?'Criar nova revisão do contrato':'Prévia + gerar contrato'} variant="secondary" /><Button disabled={record.status === 'convertido'} onPress={() => void requestGenerate(record, 'contrato', true)} title={record.contractDocumentId?'Prévia + arquivar nova revisão':'Prévia + arquivar contrato'} variant="ghost" /></View>
+            {record.contractDocumentId?<Button loading={loadingKey === `versions-contrato-${record.id}`} onPress={() => void showVersionHistory(record,'contrato')} title="Consultar versões emitidas do contrato" variant="ghost" />:null}
+            {versionHistory?.recordId===record.id&&versionHistory.kind==='contrato'?<View style={styles.serviceList}><Text style={styles.help}>Versões emitidas — baixar não cria revisão.</Text>{versionHistory.items.length===0?<Text style={styles.help}>Nenhuma versão emitida localizada.</Text>:versionHistory.items.map(version=><View key={version.id} style={styles.matchRow}><View style={{flex:1}}><Text style={styles.serviceText}>{version.name} • v{version.version}</Text><Text style={styles.meta}>Emissão: {formatDate(version.generatedAt)}</Text></View><Button loading={loadingKey === `download-contrato-${record.id}`} onPress={()=>void downloadIssuedWord(record,'contrato',false,version.id)} title={`Baixar v${version.version}`} variant="secondary" /></View>)}</View>:null}
             <Button disabled={!record.contractDocumentId || record.status === 'convertido'} loading={loadingKey === `convert-${record.id}`} onPress={() => void convert(record)} title={record.status === 'convertido' ? 'Cliente/projeto vinculados' : 'Converter em cliente + projeto'} />
             <Button disabled={!record.quoteDocumentId && !record.contractDocumentId} loading={loadingKey === `access-${record.id}`} onPress={() => void createAccess(record)} title="Compartilhar link temporário" variant="secondary" />
           </View>
