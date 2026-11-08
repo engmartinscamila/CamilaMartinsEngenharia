@@ -30,7 +30,7 @@ Base: dossiê de auditoria de 07/11/2026 (commit de referência `22328fb`). Cada
 ## Pendências que dependem de você
 
 1. ~~Confirmar a migração do A18~~ — **feito em 08/11**.
-2. **Criar o token de implantação das Edge Functions** (A11 e A12 já publicados pelo conector; o token mantém `download-commercial-word`, `process-commercial-document-job` e as próximas correções em dia):
+2. ~~Criar o token de implantação das Edge Functions~~ — **feito**: o CI publicou as funções em 08/11 (inclui `download-commercial-word` e `process-commercial-document-job`). (A11 e A12 já publicados pelo conector; o token mantém `download-commercial-word`, `process-commercial-document-job` e as próximas correções em dia):
    - Supabase → Account → Access Tokens → *Generate new token*;
    - GitHub → repositório → Settings → Secrets and variables → Actions → *New repository secret* com o nome `SUPABASE_ACCESS_TOKEN`;
    - Depois: GitHub → Actions → "Publicar Edge Functions no Supabase" → *Run workflow* com `download-commercial-word process-commercial-document-job`.
@@ -84,7 +84,7 @@ Regra registrada: o cronograma completo só é oferecido ao cliente quando o ser
 
 **Vitalle:** usar Gestão de obras → Novo cronograma → opção 2C, informando motivo, datas e custos. O legado fica preservado como histórico.
 
-Pendentes da proprietária: token `SUPABASE_ACCESS_TOKEN` (funções `download-commercial-word` e `process-commercial-document-job`) e `npx wrangler deploy` do Worker de mídia.
+Pendente da proprietária: `npx wrangler deploy` do Worker de mídia (o token das funções já está ativo).
 
 
 ## Atualização 08/11 (noite) — contrato → Financeiro, Anexo I e Contrato Mestre v8
