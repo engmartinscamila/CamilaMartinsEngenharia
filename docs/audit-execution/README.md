@@ -15,6 +15,14 @@ Referência: auditoria de 07/11/2026, SHA `22328fb626c152e79518ba1451646e2ce85e6
 
 As migrações estão na pasta raiz `supabase/migrations`, criadas pelo CLI. São candidatas, não aplicadas nos projetos conectados. A interface de criação de tarefas deste PR depende da nova RPC: não integrar/publicar isoladamente antes das condições abaixo.
 
+## Continuação verificada em 07/11/2026 (somente leitura dos bancos)
+
+- GitHub Actions do HEAD anterior `dce15675810db047b111620793abfdab39e314ce`: cinco workflows concluídos com sucesso. A nova regressão A04 foi adicionada ao CI após esses resultados e precisa de seu próprio workflow verde.
+- A13, catálogo atual do esquema `public`: 178 funções em produção e 155 em homologação, 136 assinaturas em comum, 57 definições divergentes, 42 assinaturas exclusivas de produção e 19 exclusivas de homologação. As diferenças incluem funções de autenticação/acesso, documentos, contratos, notificações e operações financeiras. Comparação por assinatura e hash de definição, **não** uma classificação semântica nem autorização para copiar funções.
+- A04: `public.financeiro.valor` em produção é `numeric(12,2)`, que arredonda previamente valores de terceira casa decimal; em homologação é `numeric` sem precisão/escala declaradas. A produção tem 4 lançamentos, nenhum valor armazenado com terceira casa; homologação tem zero lançamentos. A view `public.project_financial_summary` depende da coluna. Logo, um simples `BEFORE TRIGGER` ou `CHECK` na coluna atual **não** pode detectar o valor original, e um `ALTER COLUMN TYPE` isolado pode falhar por dependência de view.
+- O novo `scripts/security/audit-money-precision-regression.mjs` reproduz essa falha em PostgreSQL isolado e valida o princípio de `numeric` sem escala com `CHECK` de centavos e magnitude depois de tratar a view fictícia. Não altera produção nem constitui migração aprovada. A migração verdadeira requer reconstrução fiel e validação de dependências, GRANT, segurança de views, consultas e backup restaurável antes da aplicação.
+- Permanecem bloqueados merge, publicação, migrações de produção, Financeiro V2 e qualquer reescrita de recibos anteriores até os gates já descritos nesta página.
+
 ## Verificação
 
 Suítes existentes: 92 scripts reexecutados, com 89 sucessos imediatos e 3 erros de preparação do executor. Os três passaram após resolver dependências/cwd, sem mudar as asserções. Resultados iniciais e reexecuções estão preservados em `evidence/`. Novos testes de componente/serviço e os dois testes SQL candidatos também passaram. TypeScript, lint (seis avisos anteriores) e exportação web passaram localmente; isso não equivale a homologação autenticada.
