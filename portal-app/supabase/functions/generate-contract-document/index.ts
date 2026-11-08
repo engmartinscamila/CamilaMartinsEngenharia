@@ -738,6 +738,17 @@ Deno.serve(async(req)=>{
    return json({reconstituted:true,documentId:row.id,documentKind:row.document_kind,path,version,originalEmittedAt:emittedRaw});
   }
 
+  // Documento já emitido (snapshot congelado): nunca gerar de novo por cima.
+  // O clique em "baixar" entrega o original; nova emissão exige nova versão.
+  if(action==='generate'){
+   const frozen=await service.from('document_emission_snapshots').select('id').eq('document_id',row.id).maybeSingle();
+   if(frozen.error)throw frozen.error;
+   if(frozen.data){
+    if(row.arquivo)return json({generated:true,alreadyEmitted:true,documentId:row.id,documentKind:row.document_kind,path:row.arquivo});
+    return json({error:'Esta versão já foi emitida e o arquivo original não está disponível. Use a cópia reconstituída ou prepare uma nova versão.',missingOriginal:true,canReconstitute:true},409);
+   }
+  }
+
   if(row.workflow_status==='enviado'||row.workflow_status==='assinado'||row.workflow_status==='aceito'){
    return json({error:'O documento já foi enviado/aceito e não pode ser sobrescrito. Crie uma nova versão.'},409);
   }

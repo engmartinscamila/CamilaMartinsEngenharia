@@ -786,6 +786,13 @@
   }
 
   async function generate(recordId, kind, archive) {
+    // Caminho único de emissão: o fluxo final (prévia, revisão com motivo e
+    // versão substituída). Este gerador antigo não controlava revisões.
+    if (typeof window.CMEGenerateCommercialDocument === 'function') {
+      const result = await window.CMEGenerateCommercialDocument(recordId, kind, archive);
+      await load();
+      return result;
+    }
     msg(`Gerando ${kind}...`);
     const generated = await client().functions.invoke('generate-commercial-document', {
       body: { recordId, kind }

@@ -24,6 +24,15 @@ assert.ok(annex.includes("action==='reconstitute'")&&annex.includes('historical_
 assert.ok(annex.includes('CÓPIA RECONSTITUÍDA')&&annex.includes('build(row.document_kind,reconstitutedData,profile,emittedAt)'),'A12: cópia reconstituída é identificada e preserva a data original da emissão');
 assert.ok(!/action==='reconstitute'[\s\S]{0,2500}generated_at:/.test(annex),'A12: reconstituição não altera generated_at nem os dados congelados');
 assert.ok(read('js/contract-documents-web.js').includes("action:'reconstitute'"),'A12: tela oferece a cópia reconstituída quando falta o original');
+{
+ const finalCommercial=read('portal-app/supabase/functions/generate-commercial-document-final/index.ts');
+ assert.ok(finalCommercial.includes("update({ superseded_by: documentId })")&&finalCommercial.includes(".is('superseded_by', null)"),'Revisão: versão anterior passa a ser substituída após a nova emissão');
+ assert.ok(finalCommercial.includes('pelo menos 10 letras'),'Revisão: motivo genérico (ex.: "A") é recusado no servidor');
+ assert.ok(read('js/commercial-document-preview-web.js').includes('pelo menos 10 letras')&&read('portal-app/src/app/admin/commercial-documents.tsx').includes('pelo menos 10 letras'),'Revisão: mesma regra de motivo no site e no portal');
+ assert.ok(read('js/commercial-documents-web.js').includes('window.CMEGenerateCommercialDocument(recordId, kind, archive)'),'Comercial: caminho único de emissão');
+ assert.ok(read('js/contract-documents-web.js').includes("'generate-contract-document-final'"),'Contratuais: site usa o mesmo gerador do portal (respeita opções)');
+ assert.ok(annex.includes("alreadyEmitted:true")&&annex.includes("from('document_emission_snapshots')"),'Documento emitido não é gerado de novo por cima; o download entrega o original');
+}
 assert.ok(editor.includes('representative_name')&&editor.includes('representative_powers'),'Cadastro do signatário completo');
 assert.ok(migration.includes('assert_commercial_party_ready')&&migration.includes("v_code IN ('k','l','m')"),'Validação obrigatória também no servidor');
 const record={
