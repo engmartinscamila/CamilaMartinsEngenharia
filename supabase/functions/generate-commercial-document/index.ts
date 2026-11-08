@@ -56,7 +56,15 @@ Deno.serve(async(req)=>{
   }
   if(kind==='contrato'){const assigned=await caller.rpc('admin_assign_commercial_contract_number',{p_record_id:recordId});if(assigned.error)throw assigned.error;}
   const preparedScope=await service.rpc('admin_prepare_commercial_scope_for_generation',{p_record_id:recordId});if(preparedScope.error)throw preparedScope.error;
-  const refreshed=await service.from('commercial_records').select('*').eq('id',recordId).single();if(refreshed.error)throw refreshed.error;const record=refreshed.data as CommercialRecord;
+  const refreshed=await service.from('commercial_records').select('*').eq('id',recordId).single();if(refreshed.error)throw refreshed.error;let record=refreshed.data as CommercialRecord;
+  if(kind==='contrato'){
+   // Nova emissão usa o Contrato Mestre e os textos padronizados vigentes; versões já emitidas continuam congeladas.
+   const activeMaster=await service.from('contract_master_versions').select('id,version').eq('active',true).order('version',{ascending:false}).limit(1).maybeSingle();if(activeMaster.error)throw activeMaster.error;
+   const currentTexts=await service.rpc('current_document_text_snapshot_all');if(currentTexts.error)throw currentTexts.error;
+   if(activeMaster.data&&(record.contract_master_id!==activeMaster.data.id||JSON.stringify((record as any).smart_texts??{})!==JSON.stringify(currentTexts.data??{}))){
+    const aligned=await service.from('commercial_records').update({contract_master_id:activeMaster.data.id,contract_master_version:activeMaster.data.version,smart_texts:currentTexts.data??{}}).eq('id',recordId).select('*').single();if(aligned.error)throw aligned.error;record=aligned.data as CommercialRecord;
+   }
+  }
   const professionalProfile=await loadProfessionalIdentity(service,kind);
   const missingProfile=missingProfessionalFields(professionalProfile,kind);
   if(missingProfile.length)return json({error:`Complete a identificação profissional sigilosa em Configurações antes de gerar este documento. Campos pendentes: ${missingProfile.join(', ')}.`},422);
@@ -68,14 +76,17 @@ Deno.serve(async(req)=>{
   if(currentDocument.data.generated_at||currentDocument.data.workflow_status==='enviado'||currentDocument.data.workflow_status==='assinado')return json({error:'Esta versão já foi emitida e não pode ser reescrita. Crie uma nova revisão.'},409);
   const docVersion=String(currentDocument.data.versao||'1.0');
   if(!/^\d+\.\d+$/.test(docVersion))return json({error:'Versão documental inválida.'},422);
-  const renderRecord={...record,document_version:docVersion,document_version_reason:currentDocument.data.version_reason||null};
+  // O cliente vê apenas a numeração das versões que recebeu; revisões internas não liberadas não aparecem.
+  let clientVersion=docVersion;
+  if(kind==='contrato'&&record.linked_contract_id){const released=await service.from('documentos').select('id',{count:'exact',head:true}).eq('contract_id',record.linked_contract_id).eq('document_kind','contrato').not('client_released_at','is',null).neq('id',documentId);if(released.error)throw released.error;clientVersion=`${(released.count||0)+1}.0`;}
+  const renderRecord={...record,document_version:clientVersion,document_version_reason:currentDocument.data.version_reason||null};
   const generatedAt=new Date();
   const generatedAtIso=generatedAt.toISOString();
   const documentDate=generatedDateIso(generatedAt);
   const generatedData={commercial_record_snapshot:record,professional_identity_snapshot:professionalProfile,commercial_document_kind:kind,commercial_record_id:record.id,quote_number:record.quote_number,contract_number:record.contract_number,prospect_name:record.prospect_name,contract_master_id:record.contract_master_id,contract_master_version:record.contract_master_version,smart_texts:record.smart_texts,services:record.services,coobligors:record.coobligors,experience_level:record.experience_level,emitted_at:generatedAtIso,document_date:documentDate,document_version:docVersion};
   const word=kind==='orcamento'?quoteDocument(renderRecord,professionalProfile,generatedAt):contractDocument(renderRecord,professionalProfile,contractMaster!.body,generatedAt);const buffer=await Packer.toBuffer(word);const number=kind==='orcamento'?record.quote_number:record.contract_number??'contrato';const path=`comercial/${record.id}/${kind}-${number}-v${docVersion}-${documentId}.docx`;
   const uploaded=await service.storage.from('documentos').upload(path,buffer,{contentType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',upsert:true});if(uploaded.error)throw uploaded.error;
-  const updatedDocument=await service.from('documentos').update({arquivo:path,workflow_status:'gerado',generated_at:generatedAtIso,generated_data:generatedData}).eq('id',documentId);if(updatedDocument.error)throw updatedDocument.error;
+  const updatedDocument=await service.from('documentos').update({arquivo:path,workflow_status:'gerado',generated_at:generatedAtIso,generated_data:{...generatedData,client_document_version:clientVersion},...(kind==='contrato'?{version:clientVersion}:{})}).eq('id',documentId);if(updatedDocument.error)throw updatedDocument.error;
   const nextStatus=record.status==='convertido'?'convertido':kind==='contrato'?'contrato_gerado':record.contract_document_id?'contrato_gerado':'orcamento_gerado';const updatedRecord=await service.from('commercial_records').update({status:nextStatus,updated_at:generatedAtIso}).eq('id',record.id);if(updatedRecord.error)throw updatedRecord.error;
   await service.from('audit_log').insert({user_id:user.id,action:`generate_commercial_${kind}_docx`,entity_type:'commercial_records',entity_id:record.id,details:{document_id:documentId,path,quote_number:record.quote_number,contract_number:record.contract_number,contract_master_version:record.contract_master_version,emitted_at:generatedAtIso,document_date:documentDate}});
   return json({generated:true,documentId,path,quoteNumber:record.quote_number,contractNumber:record.contract_number,emittedAt:generatedAtIso,documentDate,version:docVersion});

@@ -93,7 +93,7 @@ const historicXml=await (await JSZip.loadAsync(historicBuf)).file('word/document
 assert.ok(historicXml.includes('CÓPIA RECONSTITUÍDA'),'Recuperação histórica deve ser sinalizada');
 assert.ok(historicXml.includes('não registrados na emissão histórica'),'Representante ausente em versão antiga não deve causar bloqueio nem ser inventado');
 const recovery=read('portal-app/supabase/functions/download-commercial-word/index.ts');
-assert.ok(recovery.includes('historical_reconstitution:true')&&recovery.includes('document_version:String(snapshot.data.version'),'Recuperação deve usar versão congelada');
+assert.ok(recovery.includes('historical_reconstitution:true')&&recovery.includes('document_version:String(row.generated_data?.client_document_version||snapshot.data.version'),'Recuperação deve usar versão congelada');
 assert.equal(read('supabase/functions/download-commercial-word/index.ts'),recovery,'Recuperadores espelhados idênticos');
 assert.equal(read('supabase/functions/_shared/commercial-word-renderer.ts'),renderer,'Renderizadores sincronizados');
 assert.equal(read('supabase/functions/generate-contract-document/index.ts'),annex,'Anexo sincronizado');

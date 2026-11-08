@@ -121,7 +121,7 @@ function newestFirst<T extends { data: any[]; error: any }>(result: T): T {
 export async function listDocuments(projectId: string | null, clientPreview=false): Promise<ServiceResult<DocumentSummary[]>> {
   const modernQuery = supabase
     .from('documentos')
-    .select('id, projeto_id, nome, categoria, versao, created_at, storage_bucket, arquivo, permitir_download, protection_mode, document_kind, generated_at, client_visible, exibir_cliente, client_released_at');
+    .select('id, projeto_id, nome, categoria, versao, version, created_at, storage_bucket, arquivo, permitir_download, protection_mode, document_kind, generated_at, client_visible, exibir_cliente, client_released_at');
   const modern = newestFirst(await readAllRows(projectId ? modernQuery.eq('projeto_id', projectId) : modernQuery.is('projeto_id', null)));
 
   if (!modern.error) {
@@ -131,7 +131,7 @@ export async function listDocuments(projectId: string | null, clientPreview=fals
         projectId: row.projeto_id,
         title: row.nome ?? 'Documento',
         category: row.categoria ?? 'Outros',
-        version: row.versao,
+        version: row.version ?? row.versao,
         createdAt: row.created_at,
         storageBucket: row.storage_bucket,
         storagePath: row.arquivo,

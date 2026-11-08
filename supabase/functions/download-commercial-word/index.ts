@@ -38,7 +38,7 @@ Deno.serve(async req=>{
    const date=new Date(frozen.emitted_at||snapshot.data.emitted_at);if(!Number.isFinite(date.getTime()))throw new Error('Data histórica da emissão ausente.');
    const profile=frozen.professional_identity_snapshot||await loadProfessionalIdentity(service,kind);
    const master=kind==='contrato'?await loadContractMaster(service,record):null;
-   const historicRecord={...record,historical_reconstitution:true,document_version:String(snapshot.data.version||row.versao||'1.0')};
+   const historicRecord={...record,historical_reconstitution:true,document_version:String(row.generated_data?.client_document_version||snapshot.data.version||row.versao||'1.0')};
     const original=new Uint8Array(await Packer.toBuffer(kind==='contrato'?contractDocument(historicRecord,profile,master!.body,date):quoteDocument(historicRecord,profile,date)));
    bytes=kind==='contrato'?await enhanceContractDocument(original,record.property_address||'',record.services,record.custom_service,record.experience_level,record.commercial_terms,true):await enhanceQuoteDocument(original,record.services,record.custom_service);
    path=`_issued_word/reconstituted/${row.id}.docx`;
@@ -50,6 +50,6 @@ Deno.serve(async req=>{
   if(bytes.byteLength>20*1024*1024)return json({error:'Arquivo acima do limite de download direto.'},413);
   await service.from('audit_log').insert({user_id:user.data.user.id,action:'download_existing_commercial_word',entity_type:'documentos',entity_id:row.id,details:{version:snapshot.data.version,reconstituted,creates_revision:false}});
   const number=text(gd.contract_number||gd.quote_number||row.id).replace(/[^\p{L}\p{N}._-]/gu,'-');
-  return json({delivered:true,documentId:row.id,version:snapshot.data.version,reconstituted,fileName:`${kind==='contrato'?'Contrato':'Orcamento'}-${number}-v${snapshot.data.version}${reconstituted?'-copia-reconstituida':''}.docx`,contentBase64:encodeBase64(bytes)});
+  return json({delivered:true,documentId:row.id,version:snapshot.data.version,reconstituted,fileName:`${kind==='contrato'?'Contrato':'Orcamento'}-${number}-v${row.generated_data?.client_document_version||snapshot.data.version}${reconstituted?'-copia-reconstituida':''}.docx`,contentBase64:encodeBase64(bytes)});
  }catch(error){return json({error:error instanceof Error?error.message:String((error as {message?:string})?.message||'Não foi possível baixar a versão emitida.')},500);}
 });

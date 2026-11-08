@@ -15,7 +15,7 @@ async function fixture(failure,{kind='contrato',issued=true,admin=true,status='c
   total_value:9000,property_address:'Endereço de teste',address:'Endereço cadastral de teste',experience_level:'prata',
   services:[{code:'d',name:'Executivo',included:true}],commercial_terms:{scope:[{code:'d',deliverables:'Uma prancha executiva'}]},
   contract_document_id:kind==='contrato'&&issued?id(2):null,quote_document_id:kind==='orcamento'&&issued?id(2):null,status};
- const tables={commercial_records:[record],documentos:[],document_emission_snapshots:[],document_generation_history:[],audit_log:[]};
+ const tables={commercial_records:[record],documentos:[],document_emission_snapshots:[],document_generation_history:[],audit_log:[],contract_master_versions:[{id:'master-qa',version:8,active:true}]};
  const objects=new Map();let sequence=10,failed=false,packed=0,backgroundCore;
  let releaseCore,markCoreStarted;
  const coreGate=new Promise(resolve=>releaseCore=resolve);
@@ -24,7 +24,7 @@ async function fixture(failure,{kind='contrato',issued=true,admin=true,status='c
  const before=issued?clone(tables.documentos[0]):null;
  function fail(stage){if(stage===failure&&!failed){failed=true;return {error:{message:'Injected '+stage,status:503},data:null};}}
  function query(table){let operation='select',payload,filters=[];let executed;
-  const q={select(){return q;},eq(k,v){filters.push(row=>row[k]===v);return q;},is(k,v){filters.push(row=>row[k]===v);return q;},limit(){return q;},
+  const q={select(){return q;},eq(k,v){filters.push(row=>row[k]===v);return q;},is(k,v){filters.push(row=>row[k]===v);return q;},neq(k,v){filters.push(row=>row[k]!==v);return q;},not(k,_op,_v){filters.push(row=>row[k]!=null);return q;},order(){return q;},limit(){return q;},
    insert(v){operation='insert';payload=v;return q;},update(v){operation='update';payload=v;return q;},delete(){operation='delete';return q;},
    single(){return execute(true);},maybeSingle(){return execute(true);},then(resolve,reject){return execute(false).then(resolve,reject);}};
   async function execute(single){if(executed)return executed;
