@@ -80,7 +80,8 @@ jobs:
           no_jwt=" proteger-pdf agenda-ics prospect-document-access cleanup-expired-assets client-password-link dispatch-document-notifications dispatch-client-emails process-commercial-document-job "
           for fn in ${{ steps.list.outputs.names }}; do
             [ -f "supabase/functions/$fn/index.ts" ] || { echo "Ignorando $fn (sem index.ts)"; continue; }
-            flags="--project-ref $PROJECT_REF --use-api"
+            # CLI recente pede confirmação interativa; em CI confirmamos explicitamente.
+            flags="--project-ref $PROJECT_REF --use-api --yes"
             case "$no_jwt" in *" $fn "*) flags="$flags --no-verify-jwt";; esac
             echo "Publicando $fn ($flags)"
             supabase functions deploy "$fn" $flags
