@@ -85,3 +85,16 @@ Regra registrada: o cronograma completo só é oferecido ao cliente quando o ser
 **Vitalle:** usar Gestão de obras → Novo cronograma → opção 2C, informando motivo, datas e custos. O legado fica preservado como histórico.
 
 Pendentes da proprietária: token `SUPABASE_ACCESS_TOKEN` (funções `download-commercial-word` e `process-commercial-document-job`) e `npx wrangler deploy` do Worker de mídia.
+
+
+## Atualização 08/11 (noite) — contrato → Financeiro, Anexo I e Contrato Mestre v8
+
+| Item | Situação | Onde |
+|---|---|---|
+| Parcelas do contrato emitido viram contas a receber (uma por parcela, sem duplicar; revisão atualiza só as em aberto; pagas nunca mudam; contrato cancelado cancela as em aberto; soma ≠ total ou lançamento manual prévio não gera nada e registra pendência) | **No ar** (migração `20261108140000` aplicada; testada antes em transação desfeita). CON-2026-10-0002: 8 parcelas de R$ 1.500 geradas | commit `6f8af58` |
+| Anexo I exigido só com Serviço Adicional (não recusado) ou aditivo aceito | **No ar** (migração `20261108141000`; mapa documental e conferência de fechamento) | commit `6f8af58` |
+| Tarefa de revisão documental sem Anexo I quando não há adicional | **Código pronto**; depende do token `SUPABASE_ACCESS_TOKEN` para publicar `process-commercial-document-job` | commit `6f8af58` |
+| Contrato Mestre v8, textos padronizados, gerador e 123 escopos reescritos | **Aguardando “ok” da proprietária** (nada aplicado). Dados prontos em `docs/contrato-mestre-v8/revisao-v8.json` | — |
+| Revisão jurídica do Contrato Mestre v8 | **Recomendada** antes do uso com clientes (5.2, 6.1, 21.5) | — |
+
+Atenção: a Parcela 1/8 do CON-2026-10-0002 venceu em 06/11 e está como pendente. Se já foi recebida, marque como paga no Financeiro.
