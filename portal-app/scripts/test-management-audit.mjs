@@ -55,8 +55,8 @@ const clientDocuments=[
  {id:'other',projeto_id:'project-b',nome:'Outro projeto',created_at:'2026-11-04'},
 ];
 let standaloneFailure=false;
-const documentDb={from(){let project;const q={select(){return q},eq(_key,value){project=value;return q},is(_key,value){project=value;return q},order(){return q},async limit(){return standaloneFailure&&project===null?{data:null,error:{code:'503'}}:{data:clientDocuments.filter(r=>r.projeto_id===project),error:null}}};return q;}};
-const portal=load('src/services/portal-service.ts',{'@/lib/format':{},'@/lib/errors':{},'@/lib/env':{},'@/lib/supabase':{supabase:documentDb},'@/services/push-service':{}});
+const documentDb={from(){let project;const q={select(){return q},eq(_key,value){project=value;return q},is(_key,value){project=value;return q},order(){return q},range(){return q.limit()},async limit(){return standaloneFailure&&project===null?{data:null,error:{code:'503'}}:{data:clientDocuments.filter(r=>r.projeto_id===project),error:null}}};return q;}};
+const portal=load('src/services/portal-service.ts',{'@/lib/paginated-query':load('src/lib/paginated-query.ts'),'@/lib/format':{},'@/lib/errors':{},'@/lib/env':{},'@/lib/supabase':{supabase:documentDb},'@/services/push-service':{}});
 assert.deepEqual(Array.from((await portal.listClientDocuments(null)).data,r=>r.id),['standalone']);
 assert.deepEqual(Array.from((await portal.listClientDocuments('project-a')).data,r=>r.id),['standalone','selected']);
 standaloneFailure=true;
