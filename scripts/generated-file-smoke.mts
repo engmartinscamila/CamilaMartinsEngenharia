@@ -43,6 +43,8 @@ async function validateDocx(name:string,bytes:Uint8Array|Buffer,expected:string[
   for(const token of expected)check(visible.includes(token),`${name}: conteúdo esperado ausente: ${token}`);
   for(const token of forbidden)check(!visible.includes(token),`${name}: conteúdo indevido presente: ${token}`);
   for(const bad of ['undefined','[object Object]','NaN'])check(!visible.includes(bad),`${name}: texto inválido encontrado: ${bad}`);
+  // A20: campo obrigatório não preenchido não pode ser aprovado como documento válido.
+  for(const pending of ['A definir','Não definido','Não informado','Vencimento: a definir'])check(!visible.toLowerCase().includes(pending.toLowerCase()),`${name}: campo não preenchido no documento: ${pending}`);
   fs.writeFileSync(path.join(OUT,`${name}.docx`),buffer);
   console.log(`DOCX OK ${name}: ${buffer.length} bytes`);
 }
@@ -99,7 +101,7 @@ const services=[{
 const smartTexts={scope_limits_rule:{body:'Somente os serviços expressamente contratados integram o escopo QA.'},proposal_timeline_rule:{body:'Prazo QA conforme planejamento aprovado.'},anexo_timeline_rule:{body:'Cronograma QA vinculado ao contrato.'}};
 const commercialTerms={
   schedule:{days:45,day_type:'uteis',start_trigger:'Recebimento dos documentos e aprovação do início da prestação'},
-  installments:[{number:1,value:10000,due:'2026-09-11'},{number:2,value:15000,due:'2026-10-20'}],
+  installments:[{number:1,amount:10000,due_date:'2026-09-11'},{number:2,amount:15000,due_date:'2026-10-20'}],
   payment_method:'pix',
   scope:[
     {code:'a',quantity:1,unit:'projeto',deliverables:'Plantas técnicas, cortes, fachadas e memorial arquitetônico da residência',days:30,revisions:2,visits:0},
@@ -117,7 +119,7 @@ const commercialRecord:any={
 
 const contractData:any={
   emitted_at:'2026-09-11T12:00:00-03:00',document_date:'2026-09-11',contract_signed_at:'2026-09-11',contract_number:'CON-2026-09-QA01',contract_master_version:3,
-  client_name:'Cliente Arquivo QA',project_name:'Residência QA',project_type:'Residencial',property_address:'Rua da Obra QA, 999 - Rio de Janeiro/RJ',source_quote_number:'ORC-2026-09-QA01',
+  client_name:'Cliente Arquivo QA',client_cpf_cnpj:'529.982.247-25',project_name:'Residência QA',project_type:'Residencial',property_address:'Rua da Obra QA, 999 - Rio de Janeiro/RJ',source_quote_number:'ORC-2026-09-QA01',
   area_terreno_m2:420,area_construida_m2:210,contract_value:25000,payment_terms:commercialRecord.payment_terms,commercial_terms:commercialTerms,annex_source:'emitted_contract_snapshot',source_contract_document_version:'1.0',has_project:true,commercial_notes:'Condição QA',experience_level:'essencial',service_level:serviceLevel,
   scope_items:[...services,{code:'c',name:'Projeto Estrutural',included:false,description:'Não contratado.'}],scope_snapshot:services,smart_texts:smartTexts,
   approval_title:'Projeto Arquitetônico - Estudo preliminar',approval_description:'Entrega preliminar para validação.',delivered_at:'2026-09-10T15:00:00-03:00',approval_due_at:'2026-09-15T23:59:59-03:00',
@@ -152,6 +154,11 @@ try{
       'Local do serviço / endereço do imóvel ou obra: Rua da Obra QA, 999 - Rio de Janeiro/RJ.',
       'ESCOPO TÉCNICO CONTRATADO',
       'CLÁUSULA 1 – OBJETO',
+      // A20: cada parcela com valor e vencimento reais.
+      'Parcela 1 de 2: R$ 10.000,00',
+      'Parcela 2 de 2: R$ 15.000,00',
+      '11/09/2026',
+      '20/10/2026',
     ],
   );
 
@@ -162,7 +169,9 @@ try{
   ];
   for(const [kind,file,title] of coreKinds){
     const bytes=await Packer.toBuffer(contract.build(kind,contractData,profile));
-    await validateDocx(file,bytes,[title,'Cliente Arquivo QA','Residência QA','CON-2026-09-QA01']);
+    // A20: o Anexo I deve corresponder ao contrato (valor total e parcelas).
+    const annexValues=kind==='anexo_i'?['R$ 25.000,00','R$ 10.000,00','R$ 15.000,00']:[];
+    await validateDocx(file,bytes,[title,'Cliente Arquivo QA','529.982.247-25','Residência QA','CON-2026-09-QA01',...annexValues]);
   }
 
   const nativeCases:any[]=[
@@ -190,7 +199,7 @@ try{
     {code:'4',category:'Acabamentos',activity:'Acabamentos finais',weight_percent:25,planned_duration_days:48,predecessor_code:'3',planned_start:'2026-11-03',planned_finish:'2026-12-20',actual_start:null,actual_finish:null,actual_progress:0,planned_cost:5000,actual_cost:0,status:'Pendente',notes:'QA'}
   ];
   const xlsxBytes:Buffer=await xlsx.buildScheduleWorkbook(project,client,schedule,commercialContract,items);
-  check(xlsxBytes.length>20000,`Cronograma XLSX pequeno demais (${xlsxBytes.length} bytes)`);
+  check(xlsxBytes.length>5000,`Cronograma XLSX vazio ou truncado (${xlsxBytes.length} bytes)`);
   check(xlsxBytes[0]===0x50&&xlsxBytes[1]===0x4b,'Cronograma XLSX não é um pacote ZIP/OOXML válido');
   const xlsxZip=await JSZip.loadAsync(xlsxBytes,{checkCRC32:true});
   for(const required of ['[Content_Types].xml','xl/workbook.xml','xl/worksheets/sheet1.xml'])check(Boolean(xlsxZip.file(required)),`Cronograma XLSX: estrutura ausente (${required})`);

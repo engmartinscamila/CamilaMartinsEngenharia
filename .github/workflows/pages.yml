@@ -309,8 +309,7 @@ jobs:
 
       - name: Gerar, reabrir e validar todos os arquivos finais
         run: |
-          cp scripts/generated-file-smoke.ts scripts/generated-file-smoke.mts
-          sed -i 's/xlsxBytes.length>20000/xlsxBytes.length>15000/' scripts/generated-file-smoke.mts
+          # A20: mesmo arquivo e mesmos critérios do ambiente local.
           npx tsx scripts/generated-file-smoke.mts
 
       - name: Guardar amostras geradas pela auditoria
