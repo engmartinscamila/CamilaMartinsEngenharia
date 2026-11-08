@@ -77,6 +77,11 @@ let statement=m.receivableStatements(contractRows,projectsForStatement,statement
 let first=statement.find(row=>row.id==='contract-1');assert.equal(first.received,350);assert.equal(first.remaining,650);assert.equal(first.pending,400);assert.equal(first.unscheduled,250);
 assert.equal(first.entries.length,4,'Multiple projects and a direct contract entry count once; cancelled and expenses do not count');
 assert.equal(statement.find(row=>row.id==='unknown-value').remaining,null,'Unknown contract value is not zero');
+// A18: aditivo aceito soma ao total de referência sem alterar o valor original; valor desconhecido segue desconhecido.
+const withAddendum=m.receivableStatements([{...contractRows[0],addendumValue:500},{...contractRows[1],addendumValue:300}],projectsForStatement,statementEntries,[]);
+assert.equal(withAddendum.find(row=>row.id==='contract-1').contractValue,1500);assert.equal(withAddendum.find(row=>row.id==='contract-1').remaining,1150);
+assert.equal(withAddendum.find(row=>row.id==='unknown-value').contractValue,null,'Aditivo não inventa valor de contrato desconhecido');
+assert.equal(contractRows[0].contractValue,1000,'Valor original preservado');
 assert.equal(statement.find(row=>row.id==='client-3').pending,75);
 assert.equal(statement.filter(row=>!row.inactive).reduce((sum,row)=>sum+(row.remaining??row.pending),0),750,'Do not add pending installments to contract remainder');
 statement=m.receivableStatements(contractRows,projectsForStatement,statementEntries,[],'p2');assert.equal(statement.length,1);assert.equal(statement[0].received,350,'Project filter keeps the complete contract, not a duplicated contract value per project');

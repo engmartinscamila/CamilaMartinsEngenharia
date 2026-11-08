@@ -71,7 +71,7 @@ export function FinancialReceivables({styles,embeddedProjectId,missingContractVa
           {statementRows.length===0?<StateView title="Nenhum contrato ou recebimento neste filtro" description="Confira o cliente selecionado ou registre os serviços avulsos." icon="receipt-outline" />:statementRows.slice(statementPage*25,statementPage*25+25).map(row=><Card key={row.id}>
             <Text style={styles.title}>{row.clientName} • {row.contractNumber}</Text>
             {row.overdue>0&&!row.inactive?<Notice tone="warning">Cobrança prioritária: {formatCurrency(row.overdue)} em atraso.</Notice>:null}
-            <Text style={styles.meta}>Contratado: {row.contractValue===null?'Não informado':formatCurrency(row.contractValue)} • Recebido: {formatCurrency(row.received)}</Text>
+            <Text style={styles.meta}>Contratado: {row.contractValue===null?'Não informado':formatCurrency(row.contractValue)}{row.addendumValue?` (inclui ${formatCurrency(row.addendumValue)} de aditivos aceitos)`:''} • Recebido: {formatCurrency(row.received)}</Text>
             <Text style={styles.title}>Saldo restante: {row.remaining===null?'Valor contratado não informado':formatCurrency(row.remaining)}</Text>
             <Text style={styles.meta}>Parcelas pendentes: {formatCurrency(row.pending)} • Em atraso: {formatCurrency(row.overdue)}</Text>
             {row.unscheduled!==null&&row.unscheduled>0?<Notice tone="warning">{formatCurrency(row.unscheduled)} do saldo ainda sem parcelas lançadas. Esse valor não foi lançado automaticamente.</Notice>:null}

@@ -184,6 +184,8 @@ export interface AdminProjectSummary extends ProjectContext {
 
 export interface AdminContractSummary extends ContractSummary {
   clientName: string;
+  /** A18: soma dos aditivos aceitos (o valor original do contrato não muda). */
+  addendumValue?: number;
 }
 
 export type AdminContentKind = 'document' | 'photo' | 'library';
