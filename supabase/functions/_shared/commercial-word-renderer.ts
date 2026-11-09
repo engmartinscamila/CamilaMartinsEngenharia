@@ -272,6 +272,23 @@ const legalRepresentative=(record:CommercialRecord)=>{
  const t=commercialTerms(record);
  return t.legal_representative&&typeof t.legal_representative==='object'?t.legal_representative as Record<string,unknown>:{};
 };
+const isCompany=(record:CommercialRecord)=>String(record.cpf_cnpj??'').replace(/\D/g,'').length===14;
+const clientRg=(record:CommercialRecord)=>String((record as Record<string,unknown>).rg??'').trim();
+// Endereço completo do cadastro do cliente (não confundir com o local da obra).
+const clientFullAddress=(record:CommercialRecord)=>{
+ const place=[String(record.city??'').trim(),String(record.state??'').trim()].filter(Boolean).join('/');
+ const cep=String(record.cep??'').trim();
+ return [String(record.address??'').trim(),place,cep?`CEP ${cep}`:''].filter(Boolean).join(', ')||'não informado';
+};
+const contractingPartyText=(record:CommercialRecord)=>{
+ const contacts=`e-mail ${text(record.email)} e telefone/WhatsApp ${text(record.phone)}`;
+ if(isCompany(record))return `CONTRATANTE: ${record.prospect_name}, pessoa jurídica de direito privado inscrita no CNPJ sob o nº ${text(record.cpf_cnpj)}, com sede em ${clientFullAddress(record)}, ${contacts}, doravante denominada simplesmente CONTRATANTE.`;
+ const rg=clientRg(record);
+ return `CONTRATANTE: ${record.prospect_name}, inscrito(a) no CPF sob o nº ${text(record.cpf_cnpj)}${rg?`, portador(a) do RG nº ${rg}`:''}, residente e domiciliado(a) em ${clientFullAddress(record)}, ${contacts}, doravante denominado(a) simplesmente CONTRATANTE.`;
+};
+const contractingPartySignature=(record:CommercialRecord)=>isCompany(record)
+ ?`CONTRATANTE: ${record.prospect_name} — CNPJ ${text(record.cpf_cnpj)} • Representada por ${String(legalRepresentative(record).name??'').trim()} — CPF ${String(legalRepresentative(record).cpf??'').trim()}`
+ :`CONTRATANTE: ${record.prospect_name} — CPF ${text(record.cpf_cnpj)}`;
 const legalRepresentativeLabel=(record:CommercialRecord)=>{
  const r=legalRepresentative(record);
  const name=String(r.name??'').trim(),cpf=String(r.cpf??'').replace(/\D/g,''),role=String(r.role??'').trim(),powers=String(r.powers??'').trim();
@@ -288,7 +305,9 @@ const termsSchedule=(record:CommercialRecord)=>{
  const type=String(s.day_type)==='uteis'?'dias úteis':'dias corridos';
  return [p('Início da contagem: '+String(s.start_trigger||'não definido')+'.'),p('Prazo total de elaboração: '+String(s.days||'não definido')+' '+type+'. Prazos de órgãos públicos e terceiros não integram automaticamente o prazo técnico.')];
 };
-const sentencePart=(value:unknown)=>String(value??'').trim().replace(/[.!?]+\s*$/u,'');
+// Limpa pontuação colada ao juntar itens (".;", "..", " ,") e espaços repetidos.
+const tidyText=(value:unknown)=>String(value??'').replace(/\s+/gu,' ').replace(/\s+([,;.:])/gu,'$1').replace(/\.+\s*;/gu,';').replace(/;\s*;/gu,';').replace(/\.{2,}/gu,'.').replace(/([,;])(?=\p{L})/gu,'$1 ').trim();
+const sentencePart=(value:unknown)=>tidyText(value).replace(/[.!?]+\s*$/u,'');
 const scopeQuantityRows=(record:CommercialRecord)=>{
  const t=commercialTerms(record),rows=Array.isArray(t.scope)?t.scope as Array<Record<string,unknown>>:[];
  const services=selectedServices(record);
@@ -425,8 +444,8 @@ function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,c
    ...(record.historical_reconstitution?[p('CÓPIA RECONSTITUÍDA A PARTIR DE DADOS HISTÓRICOS — confira antes de usar; não constitui nova revisão.',true,GOLD)]:[]),
    p('Pelo presente instrumento particular de Contrato de Prestação de Serviços de Engenharia, de um lado:'),
    p(`CONTRATADO(A): ${professionalQualification(profile)}, doravante denominada simplesmente CONTRATADO(A);`),
-   p(`CONTRATANTE: ${record.prospect_name}, CPF/CNPJ ${text(record.cpf_cnpj)}, com endereço em ${text(record.address)}, e-mail ${text(record.email)} e telefone/WhatsApp ${text(record.phone)}, doravante denominado(a) simplesmente CONTRATANTE.`),
-   ...(String(record.cpf_cnpj??'').replace(/\D/g,'').length===14 ? [p('Representante legal da pessoa jurídica: '+legalRepresentativeLabel(record)+'.')] : []),
+   p(contractingPartyText(record)),
+   ...(isCompany(record) ? [p('Representante legal da pessoa jurídica: '+legalRepresentativeLabel(record)+'.')] : []),
    ...contractCoobligors(record).map(item=>p(`COOBRIGADO(A) SOLIDÁRIO(A): ${item.name}, CPF nº ${item.cpf}, na qualidade de ${coobligorRole(item)}, aderindo expressamente às obrigações solidárias previstas neste instrumento.`)),
    p('Têm entre si, justo e acertado, o presente Contrato de Prestação de Serviços de Engenharia, que se regerá pelas cláusulas e condições a seguir:'),
    ...body,
@@ -444,7 +463,7 @@ function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,c
    p('_____________________________________________'),
    p(professionalLabel(profile)),
    p('_____________________________________________'),
-   p(String(record.cpf_cnpj??'').replace(/\D/g,'').length===14 ? `CONTRATANTE: ${record.prospect_name} • Representada por ${String(legalRepresentative(record).name??'')}` : 'CONTRATANTE'),
+   p(contractingPartySignature(record)),
    ...contractCoobligors(record).flatMap(item=>[
      p('_____________________________________________'),
      p(`${item.name} — CPF ${item.cpf}`),

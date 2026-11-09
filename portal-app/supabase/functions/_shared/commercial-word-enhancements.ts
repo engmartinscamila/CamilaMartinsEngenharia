@@ -11,7 +11,7 @@ const serviceLevelLabel = (item: Obj) => {
   return label || serviceLevelCode(item).toUpperCase();
 };
 const xmlEsc = (value: unknown) => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-const sentencePart = (value: unknown) => text(value).replace(/[.!?]+\s*$/u, '');
+const sentencePart = (value: unknown) => text(value).replace(/\s+/gu, ' ').replace(/\s+([,;.:])/gu, '$1').replace(/\.+\s*;/gu, ';').replace(/;\s*;/gu, ';').replace(/\.{2,}/gu, '.').replace(/([,;])(?=\p{L})/gu, '$1 ').trim().replace(/[.!?]+\s*$/u, '');
 const wordParagraph = (value: string, bold = false) => `<w:p><w:pPr><w:spacing w:after="120" w:line="300" w:lineRule="auto"/></w:pPr><w:r><w:rPr>${bold ? '<w:b/>' : ''}<w:rFonts w:ascii="Century Gothic" w:hAnsi="Century Gothic"/></w:rPr><w:t xml:space="preserve">${xmlEsc(value)}</w:t></w:r></w:p>`;
 const customScopeDescription = (specification: string) => `Atividade específica solicitada: ${specification}. A prestação abrange exclusivamente esta atividade e os resultados expressamente descritos e aprovados no orçamento e no contrato. Quantidades, formato de entrega, visitas, revisões, prazo e etapas somente serão considerados incluídos quando definidos expressamente; acréscimos exigem aprovação e contratação prévias.`;
 function selectedServices(services: unknown) {

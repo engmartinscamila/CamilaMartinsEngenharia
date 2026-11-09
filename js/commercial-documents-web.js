@@ -242,6 +242,7 @@
     if (!item) return;
     setField('prospectName', item.nome);
     setField('cpfCnpj', item.cpf_cnpj);
+    setField('rg', item.rg);
     setField('email', item.email);
     setField('phone', item.telefone);
     setField('address', item.endereco);
@@ -334,6 +335,7 @@
       linked_client_id: $('linkedClientId')?.value || null,
       prospect_name: $('prospectName').value.trim(),
       cpf_cnpj: $('cpfCnpj').value.trim(),
+      rg: $('rg')?.value.trim() || null,
       email: $('email').value.trim(),
       phone: $('phone').value.trim(),
       cep: $('cep').value.trim(),
@@ -538,7 +540,7 @@
 
   function clearForm(clearSource = true) {
     [
-      'prospectName', 'cpfCnpj', 'email', 'phone', 'cep', 'address', 'city', 'state',
+      'prospectName', 'cpfCnpj', 'rg', 'email', 'phone', 'cep', 'address', 'city', 'state',
       'propertyAddress', 'propertyType', 'constructionStandard', 'areaTerreno',
       'areaConstruida', 'customService', 'totalValue', 'notes'
     ].forEach(id => {
@@ -628,6 +630,7 @@
     if ($('linkedClientSummary')) $('linkedClientSummary').textContent = clientCatalog.find(item => String(item.id) === String(linkedClient))?.nome || firstFilled(selected, 'prospect_name') || 'Novo cliente / prospect';
     setField('prospectName', firstFilled(selected, 'prospect_name'));
     setField('cpfCnpj', firstFilled(selected, 'cpf_cnpj'));
+    setField('rg', firstFilled(selected, 'rg'));
     setField('email', firstFilled(selected, 'email'));
     setField('phone', firstFilled(selected, 'phone'));
     setField('cep', firstFilled(selected, 'cep'));
@@ -804,6 +807,7 @@
     if(isContract){
       const recordId=typeof result.data==='string'?result.data:result.data.id;
       if(!recordId){msg('Cadastro salvo, mas não foi possível identificar o contrato para emitir o Word. Confira a lista de contratos.','error');return;}
+      if(payload.rg){const rgSaved=await client().from('commercial_records').update({rg:payload.rg}).eq('id',recordId);if(rgSaved.error){msg('Contrato salvo, mas o RG não foi gravado: '+rgSaved.error.message,'error');return;}}
       const savedTerms=await window.CMEEditCommercialTerms(recordId);
       if(!savedTerms){await load();msg('Contrato cadastrado, mas ainda não emitido. Preencha parcelas, prazos e quantitativos pela ação Editar condições.','error');return;}
       const emission=await window.CMEGenerateCommercialDocument(recordId,'contrato',true);
@@ -936,7 +940,7 @@
         .eq('active', true)
         .order('code'),
       client().from('clientes')
-        .select('id,nome,cpf_cnpj,telefone,email,endereco,cidade,estado,cep')
+        .select('id,nome,cpf_cnpj,rg,telefone,email,endereco,cidade,estado,cep')
         .eq('status', 'ativo')
         .order('nome')
         .limit(300)

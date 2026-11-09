@@ -428,6 +428,7 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
             email: valorCampo("clienteEmail").toLocaleLowerCase("pt-BR"),
             telefone: valorCampo("clienteTelefone"),
             cpf_cnpj: valorCampo("clienteCpf"),
+            rg: valorCampo("clienteRg") || null,
             endereco: valorCampo("clienteEndereco"),
             cidade: valorCampo("clienteCidade"),
             estado: valorCampo("clienteEstado"),
@@ -572,6 +573,7 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
         preencherCampo("clienteEmail", cliente.email);
         preencherCampo("clienteTelefone", cliente.telefone);
         preencherCampo("clienteCpf", cliente.cpf_cnpj);
+        preencherCampo("clienteRg", cliente.rg);
         preencherCampo("clienteEndereco", cliente.endereco);
         preencherCampo("clienteCidade", cliente.cidade);
         preencherCampo("clienteEstado", cliente.estado);
@@ -680,6 +682,7 @@ CLIENTES.JS - CRUD ADMINISTRATIVO
                 ${campoDetalhe("E-mail", cliente.email)}
                 ${campoDetalhe("Telefone", cliente.telefone)}
                 ${campoDetalhe("CPF/CNPJ", cliente.cpf_cnpj)}
+                ${campoDetalhe("RG", cliente.rg)}
                 ${campoDetalhe("Endereço", cliente.endereco)}
                 ${campoDetalhe("Cidade", cliente.cidade)}
                 ${campoDetalhe("Estado", cliente.estado)}

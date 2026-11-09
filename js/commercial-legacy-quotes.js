@@ -21,7 +21,7 @@
 
     const [clientsRes, contractsRes, scopesRes] = await Promise.all([
       clientIds.length
-        ? client().from('clientes').select('id,nome,cpf_cnpj,telefone,email,endereco,cidade,estado,cep').in('id', clientIds)
+        ? client().from('clientes').select('id,nome,cpf_cnpj,rg,telefone,email,endereco,cidade,estado,cep').in('id', clientIds)
         : Promise.resolve({ data: [], error: null }),
       contractIds.length
         ? client().from('contratos').select('id,contract_number,contract_value,service_type,notes').in('id', contractIds)
@@ -63,6 +63,7 @@
         project_name: project.nome,
         prospect_name: owner.nome || project.nome,
         cpf_cnpj: owner.cpf_cnpj || '',
+        rg: owner.rg || '',
         email: owner.email || '',
         phone: owner.telefone || '',
         // Endereço do cadastro do cliente; o endereço da obra fica em property_address.
