@@ -38,7 +38,7 @@ export function KpiTile({ label, value, hint, tone = 'neutral', money = false, o
   const body = <Card style={styles.kpi}>
     <View style={[styles.kpiAccent, { backgroundColor: accent }]} />
     <Text style={styles.kpiLabel}>{label}</Text>
-    <Text adjustsFontSizeToFit numberOfLines={1} style={[styles.kpiValue, value === null && styles.kpiUnavailable]}>{display}</Text>
+    <Text style={[styles.kpiValue, value === null && styles.kpiUnavailable]}>{display}</Text>
     {hint ? <Text style={[styles.kpiHint, tone !== 'neutral' && { color: accent }]}>{hint}</Text> : null}
   </Card>;
   return onPress
@@ -49,7 +49,7 @@ export function KpiTile({ label, value, hint, tone = 'neutral', money = false, o
 export interface BarSeries { label: string; values: number[]; color: string }
 
 /** Gráfico de colunas agrupadas em SVG, responsivo à largura do card. */
-export function GroupedBarChart({ categories, series, dimmedFrom, height = 190 }: { categories: string[]; series: BarSeries[]; dimmedFrom?: number; height?: number }) {
+export function GroupedBarChart({ categories, series, dimmedFrom, highlightIndex, height = 190 }: { categories: string[]; series: BarSeries[]; dimmedFrom?: number; highlightIndex?: number; height?: number }) {
   const styles = useThemeStyles(styleDefinitions);
   const { colors } = useAppTheme();
   const [width, setWidth] = useState(0);
@@ -63,7 +63,7 @@ export function GroupedBarChart({ categories, series, dimmedFrom, height = 190 }
     <View accessibilityLabel={series.map((item) => `${item.label}: ${categories.map((c, i) => `${c} ${formatCurrency(item.values[i])}`).join(', ')}`).join('. ')} onLayout={onLayout} style={{ height }}>
       {width > 0 ? <Svg height={height} width={width}>
         {[0, 0.5, 1].map((ratio) => <Line key={ratio} stroke={colors.line} strokeDasharray={ratio === 0 ? undefined : '3 4'} strokeWidth={1} x1={0} x2={width} y1={top + plot * (1 - ratio)} y2={top + plot * (1 - ratio)} />)}
-        {max > 0 ? <SvgText fill={colors.muted} fontSize={9} x={2} y={top - 3}>{compactMoney(max)}</SvgText> : null}
+        {max > 0 ? <SvgText fill={colors.muted} fontFamily={typography.family} fontSize={9} x={2} y={top - 3}>{compactMoney(max)}</SvgText> : null}
         {categories.map((category, index) => {
           const groupStart = index * group + (group - bar * series.length - 2 * (series.length - 1)) / 2;
           return <React.Fragment key={category}>
@@ -72,7 +72,7 @@ export function GroupedBarChart({ categories, series, dimmedFrom, height = 190 }
               const h = max > 0 ? Math.max(value > 0 ? 2 : 0, (value / max) * plot) : 0;
               return <Rect fill={item.color} height={h} key={item.label} opacity={dimmedFrom !== undefined && index >= dimmedFrom ? 0.45 : 1} rx={1.5} width={bar} x={groupStart + s * (bar + 2)} y={top + plot - h} />;
             })}
-            <SvgText fill={dimmedFrom === index ? colors.gold600 : colors.muted} fontSize={9} fontWeight={dimmedFrom === index ? '700' : '400'} textAnchor="middle" x={index * group + group / 2} y={height - 6}>{category}</SvgText>
+            <SvgText fill={highlightIndex === index ? colors.gold600 : colors.muted} fontFamily={typography.family} fontSize={9} fontWeight={highlightIndex === index ? '700' : '400'} textAnchor="middle" x={index * group + group / 2} y={height - 6}>{category}</SvgText>
           </React.Fragment>;
         })}
       </Svg> : null}
@@ -132,7 +132,7 @@ const styleDefinitions = (colors: ThemeColors) => ({
   kpi: { minHeight: 104, gap: 4, overflow: 'hidden' as const, paddingLeft: spacing.md },
   kpiAccent: { position: 'absolute' as const, left: 0, top: 0, bottom: 0, width: 3 },
   kpiLabel: { color: colors.slate, fontSize: 11, fontWeight: '600' as const, letterSpacing: 0.3, fontFamily: typography.family },
-  kpiValue: { color: colors.ink, fontSize: 22, fontWeight: '700' as const, fontFamily: typography.family, fontVariant: ['tabular-nums' as const] },
+  kpiValue: { color: colors.ink, fontSize: 20, lineHeight: 26, fontWeight: '700' as const, fontFamily: typography.family, fontVariant: ['tabular-nums' as const] },
   kpiUnavailable: { color: colors.muted, fontSize: 15 },
   kpiHint: { color: colors.muted, fontSize: 11, lineHeight: 15, fontFamily: typography.family },
   legend: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: spacing.sm, marginBottom: spacing.xs },

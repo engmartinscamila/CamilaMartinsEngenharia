@@ -48,7 +48,7 @@ export function AdminDashboardPanel({ contracts, projects, entries, unavailable,
   const abc = useMemo(() => supplierAbc(orders), [orders]);
 
   const fin = (value: number) => (unavailable.finance ? null : value);
-  const statusColor: Record<string, string> = { active: colors.gold600, paused: colors.warning, completed: colors.success, cancelled: colors.danger, archived: colors.muted };
+  const statusColor: Record<string, string> = { active: colors.gold600, paused: colors.slate, completed: colors.success, cancelled: colors.danger, archived: colors.muted };
   const tierColor = { A: colors.gold600, B: colors.info, C: colors.muted } as const;
   const tierTotals = (['A', 'B', 'C'] as const).map((tier) => ({ tier, amount: abc.filter((row) => row.tier === tier).reduce((sum, row) => sum + row.amount, 0), count: abc.filter((row) => row.tier === tier).length }));
   const visibleWorks = showAllWorks ? works.rows : works.rows.slice(0, WORKS_PREVIEW);
@@ -65,7 +65,7 @@ export function AdminDashboardPanel({ contracts, projects, entries, unavailable,
       {unavailable.finance ? null : <Card>
         <Text style={styles.cardTitle}>Fluxo de caixa mensal</Text>
         <Text style={styles.cardNote}>Realizado nos meses anteriores; realizado + previsto a partir do mês atual.</Text>
-        <GroupedBarChart categories={flow.map((month) => month.label)} dimmedFrom={currentIndex >= 0 ? currentIndex + 1 : undefined} series={[{ label: 'Entradas', values: flow.map((month) => month.inflow), color: colors.gold600 }, { label: 'Saídas', values: flow.map((month) => month.outflow), color: colors.info }]} />
+        <GroupedBarChart categories={flow.map((month) => month.label)} dimmedFrom={currentIndex >= 0 ? currentIndex + 1 : undefined} highlightIndex={currentIndex >= 0 ? currentIndex : undefined} series={[{ label: 'Entradas', values: flow.map((month) => month.inflow), color: colors.gold600 }, { label: 'Saídas', values: flow.map((month) => month.outflow), color: colors.info }]} />
       </Card>}
     </DashboardSection>
 
