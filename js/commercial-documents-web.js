@@ -69,6 +69,20 @@
     element.className = `doc-status ${type}`;
   }
 
+  function applyServiceSearch() {
+    const needle = normalizeSearch($('commercialServiceSearch')?.value || '');
+    const words = needle.split(' ').filter(Boolean);
+    let shown = 0;
+    document.querySelectorAll('#commercialServices [data-service-card]').forEach(card => {
+      const haystack = `${card.dataset.search || ''} ${normalizeSearch(card.textContent)}`;
+      const visible = !words.length || words.every(word => haystack.includes(word));
+      card.classList.toggle('doc-hidden', !visible);
+      if (visible) shown += 1;
+    });
+    const empty = $('commercialServiceSearchEmpty');
+    if (empty) empty.classList.toggle('doc-hidden', shown > 0 || !words.length);
+  }
+
   function renderServices() {
     const box = $('commercialServices');
     if (!box) return;
@@ -86,7 +100,7 @@
             <div><span class="doc-section-eyebrow">Escopo do orçamento</span><h3 id="commercialServiceModalTitle">Selecionar atividades</h3><p>Marque todas as atividades deste pacote. O nível de prestação será escolhido uma única vez depois, entre as opções ativas do catálogo.</p></div>
             <button type="button" class="doc-service-modal-close" id="cancelCommercialServices" aria-label="Cancelar seleção">×</button>
           </div>
-          <div class="doc-field"><label for="commercialServiceSearch">Pesquisar atividade</label><input id="commercialServiceSearch" type="search" placeholder="Ex.: projeto elétrico, vistoria, cronograma..."></div>
+          <div class="doc-field"><label for="commercialServiceSearch">Pesquisar atividade</label><input id="commercialServiceSearch" type="search" placeholder="Ex.: projeto elétrico, vistoria, cronograma..."></div><p id="commercialServiceSearchEmpty" class="doc-hidden">Nenhuma atividade encontrada para esta busca.</p>
           <div class="doc-services-grid doc-services-modal-grid">${servicesCatalog.map(([code, name]) => {
             const meta = serviceCatalogMeta.find(item => item.code === code) || {};
             const detail = meta.description ? `<small class="doc-service-description">${esc(meta.description)}</small>` : '';
@@ -938,13 +952,13 @@
     if (!servicesRes.error && Array.isArray(servicesRes.data) && servicesRes.data.length) {
       serviceCatalogMeta = servicesRes.data;
       servicesCatalog = serviceCatalogMeta.map(item => [item.code, item.name]);
-      renderServices();
+      renderServices(); applyServiceSearch();
     }
 
     if (!levelsRes.error && Array.isArray(levelsRes.data)) {
       levelCatalog = levelsRes.data;
       renderLevelOptions();
-      renderServices();
+      renderServices(); applyServiceSearch();
     }
 
     clientCatalog = clientsRes.error ? [] : (clientsRes.data || []);
@@ -1000,7 +1014,7 @@
 
   function bind() {
     ensureCommercialSelectors();
-    renderServices();
+    renderServices(); applyServiceSearch();
     ensureLevelInfo();
     renderLevelOptions();
     renderLevelInfo();
@@ -1021,12 +1035,12 @@
         updateServiceSummary();
       }
     });
-    $('commercialServiceSearch')?.addEventListener('input', event => {
-      const needle = normalizeSearch(event.target.value);
-      document.querySelectorAll('#commercialServices [data-service-card]').forEach(card => {
-        card.classList.toggle('doc-hidden', Boolean(needle) && !String(card.dataset.search || '').includes(needle) && !normalizeSearch(card.textContent).includes(needle));
-      });
-    });
+    // Delegado: a lista de atividades é redesenhada quando o catálogo carrega, e o campo de busca é recriado junto.
+    if (!window.__cmeServiceSearchBound) {
+      window.__cmeServiceSearchBound = true;
+      document.addEventListener('input', event => { if (event.target?.id === 'commercialServiceSearch') applyServiceSearch(); });
+      document.addEventListener('search', event => { if (event.target?.id === 'commercialServiceSearch') applyServiceSearch(); }, true);
+    }
     $('customService')?.addEventListener('input', event => {
       if (String(event.target.value || '').trim()) {
         const other = document.querySelector('[data-service="p"]');
