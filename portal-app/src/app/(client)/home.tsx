@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 
+import { ClientProgressPanel } from '@/components/client-progress-panel';
 import { ProjectPicker } from '@/components/project-picker';
 import { Button, Card, Notice, PageHeader, Screen, StateView, StatusPill } from '@/components/ui';
 import { formatDate, formatTime } from '@/lib/format';
@@ -99,6 +100,7 @@ export default function HomeScreen() {
               <View style={styles.metric}><Text style={styles.metricValue}>{highlights.recentDocuments ?? '—'}</Text><Text style={styles.metricLabel}>Documentos publicados</Text></View>
             </View>
           ) : null}
+          <ClientProgressPanel key={selectedProject.id} projectId={selectedProject.id} />
           <Button icon="alert-circle-outline" onPress={() => router.push('/(client)/pending')} title="Ver minhas pendências" variant="secondary" />
           {selectedProject.contractId === null ? (
             <Notice tone="warning">Este projeto usa um cadastro anterior sem vínculo formal de contrato. Solicite a revisão administrativa antes de incluir novos dados.</Notice>

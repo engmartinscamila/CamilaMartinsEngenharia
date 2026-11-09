@@ -3,6 +3,7 @@ import {Text,View} from 'react-native';
 import {useLocalSearchParams,useRouter,type Href} from 'expo-router';
 import {AdminPageHeader,SelectionChips} from '@/components/admin-ui';
 import {AdminProjectPicker} from '@/components/admin-project-picker';
+import {AdminDashboardPanel} from '@/components/admin-dashboard-panel';
 import {Button,Card,Field,Notice,Screen,StateView} from '@/components/ui';
 import {useLiveRefresh} from '@/hooks/use-live-refresh';
 import {useNotificationProject} from '@/hooks/use-notification-project';
@@ -22,6 +23,7 @@ export default function AdminWorkspace(){
  const embedded=useAdminModule(),router=useRouter(),params=useLocalSearchParams<{projectId?:string;clientId?:string;mode?:string}>();
  const [clients,setClients]=useState<AdminClientSummary[]>([]),[contracts,setContracts]=useState<AdminContractSummary[]>([]),[projects,setProjects]=useState<AdminProjectSummary[]>([]),[files,setFiles]=useState<AdminContentSummary[]>([]),[entries,setEntries]=useState<FinancialEntrySummary[]>([]),[approvals,setApprovals]=useState<ApprovalSummary[]>([]),[requests,setRequests]=useState<AdminRequestSummary[]>([]);
  const [counts,setCounts]=useState<DashboardCounts>({activeClients:null,activeProjects:null,openRequests:null,pendingApprovals:null});
+ const [unavailable,setUnavailable]=useState({contracts:false,projects:false,finance:false});
  const [emailJobs,setEmailJobs]=useState<{id:string;client_id:string;kind:string;status:string;last_error:string|null}[]>([]);
  const [query,setQuery]=useState(''),[projectId,setProjectId]=useAdminProjectSelection(params.projectId??null),[clientId,setClientId]=useState(typeof params.clientId==='string'?params.clientId:''),[mode,setMode]=useState(embedded?.subview??params.mode??'summary'),[page,setPage]=useState(0),[error,setError]=useState<string|null>(null),[loading,setLoading]=useState(false);
  const styles=useThemeStyles(style);
@@ -29,8 +31,9 @@ export default function AdminWorkspace(){
  const load=useCallback(async()=>{setLoading(true);try{
   const [c,ct,p,f,e,a,r,m,d]=await Promise.all([listAdminClients(),listAdminContracts(),listAdminProjects(),listAdminContent(),listAdminFinancialEntries(),listAdminApprovals(),listAdminRequests(),listPendingEmailJobs(),getAdminDashboard()]);
   setClients(c.data);setContracts(ct.data);setProjects(p.data);setFiles(f.data);setEntries(e.data);setApprovals(a.data);setRequests(r.data);setEmailJobs(m.data??[]);setCounts(d.data);
+  setUnavailable({contracts:Boolean(ct.error),projects:Boolean(p.error),finance:Boolean(e.error)});
   setError(c.error??ct.error??p.error??f.error??e.error??a.error??r.error??m.error??d.error);
- }catch{setError('Não foi possível atualizar a visão geral. Confira a conexão e tente novamente.');}finally{setLoading(false);}},[]);
+ }catch{setUnavailable({contracts:true,projects:true,finance:true});setError('Não foi possível atualizar a visão geral. Confira a conexão e tente novamente.');}finally{setLoading(false);}},[]);
  useLiveRefresh(load);
  const project=projects.find(p=>p.id===projectId),client=clients.find(c=>c.id===(project?.clientId||clientId));
  const totals=financialTotals(entries.filter(e=>e.projectId===projectId));
@@ -64,6 +67,7 @@ export default function AdminWorkspace(){
  {mode==='summary'?<View style={styles.metrics}>{([
   ['Clientes ativos',counts.activeClients,'clients'],['Projetos ativos',counts.activeProjects,'projects'],['Solicitações abertas',counts.openRequests,'requests'],['Aprovações pendentes',counts.pendingApprovals,'approvals'],
  ] as const).map(([label,value,section])=><Card key={label} style={styles.metric}><Text style={styles.meta}>{label}</Text><Text style={styles.number}>{value===null?'Indisponível':value}</Text><Button title={'Consultar '+label.toLowerCase()} variant="ghost" onPress={()=>open(section)} /></Card>)}</View>:null}
+ {mode==='summary'&&!projectId?<AdminDashboardPanel contracts={contracts} entries={entries} onOpen={(section,id)=>{if(section==='workspace'&&id){selectProject(id);return;}open(section,id);}} projects={projects} unavailable={unavailable} />:null}
  <Card><Field label="Buscar cliente, contrato, arquivo ou lançamento" value={query} onChangeText={value=>{setQuery(value);setPage(0);}} />
  {!embedded?<><AdminProjectPicker projects={projects} value={projectId} onChange={selectProject} />{projectId?<Button debounceMs={0} title="Todos os projetos" variant="ghost" onPress={()=>selectProject(null)} />:null}</>:null}</Card>
  {client&&(mode==='profile'||project)?<Card><Text style={styles.title}>{client.name}</Text><Text style={styles.meta}>{client.email??'E-mail não informado'} • {client.phone??'Telefone não informado'} • {client.status}</Text><View style={styles.actions}><Button title="Cadastro e acessos do cliente" variant="secondary" onPress={()=>open('clients',null,{clientId:client.id})} /><Button title="Orçamentos e contratos deste cliente" variant="secondary" onPress={()=>open('commercial-documents',null,{clientId:client.id})} /></View>
