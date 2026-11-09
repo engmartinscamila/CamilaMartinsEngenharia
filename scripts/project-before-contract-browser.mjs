@@ -28,7 +28,7 @@ try{for(const width of [1440,390]){
  assert.equal(await page.locator('#contractSourceManual').isChecked(),true);
  assert.equal(await page.locator('#propertyAddress').inputValue(),'Obra sem contrato — Rua da Obra, 42, São Paulo, SP');
  assert.equal(await page.locator('#contractProjectId option').count(),3,'Todos os projetos ativos deste cliente, sem projetos de outro cliente');
- assert.ok((await page.locator('#contractProjectId option[value="p3"]').textContent()).includes('já no contrato'),'Projeto já contratado deve ser identificado');
+ assert.ok((await page.locator('#contractProjectId option[value="p3"]').textContent()).includes('já tem contrato'),'Projeto já contratado deve ser identificado');
  assert.equal(await page.locator('#contractProjectId').isVisible(),true);
  await page.locator('[data-service="q"]').evaluate(input=>{input.checked=true;input.dispatchEvent(new Event('change',{bubbles:true}));});
  await page.locator('#totalValue').fill('12000');

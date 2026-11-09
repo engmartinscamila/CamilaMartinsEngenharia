@@ -253,3 +253,5 @@ html.doc-service-modal-open,body.doc-service-modal-open{overflow:hidden;overscro
   .doc-contract-pending,.doc-contract-reminder{flex-direction:column;align-items:stretch;padding:12px}
   .doc-contract-pending .doc-btn,.doc-contract-reminder .doc-btn{width:100%}
 }
+
+.doc-commercial-context>*{min-width:0}#contractProjectField select{width:100%;max-width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.doc-project-address{display:block;margin-top:6px;color:var(--text-secondary,#b8c1cc);overflow-wrap:anywhere}

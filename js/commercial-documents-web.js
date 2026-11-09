@@ -244,7 +244,8 @@
     const clientId = $('linkedClientId')?.value;
     // Todos os projetos ativos do cliente aparecem; os que já têm contrato ficam identificados.
     const items = projectCatalog.filter(item => String(item.cliente_id) === String(clientId) && !['cancelado','arquivado'].includes(item.status));
-    select.innerHTML = '<option value="">Sem projeto selecionado</option>' + items.map(item => `<option value="${esc(item.id)}">${esc(item.nome)} • ${esc(buildProjectAddress(item) || 'Endereço não informado')}${item.contract_id ? ' • já no contrato ' + esc(item.numero_contrato || 'existente') : ''}</option>`).join('');
+    select.innerHTML = '<option value="">Sem projeto selecionado</option>' + items.map(item => `<option value="${esc(item.id)}">${esc(item.nome)}${item.contract_id ? ' (já tem contrato)' : ''}</option>`).join('');
+    if ($('contractProjectAddress')) $('contractProjectAddress').textContent = '';
     if (items.some(item => item.id === current)) select.value = current;
     $('contractProjectField')?.classList.toggle('doc-hidden', mode() !== 'contrato');
   }
@@ -254,6 +255,7 @@
     if (!project) return;
     const address = buildProjectAddress(project);
     setField('propertyAddress', [project.nome, address].filter(Boolean).join(' — '));
+    if ($('contractProjectAddress')) $('contractProjectAddress').textContent = `Endereço da obra: ${address || 'não informado no projeto'}${project.mesmo_endereco_cliente ? ' (mesmo do cadastro do cliente)' : ''}`;
     setField('propertyType', project.tipo);
     setField('areaTerreno', project.area_terreno_m2);
     setField('areaConstruida', project.area_construida_m2);
@@ -281,7 +283,7 @@
           <div class="doc-field"><label for="linkedClientId">Cliente cadastrado</label><select id="linkedClientId"><option value="">Novo cliente / prospect</option></select></div>
         </div>
       </details>
-      <div id="contractProjectField" class="doc-field doc-hidden"><label for="contractProjectId">Projeto deste cliente (opcional)</label><select id="contractProjectId"><option value="">Sem projeto selecionado</option></select><small>Selecione o projeto já cadastrado para vincular o contrato sem criar outro projeto.</small></div>
+      <div id="contractProjectField" class="doc-field doc-hidden"><label for="contractProjectId">Projeto deste cliente (opcional)</label><select id="contractProjectId"><option value="">Sem projeto selecionado</option></select><small id="contractProjectAddress" class="doc-project-address"></small><small>Selecione o projeto já cadastrado para vincular o contrato sem criar outro projeto.</small></div>
       <div class="doc-field doc-payment-compact">
         <label for="paymentMethod">Forma de pagamento</label>
         <select id="paymentMethod"><option value="">Selecione</option>${paymentOptions.map(([value,label]) => `<option value="${value}">${label}</option>`).join('')}</select>
@@ -908,7 +910,7 @@
         .order('created_at', { ascending: false })
         .limit(200),
       client().from('projetos')
-        .select('id,nome,tipo,status,cliente_id,numero_orcamento,numero_contrato,contract_id,area_construida_m2,area_terreno_m2,cep_obra,endereco_obra,numero_obra,complemento_obra,bairro_obra,cidade_obra,estado_obra,created_at')
+        .select('id,nome,tipo,status,cliente_id,numero_orcamento,numero_contrato,contract_id,area_construida_m2,area_terreno_m2,cep_obra,endereco_obra,numero_obra,complemento_obra,bairro_obra,cidade_obra,estado_obra,mesmo_endereco_cliente,created_at')
         .order('created_at', { ascending: false })
         .limit(200),
       client().from('service_catalog')
