@@ -76,6 +76,32 @@ async function showVersions(recordId,kind){
  wrap.addEventListener('click',async e=>{const b=e.target.closest('[data-issued-document]');if(!b)return;b.disabled=true;try{await downloadIssued(b.dataset.issuedDocument);}finally{b.disabled=false;}});
 }
 window.CMEDownloadIssuedCommercialWord=downloadIssued;
+const checklistMoney=value=>{if(typeof value==='number')return value;let raw=String(value??'').replace(/[^\d,.-]/g,'');if(raw.includes(',')||/^-?\d{1,3}(\.\d{3})+$/.test(raw))raw=raw.replace(/\./g,'').replace(',','.');const n=Number(raw);return Number.isFinite(n)?n:NaN;};
+// Conferência antes de gerar o contrato: bloqueia o que impede a emissão e pergunta sobre o que fica incompleto.
+async function contractChecklist(recordId){
+  const {data:r,error}=await client().from('commercial_records').select('prospect_name,cpf_cnpj,rg,address,property_address,total_value,commercial_terms,services,linked_project_id').eq('id',recordId).single();
+  if(error)return {ok:false,error:error.message};
+  const digits=String(r.cpf_cnpj||'').replace(/\D/g,'');const company=digits.length===14;const terms=r.commercial_terms||{};
+  const blocking=[];const warnings=[];
+  if(!String(r.prospect_name||'').trim())blocking.push('Nome do contratante não preenchido.');
+  if(digits.length!==11&&digits.length!==14)blocking.push('CPF ou CNPJ do contratante inválido ou vazio.');
+  if(company){const rep=terms.legal_representative||{};if(!String(rep.name||'').trim()||String(rep.cpf||'').replace(/\D/g,'').length!==11)blocking.push('Representante legal da empresa (nome e CPF) incompleto.');}
+  else if(!String(r.rg||'').trim())warnings.push('RG do contratante não preenchido (cadastro do cliente).');
+  if(!String(r.address||'').trim())warnings.push('Endereço do contratante (cadastro) vazio.');
+  if(!String(r.property_address||'').trim())warnings.push('Endereço da obra vazio.');
+  else if(!/\d|s\/?n/i.test(String(r.property_address)))warnings.push('Endereço da obra sem número (use S/N se não houver).');
+  if(r.linked_project_id){const {data:proj}=await client().from('projetos').select('cep_obra').eq('id',r.linked_project_id).maybeSingle();if(proj&&!String(proj.cep_obra||'').trim())warnings.push('CEP da obra não preenchido no projeto.');}
+  const inst=Array.isArray(terms.installments)?terms.installments:[];const sum=inst.reduce((a,x)=>a+(checklistMoney(x?.amount)||0),0);const total=checklistMoney(r.total_value);
+  if(inst.some(x=>!(checklistMoney(x?.amount)>0)))blocking.push('Há parcela sem valor.');
+  if(inst.length&&Number.isFinite(total)&&total>0&&Math.abs(sum-total)>0.01)warnings.push(`Soma das parcelas (${sum.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}) diferente do valor total (${total.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}).`);
+  const services=(Array.isArray(r.services)?r.services:[]).filter(x=>x?.included===true);
+  if(!services.length)blocking.push('Nenhuma atividade incluída no contrato.');
+  const scope=Array.isArray(terms.scope)?terms.scope:[];
+  if(services.some(x=>!String(scope.find(y=>String(y?.code)===String(x.code))?.deliverables||'').trim()))warnings.push('Há atividade sem entregáveis/quantidades preenchidos (Editar condições).');
+  if(blocking.length){const error='Corrija antes de gerar: '+blocking.join(' ');status(error,'error');return {ok:false,error};}
+  if(warnings.length&&!window.confirm('Conferência do contrato:\n\n• '+warnings.join('\n• ')+'\n\nGerar mesmo assim?'))return {ok:false,cancelled:true,error:'Emissão cancelada para completar o cadastro: '+warnings.join(' ')};
+  return {ok:true};
+}
 async function generate(recordId,kind,archive){
   try{
     if(kind==='contrato'){
@@ -86,6 +112,7 @@ async function generate(recordId,kind,archive){
         if(!saved)return {ok:false,cancelled:true,error:'Preencha as condições comerciais para emitir o contrato.'};
       }
     }
+    if(kind==='contrato'){const check=await contractChecklist(recordId);if(!check.ok)return check;}
     const choice=await preview(recordId,kind);
     if(!choice)return {ok:false,cancelled:true,error:'Emissão cancelada. O cadastro foi preservado.'};
     status(`Gerando ${kind} (versão interna v${choice.version}; o cliente vê só as versões liberadas a ele)...`);

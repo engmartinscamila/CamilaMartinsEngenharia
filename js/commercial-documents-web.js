@@ -780,6 +780,11 @@
       msg('Selecione um projeto deste cliente que ainda não possua contrato.', 'error'); return;
     }
 
+    if(isContract&&payload.linked_client_id){
+      // Cliente com contrato ativo: alteração de contrato é feita por nova revisão, não por contrato novo.
+      const active=rows.filter(item=>item.record_kind==='contrato'&&String(item.linked_client_id)===String(payload.linked_client_id)&&!['cancelado','arquivado'].includes(String(item.status||'')));
+      if(active.length&&!confirm(`Este cliente já tem contrato ativo: ${active.map(item=>item.contract_number||'sem número').join(', ')}.\n\nPara alterar um contrato existente, abra o contrato na lista, use "Gerar Word e arquivar" e escolha nova revisão (o cliente não vê as revisões internas).\n\nCriar um contrato NOVO e separado mesmo assim (ex.: outra obra ou outro serviço)?`)){msg('Nenhum contrato criado. Para alterar o contrato existente, gere uma nova revisão dele na lista.','error');return;}
+    }
     if(isContract&&typeof window.CMEGenerateCommercialDocument!=='function'){msg('O gerador de Word não carregou. Atualize a página; nenhum cadastro foi criado.','error');return;}
     msg(isContract ? 'Preparando cadastro e emissão do contrato...' : 'Criando orçamento...');
 
