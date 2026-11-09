@@ -18,6 +18,8 @@ const plain = (value: string) => value.normalize('NFD').replace(/[̀-ͯ]/g, '').
  * Painel do cliente: somente o acompanhamento simples das etapas (tabela cronograma),
  * que já é exibido ao cliente. O cronograma físico-financeiro completo continua
  * restrito à tela de Cronograma e à publicação contratada.
+ * Etapas com previsão ultrapassada usam texto neutro ("Em revisão de prazo"),
+ * sem cor de alerta e sem exibir a data já vencida — decisão da Engª Camila.
  */
 export function ClientProgressPanel({ projectId }: { projectId: string }) {
   const router = useRouter();
@@ -53,7 +55,7 @@ export function ClientProgressPanel({ projectId }: { projectId: string }) {
     <KpiGrid>
       <KpiTile hint="Média ponderada das etapas" label="Andamento" value={summary.progress === null ? null : `${summary.progress}%`} />
       <KpiTile hint={`de ${summary.total} etapas`} label="Etapas concluídas" tone="success" value={summary.done} />
-      <KpiTile hint={summary.late ? 'Prazo previsto ultrapassado' : 'Dentro dos prazos previstos'} label="Etapas com prazo vencido" tone={summary.late ? 'warning' : 'success'} value={summary.late} />
+      <KpiTile hint={summary.late ? 'Previsão sendo atualizada pela equipe' : 'Previsões atualizadas'} label="Em revisão de prazo" value={summary.late} />
     </KpiGrid>
     <Card>
       <StackedBar parts={[
@@ -62,7 +64,7 @@ export function ClientProgressPanel({ projectId }: { projectId: string }) {
         { label: 'A iniciar', value: open.length - inProgress, color: colors.line },
       ]} />
       {upcoming.length ? <Text style={styles.subtitle}>Próximas etapas</Text> : <Text style={styles.subtitle}>Todas as etapas foram concluídas.</Text>}
-      {upcoming.map((stage) => <ProgressRow badge={isLate(stage) ? 'Prazo vencido' : undefined} key={stage.id} subtitle={stage.endDate ? `Previsão ${formatDate(stage.endDate)}` : 'Previsão a definir'} title={stage.title} tone={isLate(stage) ? 'warning' : 'neutral'} value={stage.progress ?? 0} />)}
+      {upcoming.map((stage) => <ProgressRow key={stage.id} subtitle={isLate(stage) ? 'Previsão em atualização' : stage.endDate ? `Previsão ${formatDate(stage.endDate)}` : 'Previsão a definir'} title={stage.title} value={stage.progress ?? 0} />)}
     </Card>
   </DashboardSection>;
 }
