@@ -274,7 +274,7 @@ const legalRepresentative=(record:CommercialRecord)=>{
 };
 const legalRepresentativeLabel=(record:CommercialRecord)=>{
  const r=legalRepresentative(record);
- const name=String(r.name??'').trim(),cpf=String(r.cpf??'').replace(/\\D/g,''),role=String(r.role??'').trim(),powers=String(r.powers??'').trim();
+ const name=String(r.name??'').trim(),cpf=String(r.cpf??'').replace(/\D/g,''),role=String(r.role??'').trim(),powers=String(r.powers??'').trim();
  if(!name||cpf.length!==11||!role||!powers){
   if(record.historical_reconstitution)return 'Dados do representante não registrados na emissão histórica; conferir a via original antes de utilizar esta cópia reconstituída';
   throw new Error('Representante legal da pessoa jurídica incompleto. Edite a identificação antes de gerar o contrato.');

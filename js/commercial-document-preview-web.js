@@ -88,7 +88,7 @@ async function generate(recordId,kind,archive){
     }
     const choice=await preview(recordId,kind);
     if(!choice)return {ok:false,cancelled:true,error:'Emissão cancelada. O cadastro foi preservado.'};
-    status(`Gerando ${kind} v${choice.version}...`);
+    status(`Gerando ${kind} (versão interna v${choice.version}; o cliente vê só as versões liberadas a ele)...`);
     const generated=await client().functions.invoke('generate-commercial-document-final',{
       body:{recordId,kind,versionReason:choice.versionReason}
     });
