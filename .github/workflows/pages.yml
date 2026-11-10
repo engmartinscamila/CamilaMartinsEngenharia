@@ -104,7 +104,7 @@ jobs:
 
       - name: Instalar Chromium de teste
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.55.0 @ffmpeg/ffmpeg@0.12.10 @ffmpeg/util@0.12.1 @ffmpeg/core@0.12.6
           npx playwright install --with-deps chromium
 
       - name: Servir site local
@@ -124,7 +124,6 @@ jobs:
           node scripts/authored-catalog-browser.mjs
           node scripts/authored-photos-browser.mjs
           node scripts/site-content-browser.mjs
-          npm install --no-save @ffmpeg/ffmpeg@0.12.10 @ffmpeg/util@0.12.1 @ffmpeg/core@0.12.6
           node scripts/video-watermark-browser.mjs
           node scripts/mobile-admin-smoke.mjs
           node scripts/admin-menu-groups-browser.mjs
