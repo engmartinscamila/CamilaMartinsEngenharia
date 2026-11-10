@@ -197,6 +197,9 @@ const levelEligibleServices=(d:Data)=>includedScope(d).filter(item=>item.levelAp
 const consolidatedExclusions=(d:Data)=>unique(includedScope(d).flatMap(item=>arrStrings(item.exclusions).map(rule=>`${serviceName(item)}: ${rule}`)));
 const contractedScopeLines=(d:Data)=>includedScope(d).map(item=>`(${String(item.code??'')}) ${serviceName(item)}`);
 const scopeMatch=(d:Data)=>{
+ // Aceite vinculado à etapa do cronograma: o serviço contratado vem pelo código.
+ const serviceCode=String(d.approval_service_code??'').trim().toLowerCase();
+ if(serviceCode){const byCode=includedScope(d).find(item=>String(item.code??'').trim().toLowerCase()===serviceCode);if(byCode)return byCode;}
  const title=String(d.approval_title??'').toLowerCase();
  if(!title)return null;
  return includedScope(d).find(item=>{
@@ -354,6 +357,7 @@ function build(kind:string,d:Data,profile:ProfessionalIdentity,generatedAt:Date)
      ...identity(d,profile,generatedAt,kind),
      h('2. OBJETO DO ACEITE'),
      p(`Referência: ${value(d,'approval_title')}`,true,GOLD),
+     ...(d.approval_stage_name?[small(`Etapa do cronograma do contrato: ${String(d.approval_stage_name)}`)]:[]),
      ...(d.acceptance_subject?[p(`Objeto específico informado para este termo: ${String(d.acceptance_subject)}`)]:[]),
      ...(matched?[p(serviceDescription(matched)),small(`Serviço relacionado: (${String(matched.code??'')}) ${serviceName(matched)}`)]:[]),
      ...(d.approval_description?[p(`Descrição registrada da entrega: ${String(d.approval_description)}`)]:[]),

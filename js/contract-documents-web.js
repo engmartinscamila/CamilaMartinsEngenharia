@@ -300,8 +300,25 @@ function createApprovalRequest(){
   if(!project){msg('Selecione primeiro o contrato / projeto.','error');return}
   return new Promise(resolve=>{
     const overlay=document.createElement('div');overlay.className='doc-options-modal';
-    overlay.innerHTML=`<div class="doc-options-dialog"><button type="button" class="doc-options-close" data-close aria-label="Fechar">×</button><h3>Nova solicitação de aceite</h3><p>Crie o objeto que será submetido ao cliente. O tipo exato do Termo será escolhido na etapa seguinte.</p><div class="doc-field"><label>Objeto / título *</label><input data-title placeholder="Ex.: Aceite da entrega do Projeto Executivo"></div><div class="doc-field"><label>Descrição do que deve ser avaliado</label><textarea data-description rows="5"></textarea></div><div class="doc-field"><label>Prazo para manifestação</label><input data-due type="date"></div><div class="doc-actions"><button type="button" class="doc-btn ghost" data-close>Cancelar</button><button type="button" class="doc-btn" data-create>Criar e preparar Termo</button></div></div>`;
+    overlay.innerHTML=`<div class="doc-options-dialog"><button type="button" class="doc-options-close" data-close aria-label="Fechar">×</button><h3>Nova solicitação de aceite</h3><p>Escolha o serviço do contrato que está sendo entregue. Quando o cliente aceitar o Termo, a etapa correspondente é concluída no cronograma.</p><div class="doc-field"><label>Serviço contratado / etapa do cronograma *</label><select data-stage><option value="">Carregando serviços do contrato…</option></select><small data-stage-help></small></div><div class="doc-field"><label>Objeto / título *</label><input data-title placeholder="Ex.: Aceite da entrega do Projeto Executivo"></div><div class="doc-field"><label>Descrição do que deve ser avaliado</label><textarea data-description rows="5"></textarea></div><div class="doc-field"><label>Prazo para manifestação</label><input data-due type="date"></div><div class="doc-actions"><button type="button" class="doc-btn ghost" data-close>Cancelar</button><button type="button" class="doc-btn" data-create>Criar e preparar Termo</button></div></div>`;
     document.body.appendChild(overlay);
+    const stageSelect=overlay.querySelector('[data-stage]'),titleInput=overlay.querySelector('[data-title]'),stageHelp=overlay.querySelector('[data-stage-help]');
+    let autoTitle='';
+    (async()=>{
+      const {data,error}=await client().from('cronograma').select('id,nome,status,servico_codigo,exige_aceite,origem').eq('projeto_id',project.id).order('ordem');
+      const isDone=s=>['concluido','concluído','concluida','concluída'].includes(String(s||'').trim().toLowerCase());
+      const stages=(data||[]).filter(e=>e.origem==='contrato'&&e.servico_codigo);
+      if(error||!stages.length){
+        stageSelect.innerHTML='<option value="">Outro objeto (não conclui etapa)</option>';
+        stageHelp.textContent=error?'Não foi possível carregar o escopo do contrato.':'Este projeto ainda não tem etapas geradas pelo contrato. Use “Atualizar pelo contrato” na página Cronograma.';
+        return;
+      }
+      stageSelect.innerHTML='<option value="" disabled selected>Selecione o serviço entregue</option>'+stages.map(e=>`<option value="${esc(e.id)}"${isDone(e.status)?' disabled':''}>${esc(e.nome)}${isDone(e.status)?' — já concluída':''}</option>`).join('')+'<option value="__outro">Outro objeto (não conclui etapa)</option>';
+    })();
+    stageSelect?.addEventListener('change',()=>{
+      const name=stageSelect.value&&stageSelect.value!=='__outro'?stageSelect.options[stageSelect.selectedIndex].text:'';
+      if(name&&(!titleInput.value.trim()||titleInput.value===autoTitle)){autoTitle=`Aceite da entrega — ${name}`;titleInput.value=autoTitle}
+    });
     const done=value=>{overlay.remove();resolve(value)};
     overlay.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>done(null)));
     overlay.addEventListener('click',event=>{if(event.target===overlay)done(null)});
@@ -310,7 +327,10 @@ function createApprovalRequest(){
       const descricao=String(overlay.querySelector('[data-description]')?.value||'').trim();
       const due=String(overlay.querySelector('[data-due]')?.value||'').trim();
       if(!titulo){alert('Informe o objeto / título do aceite.');return}
+      const stage=String(stageSelect?.value||'');
+      if(stageSelect&&stageSelect.options.length>1&&!stage){alert('Escolha o serviço do contrato que está sendo entregue (ou “Outro objeto”).');return}
       const payload={cliente_id:project.cliente_id,projeto_id:project.id,tipo:'aceite',titulo,descricao:descricao||null,status:'aguardando',delivered_at:new Date().toISOString(),approval_due_at:due?new Date(`${due}T23:59:59`).toISOString():null};
+      if(stage&&stage!=='__outro')payload.schedule_stage_id=stage;
       const result=await client().from('aprovacoes').insert(payload).select('id').single();
       if(result.error){alert(safeError(result.error,'Não foi possível criar a solicitação de aceite.'));return}
       done(result.data?.id||null)

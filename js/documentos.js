@@ -188,6 +188,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
         if(categoriaAtual && !Array.from(selectCategoria.options).some(option=>option.value===categoriaAtual))selectCategoria.add(new Option(categoriaAtual,categoriaAtual));
         preencher("documentoCategoria", categoriaAtual);
         preencher("documentoDescricao", documento.descricao);
+        window.CMEEtapaEntrega?.carregar(documento.projeto_id, documento.conclui_etapa_id || "");
         atualizarModal("Editar Documento", "Salvar Alterações", false);
         abrirModal();
     }
@@ -205,6 +206,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
         salvando=true;
         const botaoSalvar=document.getElementById('salvarDocumento');alternarSalvamento(botaoSalvar,true);
         let publicados=0;
+        const caminhosSalvos=[];
         try {
             for(const [indice,arquivo] of (arquivos.length?arquivos:[null]).entries()){
                 if(arquivo && concluidos.has(arquivo))continue;
@@ -218,7 +220,7 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
                     if(arquivo)await dbUploadArquivo(bucket,caminho,arquivo);
                     item.arquivo=caminho;item.storage_bucket=bucket;
                     if(anterior)await dbEditarDocumento(anterior.id,item);else await dbCriarDocumento(item);
-                    persistido=true;publicados++;
+                    persistido=true;publicados++;caminhosSalvos.push(caminho);
                     if(arquivo)concluidos.add(arquivo);
                 }catch(error){
                     if(!persistido && arquivo)await dbExcluirArquivoStorage(bucket,caminho).catch(()=>{});
@@ -228,11 +230,16 @@ DOCUMENTOS.JS - CRUD ADMINISTRATIVO
                     try{await dbExcluirArquivoStorage(anterior.storage_bucket,anterior.arquivo);}catch{alert('Arquivo salvo. A limpeza do arquivo anterior ficou pendente em Armazenamento e auditoria.');}
                 }
             }
+            let avisoEtapa='';
+            try{
+                const etapa=await window.CMEEtapaEntrega?.vincular(anterior?{documentoId:anterior.id}:{caminhos:caminhosSalvos});
+                if(etapa?.vinculado)avisoEtapa=`\nEtapa concluída no cronograma: ${etapa.etapa}.`;
+            }catch(error){avisoEtapa='\nOs arquivos foram salvos, mas a etapa do cronograma não foi concluída. Conclua pela página Cronograma.';}
             let notificacao;
             try{notificacao=await dbNotificarAtualizacao({tipo:dados.source==='biblioteca'?'biblioteca_atualizada':anterior?'documento_atualizado':'documento_publicado',cliente_id:dados.cliente_id,projeto_id:dados.projeto_id,titulo:dados.nome,mensagem:anterior?'Um arquivo do seu projeto foi atualizado.':'Novos arquivos foram disponibilizados no seu portal.'});}catch{notificacao={enviado:false,motivo:'Falha na solicitação de notificação.'};}
             try{await recarregar();}catch{alert('Os arquivos foram salvos. Não foi possível atualizar a lista; recarregue a página.');}
             salvando=false;fecharModal();
-            alert('Arquivo(s) confirmado(s).'+avisoNotificacao(notificacao));
+            alert('Arquivo(s) confirmado(s).'+avisoEtapa+avisoNotificacao(notificacao));
         } catch(error){tratarErro(`${publicados} arquivo(s) confirmado(s) nesta tentativa. O formulário foi preservado; repetir o envio ignora os arquivos já confirmados.`,error);}
         finally{salvando=false;alternarSalvamento(botaoSalvar,false);}
     }

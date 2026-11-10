@@ -98,3 +98,16 @@ Pendente da proprietária: `npx wrangler deploy` do Worker de mídia (o token da
 | Revisão jurídica do Contrato Mestre v8 | **Recomendada** antes do uso com clientes (5.2, 6.1, 21.5) | — |
 
 Atenção: a Parcela 1/8 do CON-2026-10-0002 venceu em 06/11 e está como pendente. Se já foi recebida, marque como paga no Financeiro.
+
+## Atualização 10/11 — cronograma simples integrado ao contrato e aos documentos
+
+Teste de 10/11 encontrou: etapas genéricas por tipo de projeto (sem relação com o contrato e sem datas); situação × percentual contraditórios (CASINHA "Concluído" com 10%; CASA URBEN com 100% "Pendente"); escopo do contrato usado pelo Termo de Aceite desatualizado no CON-2026-10-0002 (tabela de escopo com a,d,f,g,j,k,m,p,u, contrato emitido com a,am,an,ao,c,d,f,g,j,k,l,q,w); cronograma completo: contrato direto sem orçamento não gera cronograma contratado e os modelos "comercial" e "parcial" estão vazios (pendente de decisão).
+
+| Item | Situação | Onde |
+|---|---|---|
+| Escopo contratado sempre igual ao contrato emitido (inclui revisões; retira serviços removidos) | **Aguardando aplicar no banco** | migração `20261110040000` |
+| Cronograma simples nasce do contrato: Assinatura → um serviço contratado por etapa (e serviço adicional aceito) → Entrega final e encerramento; genéricas sem avanço substituídas | **Aguardando aplicar no banco** | migração `20261110040000` |
+| Conclusão automática: contrato assinado (aceite no portal, status assinado ou upload na categoria Contrato); Termo de Aceite aceito pelo cliente conclui a etapa vinculada; upload com "Esta entrega conclui a etapa"; ART/laudo/memorial/estudo preliminar/levantamento reconhecidos (serviço que exige aceite fica "Em andamento" até o aceite); quitação conclui o encerramento | **Aguardando aplicar no banco** | migração + `js/documento-etapa.js` |
+| Aceite de etapa pelo escopo: solicitação de aceite escolhe o serviço contratado (site e app); o Termo cita o serviço pelo código | **Pronto no PR** (gerador publica no merge) | `contract-documents-web.js`, app `admin/approvals.tsx`, `generate-contract-document` |
+| Conclusão manual: botões Concluir / Reabrir; etapa reaberta só volta a concluir com documento novo | **Pronto no PR** | `js/cronograma.js` |
+| Situação × percentual sempre coerentes (gatilho no banco) e correção dos dados existentes sem e-mail ao cliente | **Aguardando aplicar no banco** | migração |
