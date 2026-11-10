@@ -378,6 +378,7 @@
     </a>
   </div>
 
+  <script src="js/camilinha-work.js" defer></script>
   <script src="js/script.js?v=20260819-5"></script>
   <script src="js/cursor-dourado.js?v=20260910-1"></script>
   <!-- As três capas usam o mesmo keyframe CSS; não há players de vídeo independentes. -->
@@ -507,6 +508,7 @@
   function message(text) {
     window.clearTimeout(camilinhaDelayId);
     state.classList.remove('camilinha-3d-carregando');
+    state.classList.toggle('camilinha-3d-erro', Boolean(text) && text !== loadingNotice);
     state.textContent = text;
     state.hidden = !text;
     // A Camilinha aparece apenas se o carregamento ultrapassar 500 ms.
