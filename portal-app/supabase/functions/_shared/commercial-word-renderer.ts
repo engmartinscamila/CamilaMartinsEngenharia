@@ -555,6 +555,8 @@ function contractDocumentV10(sourceRecord:CommercialRecord,profile:ProfessionalI
  const specificClauses=(Array.isArray(t.specific_clauses)?t.specific_clauses as Array<Record<string,unknown>>:[])
   .map(item=>({title:sentencePart(item.title),text:tidyText(item.text)}))
   .filter(item=>item.title&&item.text);
+ // Parcelas a combinar: só quando marcado e sem parcelas registradas (parcelas cadastradas depois prevalecem).
+ const toBeAgreed=t.payment_to_be_agreed===true&&installments.length===0;
  const isPj=isCompany(record);
  const contractingSummary=`${record.prospect_name} — ${isPj?'CNPJ':'CPF'} ${text(record.cpf_cnpj)}`;
  return makeDoc([
@@ -568,7 +570,7 @@ function contractDocumentV10(sourceRecord:CommercialRecord,profile:ProfessionalI
     ['Imóvel / obra',text(record.property_address)],
     ['Serviço contratado',serviceNames.join('; ')||'Conforme o Quadro de Escopo',true],
     ['Valor total dos honorários',money(record.total_value),true],
-    ['Forma de pagamento',`${method?method+', ':''}${installments.length>1?`em ${installments.length} parcelas`:installments.length===1?'em parcela única':'conforme condição registrada'}, conforme o quadro Parcelas e Entregas`,true],
+    ['Forma de pagamento',toBeAgreed?`${method?method+', ':''}em parcelas a combinar entre as partes, conforme o quadro Parcelas e Entregas`:`${method?method+', ':''}${installments.length>1?`em ${installments.length} parcelas`:installments.length===1?'em parcela única':'conforme condição registrada'}, conforme o quadro Parcelas e Entregas`,true],
     ['Prazo',prazo],
     ['Revisões e visitas incluídas','Por atividade, na tabela do Quadro de Escopo'],
     ['Taxas e serviços de terceiros','Por conta do(a) CONTRATANTE (ART, Prefeitura, cartório, topografia, sondagem e outros), conforme a Cláusula 4'],
@@ -576,7 +578,9 @@ function contractDocumentV10(sourceRecord:CommercialRecord,profile:ProfessionalI
    h('PARCELAS E ENTREGAS'),
    ...(paymentRows.length
      ? [gridTable(['Parcela','Valor','% do total','Vencimento'],paymentRows,[12,22,14,52])]
-     : [p('Condição de pagamento não informada.')]),
+     : toBeAgreed
+       ? [p('Parcelas a combinar. O número, o valor e o vencimento das parcelas serão definidos por escrito entre as partes, por aditivo ou aceite no Portal do Cliente, respeitado o valor total do Quadro-Resumo. O cronograma formalizado passa a integrar este quadro.')]
+       : [p('Condição de pagamento não informada.')]),
    h('QUADRO DE ESCOPO — O QUE ESTÁ INCLUSO'),
    ...(activityRows.length?[gridTable(['Atividade','Quantidade','Prazo','Revisões incluídas','Visitas incluídas','Formato'],activityRows,[28,13,20,12,12,15]),p('Detalhamento das entregas de cada atividade:',true,NAVY)]:[]),
    ...(specificClauses.length?[
