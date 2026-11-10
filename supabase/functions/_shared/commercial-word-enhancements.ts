@@ -56,11 +56,15 @@ function contractScopeXml(services: unknown, customService: unknown, experienceL
   const specificRows = Array.isArray(terms.scope) ? terms.scope.filter(row => row && typeof row === 'object') as Obj[] : [];
   const perItemLevels = selected.filter(item => isProjectTierEligible(item) && serviceLevelCode(item));
   const distinctLevels = [...new Set(perItemLevels.map(serviceLevelCode))];
+  // Contrato pode ocultar a menção ao nível (Bronze/Prata/Ouro) a pedido do cliente; o escopo não muda.
+  const hideLevel = v10 && terms.hide_service_level === true;
   const parts = v10 ? [] : [
     wordParagraph('ESCOPO TÉCNICO CONTRATADO', true),
     wordParagraph(`Local do serviço / endereço do imóvel ou obra: ${propertyAddress}.`),
   ];
-  if (!perItemLevels.length && text(experienceLevel) && selected.some(isProjectTierEligible)) {
+  if (hideLevel) {
+    // nível omitido a pedido do cliente
+  } else if (!perItemLevels.length && text(experienceLevel) && selected.some(isProjectTierEligible)) {
     parts.push(wordParagraph(`Nível de prestação: ${text(experienceLevel).toUpperCase()}, aplicável exclusivamente às atividades elegíveis expressamente contratadas. Não acrescenta serviços, visitas, aprovações, execução, taxas, fornecimentos ou entregáveis de outra categoria.`));
   } else if (distinctLevels.length > 1) {
     parts.push(wordParagraph('Os níveis de prestação são definidos individualmente por atividade e não ampliam automaticamente o escopo de outras atividades.'));
@@ -83,7 +87,7 @@ function contractScopeXml(services: unknown, customService: unknown, experienceL
         : `Atividade contratada: ${sentencePart(customService)}. Entrega técnica aprovada: ${agreed}.`
       : `Entrega técnica aprovada para esta atividade: ${agreed}.`;
     parts.push(wordParagraph(`${index + 1}. ${name}`, true));
-    if (isProjectTierEligible(item) && serviceLevelCode(item)) {
+    if (!hideLevel && isProjectTierEligible(item) && serviceLevelCode(item)) {
       parts.push(wordParagraph(`Nível desta atividade: ${serviceLevelLabel(item)}.`));
     }
     parts.push(wordParagraph(description));
