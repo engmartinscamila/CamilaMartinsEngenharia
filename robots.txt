@@ -30,4 +30,4 @@ Disallow: /agenda-cliente.html
 Disallow: /cronograma-cliente.html
 Disallow: /solicitacoes-cliente.html
 
-Sitemap: https://www.camilamartinsengenharia.com.br/sitemap.xml
+Sitemap: https://camilamartinsengenharia.com.br/sitemap.xml
