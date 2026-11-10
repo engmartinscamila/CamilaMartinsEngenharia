@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="theme-color" content="#010914">
+<title>Verificar cópia autenticada | Camila Martins Engenharia</title>
+<link rel="icon" href="assets/logo.png" type="image/png">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#010914;--card:#0b1626;--text:#f3ece0;--muted:#b9ad98;--gold:#d0b47a;--ok:#7fc79a;--bad:#e59a8f;--line:rgba(208,180,122,.25)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f6f2ea;--card:#fff;--text:#1c1a17;--muted:#6b6255;--gold:#8a6d3b;--ok:#1b6e3c;--bad:#9b2c1f;--line:rgba(138,109,59,.25)}}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:Montserrat,Arial,sans-serif;display:flex;flex-direction:column}
+header{padding:20px 16px;text-align:center}
+header a{color:var(--gold);text-decoration:none;font-family:"Cormorant Garamond",serif;font-size:1.6rem}
+main{flex:1;width:min(560px,100%);margin:0 auto;padding:0 16px 40px}
+h1{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:2rem;margin:.5rem 0}
+p{color:var(--muted);line-height:1.55}
+form{display:flex;flex-wrap:wrap;gap:.6rem;margin:1.2rem 0}
+input{flex:1 1 220px;min-width:0;padding:.8rem 1rem;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;text-transform:uppercase;letter-spacing:.04em}
+button{padding:.8rem 1.2rem;border-radius:12px;border:0;background:var(--gold);color:#111;font:inherit;font-weight:600;cursor:pointer}
+.result{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:1.1rem 1.2rem;margin-top:1rem}
+.result[hidden]{display:none}
+.result h2{margin:0 0 .6rem;font-size:1.15rem}
+.result.ok h2{color:var(--ok)}.result.bad h2{color:var(--bad)}
+dl{display:grid;grid-template-columns:auto 1fr;gap:.35rem .9rem;margin:0}
+dt{color:var(--muted)}dd{margin:0;overflow-wrap:anywhere}
+footer{text-align:center;color:var(--muted);font-size:.8rem;padding:16px}
+</style>
+</head>
+<body>
+<header><a href="index.html">Camila Martins Engenharia</a></header>
+<main>
+<h1>Verificar cópia autenticada</h1>
+<p>Cada cópia de um material de Camila Martins Engenharia (portfólio, guia de níveis, guias e imagens autorais) traz um código único, impresso no rodapé ou na faixa da imagem. Digite o código para confirmar se a cópia é verdadeira e para quem foi emitida.</p>
+<form id="verifyForm" autocomplete="off">
+<label for="verifyCode" class="sr-only" style="position:absolute;left:-9999px">Código da cópia</label>
+<input id="verifyCode" name="c" placeholder="Ex.: CME-AB12CD34EF56" maxlength="24" required>
+<button type="submit">Verificar</button>
+</form>
+<section id="verifyResult" class="result" role="status" aria-live="polite" hidden></section>
+</main>
+<footer>Reprodução e redistribuição dos materiais são proibidas (Lei 9.610/98).</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js?v=20260725-14"></script>
+<script src="js/verify-copy.js"></script>
+</body>
+</html>

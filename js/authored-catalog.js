@@ -28,6 +28,38 @@
     return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
   }
 
+  // Imagem (render, prancha) vira PDF de uma página, que segue o fluxo protegido dos guias.
+  const IMAGE_RE = /\.(jpe?g|png|webp)$/i;
+  let pdfLibPromise = null;
+  function loadPdfLib() {
+    if (window.PDFLib) return Promise.resolve(window.PDFLib);
+    pdfLibPromise = pdfLibPromise || new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+      script.onload = () => (window.PDFLib ? resolve(window.PDFLib) : reject(new Error('Conversor de PDF indisponível.')));
+      script.onerror = () => { pdfLibPromise = null; reject(new Error('Não foi possível carregar o conversor de imagem para PDF.')); };
+      document.head.appendChild(script);
+    });
+    return pdfLibPromise;
+  }
+  async function toPdfIfImage(file) {
+    if (!(file instanceof File) || !IMAGE_RE.test(file.name)) return file;
+    const PDFLib = await loadPdfLib();
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, 3000 / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * scale); canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const jpeg = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+    const doc = await PDFLib.PDFDocument.create();
+    const image = await doc.embedJpg(new Uint8Array(await jpeg.arrayBuffer()));
+    const page = doc.addPage([image.width, image.height]);
+    page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
+    doc.setTitle(file.name.replace(IMAGE_RE, ''));
+    const bytes = await doc.save();
+    return new File([bytes], file.name.replace(IMAGE_RE, '.pdf'), { type: 'application/pdf' });
+  }
+
   async function validPdf(file) {
     if (!(file instanceof File) || !/\.pdf$/i.test(file.name)) return 'Envie somente arquivos PDF.';
     if (file.size <= 0 || file.size > MAX_BYTES) return 'O PDF deve ter até 25 MB.';
@@ -126,7 +158,9 @@
   }
 
   async function pickNewFiles(files) {
-    for (const file of files) {
+    for (const picked of files) {
+      let file = picked;
+      try { file = await toPdfIfImage(picked); } catch (error) { state.pending.push({ file: picked, title: picked.name, category: 'Outros', target: 'new', error: error.message }); continue; }
       const s = U.suggestFromFilename(file.name);
       const match = state.materials.find((m) => m.code === s.code);
       const error = await validPdf(file);
@@ -224,7 +258,7 @@
     const count = docsOf(m.id).length;
     const body = modal(`Substituir: ${m.title}`, `
       <p>O novo PDF vira a versão ${Number(m.current_version) + 1}. ${count ? `As cópias de ${count} cliente(s) serão atualizadas.` : 'Nenhum cliente tem este guia ainda.'} A versão atual fica no histórico.</p>
-      <label class="ac-file"><input id="acReplaceFile" type="file" accept="application/pdf,.pdf"><span><i class="fa-solid fa-file-arrow-up"></i> Escolher o PDF novo</span></label>
+      <label class="ac-file"><input id="acReplaceFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp"><span><i class="fa-solid fa-file-arrow-up"></i> Escolher o arquivo novo (PDF ou imagem)</span></label>
       <p id="acReplaceName" class="ac-muted"></p>
       <label>O que mudou (opcional)<input id="acReplaceNote" maxlength="160" placeholder="Ex.: revisão de normas e novas fotos"></label>
       <label class="ac-check"><input id="acReplaceNotify" type="checkbox"> Avisar os clientes (e-mail e notificação no portal)</label>
@@ -235,7 +269,7 @@
       const button = event.currentTarget; busy(button, 'Substituindo...');
       const notify = body.querySelector('#acReplaceNotify').checked;
       try {
-        const result = await newVersion(m, input.files[0], notify, body.querySelector('#acReplaceNote').value.trim());
+        const result = await newVersion(m, await toPdfIfImage(input.files[0]), notify, body.querySelector('#acReplaceNote').value.trim());
         closeModal(); await refresh();
         status(`${m.title}: versão ${result.version} no ar; ${result.updated} cliente(s) atualizado(s)${notify ? ' e avisado(s)' : ' sem aviso'}.`, 'sucesso');
       } catch (error) { idle(button); status(`Não foi possível substituir: ${error.message}`, 'erro'); }

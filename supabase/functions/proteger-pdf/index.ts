@@ -116,16 +116,15 @@ async function resolveSource(
     if (!data) return null;
 
     // Cliente logado recebe a cópia com o próprio nome; visitante recebe a amostra pública.
-    let siteClient: { id: string; nome: string | null; email: string | null } | null = null;
-    if (user && !userIsAdmin) {
-      const { data: found } = await admin
-        .from("clientes")
-        .select("id,nome,email")
-        .eq("auth_id", user.id)
-        .limit(1)
-        .maybeSingle();
-      if (found) siteClient = found as typeof siteClient;
-    }
+    type SiteClient = { id: string; nome: string | null; email: string | null };
+    const siteClient: SiteClient | null = user && !userIsAdmin
+      ? ((await admin
+          .from("clientes")
+          .select("id,nome,email")
+          .eq("auth_id", user.id)
+          .limit(1)
+          .maybeSingle()).data as SiteClient | null) ?? null
+      : null;
 
     return {
       sourceType: "site",

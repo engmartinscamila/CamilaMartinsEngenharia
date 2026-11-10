@@ -285,6 +285,25 @@ PONTE DA GALERIA: painel existente -> Cloudflare R2 + GitHub
     context.drawImage(bitmap, 0, 0);
 
     const smallerSide = Math.min(canvas.width, canvas.height);
+
+    // Marca central suave (não sai com um simples recorte do canto), como nas imagens do site.
+    context.save();
+    const centerSize = Math.max(22, Math.round(smallerSide * 0.06));
+    context.font = "600 " + centerSize + "px Montserrat, Arial, sans-serif";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.translate(canvas.width / 2, canvas.height / 2);
+    const centerText = "CAMILA MARTINS ENGENHARIA CIVIL";
+    const maxCenter = canvas.width * 0.86;
+    const measured = context.measureText(centerText).width;
+    if (measured > maxCenter) context.scale(maxCenter / measured, maxCenter / measured);
+    context.lineWidth = Math.max(1, centerSize * 0.04);
+    context.strokeStyle = "rgba(0,0,0,.10)";
+    context.strokeText(centerText, 0, 0);
+    context.fillStyle = "rgba(255,255,255,.16)";
+    context.fillText(centerText, 0, 0);
+    context.restore();
+
     const fontSize = Math.max(18, Math.round(smallerSide * 0.024));
     const padding = Math.max(16, Math.round(smallerSide * 0.025));
 

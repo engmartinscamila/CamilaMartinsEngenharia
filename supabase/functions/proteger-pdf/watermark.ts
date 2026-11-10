@@ -1,6 +1,9 @@
 import { degrees, PDFDocument, PDFFont, rgb, StandardFonts } from "npm:pdf-lib@1.17.1";
 import { normalizeText } from "./core.ts";
 
+// Página pública onde qualquer pessoa confere se a cópia é autêntica e para quem foi emitida.
+export const VERIFY_HOST = "camilamartinsengenharia.com.br";
+
 export type ProtectPdfOptions = { issueCode: string; licensedTo: string; title: string; issuedAt: Date; };
 
 function fitText(font: PDFFont, value: string, maxWidth: number, initialSize: number, minimumSize: number): { text: string; size: number } {
@@ -22,25 +25,32 @@ export async function protectPdf(input: Uint8Array, options: ProtectPdfOptions):
   const licensedTo = normalizeText(options.licensedTo, 110);
   const title = normalizeText(options.title, 180);
   const date = options.issuedAt.toISOString().slice(0, 10);
-  const watermark = `CAMILA MARTINS ENGENHARIA | ${issueCode} | USO EXCLUSIVO`;
-  const footer = `Licenciado para: ${licensedTo} | ${issueCode} | Emitido em ${date} | Reproducao e redistribuicao proibidas`;
+  const watermark = `CAMILA MARTINS ENGENHARIA | COPIA AUTENTICADA ${issueCode}`;
+  const footer = `Copia autenticada ${issueCode} | Licenciado para: ${licensedTo} | Emitido em ${date} | Confira em ${VERIFY_HOST}/verificar.html | Reproducao proibida`;
   const micro = `CME:${issueCode}:P`;
 
   for (const [index, page] of pdf.getPages().entries()) {
     const { width, height } = page.getSize();
-    const watermarkSize = Math.max(8, Math.min(11, width / 55));
+    const watermarkSize = Math.max(9, Math.min(14, width / 44));
     const watermarkWidth = regular.widthOfTextAtSize(watermark, watermarkSize);
-    const stepX = Math.max(250, watermarkWidth + 72);
-    const stepY = Math.max(125, height / 6);
-    for (let y = -40; y < height + 80; y += stepY) {
-      const row = Math.round((y + 40) / stepY);
-      const offset = row % 2 === 0 ? -width * 0.6 : -width * 0.35;
-      for (let x = offset; x < width * 1.3; x += stepX) {
-        page.drawText(watermark, { x, y, size: watermarkSize, font: bold, color: rgb(0.35, 0.25, 0.18), rotate: degrees(32), opacity: 0.065 });
+    // Linhas paralelas a 32°, com espaçamento fixo entre elas (sem sobreposição).
+    const angle = (32 * Math.PI) / 180;
+    const along = watermarkWidth + 60;
+    const gap = Math.max(95, Math.min(width, height) / 4.2);
+    const span = Math.hypot(width, height);
+    const cos = Math.cos(angle), sin = Math.sin(angle);
+    for (let k = -Math.ceil(span / gap); k <= Math.ceil(span / gap); k += 1) {
+      const shift = (k % 2) * (along / 2);
+      for (let j = -Math.ceil(span / along) - 1; j <= Math.ceil(span / along) + 1; j += 1) {
+        const t = j * along + shift;
+        const x = width / 2 + t * cos - k * gap * sin;
+        const y = height / 2 + t * sin + k * gap * cos;
+        if (x < -along || x > width + 20 || y < -along || y > height + 20) continue;
+        page.drawText(watermark, { x, y, size: watermarkSize, font: bold, color: rgb(0.35, 0.25, 0.18), rotate: degrees(32), opacity: 0.13 });
       }
     }
-    page.drawRectangle({ x: 0, y: 0, width, height: 19, color: rgb(1, 1, 1), opacity: 0.86 });
-    const fittedFooter = fitText(regular, footer, Math.max(50, width - 22), 7, 4.5);
+    page.drawRectangle({ x: 0, y: 0, width, height: 19, color: rgb(1, 1, 1), opacity: 0.9 });
+    const fittedFooter = fitText(regular, footer, Math.max(50, width - 22), 7, 4);
     page.drawText(fittedFooter.text, { x: 11, y: 6.25, size: fittedFooter.size, font: regular, color: rgb(0.21, 0.17, 0.14), opacity: 0.96 });
     const pageCode = `${micro}${index + 1}`;
     page.drawText(pageCode, { x: 2, y: Math.max(22, height - 4), size: 1.8, font: regular, color: rgb(0.52, 0.48, 0.44), opacity: 0.035 });
@@ -51,7 +61,7 @@ export async function protectPdf(input: Uint8Array, options: ProtectPdfOptions):
   pdf.setAuthor("Camila Martins Engenharia");
   pdf.setCreator("Camila Martins Engenharia - Portal do Cliente");
   pdf.setProducer(`Camila Martins Engenharia | ${issueCode}`);
-  pdf.setSubject(`Copia licenciada: ${licensedTo} | Codigo: ${issueCode}`);
+  pdf.setSubject(`Copia autenticada ${issueCode} | Licenciado para: ${licensedTo} | Confira em ${VERIFY_HOST}/verificar.html`);
   pdf.setKeywords(["Camila Martins Engenharia", "documento licenciado", issueCode, `emitido-${date}`]);
   pdf.setModificationDate(options.issuedAt);
   return pdf.save({ addDefaultPage: false, objectsPerTick: 40, useObjectStreams: false, updateFieldAppearances: false });

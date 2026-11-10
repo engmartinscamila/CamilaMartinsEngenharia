@@ -122,6 +122,7 @@ jobs:
           node scripts/project-before-contract-browser.mjs
           node scripts/contract-form-guards-browser.mjs
           node scripts/authored-catalog-browser.mjs
+          node scripts/authored-photos-browser.mjs
           node scripts/mobile-admin-smoke.mjs
           node scripts/admin-menu-groups-browser.mjs
           node scripts/management-closure-browser.mjs
