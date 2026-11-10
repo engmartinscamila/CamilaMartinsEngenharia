@@ -495,7 +495,7 @@ const quadroCell=(value:string,options:{bold?:boolean;shade?:boolean;width?:numb
 });
 const keyValueTable=(rows:Array<[string,string,boolean?]>)=>new Table({
  width:{size:100,type:WidthType.PERCENTAGE},
- rows:rows.map(([label,value,highlight])=>new TableRow({children:[
+ rows:rows.map(([label,value,highlight])=>new TableRow({cantSplit:true,children:[
   quadroCell(label,{bold:true,shade:true,width:32}),
   quadroCell(value,{bold:Boolean(highlight),width:68,color:highlight?NAVY:TEXT}),
  ]}))
@@ -503,8 +503,8 @@ const keyValueTable=(rows:Array<[string,string,boolean?]>)=>new Table({
 const gridTable=(headers:string[],rows:string[][],widths:number[])=>new Table({
  width:{size:100,type:WidthType.PERCENTAGE},
  rows:[
-  new TableRow({tableHeader:true,children:headers.map((label,index)=>quadroCell(label,{bold:true,shade:true,width:widths[index]}))}),
-  ...rows.map(row=>new TableRow({children:row.map((value,index)=>quadroCell(value,{width:widths[index]}))})),
+  new TableRow({tableHeader:true,cantSplit:true,children:headers.map((label,index)=>quadroCell(label,{bold:true,shade:true,width:widths[index]}))}),
+  ...rows.map(row=>new TableRow({cantSplit:true,children:row.map((value,index)=>quadroCell(value,{width:widths[index]}))})),
  ]
 });
 const percentPt=(part:number,total:number)=>new Intl.NumberFormat('pt-BR',{maximumFractionDigits:1}).format(part/total*100)+'%';
