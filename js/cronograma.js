@@ -43,6 +43,8 @@ CRONOGRAMA.JS - CRUD ADMINISTRATIVO
         const botaoTeste = document.getElementById("modoTesteCronograma");
         botaoTeste?.addEventListener("click", alternarModoTeste);
 
+        document.getElementById("sincronizarCronograma")?.addEventListener("click", sincronizarPeloContrato);
+
         const botaoNovo = document.getElementById("novaEtapa");
         if (botaoNovo) {
             botaoNovo.removeAttribute("onclick");
@@ -132,13 +134,16 @@ CRONOGRAMA.JS - CRUD ADMINISTRATIVO
                                     <tbody>
                                         ${ordenadas.map(etapa => `
                                             <tr>
-                                                <td>${escapar(etapa.nome)}</td>
+                                                <td>${escapar(etapa.nome)}${detalheEtapa(etapa)}</td>
                                                 <td>${escapar(nomeProjeto(etapa.projeto_id))}</td>
                                                 <td>${escapar(formatarData(etapa.data_inicio))}</td>
                                                 <td>${escapar(formatarData(etapa.data_fim))}</td>
                                                 <td><span class="status ${classeStatus(etapa.status)}">${escapar(etapa.status || "Pendente")}</span></td>
                                                 <td>${window.cmPercentualEtapa?.(etapa) || 0}%</td>
                                                 <td>
+                                                    ${concluida(etapa)
+                                                        ? botao("reabrir", etapa.id, "fa-rotate-left", "Reabrir etapa")
+                                                        : botao("concluir", etapa.id, "fa-check", "Marcar etapa como concluída")}
                                                     ${botao("editar", etapa.id, "fa-pen", "Editar etapa")}
                                                     ${botao("excluir", etapa.id, "fa-trash", "Excluir etapa", "delete")}
                                                 </td>
@@ -161,6 +166,58 @@ CRONOGRAMA.JS - CRUD ADMINISTRATIVO
         const { acaoCronograma: acao, id } = alvo.dataset;
         if (acao === "editar") editarEtapa(id);
         if (acao === "excluir") excluirEtapa(id);
+        if (acao === "concluir") alterarConclusao(id, true);
+        if (acao === "reabrir") alterarConclusao(id, false);
+    }
+
+    function concluida(etapa) {
+        return normalizarStatus(etapa?.status) === "concluido";
+    }
+
+    // Mostra de onde veio a etapa e quem/que documento a concluiu.
+    function detalheEtapa(etapa) {
+        const partes = [];
+        if (etapa.origem === "contrato") partes.push(etapa.exige_aceite ? "Contrato · exige Termo de Aceite" : "Contrato");
+        if (concluida(etapa) && etapa.conclusao_motivo) {
+            const quando = etapa.concluida_em ? ` em ${new Date(etapa.concluida_em).toLocaleDateString("pt-BR")}` : "";
+            partes.push(`${etapa.conclusao_tipo === "automatica" ? "Automática" : "Manual"}: ${etapa.conclusao_motivo}${quando}`);
+        }
+        return partes.length ? `<div class="cme-etapa-origem">${escapar(partes.join(" — "))}</div>` : "";
+    }
+
+    async function alterarConclusao(id, concluir) {
+        const etapa = localizar(id);
+        if (!etapa || modoTeste) return;
+        const pergunta = concluir
+            ? `Marcar "${etapa.nome}" como concluída? O cliente verá a etapa concluída no portal.`
+            : `Reabrir "${etapa.nome}"? Ela volta para pendente e só será concluída de novo por um documento novo ou manualmente.`;
+        if (!confirm(pergunta)) return;
+        try {
+            await dbEditarEtapaCronograma(etapa.id, concluir
+                ? { status: "Concluído", percentual_conclusao: 100 }
+                : { status: "Pendente", percentual_conclusao: 0 });
+            await recarregar();
+        }
+        catch (error) {
+            tratarErro("Não foi possível alterar a etapa.", error);
+        }
+    }
+
+    async function sincronizarPeloContrato() {
+        const botao = document.getElementById("sincronizarCronograma");
+        if (botao) botao.disabled = true;
+        try {
+            const { data, error } = await window.supabaseClient.rpc("admin_cronograma_simples_sincronizar", { p_projeto: null });
+            if (error) throw error;
+            await recarregar();
+            alert(`Cronograma conferido com os contratos.\nEtapas criadas: ${data?.etapas_criadas ?? 0}\nEtapas concluídas por documentos: ${data?.etapas_concluidas ?? 0}`);
+        }
+        catch (error) {
+            tratarErro("Não foi possível atualizar o cronograma pelos contratos.", error);
+        }
+        finally {
+            if (botao) botao.disabled = false;
+        }
     }
 
     function novaEtapa() {
