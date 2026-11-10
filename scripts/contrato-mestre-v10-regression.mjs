@@ -84,8 +84,11 @@ assert.ok(pf.includes('Nível desta atividade: BRONZE'), 'Por padrão o nível a
 const semNivel = await render({ ...base, commercial_terms: { ...base.commercial_terms, hide_service_level: true } });
 assert.ok(!/bronze|prata|ouro|Nível de (prestação|experiência)|Nível desta/i.test(semNivel), 'Com hide_service_level o contrato não menciona nível');
 assert.ok(semNivel.includes('1. Projeto Legal') && semNivel.includes('Entrega técnica aprovada'), 'Ocultar nível não remove o escopo');
-const aCombinar = await render({ ...base, payment_terms: [], commercial_terms: { ...base.commercial_terms, installments: [], payment_to_be_agreed: true } });
+const aCombinar = await render({ ...base, payment_terms: [], commercial_terms: { ...base.commercial_terms, installments: [{ amount: '10000', due_date: '', due_event: 'A combinar entre as partes' }], payment_to_be_agreed: true } });
+assert.ok(!aCombinar.includes('100%'), 'Parcela técnica a combinar não vira linha da tabela');
 assert.ok(aCombinar.includes('em parcelas a combinar entre as partes') && aCombinar.includes('Parcelas a combinar. O número, o valor e o vencimento'), 'Parcelas a combinar no Quadro-Resumo e no quadro de parcelas');
 assert.ok(!aCombinar.includes('Condição de pagamento não informada'), 'Parcelas a combinar não é condição ausente');
 assert.ok(aCombinar.includes('reajustadas anualmente'), 'Sem datas definidas, a cláusula de reajuste permanece');
+const datadas = await render({ ...base, commercial_terms: { ...base.commercial_terms, payment_to_be_agreed: true } });
+assert.ok(datadas.includes('40%') && !datadas.includes('a combinar'), 'Parcelas datadas prevalecem sobre a combinar');
 console.log('PASS: Contrato Mestre v10 com quadro-resumo, parcelas, escopo, condicionais e renumeração.');
