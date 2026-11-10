@@ -16,6 +16,11 @@ const restrictedExtras = [
 restrictedExtras.forEach(file => disallowed.add(file));
 
 const clientPwaPattern = /^(portal|meu-projeto|login|recuperar-senha|redefinir-senha|baixar-app|biblioteca-cliente|documentos-cliente|fotos-cliente|agenda-cliente|cronograma-cliente|solicitacoes-cliente)\.html$/;
+const camilinhaClassicPages = new Set([
+  'portal.html', 'meu-projeto.html',
+  'biblioteca-cliente.html', 'documentos-cliente.html', 'fotos-cliente.html',
+  'agenda-cliente.html', 'cronograma-cliente.html', 'solicitacoes-cliente.html'
+]);
 
 function injectBefore(html, token, snippet) {
   if (html.includes(snippet.trim())) return html;
@@ -71,6 +76,12 @@ for (const name of fs.readdirSync(root).filter(name => name.endsWith('.html'))) 
     if (!html.includes('js/pwa-client.js')) {
       html = injectBefore(html, '</body>', '    <script src="js/pwa-client.js?v=20260903-1"></script>');
     }
+  }
+
+  if (camilinhaClassicPages.has(name)) {
+    html = injectBefore(html, '</head>', '    <link rel="stylesheet" href="css/camilinha.css?v=work-client">');
+    html = injectBefore(html, '</body>', '    <script src="js/camilinha-work.js?v=work-client" defer></script>');
+    html = injectBefore(html, '</body>', '    <script src="js/camilinha-client-classic.js?v=work-client" defer></script>');
   }
 
   fs.writeFileSync(file, html);

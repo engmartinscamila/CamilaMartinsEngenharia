@@ -42,4 +42,17 @@ assert.match(index, /camilinha-3d-erro/, 'Maquete 3D reage a erro sem ocultá-lo
 const script = index.match(/<script id="portfolio-live3d-inline-v17">([\s\S]*?)<\/script>/);
 assert.ok(script, 'Script de maquetes 3D presente');
 assert.doesNotThrow(() => new Function(script[1]), 'Script de maquetes 3D deve ser sintaticamente válido');
-console.info('Camilinha: CTAs, galeria, maquete 3D e acessibilidade OK.');
+const classicClient = read('js/camilinha-client-classic.js');
+const hardening = read('scripts/harden-public-html.mjs');
+assert.match(hardening, /camilinhaClassicPages/, 'Publicação cobre o portal clássico');
+for (const name of ['portal.html', 'meu-projeto.html', 'biblioteca-cliente.html', 'documentos-cliente.html',
+  'fotos-cliente.html', 'agenda-cliente.html', 'cronograma-cliente.html', 'solicitacoes-cliente.html']) {
+  assert.ok(hardening.includes("'" + name + "'"), 'Página protegida vinculada: ' + name);
+}
+assert.ok(hardening.includes('js/camilinha-client-classic.js'), 'Módulo clássico na publicação');
+assert.ok(hardening.includes('css/camilinha.css'), 'Estilos do atlas no portal clássico');
+assert.match(classicClient, /MutationObserver/, 'Observa carregamentos assíncronos sem interceptar fetch');
+assert.match(classicClient, /delay = 500/, 'Evita mascote em carregamento rápido');
+assert.match(classicClient, /CamilinhaWork/, 'Reutiliza os nove estados do atlas original');
+assert.doesNotThrow(() => new Function(classicClient), 'JS do cliente clássico sem erro de sintaxe');
+console.info('Camilinha: site público, área do cliente clássica e API original OK.');

@@ -178,3 +178,29 @@
 @media (prefers-reduced-motion: reduce) and (hover: hover) {
   .camilinha-orcamento:hover::after { animation: none !important; }
 }
+
+/* Portal do cliente clássico: animação discreta apenas em estados observados. */
+.loading.camilinha-classic-active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.loading.camilinha-classic-active > .bi-arrow-repeat,
+#loadingScreen.camilinha-classic-active > .loading-spinner {
+  display: none !important;
+}
+#loadingScreen.camilinha-classic-active > .camilinha-work {
+  display: block;
+  margin: 0 auto 8px;
+}
+#projectName.camilinha-classic-active > .camilinha-work,
+.form-message > .camilinha-work {
+  vertical-align: middle;
+  margin-right: 7px;
+}
+.error-state > .camilinha-work {
+  display: block;
+  margin: 0 auto 6px;
+}
