@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<link rel="icon" href="assets/logo.png" type="image/png">
+<title>Meus guias autorais | Camila Martins Engenharia</title>
+<link rel="stylesheet" href="css/admin.css?v=20260725-14">
+<link rel="stylesheet" href="css/admin-theme.css?v=20260830-5">
+<link rel="stylesheet" href="css/authored-catalog.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Parisienne&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+<div class="logo">
+<h1 class="assinatura">
+Camila Martins
+</h1>
+<span>
+ENGENHARIA
+</span>
+</div>
+<nav class="menu-lateral">
+<a href="admin.html" class="menu-item">
+<i class="fa-solid fa-house"></i>
+Dashboard
+</a>
+<a href="clientes.html" class="menu-item">
+<i class="fa-solid fa-users"></i>
+Clientes
+</a>
+<a href="projetos.html" class="menu-item">
+<i class="fa-solid fa-compass-drafting"></i>
+Projetos
+</a>
+<a href="documentos.html" class="menu-item ativo">
+<i class="fa-solid fa-folder-open"></i>
+Documentos
+</a>
+<a href="biblioteca.html" class="menu-item">
+<i class="fa-solid fa-book-open"></i>
+Biblioteca
+</a>
+<a href="protecao-pdf-admin.html" class="menu-item">
+<i class="fa-solid fa-file-shield"></i>
+Conteúdo do site
+</a>
+<a href="fotos.html" class="menu-item">
+<i class="fa-solid fa-images"></i>
+Fotos
+</a>
+<a href="financeiro.html" class="menu-item">
+<i class="fa-solid fa-chart-line"></i>
+Financeiro
+</a>
+<a href="agenda.html" class="menu-item">
+<i class="fa-solid fa-calendar-days"></i>
+Agenda
+</a>
+<a href="cronograma.html" class="menu-item">
+<i class="fa-solid fa-list-check"></i>
+Cronograma
+</a>
+<a href="solicitacoes.html" class="menu-item">
+<i class="fa-solid fa-comments"></i>
+Solicitações
+</a>
+<a href="configuracoes.html" class="menu-item">
+<i class="fa-solid fa-gear"></i>
+Configurações
+</a>
+</nav>
+<button
+id="logoutButton"
+class="btn-sair">
+<i class="fa-solid fa-right-from-bracket"></i>
+Sair
+</button>
+</aside>
+<main class="conteudo">
+<header class="topbar">
+<div>
+<h2>Meus guias autorais</h2>
+<p>Envie cada guia uma vez, libere para quantos clientes quiser e substitua o arquivo para todos de uma só vez.</p>
+</div>
+<div class="acoes-topo">
+<a class="ac-link" href="documentos.html"><i class="fa-solid fa-arrow-left"></i> Documentos</a>
+</div>
+</header>
+
+<p id="acStatus" class="ac-status" role="status" aria-live="polite">Carregando o catálogo...</p>
+
+<section class="card-grande ac-card">
+<div class="ac-section-head">
+<div><h3>Enviar guias novos</h3><p>Selecione um ou vários PDFs. O título é sugerido pelo nome do arquivo; confira e ajuste antes de salvar. Todo arquivo enviado aqui é autoral e chega ao cliente como cópia protegida com o nome dele.</p></div>
+</div>
+<label class="ac-file"><input id="acNewFiles" type="file" accept="application/pdf,.pdf" multiple><span><i class="fa-solid fa-file-arrow-up"></i> Escolher PDFs</span></label>
+<div id="acNewList" class="ac-new-list"></div>
+<div class="ac-actions"><button id="acSaveNew" type="button" class="ac-primary" disabled><i class="fa-solid fa-floppy-disk"></i> Salvar no catálogo</button></div>
+</section>
+
+<section class="card-grande ac-card">
+<div class="ac-section-head">
+<div><h3>Catálogo</h3><p>Substituir o arquivo atualiza a cópia de todos os clientes que têm o guia. O cliente não é avisado, a menos que você marque "avisar".</p></div>
+<input id="acSearch" class="ac-search" type="search" placeholder="Pesquisar guia...">
+</div>
+<div id="acCatalog" class="ac-catalog"></div>
+</section>
+
+<section class="card-grande ac-card">
+<div class="ac-section-head">
+<div><h3>Quem tem qual guia</h3><p>Guias de cada cliente, com aviso de cópia desatualizada e o que ainda falta liberar.</p></div>
+</div>
+<div id="acMatrix" class="ac-matrix"></div>
+</section>
+</main>
+</div>
+
+<div id="acModal" class="ac-modal" hidden>
+<div class="ac-modal-box" role="dialog" aria-modal="true" aria-labelledby="acModalTitle">
+<button type="button" class="ac-modal-close" data-ac-close aria-label="Fechar">×</button>
+<h3 id="acModalTitle"></h3>
+<div id="acModalBody"></div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js?v=20260725-14"></script>
+<script src="js/ui-core.js?v=20260829-3"></script>
+<script src="js/auth.js?v=20260829-9"></script>
+<script src="js/authored-catalog-utils.js"></script>
+<script src="js/authored-catalog.js"></script>
+<script src="js/admin-form-guard.js"></script>
+</body>
+</html>

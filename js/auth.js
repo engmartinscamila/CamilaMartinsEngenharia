@@ -22,7 +22,8 @@ const PAGINAS_ADMINISTRATIVAS = new Set([
     "configuracoes.html",
     "cronograma.html",
     "solicitacoes.html",
-    "protecao-pdf-admin.html"
+    "protecao-pdf-admin.html",
+    "materiais-autorais.html"
 ]);
 
 document.addEventListener("DOMContentLoaded", iniciarAuth);

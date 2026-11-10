@@ -580,3 +580,13 @@
 @media(max-width:720px){
     .site-admin-r2-card{align-items:stretch;flex-direction:column}
 }
+
+/* Histórico dos PDFs protegidos do site */
+.pdf-admin-current{display:grid;gap:.45rem;padding:.9rem 0;border-bottom:1px solid rgba(0,0,0,.08)}
+.pdf-admin-current>a.site-admin-secondary{justify-self:start;text-decoration:none}
+.pdf-admin-current details summary{cursor:pointer;font-weight:600}
+.pdf-version-list{list-style:none;margin:.5rem 0 0;padding:0;display:grid;gap:.4rem}
+.pdf-version{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.5rem;padding:.5rem .65rem;border-radius:10px;background:rgba(0,0,0,.03);min-width:0}
+.pdf-version>span:first-child{min-width:0;overflow-wrap:anywhere}
+.pdf-version.is-live{outline:1px solid rgba(46,125,50,.35)}
+.pdf-version-live{font-size:.78rem;font-weight:700;color:#2e7d32}
