@@ -555,8 +555,8 @@ function contractDocumentV10(sourceRecord:CommercialRecord,profile:ProfessionalI
  const specificClauses=(Array.isArray(t.specific_clauses)?t.specific_clauses as Array<Record<string,unknown>>:[])
   .map(item=>({title:sentencePart(item.title),text:tidyText(item.text)}))
   .filter(item=>item.title&&item.text);
- // Parcelas a combinar: só quando marcado e sem parcelas registradas (parcelas cadastradas depois prevalecem).
- const toBeAgreed=t.payment_to_be_agreed===true&&installments.length===0;
+ // Parcelas a combinar: só quando marcado e sem nenhuma parcela com data (parcelas datadas cadastradas depois prevalecem).
+ const toBeAgreed=t.payment_to_be_agreed===true&&installments.every(item=>!/^\d{4}-\d{2}-\d{2}$/.test(item.date));
  const isPj=isCompany(record);
  const contractingSummary=`${record.prospect_name} — ${isPj?'CNPJ':'CPF'} ${text(record.cpf_cnpj)}`;
  return makeDoc([
@@ -576,7 +576,7 @@ function contractDocumentV10(sourceRecord:CommercialRecord,profile:ProfessionalI
     ['Taxas e serviços de terceiros','Por conta do(a) CONTRATANTE (ART, Prefeitura, cartório, topografia, sondagem e outros), conforme a Cláusula 4'],
    ]),
    h('PARCELAS E ENTREGAS'),
-   ...(paymentRows.length
+   ...(paymentRows.length&&!toBeAgreed
      ? [gridTable(['Parcela','Valor','% do total','Vencimento'],paymentRows,[12,22,14,52])]
      : toBeAgreed
        ? [p('Parcelas a combinar. O número, o valor e o vencimento das parcelas serão definidos por escrito entre as partes, por aditivo ou aceite no Portal do Cliente, respeitado o valor total do Quadro-Resumo. O cronograma formalizado passa a integrar este quadro.')]
