@@ -343,16 +343,17 @@ PONTE DA GALERIA: painel existente -> Cloudflare R2 + GitHub
     return ffmpegPromise;
   }
 
-  function videoSize(file){
-    return new Promise(function(resolve, reject){
-      const video = document.createElement("video");
-      const url = URL.createObjectURL(file);
-      video.preload = "metadata";
-      video.muted = true;
-      video.onloadedmetadata = function(){ URL.revokeObjectURL(url); resolve({ width: video.videoWidth, height: video.videoHeight }); };
-      video.onerror = function(){ URL.revokeObjectURL(url); reject(new Error("Não foi possível ler o vídeo. Envie em MP4 (H.264).")); };
-      video.src = url;
-    });
+  // Dimensões lidas pelo próprio FFmpeg (não depende do navegador saber tocar H.264).
+  async function videoSize(ffmpeg){
+    const lines = [];
+    const listener = function(event){ lines.push(String(event && event.message || "")); };
+    ffmpeg.on("log", listener);
+    try { await ffmpeg.exec(["-hide_banner", "-i", "entrada.mp4"]); } catch (_) { /* sem saída: só leitura */ }
+    if (ffmpeg.off) ffmpeg.off("log", listener);
+    const line = lines.find(function(text){ return /Stream .*Video:/.test(text); }) || "";
+    const match = line.match(/,\s*(\d{2,5})x(\d{2,5})[\s,\[]/);
+    if (!match) throw new Error("Não foi possível ler o vídeo. Envie em MP4 (H.264).");
+    return { width: Number(match[1]), height: Number(match[2]) };
   }
 
   async function videoOverlay(width, height){
@@ -380,14 +381,17 @@ PONTE DA GALERIA: painel existente -> Cloudflare R2 + GitHub
     if (typeof window.WebAssembly !== "object") throw new Error("Este navegador não grava a marca no vídeo. Use o Chrome ou o Edge atualizados.");
     try {
       videoNotice("Gravando a marca timbrada no vídeo... pode levar alguns minutos. Não feche a página.");
-      const size = await videoSize(file);
       const ffmpeg = await loadFfmpeg();
       const fetchFile = window.FFmpegUtil.fetchFile;
-      ffmpeg.on && ffmpeg.on("progress", function(event){
-        const pct = Math.max(0, Math.min(100, Math.round((event.progress || 0) * 100)));
-        videoNotice("Gravando a marca timbrada no vídeo... " + pct + "%. Não feche a página.");
-      });
+      if (!ffmpeg.__cmeProgress) {
+        ffmpeg.__cmeProgress = true;
+        ffmpeg.on("progress", function(event){
+          const pct = Math.max(0, Math.min(100, Math.round((event.progress || 0) * 100)));
+          videoNotice("Gravando a marca timbrada no vídeo... " + pct + "%. Não feche a página.");
+        });
+      }
       await ffmpeg.writeFile("entrada.mp4", await fetchFile(file));
+      const size = await videoSize(ffmpeg);
       await ffmpeg.writeFile("marca.png", await fetchFile(await videoOverlay(size.width, size.height)));
       const code = await ffmpeg.exec([
         "-i", "entrada.mp4", "-i", "marca.png",
