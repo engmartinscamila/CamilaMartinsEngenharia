@@ -519,7 +519,9 @@ const taxIdDisplay=(value:unknown)=>{
  return digits.length===11?cpfDisplay(digits):String(value??'').trim();
 };
 function contractDocumentV10(sourceRecord:CommercialRecord,profile:ProfessionalIdentity,contractMasterBody:string,generatedAt:Date){
- const record={...sourceRecord,cpf_cnpj:sourceRecord.cpf_cnpj?taxIdDisplay(sourceRecord.cpf_cnpj):sourceRecord.cpf_cnpj};
+ // Pessoa física sem RG cadastrado: deixa a linha em branco para preenchimento manual.
+ const blankRg=!isCompany(sourceRecord)&&!clientRg(sourceRecord);
+ const record={...sourceRecord,cpf_cnpj:sourceRecord.cpf_cnpj?taxIdDisplay(sourceRecord.cpf_cnpj):sourceRecord.cpf_cnpj,...(blankRg?{rg:'______________________'}:{})} as CommercialRecord;
  const conditions=contractConditions(record,generatedAt);
  const clauses=conditionalMasterLines(contractMasterBody,conditions).map(line=>line.startsWith('CLÁUSULA')?h(line):p(line));
  const selected=selectedServices(record);

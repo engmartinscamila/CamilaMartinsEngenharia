@@ -51,6 +51,7 @@ assert.ok(!pf.includes('{{se:'), 'Marcação condicional vazou para o Word');
 assert.ok(!/\[[^\]]+\]/.test(body), 'Contrato Mestre não pode ter colchetes (o banco bloqueia campos provisórios)');
 assert.ok(!pf.includes('Quando o Quadro de Escopo incluir legalização'), 'Legalização só entra com serviço municipal');
 assert.ok(!pf.includes('reajustadas anualmente'), 'Reajuste só entra com parcela após 12 meses');
+assert.match(pf, /portador\(a\) do RG nº _{10,}/, 'Pessoa física sem RG recebe linha em branco para preencher');
 assert.ok(pf.includes('bem comum de casal') && !pf.includes('Contratante pessoa jurídica'), 'Pessoa física recebe só a regra de cônjuge');
 assert.match(pf, /1\.4\. Arquivos editáveis/, 'Itens devem ser renumerados após omissão');
 assert.match(pf, /13\.1\. Se o imóvel for bem comum/, 'Cláusula 13 renumerada');
@@ -68,6 +69,7 @@ const pj = await render({
   },
 });
 assert.ok(pj.includes('59.504.708/0001-22'), 'CNPJ formatado');
+assert.ok(!pj.includes('RG nº'), 'Pessoa jurídica não recebe linha de RG');
 assert.ok(pj.includes('Quando o Quadro de Escopo incluir legalização'), 'Legalização deve entrar com alvará');
 assert.ok(pj.includes('reajustadas anualmente'), 'Reajuste deve entrar com parcela após 12 meses');
 assert.ok(pj.includes('Contratante pessoa jurídica') && !pj.includes('bem comum de casal'), 'Pessoa jurídica recebe a regra própria');
