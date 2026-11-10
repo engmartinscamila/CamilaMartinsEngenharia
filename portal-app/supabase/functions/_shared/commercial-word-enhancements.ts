@@ -22,7 +22,7 @@ function paragraphText(paragraph: string) {
 }
 const listOf = (value: unknown) => Array.isArray(value) ? value.map(entry => text(entry)).filter(Boolean) : text(value) ? [text(value)] : [];
 const positiveInt = (value: unknown) => { const n = Number(String(value ?? '').replace(',', '.')); return Number.isFinite(n) && n >= 0 && Number.isInteger(n) ? n : null; };
-function activityLimits(item: Obj, row: Obj, terms: Obj) {
+function activityLimits(item: Obj, row: Obj, terms: Obj, v10 = false) {
   const lines: string[] = [];
   const quantity = text(row.quantity), unit = text(row.unit);
   if (quantity) lines.push(`Quantidade contratada: ${quantity}${unit ? ' ' + unit : ''}.`);
@@ -34,7 +34,7 @@ function activityLimits(item: Obj, row: Obj, terms: Obj) {
   if (visits !== null) lines.push(visits === 0 ? 'Visitas técnicas incluídas: nenhuma.' : `Visitas técnicas incluídas: ${visits}. Visitas adicionais serão orçadas à parte.`);
   const schedule = terms.schedule && typeof terms.schedule === 'object' ? terms.schedule as Obj : {};
   const days = positiveInt(row.days);
-  if (text(row.deadline_type) === 'municipal') lines.push('Prazo: a preparação técnica segue o prazo do Quadro do contrato; análise, aprovação e expedição dependem exclusivamente do órgão público, sem prazo garantido pela CONTRATADA.');
+  if (text(row.deadline_type) === 'municipal') lines.push(v10 ? 'Prazo: a preparação técnica segue o prazo total do Quadro-Resumo; análise, aprovação e expedição dependem exclusivamente do órgão público, sem prazo garantido pela CONTRATADA.' : 'Prazo: a preparação técnica segue o prazo do Quadro do contrato; análise, aprovação e expedição dependem exclusivamente do órgão público, sem prazo garantido pela CONTRATADA.');
   else if (days) lines.push(`Prazo desta atividade: ${days} ${text(schedule.day_type) === 'uteis' ? 'dias úteis' : 'dias corridos'}, contados conforme o início definido no contrato e suspensos enquanto houver pendência de informações, documentos ou aprovações do contratante.`);
   const formats = listOf(item.deliveryFormats);
   if (formats.length) lines.push(`Formato de entrega: ${formats.join(', ')}.`);
@@ -89,7 +89,7 @@ function contractScopeXml(services: unknown, customService: unknown, experienceL
     // Limites objetivos da atividade, a partir dos dados já registrados nas
     // condições comerciais e no catálogo versionado. Nada é presumido: campo não
     // registrado não é impresso.
-    for (const line of activityLimits(item, row, terms)) parts.push(wordParagraph(line));
+    for (const line of activityLimits(item, row, terms, v10)) parts.push(wordParagraph(line));
     const municipalNotes = sentencePart(row.municipal_notes);
     if (v10 && municipalNotes) parts.push(wordParagraph(`Condição específica acordada: ${municipalNotes}.`));
   });

@@ -10,7 +10,7 @@ import { enhanceContractDocument } from '../portal-app/supabase/functions/_share
 for (const name of ['commercial-word-renderer.ts', 'commercial-word-enhancements.ts']) {
   assert.equal(fs.readFileSync(`supabase/functions/_shared/${name}`, 'utf8'), fs.readFileSync(`portal-app/supabase/functions/_shared/${name}`, 'utf8'), `${name} fora de sincronia`);
 }
-const body = fs.readFileSync('docs/contrato-mestre-v10/corpo.txt', 'utf8');
+const body = fs.readFileSync('docs/contrato-mestre-v11/corpo.txt', 'utf8');
 const profile = { full_name: 'Engenheira Teste', professional_title: 'Engenheira Civil', crea_rj: '123', cpf: '000.000.000-00', professional_address: 'Rua A, 1', email_professional: 'a@b.c' };
 const base = {
   id: 'r1', quote_number: 'REF-CON-1', contract_number: 'CON-TESTE-1', status: 'convertido', prospect_name: 'Cliente Teste',
@@ -38,10 +38,18 @@ assert.ok(pf.indexOf('1. Projeto Legal') < pf.indexOf('QUALIFICAÇÃO DAS PARTES
 assert.ok(pf.indexOf('CLÁUSULA 14') < pf.indexOf('ASSINATURAS'), 'Foro deve ser a última cláusula');
 assert.ok(pf.includes('40%') && pf.includes('60%'), 'Percentual das parcelas ausente');
 assert.ok(pf.indexOf('Revisões incluídas\n') > pf.indexOf('QUADRO DE ESCOPO') && pf.indexOf('Revisões incluídas\n') < pf.indexOf('1. Projeto Legal'), 'Tabela de atividades (prazo, revisões, visitas) deve abrir o Quadro de Escopo');
-assert.match(pf, /Projeto Legal\n30 dias úteis\n2\nNenhuma\n/, 'Linha da atividade com prazo, revisões e visitas');
+assert.match(pf, /Projeto Legal\n1 projeto\n30 dias úteis\n2\nNenhuma\n/, 'Linha da atividade com quantidade, prazo, revisões e visitas');
+// Toda remissão do texto precisa apontar para algo que existe no próprio documento.
+assert.ok(!/\bQuadro\b(?![- ]Resumo| de Escopo)/.test(body), 'Remissão a "Quadro" sem dizer qual quadro');
+for (const heading of ['QUADRO-RESUMO', 'PARCELAS E ENTREGAS', 'QUADRO DE ESCOPO']) assert.ok(pf.includes(heading), 'Quadro citado no texto não existe: ' + heading);
+for (const column of ['Quantidade', 'Prazo', 'Revisões incluídas', 'Visitas incluídas', 'Formato']) assert.ok(pf.includes(column + '\n'), 'Coluna citada pelo contrato ausente: ' + column);
+const items = new Set([...pf.matchAll(/^(\d+\.\d+)\. /gm)].map(m => m[1]));
+for (const [, ref] of pf.matchAll(/\bitens? (\d+\.\d+)/g)) assert.ok(items.has(ref), 'Remissão a item inexistente: ' + ref);
+const clauses = new Set([...pf.matchAll(/^CLÁUSULA (\d+) /gm)].map(m => m[1]));
+for (const [, ref] of pf.matchAll(/Cláusula (\d+)\b/g)) assert.ok(clauses.has(ref), 'Remissão a cláusula inexistente: ' + ref);
 assert.ok(!pf.includes('{{se:'), 'Marcação condicional vazou para o Word');
 assert.ok(!/\[[^\]]+\]/.test(body), 'Contrato Mestre não pode ter colchetes (o banco bloqueia campos provisórios)');
-assert.ok(!pf.includes('Quando o Quadro incluir legalização'), 'Legalização só entra com serviço municipal');
+assert.ok(!pf.includes('Quando o Quadro de Escopo incluir legalização'), 'Legalização só entra com serviço municipal');
 assert.ok(!pf.includes('reajustadas anualmente'), 'Reajuste só entra com parcela após 12 meses');
 assert.ok(pf.includes('bem comum de casal') && !pf.includes('Contratante pessoa jurídica'), 'Pessoa física recebe só a regra de cônjuge');
 assert.match(pf, /1\.4\. Arquivos editáveis/, 'Itens devem ser renumerados após omissão');
@@ -60,7 +68,7 @@ const pj = await render({
   },
 });
 assert.ok(pj.includes('59.504.708/0001-22'), 'CNPJ formatado');
-assert.ok(pj.includes('Quando o Quadro incluir legalização'), 'Legalização deve entrar com alvará');
+assert.ok(pj.includes('Quando o Quadro de Escopo incluir legalização'), 'Legalização deve entrar com alvará');
 assert.ok(pj.includes('reajustadas anualmente'), 'Reajuste deve entrar com parcela após 12 meses');
 assert.ok(pj.includes('Contratante pessoa jurídica') && !pj.includes('bem comum de casal'), 'Pessoa jurídica recebe a regra própria');
 assert.ok(pj.includes('compatibilização entre todos os projetos'), 'Compatibilização marcada deve aparecer');
