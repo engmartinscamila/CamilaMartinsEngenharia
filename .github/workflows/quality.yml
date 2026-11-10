@@ -21,7 +21,9 @@ concurrency:
 
 jobs:
   auditoria:
-    runs-on: ubuntu-latest
+    # Playwright 1.55 não instala o Chromium no Ubuntu 26.04 (ubuntu-latest);
+    # mesma imagem fixada no pages.yml.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     steps:

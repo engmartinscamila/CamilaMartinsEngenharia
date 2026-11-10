@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex,follow" />
+  <meta name="theme-color" content="#010914" />
+  <title>Página não encontrada | Camila Martins Engenharia Civil</title>
+  <link rel="icon" href="/assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Parisienne&display=swap" rel="stylesheet" />
+  <!-- Caminhos absolutos: esta página é servida em qualquer profundidade de URL. -->
+  <link rel="stylesheet" href="/css/mobile-experience.css" />
+  <style>
+    @font-face {
+      font-family: "Brittany Signature Script";
+      src: url("/assets/fonts/BrittanySignatureScript.ttf") format("truetype");
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+    :root {
+      --navy: #010914;
+      --navy-3: #07111f;
+      --gold: #b89a63;
+      --gold-soft: #d0b47a;
+      --light: #d8dadd;
+      --muted: #aeb4bd;
+      --line: rgba(184, 154, 99, .34);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(180deg, var(--navy), var(--navy-3));
+      color: var(--light);
+      font-family: "Century Gothic", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+      font-weight: 300;
+      line-height: 1.7;
+      letter-spacing: .01em;
+    }
+    a { color: inherit; text-decoration: none; }
+    .nf-header { padding: 26px 24px; text-align: center; }
+    .nf-brand strong {
+      display: block;
+      font-family: "Brittany Signature Script", "Parisienne", "Segoe Script", cursive;
+      font-size: 2rem;
+      font-weight: 400;
+      line-height: 1.3;
+      color: var(--gold);
+    }
+    .nf-brand small {
+      display: block;
+      font-size: .62rem;
+      letter-spacing: .34em;
+      text-transform: uppercase;
+      color: var(--light);
+    }
+    main {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .nf-card {
+      width: min(560px, 100%);
+      text-align: center;
+      padding: 44px 28px;
+      border: 1px solid var(--line);
+      background: rgba(216, 218, 221, .03);
+    }
+    .nf-eyebrow {
+      margin: 0 0 10px;
+      font-size: .64rem;
+      letter-spacing: .28em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(1.5rem, 4.6vw, 2.1rem);
+      font-weight: 300;
+      line-height: 1.25;
+    }
+    .nf-card p { margin: 0 auto; max-width: 42ch; color: var(--muted); font-size: .92rem; }
+    .nf-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 30px; }
+    .nf-btn {
+      display: inline-block;
+      padding: 13px 20px;
+      border: 1px solid var(--gold);
+      font-size: .66rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      transition: background .25s, color .25s;
+    }
+    .nf-btn.primary { background: var(--gold); color: var(--navy); font-weight: 400; }
+    .nf-btn.primary:hover { background: var(--gold-soft); }
+    .nf-btn.ghost { color: var(--gold-soft); }
+    .nf-btn.ghost:hover { background: rgba(184, 154, 99, .12); }
+    .nf-btn:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 3px; }
+    footer { padding: 22px 24px 30px; text-align: center; color: var(--muted); font-size: .72rem; }
+    @media (prefers-reduced-motion: reduce) { .nf-btn { transition: none; } }
+  </style>
+</head>
+<body>
+  <header class="nf-header">
+    <a class="nf-brand" href="/" aria-label="Camila Martins Engenharia Civil — página inicial">
+      <strong>Camila Martins</strong>
+      <small>Engenharia Civil</small>
+    </a>
+  </header>
+
+  <main>
+    <section class="nf-card">
+      <p class="nf-eyebrow">Erro 404</p>
+      <h1>Esta página não foi encontrada.</h1>
+      <p>O endereço pode ter mudado ou foi digitado com alguma diferença. Use um dos atalhos abaixo para continuar.</p>
+      <nav class="nf-actions" aria-label="Atalhos">
+        <a class="nf-btn primary" href="/">Página inicial</a>
+        <a class="nf-btn ghost" href="/galeria-projetos.html">Galeria de projetos</a>
+        <a class="nf-btn ghost" href="/login.html">Área do Cliente</a>
+      </nav>
+    </section>
+  </main>
+
+  <footer>© 2026 • Camila Martins Engenharia Civil</footer>
+  <script src="/js/mobile-experience.js"></script>
+</body>
+</html>
