@@ -54,6 +54,17 @@
                 </a>
             </header>
 
+            <section class="site-quick" aria-label="Atualizar conteúdo do site">
+                <h3>O que você quer atualizar?</h3>
+                <div class="site-quick-grid">
+                    <button type="button" class="site-quick-btn" data-quick="portfolio"><i class="fa-solid fa-book-open"></i><strong>Portfólio</strong><span>Trocar o PDF do portfólio</span></button>
+                    <button type="button" class="site-quick-btn" data-quick="experiencias"><i class="fa-solid fa-layer-group"></i><strong>Guia de níveis</strong><span>Trocar o PDF do guia de níveis de experiência</span></button>
+                    <button type="button" class="site-quick-btn" data-quick="imagens"><i class="fa-solid fa-images"></i><strong>Imagens dos projetos</strong><span>Adicionar ou trocar fotos e renders</span></button>
+                    <button type="button" class="site-quick-btn" data-quick="videos"><i class="fa-solid fa-film"></i><strong>Vídeos dos projetos</strong><span>Adicionar ou trocar vídeos</span></button>
+                </div>
+                <p class="site-quick-hint" id="siteQuickHint" role="status" aria-live="polite"></p>
+            </section>
+
             <nav class="site-admin-tabs" aria-label="Áreas de conteúdo">
                 <button type="button" class="site-admin-tab ativo" data-site-tab="pdfs" aria-selected="true">
                     <i class="fa-solid fa-file-shield"></i>
@@ -85,10 +96,10 @@
                         <button class="site-admin-primary" type="submit"><i class="fa-solid fa-shield-halved"></i> Enviar original para proteção</button>
                     </form>
 
-                    <form class="pdf-admin-card" data-pdf-upload data-slug="experiencias" data-title="Menu de Experiências Camila Martins Engenharia">
+                    <form class="pdf-admin-card" data-pdf-upload data-slug="experiencias" data-title="Guia de níveis de experiência Camila Martins Engenharia">
                         <div class="site-admin-card-icon"><i class="fa-solid fa-compass"></i></div>
-                        <h2>Menu de experiências</h2>
-                        <p>Substitui o PDF público da página de experiências.</p>
+                        <h2>Guia de níveis de experiência</h2>
+                        <p>Substitui o PDF público da página de experiências (guia de níveis).</p>
                         <label for="pdfExperiencias">PDF original</label>
                         <input id="pdfExperiencias" type="file" accept="application/pdf,.pdf" required>
                         <button class="site-admin-primary" type="submit"><i class="fa-solid fa-shield-halved"></i> Enviar original para proteção</button>
@@ -124,7 +135,18 @@
                     </button>
                 </div>
 
-                <div class="site-admin-section-title">
+                <div class="site-admin-r2-card" id="portfolioRestampCard">
+                    <div>
+                        <span class="site-admin-eyebrow">Proteção das imagens</span>
+                        <strong>Marca timbrada em todas as imagens</strong>
+                        <p class="site-admin-status" id="portfolioRestampStatus">Toda imagem nova já sai com a marca repetida na imagem inteira. Use o botão uma vez para aplicar a marca às imagens que já estavam publicadas.</p>
+                    </div>
+                    <button id="portfolioRestamp" class="site-admin-secondary" type="button">
+                        <i class="fa-solid fa-stamp"></i> Aplicar marca timbrada nas imagens publicadas
+                    </button>
+                </div>
+
+                <div class="site-admin-section-title" id="portfolioProjectsTitle">
                     <div><span class="site-admin-eyebrow">Empreendimentos</span><h2>Projetos publicados</h2></div>
                     <button id="portfolioNewProject" class="site-admin-primary" type="button"><i class="fa-solid fa-plus"></i> Novo projeto</button>
                 </div>
@@ -198,6 +220,8 @@
     <script src="js/portfolio-media-storage.js?v=20261107-refactor"></script>
     <script src="js/portfolio-admin.js?v=20260828-2"></script>
     <script src="js/r2-migration-admin.js?v=20260829-1"></script>
+    <script src="js/portfolio-restamp.js"></script>
+    <script src="js/site-content-shortcuts.js"></script>
 <script src="js/admin-form-guard.js"></script>
 </body>
 </html>

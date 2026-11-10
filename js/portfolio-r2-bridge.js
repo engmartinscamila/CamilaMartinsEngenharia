@@ -266,6 +266,31 @@ PONTE DA GALERIA: painel existente -> Cloudflare R2 + GitHub
     throw new Error("Manifesto inválido.");
   }
 
+  const TILED_TEXT = "CAMILA MARTINS ENGENHARIA  •  camilamartinsengenharia.com.br";
+  function drawTiledWatermark(context, width, height){
+    const size = Math.max(14, Math.round(Math.min(width, height) / 30));
+    context.save();
+    context.translate(width / 2, height / 2);
+    context.rotate(-30 * Math.PI / 180);
+    context.font = "600 " + size + "px Montserrat, Arial, sans-serif";
+    context.textAlign = "left";
+    context.textBaseline = "middle";
+    context.lineWidth = Math.max(1, size * 0.05);
+    context.strokeStyle = "rgba(0,0,0,.08)";
+    context.fillStyle = "rgba(255,255,255,.17)";
+    const along = context.measureText(TILED_TEXT).width + size * 3;
+    const gap = size * 5.5;
+    const span = Math.hypot(width, height);
+    for (let row = -Math.ceil(span / gap / 2) - 1, i = 0; row <= Math.ceil(span / gap / 2) + 1; row += 1, i += 1) {
+      const shift = (i % 2) * along / 2;
+      for (let x = -span / 2 - along + shift; x < span / 2; x += along) {
+        context.strokeText(TILED_TEXT, x, row * gap);
+        context.fillText(TILED_TEXT, x, row * gap);
+      }
+    }
+    context.restore();
+  }
+
   async function applyWatermark(file){
     if (!file || !String(file.type || "").startsWith("image/")) {
       return file;
@@ -286,23 +311,8 @@ PONTE DA GALERIA: painel existente -> Cloudflare R2 + GitHub
 
     const smallerSide = Math.min(canvas.width, canvas.height);
 
-    // Marca central suave (não sai com um simples recorte do canto), como nas imagens do site.
-    context.save();
-    const centerSize = Math.max(22, Math.round(smallerSide * 0.06));
-    context.font = "600 " + centerSize + "px Montserrat, Arial, sans-serif";
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.translate(canvas.width / 2, canvas.height / 2);
-    const centerText = "CAMILA MARTINS ENGENHARIA CIVIL";
-    const maxCenter = canvas.width * 0.86;
-    const measured = context.measureText(centerText).width;
-    if (measured > maxCenter) context.scale(maxCenter / measured, maxCenter / measured);
-    context.lineWidth = Math.max(1, centerSize * 0.04);
-    context.strokeStyle = "rgba(0,0,0,.10)";
-    context.strokeText(centerText, 0, 0);
-    context.fillStyle = "rgba(255,255,255,.16)";
-    context.fillText(centerText, 0, 0);
-    context.restore();
+    // Marca timbrada: texto repetido em diagonal pela imagem inteira (recortar um pedaço não a remove).
+    drawTiledWatermark(context, canvas.width, canvas.height);
 
     const fontSize = Math.max(18, Math.round(smallerSide * 0.024));
     const padding = Math.max(16, Math.round(smallerSide * 0.025));
@@ -429,9 +439,58 @@ PONTE DA GALERIA: painel existente -> Cloudflare R2 + GitHub
     };
   }
 
+  // Envio direto (sem nova marca) e catálogo, usados pela regravação com marca timbrada.
+  async function putObjectRaw(key, blob){
+    const token = await adminToken();
+    const response = await fetch(API + "/api/upload?key=" + encodeURIComponent(normalizePath(key)), {
+      method: "PUT",
+      headers: { authorization: "Bearer " + token, "content-type": blob.type || "image/webp" },
+      body: blob
+    });
+    const data = await response.json().catch(function(){ return {}; });
+    if (!response.ok || !data.ok) throw new Error(data.error || "Falha ao enviar o arquivo para o R2.");
+    return data.key || normalizePath(key);
+  }
+
+  async function fetchManifest(){
+    const response = await fetch(API + "/api/manifest?v=" + Date.now(), { cache: "no-store" });
+    if (!response.ok) throw new Error("Não foi possível ler a galeria publicada.");
+    const manifest = await response.json();
+    if (!Array.isArray(manifest && manifest.projetos)) throw new Error("Galeria publicada inválida.");
+    return manifest;
+  }
+
+  async function publishManifest(manifest){
+    return putManifest(await adminToken(), manifest);
+  }
+
+  async function deleteKeysWithManifest(keys, manifest){
+    const token = await adminToken();
+    const response = await fetch(API + "/api/delete-batch", {
+      method: "POST",
+      headers: { authorization: "Bearer " + token, "content-type": "application/json" },
+      body: JSON.stringify({ keys: keys, manifest: manifest })
+    });
+    const data = await response.json().catch(function(){ return {}; });
+    if (!response.ok || !data.ok) throw new Error(data.error || "Falha ao remover as versões antigas.");
+    return data;
+  }
+
+  async function deleteObjectRaw(key){
+    const token = await adminToken();
+    await fetch(API + "/api/object?key=" + encodeURIComponent(normalizePath(key)), { method: "DELETE", headers: { authorization: "Bearer " + token } });
+  }
+
   window.CME_PORTFOLIO_R2_BRIDGE = {
     api: API,
     bucket: PORTFOLIO_BUCKET,
-    manifestPath: MANIFEST_PATH
+    manifestPath: MANIFEST_PATH,
+    applyWatermark: applyWatermark,
+    drawTiledWatermark: drawTiledWatermark,
+    putObjectRaw: putObjectRaw,
+    fetchManifest: fetchManifest,
+    publishManifest: publishManifest,
+    deleteKeysWithManifest: deleteKeysWithManifest,
+    deleteObjectRaw: deleteObjectRaw
   };
 })();

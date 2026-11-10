@@ -25,7 +25,7 @@ try{for(const width of [1440,390]){
   else if(url.pathname.endsWith('/clientes'))data=[{id:'c1',nome:'Cliente Alfa',email:'client@example.invalid'},{id:'c2',nome:'Cliente Beta'},{id:'c3',nome:'Harison sintético sem contrato'}];
   else if(url.pathname.endsWith('/rpc/admin_document_archive_reminder'))data=0;
   else if((route.request().headers().accept||'').includes('vnd.pgrst.object'))data=null;
-  if(['PATCH','DELETE','PUT'].includes(method)||(method==='POST'&&!url.pathname.includes('/rpc/is_portal_admin')&&!url.pathname.includes('/rpc/admin_document_archive_reminder')))writes.push(url.pathname);
+  if(['PATCH','DELETE','PUT'].includes(method)||(method==='POST'&&!url.pathname.includes('/rpc/is_portal_admin')&&!url.pathname.includes('/rpc/admin_document_archive_reminder')&&!url.pathname.includes('/rpc/admin_photo_stamp_queue')))writes.push(url.pathname);
   return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*','content-range':'*/0'},body:JSON.stringify(data)});
  });
  await context.addInitScript(({key,value})=>localStorage.setItem(key,value),{key:`sb-${backend.hostname.split('.')[0]}-auth-token`,value:JSON.stringify({access_token:token,token_type:'bearer',expires_in:3600,expires_at:expires,refresh_token:'SYNTHETIC_INVALID',user})});

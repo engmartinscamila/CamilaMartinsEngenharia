@@ -6,7 +6,7 @@
   'use strict';
   const BUCKET = 'materiais-protegidos';
   const MAX_BYTES = 25 * 1024 * 1024;
-  const LABELS = { portfolio: 'Portfólio', experiencias: 'Menu de Experiências' };
+  const LABELS = { portfolio: 'Portfólio', experiencias: 'Guia de níveis de experiência' };
   const client = () => window.supabaseClient;
   const $ = (id) => document.getElementById(id);
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

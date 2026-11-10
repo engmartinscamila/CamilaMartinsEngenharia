@@ -37,6 +37,8 @@ test -f site-public/previews/casa-urben-v13-1-assets/part-17.txt
 # Reconstruir o GLB aprovado e corrigir os materiais após copiar para site-public.
 # A geometria da Vitalle e todos os demais arquivos ficam preservados.
 python3 scripts/portfolio_repair_v2.py site-public
+python3 -c "import PIL" 2>/dev/null || python3 -m pip install --quiet pillow 2>/dev/null || python3 -m pip install --quiet --break-system-packages pillow
+python3 scripts/watermark-public-images.py site-public
 touch site-public/.nojekyll
 printf '%s\n' "$BUILD_VERSION" > site-public/build-version.txt
 

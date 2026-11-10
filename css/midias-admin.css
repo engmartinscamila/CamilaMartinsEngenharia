@@ -590,3 +590,15 @@
 .pdf-version>span:first-child{min-width:0;overflow-wrap:anywhere}
 .pdf-version.is-live{outline:1px solid rgba(46,125,50,.35)}
 .pdf-version-live{font-size:.78rem;font-weight:700;color:#2e7d32}
+
+/* Atalhos do Conteúdo do site */
+.site-quick{margin:0 0 1.2rem}
+.site-quick h3{margin:0 0 .7rem;font-size:1.05rem}
+.site-quick-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:.7rem}
+.site-quick-btn{display:grid;gap:.25rem;justify-items:start;text-align:left;padding:1rem;border-radius:14px;border:1px solid rgba(138,109,59,.35);background:rgba(138,109,59,.06);color:inherit;font:inherit;cursor:pointer;min-width:0}
+.site-quick-btn:hover,.site-quick-btn:focus-visible{background:rgba(138,109,59,.14);outline:none;border-color:#8a6d3b}
+.site-quick-btn i{font-size:1.35rem;color:#8a6d3b}
+.site-quick-btn strong{font-size:1rem}
+.site-quick-btn span{font-size:.82rem;opacity:.8}
+.site-quick-hint{margin:.7rem 0 0;min-height:1.2em;overflow-wrap:anywhere}
+.site-quick-focus{outline:3px solid #8a6d3b;outline-offset:4px;transition:outline-color .3s}
