@@ -9,7 +9,7 @@ import { formatDate, formatTime } from '@/lib/format';
 import { getDisplayName, getFirstName } from '@/lib/user-name';
 import { useAuth } from '@/providers/auth-provider';
 import { useProject } from '@/providers/project-provider';
-import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
+import { useThemeStyles } from '@/providers/theme-provider';
 import { getProjectHighlights } from '@/services/portal-service';
 import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 import type { ProjectHighlights } from '@/types/domain';
@@ -22,7 +22,6 @@ export default function HomeScreen() {
   const [highlightsLoading, setHighlightsLoading] = useState(false);
   const [highlightsError, setHighlightsError] = useState<string | null>(null);
   const firstName = getFirstName(getDisplayName(user, client?.name, 'Cliente'));
-  const { colors } = useAppTheme();
   const styles = useThemeStyles(styleDefinitions);
 
   const loadHighlights = useCallback(async () => {

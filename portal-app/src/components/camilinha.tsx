@@ -36,7 +36,6 @@ export function CamilinhaSprite({ state = 'waiting', size = 40 }: { state?: Cami
   }, []);
 
   useEffect(() => {
-    setFrame(0);
     if (reducedMotion) return;
     let step = 0;
     const timer = setInterval(() => {
@@ -70,39 +69,42 @@ export function CamilinhaSprite({ state = 'waiting', size = 40 }: { state?: Cami
 }
 
 /** Aparece apenas quando a operação dura mais que o intervalo definido. */
-export function CamilinhaActivity({
-  active,
-  state = 'running',
-  label,
-  size = 40,
-  delayMs = 500,
-  compact = false,
-}: {
+type ActivityProps = {
   active: boolean;
   state?: CamilinhaState;
   label?: string;
   size?: number;
   delayMs?: number;
   compact?: boolean;
-}) {
+};
+
+/** Ao desativar, desmonta o componente e reinicia a espera na próxima operação. */
+export function CamilinhaActivity(props: ActivityProps) {
+  return props.active ? <ActiveCamilinhaActivity {...props} /> : null;
+}
+
+function ActiveCamilinhaActivity({
+  state = 'running',
+  label,
+  size = 40,
+  delayMs = 500,
+  compact = false,
+}: ActivityProps) {
   const { colors } = useAppTheme();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    setVisible(false);
-    if (!active) return;
     const timer = setTimeout(() => setVisible(true), Math.max(0, delayMs));
     return () => clearTimeout(timer);
-  }, [active, delayMs]);
+  }, [delayMs]);
 
-  if (!active) return null;
   return (
     <View
       accessibilityLiveRegion="polite"
       style={{ alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: compact ? 0 : 10, flexShrink: 1 }}
     >
       {visible ? (
-        <CamilinhaSprite state={state} size={size} />
+        <CamilinhaSprite key={state} state={state} size={size} />
       ) : (
         <ActivityIndicator accessibilityLabel={label ?? 'Carregando'} color={colors.gold600} size="small" />
       )}

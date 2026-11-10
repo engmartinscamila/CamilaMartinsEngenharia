@@ -6,7 +6,7 @@ import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
 import { CamilinhaActivity } from '@/components/camilinha';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
 import { formatCurrency } from '@/lib/format';
-import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
+import { useThemeStyles } from '@/providers/theme-provider';
 import { createAdminProjectDraft, createAdminProjectForContract, listAdminClients, listAdminContracts, listAdminProjects, updateAdminProject } from '@/services/admin-service';
 import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 import { openWebsiteAdminSection, usesWebsiteAdminHome } from '@/lib/admin-navigation';
@@ -16,7 +16,6 @@ import type { AdminClientSummary, AdminContractSummary, AdminProjectSummary } fr
 type ProjectStatus = string;
 
 export default function AdminProjectsScreen() {
-  const { colors } = useAppTheme();
   const styles = useThemeStyles(styleDefinitions);
   const [clients, setClients] = useState<AdminClientSummary[]>([]);
   const [contracts, setContracts] = useState<AdminContractSummary[]>([]);

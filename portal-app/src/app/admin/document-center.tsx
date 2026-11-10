@@ -8,7 +8,7 @@ import {AdminDetailPanel} from '@/components/admin-detail-panel';
 import {DocumentCenterDetails,type DocumentAction} from '@/components/document-center-details';
 import {Button,Card,Field,Notice,Screen,StateView,StatusPill} from '@/components/ui';
 import {useSync} from '@/providers/sync-provider';
-import {useAppTheme,useThemeStyles} from '@/providers/theme-provider';
+import {useThemeStyles} from '@/providers/theme-provider';
 import {listAdminApprovals,listAdminProjects} from '@/services/admin-service';
 import {listAdminDocumentAlerts,listAdminDocumentMap,listProjectDocumentDecisions,releaseDocumentForClient,type AdminDocumentAlertItem,type AdminDocumentMapItem,type DocumentDecision} from '@/services/document-governance-service';
 import {generateContractDocument,listProjectContractDocuments,sendContractDocument,type ContractDocumentSummary} from '@/services/document-workflow-service';
@@ -27,7 +27,7 @@ function confirmAction(message:string):Promise<boolean>{
 const single=(value:unknown)=>typeof value==='string'?value:'';
 export default function DocumentCenter(){
  const router=useRouter(),params=useLocalSearchParams<{view?:string;projectId?:string;filter?:string;q?:string}>();
- const {colors}=useAppTheme(),styles=useThemeStyles(styleDefinitions);
+ const styles=useThemeStyles(styleDefinitions);
  const {lastSyncedAt,status:syncStatus,syncNow,revision}=useSync();
  const projectId=single(params.projectId)||null;
  const view=params.view==='approvals'?'approvals':'emissions';

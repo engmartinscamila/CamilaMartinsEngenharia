@@ -6,7 +6,7 @@ import { CamilinhaActivity } from '@/components/camilinha';
 import { Button, Card, Field, Notice, PageHeader, Screen, StateView, StatusPill } from '@/components/ui';
 import { openExternalUrl } from '@/lib/external-link';
 import { useProject } from '@/providers/project-provider';
-import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
+import { useThemeStyles } from '@/providers/theme-provider';
 import {
   acceptClientDocument,
   listClientDocumentGovernance,
@@ -38,7 +38,6 @@ export default function DocumentsScreen() {
   const [success, setSuccess] = useState<string | null>(null);
   const [openingId, setOpeningId] = useState<string | null>(null);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
-  const { colors } = useAppTheme();
   const styles = useThemeStyles(styleDefinitions);
   const governanceByDocument = useMemo(() => new Map(governance.map((item) => [item.documentId, item])), [governance]);
 
