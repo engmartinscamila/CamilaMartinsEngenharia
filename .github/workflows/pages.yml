@@ -350,3 +350,5 @@ jobs:
         uses: actions/deploy-pages@v4
         with:
           artifact_name: github-pages-${{ github.run_attempt }}
+          # A sincronização do GitHub Pages pode passar de 10 minutos em horários de lentidão.
+          timeout: 1800000
