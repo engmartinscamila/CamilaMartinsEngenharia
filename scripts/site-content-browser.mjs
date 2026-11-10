@@ -15,7 +15,7 @@ try{
    {src:`${API}/media/portfolio/vitalle/imagem/01.webp`,storagePath:'portfolio/vitalle/imagem/01.webp',watermark:'embedded'},
    {src:`${API}/media/portfolio/vitalle/imagem/02-timbrada.webp`,storagePath:'portfolio/vitalle/imagem/02-timbrada.webp',watermark:'timbrada'},
    {src:'assets/projetos/vitalle/03.webp',watermark:'embedded'}],
-   videos:[{src:`${API}/media/portfolio/vitalle/video/v.mp4`,poster:`${API}/media/portfolio/vitalle/video/capa.jpg`}]}]};
+   videos:[{src:`${API}/media/portfolio/vitalle/video/v.mp4`,storagePath:'portfolio/vitalle/video/v.mp4',poster:`${API}/media/portfolio/vitalle/video/capa.jpg`}]}]};
   const png=fs.readFileSync('assets/projetos/tiny-house-signature/01.webp');
   await ctx.route('**/*',async r=>{
    const req=r.request(),url=req.url();
@@ -27,6 +27,7 @@ try{
     if(u.pathname==='/api/upload')return r.fulfill({contentType:'application/json',body:JSON.stringify({ok:true,key:u.searchParams.get('key')})});
     return r.fulfill({contentType:'application/json',body:JSON.stringify({ok:true})});
    }
+   if(url.includes('/assets/projetos/vitalle/videos/v.mp4')){calls.push({method:'GET',path:'site-video'});return r.fulfill({contentType:'video/mp4',body:Buffer.from('VIDEO-COM-MARCA')});}
    return r.abort();
   });
   await page.goto('http://127.0.0.1:45999/protecao-pdf-admin.html');
@@ -48,18 +49,19 @@ try{
 
   // Marca timbrada nas imagens publicadas: só as que ainda não têm; endereço novo; antigas removidas.
   const result=await page.evaluate(()=>window.CMEPortfolioRestamp.restampAll());
-  assert.deepEqual([result.total,result.done,result.failed.length],[2,2,0],'01.webp e a capa do vídeo');
+  assert.deepEqual([result.total,result.done,result.failed.length],[3,3,0],'01.webp, a capa e o vídeo');
   const uploads=calls.filter(c=>c.path==='/api/upload').map(c=>c.key).sort();
-  assert.deepEqual(uploads,['portfolio/vitalle/imagem/01-timbrada.webp','portfolio/vitalle/video/capa-timbrada.webp']);
+  assert.deepEqual(uploads,['portfolio/vitalle/imagem/01-timbrada.webp','portfolio/vitalle/video/capa-timbrada.webp','portfolio/vitalle/video/v-timbrada.mp4']);
+  assert.equal(calls.find(c=>c.key==='portfolio/vitalle/video/v-timbrada.mp4').body.toString(),'VIDEO-COM-MARCA','vídeo vem da versão marcada do site');
   const put=calls.find(c=>c.path==='/api/manifest'&&c.method==='PUT');
   const saved=JSON.parse(put.body.toString());
   assert.equal(saved.projetos[0].imagens[0].src,`${API}/media/portfolio/vitalle/imagem/01-timbrada.webp`);
   assert.equal(saved.projetos[0].imagens[0].storagePath,'portfolio/vitalle/imagem/01-timbrada.webp');
   assert.equal(saved.projetos[0].imagens[0].watermark,'timbrada');
   assert.equal(saved.projetos[0].imagens[2].src,'assets/projetos/vitalle/03.webp','imagem do próprio site recebe a marca na publicação');
-  assert.equal(saved.projetos[0].videos[0].src,`${API}/media/portfolio/vitalle/video/v.mp4`,'vídeo não é alterado');
+  assert.equal(saved.projetos[0].videos[0].src,`${API}/media/portfolio/vitalle/video/v-timbrada.mp4`,'vídeo passa para a versão marcada');
   const del=JSON.parse(calls.find(c=>c.path==='/api/delete-batch').body.toString());
-  assert.deepEqual(del.keys.sort(),['portfolio/vitalle/imagem/01.webp','portfolio/vitalle/video/capa.jpg']);
+  assert.deepEqual(del.keys.sort(),['portfolio/vitalle/imagem/01.webp','portfolio/vitalle/video/capa.jpg','portfolio/vitalle/video/v.mp4']);
   // A imagem enviada tem a marca: é diferente da original e é WebP.
   const sent=calls.find(c=>c.key==='portfolio/vitalle/imagem/01-timbrada.webp').body;
   assert.equal(sent.slice(8,12).toString(),'WEBP');assert.notEqual(sent.length,png.length);
@@ -69,5 +71,5 @@ try{
   assert.deepEqual(errors,[]);
   await ctx.close();
  }
- console.log('PASS: botões de atualização (Portfólio, Guia de níveis, imagens, vídeos) e marca timbrada nas imagens publicadas (endereço novo, catálogo atualizado, antigas removidas, vídeo intacto).');
+ console.log('PASS: botões de atualização (Portfólio, Guia de níveis, imagens, vídeos) e marca timbrada nas imagens e vídeos publicados (endereço novo, catálogo atualizado, antigas removidas).');
 }finally{await browser.close();}

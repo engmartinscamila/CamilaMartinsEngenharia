@@ -31,18 +31,18 @@
     $('#portfolioProjectsTitle')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     hint(action === 'imagens'
       ? 'Abra o projeto abaixo e use "Adicionar mídia" com o tipo "Fotos". Cada imagem já sai com a marca timbrada; para trocar uma imagem, exclua a antiga e envie a nova.'
-      : 'Abra o projeto abaixo e use "Adicionar mídia" com o tipo "Vídeo" (com a imagem de capa). Para trocar um vídeo, exclua o antigo e envie o novo.');
+      : 'Abra o projeto abaixo e use "Adicionar mídia" com o tipo "Vídeo" (com a imagem de capa). A marca timbrada é gravada no vídeo antes do envio; vídeos longos podem levar alguns minutos. Para trocar um vídeo, exclua o antigo e envie o novo.');
   }
 
   async function restamp(button) {
     const status = $('#portfolioRestampStatus');
     if (!window.CMEPortfolioRestamp) return;
-    if (!window.confirm('Aplicar a marca timbrada (repetida na imagem inteira) em todas as imagens publicadas da galeria?\n\nCada imagem é regravada com a marca e a versão antiga, que só tinha a marca no canto, é removida. Pode levar alguns minutos; não feche a página.')) return;
+    if (!window.confirm('Aplicar a marca timbrada (repetida no quadro inteiro) em todas as imagens e vídeos publicados da galeria?\n\nCada arquivo é regravado com a marca e a versão antiga, que só tinha a marca no canto, é removida. Pode levar alguns minutos; não feche a página.')) return;
     button.disabled = true;
     try {
-      const result = await window.CMEPortfolioRestamp.restampAll((i, n) => { status.textContent = `Aplicando a marca: imagem ${i} de ${n}...`; });
-      if (!result.total) status.textContent = 'Todas as imagens publicadas já estão com a marca timbrada.';
-      else status.textContent = `${result.done} de ${result.total} imagem(ns) com marca timbrada.${result.failed.length ? ` Não foi possível: ${result.failed.join('; ')}.` : ''} Atualizando a lista...`;
+      const result = await window.CMEPortfolioRestamp.restampAll((i, n) => { status.textContent = `Aplicando a marca: arquivo ${i} de ${n}...`; });
+      if (!result.total) status.textContent = 'Todas as imagens e vídeos publicados já estão com a marca timbrada.';
+      else status.textContent = `${result.done} de ${result.total} arquivo(s) com marca timbrada.${result.failed.length ? ` Não foi possível: ${result.failed.join('; ')}.` : ''} Atualizando a lista...`;
       if (result.done) setTimeout(() => window.location.reload(), 2500);
     } catch (error) {
       status.textContent = `Nada foi alterado: ${error.message}`;

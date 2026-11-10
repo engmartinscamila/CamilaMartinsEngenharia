@@ -1,21 +1,27 @@
-/* Regrava as imagens já publicadas na galeria com a marca timbrada (texto repetido na imagem
-   inteira). Como as imagens publicadas ficam em cache por 1 ano, cada imagem regravada ganha um
+/* Regrava as imagens e vídeos já publicados na galeria com a marca timbrada (texto repetido no
+   quadro inteiro). Vídeos usam a versão com marca gravada na publicação do site. Como as imagens publicadas ficam em cache por 1 ano, cada imagem regravada ganha um
    endereço novo ("-timbrada.webp"), o catálogo passa a apontar para ele e a versão antiga é
    removida. Imagens servidas pelo próprio site já recebem a marca na publicação. */
 (function () {
   'use strict';
   const MARK = '-timbrada';
   const IMAGE = /\.(webp|jpe?g|png)$/i;
+  const VIDEO = /\.mp4$/i;
   const bridge = () => window.CME_PORTFOLIO_R2_BRIDGE;
 
   function r2Key(value) {
     const text = String(value || '').split('#')[0];
     const url = text.match(/^https?:\/\/[^/]+\/media\/([^?]+)/i);
     const key = url ? decodeURIComponent(url[1]) : text.split('?')[0].replace(/^\/+/, '');
-    return key.startsWith('portfolio/') && IMAGE.test(key) ? key : null;
+    return key.startsWith('portfolio/') && (IMAGE.test(key) || VIDEO.test(key)) ? key : null;
   }
   const isUrl = (value) => /^https?:\/\//i.test(String(value || ''));
-  const newKeyFor = (key) => key.replace(/\.[a-z0-9]+$/i, '') + MARK + '.webp';
+  const newKeyFor = (key) => key.replace(/\.[a-z0-9]+$/i, '') + MARK + (VIDEO.test(key) ? '.mp4' : '.webp');
+  // Vídeo publicado no R2 -> mesma obra no site, onde a marca já é gravada na publicação.
+  const siteVideoFor = (key) => {
+    const m = key.match(/^portfolio\/([^/]+)\/video\/([^/]+\.mp4)$/i);
+    return m ? `${location.origin}/assets/projetos/${m[1]}/videos/${m[2]}` : null;
+  };
   const mediaUrl = (key) => `${bridge().api}/media/${key.split('/').map(encodeURIComponent).join('/')}`;
 
   // Todas as referências a imagens do R2 ainda sem a marca timbrada.
@@ -58,6 +64,14 @@
     for (let i = 0; i < keys.length; i += 1) {
       onProgress(i + 1, keys.length);
       try {
+        if (VIDEO.test(keys[i])) {
+          const site = siteVideoFor(keys[i]);
+          const response = site ? await fetch(site, { cache: 'no-store' }) : null;
+          if (!response || !response.ok) throw new Error('vídeo sem versão com marca no site; envie de novo pelo painel');
+          const video = await response.blob();
+          mapping.set(keys[i], await b.putObjectRaw(newKeyFor(keys[i]), new File([video], 'video.mp4', { type: 'video/mp4' })));
+          continue;
+        }
         const response = await fetch(mediaUrl(keys[i]), { cache: 'no-store' });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const source = await response.blob();
@@ -89,5 +103,5 @@
     return new Promise((resolve, reject) => canvas.toBlob((out) => (out ? resolve(out) : reject(new Error('Falha ao converter a imagem.'))), 'image/webp', 0.9));
   }
 
-  window.CMEPortfolioRestamp = { restampAll, collect, rewrite, newKeyFor, r2Key };
+  window.CMEPortfolioRestamp = { restampAll, collect, rewrite, newKeyFor, r2Key, siteVideoFor };
 }());

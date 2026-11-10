@@ -102,6 +102,9 @@ PONTE DA GALERIA: painel existente -> Cloudflare R2 + GitHub
       if (String(contentType).toLowerCase().startsWith("image/")) {
         uploadBody = await applyWatermark(body);
         contentType = uploadBody.type || contentType;
+      } else if (String(contentType).toLowerCase().startsWith("video/")) {
+        uploadBody = await watermarkVideo(body);
+        contentType = "video/mp4";
       }
 
       const response = await fetch(
@@ -289,6 +292,116 @@ PONTE DA GALERIA: painel existente -> Cloudflare R2 + GitHub
       }
     }
     context.restore();
+  }
+
+  /* Marca timbrada gravada no vídeo, no próprio navegador (FFmpeg em WebAssembly), antes do envio.
+     O vídeo publicado já sai marcado; o original fica só com você. */
+  const FFMPEG_BASE = "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd";
+  // O worker do FFmpeg roda como módulo: o núcleo precisa ser a versão ESM.
+  const FFMPEG_CORE = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm";
+  const FFMPEG_UTIL = "https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js";
+  let ffmpegPromise = null;
+
+  function loadScript(src){
+    return new Promise(function(resolve, reject){
+      const el = document.createElement("script");
+      el.src = src;
+      el.onload = resolve;
+      el.onerror = function(){ reject(new Error("Não foi possível carregar o gravador de vídeo.")); };
+      document.head.appendChild(el);
+    });
+  }
+
+  function videoNotice(text){
+    let box = document.getElementById("cmeVideoMarkNotice");
+    if (!text) { if (box) box.remove(); return; }
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "cmeVideoMarkNotice";
+      box.setAttribute("role", "status");
+      box.style.cssText = "position:fixed;left:16px;right:16px;bottom:16px;z-index:5000;max-width:520px;margin:0 auto;padding:12px 16px;border-radius:12px;background:#010914;color:#f3ece0;font:500 14px Montserrat,Arial,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.3)";
+      document.body.appendChild(box);
+    }
+    box.textContent = text;
+  }
+
+  async function loadFfmpeg(){
+    if (!ffmpegPromise) {
+      ffmpegPromise = (async function(){
+        if (!window.FFmpegWASM) await loadScript(FFMPEG_BASE + "/ffmpeg.js");
+        if (!window.FFmpegUtil) await loadScript(FFMPEG_UTIL);
+        const toBlobURL = window.FFmpegUtil.toBlobURL;
+        const ffmpeg = new window.FFmpegWASM.FFmpeg();
+        await ffmpeg.load({
+          coreURL: await toBlobURL(FFMPEG_CORE + "/ffmpeg-core.js", "text/javascript"),
+          wasmURL: await toBlobURL(FFMPEG_CORE + "/ffmpeg-core.wasm", "application/wasm"),
+          classWorkerURL: await toBlobURL(FFMPEG_BASE + "/814.ffmpeg.js", "text/javascript")
+        });
+        return ffmpeg;
+      })().catch(function(error){ ffmpegPromise = null; throw error; });
+    }
+    return ffmpegPromise;
+  }
+
+  function videoSize(file){
+    return new Promise(function(resolve, reject){
+      const video = document.createElement("video");
+      const url = URL.createObjectURL(file);
+      video.preload = "metadata";
+      video.muted = true;
+      video.onloadedmetadata = function(){ URL.revokeObjectURL(url); resolve({ width: video.videoWidth, height: video.videoHeight }); };
+      video.onerror = function(){ URL.revokeObjectURL(url); reject(new Error("Não foi possível ler o vídeo. Envie em MP4 (H.264).")); };
+      video.src = url;
+    });
+  }
+
+  async function videoOverlay(width, height){
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    drawTiledWatermark(context, width, height);
+    const size = Math.max(12, Math.round(Math.min(width, height) * 0.03));
+    const pad = Math.max(10, Math.round(Math.min(width, height) * 0.02));
+    const label = "© CAMILA MARTINS ENGENHARIA";
+    context.font = "600 " + size + "px Montserrat, Arial, sans-serif";
+    context.textBaseline = "bottom";
+    const textWidth = context.measureText(label).width;
+    context.fillStyle = "rgba(1,9,20,.6)";
+    context.fillRect(pad, height - size - pad * 2.5, textWidth + pad * 2, size + pad * 1.5);
+    context.fillStyle = "rgba(255,255,255,.88)";
+    context.fillText(label, pad * 2, height - pad * 1.5);
+    return new Promise(function(resolve, reject){
+      canvas.toBlob(function(blob){ blob ? resolve(blob) : reject(new Error("Falha ao preparar a marca do vídeo.")); }, "image/png");
+    });
+  }
+
+  async function watermarkVideo(file){
+    if (typeof window.WebAssembly !== "object") throw new Error("Este navegador não grava a marca no vídeo. Use o Chrome ou o Edge atualizados.");
+    try {
+      videoNotice("Gravando a marca timbrada no vídeo... pode levar alguns minutos. Não feche a página.");
+      const size = await videoSize(file);
+      const ffmpeg = await loadFfmpeg();
+      const fetchFile = window.FFmpegUtil.fetchFile;
+      ffmpeg.on && ffmpeg.on("progress", function(event){
+        const pct = Math.max(0, Math.min(100, Math.round((event.progress || 0) * 100)));
+        videoNotice("Gravando a marca timbrada no vídeo... " + pct + "%. Não feche a página.");
+      });
+      await ffmpeg.writeFile("entrada.mp4", await fetchFile(file));
+      await ffmpeg.writeFile("marca.png", await fetchFile(await videoOverlay(size.width, size.height)));
+      const code = await ffmpeg.exec([
+        "-i", "entrada.mp4", "-i", "marca.png",
+        "-filter_complex", "[0:v][1:v]overlay=0:0:format=auto,scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p",
+        "-map", "0:a?", "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-c:a", "copy",
+        "-movflags", "+faststart", "saida.mp4"
+      ]);
+      if (code !== 0) throw new Error("O gravador de vídeo não conseguiu processar este arquivo. Envie em MP4 (H.264).");
+      const data = await ffmpeg.readFile("saida.mp4");
+      await Promise.all(["entrada.mp4", "marca.png", "saida.mp4"].map(function(name){ return ffmpeg.deleteFile(name).catch(function(){}); }));
+      return new Blob([data], { type: "video/mp4" });
+    } finally {
+      videoNotice("");
+    }
   }
 
   async function applyWatermark(file){
@@ -486,6 +599,7 @@ PONTE DA GALERIA: painel existente -> Cloudflare R2 + GitHub
     bucket: PORTFOLIO_BUCKET,
     manifestPath: MANIFEST_PATH,
     applyWatermark: applyWatermark,
+    watermarkVideo: watermarkVideo,
     drawTiledWatermark: drawTiledWatermark,
     putObjectRaw: putObjectRaw,
     fetchManifest: fetchManifest,
