@@ -429,11 +429,12 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
 
 
 // ---- Contrato Mestre v10: quadro-resumo no início e trechos condicionais ----
-// Linhas do Contrato Mestre iniciadas por [[se:<condição>]] só entram quando a
+// Linhas do Contrato Mestre iniciadas por {{se:<condição>}} (sem colchetes, reservados
+// pelo banco a campos provisórios) só entram quando a
 // condição se aplica ao cliente; os itens são renumerados e as remissões
 // "item N.M" acompanham a nova numeração (remissão a item omitido bloqueia a emissão).
-const CONDITION_PREFIX=/^\[\[se:([a-z_]+)\]\]\s*/;
-const isConditionalMaster=(record:CommercialRecord,body:string)=>Number(record.contract_master_version)>=10||CONDITION_PREFIX.test(body)||body.includes('[[se:');
+const CONDITION_PREFIX=/^\{\{se:([a-z_]+)\}\}\s*/;
+const isConditionalMaster=(record:CommercialRecord,body:string)=>Number(record.contract_master_version)>=10||CONDITION_PREFIX.test(body)||body.includes('{{se:');
 const installmentsOf=(record:CommercialRecord)=>{
  const t=commercialTerms(record);
  const list=Array.isArray(t.installments)?t.installments as Array<Record<string,unknown>>:[];

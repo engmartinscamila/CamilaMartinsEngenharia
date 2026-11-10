@@ -37,7 +37,8 @@ assert.ok(pf.indexOf('QUADRO DE ESCOPO') < pf.indexOf('Projeto Legal\n') || pf.i
 assert.ok(pf.indexOf('1. Projeto Legal') < pf.indexOf('QUALIFICAÇÃO DAS PARTES'), 'Escopo inserido fora do Quadro de Escopo');
 assert.ok(pf.indexOf('CLÁUSULA 14') < pf.indexOf('ASSINATURAS'), 'Foro deve ser a última cláusula');
 assert.ok(pf.includes('40%') && pf.includes('60%'), 'Percentual das parcelas ausente');
-assert.ok(!pf.includes('[[se:'), 'Marcação condicional vazou para o Word');
+assert.ok(!pf.includes('{{se:'), 'Marcação condicional vazou para o Word');
+assert.ok(!/\[[^\]]+\]/.test(body), 'Contrato Mestre não pode ter colchetes (o banco bloqueia campos provisórios)');
 assert.ok(!pf.includes('Quando o Quadro incluir legalização'), 'Legalização só entra com serviço municipal');
 assert.ok(!pf.includes('reajustadas anualmente'), 'Reajuste só entra com parcela após 12 meses');
 assert.ok(pf.includes('bem comum de casal') && !pf.includes('Contratante pessoa jurídica'), 'Pessoa física recebe só a regra de cônjuge');
