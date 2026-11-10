@@ -317,7 +317,7 @@
           <p class="contact-text">Solicite um orçamento gratuito pelo WhatsApp ou envie um e-mail com as informações iniciais do seu projeto.</p>
         </div>
         <div class="contact-card">
-  <a href="https://wa.me/5521986429999?text=Ol%C3%A1%20Camila!%20Conheci%20seu%20site%20e%20gostaria%20de%20solicitar%20um%20or%C3%A7amento." target="_blank" rel="noopener">
+  <a class="camilinha-orcamento" href="https://wa.me/5521986429999?text=Ol%C3%A1%20Camila!%20Conheci%20seu%20site%20e%20gostaria%20de%20solicitar%20um%20or%C3%A7amento." target="_blank" rel="noopener">
     <i class="bi bi-whatsapp"></i>
    <span>WHATSAPP</span>
   </a>
@@ -501,22 +501,40 @@
   const state = dialog.querySelector('.portfolio3d-state');
   const close = dialog.querySelector('.portfolio3d-close');
   let modalViewer = null;
+  let openRequestId = 0;
+  let camilinhaDelayId = 0;
+  const loadingNotice = 'Carregando a maquete tridimensional…';
   function message(text) {
+    window.clearTimeout(camilinhaDelayId);
+    state.classList.remove('camilinha-3d-carregando');
     state.textContent = text;
     state.hidden = !text;
+    // A Camilinha aparece apenas se o carregamento ultrapassar 500 ms.
+    if (text === loadingNotice) {
+      camilinhaDelayId = window.setTimeout(() => {
+        if (dialog.open && !state.hidden && state.textContent === loadingNotice) {
+          state.classList.add('camilinha-3d-carregando');
+        }
+      }, 500);
+    }
   }
   close.addEventListener('click',()=>dialog.close());
   dialog.addEventListener('click',event=>{ if(event.target===dialog) dialog.close(); });
-  dialog.addEventListener('close',()=>{if(modalViewer) modalViewer.removeAttribute('auto-rotate');});
+  dialog.addEventListener('close',()=>{
+    openRequestId += 1;
+    message('');
+    if(modalViewer) modalViewer.removeAttribute('auto-rotate');
+  });
   async function openModel(spec) {
+    const requestId = ++openRequestId;
     if (!dialog.open) dialog.showModal();
     dialog.querySelector('#portfolio3d-dialog-title').textContent = spec.title;
     stage.replaceChildren();
     modalViewer = null;
-    message('Carregando a maquete tridimensional…');
+    message(loadingNotice);
     try {
       const src = await modelURL(spec);
-      if (!dialog.open) return;
+      if (!dialog.open || requestId !== openRequestId) return;
       if (!customElements.get('model-viewer')) throw new Error('Visualização 3D não suportada neste navegador');
       const viewer = document.createElement('model-viewer');
       viewer.className = 'portfolio3d-full';
@@ -529,12 +547,19 @@
       viewer.setAttribute('exposure','1.05');
       viewer.setAttribute('loading','eager');
       if(!reducedMotion) viewer.setAttribute('auto-rotate','');
-      viewer.addEventListener('load',()=>message(''),{once:true});
-      viewer.addEventListener('error',()=>message('Não foi possível mostrar o modelo 3D. Feche e tente novamente.'),{once:true});
+      viewer.addEventListener('load',()=>{
+        if (dialog.open && requestId === openRequestId) message('');
+      },{once:true});
+      viewer.addEventListener('error',()=>{
+        if (dialog.open && requestId === openRequestId) {
+          message('Não foi possível mostrar o modelo 3D. Feche e tente novamente.');
+        }
+      },{once:true});
       viewer.src = src;
       modalViewer = viewer;
       stage.appendChild(viewer);
     } catch (error) {
+      if (requestId !== openRequestId || !dialog.open) return;
       console.error('Galeria 3D:', error);
       message('Visualização 3D indisponível. As imagens do projeto continuam acessíveis.');
     }

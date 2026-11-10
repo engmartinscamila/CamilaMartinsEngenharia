@@ -46,6 +46,7 @@ jobs:
       - name: Auditoria estática e funcional do Admin
         run: |
           node scripts/site-audit.mjs
+          node scripts/camilinha-regression.mjs
           node scripts/admin-functional-audit.mjs
           node scripts/admin-menu-groups-regression.mjs
           node scripts/portal-canonical-path-test.mjs

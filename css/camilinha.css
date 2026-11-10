@@ -66,3 +66,36 @@
     animation: none;
   }
 }
+
+/* Segunda fase: a coruja aparece apenas em ações pontuais. */
+.camilinha-orcamento::after {
+  z-index: 5;
+}
+.gallery-budget.camilinha-orcamento::after {
+  inset-inline-end: 0;
+  bottom: calc(100% - 4px);
+}
+.contact-card a.camilinha-orcamento::after {
+  inset-inline-end: 14px;
+  bottom: calc(100% - 6px);
+}
+/* Abertura demorada da maquete 3D: análise da planta, sem tela extra. */
+.portfolio3d-state.camilinha-3d-carregando {
+  min-width: min(230px, 90vw);
+  padding-top: 72px;
+}
+.portfolio3d-state.camilinha-3d-carregando::before {
+  content: "";
+  position: absolute;
+  width: 44px;
+  aspect-ratio: 12 / 13;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: url("../assets/camilinha/planta.webp") left center / 600% 100% no-repeat;
+  pointer-events: none;
+  animation: camilinha-quadros 1.2s steps(6, jump-none) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .portfolio3d-state.camilinha-3d-carregando::before { animation: none; }
+}
