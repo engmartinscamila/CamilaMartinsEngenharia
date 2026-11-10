@@ -34,6 +34,26 @@ cme_apt_options=(
   -o APT::Get::List-Cleanup=0 -o Acquire::Retries=3
   -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30
 )
-sudo timeout 180s apt-get "${cme_apt_options[@]}" update -qq
-sudo timeout 300s apt-get "${cme_apt_options[@]}" install -y --no-install-recommends ffmpeg
+# 1) Arquivos oficiais do Ubuntu.
+if sudo timeout 120s apt-get "${cme_apt_options[@]}" update -qq \
+  && sudo timeout 300s apt-get "${cme_apt_options[@]}" install -y --no-install-recommends ffmpeg; then
+  ffmpeg -version
+  exit 0
+fi
+echo "Arquivos oficiais do Ubuntu indisponíveis; tentando o espelho padrão do runner." >&2
+# 2) Espelho padrão configurado no runner.
+if sudo timeout 120s apt-get -o Acquire::Retries=3 update -qq \
+  && sudo timeout 300s apt-get -o Acquire::Retries=3 install -y --no-install-recommends ffmpeg; then
+  ffmpeg -version
+  exit 0
+fi
+echo "Espelhos APT indisponíveis; usando a compilação estática do FFmpeg publicada no GitHub." >&2
+# 3) Compilação estática (BtbN/FFmpeg-Builds, release GPL para Linux x64), baixada do GitHub.
+cme_ffmpeg_dir="${RUNNER_TEMP:-/tmp}/cme-ffmpeg-static"
+mkdir -p "$cme_ffmpeg_dir"
+curl --fail --location --retry 4 --retry-delay 5 --max-time 300 \
+  -o "$cme_ffmpeg_dir/ffmpeg.tar.xz" \
+  "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz"
+tar -xJf "$cme_ffmpeg_dir/ffmpeg.tar.xz" -C "$cme_ffmpeg_dir" --strip-components=1
+sudo install -m 0755 "$cme_ffmpeg_dir/bin/ffmpeg" "$cme_ffmpeg_dir/bin/ffprobe" /usr/local/bin/
 ffmpeg -version
