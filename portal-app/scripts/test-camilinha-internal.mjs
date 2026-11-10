@@ -1,0 +1,28 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+const read = (path) => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
+const component = read('src/components/camilinha.tsx');
+const ui = read('src/components/ui.tsx');
+const adminDocs = read('src/app/admin/document-center.tsx');
+const adminProjects = read('src/app/admin/projects.tsx');
+const clientDocs = read('src/app/(client)/documents.tsx');
+const clientRequests = read('src/app/(client)/requests.tsx');
+const clientHome = read('src/app/(client)/home.tsx');
+const rootAtlas = readFileSync(new URL('../../assets/camilinha/work-atlas.png', import.meta.url));
+const appAtlas = readFileSync(new URL('../assets/camilinha/work-atlas.png', import.meta.url));
+
+assert.ok(rootAtlas.equals(appAtlas), 'Atlas interno deve ser idêntico ao Work');
+assert.match(component, /isReduceMotionEnabled/, 'Respeitar redução de movimento');
+assert.match(component, /clearInterval\(timer\)/, 'Intervalos são liberados');
+assert.match(component, /clearTimeout\(timer\)/, 'Atrasos são cancelados');
+assert.match(component, /delayMs = 500/, 'Indicador não aparece em espera curta');
+assert.match(ui, /<CamilinhaActivity active=\{true\} state="running"/, 'Botões internos integrados');
+assert.match(ui, /<CamilinhaActivity active=\{true\} state="waiting"/, 'Carregamento geral integrado');
+assert.match(adminDocs, /state="review"/, 'Revisão administrativa');
+assert.match(adminDocs, /state="running"/, 'Processamento administrativo');
+assert.match(adminProjects, /Consultando projetos/, 'Projetos administrativos');
+assert.match(clientDocs, /Consultando seus documentos/, 'Documentos do cliente');
+assert.match(clientRequests, /Atualizando suas solicitações/, 'Solicitações do cliente');
+assert.match(clientHome, /Atualizando o andamento/, 'Andamento do cliente');
+console.log('Camilinha interna: atlas original, carregamentos reais, acessibilidade e limpeza OK.');

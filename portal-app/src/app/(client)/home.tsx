@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { ProjectPicker } from '@/components/project-picker';
+import { CamilinhaActivity } from '@/components/camilinha';
 import { Button, Card, Notice, PageHeader, Screen, StateView, StatusPill } from '@/components/ui';
 import { formatDate, formatTime } from '@/lib/format';
 import { getDisplayName, getFirstName } from '@/lib/user-name';
@@ -91,7 +92,7 @@ export default function HomeScreen() {
               {highlights?.nextEvent ? <Text style={styles.smallMeta}>{formatDate(highlights.nextEvent.date)}{formatTime(highlights.nextEvent.startTime) ? ` • ${formatTime(highlights.nextEvent.startTime)}` : ''}</Text> : null}
             </Card>
           </View>
-          {highlightsLoading ? <ActivityIndicator color={colors.gold600} /> : null}
+          {highlightsLoading ? <CamilinhaActivity active={true} state="waiting" label="Atualizando o andamento…" /> : null}
           {highlights ? (
             <View style={styles.metrics}>
               <View style={styles.metric}><Text style={styles.metricValue}>{highlights.pendingApprovals ?? '—'}</Text><Text style={styles.metricLabel}>Aprovações pendentes</Text></View>

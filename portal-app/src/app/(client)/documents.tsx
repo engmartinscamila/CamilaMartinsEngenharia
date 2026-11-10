@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { ProjectPicker } from '@/components/project-picker';
+import { CamilinhaActivity } from '@/components/camilinha';
 import { Button, Card, Field, Notice, PageHeader, Screen, StateView, StatusPill } from '@/components/ui';
 import { openExternalUrl } from '@/lib/external-link';
 import { useProject } from '@/providers/project-provider';
@@ -93,7 +94,7 @@ export default function DocumentsScreen() {
       <ProjectPicker />
       {error ? <Notice tone="danger">{error}</Notice> : null}
       {success ? <Notice tone="success">{success}</Notice> : null}
-      {loading ? <ActivityIndicator color={colors.gold600} /> : null}
+      {loading ? <CamilinhaActivity active={true} state="review" label="Consultando seus documentos…" /> : null}
       {!loading && documents.length === 0 ? (
         <StateView actionLabel="Atualizar" description="Os documentos liberados para você aparecerão aqui, inclusive contratos sem projeto vinculado." icon="document-text-outline" onAction={() => void load()} title="Nenhum documento publicado" />
       ) : null}

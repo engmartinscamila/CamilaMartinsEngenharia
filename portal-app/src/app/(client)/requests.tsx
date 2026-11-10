@@ -3,6 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { Text, View } from 'react-native';
 
 import { ProjectPicker } from '@/components/project-picker';
+import { CamilinhaActivity } from '@/components/camilinha';
 import { SelectionChips } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, PageHeader, Screen, StateView, StatusPill } from '@/components/ui';
 import { humanizeStatus } from '@/lib/format';
@@ -124,6 +125,7 @@ export default function RequestsScreen() {
     <Screen>
       <PageHeader eyebrow="Comunicação organizada" title="Solicitações" description="Envie e acompanhe assuntos vinculados ao projeto selecionado." />
       <ProjectPicker />
+      {loading ? <CamilinhaActivity active={true} state="waiting" label="Atualizando suas solicitações…" /> : null}
       {error ? <Notice tone="danger">{error}</Notice> : null}
       {success ? <Notice tone="success">{success}</Notice> : null}
       {client && role === 'client' && selectedProject ? (

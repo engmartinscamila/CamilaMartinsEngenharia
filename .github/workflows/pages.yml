@@ -47,6 +47,7 @@ jobs:
         run: |
           node scripts/site-audit.mjs
           node scripts/camilinha-regression.mjs
+          node portal-app/scripts/test-camilinha-internal.mjs
           node scripts/admin-functional-audit.mjs
           node scripts/admin-menu-groups-regression.mjs
           node scripts/portal-canonical-path-test.mjs

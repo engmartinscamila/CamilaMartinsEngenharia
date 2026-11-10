@@ -1,7 +1,8 @@
 import {useLocalSearchParams,useRouter} from 'expo-router';
 import React,{useCallback,useEffect,useMemo,useRef,useState} from 'react';
-import {ActivityIndicator,Alert,Linking,Platform,Pressable,Text,View} from 'react-native';
+import {Alert,Linking,Platform,Pressable,Text,View} from 'react-native';
 import {AdminPageHeader,SelectionChips} from '@/components/admin-ui';
+import {CamilinhaActivity} from '@/components/camilinha';
 import {AdminProjectPicker} from '@/components/admin-project-picker';
 import {AdminDetailPanel} from '@/components/admin-detail-panel';
 import {DocumentCenterDetails,type DocumentAction} from '@/components/document-center-details';
@@ -104,7 +105,7 @@ export default function DocumentCenter(){
   </View>
   {help?<Notice tone="info">Selecione o projeto e consulte seus documentos. Abra os detalhes para ver versões, liberações e aceites. Decisões de layout, material ou etapa ficam em Decisões do projeto. Criar documento abre o fluxo existente de Contratos Gerais.</Notice>:null}
   {error?<Notice tone="danger">{error}</Notice>:null}{success?<Notice tone="success">{success}</Notice>:null}
-  {loadingProjects?<ActivityIndicator color={colors.gold600} />:null}
+  {loadingProjects?<CamilinhaActivity active={true} state="waiting" label="Buscando projetos…" />:null}
   <Card><AdminProjectPicker projects={projects} value={projectId} onChange={chooseProject} disabled={busy||approvalSaving} /></Card>
   <View style={styles.toolbar}>
    <SelectionChips label="Consultar" value={view} onChange={next=>router.setParams({view:next})} items={[{value:'emissions',label:'Documentos'},{value:'approvals',label:'Decisões do projeto'}]} />
@@ -114,7 +115,7 @@ export default function DocumentCenter(){
   {selectedProject?<>
    <Field label="Pesquisar nesta lista" placeholder="Pesquisar documento ou decisão" value={query} onChangeText={q=>router.setParams({q:q.slice(0,200)})} />
    <SelectionChips label="Situação" value={filter} onChange={next=>router.setParams({filter:next})} items={documentFilters.filter(item=>view!=='approvals'||item.value!=='superseded').map(item=>({value:item.value,label:`${item.label} (${error||loading?'—':count(item.value)})`}))} />
-   {loading?<ActivityIndicator color={colors.gold600} />:null}
+   {busy?<CamilinhaActivity active={true} state="running" label="Preparando documento…" />:loading?<CamilinhaActivity active={true} state="review" label="Revisando documentos do projeto…" />:null}
    {view==='emissions'?<Card>
     <View style={styles.toolbar}><Text accessibilityRole="header" style={styles.section}>Documentos do projeto</Text><Text style={styles.meta}>{error?'Consulta incompleta':loading?'Carregando…':`${visible.length} resultado(s)`}</Text></View>
     {visible.length===0&&!loading&&!error?<StateView icon="documents-outline" title="Nenhum documento nesta seleção" description="Ajuste a pesquisa ou os filtros. Novas emissões são criadas em Contratos Gerais." />:null}

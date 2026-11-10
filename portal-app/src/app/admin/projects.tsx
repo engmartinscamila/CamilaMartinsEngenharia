@@ -1,8 +1,9 @@
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
 import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import {  Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
+import { CamilinhaActivity } from '@/components/camilinha';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
 import { formatCurrency } from '@/lib/format';
 import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
@@ -140,7 +141,7 @@ export default function AdminProjectsScreen() {
         <Button loading={saving} onPress={() => void createInExistingContract()} title="Adicionar projeto ao contrato" variant="secondary" />
       </Card>
       <Field autoCapitalize="none" label="Pesquisar por contrato, projeto, cliente ou serviço" onChangeText={setSearch} value={search} />
-      {loading ? <ActivityIndicator color={colors.gold600} /> : null}
+      {loading ? <CamilinhaActivity active={true} state="waiting" label="Consultando projetos…" /> : null}
       {!loading && filteredProjects.length === 0 ? <StateView description="Nenhum projeto corresponde à pesquisa." icon="briefcase-outline" title="Sem projetos" /> : null}
       {filteredProjects.map((project) => (
         <Card key={project.id}>

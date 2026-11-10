@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-  ActivityIndicator,
   Image,
   KeyboardTypeOptions,
   Pressable,
@@ -15,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
+import { CamilinhaActivity } from '@/components/camilinha';
 import { layout, radius, shadow, spacing, ThemeColors, typography } from '@/theme/tokens';
 
 const ScreenTopInsetContext = React.createContext(true);
@@ -120,7 +120,7 @@ export function Button({ title, onPress, loading, disabled, variant = 'primary',
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? colors.navy950 : colors.gold600} />
+        <CamilinhaActivity active={true} state="running" size={29} delayMs={500} compact />
       ) : (
         <>
           {icon ? (
@@ -203,12 +203,11 @@ export function StateView({
 }
 
 export function FullScreenLoader({ label = 'Carregando com segurança…' }: { label?: string }) {
-  const { colors } = useAppTheme();
   const styles = useThemeStyles(styleDefinitions);
   return (
     <SafeAreaView style={styles.loader}>
       <BrandMark />
-      <ActivityIndicator color={colors.gold500} size="small" />
+      <CamilinhaActivity active={true} state="waiting" size={54} delayMs={500} compact />
       <Text style={styles.loaderText}>{label}</Text>
     </SafeAreaView>
   );
