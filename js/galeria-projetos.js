@@ -574,6 +574,10 @@
     });
   });
 
+  const esperaMascote = window.setTimeout(() => {
+    carregamento.classList.add('camilinha-carregando');
+  }, 500);
+
   carregarManifestoPortfolio()
     .then((dados) => {
       projetos = prepararProjetos(dados);
@@ -586,6 +590,10 @@
     })
     .catch((erro) => {
       console.error(erro);
-      carregamento.innerHTML = '<i class="bi bi-exclamation-circle"></i><span>Não foi possível carregar a galeria agora.</span>';
+      carregamento.innerHTML = '<i class="bi bi-exclamation-circle" aria-hidden="true"></i><span>Não foi possível carregar a galeria agora.</span>';
+    })
+    .finally(() => {
+      window.clearTimeout(esperaMascote);
+      carregamento.classList.remove('camilinha-carregando');
     });
 }());

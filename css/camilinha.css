@@ -1,0 +1,68 @@
+.camilinha-orcamento {
+  position: relative;
+}
+
+.camilinha-orcamento::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: 8px;
+  bottom: calc(100% - 8px);
+  width: 36px;
+  aspect-ratio: 12 / 13;
+  pointer-events: none;
+  background: url("../assets/camilinha/aceno.webp") no-repeat;
+  background-size: 400% 100%;
+  visibility: hidden;
+}
+
+.camilinha-orcamento:focus-visible::after {
+  visibility: visible;
+  animation: camilinha-quadros 740ms steps(4, jump-none) both;
+}
+
+@media (hover: hover) {
+  .camilinha-orcamento:hover::after {
+    visibility: visible;
+    animation: camilinha-quadros 740ms steps(4, jump-none) both;
+  }
+}
+
+.camilinha-indicador {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  aspect-ratio: 12 / 13;
+}
+
+.camilinha-carregando .camilinha-indicador i {
+  visibility: hidden;
+  animation: none;
+}
+
+.camilinha-carregando .camilinha-indicador::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("../assets/camilinha/planta.webp") no-repeat;
+  background-size: 600% 100%;
+  animation: camilinha-quadros 1.2s steps(6, jump-none) infinite;
+}
+
+@keyframes camilinha-quadros {
+  from { background-position: left center; }
+  to { background-position: right center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .camilinha-orcamento:focus-visible::after,
+  .camilinha-carregando .camilinha-indicador::after {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) and (hover: hover) {
+  .camilinha-orcamento:hover::after {
+    animation: none;
+  }
+}
