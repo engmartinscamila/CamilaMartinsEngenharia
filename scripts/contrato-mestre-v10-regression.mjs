@@ -74,4 +74,8 @@ assert.ok(pj.includes('Contratante pessoa jurídica') && !pj.includes('bem comum
 assert.ok(pj.includes('compatibilização entre todos os projetos'), 'Compatibilização marcada deve aparecer');
 assert.ok(pj.includes('Condição específica acordada: Condição combinada'), 'Observação municipal acordada deve aparecer');
 assert.ok(!pf.includes('compatibilização entre todos os projetos'), 'Compatibilização não pode ser presumida');
+assert.ok(!pf.includes('CONDIÇÕES ESPECÍFICAS'), 'Sem condições específicas, a seção não aparece');
+const esp = await render({ ...base, commercial_terms: { ...base.commercial_terms, specific_clauses: [{ title: 'Acompanhamento do alvará', text: 'Texto acordado.' }] } });
+assert.ok(esp.indexOf('1. Projeto Legal') < esp.indexOf('CONDIÇÕES ESPECÍFICAS DESTE CONTRATO') && esp.indexOf('CONDIÇÕES ESPECÍFICAS DESTE CONTRATO') < esp.indexOf('QUALIFICAÇÃO DAS PARTES'), 'Condições específicas entre o escopo e a qualificação');
+assert.ok(esp.includes('E.1. Acompanhamento do alvará') && esp.includes('prevalecem sobre as cláusulas gerais'), 'Condição específica numerada e com regra de prevalência');
 console.log('PASS: Contrato Mestre v10 com quadro-resumo, parcelas, escopo, condicionais e renumeração.');

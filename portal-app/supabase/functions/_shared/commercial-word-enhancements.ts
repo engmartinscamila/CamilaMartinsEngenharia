@@ -48,6 +48,7 @@ function activityLimits(item: Obj, row: Obj, terms: Obj, v10 = false) {
 // Layout do Contrato Mestre v10: o escopo entra na seção "Quadro de Escopo", logo após o Quadro-Resumo.
 const V10_SCOPE_HEADING = 'QUADRO DE ESCOPO — O QUE ESTÁ INCLUSO';
 const V10_SCOPE_END_MARKER = 'QUALIFICAÇÃO DAS PARTES';
+const V10_SPECIFIC_MARKER = 'CONDIÇÕES ESPECÍFICAS DESTE CONTRATO';
 function contractScopeXml(services: unknown, customService: unknown, experienceLevel: unknown, propertyAddress: string, commercialTerms: unknown, historicalReconstitution = false, v10 = false) {
   const selected = selectedServices(services);
   if (!selected.length && !text(customService)) return '';
@@ -135,7 +136,7 @@ async function enhanceContractDocument(bytes: Uint8Array, propertyAddress: strin
   const v10 = xml.includes(V10_SCOPE_HEADING);
   const scopeXml = contractScopeXml(services, customService, experienceLevel, propertyAddress, commercialTerms, historicalReconstitution, v10);
   if (scopeXml) {
-    const insertion = insertionBeforeParagraph(xml, v10 ? V10_SCOPE_END_MARKER : 'RESUMO COMERCIAL VINCULADO');
+    const insertion = insertionBeforeParagraph(xml, v10 ? (xml.includes(V10_SPECIFIC_MARKER) ? V10_SPECIFIC_MARKER : V10_SCOPE_END_MARKER) : 'RESUMO COMERCIAL VINCULADO');
     xml = xml.slice(0, insertion) + scopeXml + xml.slice(insertion);
   }
   zip.file('word/document.xml', xml);

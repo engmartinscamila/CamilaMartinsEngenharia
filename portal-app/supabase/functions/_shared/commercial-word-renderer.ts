@@ -549,6 +549,10 @@ function contractDocumentV10(sourceRecord:CommercialRecord,profile:ProfessionalI
   const quantity=[String(row?.quantity??'').trim(),String(row?.unit??'').trim()].filter(Boolean).join(' ');
   return [serviceNames[index],quantity||'1',prazo,countLabel(row?.revisions,'Nenhuma'),countLabel(row?.visits,'Nenhuma'),formats||'Conforme detalhamento'];
  });
+ // Condições específicas acordadas para este contrato (commercial_terms.specific_clauses).
+ const specificClauses=(Array.isArray(t.specific_clauses)?t.specific_clauses as Array<Record<string,unknown>>:[])
+  .map(item=>({title:sentencePart(item.title),text:tidyText(item.text)}))
+  .filter(item=>item.title&&item.text);
  const isPj=isCompany(record);
  const contractingSummary=`${record.prospect_name} — ${isPj?'CNPJ':'CPF'} ${text(record.cpf_cnpj)}`;
  return makeDoc([
@@ -573,6 +577,11 @@ function contractDocumentV10(sourceRecord:CommercialRecord,profile:ProfessionalI
      : [p('Condição de pagamento não informada.')]),
    h('QUADRO DE ESCOPO — O QUE ESTÁ INCLUSO'),
    ...(activityRows.length?[gridTable(['Atividade','Quantidade','Prazo','Revisões incluídas','Visitas incluídas','Formato'],activityRows,[28,13,20,12,12,15]),p('Detalhamento das entregas de cada atividade:',true,NAVY)]:[]),
+   ...(specificClauses.length?[
+     h('CONDIÇÕES ESPECÍFICAS DESTE CONTRATO'),
+     p('As condições abaixo foram acordadas para este contrato, integram o Quadro de Escopo e prevalecem sobre as cláusulas gerais naquilo em que dispuserem de forma diferente.'),
+     ...specificClauses.flatMap((item,index)=>[p(`E.${index+1}. ${item.title}`,true,NAVY),p(item.text)]),
+   ]:[]),
    h('QUALIFICAÇÃO DAS PARTES'),
    p(`CONTRATADA: ${professionalQualification(profile)}, doravante denominada CONTRATADA.`),
    p(contractingPartyText(record)),
