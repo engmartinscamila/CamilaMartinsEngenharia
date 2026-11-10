@@ -538,6 +538,17 @@ function contractDocumentV10(sourceRecord:CommercialRecord,profile:ProfessionalI
   const due=[item.date?datePt(item.date):'',sentencePart(item.event)].filter(Boolean).join(' — ')||'Na entrega da etapa correspondente';
   return [`${index+1}ª`,money(String(item.amount??'')),Number.isFinite(amount)&&total>0?percentPt(amount,total):'—',due];
  });
+ const scopeRows=Array.isArray(t.scope)?t.scope as Array<Record<string,unknown>>:[];
+ const countLabel=(value:unknown,none:string)=>{const raw=String(value??'').trim();if(raw==='')return none;const n=Number(raw);return Number.isFinite(n)&&n===0?none:raw;};
+ const activityRows=selected.map((item,index)=>{
+  const row=scopeRows.find(entry=>String(entry.code??'').toLowerCase()===String(item.code??'').toLowerCase());
+  const municipal=String(row?.deadline_type??'')==='municipal';
+  const days=String(row?.days??'').trim();
+  const prazo=municipal?'Preparação no prazo total do Quadro-Resumo; Prefeitura sem prazo garantido':days?`${days} ${dayType}`:'Prazo geral do contrato';
+  const formats=arrStrings(item.deliveryFormats).join(', ');
+  const quantity=[String(row?.quantity??'').trim(),String(row?.unit??'').trim()].filter(Boolean).join(' ');
+  return [serviceNames[index],quantity||'1',prazo,countLabel(row?.revisions,'Nenhuma'),countLabel(row?.visits,'Nenhuma'),formats||'Conforme detalhamento'];
+ });
  const isPj=isCompany(record);
  const contractingSummary=`${record.prospect_name} — ${isPj?'CNPJ':'CPF'} ${text(record.cpf_cnpj)}`;
  return makeDoc([
@@ -553,7 +564,7 @@ function contractDocumentV10(sourceRecord:CommercialRecord,profile:ProfessionalI
     ['Valor total dos honorários',money(record.total_value),true],
     ['Forma de pagamento',`${method?method+', ':''}${installments.length>1?`em ${installments.length} parcelas`:installments.length===1?'em parcela única':'conforme condição registrada'}, conforme o quadro Parcelas e Entregas`,true],
     ['Prazo',prazo],
-    ['Revisões e visitas incluídas','Por atividade, conforme o Quadro de Escopo'],
+    ['Revisões e visitas incluídas','Por atividade, na tabela do Quadro de Escopo'],
     ['Taxas e serviços de terceiros','Por conta do(a) CONTRATANTE (ART, Prefeitura, cartório, topografia, sondagem e outros), conforme a Cláusula 4'],
    ]),
    h('PARCELAS E ENTREGAS'),
@@ -561,6 +572,7 @@ function contractDocumentV10(sourceRecord:CommercialRecord,profile:ProfessionalI
      ? [gridTable(['Parcela','Valor','% do total','Vencimento'],paymentRows,[12,22,14,52])]
      : [p('Condição de pagamento não informada.')]),
    h('QUADRO DE ESCOPO — O QUE ESTÁ INCLUSO'),
+   ...(activityRows.length?[gridTable(['Atividade','Quantidade','Prazo','Revisões incluídas','Visitas incluídas','Formato'],activityRows,[28,13,20,12,12,15]),p('Detalhamento das entregas de cada atividade:',true,NAVY)]:[]),
    h('QUALIFICAÇÃO DAS PARTES'),
    p(`CONTRATADA: ${professionalQualification(profile)}, doravante denominada CONTRATADA.`),
    p(contractingPartyText(record)),
