@@ -1,4 +1,4 @@
-import { AlignmentType, BorderStyle, Document, Footer, Header, HeadingLevel, Packer, Paragraph, TextRun } from 'docx';
+import { AlignmentType, BorderStyle, Document, Footer, Header, HeadingLevel, Packer, Paragraph, Table, TableCell, TableRow, TextRun, WidthType } from 'docx';
 type CommercialRecord={id:string;linked_client_id:string|null;linked_contract_id:string|null;linked_project_id:string|null;quote_number:string;contract_number:string|null;status:string;prospect_name:string;cpf_cnpj:string|null;email:string|null;phone:string|null;address:string|null;city:string|null;state:string|null;property_address:string|null;property_type:string|null;area_terreno_m2:number|null;area_construida_m2:number|null;construction_standard:string|null;experience_level:string|null;services:unknown;coobligors:unknown;custom_service:string|null;total_value:number|null;payment_terms:unknown;commercial_terms?:unknown;historical_reconstitution?:boolean;document_version?:string;document_version_reason?:string|null;valid_until:string|null;notes:string|null;quote_document_id:string|null;contract_document_id:string|null;contract_master_id:string|null;contract_master_version:number|null;smart_texts:unknown};
 type ServiceItem=Record<string,unknown>;
 type ProfessionalIdentity=Record<string,string|undefined>;
@@ -157,7 +157,7 @@ const brandFooter=(profile:ProfessionalIdentity,documentCode:string)=>new Footer
    })]
  })
 ]});
-const makeDoc=(children:Paragraph[],profile:ProfessionalIdentity,documentCode:string)=>new Document({
+const makeDoc=(children:(Paragraph|Table)[],profile:ProfessionalIdentity,documentCode:string)=>new Document({
  styles:{
    default:{
      document:{
@@ -428,7 +428,165 @@ function quoteDocument(record:CommercialRecord,profile:ProfessionalIdentity,gene
 }
 
 
+// ---- Contrato Mestre v10: quadro-resumo no início e trechos condicionais ----
+// Linhas do Contrato Mestre iniciadas por [[se:<condição>]] só entram quando a
+// condição se aplica ao cliente; os itens são renumerados e as remissões
+// "item N.M" acompanham a nova numeração (remissão a item omitido bloqueia a emissão).
+const CONDITION_PREFIX=/^\[\[se:([a-z_]+)\]\]\s*/;
+const isConditionalMaster=(record:CommercialRecord,body:string)=>Number(record.contract_master_version)>=10||CONDITION_PREFIX.test(body)||body.includes('[[se:');
+const installmentsOf=(record:CommercialRecord)=>{
+ const t=commercialTerms(record);
+ const list=Array.isArray(t.installments)?t.installments as Array<Record<string,unknown>>:[];
+ if(list.length)return list.map(item=>({amount:item.amount,date:String(item.due_date||'').trim(),event:String(item.due_event||'').trim()}));
+ const legacy=Array.isArray(record.payment_terms)?record.payment_terms as Array<Record<string,unknown>>:[];
+ return legacy.map(item=>{const raw=String(item.due??item.dueDate??'').trim();const isDate=/^\d{4}-\d{2}-\d{2}$/.test(raw);return {amount:item.value??item.amount,date:isDate?raw:'',event:isDate?'':raw};});
+};
+const contractConditions=(record:CommercialRecord,generatedAt:Date):Record<string,boolean>=>{
+ const pj=isCompany(record);
+ const limit=new Date(generatedAt.getTime());limit.setFullYear(limit.getFullYear()+1);
+ const installments=installmentsOf(record);
+ const reajuste=installments.length===0||installments.some(item=>!/^\d{4}-\d{2}-\d{2}$/.test(item.date)||new Date(`${item.date}T12:00:00-03:00`)>limit);
+ return {
+  legalizacao:selectedServices(record).some(item=>['k','l','m'].includes(String(item.code??'').trim().toLowerCase())),
+  reajuste,
+  coobrigados:contractCoobligors(record).length>0,
+  pf:!pj,
+  pj,
+ };
+};
+function conditionalMasterLines(body:string,conditions:Record<string,boolean>){
+ const kept:string[]=[];
+ const removed=new Set<string>();
+ for(const raw of body.split('\n')){
+  const line=raw.trim();
+  if(!line)continue;
+  const match=line.match(CONDITION_PREFIX);
+  if(!match){kept.push(line);continue;}
+  if(!(match[1] in conditions))throw new Error('Condição desconhecida no Contrato Mestre: '+match[1]+'.');
+  const content=line.slice(match[0].length);
+  if(conditions[match[1]])kept.push(content);
+  else{const n=content.match(/^(\d+\.\d+)\./);if(n)removed.add(n[1]);}
+ }
+ const renumber=new Map<string,string>();
+ let item=0;
+ const numbered=kept.map(line=>{
+  if(line.startsWith('CLÁUSULA')){item=0;return line;}
+  const m=line.match(/^(\d+)\.(\d+)\.\s+/);
+  if(!m)return line;
+  item+=1;
+  const next=`${m[1]}.${item}`;
+  renumber.set(`${m[1]}.${m[2]}`,next);
+  return `${next}. ${line.slice(m[0].length)}`;
+ });
+ return numbered.map(line=>line.replace(/\b(itens?) (\d+\.\d+)\b/g,(_all,word,ref)=>{
+  if(removed.has(ref))throw new Error(`O Contrato Mestre remete ao item ${ref}, que não se aplica a este contrato. Revise o texto antes de emitir.`);
+  return `${word} ${renumber.get(ref)??ref}`;
+ }));
+}
+const CELL_BORDER={style:BorderStyle.SINGLE,size:4,color:'D6DCE3'};
+const cellParagraph=(value:string,bold=false,color=TEXT)=>new Paragraph({spacing:{before:40,after:40,line:260},children:[new TextRun({text:value,bold,font:'Century Gothic',size:18,color})]});
+const quadroCell=(value:string,options:{bold?:boolean;shade?:boolean;width?:number;color?:string}={})=>new TableCell({
+ width:options.width?{size:options.width,type:WidthType.PERCENTAGE}:undefined,
+ shading:options.shade?{fill:SOFT}:undefined,
+ margins:{top:60,bottom:60,left:110,right:110},
+ borders:{top:CELL_BORDER,bottom:CELL_BORDER,left:CELL_BORDER,right:CELL_BORDER},
+ children:[cellParagraph(value,options.bold,options.color??(options.shade?NAVY:TEXT))]
+});
+const keyValueTable=(rows:Array<[string,string,boolean?]>)=>new Table({
+ width:{size:100,type:WidthType.PERCENTAGE},
+ rows:rows.map(([label,value,highlight])=>new TableRow({children:[
+  quadroCell(label,{bold:true,shade:true,width:32}),
+  quadroCell(value,{bold:Boolean(highlight),width:68,color:highlight?NAVY:TEXT}),
+ ]}))
+});
+const gridTable=(headers:string[],rows:string[][],widths:number[])=>new Table({
+ width:{size:100,type:WidthType.PERCENTAGE},
+ rows:[
+  new TableRow({tableHeader:true,children:headers.map((label,index)=>quadroCell(label,{bold:true,shade:true,width:widths[index]}))}),
+  ...rows.map(row=>new TableRow({children:row.map((value,index)=>quadroCell(value,{width:widths[index]}))})),
+ ]
+});
+const percentPt=(part:number,total:number)=>new Intl.NumberFormat('pt-BR',{maximumFractionDigits:1}).format(part/total*100)+'%';
+const paymentMethodLabel=(record:CommercialRecord)=>{
+ const map:Record<string,string>={pix:'Pix',transferencia:'Transferência bancária',boleto:'Boleto',dinheiro:'Dinheiro',cartao:'Cartão',cartao_parcelado:'Cartão de crédito parcelado',outro:'Conforme condição específica'};
+ const method=String(commercialTerms(record).payment_method||'').trim();
+ return map[method]||method||'';
+};
+const taxIdDisplay=(value:unknown)=>{
+ const digits=String(value??'').replace(/\D/g,'');
+ if(digits.length===14)return `${digits.slice(0,2)}.${digits.slice(2,5)}.${digits.slice(5,8)}/${digits.slice(8,12)}-${digits.slice(12)}`;
+ return digits.length===11?cpfDisplay(digits):String(value??'').trim();
+};
+function contractDocumentV10(sourceRecord:CommercialRecord,profile:ProfessionalIdentity,contractMasterBody:string,generatedAt:Date){
+ const record={...sourceRecord,cpf_cnpj:sourceRecord.cpf_cnpj?taxIdDisplay(sourceRecord.cpf_cnpj):sourceRecord.cpf_cnpj};
+ const conditions=contractConditions(record,generatedAt);
+ const clauses=conditionalMasterLines(contractMasterBody,conditions).map(line=>line.startsWith('CLÁUSULA')?h(line):p(line));
+ const selected=selectedServices(record);
+ const serviceNames=selected.map(item=>['p','outro','outros'].includes(String(item.code??'').toLowerCase())&&record.custom_service?String(record.custom_service).trim():String(item.name??item.code??'Serviço'));
+ const total=Number(record.total_value);
+ const installments=installmentsOf(record);
+ const method=paymentMethodLabel(record);
+ const t=commercialTerms(record);
+ const schedule=t.schedule&&typeof t.schedule==='object'?t.schedule as Record<string,unknown>:null;
+ const dayType=String(schedule?.day_type)==='uteis'?'dias úteis':'dias corridos';
+ const prazo=schedule&&String(schedule.days||'').trim()
+  ? `${String(schedule.days).trim()} ${dayType}, contados de: ${sentencePart(schedule.start_trigger)||'evento indicado no Quadro de Escopo'}.${conditions.legalizacao?' Análise e expedição pela Prefeitura não têm prazo garantido.':''}`
+  : 'Por atividade, conforme o Quadro de Escopo.';
+ const paymentRows=installments.map((item,index)=>{
+  const amount=Number(item.amount);
+  const due=[item.date?datePt(item.date):'',sentencePart(item.event)].filter(Boolean).join(' — ')||'Na entrega da etapa correspondente';
+  return [`${index+1}ª`,money(String(item.amount??'')),Number.isFinite(amount)&&total>0?percentPt(amount,total):'—',due];
+ });
+ const isPj=isCompany(record);
+ const contractingSummary=`${record.prospect_name} — ${isPj?'CNPJ':'CPF'} ${text(record.cpf_cnpj)}`;
+ return makeDoc([
+   ...title(`CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE ENGENHARIA — ${text(record.contract_number,'CONTRATO SEM NUMERAÇÃO — NÃO EMITIR')}`),
+   small(`Data de emissão: ${generatedDatePt(generatedAt)} • Versão do contrato: v${String(record.document_version||'1.0')}`),
+   ...(record.historical_reconstitution?[p('CÓPIA RECONSTITUÍDA A PARTIR DE DADOS HISTÓRICOS — confira antes de usar; não constitui nova revisão.',true,GOLD)]:[]),
+   h('QUADRO-RESUMO'),
+   keyValueTable([
+    ['Contratada',professionalLabel(profile)],
+    ['Contratante',contractingSummary],
+    ['Imóvel / obra',text(record.property_address)],
+    ['Serviço contratado',serviceNames.join('; ')||'Conforme o Quadro de Escopo',true],
+    ['Valor total dos honorários',money(record.total_value),true],
+    ['Forma de pagamento',`${method?method+', ':''}${installments.length>1?`em ${installments.length} parcelas`:installments.length===1?'em parcela única':'conforme condição registrada'}, conforme o quadro Parcelas e Entregas`,true],
+    ['Prazo',prazo],
+    ['Revisões e visitas incluídas','Por atividade, conforme o Quadro de Escopo'],
+    ['Taxas e serviços de terceiros','Por conta do(a) CONTRATANTE (ART, Prefeitura, cartório, topografia, sondagem e outros), conforme a Cláusula 4'],
+   ]),
+   h('PARCELAS E ENTREGAS'),
+   ...(paymentRows.length
+     ? [gridTable(['Parcela','Valor','% do total','Vencimento'],paymentRows,[12,22,14,52])]
+     : [p('Condição de pagamento não informada.')]),
+   h('QUADRO DE ESCOPO — O QUE ESTÁ INCLUSO'),
+   h('QUALIFICAÇÃO DAS PARTES'),
+   p(`CONTRATADA: ${professionalQualification(profile)}, doravante denominada CONTRATADA.`),
+   p(contractingPartyText(record)),
+   ...(isPj ? [p('Representante legal da pessoa jurídica: '+legalRepresentativeLabel(record)+'.')] : []),
+   ...contractCoobligors(record).map(item=>p(`COOBRIGADO(A) SOLIDÁRIO(A): ${item.name}, CPF nº ${item.cpf}, na qualidade de ${coobligorRole(item)}, aderindo expressamente às obrigações solidárias previstas neste instrumento.`)),
+   p('As partes acima identificadas celebram este contrato, que se rege pelas cláusulas a seguir.'),
+   ...clauses,
+   h('ASSINATURAS'),
+   p('E, por estarem de acordo, as partes assinam este contrato.'),
+   p('Local: _______________________________ • Data da assinatura: ____/____/________'),
+   p('_____________________________________________'),
+   p(professionalLabel(profile)+' — CONTRATADA'),
+   p('_____________________________________________'),
+   p(contractingPartySignature(record)),
+   ...contractCoobligors(record).flatMap(item=>[
+     p('_____________________________________________'),
+     p(`${item.name} — CPF ${item.cpf}`),
+     small(coobligorRole(item)),
+   ]),
+   p('Testemunhas (dispensadas na assinatura eletrônica):'),
+   p('1) ______________________________  CPF: ______________________'),
+   p('2) ______________________________  CPF: ______________________')
+ ],profile,record.contract_number??'');
+}
+
 function contractDocument(record:CommercialRecord,profile:ProfessionalIdentity,contractMasterBody:string,generatedAt:Date){
+ if(isConditionalMaster(record,contractMasterBody))return contractDocumentV10(record,profile,contractMasterBody,generatedAt);
  const body=contractMasterBody.split('\n').filter(Boolean).map(line=>line.startsWith('CLÁUSULA')?h(line):p(line));
  const selected=selectedServices(record);
  const entries=levelEntries(selected);

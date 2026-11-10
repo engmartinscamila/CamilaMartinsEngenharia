@@ -29,7 +29,7 @@ function activityLimits(item: Obj, row: Obj, terms: Obj) {
   const revisions = positiveInt(row.revisions ?? item.revisions);
   if (revisions !== null) lines.push(revisions === 0
     ? 'Revisões incluídas: nenhuma. Alterações solicitadas após a entrega serão orçadas à parte.'
-    : `Revisões incluídas: ${revisions} (${['zero','uma','duas','três','quatro','cinco','seis'][revisions] ?? revisions}) rodada${revisions === 1 ? '' : 's'} de ajustes sobre a entrega, a partir de solicitação consolidada por escrito do contratante. Novas revisões, mudanças de programa ou de premissas já aprovadas serão orçadas à parte.`);
+    : `Revisões incluídas: ${revisions}${['zero','uma','duas','três','quatro','cinco','seis'][revisions] ? ` (${['zero','uma','duas','três','quatro','cinco','seis'][revisions]})` : ''} rodada${revisions === 1 ? '' : 's'} de ajustes sobre a entrega, a partir de solicitação consolidada por escrito do contratante. Novas revisões, mudanças de programa ou de premissas já aprovadas serão orçadas à parte.`);
   const visits = positiveInt(row.visits);
   if (visits !== null) lines.push(visits === 0 ? 'Visitas técnicas incluídas: nenhuma.' : `Visitas técnicas incluídas: ${visits}. Visitas adicionais serão orçadas à parte.`);
   const schedule = terms.schedule && typeof terms.schedule === 'object' ? terms.schedule as Obj : {};
@@ -45,14 +45,17 @@ function activityLimits(item: Obj, row: Obj, terms: Obj) {
   if (item.acceptanceRequired === true) lines.push('A entrega desta atividade será submetida à manifestação formal de aceite do contratante pelo portal ou por escrito.');
   return lines;
 }
-function contractScopeXml(services: unknown, customService: unknown, experienceLevel: unknown, propertyAddress: string, commercialTerms: unknown, historicalReconstitution = false) {
+// Layout do Contrato Mestre v10: o escopo entra na seção "Quadro de Escopo", logo após o Quadro-Resumo.
+const V10_SCOPE_HEADING = 'QUADRO DE ESCOPO — O QUE ESTÁ INCLUSO';
+const V10_SCOPE_END_MARKER = 'QUALIFICAÇÃO DAS PARTES';
+function contractScopeXml(services: unknown, customService: unknown, experienceLevel: unknown, propertyAddress: string, commercialTerms: unknown, historicalReconstitution = false, v10 = false) {
   const selected = selectedServices(services);
   if (!selected.length && !text(customService)) return '';
   const terms = commercialTerms && typeof commercialTerms === 'object' ? commercialTerms as Obj : {};
   const specificRows = Array.isArray(terms.scope) ? terms.scope.filter(row => row && typeof row === 'object') as Obj[] : [];
   const perItemLevels = selected.filter(item => isProjectTierEligible(item) && serviceLevelCode(item));
   const distinctLevels = [...new Set(perItemLevels.map(serviceLevelCode))];
-  const parts = [
+  const parts = v10 ? [] : [
     wordParagraph('ESCOPO TÉCNICO CONTRATADO', true),
     wordParagraph(`Local do serviço / endereço do imóvel ou obra: ${propertyAddress}.`),
   ];
@@ -87,8 +90,13 @@ function contractScopeXml(services: unknown, customService: unknown, experienceL
     // condições comerciais e no catálogo versionado. Nada é presumido: campo não
     // registrado não é impresso.
     for (const line of activityLimits(item, row, terms)) parts.push(wordParagraph(line));
+    const municipalNotes = sentencePart(row.municipal_notes);
+    if (v10 && municipalNotes) parts.push(wordParagraph(`Condição específica acordada: ${municipalNotes}.`));
   });
-  parts.push(wordParagraph('Integram este contrato somente as atividades, quantidades, revisões, visitas e entregáveis expressamente listados acima. Qualquer item não listado — inclusive novas alternativas, revisões ou visitas além das quantidades indicadas, outras disciplinas, aprovações de terceiros, taxas e execução de obra — não está incluído e depende de orçamento e aditivo prévios.'));
+  if (v10) {
+    if (terms.compatibilization === true) parts.push(wordParagraph('Inclui também: compatibilização entre todos os projetos contratados, para que não haja conflito entre eles na obra.', true));
+    parts.push(wordParagraph('Integram este contrato somente as atividades, quantidades, revisões, visitas e entregas listadas acima. O que não estiver listado é serviço adicional (item 1.3).'));
+  } else parts.push(wordParagraph('Integram este contrato somente as atividades, quantidades, revisões, visitas e entregáveis expressamente listados acima. Qualquer item não listado — inclusive novas alternativas, revisões ou visitas além das quantidades indicadas, outras disciplinas, aprovações de terceiros, taxas e execução de obra — não está incluído e depende de orçamento e aditivo prévios.'));
   if (text(customService) && !otherSelected) {
     parts.push(wordParagraph('Serviço adicional / especificação complementar', true));
     parts.push(wordParagraph(text(customService)));
@@ -124,9 +132,10 @@ async function enhanceContractDocument(bytes: Uint8Array, propertyAddress: strin
         : paragraph);
   }
   // Não substitui endereço cadastral do contratante no preâmbulo.
-  const scopeXml = contractScopeXml(services, customService, experienceLevel, propertyAddress, commercialTerms, historicalReconstitution);
+  const v10 = xml.includes(V10_SCOPE_HEADING);
+  const scopeXml = contractScopeXml(services, customService, experienceLevel, propertyAddress, commercialTerms, historicalReconstitution, v10);
   if (scopeXml) {
-    const insertion = insertionBeforeParagraph(xml, 'RESUMO COMERCIAL VINCULADO');
+    const insertion = insertionBeforeParagraph(xml, v10 ? V10_SCOPE_END_MARKER : 'RESUMO COMERCIAL VINCULADO');
     xml = xml.slice(0, insertion) + scopeXml + xml.slice(insertion);
   }
   zip.file('word/document.xml', xml);
