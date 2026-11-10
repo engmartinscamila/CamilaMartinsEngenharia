@@ -71,7 +71,27 @@ Deno.serve(async (request) => {
       if (update.error) throw new Error('Não foi possível concluir a limpeza das emissões expiradas.');
     }
 
-    return json({ ok: true, processed: ids.length, removedTemporaryCopies: temporary.length });
+    // Cópias protegidas (PDFs do site e documentos autorais) vencidas também são apagadas aqui,
+    // sem depender de alguém pedir uma cópia nova.
+    const { data: expiredPdf, error: pdfSelectError } = await service
+      .from('protected_pdf_issues')
+      .select('id,issued_storage_path')
+      .eq('status', 'generated')
+      .lt('expires_at', new Date().toISOString())
+      .not('issued_storage_path', 'is', null)
+      .order('expires_at')
+      .limit(500);
+    if (pdfSelectError) throw new Error('Não foi possível consultar as cópias protegidas vencidas.');
+    const pdfPaths = (expiredPdf ?? []).map((item) => item.issued_storage_path).filter(Boolean) as string[];
+    if (pdfPaths.length) {
+      const removal = await service.storage.from('materiais-protegidos').remove(pdfPaths);
+      if (removal.error) throw new Error('Não foi possível remover as cópias protegidas vencidas.');
+      const update = await service.from('protected_pdf_issues').update({ status: 'purged' })
+        .in('id', (expiredPdf ?? []).map((item) => item.id));
+      if (update.error) throw new Error('Não foi possível concluir a limpeza das cópias protegidas.');
+    }
+
+    return json({ ok: true, processed: ids.length, removedTemporaryCopies: temporary.length, purgedProtectedPdfs: pdfPaths.length });
   } catch (error) {
     console.error('cleanup-expired-assets:', error instanceof Error ? error.message : 'Falha interna.');
     return json({ ok: false, error: 'Falha na limpeza automática.' }, 500);

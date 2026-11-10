@@ -15,7 +15,7 @@ const PORTAL_BUCKETS = new Set(["documentos", "biblioteca"]);
 const SIGNED_URL_SECONDS = 60;
 const MAX_PDF_BYTES = 25 * 1024 * 1024;
 const RATE_WINDOW_MINUTES = 5;
-const RATE_MAX_REQUESTS = 8;
+const RATE_MAX_REQUESTS = 20;
 const DEFAULT_ORIGINS = [
   "https://camilamartinsengenharia.com.br",
   "https://www.camilamartinsengenharia.com.br",
@@ -115,6 +115,18 @@ async function resolveSource(
     if (error) throw new Error("SITE_PDF_QUERY_FAILED");
     if (!data) return null;
 
+    // Cliente logado recebe a cópia com o próprio nome; visitante recebe a amostra pública.
+    let siteClient: { id: string; nome: string | null; email: string | null } | null = null;
+    if (user && !userIsAdmin) {
+      const { data: found } = await admin
+        .from("clientes")
+        .select("id,nome,email")
+        .eq("auth_id", user.id)
+        .limit(1)
+        .maybeSingle();
+      if (found) siteClient = found as typeof siteClient;
+    }
+
     return {
       sourceType: "site",
       sourceRecordId: null,
@@ -123,8 +135,12 @@ async function resolveSource(
       path: data.original_storage_path,
       title: data.title,
       originalSha256: data.original_sha256,
-      clientId: null,
-      licensedTo: buildLicensedTo({ isPublicSample: true }),
+      clientId: siteClient?.id ?? null,
+      licensedTo: userIsAdmin
+        ? "CAMILA MARTINS ENGENHARIA - ADMINISTRADORA"
+        : siteClient
+          ? buildLicensedTo({ isPublicSample: false, fullName: siteClient.nome, email: siteClient.email || user?.email })
+          : buildLicensedTo({ isPublicSample: true }),
       shouldProtect: true,
       downloadAllowed: data.slug === "experiencias"
     };
