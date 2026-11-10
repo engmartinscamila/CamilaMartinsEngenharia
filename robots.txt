@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /portal/
+Disallow: /previews/
 Disallow: /admin.html
 Disallow: /dashboard.html
 Disallow: /clientes.html
@@ -13,6 +14,13 @@ Disallow: /agenda.html
 Disallow: /cronograma.html
 Disallow: /solicitacoes.html
 Disallow: /configuracoes.html
+Disallow: /recibos.html
+Disallow: /materiais-autorais.html
+Disallow: /orcamentos-contratos.html
+Disallow: /documentos-contratuais.html
+Disallow: /arquivo-documental.html
+Disallow: /integridade-sistema.html
+Disallow: /protecao-pdf-admin.html
 Disallow: /portal.html
 Disallow: /meu-projeto.html
 Disallow: /biblioteca-cliente.html
@@ -23,6 +31,3 @@ Disallow: /cronograma-cliente.html
 Disallow: /solicitacoes-cliente.html
 
 Sitemap: https://www.camilamartinsengenharia.com.br/sitemap.xml
-
-Disallow: /recibos.html
-Disallow: /materiais-autorais.html

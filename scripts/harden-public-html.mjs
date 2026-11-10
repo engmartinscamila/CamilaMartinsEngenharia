@@ -65,6 +65,9 @@ for (const name of fs.readdirSync(root).filter(name => name.endsWith('.html'))) 
     if (!/apple-mobile-web-app-capable/i.test(html)) {
       html = injectBefore(html, '</head>', '    <meta name="apple-mobile-web-app-capable" content="yes">\n    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">');
     }
+    if (!/rel=["']apple-touch-icon["']/i.test(html)) {
+      html = injectBefore(html, '</head>', '    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">');
+    }
     if (!html.includes('js/pwa-client.js')) {
       html = injectBefore(html, '</body>', '    <script src="js/pwa-client.js?v=20260903-1"></script>');
     }
