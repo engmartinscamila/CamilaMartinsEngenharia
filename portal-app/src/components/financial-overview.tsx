@@ -1,3 +1,5 @@
+import {groupStatementClients} from '@/lib/financial-grouping';
+import {FinancialProjectGroups} from '@/components/financial-entry-groups';
 import React from 'react';
 import type { useThemeStyles } from '@/providers/theme-provider';
 import { ActivityIndicator, Text, View } from 'react-native';
@@ -49,6 +51,8 @@ export type FinancialReceivablesProps = {
   onContractEdit:(id:string)=>void;
 };
 export function FinancialReceivables({styles,embeddedProjectId,missingContractValues,statementQuery,setStatementQuery,statementFocus,setStatementFocus,statementPage,setStatementPage,expandedStatement,setExpandedStatement,statementRows,contracts,integrityIssues,bankError,loading,coreError,saving,goldColor,perform,openReceipt,receiveEntry,onContractEdit}:FinancialReceivablesProps){
+  const [expandedClients,setExpandedClients]=React.useState<Record<string,boolean>>({});
+  const clientGroups=groupStatementClients(statementRows);
   return (
 <>
         <Text style={styles.sectionTitle}>Extrato de saldo a receber</Text>
@@ -63,12 +67,16 @@ export function FinancialReceivables({styles,embeddedProjectId,missingContractVa
         {embeddedProjectId?<Notice tone="info">Exibindo o contrato completo do projeto selecionado, incluindo recebimentos de seus outros projetos.</Notice>:null}
         {missingContractValues>0?<Notice tone="warning">{missingContractValues} contrato(s) sem valor informado: o saldo completo desses contratos ainda não pode ser calculado. Use “Informar valor contratado” para completar.</Notice>:null}
         <SelectionChips label="Prioridade de cobrança" value={statementFocus} onChange={value=>{setStatementFocus(value);setStatementPage(0);}} items={[{value:'all',label:'Todos'},{value:'overdue',label:'Em atraso'},{value:'unplanned',label:'Sem parcelas'},{value:'credit',label:'Crédito excedente'},{value:'inactive',label:'Inativos'}]} />
-        <Field label="Buscar cliente ou contrato no extrato" value={statementQuery} onChangeText={value=>{setStatementQuery(value);setStatementPage(0);}} />
+        <Field label="Buscar cliente, projeto ou contrato no extrato" value={statementQuery} onChangeText={value=>{setStatementQuery(value);setStatementPage(0);}} />
         <Button title="Exportar resultado filtrado (CSV)" variant="secondary" disabled={Boolean(coreError)||loading} onPress={()=>void perform(()=>exportReceivableCsv(statementRows))} />
         {loading?<ActivityIndicator color={goldColor} />:coreError?<Notice tone="danger">Extrato indisponível. Atualize os dados para conferir os saldos.</Notice>:<>
           <Text style={styles.metricValue}>Saldo a receber: {formatCurrency(receivableOverview(statementRows).total)}</Text>
           <Text style={styles.meta}>Em atraso: {formatCurrency(receivableOverview(statementRows).overdue)} • Saldo sem parcelas: {formatCurrency(receivableOverview(statementRows).unplanned)} • Créditos a conferir: {formatCurrency(receivableOverview(statementRows).credit)}. Indicadores do filtro atual.</Text>
-          {statementRows.length===0?<StateView title="Nenhum contrato ou recebimento neste filtro" description="Confira o cliente selecionado ou registre os serviços avulsos." icon="receipt-outline" />:statementRows.slice(statementPage*25,statementPage*25+25).map(row=><Card key={row.id}>
+          {statementRows.length===0?<StateView title="Nenhum contrato ou recebimento neste filtro" description="Confira o cliente selecionado ou registre os serviços avulsos." icon="receipt-outline" />:clientGroups.slice(statementPage*25,statementPage*25+25).map(client=><Card key={client.id}>
+            <Text style={styles.sectionTitle}>{client.name}</Text>
+            <Text style={styles.meta}>{client.rows.length} contrato(s) / grupo(s) • Saldo a receber: {formatCurrency(receivableOverview(client.rows).total)}</Text>
+            <Button title={expandedClients[client.id]?'Recolher cliente':'Ver contratos e projetos do cliente'} variant="secondary" onPress={()=>setExpandedClients(current=>({...current,[client.id]:!current[client.id]}))} />
+            {expandedClients[client.id]?client.rows.map(row=><Card key={row.id}>
             <Text style={styles.title}>{row.clientName} • {row.contractNumber}</Text>
             {row.overdue>0&&!row.inactive?<Notice tone="warning">Cobrança prioritária: {formatCurrency(row.overdue)} em atraso.</Notice>:null}
             <Text style={styles.meta}>Contratado: {row.contractValue===null?'Não informado':formatCurrency(row.contractValue)}{row.addendumValue?` (inclui ${formatCurrency(row.addendumValue)} de aditivos aceitos)`:''} • Recebido: {formatCurrency(row.received)}</Text>
@@ -80,12 +88,12 @@ export function FinancialReceivables({styles,embeddedProjectId,missingContractVa
             {row.credit>0?<Notice tone="warning">Recebimentos excedem o valor contratado em {formatCurrency(row.credit)}. Confira o contrato e os pagamentos.</Notice>:null}
             {row.inactive?<Notice tone="info">Contrato cancelado ou arquivado: preservado para conferência, fora do total a receber.</Notice>:null}
             <Button title={expandedStatement===row.id?'Recolher parcelas':'Ver parcelas e recebimentos'} variant="secondary" onPress={()=>setExpandedStatement(expandedStatement===row.id?null:row.id)} />
-            {expandedStatement===row.id?(row.entries.length===0?<Text style={styles.meta}>Ainda não há parcelas lançadas para este contrato.</Text>:row.entries.map(entry=><View key={entry.id} style={styles.summary}>
+            {expandedStatement===row.id?(row.entries.length===0?<Text style={styles.meta}>Ainda não há parcelas lançadas para este contrato.</Text>:<FinancialProjectGroups entries={row.entries} styles={styles} renderEntry={entry=><View key={entry.id} style={styles.summary}>
               <View style={{flex:1}}><Text style={styles.title}>{entry.description} • {formatCurrency(entry.amount)}</Text><Text style={styles.meta}>{effectiveStatus(entry)==='atrasado'?'Em atraso':financialStatus(entry.status)==='pago'?'Recebido':'Pendente'} • Vencimento: {formatDate(entry.dueDate)} • Recebimento: {formatDate(entry.paidAt)}</Text>
               {financialStatus(entry.status)==='pago'?<Button title="Emitir / abrir recibo" variant="secondary" onPress={()=>openReceipt(entry.id,entry.projectId)} />:<Button title="Registrar recebimento" variant="secondary" disabled={saving} onPress={()=>receiveEntry(entry)} />}</View>
-            </View>)):null}
-          </Card>)}
-          <View style={styles.rowFields}><Button title="Contratos anteriores" variant="ghost" disabled={statementPage===0} onPress={()=>setStatementPage(value=>value-1)} /><Text style={styles.meta}>Página {statementPage+1} • {statementRows.length} registro(s)</Text><Button title="Próximos contratos" variant="ghost" disabled={(statementPage+1)*25>=statementRows.length} onPress={()=>setStatementPage(value=>value+1)} /></View>
+            </View>} />):null}
+          </Card>):null}</Card>)}
+          <View style={styles.rowFields}><Button title="Clientes anteriores" variant="ghost" disabled={statementPage===0} onPress={()=>setStatementPage(value=>value-1)} /><Text style={styles.meta}>Página {statementPage+1} • {clientGroups.length} cliente(s)</Text><Button title="Próximos clientes" variant="ghost" disabled={(statementPage+1)*25>=clientGroups.length} onPress={()=>setStatementPage(value=>value+1)} /></View>
         </>}
       </>
   );

@@ -43,3 +43,13 @@ export async function reverseReceiptedPayment(financialId:string,reason:string):
 }
 
 export const receiptLabel=(n:number)=>`REC-${String(n).padStart(6,'0')}`;
+
+/** A parcela e o recibo só são confirmados juntos, pelo servidor. */
+export async function receivePaymentWithReceipt(input:{financialId:string;requestId:string;paidOn:string;paymentMethod:string;city:string;expectedAmount:number}):Promise<{receiptId:string|null;error:string|null}>{
+  const result=await supabase.rpc('admin_receive_payment_with_receipt',{
+    p_financial_id:input.financialId,p_request_id:input.requestId,p_paid_on:input.paidOn,
+    p_payment_method:input.paymentMethod.trim(),p_city:input.city.trim(),p_expected_amount:input.expectedAmount,
+  });
+  if(result.error||!result.data?.id)return {receiptId:null,error:result.error?.message||'Não foi possível confirmar o recebimento e o recibo. Atualize antes de tentar novamente.'};
+  return {receiptId:result.data.id,error:null};
+}
