@@ -80,4 +80,8 @@ assert.ok(!pf.includes('CONDIÇÕES ESPECÍFICAS'), 'Sem condições específica
 const esp = await render({ ...base, commercial_terms: { ...base.commercial_terms, specific_clauses: [{ title: 'Acompanhamento do alvará', text: 'Texto acordado.' }] } });
 assert.ok(esp.indexOf('1. Projeto Legal') < esp.indexOf('CONDIÇÕES ESPECÍFICAS DESTE CONTRATO') && esp.indexOf('CONDIÇÕES ESPECÍFICAS DESTE CONTRATO') < esp.indexOf('QUALIFICAÇÃO DAS PARTES'), 'Condições específicas entre o escopo e a qualificação');
 assert.ok(esp.includes('E.1. Acompanhamento do alvará') && esp.includes('prevalecem sobre as cláusulas gerais'), 'Condição específica numerada e com regra de prevalência');
+assert.ok(pf.includes('Nível desta atividade: BRONZE'), 'Por padrão o nível aparece no detalhamento');
+const semNivel = await render({ ...base, commercial_terms: { ...base.commercial_terms, hide_service_level: true } });
+assert.ok(!/bronze|prata|ouro|Nível de (prestação|experiência)|Nível desta/i.test(semNivel), 'Com hide_service_level o contrato não menciona nível');
+assert.ok(semNivel.includes('1. Projeto Legal') && semNivel.includes('Entrega técnica aprovada'), 'Ocultar nível não remove o escopo');
 console.log('PASS: Contrato Mestre v10 com quadro-resumo, parcelas, escopo, condicionais e renumeração.');
