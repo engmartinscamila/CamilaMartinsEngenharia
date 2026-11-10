@@ -204,3 +204,51 @@
   display: block;
   margin: 0 auto 6px;
 }
+
+/* Feedback nos links públicos, com espaço reservado apenas dentro do desenho. */
+.camilinha-acao { position: relative; }
+.camilinha-acao > .camilinha-acao-mascote {
+  position: absolute;
+  inset-inline-end: 8px;
+  bottom: calc(100% - 8px);
+  z-index: 5;
+  visibility: hidden;
+  animation: none;
+}
+.camilinha-acao > .camilinha-acao-mascote[data-state="waving"] {
+  --camilinha-acao-animacao: camilinha-work-4 740ms steps(4, jump-none) both;
+}
+.camilinha-acao > .camilinha-acao-mascote[data-state="review"] {
+  --camilinha-acao-animacao: camilinha-work-6 1.2s steps(6, jump-none) both;
+}
+.camilinha-acao:focus-visible > .camilinha-acao-mascote,
+.camilinha-acao:active > .camilinha-acao-mascote {
+  visibility: visible;
+  animation: var(--camilinha-acao-animacao);
+}
+@media (hover: hover) {
+  .camilinha-acao:hover > .camilinha-acao-mascote {
+    visibility: visible;
+    animation: var(--camilinha-acao-animacao);
+  }
+}
+.float-btn.camilinha-acao > .camilinha-acao-mascote {
+  inset-inline-end: calc(100% + 6px);
+  bottom: 4px;
+}
+.featured-project-card.camilinha-acao > .camilinha-acao-mascote {
+  top: 12px;
+  bottom: auto;
+  inset-inline-end: 12px;
+}
+.contact-card a.camilinha-acao > .camilinha-acao-mascote {
+  inset-inline-end: 14px;
+  bottom: calc(100% - 6px);
+}
+@media (max-width: 760px) {
+  .nav-links .camilinha-acao > .camilinha-acao-mascote {
+    inset-inline-end: 16px;
+    top: 7px;
+    bottom: auto;
+  }
+}
