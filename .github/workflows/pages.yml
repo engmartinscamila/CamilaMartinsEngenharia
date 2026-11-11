@@ -33,7 +33,7 @@ jobs:
           node-version: "22"
 
       - name: Gerar acervo de frases do dia
-        run: node scripts/build-frases-do-dia-v7.mjs
+        run: node scripts/build-frases-do-dia-v8.mjs
 
       # O index.html referencia um MP4 gerado a partir da foto 03 original.
       # Gerar ANTES de site-audit.mjs para a auditoria validar o arquivo real.
@@ -159,7 +159,7 @@ jobs:
           node-version: "22"
 
       - name: Gerar acervo de frases do dia
-        run: node scripts/build-frases-do-dia-v7.mjs
+        run: node scripts/build-frases-do-dia-v8.mjs
 
       - name: Instalar FFmpeg para a publicação da Casa Urben
         run: bash scripts/install-ci-ffmpeg.sh

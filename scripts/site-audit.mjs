@@ -94,13 +94,13 @@ if (!fs.existsSync(frasesPath)) {
     const acervo = JSON.parse(fs.readFileSync(frasesPath, "utf8"));
     const frases = Array.isArray(acervo.frases) ? acervo.frases : [];
     const suspeita = /[_*`<>]|\b(?:n['’]um|n['’]uma|d['’]um|d['’]uma|d['’]elle|d['’]ella|scenas?|polycarpo|yaya|pharmacia|acceitar|ahi)\b/i;
-    if (frases.length < 700) fail(`Frase do dia: esperado acervo amplo com ao menos 700 frases; encontrado ${frases.length}.`);
+    if (frases.length < 90) fail(`Frase do dia: esperado acervo revisado com ao menos 90 frases; encontrado ${frases.length}.`);
     const textos = new Set();
     frases.forEach((item, index) => {
       const texto = String(item?.texto || "").trim();
       if (!texto) fail(`Frase do dia: texto vazio na posição ${index + 1}.`);
       if (suspeita.test(texto)) fail(`Frase do dia: grafia antiga ou marcação indevida na posição ${index + 1}: ${texto}`);
-      if (!texto.endsWith(".")) fail(`Frase do dia: pontuação final ausente na posição ${index + 1}.`);
+      if (!/[.!?]$/.test(texto)) fail(`Frase do dia: pontuação final ausente na posição ${index + 1}.`);
       textos.add(texto.toLocaleLowerCase("pt-BR"));
     });
     if (textos.size !== frases.length) fail("Frase do dia: existem frases duplicadas no acervo.");

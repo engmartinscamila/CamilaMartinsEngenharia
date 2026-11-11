@@ -4,6 +4,7 @@ import { Text, View } from 'react-native';
 
 import { ProjectPicker } from '@/components/project-picker';
 import { CamilinhaActivity, CamilinhaGreeting } from '@/components/camilinha';
+import { DailyQuote } from '@/components/daily-quote';
 import { Button, Card, Notice, PageHeader, Screen, StateView, StatusPill } from '@/components/ui';
 import { formatDate, formatTime } from '@/lib/format';
 import { getDisplayName, getFirstName } from '@/lib/user-name';
@@ -45,6 +46,7 @@ export default function HomeScreen() {
     <Screen>
       <PageHeader eyebrow="Central digital" title={`Olá, ${firstName}.`} description="Veja o que está acontecendo com seu projeto." />
       <CamilinhaGreeting text="Eu sou a Camilinha. Acompanhe aqui as etapas, os documentos e as novidades da sua obra." />
+      <DailyQuote />
       <ProjectPicker />
       {error ? <Notice tone="danger">{error}</Notice> : null}
       {highlightsError ? <Notice tone="warning">{highlightsError}</Notice> : null}

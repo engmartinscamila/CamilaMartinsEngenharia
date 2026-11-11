@@ -6,6 +6,7 @@ import {AdminProjectPicker} from '@/components/admin-project-picker';
 import {Button,Card,Field,Notice,Screen,StateView} from '@/components/ui';
 import {CamilinhaGreeting} from '@/components/camilinha';
 import {AdminDashboardPanel} from '@/components/admin-dashboard';
+import {DailyQuote} from '@/components/daily-quote';
 import {useAuth} from '@/providers/auth-provider';
 import {getDisplayName,getFirstName} from '@/lib/user-name';
 import {useLiveRefresh} from '@/hooks/use-live-refresh';
@@ -65,6 +66,7 @@ export default function AdminWorkspace(){
  },[clients,projects,files,entries,approvals,requests,emailJobs,mode,projectId,project,query]);
  return <Screen><AdminPageHeader title="Visão geral" description="Indicadores, busca, pendências e ficha do cliente ou projeto." />
  {!embedded?<CamilinhaGreeting text={`Bem-vinda, ${adminFirstName}! Aqui estão os indicadores e as pendências de hoje.`} />:null}
+ {!embedded&&mode==='summary'?<DailyQuote />:null}
  {error?<Notice tone="warning">{error} O resumo pode estar incompleto; atualize antes de tomar decisões.</Notice>:null}
  {!embedded?<SelectionChips label="Consultar" value={mode} onChange={value=>{setMode(value);setPage(0);}} items={[{value:'summary',label:'Resumo'},{value:'search',label:'Pesquisar'},{value:'pending',label:'Pendências'},{value:'profile',label:'Ficha do cliente / projeto'}]} />:null}
  {mode==='summary'?<AdminDashboardPanel entries={entries} projects={projects} contracts={contracts} counts={counts} loading={loading} unavailable={Boolean(error)} onOpen={(section,id,extra)=>open(section,id,extra)} onSelectProject={id=>{selectProject(id);}} />:null}

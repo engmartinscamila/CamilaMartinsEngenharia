@@ -36,7 +36,7 @@ jobs:
           node-version: "22"
 
       - name: Gerar e revisar acervo de frases
-        run: node scripts/build-frases-do-dia-v7.mjs
+        run: node scripts/build-frases-do-dia-v8.mjs
 
       # A capa da Casa Urben é gerada a partir da foto 03 original.
       # Precisa existir antes dos testes de referências locais.

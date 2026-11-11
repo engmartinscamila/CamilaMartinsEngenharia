@@ -135,8 +135,9 @@ has(native, 'Recuso esta entrega.', 'Termo Word não contém recusa.');
 for (const key of ['sanitary','masonry','waterproofing','facade','accessibility','fire_safety','dimensions','equipment','safety_risk','no_anomaly']) has(native, key, `Vistoria incompleta: ${key} ausente.`);
 
 const phrases = JSON.parse(read('assets/frases-do-dia.json'));
-assert.ok(Array.isArray(phrases.frases) && phrases.frases.length >= 700, 'Acervo de frases não contém centenas de itens.');
+assert.ok(Array.isArray(phrases.frases) && phrases.frases.length >= 90, 'Acervo revisado de frases ficou pequeno demais.');
 const authors = new Set(phrases.frases.map((item) => item.autor).filter(Boolean));
+assert.ok(phrases.frases.every((item, i, all) => item.autor !== all[(i + 1) % all.length].autor), 'Mesmo autor em dias seguidos.');
 assert.ok(authors.size >= 8, 'Acervo continua sem diversidade de autores.');
 assert.ok(authors.has('Camila Martins'), 'Camila Martins desapareceu do acervo.');
 const phraseKeys = phrases.frases.map((item) => `${String(item.autor).trim()}::${String(item.texto).trim().toLocaleLowerCase('pt-BR')}`);
@@ -144,7 +145,6 @@ assert.equal(new Set(phraseKeys).size, phraseKeys.length, 'Acervo contém duplic
 
 const phraseRuntime = read('js/frase-do-dia.js');
 has(phraseRuntime, 'America/Sao_Paulo', 'Frase do dia não usa America/Sao_Paulo.');
-has(phraseRuntime, 'autoresRecentes', 'Frase do dia não mantém histórico de autores.');
-has(phraseRuntime, 'LIMITE_HISTORICO', 'Frase do dia não evita repetição recente.');
+has(phraseRuntime, 'indiceDoDia(data, acervo.length)', 'Frase do dia precisa seguir a ordem do acervo (sem autor repetido em dias seguidos).');
 
 console.log('Regressão de finalização: OK');
