@@ -7,6 +7,8 @@ const backend=new URL(readFileSync('.github/workflows/pages.yml','utf8').match(/
 const user={id:'00000000-0000-4000-8000-000000000001',aud:'authenticated',role:'authenticated',email:'document-center@example.invalid',app_metadata:{},user_metadata:{},created_at:'2026-01-01T00:00:00Z'};
 const expires=Math.floor(Date.now()/1000)+3600;
 const token=[Buffer.from('{"alg":"HS256","typ":"JWT"}').toString('base64url'),Buffer.from(JSON.stringify({sub:user.id,exp:expires,aud:'authenticated',role:'authenticated'})).toString('base64url'),'SYNTHETIC_NOT_VALID'].join('.');
+// O Financeiro agrupa por cliente e projeto em blocos recolhíveis: expande até exibir as parcelas.
+const expandFinancialGroups=async page=>{const expand=/^(Ver projetos do cliente|Ver contratos e projetos do cliente|Ver parcelas e recebimentos|Ver parcelas do projeto)$/;await page.getByRole('button',{name:/^(Ver projetos do cliente|Ver contratos e projetos do cliente|Ver parcelas e recebimentos|Ver parcelas do projeto|Recolher cliente|Recolher projeto)$/}).locator('visible=true').first().waitFor();for(let i=0;i<20;i++){const next=page.getByRole('button',{name:expand}).locator('visible=true').first();if(!(await next.count()))return;await next.click();}};
 const browser=await chromium.launch({headless:true});
 try{for(const width of [1440,390]){
  const context=await browser.newContext({viewport:{width,height:1000}}),page=await context.newPage(),errors=[],writes=[];
@@ -76,7 +78,7 @@ try{for(const width of [1440,390]){
  assert.equal(await description().inputValue(),'Lançamento não salvo');
  // Separate visits to a receipt must work even within the generic 500 ms button guard.
  await page.evaluate(()=>{const now=Date.now();Date.now=()=>now;});
- await page.getByRole('button',{name:'Emitir / abrir recibo deste recebimento',exact:true}).click();
+ await expandFinancialGroups(page);await page.getByRole('button',{name:'Emitir / abrir recibo deste recebimento',exact:true}).click();
  let receipt=page.locator('iframe:visible').contentFrame().locator('#receiptDescription');
  await receipt.waitFor();await page.waitForFunction(()=>document.querySelector('iframe')?.contentDocument?.getElementById('receiptDescription')?.value==='Parcela recebida sintética');
  assert.equal(await receipt.isDisabled(),true,'Recebimento vinculado não permite alterar o valor-base');
@@ -90,7 +92,7 @@ try{for(const width of [1440,390]){
  await page.getByRole('button',{name:'Recibos',exact:true}).click();
  assert.equal(await receipt.inputValue(),'Recibo avulso não emitido');
  await page.getByRole('button',{name:'Movimentações',exact:true}).click();
- await page.getByRole('button',{name:'Emitir / abrir recibo deste recebimento',exact:true}).click();
+ await expandFinancialGroups(page);await page.getByRole('button',{name:'Emitir / abrir recibo deste recebimento',exact:true}).click();
  await page.getByText('Recibo vinculado ao recebimento selecionado.',{exact:true}).waitFor();
  await page.getByRole('button',{name:'Movimentações',exact:true}).click();
  assert.equal(new URL(page.url()).searchParams.get('financialId'),null,'Vínculo antigo não acompanha outra visão/projeto');
@@ -100,9 +102,9 @@ try{for(const width of [1440,390]){
  await page.getByText('Resumo financeiro',{exact:true}).waitFor();
  await page.getByRole('button',{name:'Abrir extrato a receber',exact:true}).click();
  await page.getByText('Extrato de saldo a receber',{exact:true}).waitFor();
- await page.getByLabel('Buscar cliente ou contrato no extrato',{exact:true}).fill('CT-001');
+ await page.getByLabel('Buscar cliente, projeto ou contrato no extrato',{exact:true}).fill('CT-001');
+ await expandFinancialGroups(page);
  await page.getByText('Cliente Alfa • CT-001',{exact:true}).waitFor();
- await page.getByRole('button',{name:'Ver parcelas e recebimentos',exact:true}).click();
  await page.getByRole('button',{name:'Emitir / abrir recibo',exact:true}).waitFor();
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2),false);
  await page.screenshot({path:`/tmp/receivable-statement-${width}.png`});
