@@ -16,17 +16,45 @@
   }
   async function loadHistory() {
     $('receiptHistoryState').textContent = 'Carregando recibos...';
-    const { data, error } = await supabaseClient.from('payment_receipts').select('*').order('created_at', { ascending: false }).range(offset, offset + 49);
-    if (error) { $('receiptHistoryState').textContent = 'Não foi possível carregar o histórico. Tente atualizar.'; return; }
-    history = data || []; $('receiptHistory').replaceChildren();
-    $('receiptHistoryState').textContent = history.length ? `${offset + 1} a ${offset + history.length} · Clique em Abrir para reimprimir a mesma emissão.` : 'Nenhum recibo nesta página.';
-    for (const row of history) {
-      const entry = document.createElement('div'); entry.className = 'item-lista';
-      const copy = document.createElement('span'); copy.textContent = `REC-${String(row.receipt_number).padStart(6,'0')} · ${row.snapshot.payer_name} · ${money(row.amount)} · ${date(row.paid_on)}${row.reversed_at ? ' · ESTORNADO' : ''}`;
-      const open = document.createElement('button'); open.type = 'button'; open.textContent = 'Abrir recibo'; open.addEventListener('click', () => showReceipt(row)); entry.append(copy, open); $('receiptHistory').append(entry);
+    const all=[];
+    for(let page=0;;page+=500){
+      const {data,error}=await supabaseClient.from('payment_receipts').select('*').order('created_at',{ascending:false}).order('id').range(page,page+499);
+      if(error){$('receiptHistoryState').textContent='Não foi possível carregar todo o histórico. Tente atualizar.';return;}
+      all.push(...(data||[]));
+      if((data||[]).length<500)break;
+      if(all.length>=100000){$('receiptHistoryState').textContent='Histórico muito extenso. Consulte pelo Financeiro.';return;}
     }
-    $('receiptPrevious').disabled = offset === 0; $('receiptNext').disabled = history.length < 50;
+    history=all;
+    const clientsById=new Map();
+    for(const row of history){
+      const key=row.client_id;
+      if(!clientsById.has(key))clientsById.set(key,{name:clients.find(c=>c.id===key)?.nome||row.snapshot.payer_name,rows:[]});
+      clientsById.get(key).rows.push(row);
+    }
+    const groups=[...clientsById.values()].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+    offset=Math.min(offset,Math.max(0,Math.floor((groups.length-1)/25)*25));
+    $('receiptHistory').replaceChildren();
+    $('receiptHistoryState').textContent=groups.length?`${groups.length} cliente(s) · ${history.length} recibo(s). Abra o cliente e depois o projeto.`:'Nenhum recibo emitido.';
+    for(const group of groups.slice(offset,offset+25)){
+      const client=document.createElement('details'),title=document.createElement('summary');
+      client.className='item-lista';client.style.display='block';title.textContent=`${group.name} · ${group.rows.length} recibo(s)`;client.append(title);
+      const projectsById=new Map();
+      for(const row of group.rows){const key=row.project_id||'without-project';if(!projectsById.has(key))projectsById.set(key,{name:row.project_id?(projects.find(p=>p.id===row.project_id)?.nome||row.snapshot.project_name||'Projeto não identificado'):'Serviços sem projeto',rows:[]});projectsById.get(key).rows.push(row);}
+      for(const project of [...projectsById.values()].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'))){
+        const details=document.createElement('details'),summary=document.createElement('summary');
+        details.style.margin='16px';summary.textContent=`${project.name} · ${project.rows.length} recibo(s)`;details.append(summary);
+        for(const row of project.rows){
+          const entry=document.createElement('div');entry.className='item-lista';
+          const copy=document.createElement('span');copy.textContent=`REC-${String(row.receipt_number).padStart(6,'0')} · ${row.snapshot.contract_number||'Sem contrato'} · ${row.description} · ${money(row.amount)} · ${date(row.paid_on)}${row.reversed_at?' · ESTORNADO':''}`;
+          const open=document.createElement('button');open.type='button';open.textContent='Abrir recibo';open.addEventListener('click',()=>showReceipt(row));entry.append(copy,open);details.append(entry);
+        }
+        client.append(details);
+      }
+      $('receiptHistory').append(client);
+    }
+    $('receiptPrevious').disabled=offset===0;$('receiptNext').disabled=offset+25>=groups.length;
   }
+
   async function issue(event) {
     event.preventDefault(); if (busy) return;
     let amount;
@@ -75,7 +103,7 @@
         try{if(window.parent!==window){parentTitle=window.parent.document.title;window.parent.document.title=title;}}catch{}
         try{document.title=title;window.print();}finally{if(parentTitle!==undefined)try{window.parent.document.title=parentTitle;}catch{}}
       }); $('refreshReceipts').addEventListener('click',() => void loadHistory());
-      $('receiptPrevious').addEventListener('click',()=>{offset=Math.max(0,offset-50);void loadHistory();}); $('receiptNext').addEventListener('click',()=>{offset+=50;void loadHistory();});
+      $('receiptPrevious').addEventListener('click',()=>{offset=Math.max(0,offset-25);void loadHistory();}); $('receiptNext').addEventListener('click',()=>{offset+=25;void loadHistory();});
       $('receiptForm').addEventListener('input',()=>{if (!busy) requestId=null;});
       const contextualProject=new URLSearchParams(location.search).get('projectId');
       if(!financialId&&contextualProject){const project=projects.find(item=>String(item.id)===contextualProject);if(project){$('receiptClient').value=project.cliente_id;selectProject();$('receiptProject').value=project.id;}}

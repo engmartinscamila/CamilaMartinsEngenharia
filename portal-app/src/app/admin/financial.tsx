@@ -1,7 +1,9 @@
+import {groupFinancialClients} from '@/lib/financial-grouping';
+import {FinancialProjectGroups} from '@/components/financial-entry-groups';
 import { FinancialSummary, FinancialReceivables } from '@/components/financial-overview';
 import { LegacyFinancialAuditPanel } from '@/components/legacy-financial-audit-panel';
 import { auditLegacyReceivables, type LegacyReceiptReference } from '@/lib/legacy-finance-audit';
-import { listAdminReceiptReferences, listReceiptLocks, receiptLabel, reverseReceiptedPayment, type ReceiptLock } from '@/services/legacy-receipt-service';
+import { receivePaymentWithReceipt, listAdminReceiptReferences, listReceiptLocks, receiptLabel, reverseReceiptedPayment, type ReceiptLock } from '@/services/legacy-receipt-service';
 import { listFinancialOriginReviews,recordFinancialOriginReview,type LegacyOriginReview,type LegacyOriginClassification } from '@/services/financial-origin-review-service';
 import { financeV2HomologationEnabled } from '@/services/finance-v2-service';
 import { useRouter } from 'expo-router';
@@ -13,7 +15,7 @@ import { useUnsavedForm } from '@/hooks/use-unsaved-form';
 import { useNotificationProject } from '@/hooks/use-notification-project';
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
 import React, { useCallback, useMemo, useState, useRef } from 'react';
-import { ActivityIndicator, Linking, Platform, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Modal, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 
 import { AdminClientPicker } from '@/components/admin-client-picker';
@@ -125,6 +127,10 @@ export default function AdminFinancialScreen() {
   const [referenceAccount,setReferenceAccount]=useState<string|null>(null);
   const [localSection,setLocalSection]=useState('summary');
   const [formOpen,setFormOpen]=useState(false);
+  const [receiving,setReceiving]=useState<FinancialEntrySummary|null>(null);
+  const [receiptCity,setReceiptCity]=useState('');
+  const [expandedEntryClients,setExpandedEntryClients]=useState<Record<string,boolean>>({});
+  const receiptRequest=useRef<{fingerprint:string;id:string}|null>(null);
   const [statementQuery,setStatementQuery]=useState('');
   const [statementFocus,setStatementFocus]=useState<ReceivableFocus>('all');
   const [statementPage,setStatementPage]=useState(0);
@@ -155,7 +161,7 @@ export default function AdminFinancialScreen() {
   };
   const { colors } = useAppTheme();
   const styles = useThemeStyles(financialStyleDefinitions);
-  useUnsavedForm(Boolean(description||amount||notes||accountName||timeHours||timeDescription||fiscalDescription||fiscalAmount||contractValue));
+  useUnsavedForm(Boolean(receiving||description||amount||notes||accountName||timeHours||timeDescription||fiscalDescription||fiscalAmount||contractValue));
 
   const selectContext=useCallback((id:string)=>{setEntryLink('project');setSelectedProjectId(id);setFilters(current=>({...current,projectId:id}));setPage(0);},[]);
   useNotificationProject(projects, selectContext);
@@ -221,9 +227,26 @@ export default function AdminFinancialScreen() {
     return null;
   }
   const openReceipt=(id:string,projectId?:string|null)=>{const url='/recibos.html?financialId='+encodeURIComponent(id);if(embedded)embedded.onNavigate('receipts',{financialId:id,...(projectId?{projectId}:{})});else if(Platform.OS==='web')window.location.assign(url);else void Linking.openURL('https://camilamartinsengenharia.com.br'+url);};
-  const receiveEntry=(entry:FinancialEntrySummary)=>{editEntry(entry);setEntryStatus('pago');setPaidAt(financialToday());};
+  const receiveEntry=(entry:FinancialEntrySummary)=>{
+    setReceiving(entry);setPaidAt(financialToday());setPaymentMethod(entry.paymentMethod??'');setError(null);setSuccess(null);receiptRequest.current=null;
+    void supabase.from('configuracoes').select('cidade').limit(1).maybeSingle().then(result=>{if(result.data?.cidade)setReceiptCity(result.data.cidade);});
+  };
+  const confirmReceipt=async()=>{
+    if(!receiving)return;
+    const paidOn=financialDateInput(paidAt);
+    if(!isValidIsoDate(paidOn)||paidOn>financialToday()){setError('Informe uma data de recebimento válida, sem data futura.');return;}
+    if(!paymentMethod.trim()||receiptCity.trim().length<2){setError('Informe a forma de pagamento e a cidade de emissão.');return;}
+    setError(null);setSuccess(null);
+    const fingerprint=JSON.stringify({id:receiving.id,paidOn,paymentMethod:paymentMethod.trim(),city:receiptCity.trim(),amount:receiving.amount});
+    if(receiptRequest.current?.fingerprint!==fingerprint)receiptRequest.current={fingerprint,id:randomUUID()};
+    const result=await receivePaymentWithReceipt({financialId:receiving.id,requestId:receiptRequest.current.id,paidOn,paymentMethod,city:receiptCity,expectedAmount:receiving.amount});
+    if(result.error){setError(result.error);return;}
+    const entry=receiving;setReceiving(null);clearEntry();setFormOpen(false);receiptRequest.current=null;
+    await load();setSuccess('Recebimento confirmado e recibo emitido no histórico.');openReceipt(entry.id,entry.projectId);
+  };
   const totals=useMemo(()=>financialTotals(filteredEntries),[filteredEntries]);
-  const visibleEntries=filteredEntries.slice(page*50,page*50+50);
+  const entryClientGroups=useMemo(()=>groupFinancialClients(filteredEntries),[filteredEntries]);
+  const visibleEntryClients=entryClientGroups.slice(page*25,page*25+25);
   const summaries=useMemo(()=>contracts.filter(contract=>!embedded?.projectId||projects.some(project=>project.id===embedded.projectId&&project.contractId===contract.id)).map(contract=>{
     const linkedProjects=projects.filter(project=>project.contractId===contract.id);
     const ids=new Set(linkedProjects.map(project=>project.id));
@@ -258,7 +281,7 @@ export default function AdminFinancialScreen() {
     if(result.error){setError('A limpeza não foi confirmada. Atualize os dados antes de tentar novamente.');return;}
     setResetReady(false);setResetPhrase('');await load();setSuccess('Lançamentos ativos arquivados. O histórico permanece disponível.');
   };
-  const saveEntry = async (withReceipt=false) => {
+  const saveEntry = async () => {
     setError(null); setSuccess(null);
     const parsed = parseBrazilianCurrency(amount);
     const dateValue=financialDateInput(date),dueValue=financialDateInput(dueDate),paidValue=financialDateInput(paidAt);
@@ -277,6 +300,7 @@ export default function AdminFinancialScreen() {
     if(entryStatus==='pago'&&(paidValue||dateValue)>financialToday())invalid.paidAt='A data efetiva de pagamento não pode estar no futuro.';
     setEntryErrors(invalid);
     if(Object.keys(invalid).length||parsed===null){setError(Object.values(invalid).join(' '));return;}
+    if(editing&&type==='entrada'&&entryStatus==='pago'&&financialStatus(editing.status)!=='pago'){receiveEntry(editing);setPaidAt(paidValue||dateValue);setPaymentMethod(paymentMethod);return;}
     setSaving(true);
     const fingerprint=JSON.stringify({projectId,clientId,contractId,description,type,parsed,date,notes,category,entryStatus,dueDate,accountId,paidAt,paymentMethod});
     if(requestFingerprint.current!==fingerprint){requestId.current=null;requestFingerprint.current=fingerprint;}
@@ -285,7 +309,7 @@ export default function AdminFinancialScreen() {
     const result=editing ? await updateAdminFinancialEntry(editing.id,input) : await createAdminFinancialEntry(input);
     setSaving(false);
     if (result) setError(result);
-    else { const receiptEntry=withReceipt&&editing&&type==='entrada'&&entryStatus==='pago'?editing:null; clearEntry(); setFormOpen(false); setSuccess('Lançamento administrativo confirmado.'); await load(); if(receiptEntry)openReceipt(receiptEntry.id,receiptEntry.projectId); }
+    else { clearEntry(); setFormOpen(false); setSuccess('Lançamento administrativo confirmado.'); await load(); }
   };
 
   const saveAccount = async () => {
@@ -361,6 +385,20 @@ export default function AdminFinancialScreen() {
       {error ? <Notice tone="danger">{error}</Notice> : null}
       {success ? <Notice tone="success">{success}</Notice> : null}
       {loading ? <ActivityIndicator color={colors.gold600} /> : null}
+      {receiving?<Modal visible transparent animationType="fade" onRequestClose={()=>{if(!saving)setReceiving(null);}}>
+        <ScrollView contentContainerStyle={{flexGrow:1,justifyContent:'center',alignItems:'center',padding:20,backgroundColor:'rgba(0,0,0,0.55)'}} keyboardShouldPersistTaps="handled">
+        <Card style={{width:'100%',maxWidth:640}}>
+        {error?<Notice tone="danger">{error}</Notice>:null}
+        <Text style={styles.sectionTitle}>Confirmar recebimento e emitir recibo</Text>
+        <Text style={styles.title}>{receiving.clientName} • {receiving.projectName}</Text>
+        <Text style={styles.meta}>{receiving.description} • {formatCurrency(receiving.amount)}</Text>
+        <DateField label="Data efetiva do recebimento" value={paidAt} onChange={setPaidAt} />
+        <Field label="Forma de pagamento" value={paymentMethod} onChangeText={setPaymentMethod} />
+        <Field label="Cidade de emissão do recibo" value={receiptCity} onChangeText={setReceiptCity} />
+        <Text style={styles.meta}>A confirmação quita esta parcela e preserva o recibo no histórico. Se a emissão falhar, a parcela continua pendente.</Text>
+        <Button title="Confirmar recebimento e gerar recibo" loading={saving} onPress={()=>void perform(confirmReceipt)} />
+        <Button title="Cancelar recebimento" variant="ghost" disabled={saving} onPress={()=>{setReceiving(null);setError(null);}} />
+      </Card></ScrollView></Modal>:null}
       {!embedded ? <SelectionChips label="Área financeira" value={section} onChange={value=>{setSection(value);setError(null);setSuccess(null);}}
         items={[{value:'summary',label:'Resumo'},{value:'receivables',label:'A receber'},{value:'entries',label:'Movimentações'},{value:'accounts',label:'Contas e OFX'},{value:'hours',label:'Horas e margem'},{value:'history',label:'Histórico e exportações'},{value:'fiscal',label:'Rascunhos fiscais'}]} /> : null}
       {!embedded ? <Button title="Emissão de recibos — Word e PDF" variant="secondary" onPress={()=>{if(Platform.OS==='web')window.location.assign('/recibos.html');else void Linking.openURL('https://camilamartinsengenharia.com.br/recibos.html');}} /> : null}
@@ -413,14 +451,18 @@ export default function AdminFinancialScreen() {
         <Field label="Forma de pagamento" value={paymentMethod} onChangeText={value=>{setPaymentMethod(value);requestId.current=null;}} />
         <Button title="Sem conta vinculada" variant="ghost" onPress={()=>{setAccountId(null);requestId.current=null;}} />
         <Field label="Observações (opcional)" multiline onChangeText={value=>{setNotes(value);requestId.current=null;}} value={notes} />
-        {editing&&type==='entrada'&&entryStatus==='pago'?<Button loading={saving} title="Confirmar recebimento e emitir recibo" variant="secondary" onPress={()=>void perform(()=>saveEntry(true))} />:null}
+
         <Button loading={saving} onPress={() => void perform(saveEntry)} title={editing?"Confirmar alterações":"Registrar no extrato administrativo"} />
         <Button title="Cancelar edição / limpar formulário" variant="ghost" onPress={()=>{clearEntry();setFormOpen(false);}} />
       </Card>:null}
       <Text style={styles.sectionTitle}>Lançamentos atuais • {filteredEntries.length} resultado(s)</Text>
       <Button title="Exportar CSV do filtro" variant="secondary" disabled={Boolean(coreError)} onPress={()=>void perform(()=>exportFinancialCsv(filteredEntries))} />
-      {visibleEntries.length===0?<StateView title="Nenhum lançamento neste filtro" description="Ajuste os filtros ou registre um lançamento." icon="receipt-outline" />:null}
-      {visibleEntries.map(entry=>{const lock=receiptLocks[entry.id];return <Card key={entry.id}><Text style={styles.title}>{entry.description}</Text><Text style={styles.meta}>{entry.clientName} • {entry.contractNumber} • {entry.projectName}</Text>
+      {visibleEntryClients.length===0?<StateView title="Nenhum lançamento neste filtro" description="Ajuste os filtros ou registre um lançamento." icon="receipt-outline" />:null}
+      {visibleEntryClients.map(client=><Card key={client.id}>
+        <Text style={styles.sectionTitle}>{client.name}</Text>
+        <Text style={styles.meta}>{client.entries.length} lançamento(s) • Recebido {formatCurrency(financialTotals(client.entries).received)} • A receber {formatCurrency(financialTotals(client.entries).receivable)}</Text>
+        <Button title={expandedEntryClients[client.id]?'Recolher cliente':'Ver projetos do cliente'} variant="secondary" onPress={()=>setExpandedEntryClients(current=>({...current,[client.id]:!current[client.id]}))} />
+        {expandedEntryClients[client.id]?<FinancialProjectGroups entries={client.entries} styles={styles} renderEntry={entry=>{const lock=receiptLocks[entry.id];return <Card key={entry.id}><Text style={styles.title}>{entry.description}</Text><Text style={styles.meta}>{entry.clientName} • {entry.contractNumber} • {entry.projectName}</Text>
         <Text style={styles.meta}>{entry.type==='saida'?'Saída':'Entrada'} • {formatCurrency(entry.amount)} • {effectiveStatus(entry)} • {categoryLabel(entry.category)} • {formatDate(entryDate(entry))}</Text>
         <Text style={styles.meta}>{entry.notes}</Text>
         {entry.type==='entrada'&&financialStatus(entry.status)==='pago'?<Button debounceMs={0} title="Emitir / abrir recibo deste recebimento" variant="secondary" onPress={()=>openReceipt(entry.id,entry.projectId)} />:null}
@@ -431,8 +473,8 @@ export default function AdminFinancialScreen() {
             :`Recibo ${receiptLabel(lock.receiptNumber)} emitido. Valor, data, cliente, projeto e descrição ficam bloqueados para manter o recibo válido. Para corrigir, estorne e registre o lançamento correto.`}</Notice>
           {!lock.reversedAt&&!entry.bankTransactionId?<View style={styles.rowFields}><Button title="Editar observações e categoria" variant="secondary" disabled={saving} onPress={()=>editEntry(entry)} /><Button title="Estornar recebimento" variant="ghost" disabled={saving} onPress={()=>{setReverseTarget(entry);setReverseReason('');}} /></View>:null}
         </>:entry.bankTransactionId?<Notice tone="info">Lançamento conciliado. O vínculo bancário foi preservado.</Notice>:receiptLockError&&entry.type==='entrada'&&financialStatus(entry.status)==='pago'?<Notice tone="warning">{receiptLockError}</Notice>:<View style={styles.rowFields}><Button title="Editar lançamento" variant="secondary" disabled={saving} onPress={()=>editEntry(entry)} /><Button title="Excluir dos ativos" variant="ghost" disabled={saving} onPress={()=>setDeleteTarget(entry)} /></View>}
-      </Card>;})}
-      <View style={styles.rowFields}><Button title="Página anterior" disabled={page===0} variant="ghost" onPress={()=>setPage(value=>value-1)} /><Text style={styles.meta}>Página {page+1}</Text><Button title="Próxima página" disabled={(page+1)*50>=filteredEntries.length} variant="ghost" onPress={()=>setPage(value=>value+1)} /></View>
+      </Card>;}} />:null}</Card>)}
+      <View style={styles.rowFields}><Button title="Página anterior" disabled={page===0} variant="ghost" onPress={()=>setPage(value=>value-1)} /><Text style={styles.meta}>Página {page+1}</Text><Button title="Próxima página" disabled={(page+1)*25>=entryClientGroups.length} variant="ghost" onPress={()=>setPage(value=>value+1)} /></View>
       {reverseTarget?<Card><Notice tone="warning">Estornar “{reverseTarget.description}” ({formatCurrency(reverseTarget.amount)})? O recibo {receiptLabel(receiptLocks[reverseTarget.id]?.receiptNumber??0)} continua preservado e será marcado como estornado. Um lançamento de saída equivalente entra no extrato hoje.</Notice>
         <Field label="Motivo do estorno *" value={reverseReason} onChangeText={setReverseReason} />
         <Button title="Confirmar estorno" loading={saving} disabled={reverseReason.trim().length<5} onPress={()=>void perform(reverseEntry)} /><Button title="Cancelar estorno" variant="ghost" onPress={()=>setReverseTarget(null)} /></Card>:null}

@@ -68,7 +68,7 @@ export function csvCell(value:unknown) {
 
 
 export interface ReceivableStatement {
-  id: string; clientName: string; contractNumber: string; contractValue: number | null; addendumValue?: number;
+  id: string; clientId?: string | null; clientName: string; contractNumber: string; contractValue: number | null; addendumValue?: number;
   received: number; pending: number; remaining: number | null; unscheduled: number | null;
   overdue: number; credit: number; entries: FinancialEntrySummary[]; inactive: boolean;
 }
@@ -85,7 +85,7 @@ export function receivableStatements(contracts:AdminContractSummary[], projects:
     const totals=financialTotals(linked), value=contract.contractValue===null?null:(Math.round(contract.contractValue*100)+Math.round(addendum*100))/100;
     const balance=value===null?null:(Math.round(value*100)-Math.round(totals.received*100))/100;
     const inactive=['cancelled','archived','cancelado','arquivado'].includes(contract.status);
-    return {id:contract.id,clientName:contract.clientName,contractNumber:contract.contractNumber,contractValue:value,addendumValue:addendum,
+    return {id:contract.id,clientId:contract.clientId,clientName:contract.clientName,contractNumber:contract.contractNumber,contractValue:value,addendumValue:addendum,
       received:totals.received,pending:totals.receivable,remaining:balance===null?null:Math.max(0,balance),
       unscheduled:balance===null?null:Math.max(0,(Math.round(balance*100)-Math.round(totals.receivable*100))/100),
       overdue:financialTotals(linked.filter(entry=>effectiveStatus(entry)==='atrasado')).receivable,
@@ -101,7 +101,7 @@ export function receivableStatements(contracts:AdminContractSummary[], projects:
   }
   for(const [id,linked] of standalone){
     const totals=financialTotals(linked),first=linked[0]!;
-    rows.push({id,clientName:clients.find(client=>client.id===id)?.name||first.clientName,
+    rows.push({id,clientId:first.clientId|| (first.projectId?projectMap.get(first.projectId)?.clientId:null),clientName:clients.find(client=>client.id===id)?.name||first.clientName,
       contractNumber:id.startsWith('unavailable:')?'Contrato fora da listagem':'Serviços sem contrato',contractValue:null,
       received:totals.received,pending:totals.receivable,remaining:null,unscheduled:null,
       overdue:financialTotals(linked.filter(entry=>effectiveStatus(entry)==='atrasado')).receivable,credit:0,entries:linked,inactive:false});

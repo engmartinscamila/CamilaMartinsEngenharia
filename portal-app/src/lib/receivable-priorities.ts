@@ -21,7 +21,7 @@ export function receivableOverview(rows:ReceivableStatement[]){
 export function prioritizeReceivables(rows:ReceivableStatement[],focus:ReceivableFocus='all',query=''){
   const term=normalize(query);
   return rows.filter(row=>{
-    if(term&&!normalize(row.clientName+' '+row.contractNumber).includes(term))return false;
+    if(term&&!normalize(row.clientName+' '+row.contractNumber+' '+row.entries.map(entry=>entry.projectName).join(' ')).includes(term))return false;
     if(focus==='inactive')return row.inactive;
     if(row.inactive)return focus==='all';
     if(focus==='overdue')return cents(row.overdue)>0;
