@@ -47,6 +47,8 @@
   function prepararBotoes() {
     document.querySelectorAll('a[href]').forEach((link) => {
       if (link.classList.contains('camilinha-orcamento')) return;
+      // Menu superior: a mascote cobriria os nomes dos itens, então não aparece ali.
+      if (link.closest('.site-header, .gallery-site-header, .nav-links')) return;
       const url = new URL(link.getAttribute('href'), document.baseURI);
       const pagina = url.pathname.split('/').filter(Boolean).pop() || '';
       const social = ['wa.me', 'api.whatsapp.com', 'www.whatsapp.com',

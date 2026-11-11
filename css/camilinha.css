@@ -52,9 +52,14 @@
   inset-inline-end: 0;
   bottom: calc(100% - 4px);
 }
+/* Os cards de contato cortam o que passa da borda (overflow: hidden),
+   então a mascote fica inteira dentro da caixa, à direita e centralizada. */
 .contact-card a.camilinha-orcamento::after {
   inset-inline-end: 14px;
-  bottom: calc(100% - 6px);
+  top: 50%;
+  bottom: auto;
+  width: 40px;
+  transform: translateY(-50%);
 }
 
 /* Carregando a galeria: trabalho em andamento, linha 7. */
@@ -243,12 +248,9 @@
 }
 .contact-card a.camilinha-acao > .camilinha-acao-mascote {
   inset-inline-end: 14px;
-  bottom: calc(100% - 6px);
+  top: 50%;
+  bottom: auto;
+  --camilinha-size: 40px;
+  transform: translateY(-50%);
 }
-@media (max-width: 760px) {
-  .nav-links .camilinha-acao > .camilinha-acao-mascote {
-    inset-inline-end: 16px;
-    top: 7px;
-    bottom: auto;
-  }
-}
+/* Menu superior não recebe a mascote (ver camilinha-work.js). */
