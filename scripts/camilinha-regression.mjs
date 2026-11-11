@@ -21,9 +21,9 @@ for (const asset of ['aceno.webp', 'planta.webp']) {
   assert.ok(statSync(path).size > 100, asset + ' precisa estar presente');
 }
 
-assert.match(index, /class="btn primary camilinha-orcamento"/, 'CTA principal preservada');
-assert.match(index, /class="camilinha-orcamento" href="https:\/\/wa\.me\//, 'CTA de contato preservada');
-assert.match(gallery, /gallery-budget camilinha-orcamento/, 'CTA da galeria');
+assert.doesNotMatch(index + gallery, /camilinha-orcamento/, 'Botões públicos sem mascote');
+assert.doesNotMatch(workJs + css, /camilinha-acao|camilinha-orcamento/, 'Links públicos sem mascote');
+assert.match(gallery, /camilinha-indicador/, 'Galeria mantém mascote no carregamento');
 assert.match(galleryJs, /}, 500\);/, 'Galeria usa atraso de 500 ms');
 assert.match(index, /camilinha-3d-carregando/, 'Maquete 3D usa animação de espera');
 assert.match(index, /requestId !== openRequestId/, 'Carregamentos obsoletos descartados');

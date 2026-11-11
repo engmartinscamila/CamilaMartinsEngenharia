@@ -1,5 +1,6 @@
 /* API discreta da mascote Camilinha. Estados originais recuperados do ChatGPT Work.
-   Nunca inicia animações sozinho; apenas quando chamado por uma ação da interface. */
+   Nunca inicia animações sozinho. No site público só aparece em carregamentos;
+   nos portais do cliente e do admin, nos estados internos. */
 (() => {
   'use strict';
   const estados = Object.freeze([
@@ -43,40 +44,6 @@
     return elemento;
   }
 
-
-  function prepararBotoes() {
-    document.querySelectorAll('a[href]').forEach((link) => {
-      if (link.classList.contains('camilinha-orcamento')) return;
-      const url = new URL(link.getAttribute('href'), document.baseURI);
-      const pagina = url.pathname.split('/').filter(Boolean).pop() || '';
-      const social = ['wa.me', 'api.whatsapp.com', 'www.whatsapp.com',
-        'instagram.com', 'www.instagram.com'].includes(url.hostname);
-      const email = url.protocol === 'mailto:';
-      const interno = url.origin === window.location.origin;
-      const projetos = interno && (url.hash === '#projetos-destaque' ||
-        pagina === 'galeria-projetos.html');
-      const portfolio = interno && pagina === 'pdf-protegido.html' &&
-        url.searchParams.get('slug') === 'portfolio';
-      const cliente = interno && (pagina === 'login.html' ||
-        url.pathname.endsWith('/portal/') || url.pathname.endsWith('/portal'));
-      if (!social && !email && !projetos && !portfolio && !cliente) return;
-
-      const estado = projetos || portfolio ? 'review' : 'waving';
-      const mascote = criar(estado, 36);
-      mascote.classList.add('camilinha-acao-mascote');
-      mascote.removeAttribute('role');
-      mascote.removeAttribute('aria-label');
-      mascote.setAttribute('aria-hidden', 'true');
-      link.classList.add('camilinha-acao');
-      link.appendChild(mascote);
-    });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', prepararBotoes, { once: true });
-  } else {
-    prepararBotoes();
-  }
 
   window.CamilinhaWork = Object.freeze({
     estados,
