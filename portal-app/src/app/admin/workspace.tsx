@@ -4,6 +4,9 @@ import {useLocalSearchParams,useRouter,type Href} from 'expo-router';
 import {AdminPageHeader,SelectionChips} from '@/components/admin-ui';
 import {AdminProjectPicker} from '@/components/admin-project-picker';
 import {Button,Card,Field,Notice,Screen,StateView} from '@/components/ui';
+import {CamilinhaGreeting} from '@/components/camilinha';
+import {useAuth} from '@/providers/auth-provider';
+import {getDisplayName,getFirstName} from '@/lib/user-name';
 import {useLiveRefresh} from '@/hooks/use-live-refresh';
 import {useNotificationProject} from '@/hooks/use-notification-project';
 import {useAdminModule,useAdminProjectSelection} from '@/providers/admin-module-context';
@@ -20,6 +23,7 @@ type Result={id:string;label:string;detail:string;section:string;projectId?:stri
 const text=(value:unknown)=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
 export default function AdminWorkspace(){
  const embedded=useAdminModule(),router=useRouter(),params=useLocalSearchParams<{projectId?:string;clientId?:string;mode?:string}>();
+ const {user}=useAuth(),adminFirstName=getFirstName(getDisplayName(user,null,'Camila'));
  const [clients,setClients]=useState<AdminClientSummary[]>([]),[contracts,setContracts]=useState<AdminContractSummary[]>([]),[projects,setProjects]=useState<AdminProjectSummary[]>([]),[files,setFiles]=useState<AdminContentSummary[]>([]),[entries,setEntries]=useState<FinancialEntrySummary[]>([]),[approvals,setApprovals]=useState<ApprovalSummary[]>([]),[requests,setRequests]=useState<AdminRequestSummary[]>([]);
  const [counts,setCounts]=useState<DashboardCounts>({activeClients:null,activeProjects:null,openRequests:null,pendingApprovals:null});
  const [emailJobs,setEmailJobs]=useState<{id:string;client_id:string;kind:string;status:string;last_error:string|null}[]>([]);
@@ -59,6 +63,7 @@ export default function AdminWorkspace(){
   return rows.filter(r=>(!projectId||r.projectId===projectId||r.id==='client:'+project?.clientId||((r.id.startsWith('email:')||r.id.startsWith('missing-access:'))&&r.clientId===project?.clientId))&&text(r.label+' '+r.detail).includes(text(query)));
  },[clients,projects,files,entries,approvals,requests,emailJobs,mode,projectId,project,query]);
  return <Screen><AdminPageHeader title="Visão geral" description="Indicadores, busca, pendências e ficha do cliente ou projeto." />
+ {!embedded?<CamilinhaGreeting text={`Olá, ${adminFirstName}! Aqui estão as pendências e os indicadores de hoje.`} />:null}
  {error?<Notice tone="warning">{error} O resumo pode estar incompleto; atualize antes de tomar decisões.</Notice>:null}
  {!embedded?<SelectionChips label="Consultar" value={mode} onChange={value=>{setMode(value);setPage(0);}} items={[{value:'summary',label:'Resumo'},{value:'search',label:'Pesquisar'},{value:'pending',label:'Pendências'},{value:'profile',label:'Ficha do cliente / projeto'}]} />:null}
  {mode==='summary'?<View style={styles.metrics}>{([

@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
-import { CamilinhaActivity } from '@/components/camilinha';
+import { CamilinhaActivity, CamilinhaSprite } from '@/components/camilinha';
 import { layout, radius, shadow, spacing, ThemeColors, typography } from '@/theme/tokens';
 
 const ScreenTopInsetContext = React.createContext(true);
@@ -169,8 +169,9 @@ export function Notice({
 }) {
   const styles = useThemeStyles(styleDefinitions);
   return (
-    <View style={[styles.notice, styles[`notice_${tone}`]]} accessibilityRole="alert">
-      <Text style={[styles.noticeText, styles[`noticeText_${tone}`]]}>{children}</Text>
+    <View style={[styles.notice, styles[`notice_${tone}`], (tone === 'success' || tone === 'danger') && styles.noticeWithMascot]} accessibilityRole="alert">
+      {tone === 'success' ? <CamilinhaSprite state="jumping" size={30} /> : tone === 'danger' ? <CamilinhaSprite state="failed" size={30} /> : null}
+      <Text style={[styles.noticeText, styles[`noticeText_${tone}`], (tone === 'success' || tone === 'danger') && styles.noticeTextFlex]}>{children}</Text>
     </View>
   );
 }
@@ -192,8 +193,9 @@ export function StateView({
   const styles = useThemeStyles(styleDefinitions);
   return (
     <View style={styles.state}>
-      <View style={styles.stateIcon}>
-        <Ionicons color={colors.gold600} name={icon} size={24} />
+      <View style={styles.stateMascot}>
+        <CamilinhaSprite state="idle" size={52} />
+        <View style={styles.stateBadge}><Ionicons color={colors.gold600} name={icon} size={14} /></View>
       </View>
       <Text style={styles.stateTitle}>{title}</Text>
       <Text style={styles.stateDescription}>{description}</Text>
@@ -324,12 +326,16 @@ const styleDefinitions = (colors: ThemeColors) => ({
   notice_warning: { backgroundColor: colors.warningSoft, borderColor: colors.warning },
   notice_danger: { backgroundColor: colors.dangerSoft, borderColor: colors.danger },
   noticeText: { fontSize: 13, lineHeight: 19, fontFamily: typography.family },
+  noticeWithMascot: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  noticeTextFlex: { flex: 1, minWidth: 0 },
   noticeText_info: { color: colors.info },
   noticeText_success: { color: colors.success },
   noticeText_warning: { color: colors.warning },
   noticeText_danger: { color: colors.danger },
   state: { alignItems: 'center', padding: spacing.lg, gap: spacing.sm },
   stateIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.warningSoft, alignItems: 'center', justifyContent: 'center' },
+  stateMascot: { position: 'relative' },
+  stateBadge: { position: 'absolute', right: -8, bottom: -2, width: 24, height: 24, borderRadius: 12, backgroundColor: colors.warningSoft, alignItems: 'center', justifyContent: 'center' },
   stateTitle: { color: colors.ink, fontSize: typography.size.bodyLarge, fontWeight: '700', textAlign: 'center', fontFamily: typography.family },
   stateDescription: { color: colors.slate, fontSize: typography.size.body, lineHeight: 22, textAlign: 'center', maxWidth: 520, fontFamily: typography.family },
   loader: { flex: 1, backgroundColor: colors.navy900, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
