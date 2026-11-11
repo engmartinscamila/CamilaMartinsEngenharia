@@ -14,6 +14,7 @@ const mock=`window.__PRINTED__=false;window.print=()=>{window.__PRINTED__=true;w
 const clients=[{id:'client',nome:'Cliente de validação'}],projects=[{id:'project',cliente_id:'client',nome:'Projeto de validação',numero_contrato:'TESTE'}];
 window.dbBuscarClientes=async()=>clients;window.dbBuscarProjetos=async()=>projects;window.dbBuscarConfiguracoes=async()=>({notificacoes:true});
 window.supabaseClient={auth:{getUser:async()=>({data:{user:{id:'admin'}}})},rpc:async(name,args)=>{if(name==='is_portal_admin')return{data:true};window.__RECEIPT_PAYLOAD__=args.p_data;const row={id:'receipt',receipt_number:17,amount:args.p_data.amount,paid_on:args.p_data.paid_on,payment_method:args.p_data.payment_method,description:args.p_data.description,created_at:'2026-10-29T01:00:00Z',snapshot:{issuer:{name:'Profissional de validação',document:'Documento de teste',title:'Engenheira Civil'},payer_name:clients[0].nome,project_name:args.p_data.project_id?projects[0].nome:null,contract_number:'TESTE',city:args.p_data.city}};localStorage.setItem('qa-receipt',JSON.stringify(row));return{data:row}},from:table=>{const q={select:()=>q,eq:()=>q,order:()=>q,limit:()=>q,range:()=>q,maybeSingle:async()=>({data:table==='financeiro'?{id:'paid',cliente_id:'client',projeto_id:null,descricao:'Recebimento existente',valor:1234.56,tipo:'entrada',status:'pago',data_pagamento:'2026-10-28',forma_pagamento:'Pix'}:table==='payment_receipts'?JSON.parse(localStorage.getItem('qa-receipt')||'null'):{cidade:'São Paulo'}}),then:resolve=>resolve({data:JSON.parse(localStorage.getItem('qa-receipt')||'null')?[JSON.parse(localStorage.getItem('qa-receipt'))]:[],error:null})};return q}};`;
+const openHistory=async page=>{await page.locator('#receiptHistory details').first().waitFor({state:'attached'});for(const summary of await page.locator('#receiptHistory details > summary').all())if(!(await summary.evaluate(el=>el.parentElement.open)))await summary.click();};
 const browser=await chromium.launch({headless:true});
 try{
  for(const width of [1440,390]){
@@ -22,7 +23,7 @@ try{
   await page.goto('http://127.0.0.1:4175/recibos.html');await page.locator('#newStandaloneReceipt').click();await page.locator('#receiptClient').selectOption('client');if(width===1440)await page.locator('#receiptProject').selectOption('project');await page.locator('#receiptAmount').fill('1.234,56');await page.locator('#receiptDate').fill('2026-10-28');await page.locator('#receiptDescription').fill('Parcela de serviço conferida para teste local');await page.locator('#receiptConfirmed').check();await page.locator('#issueReceipt').click();
   await page.getByText('Recibo emitido e preservado no histórico.',{exact:false}).waitFor();assert.match(await page.locator('#receiptPaper').innerText(),/REC-000017\/2026/);assert.equal(await page.evaluate(()=>window.__RECEIPT_PAYLOAD__.project_id),width===1440?'project':null);if(width===390)assert.match(await page.locator('#receiptPaper').innerText(),/Serviço sem projeto/);await page.locator('#printReceipt').click();assert.equal(await page.evaluate(()=>window.__PRINTED__),true);assert.equal(await page.evaluate(()=>window.__PRINT_TITLE__),'Recibo-TESTE-REC-000017-2026');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false,`${width}px must not overflow`);
-  await page.reload();await page.getByRole('button',{name:'Abrir recibo',exact:true}).click();assert.match(await page.locator('#receiptPaper').innerText(),/1.234,56/);
+  await page.reload();await openHistory(page);await page.getByRole('button',{name:'Abrir recibo',exact:true}).click();assert.match(await page.locator('#receiptPaper').innerText(),/1.234,56/);
   assert.deepEqual(errors,[]);
   const downloaded = page.waitForEvent('download'); await page.locator('#wordReceipt').click(); const file = await downloaded;
   assert.equal(file.suggestedFilename(),'Recibo-TESTE-REC-000017-2026.docx'); const docxPath=path.join(qaDir,'receipt-qa.docx'); await file.saveAs(docxPath);
@@ -45,7 +46,7 @@ with zipfile.ZipFile(sys.argv[1]) as z:
   await page.goto('http://127.0.0.1:4175/recibos.html?financialId=paid');
   await page.getByText('posteriormente estornado',{exact:false}).waitFor();
   assert.match(await page.locator('#receiptPaper').innerText(),/RECIBO ESTORNADO em 02\/11\/2026 — motivo: Valor lançado em duplicidade/);
-  assert.match(await page.locator('#receiptHistory').innerText(),/ESTORNADO/);
+  await openHistory(page);assert.match(await page.locator('#receiptHistory').innerText(),/ESTORNADO/);
   const reversedDownload=page.waitForEvent('download');await page.locator('#wordReceipt').click();const reversedFile=await reversedDownload;
   assert.equal(reversedFile.suggestedFilename(),'Recibo-TESTE-REC-000017-2026-ESTORNADO.docx');const reversedPath=path.join(qaDir,'receipt-reversed.docx');await reversedFile.saveAs(reversedPath);
   execFileSync(process.env.CODEX_PRIMARY_RUNTIME_PYTHON || 'python3',['-c',`import sys,zipfile
