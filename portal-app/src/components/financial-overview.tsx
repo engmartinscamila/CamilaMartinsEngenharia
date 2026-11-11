@@ -59,30 +59,25 @@ export type FinancialReceivablesProps = {
 export function FinancialReceivables({styles,embeddedProjectId,missingContractValues,statementQuery,setStatementQuery,statementFocus,setStatementFocus,statementPage,setStatementPage,expandedStatement,setExpandedStatement,statementRows,contracts,integrityIssues,bankError,loading,coreError,saving,goldColor,perform,openReceipt,receiveEntry,onContractEdit}:FinancialReceivablesProps){
   const [expandedClients,setExpandedClients]=React.useState<Record<string,boolean>>({});
   const clientGroups=groupStatementClients(statementRows);
+  // Com um único cliente (ex.: projeto filtrado), já abre contratos e parcelas, sem cliques extras.
+  const single=clientGroups.length===1;
+  const clientOpen=(id:string)=>expandedClients[id]??single;
+  const rowOpen=(id:string,rows:number)=>expandedStatement===id||(single&&rows===1&&expandedStatement===null);
   return (
 <>
-        <Text style={styles.sectionTitle}>Extrato de saldo a receber</Text>
-        {!loading&&!coreError?<Card>
-          <Text style={styles.title}>Conferência automática de integridade</Text>
-          {bankError?<Notice tone="warning">Os dados bancários não foram carregados integralmente; esta conferência não valida a conciliação de contas.</Notice>:null}
-          {integrityIssues.length?<Notice tone="warning">{integrityIssues.length} ponto(s) para conferir no financeiro. Este aviso não altera lançamentos nem confirma perda de saldo.</Notice>:<Text style={styles.meta}>{bankError?'Nenhuma divergência nos dados carregados; validação incompleta.':'Nenhuma divergência nas verificações básicas. A conciliação completa depende de extrato bancário e comprovantes.'}</Text>}
-          {integrityIssues.slice(0,5).map((issue,index)=><Text key={issue.code+'-'+(issue.entryId??'')+'-'+index} style={styles.meta}>• {issue.message}</Text>)}
-          {integrityIssues.length>5?<Text style={styles.meta}>Há mais {integrityIssues.length-5} ocorrência(s); exporte e confira os lançamentos antes de regularizar.</Text>:null}
-        </Card>:null}
-        <Text style={styles.meta}>Saldo restante = valor contratado menos recebimentos. Parcelas pendentes fazem parte desse saldo. Serviços sem contrato usam os lançamentos pendentes. Valores de contratos cancelados ou arquivados ficam fora do total.</Text>
+        <Text style={styles.sectionTitle}>Extrato a receber por contrato</Text>
         {embeddedProjectId?<Notice tone="info">Exibindo o contrato completo do projeto selecionado, incluindo recebimentos de seus outros projetos.</Notice>:null}
         {missingContractValues>0?<Notice tone="warning">{missingContractValues} contrato(s) sem valor informado: o saldo completo desses contratos ainda não pode ser calculado. Use “Informar valor contratado” para completar.</Notice>:null}
         <SelectionChips label="Prioridade de cobrança" value={statementFocus} onChange={value=>{setStatementFocus(value);setStatementPage(0);}} items={[{value:'all',label:'Todos'},{value:'overdue',label:'Em atraso'},{value:'unplanned',label:'Sem parcelas'},{value:'credit',label:'Crédito excedente'},{value:'inactive',label:'Inativos'}]} />
         <Field label="Buscar cliente, projeto ou contrato no extrato" value={statementQuery} onChangeText={value=>{setStatementQuery(value);setStatementPage(0);}} />
-        <Button title="Exportar resultado filtrado (CSV)" variant="secondary" disabled={Boolean(coreError)||loading} onPress={()=>void perform(()=>exportReceivableCsv(statementRows))} />
         {loading?<ActivityIndicator color={goldColor} />:coreError?<Notice tone="danger">Extrato indisponível. Atualize os dados para conferir os saldos.</Notice>:<>
           <Text style={styles.metricValue}>Saldo a receber: {formatCurrency(receivableOverview(statementRows).total)}</Text>
           <Text style={styles.meta}>Em atraso: {formatCurrency(receivableOverview(statementRows).overdue)} • Saldo sem parcelas: {formatCurrency(receivableOverview(statementRows).unplanned)} • Créditos a conferir: {formatCurrency(receivableOverview(statementRows).credit)}. Indicadores do filtro atual.</Text>
           {statementRows.length===0?<StateView title="Nenhum contrato ou recebimento neste filtro" description="Confira o cliente selecionado ou registre os serviços avulsos." icon="receipt-outline" />:clientGroups.slice(statementPage*25,statementPage*25+25).map(client=><Card key={client.id}>
             <Text style={styles.sectionTitle}>{client.name}</Text>
             <Text style={styles.meta}>{client.rows.length} contrato(s) / grupo(s) • Saldo a receber: {formatCurrency(receivableOverview(client.rows).total)}</Text>
-            <Button title={expandedClients[client.id]?'Recolher cliente':'Ver contratos e projetos do cliente'} variant="secondary" onPress={()=>setExpandedClients(current=>({...current,[client.id]:!current[client.id]}))} />
-            {expandedClients[client.id]?client.rows.map(row=><Card key={row.id}>
+            <Button title={clientOpen(client.id)?'Recolher cliente':'Ver contratos e parcelas'} variant="secondary" onPress={()=>setExpandedClients(current=>({...current,[client.id]:!clientOpen(client.id)}))} />
+            {clientOpen(client.id)?client.rows.map(row=><Card key={row.id}>
             <Text style={styles.title}>{row.clientName} • {row.contractNumber}</Text>
             {row.overdue>0&&!row.inactive?<Notice tone="warning">Cobrança prioritária: {formatCurrency(row.overdue)} em atraso.</Notice>:null}
             <Text style={styles.meta}>Contratado: {row.contractValue===null?'Não informado':formatCurrency(row.contractValue)}{row.addendumValue?` (inclui ${formatCurrency(row.addendumValue)} de aditivos aceitos)`:''} • Recebido: {formatCurrency(row.received)}</Text>
@@ -93,14 +88,23 @@ export function FinancialReceivables({styles,embeddedProjectId,missingContractVa
             {row.contractValue===null&&contracts.some(contract=>contract.id===row.id)?<Button title="Informar valor contratado" variant="secondary" onPress={()=>onContractEdit(row.id)} />:null}
             {row.credit>0?<Notice tone="warning">Recebimentos excedem o valor contratado em {formatCurrency(row.credit)}. Confira o contrato e os pagamentos.</Notice>:null}
             {row.inactive?<Notice tone="info">Contrato cancelado ou arquivado: preservado para conferência, fora do total a receber.</Notice>:null}
-            <Button title={expandedStatement===row.id?'Recolher parcelas':'Ver parcelas e recebimentos'} variant="secondary" onPress={()=>setExpandedStatement(expandedStatement===row.id?null:row.id)} />
-            {expandedStatement===row.id?(row.entries.length===0?<Text style={styles.meta}>Ainda não há parcelas lançadas para este contrato.</Text>:<FinancialProjectGroups entries={row.entries} styles={styles} renderEntry={entry=><View key={entry.id} style={styles.summary}>
+            <Button title={rowOpen(row.id,client.rows.length)?'Recolher parcelas':'Ver parcelas e recebimentos'} variant="secondary" onPress={()=>setExpandedStatement(rowOpen(row.id,client.rows.length)?'__closed__':row.id)} />
+            {rowOpen(row.id,client.rows.length)?(row.entries.length===0?<Text style={styles.meta}>Ainda não há parcelas lançadas para este contrato.</Text>:<FinancialProjectGroups entries={row.entries} styles={styles} renderEntry={entry=><View key={entry.id} style={styles.summary}>
               <View style={{flex:1}}><Text style={styles.title}>{entry.description} • {formatCurrency(entry.amount)}</Text><Text style={styles.meta}>{effectiveStatus(entry)==='atrasado'?'Em atraso':financialStatus(entry.status)==='pago'?'Recebido':'Pendente'} • Vencimento: {formatDate(entry.dueDate)} • Recebimento: {formatDate(entry.paidAt)}</Text>
               {financialStatus(entry.status)==='pago'?<Button title="Emitir / abrir recibo" variant="secondary" onPress={()=>openReceipt(entry.id,entry.projectId)} />:<Button title="Dar baixa (registrar recebimento)" variant="secondary" disabled={saving} onPress={()=>receiveEntry(entry)} />}</View>
             </View>} />):null}
           </Card>):null}</Card>)}
           <View style={styles.rowFields}><Button title="Clientes anteriores" variant="ghost" disabled={statementPage===0} onPress={()=>setStatementPage(value=>value-1)} /><Text style={styles.meta}>Página {statementPage+1} • {clientGroups.length} cliente(s)</Text><Button title="Próximos clientes" variant="ghost" disabled={(statementPage+1)*25>=clientGroups.length} onPress={()=>setStatementPage(value=>value+1)} /></View>
         </>}
+        {!loading&&!coreError?<Card>
+          <Text style={styles.title}>Conferência automática</Text>
+          {bankError?<Notice tone="warning">Os dados bancários não foram carregados integralmente; esta conferência não valida a conciliação de contas.</Notice>:null}
+          {integrityIssues.length?<Notice tone="warning">{integrityIssues.length} ponto(s) para conferir no financeiro. Este aviso não altera lançamentos nem confirma perda de saldo.</Notice>:<Text style={styles.meta}>{bankError?'Nenhuma divergência nos dados carregados; validação incompleta.':'Nenhuma divergência nas verificações básicas. A conciliação completa depende de extrato bancário e comprovantes.'}</Text>}
+          {integrityIssues.slice(0,5).map((issue,index)=><Text key={issue.code+'-'+(issue.entryId??'')+'-'+index} style={styles.meta}>• {issue.message}</Text>)}
+          {integrityIssues.length>5?<Text style={styles.meta}>Há mais {integrityIssues.length-5} ocorrência(s); exporte e confira os lançamentos antes de regularizar.</Text>:null}
+        </Card>:null}
+        <Button title="Exportar resultado filtrado (CSV)" variant="secondary" disabled={Boolean(coreError)||loading} onPress={()=>void perform(()=>exportReceivableCsv(statementRows))} />
+        <Text style={styles.meta}>Como o saldo é calculado: valor contratado menos o que já foi recebido. Parcelas pendentes fazem parte desse saldo. Contratos cancelados ou arquivados ficam fora do total.</Text>
       </>
   );
 }

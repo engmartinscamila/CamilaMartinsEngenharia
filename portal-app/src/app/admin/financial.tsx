@@ -409,12 +409,12 @@ export default function AdminFinancialScreen() {
         onReceivables={()=>setSection('receivables')} onNewEntry={()=>{clearEntry();setFormOpen(true);setSection('entries');}} onInstallments={()=>setSection('installments')} />:null}
       {section==='installments'?<FinancialInstallments styles={styles} entries={entries} embeddedProjectId={embedded?.projectId} loading={loading} coreError={coreError} saving={saving} goldColor={colors.gold600} receiveEntry={receiveEntry} onNewEntry={()=>{clearEntry();setType('entrada');setFormOpen(true);setSection('entries');}} />:null}
       {section==='receivables'?<>
+        <FinancialReceivables styles={styles} embeddedProjectId={embedded?.projectId} missingContractValues={missingContractValues} statementQuery={statementQuery} setStatementQuery={setStatementQuery} statementFocus={statementFocus} setStatementFocus={setStatementFocus} statementPage={statementPage} setStatementPage={setStatementPage} expandedStatement={expandedStatement} setExpandedStatement={setExpandedStatement} statementRows={statementRows} contracts={contracts} integrityIssues={integrityIssues} bankError={bankError} loading={loading} coreError={coreError} saving={saving} goldColor={colors.gold600}
+        perform={perform} openReceipt={openReceipt} receiveEntry={receiveEntry} onContractEdit={id=>{setSelectedContractId(id);setContractValue('');setSection('hours');}} />
         <LegacyFinancialAuditPanel report={legacyAudit} loading={loading} error={coreError||receiptAuditError||originReviewError}
           onContractEdit={id=>{setSelectedContractId(id);setContractValue('');setSection('hours');}}
           onEntryEdit={id=>{const entry=entries.find(row=>row.id===id);if(entry)editEntry(entry);else setError('Lançamento não localizado entre os registros ativos. Confira o histórico.');}}
           onOriginReview={saveOriginReview} />
-        <FinancialReceivables styles={styles} embeddedProjectId={embedded?.projectId} missingContractValues={missingContractValues} statementQuery={statementQuery} setStatementQuery={setStatementQuery} statementFocus={statementFocus} setStatementFocus={setStatementFocus} statementPage={statementPage} setStatementPage={setStatementPage} expandedStatement={expandedStatement} setExpandedStatement={setExpandedStatement} statementRows={statementRows} contracts={contracts} integrityIssues={integrityIssues} bankError={bankError} loading={loading} coreError={coreError} saving={saving} goldColor={colors.gold600}
-        perform={perform} openReceipt={openReceipt} receiveEntry={receiveEntry} onContractEdit={id=>{setSelectedContractId(id);setContractValue('');setSection('hours');}} />
       </>:null}
       {section==='entries'?<>
       <Card><Text style={styles.sectionTitle}>Filtrar lançamentos e indicadores</Text>

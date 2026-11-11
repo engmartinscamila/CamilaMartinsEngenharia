@@ -14,6 +14,7 @@ export function LegacyFinancialAuditPanel({report,error,loading,onContractEdit,o
  const [reviewEntry,setReviewEntry]=React.useState<string|null>(null);
  const [reason,setReason]=React.useState('');
  const [reviewing,setReviewing]=React.useState(false);
+ const [open,setOpen]=React.useState(false);
  async function save(id:string,classification:LegacyOriginClassification){
   if(reviewing)return;
   setReviewing(true);
@@ -25,9 +26,25 @@ export function LegacyFinancialAuditPanel({report,error,loading,onContractEdit,o
  const title={color:colors.ink,fontSize:16,fontWeight:'700' as const};
  const subtitle={color:colors.ink,fontWeight:'600' as const};
  const details={color:colors.muted,fontSize:13};
+ const pendingCount=report?report.contractsMissingValue.length+report.unclassifiedEntries.length+report.receiptIssues.length:0;
+ if(!open){
+  if(loading||(!error&&report&&pendingCount===0))return null;
+  return <Card>
+   <View style={{gap:8}}>
+    <Text style={title}>Pendências de cadastro</Text>
+    <Text style={details}>{error||!report?'A conferência de cadastro não pôde ser carregada.':[
+     report.contractsMissingValue.length?`${report.contractsMissingValue.length} contrato(s) sem valor`:'',
+     report.unclassifiedEntries.length?`${report.unclassifiedEntries.length} lançamento(s) sem contrato definido`:'',
+     report.receiptIssues.length?`${report.receiptIssues.length} recibo(s) para conferir`:'',
+    ].filter(Boolean).join(' • ')+'. Não impede dar baixa nem emitir recibos.'}</Text>
+    <Button title="Ver e resolver pendências" variant="secondary" onPress={()=>setOpen(true)} />
+   </View>
+  </Card>;
+ }
  return <Card>
   <View style={{gap:10}}>
-   <Text style={title}>Conciliação de lançamentos e recibos — legado</Text>
+   <Text style={title}>Pendências de cadastro</Text>
+   <Button title="Recolher pendências" variant="ghost" onPress={()=>setOpen(false)} />
    <Text style={details}>Conferência somente de leitura. Recibos não criam uma segunda entrada no caixa e serviços avulsos não recebem contratos automaticamente.</Text>
    {loading?<Text style={details}>Conferindo todos os registros…</Text>:error?<Notice tone="danger">{error} Nenhum resultado parcial será apresentado.</Notice>:report?<>
     <Text style={details}>Lançamentos: {report.countEntries} • Recibos: {report.countReceipts} • Recibos conferidos: {report.confirmedReceiptLinks}</Text>
