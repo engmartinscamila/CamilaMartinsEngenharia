@@ -5,6 +5,7 @@ import { Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
+import { DateField } from '@/components/date-field';
 import { useLiveRefresh } from '@/hooks/use-live-refresh';
 import { formatCurrency, formatDate, isValidIsoDate } from '@/lib/format';
 import { useThemeStyles } from '@/providers/theme-provider';
@@ -93,9 +94,9 @@ export default function ConstructionScheduleScreen() {
 
   const saveHeader = async () => {
     if (!header || saving) return;
-    if (header.referenceDate && !isValidIsoDate(header.referenceDate)) { setError('Data de referência inválida. Use AAAA-MM-DD.'); return; }
-    if (header.plannedStart && !isValidIsoDate(header.plannedStart)) { setError('Data inicial inválida. Use AAAA-MM-DD.'); return; }
-    if (header.plannedFinish && !isValidIsoDate(header.plannedFinish)) { setError('Data final inválida. Use AAAA-MM-DD.'); return; }
+    if (header.referenceDate && !isValidIsoDate(header.referenceDate)) { setError('Data de referência inválida. Use DD/MM/AAAA.'); return; }
+    if (header.plannedStart && !isValidIsoDate(header.plannedStart)) { setError('Data inicial inválida. Use DD/MM/AAAA.'); return; }
+    if (header.plannedFinish && !isValidIsoDate(header.plannedFinish)) { setError('Data final inválida. Use DD/MM/AAAA.'); return; }
     setSaving(true); setError(null); setSuccess(null);
     const actionError = await updateConstructionSchedule(header);
     setSaving(false);
@@ -108,7 +109,7 @@ export default function ConstructionScheduleScreen() {
     if (editItem.weightPercent < 0 || editItem.weightPercent > 100) { setError('O peso deve ficar entre 0 e 100%.'); return; }
     if (editItem.actualProgress < 0 || editItem.actualProgress > 100) { setError('O avanço real deve ficar entre 0 e 100%.'); return; }
     for (const value of [editItem.plannedStart, editItem.plannedFinish, editItem.actualStart, editItem.actualFinish]) {
-      if (value && !isValidIsoDate(value)) { setError('Use datas válidas no formato AAAA-MM-DD.'); return; }
+      if (value && !isValidIsoDate(value)) { setError('Use datas válidas (DD/MM/AAAA).'); return; }
     }
     setSaving(true); setError(null); setSuccess(null);
     const actionError = await updateConstructionScheduleItem(editItem);
@@ -186,9 +187,9 @@ export default function ConstructionScheduleScreen() {
         {header ? <Card><Text style={styles.sectionTitle}>Dados gerais</Text>
           <View style={styles.formGrid}>
             <Field label="Título" value={header.title} onChangeText={(title) => setHeader({ ...header, title })} />
-            <Field label="Data de referência (AAAA-MM-DD)" value={header.referenceDate ?? ''} onChangeText={(referenceDate) => setHeader({ ...header, referenceDate })} />
-            <Field label="Início previsto (AAAA-MM-DD)" value={header.plannedStart ?? ''} onChangeText={(plannedStart) => setHeader({ ...header, plannedStart })} />
-            <Field label="Fim previsto (AAAA-MM-DD)" value={header.plannedFinish ?? ''} onChangeText={(plannedFinish) => setHeader({ ...header, plannedFinish })} />
+            <DateField label="Data de referência" optional value={header.referenceDate ?? ''} onChange={(referenceDate) => setHeader({ ...header, referenceDate })} />
+            <DateField label="Início previsto" optional value={header.plannedStart ?? ''} onChange={(plannedStart) => setHeader({ ...header, plannedStart })} />
+            <DateField label="Fim previsto" optional value={header.plannedFinish ?? ''} onChange={(plannedFinish) => setHeader({ ...header, plannedFinish })} />
           </View>
           <Field label="Observações gerais" multiline value={header.notes ?? ''} onChangeText={(notes) => setHeader({ ...header, notes })} />
           <Button loading={saving} onPress={() => void saveHeader()} title="Salvar dados gerais" variant="secondary" />

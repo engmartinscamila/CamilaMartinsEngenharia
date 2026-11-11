@@ -4,6 +4,7 @@ import {useAdminModuleRouter as useRouter} from '@/hooks/use-admin-module-router
 import { Text } from 'react-native';
 import { AdminPageHeader } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView } from '@/components/ui';
+import { DateField } from '@/components/date-field';
 import { analyzeConstructionCriticalPath } from '@/lib/construction-schedule-critical-path';
 import { isValidIsoDate } from '@/lib/format';
 import { planConstructionSchedule, type DependencyType, type WorkCalendar } from '@/lib/construction-schedule-engine';
@@ -90,10 +91,10 @@ export default function NewConstructionScheduleScreen() {
   const calculated = (() => {
     if (!template || !project || selected.length === 0 || !startDate) return { data: null, critical: null, error: null };
     try {
-      if (!isValidIsoDate(startDate)) throw new Error('Informe uma data inicial real no formato AAAA-MM-DD.');
-      const holidays = holidaysText.trim() ? holidaysText.split(/[,;\n]+/).map((value) => value.trim()) : [];
+      if (!isValidIsoDate(startDate)) throw new Error('Informe uma data inicial real (DD/MM/AAAA).');
+      const holidays = holidaysText.trim() ? holidaysText.split(/[,;\n]+/).map((value) => value.trim().replace(/^(\d{2})\/(\d{2})\/(\d{4})$/, '$3-$2-$1')) : [];
       if (holidays.length > 366 || holidays.some((day) => !isValidIsoDate(day)) || new Set(holidays).size !== holidays.length) {
-        throw new Error('Informe até 366 feriados distintos no formato AAAA-MM-DD, separados por vírgula.');
+        throw new Error('Informe até 366 feriados distintos no formato DD/MM/AAAA, separados por vírgula.');
       }
       if (selected.some((row) => !row.confirmed)) throw new Error('Revise e confirme individualmente cada atividade selecionada.');
       if (selected.some((row) => row.lag.trim() && !/^-?\d{1,3}$/.test(row.lag.trim()))) {
@@ -304,12 +305,12 @@ export default function NewConstructionScheduleScreen() {
           </Card>)}
           <Card>
             <Text>5. Planejamento e conferência</Text>
-            <Field label="Data de início (AAAA-MM-DD)" value={startDate} onChangeText={(value) => { setStartDate(value); setSaveConfirmed(false); }} />
+            <DateField label="Data de início" value={startDate} onChange={(value) => { setStartDate(value); setSaveConfirmed(false); }} />
             <Text>Calendário de execução</Text>
             <Button title={`Dias úteis ${calendar === 'weekdays' ? '✓' : ''}`} variant="secondary" onPress={() => { setCalendar('weekdays'); setSaveConfirmed(false); }} />
             <Button title={`Dias corridos ${calendar === 'calendar_days' ? '✓' : ''}`} variant="secondary" onPress={() => { setCalendar('calendar_days'); setSaveConfirmed(false); }} />
             {advancedMode?<>
-              <Field label="Datas não úteis/feriados da obra (AAAA-MM-DD; separados por vírgula)" value={holidaysText} multiline onChangeText={(value) => { setHolidaysText(value); setSaveConfirmed(false); }} />
+              <Field label="Datas não úteis/feriados da obra (DD/MM/AAAA, separados por vírgula)" placeholder="Ex.: 25/12/2026, 01/01/2027" value={holidaysText} multiline onChangeText={(value) => { setHolidaysText(value); setSaveConfirmed(false); }} />
               <Notice tone="info">Cadastre apenas datas conferidas para esta obra. Em dias úteis, elas são descontadas; em dias corridos, não estendem o prazo. O calendário ficará congelado na aprovação.</Notice>
               <Notice tone="info">Pesos financeiros decorrem de custos completos. Pesos físicos são independentes: só informe e aprove se houver critério técnico conferido para TODAS as atividades. Caso contrário, o indicador físico permanece indisponível.</Notice>
               <Button title={manualWeightsApproved ? 'Pesos manuais financeiros validados ✓' : 'Validar pesos manuais financeiros (se aplicável)'} variant="secondary" onPress={() => { setManualWeightsApproved((current) => !current); setSaveConfirmed(false); }} />

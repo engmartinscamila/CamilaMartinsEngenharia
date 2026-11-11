@@ -6,6 +6,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
+import { DateField } from '@/components/date-field';
 import { formatDate, formatTime, humanizeStatus, isValidIsoDate, isValidTime } from '@/lib/format';
 import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
 import { cancelAdminAgenda, createAdminAgenda, listAdminAgenda, listAdminProjects } from '@/services/admin-service';
@@ -66,7 +67,7 @@ export default function AdminAgendaScreen() {
         <Text style={styles.sectionTitle}>Novo compromisso</Text>
         <View style={styles.projectList}>{projects.filter(project=>!embedded?.projectId||project.id===embedded.projectId).map((project) => <Pressable key={project.id} onPress={() => setProjectId(project.id)} style={[styles.projectChip, projectId === project.id && styles.selected]}><Text style={[styles.projectText, projectId === project.id && styles.selectedText]}>{project.contractNumber} • {project.name}</Text></Pressable>)}</View>
         <Field label="Título" onChangeText={setTitle} value={title} />
-        <View style={styles.row}><View style={styles.grow}><Field label="Data (AAAA-MM-DD)" maxLength={10} onChangeText={setDate} placeholder="2026-08-20" value={date} /></View><View style={styles.time}><Field label="Horário" maxLength={5} onChangeText={setTime} placeholder="14:30" value={time} /></View></View>
+        <View style={styles.row}><View style={styles.grow}><DateField label="Data" onChange={setDate} value={date} /></View><View style={styles.time}><Field label="Horário" maxLength={5} onChangeText={setTime} placeholder="14:30" value={time} /></View></View>
         <Field label="Descrição" multiline onChangeText={setDescription} value={description} />
         <Button loading={saving} onPress={() => void create()} title="Criar compromisso" />
       </Card>
