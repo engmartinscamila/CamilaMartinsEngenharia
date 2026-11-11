@@ -55,4 +55,14 @@ assert.match(classicClient, /MutationObserver/, 'Observa carregamentos assíncro
 assert.match(classicClient, /delay = 500/, 'Evita mascote em carregamento rápido');
 assert.match(classicClient, /CamilinhaWork/, 'Reutiliza os nove estados do atlas original');
 assert.doesNotThrow(() => new Function(classicClient), 'JS do cliente clássico sem erro de sintaxe');
+const cursor = read('js/camilinha-cursor.js');
+const guard = read('js/admin-form-guard.js');
+assert.match(cursor, /pointer-events:none/, 'Camilinha do cursor não pode bloquear cliques');
+assert.match(cursor, /prefers-reduced-motion/, 'Camilinha do cursor respeita redução de movimento');
+assert.match(cursor, /\(hover: hover\) and \(pointer: fine\)/, 'Camilinha do cursor só com mouse');
+assert.match(cursor, /\/portal\/admin/, 'No portal React, só nas rotas do admin');
+assert.match(guard, /camilinha-cursor\.js/, 'Páginas clássicas do admin carregam a Camilinha do cursor');
+for (const page of ['portal.html', 'meu-projeto.html', 'index.html', 'login.html']) {
+  assert.doesNotMatch(read(page), /admin-form-guard|camilinha-cursor/, 'Cursor da Camilinha fora do admin: ' + page);
+}
 console.info('Camilinha: site público, área do cliente clássica e API original OK.');
