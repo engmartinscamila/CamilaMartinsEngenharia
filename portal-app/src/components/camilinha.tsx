@@ -114,3 +114,14 @@ function ActiveCamilinhaActivity({
     </View>
   );
 }
+
+/** Saudação curta: a Camilinha acena uma vez ao lado do texto. */
+export function CamilinhaGreeting({ text, size = 44 }: { text: string; size?: number }) {
+  const { colors } = useAppTheme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      <CamilinhaSprite state="waving" size={size} />
+      <Text style={{ flex: 1, minWidth: 0, color: colors.ink, fontSize: 15, fontWeight: '600', lineHeight: 21 }}>{text}</Text>
+    </View>
+  );
+}

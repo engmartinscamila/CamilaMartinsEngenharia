@@ -6,6 +6,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
+import { DateField } from '@/components/date-field';
 import { formatDate, isValidIsoDate } from '@/lib/format';
 import { getProjectTaskTriage, getUnmetTaskDependencies, todayInSaoPaulo } from '@/lib/project-task-triage';
 import { useThemeStyles } from '@/providers/theme-provider';
@@ -85,8 +86,8 @@ export default function AdminTasksScreen() {
   const createRequest = useRef<{ fingerprint: string; id: string } | null>(null);
   const create = async () => {
     if (!projectId || title.trim().length < 3) { setError('Selecione o projeto e informe uma tarefa válida.'); return; }
-    if (startDate && !isValidIsoDate(startDate)) { setError('A data inicial deve usar AAAA-MM-DD.'); return; }
-    if (dueDate && !isValidIsoDate(dueDate)) { setError('O prazo deve usar AAAA-MM-DD.'); return; }
+    if (startDate && !isValidIsoDate(startDate)) { setError('A data inicial deve ser uma data válida (DD/MM/AAAA).'); return; }
+    if (dueDate && !isValidIsoDate(dueDate)) { setError('O prazo deve ser uma data válida (DD/MM/AAAA).'); return; }
     if (startDate && dueDate && dueDate < startDate) { setError('O prazo não pode ser anterior ao início.'); return; }
     setLoading(true); setError(null); setSuccess(null);
     const draft = { projectId, title, description, priority, startDate, dueDate,
@@ -161,7 +162,7 @@ export default function AdminTasksScreen() {
         <Field label="Título *" onChangeText={setTitle} value={title} />
         <Field label="Descrição" multiline onChangeText={setDescription} value={description} />
         <SelectionChips label="Prioridade" items={priorities} onChange={setPriority} value={priority} />
-        <View style={styles.twoColumns}><Field label="Início (AAAA-MM-DD)" onChangeText={setStartDate} value={startDate} /><Field label="Prazo (AAAA-MM-DD)" onChangeText={setDueDate} value={dueDate} /><Field keyboardType="decimal-pad" label="Horas previstas" onChangeText={setHours} value={hours} /></View>
+        <View style={styles.twoColumns}><DateField label="Início" optional onChange={setStartDate} value={startDate} /><DateField label="Prazo" optional onChange={setDueDate} value={dueDate} /><Field keyboardType="decimal-pad" label="Horas previstas" onChangeText={setHours} value={hours} /></View>
         {tasks.length ? <><Text style={styles.label}>Subtarefa de</Text><View style={styles.chips}><Pressable onPress={() => setParentTaskId(null)} style={[styles.chip, !parentTaskId && styles.selected]}><Text style={styles.chipText}>Nenhuma</Text></Pressable>{tasks.filter((task) => !task.parentTaskId).map((task) => <Pressable key={task.id} onPress={() => setParentTaskId(task.id)} style={[styles.chip, parentTaskId === task.id && styles.selected]}><Text style={styles.chipText}>{task.title}</Text></Pressable>)}</View>
         <Text style={styles.label}>Depende de</Text><View style={styles.chips}><Pressable onPress={() => setDependencyId(null)} style={[styles.chip, !dependencyId && styles.selected]}><Text style={styles.chipText}>Nenhuma</Text></Pressable>{tasks.filter((task) => task.status !== 'cancelled').map((task) => <Pressable key={task.id} onPress={() => setDependencyId(task.id)} style={[styles.chip, dependencyId === task.id && styles.selected]}><Text style={styles.chipText}>{task.title}</Text></Pressable>)}</View></> : null}
         <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: clientVisible }} onPress={() => setClientVisible((current) => !current)} style={[styles.toggle, clientVisible && styles.selected]}><Text style={styles.toggleText}>{clientVisible ? '☒ Visível no portal do cliente' : '☐ Manter somente na administração'}</Text></Pressable>

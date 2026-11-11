@@ -10,7 +10,8 @@ const generatorMirror=fs.readFileSync('portal-app/supabase/functions/generate-co
 const dispatcher=fs.readFileSync('supabase/functions/dispatch-document-notifications/index.ts','utf8');
 const dispatcherMirror=fs.readFileSync('portal-app/supabase/functions/dispatch-document-notifications/index.ts','utf8');
 const dispatchMigration=fs.readFileSync('supabase/migrations/20260924124500_dispatch_scheduled_document_notifications.sql','utf8');
-const phraseBuilder=fs.readFileSync('scripts/build-frases-do-dia-v7.mjs','utf8');
+const phraseBuilder=fs.readFileSync('scripts/build-frases-do-dia-v8.mjs','utf8');
+const phraseData=JSON.parse(fs.readFileSync('assets/frases-do-dia.json','utf8'));
 const phraseUi=fs.readFileSync('js/frase-do-dia.js','utf8');
 const clientNotifications=fs.readFileSync('portal-app/src/app/(client)/notifications.tsx','utf8');
 
@@ -64,8 +65,10 @@ assert.ok(generator.includes("client_released_at")&&generator.includes("sendClie
 assert.ok(generator.includes("Escolha uma data e horário futuros para o agendamento."),'Servidor precisa rejeitar data passada/inválida em vez de convertê-la em envio imediato.');
 assert.ok(clientNotifications.includes("markNotificationRead")&&clientNotifications.includes("openNotification"),'Portal do Cliente precisa registrar leitura antes de abrir a atividade vinculada.');
 
-assert.ok(phraseBuilder.includes('build-frases-do-dia-fixed.mjs'),'Build voltou a substituir o banco multi-autores por conteúdo editorial único.');
-assert.ok(phraseBuilder.includes('autores.size < 8'),'Build precisa falhar se perder diversidade de autores.');
-assert.ok(phraseUi.includes('LIMITE_HISTORICO = 14')&&phraseUi.includes('autoresRecentes'),'Seleção diária precisa preservar histórico e evitar mesmo autor consecutivo.');
+assert.ok(phraseBuilder.includes('frases-do-dia-curadoria.mjs'),'Build precisa usar o acervo revisado manualmente.');
+assert.ok(new Set(phraseData.frases.map(f=>f.autor)).size>=30,'Acervo precisa manter diversidade de autores.');
+assert.ok(phraseData.frases.every((f,i,a)=>f.autor!==a[(i+1)%a.length].autor),'Mesmo autor nunca pode aparecer em dias seguidos.');
+assert.ok(!phraseData.frases.some(f=>/\b(?:quizera|bocca|tambem|effeito|elle|ella|cousa)\b/i.test(f.texto)),'Sem grafia antiga ou trechos soltos de romances.');
+assert.ok(phraseUi.includes('indiceDoDia(data, acervo.length)'),'Seleção diária precisa seguir a ordem do acervo.');
 
 console.log('PASS: observações do portal protegidas por regressões de UI, fluxo documental, Word, notificações e frases.');

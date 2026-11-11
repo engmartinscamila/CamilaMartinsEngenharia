@@ -4,6 +4,7 @@ import { Text, View } from 'react-native';
 
 import { AdminPageHeader, SelectionChips } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
+import { DateField } from '@/components/date-field';
 import { formatCurrency, formatDate, isValidIsoDate } from '@/lib/format';
 import { useThemeStyles } from '@/providers/theme-provider';
 import { listCommercialRecords, type CommercialRecord } from '@/services/commercial-service';
@@ -58,7 +59,7 @@ export default function AdminCrmScreen() {
   const savePlanning = async () => {
     if (!selected || saving) return;
     setError(null); setSuccess(null);
-    if (nextAction && !isValidIsoDate(nextAction)) { setError('Informe uma data existente no formato AAAA-MM-DD.'); return; }
+    if (nextAction && !isValidIsoDate(nextAction)) { setError('Informe uma data existente (DD/MM/AAAA).'); return; }
     if (selected.crmStage === 'perdido' && !lostReason.trim()) { setError('Informe o motivo da perda para preservar o histórico comercial.'); return; }
     setSaving(true);
     const actionError = await updateCrmRecord({
@@ -84,7 +85,7 @@ export default function AdminCrmScreen() {
         <SelectionChips label="Etapa da negociação" items={[...stages]} value={selected.crmStage} onChange={(crmStage) => { if (!saving) setSelected({ ...selected, crmStage }); }} />
         {selected.crmStage === 'perdido'
           ? <Field label="Motivo da perda *" multiline onChangeText={setLostReason} value={lostReason} />
-          : <Field label="Próxima ação (AAAA-MM-DD)" maxLength={10} onChangeText={setNextAction} value={nextAction} />}
+          : <DateField label="Próxima ação" optional onChange={setNextAction} value={nextAction} />}
         <View style={styles.actions}><Button loading={saving} onPress={() => void savePlanning()} title="Salvar planejamento" /><Button disabled={saving} onPress={() => setSelected(null)} title="Cancelar" variant="ghost" /></View>
       </View></Card> : null}
 

@@ -13,8 +13,8 @@ export function AdminProjectPicker({projects,value,onChange,disabled=false}:{pro
  const matches=[...projects].sort((a,b)=>a.clientName.localeCompare(b.clientName,'pt-BR')||a.contractNumber.localeCompare(b.contractNumber,'pt-BR',{numeric:true})||a.name.localeCompare(b.name,'pt-BR')).filter(project=>normalizeDocumentSearch(`${project.clientName} ${project.name} ${project.contractNumber}`).includes(normalizeDocumentSearch(query)));
  return <View style={styles.wrapper}>
   {selected?<View style={styles.summary}>
-   <View style={styles.texts}><Text style={styles.title}>{selected.name}</Text><Text style={styles.meta}>{selected.clientName}</Text>
-    {selected.contractId?<Text style={styles.meta}>{selected.contractNumber}</Text>:<StatusPill label="Vínculo contratual pendente" tone="warning" />}
+   <View style={styles.texts}><Text style={styles.title}>{selected.name}</Text><Text style={styles.meta}>{selected.clientName}{selected.contractId?` • ${selected.contractNumber}`:''}</Text>
+    {selected.contractId?null:<StatusPill label="Vínculo contratual pendente" tone="warning" />}
    </View><Button debounceMs={0} disabled={disabled} onPress={()=>setEditing(current=>!current)} title={editing?'Fechar seleção':'Trocar projeto'} variant="ghost" />
   </View>:null}
   {!selected||editing?<View style={styles.wrapper}>

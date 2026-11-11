@@ -1,5 +1,5 @@
 import React,{useCallback,useEffect,useState} from 'react';
-import {ScrollView,Text,View} from 'react-native';
+import {Pressable,ScrollView,Text,useWindowDimensions,View} from 'react-native';
 import {useLocalSearchParams,useRouter,type Href} from 'expo-router';
 import {AdminPageHeader,SelectionChips} from '@/components/admin-ui';
 import {AdminProjectPicker} from '@/components/admin-project-picker';
@@ -22,6 +22,9 @@ export function AdminArea({area}:{area:AdminAreaKey}){
  const styles=useThemeStyles(styleDefinitions);
  const [projects,setProjects]=useState<AdminProjectSummary[]>([]),[error,setError]=useState<string|null>(null);
  const [cache,setCache]=useState<CachedModule[]>([]),[showProjects,setShowProjects]=useState(false);
+ // Cabeçalho recolhível: em telas baixas começa recolhido para sobrar espaço ao conteúdo.
+ const {height}=useWindowDimensions();
+ const [headerOpen,setHeaderOpen]=useState(()=>height>=900);
  useEffect(()=>{let active=true;void listAdminProjects().then(result=>{if(active){setProjects(result.data);setError(result.error);}}).catch(()=>{if(active)setError('Não foi possível carregar os projetos.');});return()=>{active=false;};},[]);
  const navigate=useCallback((module:string,values:Record<string,string>={})=>{
   const local=definition.groups.flatMap(item=>item.views).find(item=>item.module===module&&(!values.view||item.key===values.view))??definition.groups.flatMap(item=>item.views).find(item=>item.module===module);
@@ -46,8 +49,18 @@ export function AdminArea({area}:{area:AdminAreaKey}){
   return()=>clearTimeout(timer);
  },[available,key,selected.module,selected.subview,selected.key,viewProject,financialId,extraKey]);
  const choose=(view:AdminAreaView)=>{router.setParams({view:view.key,...(view.module!=='receipts'?{financialId:undefined,receiptId:undefined}:{})});setShowProjects(false);};
+ const currentProject=projects.find(item=>item.id===projectId);
+ if(!headerOpen)return <View style={styles.container}>
+  <View style={[styles.heading,styles.headingCompact]}>
+   <Pressable accessibilityRole="button" accessibilityLabel="Mostrar abas e projeto" onPress={()=>setHeaderOpen(true)} style={styles.compactBar}>
+    <Text style={styles.compactTitle} numberOfLines={1}>{definition.title} • {selected.label}{scoped&&currentProject?` • ${currentProject.name}`:''}</Text>
+    <Text style={styles.compactAction}>Mostrar abas ▾</Text>
+   </Pressable>
+  </View>
+  {renderModules()}
+ </View>;
  return <View style={styles.container}>
-  <View style={styles.heading}><AdminPageHeader title={definition.title} description={definition.description} />
+  <View style={styles.heading}><AdminPageHeader title={definition.title} description="" />
    <SelectionChips label="Área de trabalho" value={group.key} onChange={value=>choose(definition.groups.find(item=>item.key===value)!.views[0]!)} items={definition.groups.map(item=>({value:item.key,label:item.label}))} />
    {group.views.length>1?<SelectionChips label="Planejamento e ações" value={selected.key} onChange={value=>choose(group.views.find(item=>item.key===value)!)} items={group.views.map(item=>({value:item.key,label:item.label}))} />:null}
    {scoped?<View style={styles.context}>
@@ -58,7 +71,11 @@ export function AdminArea({area}:{area:AdminAreaKey}){
    </View>:null}
    {error?<Notice tone="warning">{error}</Notice>:null}
    {area==='finance-center'&&selected.module==='receipts'&&financialId?<View style={styles.receiptContext}><Text style={styles.meta}>Recibo vinculado ao recebimento selecionado.</Text><Button debounceMs={0} title="Novo recibo avulso" variant="ghost" onPress={()=>router.setParams({financialId:undefined,receiptId:undefined})} /></View>:null}
+   <Pressable accessibilityRole="button" accessibilityLabel="Recolher abas e projeto" onPress={()=>setHeaderOpen(false)} style={styles.collapse}><Text style={styles.compactAction}>Recolher abas ▴</Text></Pressable>
   </View>
+  {renderModules()}
+ </View>;
+ function renderModules(){return <>
   {!available?<ScrollView contentContainerStyle={styles.empty}><StateView title="Selecione o projeto" description="O planejamento e os registros serão abertos no projeto escolhido." icon="briefcase-outline" /></ScrollView>:null}
   {cache.map(entry=>{
    const active=available&&entry.key===key;
@@ -68,10 +85,15 @@ export function AdminArea({area}:{area:AdminAreaKey}){
     </AdminModuleProvider>
    </View>;
   })}
- </View>;
+ </>;}
 }
 const styleDefinitions=(colors:ThemeColors)=>({
- container:{flex:1,minWidth:0},heading:{padding:spacing.md,gap:spacing.sm,borderBottomWidth:1,borderBottomColor:colors.line},
+ container:{flex:1,minWidth:0},heading:{paddingHorizontal:spacing.md,paddingVertical:spacing.sm,gap:spacing.xs,borderBottomWidth:1,borderBottomColor:colors.line},
+ headingCompact:{paddingVertical:spacing.xs},
+ compactBar:{flexDirection:'row' as const,alignItems:'center' as const,justifyContent:'space-between' as const,gap:spacing.sm,minHeight:44},
+ compactTitle:{flex:1,minWidth:0,color:colors.ink,fontFamily:typography.family,fontSize:15,fontWeight:'700' as const},
+ compactAction:{color:colors.gold600,fontFamily:typography.family,fontSize:13,fontWeight:'700' as const},
+ collapse:{alignSelf:'flex-end' as const,minHeight:32,justifyContent:'center' as const},
  context:{gap:spacing.xs},module:{flex:1,minHeight:0},empty:{padding:spacing.lg},
  receiptContext:{flexDirection:'row' as const,flexWrap:'wrap' as const,alignItems:'center' as const,gap:spacing.sm},
  meta:{color:colors.muted,fontFamily:typography.family,fontSize:12,lineHeight:18},

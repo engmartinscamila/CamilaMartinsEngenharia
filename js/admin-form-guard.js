@@ -11,3 +11,9 @@
  window.addEventListener('beforeunload',event=>{if(dirty()){event.preventDefault();event.returnValue='';}});
  document.addEventListener('click',event=>{const link=event.target.closest('a[href]');if(link&&link.target!=='_blank'&&!link.hasAttribute('download')&&dirty()&&!confirm('Há campos ainda preenchidos neste formulário. Deseja sair e descartar o preenchimento?')){event.preventDefault();event.stopImmediatePropagation();}},true);
 })();
+/* Camilinha que acompanha o cursor: só nas páginas do admin (este arquivo só é carregado nelas). */
+(function(){
+ if(document.getElementById('cmeCamilinhaCursorScript'))return;
+ const script=document.createElement('script');script.id='cmeCamilinhaCursorScript';script.src='/js/camilinha-cursor.js?v=20261111';script.defer=true;
+ (document.head||document.documentElement).appendChild(script);
+})();

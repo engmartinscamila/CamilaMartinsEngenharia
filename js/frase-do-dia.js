@@ -75,40 +75,11 @@
         return legado;
     }
 
-    const HISTORICO_KEY = "cme.frases-do-dia.historico.v1";
-    const LIMITE_HISTORICO = 14;
 
-    function lerHistorico() {
-        try {
-            const value = JSON.parse(localStorage.getItem(HISTORICO_KEY) || "[]");
-            return Array.isArray(value) ? value : [];
-        } catch (_) {
-            return [];
-        }
-    }
-
+    // v8: uma frase por dia, na ordem do acervo. A ordem já impede o mesmo autor em dias seguidos,
+    // e a escolha é igual em qualquer aparelho (cliente, admin e app).
     function escolherFrase(acervo, data) {
-        const historico = lerHistorico();
-        const existente = historico.find(item => item.data === data);
-        if (existente) {
-            const porTexto = acervo.find(item => item.texto === existente.texto);
-            const porIndice = acervo[existente.indice];
-            if (porTexto) return porTexto;
-            if (porIndice && porIndice.texto === existente.texto) return porIndice;
-        }
-
-        const indiceBase = indiceDoDia(data, acervo.length);
-        const textosRecentes = new Set(historico.slice(-LIMITE_HISTORICO).map(item => item.texto));
-        const autoresRecentes = new Set(historico.slice(-1).map(item => item.autor));
-        const candidatos = acervo.map((item, indice) => ({ item, indice }))
-            .filter(({item}) => !textosRecentes.has(item.texto));
-        const semAutorRepetido = candidatos.filter(({item}) => !autoresRecentes.has(item.autor));
-        const lista = semAutorRepetido.length ? semAutorRepetido : (candidatos.length ? candidatos : acervo.map((item, indice) => ({ item, indice })));
-        const escolhido = lista[indiceBase % lista.length];
-        const novoHistorico = [...historico, { data, indice: escolhido.indice, texto: escolhido.item.texto, autor: escolhido.item.autor }]
-            .slice(-LIMITE_HISTORICO);
-        try { localStorage.setItem(HISTORICO_KEY, JSON.stringify(novoHistorico)); } catch (_) {}
-        return escolhido.item;
+        return acervo[indiceDoDia(data, acervo.length)];
     }
 
     async function carregarFrase() {

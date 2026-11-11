@@ -19,6 +19,15 @@ export default function AdminLayout() {
     if (typeof params[key] === 'string') query.set(key, params[key]);
   }
   const returnTo = safeAdminReturnPath(`${pathname}?${query}`);
+  // Camilinha que acompanha o cursor: só no admin, só na web com mouse (o próprio script verifica).
+  React.useEffect(() => {
+    if (Platform.OS !== 'web' || role !== 'admin' || document.getElementById('cmeCamilinhaCursorScript')) return;
+    const script = document.createElement('script');
+    script.id = 'cmeCamilinhaCursorScript';
+    script.src = '/js/camilinha-cursor.js?v=20261111';
+    script.defer = true;
+    document.head.appendChild(script);
+  }, [role]);
 
   if (loading) return <FullScreenLoader />;
   if (!session) return <Redirect href={returnTo ? { pathname: '/login', params: { returnTo } } : '/login'} />;

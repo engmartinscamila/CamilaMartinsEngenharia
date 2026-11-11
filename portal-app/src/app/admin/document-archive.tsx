@@ -7,6 +7,7 @@ import { Linking, Text, View } from 'react-native';
 
 import { AdminPageHeader } from '@/components/admin-ui';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
+import { DateField } from '@/components/date-field';
 import { formatDate } from '@/lib/format';
 import { useThemeStyles } from '@/providers/theme-provider';
 import {
@@ -157,7 +158,7 @@ export default function DocumentArchiveScreen() {
         <Field label="Cliente / prospect (opcional)" placeholder="Parte do nome" value={clientName} onChangeText={setClientName} />
         <Field label="Projeto (opcional)" placeholder="Parte do nome" value={projectName} onChangeText={setProjectName} />
         <Field label="Tipo do documento (opcional)" placeholder="Ex.: contrato, orcamento, termo_aceite" value={kind} onChangeText={setKind} />
-        <View style={styles.twoColumns}><Field label="Gerado a partir de (AAAA-MM-DD)" value={fromDate} onChangeText={setFromDate} /><Field label="Gerado até (AAAA-MM-DD)" value={toDate} onChangeText={setToDate} /></View>
+        <View style={styles.twoColumns}><DateField label="Gerado a partir de" optional value={fromDate} onChange={setFromDate} /><DateField label="Gerado até" optional value={toDate} onChange={setToDate} /></View>
         <Button loading={loadingKey === 'preview'} onPress={() => void preview()} title="Calcular arquivos e espaço" variant="secondary" />
         {previewData ? <Text style={styles.metric}>{previewData.count} arquivo(s) arquivado(s) • ~{formatBytes(previewData.estimatedBytes)} a liberar</Text> : null}
       </Card>

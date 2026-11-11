@@ -5,6 +5,7 @@ import { AdminPageHeader } from '@/components/admin-ui';
 import { ConstructionScheduleClientPublication } from '@/components/construction-schedule-client-publication';
 import { ConstructionScheduleCurve } from '@/components/construction-schedule-curve';
 import { Button, Card, Field, Notice, Screen, StateView } from '@/components/ui';
+import { DateField } from '@/components/date-field';
 import { formatCurrency, isValidIsoDate } from '@/lib/format';
 import {
   listApprovedSchedules, loadScheduleMeasurementOverview, recordScheduleMeasurement,
@@ -112,7 +113,7 @@ export default function ConstructionScheduleMeasurementsScreen() {
       <Button title="Trocar cronograma" variant="ghost" onPress={() => {setActive(null);setOverview(null);setDrafts({});setError(null);}} />
       <Card>
         <Text>{active.title} — linha de base v{overview.baselineVersion}</Text>
-        <Field label="Data de consulta dos indicadores (AAAA-MM-DD)" value={reference} onChangeText={setReference} />
+        <DateField label="Data de consulta dos indicadores" value={reference} onChange={setReference} />
         <Button title="Recalcular na data informada" loading={busy} disabled={busy} variant="secondary" onPress={() => void load(active, reference)} />
         <Text>Planejado financeiro no corte: {displayPercent(overview.summary.plannedFinancialPercent)}</Text>
         <Text>Real medido ponderado: {displayPercent(overview.summary.actualWeightedProgressPercent)}</Text>
@@ -135,7 +136,7 @@ export default function ConstructionScheduleMeasurementsScreen() {
       />
       <Card>
         <Text>Nova medição / correção auditável</Text>
-        <Field label="Data da vistoria (AAAA-MM-DD)" value={measuredOn} onChangeText={setMeasuredOn} />
+        <DateField label="Data da vistoria" value={measuredOn} onChange={setMeasuredOn} />
         <Field label="Justificativa, evidência ou correção" value={reason} multiline onChangeText={setReason} />
         {overview.items.map((item) => {
           const draft = drafts[item.code] ?? {selected:false,progress:'',cost:'',actualStart:'',actualFinish:''};
@@ -147,8 +148,8 @@ export default function ConstructionScheduleMeasurementsScreen() {
             {draft.selected ? <>
               <Field label="Avanço constatado (0–100%; inteiro)" value={draft.progress} keyboardType="numeric" onChangeText={(progress) => update(item.code,{progress})} />
               <Field label="Custo acumulado realizado desta atividade (R$; opcional)" value={draft.cost} keyboardType="decimal-pad" onChangeText={(cost) => update(item.code,{cost})} />
-              <Field label="Início real, se comprovado (AAAA-MM-DD)" value={draft.actualStart} onChangeText={(actualStart) => update(item.code,{actualStart})} />
-              <Field label="Fim real, se comprovado (AAAA-MM-DD)" value={draft.actualFinish} onChangeText={(actualFinish) => update(item.code,{actualFinish})} />
+              <DateField label="Início real, se comprovado" optional value={draft.actualStart} onChange={(actualStart) => update(item.code,{actualStart})} />
+              <DateField label="Fim real, se comprovado" optional value={draft.actualFinish} onChange={(actualFinish) => update(item.code,{actualFinish})} />
             </> : null}
           </Card>;
         })}

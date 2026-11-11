@@ -1,6 +1,6 @@
 import {groupFinancialClients} from '@/lib/financial-grouping';
 import {FinancialProjectGroups} from '@/components/financial-entry-groups';
-import { FinancialSummary, FinancialReceivables } from '@/components/financial-overview';
+import { FinancialSummary, FinancialReceivables, FinancialInstallments } from '@/components/financial-overview';
 import { LegacyFinancialAuditPanel } from '@/components/legacy-financial-audit-panel';
 import { auditLegacyReceivables, type LegacyReceiptReference } from '@/lib/legacy-finance-audit';
 import { receivePaymentWithReceipt, listAdminReceiptReferences, listReceiptLocks, receiptLabel, reverseReceiptedPayment, type ReceiptLock } from '@/services/legacy-receipt-service';
@@ -138,6 +138,7 @@ export default function AdminFinancialScreen() {
   const section=embedded?.subview??localSection;
   const setSection=(value:string)=>{if(embedded)embedded.onNavigate('financial',{view:value});else setLocalSection(value);};
   const [filters,setFilters]=useState({query:'',projectId:'',status:'',month:'',type:''});
+  const [monthInput,setMonthInput]=useState('');
   const [coreError,setCoreError]=useState<string|null>(null);
   const [bankError,setBankError]=useState<string|null>(null);
   const [archiveError,setArchiveError]=useState<string|null>(null);
@@ -294,7 +295,7 @@ export default function AdminFinancialScreen() {
     if(description.trim().length<2)invalid.description='Preencha a descrição do lançamento com pelo menos 2 caracteres.';
     if(parsed!==null&&moneyToCents(parsed)===null)invalid.amount=`Use no máximo duas casas decimais (ex.: 100,01). O valor ${amount.trim()} não será arredondado automaticamente.`;
     else if(parsed===null||parsed<=0)invalid.amount='Informe um valor maior que zero. Exemplo: 500,00.';
-    if(!isValidIsoDate(dateValue))invalid.date='Informe uma data válida para o lançamento (DD/MM/AAAA ou AAAA-MM-DD).';
+    if(!isValidIsoDate(dateValue))invalid.date='Informe uma data válida para o lançamento (DD/MM/AAAA).';
     if(dueValue&&!isValidIsoDate(dueValue))invalid.dueDate='Informe uma data de vencimento válida ou deixe em branco.';
     if(entryStatus==='pago'&&paidValue&&!isValidIsoDate(paidValue))invalid.paidAt='Informe uma data efetiva de pagamento válida.';
     if(entryStatus==='pago'&&(paidValue||dateValue)>financialToday())invalid.paidAt='A data efetiva de pagamento não pode estar no futuro.';
@@ -400,19 +401,20 @@ export default function AdminFinancialScreen() {
         <Button title="Cancelar recebimento" variant="ghost" disabled={saving} onPress={()=>{setReceiving(null);setError(null);}} />
       </Card></ScrollView></Modal>:null}
       {!embedded ? <SelectionChips label="Área financeira" value={section} onChange={value=>{setSection(value);setError(null);setSuccess(null);}}
-        items={[{value:'summary',label:'Resumo'},{value:'receivables',label:'A receber'},{value:'entries',label:'Movimentações'},{value:'accounts',label:'Contas e OFX'},{value:'hours',label:'Horas e margem'},{value:'history',label:'Histórico e exportações'},{value:'fiscal',label:'Rascunhos fiscais'}]} /> : null}
+        items={[{value:'summary',label:'Resumo'},{value:'installments',label:'Dar baixa'},{value:'receivables',label:'Extrato a receber'},{value:'entries',label:'Movimentações'},{value:'accounts',label:'Contas e OFX'},{value:'hours',label:'Horas e margem'},{value:'history',label:'Histórico e exportações'},{value:'fiscal',label:'Rascunhos fiscais'}]} /> : null}
       {!embedded ? <Button title="Emissão de recibos — Word e PDF" variant="secondary" onPress={()=>{if(Platform.OS==='web')window.location.assign('/recibos.html');else void Linking.openURL('https://camilamartinsengenharia.com.br/recibos.html');}} /> : null}
       {section==='summary'?<FinancialSummary styles={styles} coreError={coreError} bankError={bankError} loading={loading} monthTotals={monthTotals} statementTotal={statementTotal} missingContractValues={missingContractValues} embeddedProjectId={embedded?.projectId} entries={entries} accounts={accounts} transactions={transactions} goldColor={colors.gold600}
-        onMonthReceipts={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'pago',month:financialToday().slice(0,7),type:'entrada'});setPage(0);setSection('entries');}}
-        onPendingPayables={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'aberto',month:'',type:'saida'});setPage(0);setSection('entries');}}
-        onReceivables={()=>setSection('receivables')} onNewEntry={()=>{clearEntry();setFormOpen(true);setSection('entries');}} />:null}
+        onMonthReceipts={()=>{const month=financialToday().slice(0,7);setMonthInput(`${month.slice(5)}/${month.slice(0,4)}`);setFilters({query:'',projectId:embedded?.projectId??'',status:'pago',month,type:'entrada'});setPage(0);setSection('entries');}}
+        onPendingPayables={()=>{setMonthInput('');setFilters({query:'',projectId:embedded?.projectId??'',status:'aberto',month:'',type:'saida'});setPage(0);setSection('entries');}}
+        onReceivables={()=>setSection('receivables')} onNewEntry={()=>{clearEntry();setFormOpen(true);setSection('entries');}} onInstallments={()=>setSection('installments')} />:null}
+      {section==='installments'?<FinancialInstallments styles={styles} entries={entries} embeddedProjectId={embedded?.projectId} loading={loading} coreError={coreError} saving={saving} goldColor={colors.gold600} receiveEntry={receiveEntry} onNewEntry={()=>{clearEntry();setType('entrada');setFormOpen(true);setSection('entries');}} />:null}
       {section==='receivables'?<>
+        <FinancialReceivables styles={styles} embeddedProjectId={embedded?.projectId} missingContractValues={missingContractValues} statementQuery={statementQuery} setStatementQuery={setStatementQuery} statementFocus={statementFocus} setStatementFocus={setStatementFocus} statementPage={statementPage} setStatementPage={setStatementPage} expandedStatement={expandedStatement} setExpandedStatement={setExpandedStatement} statementRows={statementRows} contracts={contracts} integrityIssues={integrityIssues} bankError={bankError} loading={loading} coreError={coreError} saving={saving} goldColor={colors.gold600}
+        perform={perform} openReceipt={openReceipt} receiveEntry={receiveEntry} onContractEdit={id=>{setSelectedContractId(id);setContractValue('');setSection('hours');}} />
         <LegacyFinancialAuditPanel report={legacyAudit} loading={loading} error={coreError||receiptAuditError||originReviewError}
           onContractEdit={id=>{setSelectedContractId(id);setContractValue('');setSection('hours');}}
           onEntryEdit={id=>{const entry=entries.find(row=>row.id===id);if(entry)editEntry(entry);else setError('Lançamento não localizado entre os registros ativos. Confira o histórico.');}}
           onOriginReview={saveOriginReview} />
-        <FinancialReceivables styles={styles} embeddedProjectId={embedded?.projectId} missingContractValues={missingContractValues} statementQuery={statementQuery} setStatementQuery={setStatementQuery} statementFocus={statementFocus} setStatementFocus={setStatementFocus} statementPage={statementPage} setStatementPage={setStatementPage} expandedStatement={expandedStatement} setExpandedStatement={setExpandedStatement} statementRows={statementRows} contracts={contracts} integrityIssues={integrityIssues} bankError={bankError} loading={loading} coreError={coreError} saving={saving} goldColor={colors.gold600}
-        perform={perform} openReceipt={openReceipt} receiveEntry={receiveEntry} onContractEdit={id=>{setSelectedContractId(id);setContractValue('');setSection('hours');}} />
       </>:null}
       {section==='entries'?<>
       <Card><Text style={styles.sectionTitle}>Filtrar lançamentos e indicadores</Text>
@@ -420,9 +422,9 @@ export default function AdminFinancialScreen() {
         {!embedded ? <SelectionChips label="Projeto / contrato" value={filters.projectId} onChange={value=>setFilter('projectId',value)} items={[{value:'',label:'Todos'},...projects.map(project=>({value:project.id,label:`${project.contractNumber} • ${project.clientName} • ${project.name}`}))]} /> : null}
         <SelectionChips label="Tipo de movimentação" value={filters.type} onChange={value=>setFilter('type',value)} items={[{value:'',label:'Todas'},{value:'entrada',label:'Entradas'},{value:'saida',label:'Saídas'}]} />
         <SelectionChips label="Situação do lançamento" value={filters.status} onChange={value=>setFilter('status',value)} items={[{value:'',label:'Todas'},{value:'pago',label:'Recebidos / pagos'},{value:'aberto',label:'Em aberto'},{value:'pendente',label:'Pendentes a vencer'},{value:'atrasado',label:'Em atraso'},{value:'cancelado',label:'Cancelados'}]} />
-        <Field label="Mês (AAAA-MM)" placeholder="Ex.: 2026-10" value={filters.month} onChangeText={value=>setFilter('month',value)} />
+        <Field label="Mês (MM/AAAA)" placeholder="Ex.: 10/2026" keyboardType="number-pad" maxLength={7} value={monthInput} onChangeText={value=>{const digits=value.replace(/\D/g,'').slice(0,6);setMonthInput(digits.length>2?`${digits.slice(0,2)}/${digits.slice(2)}`:digits);const month=Number(digits.slice(0,2));setFilter('month',digits.length===6&&month>=1&&month<=12?`${digits.slice(2)}-${digits.slice(0,2)}`:'');}} />
         <Text style={styles.meta}>O mês usa a data de pagamento para quitados e o vencimento para pendentes. Cancelados não entram nos totais.</Text>
-        <Button title="Limpar filtros" variant="ghost" onPress={()=>{setFilters({query:'',projectId:embedded?.projectId??'',status:'',month:'',type:''});setPage(0);}} />
+        <Button title="Limpar filtros" variant="ghost" onPress={()=>{setMonthInput('');setFilters({query:'',projectId:embedded?.projectId??'',status:'',month:'',type:''});setPage(0);}} />
       </Card>
       <View style={styles.metrics}>{[
         ['RECEBIDO',totals.received],['PAGO',totals.paid],['SALDO REALIZADO',totals.balance],
@@ -463,10 +465,10 @@ export default function AdminFinancialScreen() {
         <Text style={styles.meta}>{client.entries.length} lançamento(s) • Recebido {formatCurrency(financialTotals(client.entries).received)} • A receber {formatCurrency(financialTotals(client.entries).receivable)}</Text>
         <Button title={expandedEntryClients[client.id]?'Recolher cliente':'Ver projetos do cliente'} variant="secondary" onPress={()=>setExpandedEntryClients(current=>({...current,[client.id]:!current[client.id]}))} />
         {expandedEntryClients[client.id]?<FinancialProjectGroups entries={client.entries} styles={styles} renderEntry={entry=>{const lock=receiptLocks[entry.id];return <Card key={entry.id}><Text style={styles.title}>{entry.description}</Text><Text style={styles.meta}>{entry.clientName} • {entry.contractNumber} • {entry.projectName}</Text>
-        <Text style={styles.meta}>{entry.type==='saida'?'Saída':'Entrada'} • {formatCurrency(entry.amount)} • {effectiveStatus(entry)} • {categoryLabel(entry.category)} • {formatDate(entryDate(entry))}</Text>
+        <Text style={styles.meta}>{entry.type==='saida'?'Saída':'Entrada'} • {formatCurrency(entry.amount)} • {effectiveStatus(entry)} • {categoryLabel(entry.category)} • {financialStatus(entry.status)==='pago'?'Pago em':'Vencimento'} {formatDate(entryDate(entry))}</Text>
         <Text style={styles.meta}>{entry.notes}</Text>
         {entry.type==='entrada'&&financialStatus(entry.status)==='pago'?<Button debounceMs={0} title="Emitir / abrir recibo deste recebimento" variant="secondary" onPress={()=>openReceipt(entry.id,entry.projectId)} />:null}
-        {entry.type==='entrada'&&financialStatus(entry.status)==='pendente'?<Button title="Registrar recebimento" variant="secondary" disabled={saving} onPress={()=>receiveEntry(entry)} />:null}
+        {entry.type==='entrada'&&financialStatus(entry.status)==='pendente'?<Button title="Dar baixa (registrar recebimento)" variant="secondary" disabled={saving} onPress={()=>receiveEntry(entry)} />:null}
         {lock?<>
           <Notice tone={lock.reversedAt?'warning':'info'}>{lock.reversedAt
             ?`Recibo ${receiptLabel(lock.receiptNumber)} estornado em ${formatDate(lock.reversedAt)}${lock.reversalReason?` — ${lock.reversalReason}`:''}. O documento original permanece preservado.`
