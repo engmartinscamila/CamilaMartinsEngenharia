@@ -1,5 +1,6 @@
 // Gera assets/frases-do-dia.json (v8) a partir do acervo revisado, sem rede.
 // A ordem garante que o mesmo autor nunca aparece em dois dias seguidos (inclusive na virada do ciclo).
+import { createHash } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import { AUTORAIS, CITACOES } from "./frases-do-dia-curadoria.mjs";
 
@@ -7,14 +8,15 @@ const OUT = "assets/frases-do-dia.json";
 const norm = (v) => String(v ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
 const categoria = (t) => {
   t = norm(t);
-  if (/imagina|criativ|arte|curva|beleza/.test(t)) return "Criatividade";
-  if (/conhec|aprend|sabe|intelig|mente|pens|curios|descobert|ensina/.test(t)) return "Conhecimento";
-  if (/corag|medo|falh|fracass|desist/.test(t)) return "Coragem";
-  if (/persist|discipl|esfor|habito|constan|consisten|motiva/.test(t)) return "Persistência";
-  if (/tempo|pacien|relogio/.test(t)) return "Paciência";
-  if (/clarez|simplic|menos e mais|perfeic/.test(t)) return "Clareza";
-  if (/qualidade|excelen|detalhe|bem-feita|bem construido|obra|projeto|constru/.test(t)) return "Excelência";
-  if (/meta|prior|decis|escolh|planej|foco/.test(t)) return "Planejamento";
+  if (/alegr|feliz|riso|rir|sorri|cant|music|danc/.test(t)) return "Alegria";
+  if (/corag|ous|medo|audaz|temer|derrot|levant/.test(t)) return "Coragem";
+  if (/paz|seren|calma|tranquil|descans|paciencia|pacien/.test(t)) return "Paz";
+  if (/esperanc|sonh|estrela|sol |sol,|verao|madrugada|amanha/.test(t)) return "Esperança";
+  if (/amig|amor|ama|bondade|gentil|generos|gratid|ternura/.test(t)) return "Amor e amizade";
+  if (/forc|firme|persever|constan|lut|adversid|dificuld|perseveran|tentar|vencer|fracass|falh/.test(t)) return "Força";
+  if (/aprend|ensin|saber|sabedor|conhec|pens|pergunt|curios|verdade|ideia/.test(t)) return "Sabedoria";
+  if (/vida|viver|vivo|dia|tempo|presente|caminh|jornada/.test(t)) return "Vida";
+  if (/arte|cria|imagin|belez|obra|constru|arquitet|invent/.test(t)) return "Criação";
   return "Reflexão";
 };
 
@@ -29,28 +31,40 @@ for (const [i, item] of itens.entries()) {
 }
 if (new Set(itens.map((x) => norm(x.texto))).size !== itens.length) throw new Error("Frases duplicadas no acervo.");
 
-// Ordenação: frases da Camila intercaladas com citações; as citações seguem rodízio de autores
-// (primeiro uma de cada autor, depois as segundas), e as excedentes ficam espalhadas pelo ciclo.
-const autorais = itens.filter((x) => x.origem === "autoral");
+// Ordenação: cada autor tem suas frases distribuídas de forma uniforme ao longo do ano
+// (posição ideal = (k + deslocamento) * total / quantidade). Depois, um reparo local garante
+// que o mesmo autor nunca apareça em dias seguidos.
 const porAutor = new Map();
-for (const item of itens.filter((x) => x.origem !== "autoral")) {
+for (const item of itens) {
   if (!porAutor.has(item.autor)) porAutor.set(item.autor, []);
   porAutor.get(item.autor).push(item);
 }
-const externas = [];
-for (let rodada = 0; externas.length < itens.length - autorais.length; rodada++) {
-  for (const fila of porAutor.values()) if (fila[rodada]) externas.push(fila[rodada]);
+const total = itens.length;
+const deslocamento = (autor) => (parseInt(createHash("sha256").update(autor).digest("hex").slice(0, 8), 16) / 0xffffffff);
+const posicionados = [];
+for (const [autor, lista] of porAutor) {
+  const d = deslocamento(autor);
+  lista.forEach((item, k) => posicionados.push({ item, alvo: ((k + d) * total) / lista.length }));
 }
-const extras = externas.length - autorais.length;
-const passo = extras > 0 ? Math.floor(autorais.length / extras) : Infinity;
-const ordem = [];
-let e = 0;
-for (let i = 0; i < autorais.length; i++) {
-  ordem.push(autorais[i]);
-  ordem.push(externas[e++]);
-  if (extras > 0 && (i + 1) % passo === 0 && e < externas.length && ordem.length < itens.length - (autorais.length - i - 1) * 2) ordem.push(externas[e++]);
+const ordem = posicionados.sort((a, b) => a.alvo - b.alvo || a.item.autor.localeCompare(b.item.autor, "pt-BR")).map((x) => x.item);
+const conflito = (i) => ordem[i].autor === ordem[(i + 1) % total].autor;
+for (let volta = 0; volta < 50 && ordem.some((_, i) => conflito(i)); volta++) {
+  for (let i = 0; i < total; i++) {
+    if (!conflito(i)) continue;
+    const j = (i + 1) % total;
+    // troca o segundo item do par com o vizinho mais próximo que não crie novo conflito
+    for (let dist = 2; dist < total; dist++) {
+      const k = (i + dist) % total;
+      const autorK = ordem[k].autor, autorJ = ordem[j].autor;
+      const vizinhosK = [ordem[(k - 1 + total) % total].autor, ordem[(k + 1) % total].autor];
+      const vizinhosJ = [ordem[i].autor, ordem[(j + 1) % total].autor];
+      if (autorK !== ordem[i].autor && !vizinhosK.includes(autorJ) && !vizinhosJ.includes(autorK) && autorK !== autorJ) {
+        [ordem[j], ordem[k]] = [ordem[k], ordem[j]];
+        break;
+      }
+    }
+  }
 }
-while (e < externas.length) ordem.push(externas[e++]);
 // Virada do ciclo: o último dia não pode ter o mesmo autor do primeiro.
 if (ordem.at(-1).autor === ordem[0].autor) {
   const i = ordem.findIndex((x, k) => k > 0 && k < ordem.length - 1 && x.autor !== ordem[0].autor && ordem[k - 1].autor !== ordem.at(-1).autor && ordem[k + 1]?.autor !== ordem.at(-1).autor);

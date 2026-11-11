@@ -135,7 +135,7 @@ has(native, 'Recuso esta entrega.', 'Termo Word não contém recusa.');
 for (const key of ['sanitary','masonry','waterproofing','facade','accessibility','fire_safety','dimensions','equipment','safety_risk','no_anomaly']) has(native, key, `Vistoria incompleta: ${key} ausente.`);
 
 const phrases = JSON.parse(read('assets/frases-do-dia.json'));
-assert.ok(Array.isArray(phrases.frases) && phrases.frases.length >= 90, 'Acervo revisado de frases ficou pequeno demais.');
+assert.ok(Array.isArray(phrases.frases) && phrases.frases.length >= 366, 'Acervo precisa cobrir o ano inteiro sem repetir frase.');
 const authors = new Set(phrases.frases.map((item) => item.autor).filter(Boolean));
 assert.ok(phrases.frases.every((item, i, all) => item.autor !== all[(i + 1) % all.length].autor), 'Mesmo autor em dias seguidos.');
 assert.ok(authors.size >= 8, 'Acervo continua sem diversidade de autores.');

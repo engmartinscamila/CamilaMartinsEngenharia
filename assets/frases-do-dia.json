@@ -1,132 +1,713 @@
 {
   "versao": 8,
   "timezone": "America/Sao_Paulo",
-  "total": 93,
+  "total": 375,
   "composicao": {
-    "autoraisCamilaMartins": 43,
-    "citacoesAutores": 50,
-    "autoresExternos": 44
+    "autoraisCamilaMartins": 35,
+    "citacoesAutores": 340,
+    "autoresExternos": 145
   },
   "regraSelecao": "Uma frase por dia, na ordem do acervo (dias desde 01/01/1970 no fuso de São Paulo, módulo total). A ordem nunca repete o mesmo autor em dias seguidos.",
   "politicaEditorial": "Acervo revisado manualmente: autoria verificada, sem trechos soltos de romances, grafia antiga, letras de música, política ou religião.",
   "frases": [
     {
+      "texto": "No meio do inverno, descobri que havia em mim um verão invencível.",
+      "autor": "Albert Camus",
+      "categoria": "Esperança",
+      "fonte": "Retorno a Tipasa",
+      "origem": "citação"
+    },
+    {
+      "texto": "Uma jornada de mil léguas começa com um único passo.",
+      "autor": "Lao Tsé",
+      "categoria": "Vida",
+      "fonte": "Tao Te Ching, 64",
+      "origem": "citação"
+    },
+    {
+      "texto": "A vida só é possível reinventada.",
+      "autor": "Cecília Meireles",
+      "categoria": "Vida",
+      "fonte": "Reinvenção",
+      "origem": "citação"
+    },
+    {
+      "texto": "A alma se tinge com a cor dos seus pensamentos.",
+      "autor": "Marco Aurélio",
+      "categoria": "Sabedoria",
+      "fonte": "Meditações, V, 16",
+      "origem": "citação"
+    },
+    {
+      "texto": "A prática é a melhor de todas as mestras.",
+      "autor": "Publílio Siro",
+      "categoria": "Reflexão",
+      "fonte": "Sentenças",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não sou um pássaro, e nenhuma rede me prende.",
+      "autor": "Charlotte Brontë",
+      "categoria": "Reflexão",
+      "fonte": "Jane Eyre",
+      "origem": "citação"
+    },
+    {
+      "texto": "O mundo quebra a todos, e depois muitos ficam fortes nos lugares quebrados.",
+      "autor": "Ernest Hemingway",
+      "categoria": "Reflexão",
+      "fonte": "Adeus às Armas",
+      "origem": "citação"
+    },
+    {
+      "texto": "Ninguém ignora tudo. Ninguém sabe tudo. Todos nós sabemos alguma coisa. Por isso aprendemos sempre.",
+      "autor": "Paulo Freire",
+      "categoria": "Sabedoria",
+      "fonte": "A Importância do Ato de Ler",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não rir, não lamentar, nem detestar, mas compreender.",
+      "autor": "Baruch Spinoza",
+      "categoria": "Alegria",
+      "fonte": "Tratado Político",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quem ousa desperdiçar uma hora de tempo ainda não descobriu o valor da vida.",
+      "autor": "Charles Darwin",
+      "categoria": "Coragem",
+      "fonte": "Cartas",
+      "origem": "citação"
+    },
+    {
+      "texto": "Um grande edifício deve começar no imensurável, passar pelo mensurável no projeto e, no fim, voltar a ser imensurável.",
+      "autor": "Louis Kahn",
+      "categoria": "Reflexão",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quem perde a riqueza perde muito; quem perde um amigo perde mais; mas quem perde a coragem perde tudo.",
+      "autor": "Miguel de Cervantes",
+      "categoria": "Coragem",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não te irrites se te pagarem mal um benefício: antes cair das nuvens que de um terceiro andar.",
+      "autor": "Machado de Assis",
+      "categoria": "Reflexão",
+      "fonte": "Memórias Póstumas de Brás Cubas",
+      "origem": "citação"
+    },
+    {
       "texto": "Grandes resultados nascem da constância.",
       "autor": "Camila Martins",
-      "categoria": "Persistência",
+      "categoria": "Força",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "A descoberta consiste em ver o que todos viram e pensar o que ninguém pensou.",
-      "autor": "Albert Szent-Györgyi",
-      "categoria": "Conhecimento",
-      "fonte": "atribuída",
+      "texto": "Se quer ir rápido, vá sozinho; se quer ir longe, vá acompanhado.",
+      "autor": "Provérbio africano",
+      "categoria": "Reflexão",
+      "fonte": "tradição popular",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não são as coisas que nos perturbam, mas a opinião que temos delas.",
+      "autor": "Epicteto",
+      "categoria": "Reflexão",
+      "fonte": "Manual, 5",
+      "origem": "citação"
+    },
+    {
+      "texto": "Toda a sabedoria humana está contida nestas duas palavras: esperar e ter esperança.",
+      "autor": "Alexandre Dumas",
+      "categoria": "Esperança",
+      "fonte": "O Conde de Monte Cristo",
+      "origem": "citação"
+    },
+    {
+      "texto": "O trabalho é o amor tornado visível.",
+      "autor": "Khalil Gibran",
+      "categoria": "Amor e amizade",
+      "fonte": "O Profeta",
+      "origem": "citação"
+    },
+    {
+      "texto": "Um país se faz com homens e livros.",
+      "autor": "Monteiro Lobato",
+      "categoria": "Reflexão",
+      "fonte": "América",
+      "origem": "citação"
+    },
+    {
+      "texto": "A mente não é um vaso a ser enchido, mas um fogo a ser aceso.",
+      "autor": "Plutarco",
+      "categoria": "Reflexão",
+      "fonte": "Sobre a Arte de Ouvir (paráfrase)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Enquanto ensinamos, aprendemos.",
+      "autor": "Sêneca",
+      "categoria": "Sabedoria",
+      "fonte": "Cartas a Lucílio, 7",
+      "origem": "citação"
+    },
+    {
+      "texto": "As maiores conquistas da humanidade aconteceram quando as pessoas conversaram.",
+      "autor": "Stephen Hawking",
+      "categoria": "Reflexão",
+      "fonte": "1993",
+      "origem": "citação"
+    },
+    {
+      "texto": "Ninguém entra duas vezes no mesmo rio.",
+      "autor": "Heráclito",
+      "categoria": "Reflexão",
+      "fonte": "Fragmentos",
       "origem": "citação"
     },
     {
       "texto": "A clareza transforma esforço em direção.",
       "autor": "Camila Martins",
-      "categoria": "Persistência",
+      "categoria": "Força",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "A imaginação é mais importante que o conhecimento. O conhecimento é limitado; a imaginação abraça o mundo inteiro.",
-      "autor": "Albert Einstein",
-      "categoria": "Criatividade",
-      "fonte": "entrevista ao Saturday Evening Post, 1929",
+      "texto": "O que está atrás de nós e o que está diante de nós são pequenos perto do que está dentro de nós.",
+      "autor": "Henry Stanley Haskins",
+      "categoria": "Vida",
+      "fonte": "Meditações em Wall Street",
+      "origem": "citação"
+    },
+    {
+      "texto": "O que não desejas para ti, não faças aos outros.",
+      "autor": "Confúcio",
+      "categoria": "Reflexão",
+      "fonte": "Analectos, XV, 24",
+      "origem": "citação"
+    },
+    {
+      "texto": "Há trezentos e sessenta graus; por que ficar preso a apenas um?",
+      "autor": "Zaha Hadid",
+      "categoria": "Reflexão",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Podemos enfrentar muitas derrotas, mas não devemos ser derrotados.",
+      "autor": "Maya Angelou",
+      "categoria": "Coragem",
+      "fonte": "entrevista",
+      "origem": "citação"
+    },
+    {
+      "texto": "Todos estes que aí estão atravancando o meu caminho, eles passarão... Eu passarinho!",
+      "autor": "Mario Quintana",
+      "categoria": "Vida",
+      "fonte": "Poeminho do Contra",
+      "origem": "citação"
+    },
+    {
+      "texto": "Muito pouco é necessário para uma vida feliz; está tudo dentro de você, na sua maneira de pensar.",
+      "autor": "Marco Aurélio",
+      "categoria": "Alegria",
+      "fonte": "Meditações, VII, 67",
+      "origem": "citação"
+    },
+    {
+      "texto": "Todos pensam em mudar o mundo, mas ninguém pensa em mudar a si mesmo.",
+      "autor": "Liev Tolstói",
+      "categoria": "Sabedoria",
+      "fonte": "Três Métodos de Reforma",
+      "origem": "citação"
+    },
+    {
+      "texto": "Gênio é um por cento inspiração e noventa e nove por cento transpiração.",
+      "autor": "Thomas Edison",
+      "categoria": "Reflexão",
+      "fonte": "entrevista, 1903",
+      "origem": "citação"
+    },
+    {
+      "texto": "Para mudar algo, construa um novo modelo que torne o antigo obsoleto.",
+      "autor": "Buckminster Fuller",
+      "categoria": "Criação",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "A arquitetura é o jogo sábio, correto e magnífico dos volumes reunidos sob a luz.",
+      "autor": "Le Corbusier",
+      "categoria": "Criação",
+      "fonte": "Por uma Arquitetura",
+      "origem": "citação"
+    },
+    {
+      "texto": "Nossas dúvidas são traidoras e nos fazem perder o bem que poderíamos conquistar, por medo de tentar.",
+      "autor": "William Shakespeare",
+      "categoria": "Coragem",
+      "fonte": "Medida por Medida",
       "origem": "citação"
     },
     {
       "texto": "O progresso começa com uma decisão consciente.",
       "autor": "Camila Martins",
-      "categoria": "Planejamento",
+      "categoria": "Reflexão",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "A coisa mais difícil é a decisão de agir; o resto é apenas tenacidade.",
-      "autor": "Amelia Earhart",
-      "categoria": "Planejamento",
+      "texto": "Tudo vale a pena se a alma não é pequena.",
+      "autor": "Fernando Pessoa",
+      "categoria": "Reflexão",
+      "fonte": "Mensagem, Mar Português",
+      "origem": "citação"
+    },
+    {
+      "texto": "Para que vivemos, se não para tornar a vida menos difícil uns para os outros?",
+      "autor": "George Eliot",
+      "categoria": "Vida",
+      "fonte": "Middlemarch",
+      "origem": "citação"
+    },
+    {
+      "texto": "O prazer no trabalho aperfeiçoa a obra.",
+      "autor": "Aristóteles",
+      "categoria": "Criação",
+      "fonte": "Ética a Nicômaco, X",
+      "origem": "citação"
+    },
+    {
+      "texto": "A vida é uma aventura ousada ou não é nada.",
+      "autor": "Helen Keller",
+      "categoria": "Coragem",
+      "fonte": "A Porta Aberta",
+      "origem": "citação"
+    },
+    {
+      "texto": "Assim como o ferro enferruja sem uso, a inatividade destrói o vigor da mente.",
+      "autor": "Leonardo da Vinci",
+      "categoria": "Vida",
+      "fonte": "Cadernos",
+      "origem": "citação"
+    },
+    {
+      "texto": "Enquanto há vida, há esperança.",
+      "autor": "Cícero",
+      "categoria": "Esperança",
+      "fonte": "Cartas a Ático, IX",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não é porque as coisas são difíceis que não ousamos; é porque não ousamos que elas são difíceis.",
+      "autor": "Sêneca",
+      "categoria": "Coragem",
+      "fonte": "Cartas a Lucílio, 104",
+      "origem": "citação"
+    },
+    {
+      "texto": "Tenha paciência com tudo o que não está resolvido em seu coração e procure amar as próprias perguntas.",
+      "autor": "Rainer Maria Rilke",
+      "categoria": "Paz",
+      "fonte": "Cartas a um Jovem Poeta",
+      "origem": "citação"
+    },
+    {
+      "texto": "Inventar é imaginar o que ninguém pensou; é acreditar no que ninguém jurou; é arriscar o que ninguém ousou.",
+      "autor": "Santos Dumont",
+      "categoria": "Coragem",
       "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Temos dois ouvidos e uma só boca para ouvir mais e falar menos.",
+      "autor": "Zenão de Cítio",
+      "categoria": "Reflexão",
+      "fonte": "Diógenes Laércio, Vidas, VII",
+      "origem": "citação"
+    },
+    {
+      "texto": "A vida é combate, que os fracos abate, que os fortes, os bravos, só pode exaltar.",
+      "autor": "Gonçalves Dias",
+      "categoria": "Vida",
+      "fonte": "Canção do Tamoio",
       "origem": "citação"
     },
     {
       "texto": "A disciplina sustenta aquilo que a motivação inicia.",
       "autor": "Camila Martins",
-      "categoria": "Persistência",
+      "categoria": "Reflexão",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Tu te tornas eternamente responsável por aquilo que cativas.",
-      "autor": "Antoine de Saint-Exupéry",
-      "categoria": "Conhecimento",
-      "fonte": "O Pequeno Príncipe",
+      "texto": "Nada é mais poderoso do que uma ideia cujo tempo chegou.",
+      "autor": "Victor Hugo",
+      "categoria": "Sabedoria",
+      "fonte": "História de um Crime (paráfrase)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quando uma porta se fecha, outra se abre; mas tantas vezes olhamos para a porta fechada que não vemos a que se abriu.",
+      "autor": "Alexander Graham Bell",
+      "categoria": "Reflexão",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "A imaginação é mais importante que o conhecimento. O conhecimento é limitado; a imaginação abraça o mundo inteiro.",
+      "autor": "Albert Einstein",
+      "categoria": "Sabedoria",
+      "fonte": "entrevista ao Saturday Evening Post, 1929",
+      "origem": "citação"
+    },
+    {
+      "texto": "A paciência é amarga, mas seu fruto é doce.",
+      "autor": "Jean-Jacques Rousseau",
+      "categoria": "Paz",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não há encanto igual à ternura do coração.",
+      "autor": "Jane Austen",
+      "categoria": "Alegria",
+      "fonte": "Emma",
+      "origem": "citação"
+    },
+    {
+      "texto": "Conhecer os outros é inteligência; conhecer a si mesmo é verdadeira sabedoria.",
+      "autor": "Lao Tsé",
+      "categoria": "Sabedoria",
+      "fonte": "Tao Te Ching, 33",
+      "origem": "citação"
+    },
+    {
+      "texto": "O coração tem razões que a própria razão desconhece.",
+      "autor": "Blaise Pascal",
+      "categoria": "Sabedoria",
+      "fonte": "Pensamentos",
+      "origem": "citação"
+    },
+    {
+      "texto": "Se alguém avança confiante na direção dos próprios sonhos, encontrará um sucesso inesperado.",
+      "autor": "Henry David Thoreau",
+      "categoria": "Esperança",
+      "fonte": "Walden",
+      "origem": "citação"
+    },
+    {
+      "texto": "A melhor vingança é não ser como quem o ofendeu.",
+      "autor": "Marco Aurélio",
+      "categoria": "Reflexão",
+      "fonte": "Meditações, VI, 6",
       "origem": "citação"
     },
     {
       "texto": "Conhecimento ganha valor quando se transforma em ação.",
       "autor": "Camila Martins",
-      "categoria": "Conhecimento",
+      "categoria": "Sabedoria",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Quando você elimina o impossível, o que resta, por mais improvável que pareça, deve ser a verdade.",
-      "autor": "Arthur Conan Doyle",
+      "texto": "Como é maravilhoso que ninguém precise esperar um único momento para começar a melhorar o mundo.",
+      "autor": "Anne Frank",
       "categoria": "Reflexão",
-      "fonte": "O Signo dos Quatro",
+      "fonte": "O Diário de Anne Frank",
+      "origem": "citação"
+    },
+    {
+      "texto": "Saber não basta; é preciso aplicar. Querer não basta; é preciso fazer.",
+      "autor": "Johann Wolfgang von Goethe",
+      "categoria": "Sabedoria",
+      "fonte": "Os Anos de Aprendizado de Wilhelm Meister",
+      "origem": "citação"
+    },
+    {
+      "texto": "Caia sete vezes, levante-se oito.",
+      "autor": "Provérbio japonês",
+      "categoria": "Coragem",
+      "fonte": "tradição popular",
+      "origem": "citação"
+    },
+    {
+      "texto": "Isso de querer ser exatamente aquilo que a gente é ainda vai nos levar além.",
+      "autor": "Paulo Leminski",
+      "categoria": "Reflexão",
+      "fonte": "Distraídos Venceremos",
+      "origem": "citação"
+    },
+    {
+      "texto": "Sê paciente e firme; um dia esta dor te será útil.",
+      "autor": "Ovídio",
+      "categoria": "Paz",
+      "fonte": "Amores, III, 11",
+      "origem": "citação"
+    },
+    {
+      "texto": "Nenhum vento é favorável para quem não sabe a que porto se dirige.",
+      "autor": "Sêneca",
+      "categoria": "Reflexão",
+      "fonte": "Cartas a Lucílio, 71",
+      "origem": "citação"
+    },
+    {
+      "texto": "A fé é o pássaro que sente a luz e canta quando a madrugada ainda está escura.",
+      "autor": "Rabindranath Tagore",
+      "categoria": "Alegria",
+      "fonte": "Vaga-lumes",
+      "origem": "citação"
+    },
+    {
+      "texto": "Feliz aquele que transfere o que sabe e aprende o que ensina.",
+      "autor": "Cora Coralina",
+      "categoria": "Alegria",
+      "fonte": "Exaltação de Aninha",
+      "origem": "citação"
+    },
+    {
+      "texto": "Escreva no seu coração que cada dia é o melhor dia do ano.",
+      "autor": "Ralph Waldo Emerson",
+      "categoria": "Vida",
+      "fonte": "Diários",
+      "origem": "citação"
+    },
+    {
+      "texto": "O que a vida quer da gente é coragem.",
+      "autor": "João Guimarães Rosa",
+      "categoria": "Coragem",
+      "fonte": "Grande Sertão: Veredas",
       "origem": "citação"
     },
     {
       "texto": "A excelência cresce nos detalhes bem cuidados.",
       "autor": "Camila Martins",
-      "categoria": "Excelência",
+      "categoria": "Reflexão",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Seus clientes mais insatisfeitos são sua maior fonte de aprendizado.",
-      "autor": "Bill Gates",
-      "categoria": "Conhecimento",
-      "fonte": "A Empresa na Velocidade do Pensamento",
+      "texto": "O que você faz faz diferença, e você precisa decidir que tipo de diferença quer fazer.",
+      "autor": "Jane Goodall",
+      "categoria": "Reflexão",
+      "fonte": "atribuída",
       "origem": "citação"
     },
     {
-      "texto": "Não é o mais forte que sobrevive, nem o mais inteligente, mas o que melhor se adapta às mudanças.",
-      "autor": "Leon C. Megginson",
-      "categoria": "Conhecimento",
-      "fonte": "1963, interpretando Darwin",
+      "texto": "Devagar se vai ao longe.",
+      "autor": "Provérbio português",
+      "categoria": "Reflexão",
+      "fonte": "tradição popular",
+      "origem": "citação"
+    },
+    {
+      "texto": "A vida só pode ser compreendida olhando para trás, mas só pode ser vivida olhando para a frente.",
+      "autor": "Søren Kierkegaard",
+      "categoria": "Vida",
+      "fonte": "Diários",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quem tem um porquê para viver suporta quase qualquer como.",
+      "autor": "Friedrich Nietzsche",
+      "categoria": "Vida",
+      "fonte": "Crepúsculo dos Ídolos",
+      "origem": "citação"
+    },
+    {
+      "texto": "A maior coisa do mundo é saber pertencer a si mesmo.",
+      "autor": "Michel de Montaigne",
+      "categoria": "Sabedoria",
+      "fonte": "Ensaios, I, 39",
+      "origem": "citação"
+    },
+    {
+      "texto": "A arte existe porque a vida não basta.",
+      "autor": "Ferreira Gullar",
+      "categoria": "Vida",
+      "fonte": "entrevista",
+      "origem": "citação"
+    },
+    {
+      "texto": "Colhe o dia e confia o mínimo possível no amanhã.",
+      "autor": "Horácio",
+      "categoria": "Esperança",
+      "fonte": "Odes, I, 11",
+      "origem": "citação"
+    },
+    {
+      "texto": "O que impede a ação faz avançar a ação. O que está no caminho torna-se o caminho.",
+      "autor": "Marco Aurélio",
+      "categoria": "Vida",
+      "fonte": "Meditações, V, 20",
       "origem": "citação"
     },
     {
       "texto": "Boas decisões nascem de perguntas bem formuladas.",
       "autor": "Camila Martins",
-      "categoria": "Planejamento",
+      "categoria": "Sabedoria",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Você pode fazer qualquer coisa, mas não tudo.",
-      "autor": "David Allen",
+      "texto": "Nenhum homem é livre se não é senhor de si mesmo.",
+      "autor": "Epicteto",
       "categoria": "Reflexão",
+      "fonte": "Fragmentos",
+      "origem": "citação"
+    },
+    {
+      "texto": "Tu te tornas eternamente responsável por aquilo que cativas.",
+      "autor": "Antoine de Saint-Exupéry",
+      "categoria": "Reflexão",
+      "fonte": "O Pequeno Príncipe",
+      "origem": "citação"
+    },
+    {
+      "texto": "Liberdade é pouco. O que eu desejo ainda não tem nome.",
+      "autor": "Clarice Lispector",
+      "categoria": "Reflexão",
+      "fonte": "Perto do Coração Selvagem",
+      "origem": "citação"
+    },
+    {
+      "texto": "Em cada caminhada pela natureza, recebemos muito mais do que buscamos.",
+      "autor": "John Muir",
+      "categoria": "Vida",
       "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Aprender sem pensar é inútil; pensar sem aprender é perigoso.",
+      "autor": "Confúcio",
+      "categoria": "Sabedoria",
+      "fonte": "Analectos, II, 15",
+      "origem": "citação"
+    },
+    {
+      "texto": "A sua alegria é a sua tristeza sem máscara.",
+      "autor": "Khalil Gibran",
+      "categoria": "Alegria",
+      "fonte": "O Profeta",
+      "origem": "citação"
+    },
+    {
+      "texto": "A esperança é a coisa com penas que pousa na alma.",
+      "autor": "Emily Dickinson",
+      "categoria": "Coragem",
+      "fonte": "Poema 254",
+      "origem": "citação"
+    },
+    {
+      "texto": "Cada dia é uma jornada, e a própria jornada é o lar.",
+      "autor": "Matsuo Bashō",
+      "categoria": "Vida",
+      "fonte": "Trilha Estreita ao Confim",
+      "origem": "citação"
+    },
+    {
+      "texto": "O melhor momento para plantar uma árvore foi há vinte anos. O segundo melhor momento é agora.",
+      "autor": "Provérbio chinês",
+      "categoria": "Reflexão",
+      "fonte": "tradição popular",
+      "origem": "citação"
+    },
+    {
+      "texto": "Sofremos mais na imaginação do que na realidade.",
+      "autor": "Sêneca",
+      "categoria": "Criação",
+      "fonte": "Cartas a Lucílio, 13",
+      "origem": "citação"
+    },
+    {
+      "texto": "A vida não é a que a gente viveu, e sim a que a gente recorda, e como recorda para contá-la.",
+      "autor": "Gabriel García Márquez",
+      "categoria": "Vida",
+      "fonte": "Viver para Contar",
+      "origem": "citação"
+    },
+    {
+      "texto": "A beleza salvará o mundo.",
+      "autor": "Fiódor Dostoiévski",
+      "categoria": "Criação",
+      "fonte": "O Idiota",
+      "origem": "citação"
+    },
+    {
+      "texto": "Ainda estou aprendendo.",
+      "autor": "Michelangelo",
+      "categoria": "Sabedoria",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Ensinar é um exercício de imortalidade.",
+      "autor": "Rubem Alves",
+      "categoria": "Sabedoria",
+      "fonte": "A Alegria de Ensinar",
+      "origem": "citação"
+    },
+    {
+      "texto": "Coragem é resistência ao medo, domínio do medo, e não ausência do medo.",
+      "autor": "Mark Twain",
+      "categoria": "Coragem",
+      "fonte": "Pudd'nhead Wilson",
       "origem": "citação"
     },
     {
       "texto": "A paciência também é uma forma de inteligência.",
       "autor": "Camila Martins",
-      "categoria": "Conhecimento",
+      "categoria": "Paz",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Nunca deixe que suas memórias sejam maiores que os seus sonhos.",
-      "autor": "Douglas Ivester",
+      "texto": "Grandes coisas não são feitas por impulso, mas por uma série de pequenas coisas reunidas.",
+      "autor": "Vincent van Gogh",
       "categoria": "Reflexão",
-      "fonte": "atribuída",
+      "fonte": "Cartas a Theo",
+      "origem": "citação"
+    },
+    {
+      "texto": "De tudo o que a sabedoria oferece para a felicidade da vida inteira, o maior bem é a amizade.",
+      "autor": "Epicuro",
+      "categoria": "Sabedoria",
+      "fonte": "Máximas Principais, 27",
+      "origem": "citação"
+    },
+    {
+      "texto": "Viver é a coisa mais rara do mundo. A maioria das pessoas apenas existe.",
+      "autor": "Oscar Wilde",
+      "categoria": "Vida",
+      "fonte": "A Alma do Homem sob o Socialismo",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quando você elimina o impossível, o que resta, por mais improvável que pareça, deve ser a verdade.",
+      "autor": "Arthur Conan Doyle",
+      "categoria": "Sabedoria",
+      "fonte": "O Signo dos Quatro",
+      "origem": "citação"
+    },
+    {
+      "texto": "É preciso sair da ilha para ver a ilha.",
+      "autor": "José Saramago",
+      "categoria": "Reflexão",
+      "fonte": "O Conto da Ilha Desconhecida",
+      "origem": "citação"
+    },
+    {
+      "texto": "Toda construção deve atender a três princípios: solidez, utilidade e beleza.",
+      "autor": "Vitrúvio",
+      "categoria": "Criação",
+      "fonte": "Dez Livros de Arquitetura (paráfrase)",
       "origem": "citação"
     },
     {
@@ -137,101 +718,409 @@
       "origem": "autoral"
     },
     {
-      "texto": "O fracasso é apenas a oportunidade de recomeçar, desta vez com mais inteligência.",
-      "autor": "Henry Ford",
-      "categoria": "Conhecimento",
-      "fonte": "Minha Vida e Minha Obra",
+      "texto": "O ótimo é inimigo do bom.",
+      "autor": "Voltaire",
+      "categoria": "Reflexão",
+      "fonte": "A Bégueule",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quem vence os outros é forte; quem vence a si mesmo é poderoso.",
+      "autor": "Lao Tsé",
+      "categoria": "Reflexão",
+      "fonte": "Tao Te Ching, 33",
+      "origem": "citação"
+    },
+    {
+      "texto": "Liberdade, essa palavra que o sonho humano alimenta, que não há ninguém que explique e ninguém que não entenda.",
+      "autor": "Cecília Meireles",
+      "categoria": "Esperança",
+      "fonte": "Romanceiro da Inconfidência",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não perca mais tempo discutindo como deve ser um homem bom. Seja um.",
+      "autor": "Marco Aurélio",
+      "categoria": "Vida",
+      "fonte": "Meditações, X, 16",
+      "origem": "citação"
+    },
+    {
+      "texto": "Sozinhos podemos fazer tão pouco; juntos podemos fazer muito.",
+      "autor": "Helen Keller",
+      "categoria": "Reflexão",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "A vida é longa, se soubermos usá-la.",
+      "autor": "Sêneca",
+      "categoria": "Vida",
+      "fonte": "Sobre a Brevidade da Vida",
+      "origem": "citação"
+    },
+    {
+      "texto": "Livros não mudam o mundo; quem muda o mundo são as pessoas. Os livros só mudam as pessoas.",
+      "autor": "Mario Quintana",
+      "categoria": "Reflexão",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Para que o possível aconteça, é preciso tentar o impossível repetidas vezes.",
+      "autor": "Hermann Hesse",
+      "categoria": "Força",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "O tempo é um tecido invisível em que se pode bordar tudo.",
+      "autor": "Machado de Assis",
+      "categoria": "Vida",
+      "fonte": "Esaú e Jacó",
+      "origem": "citação"
+    },
+    {
+      "texto": "Somos feitos da mesma matéria que os sonhos.",
+      "autor": "William Shakespeare",
+      "categoria": "Esperança",
+      "fonte": "A Tempestade",
       "origem": "citação"
     },
     {
       "texto": "Todo projeto sólido começa por uma boa base.",
       "autor": "Camila Martins",
-      "categoria": "Excelência",
+      "categoria": "Reflexão",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "É melhor falhar na originalidade do que ter sucesso na imitação.",
-      "autor": "Herman Melville",
+      "texto": "A criatividade exige coragem.",
+      "autor": "Henri Matisse",
       "categoria": "Coragem",
-      "fonte": "ensaio sobre Hawthorne, 1850",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Para ser grande, sê inteiro: nada teu exagera ou exclui. Sê todo em cada coisa. Põe quanto és no mínimo que fazes.",
+      "autor": "Fernando Pessoa",
+      "categoria": "Reflexão",
+      "fonte": "Odes de Ricardo Reis",
+      "origem": "citação"
+    },
+    {
+      "texto": "Às vezes cheguei a acreditar em seis coisas impossíveis antes do café da manhã.",
+      "autor": "Lewis Carroll",
+      "categoria": "Reflexão",
+      "fonte": "Alice Através do Espelho",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quanto maior o obstáculo, maior a glória em superá-lo.",
+      "autor": "Molière",
+      "categoria": "Reflexão",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Ser feliz sem motivo é a mais autêntica forma de felicidade.",
+      "autor": "Carlos Drummond de Andrade",
+      "categoria": "Alegria",
+      "fonte": "atribuída",
       "origem": "citação"
     },
     {
       "texto": "A criatividade floresce quando há espaço para observar.",
       "autor": "Camila Martins",
-      "categoria": "Criatividade",
+      "categoria": "Vida",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "As pessoas que pensam que sabem tudo são um grande aborrecimento para aqueles de nós que sabem.",
-      "autor": "Isaac Asimov",
-      "categoria": "Conhecimento",
+      "texto": "Mesmo a noite mais escura terminará, e o sol voltará a nascer.",
+      "autor": "Victor Hugo",
+      "categoria": "Esperança",
+      "fonte": "Os Miseráveis (paráfrase)",
+      "origem": "citação"
+    },
+    {
+      "texto": "A alegria de ver e entender é o mais perfeito dom da natureza.",
+      "autor": "Albert Einstein",
+      "categoria": "Alegria",
       "fonte": "atribuída",
       "origem": "citação"
     },
     {
-      "texto": "Planejamento reduz ruído e amplia possibilidades.",
-      "autor": "Camila Martins",
-      "categoria": "Planejamento",
-      "fonte": "Autoral",
-      "origem": "autoral"
-    },
-    {
-      "texto": "Motivação é o que faz você começar. Hábito é o que faz você continuar.",
-      "autor": "Jim Ryun",
-      "categoria": "Persistência",
-      "fonte": "atribuída",
-      "origem": "citação"
-    },
-    {
-      "texto": "Não tenha medo de desistir do bom para perseguir o ótimo.",
-      "autor": "John D. Rockefeller",
+      "texto": "Nada na vida deve ser temido, apenas compreendido. Agora é hora de compreender mais, para temer menos.",
+      "autor": "Marie Curie",
       "categoria": "Coragem",
       "fonte": "atribuída",
       "origem": "citação"
     },
     {
+      "texto": "Sou humano, e nada do que é humano me é estranho.",
+      "autor": "Terêncio",
+      "categoria": "Reflexão",
+      "fonte": "O Homem que se Puniu a Si Mesmo",
+      "origem": "citação"
+    },
+    {
+      "texto": "Bem-feito é melhor do que bem dito.",
+      "autor": "Benjamin Franklin",
+      "categoria": "Reflexão",
+      "fonte": "Almanaque do Pobre Ricardo",
+      "origem": "citação"
+    },
+    {
+      "texto": "Ao acordar, pense no privilégio que é estar vivo: respirar, pensar, desfrutar, amar.",
+      "autor": "Marco Aurélio",
+      "categoria": "Amor e amizade",
+      "fonte": "Meditações, V, 1 (paráfrase)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Começa já a viver e conta cada dia como uma vida inteira.",
+      "autor": "Sêneca",
+      "categoria": "Vida",
+      "fonte": "Cartas a Lucílio, 101",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quando não podemos mudar uma situação, somos desafiados a mudar a nós mesmos.",
+      "autor": "Viktor Frankl",
+      "categoria": "Reflexão",
+      "fonte": "Em Busca de Sentido",
+      "origem": "citação"
+    },
+    {
+      "texto": "Repetir, repetir até ficar diferente. Repetir é um dom do estilo.",
+      "autor": "Manoel de Barros",
+      "categoria": "Reflexão",
+      "fonte": "Livro sobre Nada",
+      "origem": "citação"
+    },
+    {
+      "texto": "A verdadeira generosidade para com o futuro consiste em dar tudo ao presente.",
+      "autor": "Albert Camus",
+      "categoria": "Amor e amizade",
+      "fonte": "O Homem Revoltado",
+      "origem": "citação"
+    },
+    {
+      "texto": "Podem, porque acreditam que podem.",
+      "autor": "Virgílio",
+      "categoria": "Reflexão",
+      "fonte": "Eneida, V",
+      "origem": "citação"
+    },
+    {
       "texto": "Quem aprende continuamente amplia o próprio horizonte.",
       "autor": "Camila Martins",
-      "categoria": "Conhecimento",
+      "categoria": "Sabedoria",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Não deixe que o que você não pode fazer interfira no que você pode fazer.",
-      "autor": "John Wooden",
+      "texto": "Um bom companheiro de viagem encurta o caminho.",
+      "autor": "Publílio Siro",
+      "categoria": "Vida",
+      "fonte": "Sentenças",
+      "origem": "citação"
+    },
+    {
+      "texto": "Saber o que se sabe e saber o que não se sabe: eis o verdadeiro saber.",
+      "autor": "Confúcio",
+      "categoria": "Sabedoria",
+      "fonte": "Analectos, II, 17",
+      "origem": "citação"
+    },
+    {
+      "texto": "A esperança é o sonho do homem acordado.",
+      "autor": "Aristóteles",
+      "categoria": "Esperança",
+      "fonte": "Diógenes Laércio, Vidas, V",
+      "origem": "citação"
+    },
+    {
+      "texto": "A gratidão não é só a maior das virtudes, mas a mãe de todas as outras.",
+      "autor": "Cícero",
+      "categoria": "Amor e amizade",
+      "fonte": "Em Defesa de Plâncio",
+      "origem": "citação"
+    },
+    {
+      "texto": "Viva agora as perguntas. Talvez um dia, sem perceber, você viva a resposta.",
+      "autor": "Rainer Maria Rilke",
+      "categoria": "Sabedoria",
+      "fonte": "Cartas a um Jovem Poeta",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não se atravessa o mar apenas olhando para a água.",
+      "autor": "Rabindranath Tagore",
       "categoria": "Reflexão",
-      "fonte": "atribuída",
+      "fonte": "Pássaros Perdidos",
+      "origem": "citação"
+    },
+    {
+      "texto": "A única maneira de ter um amigo é ser um.",
+      "autor": "Ralph Waldo Emerson",
+      "categoria": "Amor e amizade",
+      "fonte": "Amizade (ensaio)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Primeiro diga a si mesmo o que você quer ser; depois faça o que precisa fazer.",
+      "autor": "Epicteto",
+      "categoria": "Reflexão",
+      "fonte": "Diatribes, III, 23",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quanto mais fundo a tristeza cavar em seu ser, mais alegria você poderá conter.",
+      "autor": "Khalil Gibran",
+      "categoria": "Alegria",
+      "fonte": "O Profeta",
       "origem": "citação"
     },
     {
       "texto": "Consistência é o elo entre intenção e resultado.",
       "autor": "Camila Martins",
-      "categoria": "Persistência",
+      "categoria": "Reflexão",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Os desafios tornam a vida interessante; superá-los é o que dá sentido a ela.",
-      "autor": "Joshua J. Marine",
+      "texto": "Onde quer que haja um ser humano, há uma oportunidade para a bondade.",
+      "autor": "Sêneca",
+      "categoria": "Amor e amizade",
+      "fonte": "Sobre a Vida Feliz",
+      "origem": "citação"
+    },
+    {
+      "texto": "Por mais difícil que a vida pareça, sempre há algo que você pode fazer e em que pode ter sucesso.",
+      "autor": "Stephen Hawking",
+      "categoria": "Vida",
+      "fonte": "palestra de 2016",
+      "origem": "citação"
+    },
+    {
+      "texto": "A árvore que mal se pode abraçar nasce de um broto minúsculo.",
+      "autor": "Lao Tsé",
       "categoria": "Reflexão",
+      "fonte": "Tao Te Ching, 64",
+      "origem": "citação"
+    },
+    {
+      "texto": "O caráter de uma pessoa é o seu destino.",
+      "autor": "Heráclito",
+      "categoria": "Reflexão",
+      "fonte": "Fragmentos",
+      "origem": "citação"
+    },
+    {
+      "texto": "Olhe para dentro. Dentro está a fonte do bem, que sempre jorrará se você sempre cavar.",
+      "autor": "Marco Aurélio",
+      "categoria": "Reflexão",
+      "fonte": "Meditações, VII, 59",
+      "origem": "citação"
+    },
+    {
+      "texto": "O conhecimento não tem valor se não for posto em prática.",
+      "autor": "Anton Tchekhov",
+      "categoria": "Sabedoria",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Que não seja imortal, posto que é chama, mas que seja infinito enquanto dure.",
+      "autor": "Vinicius de Moraes",
+      "categoria": "Amor e amizade",
+      "fonte": "Soneto de Fidelidade",
+      "origem": "citação"
+    },
+    {
+      "texto": "Viver é desenhar sem borracha.",
+      "autor": "Millôr Fernandes",
+      "categoria": "Vida",
       "fonte": "atribuída",
       "origem": "citação"
     },
     {
       "texto": "A simplicidade é sinal de compreensão profunda.",
       "autor": "Camila Martins",
-      "categoria": "Clareza",
+      "categoria": "Reflexão",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Muitos de nós não estão vivendo os próprios sonhos porque estão vivendo os próprios medos.",
-      "autor": "Les Brown",
+      "texto": "Trate as pessoas como se elas fossem o que deveriam ser, e você as ajudará a se tornar o que são capazes de ser.",
+      "autor": "Johann Wolfgang von Goethe",
+      "categoria": "Paz",
+      "fonte": "Os Anos de Aprendizado de Wilhelm Meister (paráfrase)",
+      "origem": "citação"
+    },
+    {
+      "texto": "O começo é a parte mais importante do trabalho.",
+      "autor": "Platão",
+      "categoria": "Criação",
+      "fonte": "A República, II",
+      "origem": "citação"
+    },
+    {
+      "texto": "Só se vê bem com o coração; o essencial é invisível aos olhos.",
+      "autor": "Antoine de Saint-Exupéry",
+      "categoria": "Reflexão",
+      "fonte": "O Pequeno Príncipe",
+      "origem": "citação"
+    },
+    {
+      "texto": "Enquanto eu tiver perguntas e não houver resposta, continuarei a escrever.",
+      "autor": "Clarice Lispector",
+      "categoria": "Sabedoria",
+      "fonte": "A Hora da Estrela",
+      "origem": "citação"
+    },
+    {
+      "texto": "Se você não gosta de algo, mude. Se não puder mudar, mude sua atitude.",
+      "autor": "Maya Angelou",
+      "categoria": "Reflexão",
+      "fonte": "Não Trocaria Minha Jornada por Nada",
+      "origem": "citação"
+    },
+    {
+      "texto": "Os dois guerreiros mais poderosos são a paciência e o tempo.",
+      "autor": "Liev Tolstói",
+      "categoria": "Paz",
+      "fonte": "Guerra e Paz",
+      "origem": "citação"
+    },
+    {
+      "texto": "Nossa maior fraqueza está em desistir. O caminho mais certo para vencer é sempre tentar mais uma vez.",
+      "autor": "Thomas Edison",
+      "categoria": "Força",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quem nada ousa nada deve esperar.",
+      "autor": "Friedrich Schiller",
       "categoria": "Coragem",
       "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Felicidade se acha é em horinhas de descuido.",
+      "autor": "João Guimarães Rosa",
+      "categoria": "Reflexão",
+      "fonte": "Tutameia",
+      "origem": "citação"
+    },
+    {
+      "texto": "Uma vida não examinada não vale a pena ser vivida.",
+      "autor": "Sócrates",
+      "categoria": "Vida",
+      "fonte": "Platão, Apologia",
       "origem": "citação"
     },
     {
@@ -242,255 +1131,899 @@
       "origem": "autoral"
     },
     {
-      "texto": "Sentimos que o que fazemos é apenas uma gota no oceano. Mas o oceano seria menor sem essa gota.",
-      "autor": "Madre Teresa de Calcutá",
-      "categoria": "Reflexão",
-      "fonte": "atribuída",
+      "texto": "O otimismo é a fé que leva à realização. Nada se faz sem esperança e confiança.",
+      "autor": "Helen Keller",
+      "categoria": "Esperança",
+      "fonte": "Otimismo",
       "origem": "citação"
     },
     {
-      "texto": "Resultados duradouros respeitam processos.",
-      "autor": "Camila Martins",
+      "texto": "Água mole em pedra dura, tanto bate até que fura.",
+      "autor": "Provérbio português",
       "categoria": "Reflexão",
-      "fonte": "Autoral",
-      "origem": "autoral"
+      "fonte": "tradição popular",
+      "origem": "citação"
     },
     {
-      "texto": "Coragem é resistência ao medo, domínio do medo, e não ausência do medo.",
-      "autor": "Mark Twain",
+      "texto": "Não fostes feitos para viver como brutos, mas para seguir a virtude e o conhecimento.",
+      "autor": "Dante Alighieri",
+      "categoria": "Sabedoria",
+      "fonte": "A Divina Comédia, Inferno, XXVI",
+      "origem": "citação"
+    },
+    {
+      "texto": "Somos uma maneira de o cosmos conhecer a si mesmo.",
+      "autor": "Carl Sagan",
+      "categoria": "Sabedoria",
+      "fonte": "Cosmos",
+      "origem": "citação"
+    },
+    {
+      "texto": "Às vezes, até viver é um ato de coragem.",
+      "autor": "Sêneca",
       "categoria": "Coragem",
-      "fonte": "Pudd'nhead Wilson",
+      "fonte": "Cartas a Lucílio, 78",
+      "origem": "citação"
+    },
+    {
+      "texto": "É preciso ter o caos dentro de si para dar à luz uma estrela dançante.",
+      "autor": "Friedrich Nietzsche",
+      "categoria": "Alegria",
+      "fonte": "Assim Falou Zaratustra",
+      "origem": "citação"
+    },
+    {
+      "texto": "Vemos, ouvimos e lemos. Não podemos ignorar.",
+      "autor": "Sophia de Mello Breyner Andresen",
+      "categoria": "Reflexão",
+      "fonte": "Cantata da Paz",
+      "origem": "citação"
+    },
+    {
+      "texto": "Nem todos os que vagueiam estão perdidos.",
+      "autor": "J. R. R. Tolkien",
+      "categoria": "Reflexão",
+      "fonte": "O Senhor dos Anéis",
+      "origem": "citação"
+    },
+    {
+      "texto": "Amai para entendê-las! Pois só quem ama pode ter ouvido capaz de ouvir e de entender estrelas.",
+      "autor": "Olavo Bilac",
+      "categoria": "Paz",
+      "fonte": "Via Láctea, soneto XIII",
+      "origem": "citação"
+    },
+    {
+      "texto": "Faça cada coisa como se fosse a última de sua vida.",
+      "autor": "Marco Aurélio",
+      "categoria": "Vida",
+      "fonte": "Meditações, II, 5",
       "origem": "citação"
     },
     {
       "texto": "A atenção dedicada ao presente melhora o futuro.",
       "autor": "Camila Martins",
-      "categoria": "Reflexão",
+      "categoria": "Vida",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Ocupados em descobrir os defeitos alheios, esquecemo-nos de investigar os próprios.",
-      "autor": "Marquês de Maricá",
-      "categoria": "Reflexão",
-      "fonte": "Máximas, Pensamentos e Reflexões",
+      "texto": "Quem pergunta é tolo por cinco minutos; quem não pergunta permanece tolo para sempre.",
+      "autor": "Provérbio chinês",
+      "categoria": "Sabedoria",
+      "fonte": "tradição popular",
       "origem": "citação"
     },
     {
-      "texto": "Saber como pensar torna a pessoa muito mais capaz do que aquela que apenas sabe o que pensar.",
-      "autor": "Neil deGrasse Tyson",
-      "categoria": "Conhecimento",
+      "texto": "Fui para os bosques porque queria viver deliberadamente.",
+      "autor": "Henry David Thoreau",
+      "categoria": "Vida",
+      "fonte": "Walden",
+      "origem": "citação"
+    },
+    {
+      "texto": "Se as coisas são inatingíveis... ora! Não é motivo para não querê-las. Que tristes os caminhos, se não fora a presença distante das estrelas!",
+      "autor": "Mario Quintana",
+      "categoria": "Esperança",
+      "fonte": "Das Utopias",
+      "origem": "citação"
+    },
+    {
+      "texto": "Dê-me um ponto de apoio e moverei a Terra.",
+      "autor": "Arquimedes",
+      "categoria": "Reflexão",
+      "fonte": "Papo de Alexandria, Coleção Matemática",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quem é feliz fará os outros felizes também.",
+      "autor": "Anne Frank",
+      "categoria": "Alegria",
+      "fonte": "O Diário de Anne Frank",
+      "origem": "citação"
+    },
+    {
+      "texto": "O segredo para seguir em frente é começar.",
+      "autor": "Mark Twain",
+      "categoria": "Reflexão",
       "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "O que faz andar a estrada é o sonho. Enquanto a gente sonhar, a estrada permanecerá viva.",
+      "autor": "Mia Couto",
+      "categoria": "Esperança",
+      "fonte": "Terra Sonâmbula",
+      "origem": "citação"
+    },
+    {
+      "texto": "Duas coisas enchem a alma de admiração: o céu estrelado acima de mim e a lei moral dentro de mim.",
+      "autor": "Immanuel Kant",
+      "categoria": "Esperança",
+      "fonte": "Crítica da Razão Prática",
+      "origem": "citação"
+    },
+    {
+      "texto": "Nada é bom ou mau, mas o pensamento o torna assim.",
+      "autor": "William Shakespeare",
+      "categoria": "Sabedoria",
+      "fonte": "Hamlet",
       "origem": "citação"
     },
     {
       "texto": "Aprender a priorizar é aprender a avançar.",
       "autor": "Camila Martins",
-      "categoria": "Conhecimento",
+      "categoria": "Sabedoria",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Caia sete vezes, levante-se oito.",
+      "texto": "Depois da chuva, a terra fica mais firme.",
       "autor": "Provérbio japonês",
+      "categoria": "Força",
+      "fonte": "tradição popular",
+      "origem": "citação"
+    },
+    {
+      "texto": "Tenho em mim todos os sonhos do mundo.",
+      "autor": "Fernando Pessoa",
+      "categoria": "Esperança",
+      "fonte": "Tabacaria, Álvaro de Campos",
+      "origem": "citação"
+    },
+    {
+      "texto": "Errar e não se corrigir: isso é que é errar.",
+      "autor": "Confúcio",
       "categoria": "Reflexão",
+      "fonte": "Analectos, XV, 30",
+      "origem": "citação"
+    },
+    {
+      "texto": "A gota cava a pedra não pela força, mas pela constância.",
+      "autor": "Ovídio",
+      "categoria": "Força",
+      "fonte": "Cartas do Ponto, IV, 10",
+      "origem": "citação"
+    },
+    {
+      "texto": "O que a razão não pôde curar, muitas vezes o tempo curou.",
+      "autor": "Sêneca",
+      "categoria": "Vida",
+      "fonte": "Agamêmnon",
+      "origem": "citação"
+    },
+    {
+      "texto": "Recria tua vida, sempre, sempre. Remove pedras e planta roseiras e faz doces. Recomeça.",
+      "autor": "Cora Coralina",
+      "categoria": "Vida",
+      "fonte": "Meu Destino",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quem sabe que tem o suficiente é rico.",
+      "autor": "Lao Tsé",
+      "categoria": "Reflexão",
+      "fonte": "Tao Te Ching, 33",
+      "origem": "citação"
+    },
+    {
+      "texto": "Aprendi com as primaveras a deixar-me cortar e a voltar sempre inteira.",
+      "autor": "Cecília Meireles",
+      "categoria": "Sabedoria",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Ame as pessoas com quem o destino o reúne, e ame-as de todo o coração.",
+      "autor": "Marco Aurélio",
+      "categoria": "Reflexão",
+      "fonte": "Meditações, VI, 39",
+      "origem": "citação"
+    },
+    {
+      "texto": "Uma sociedade cresce bem quando os velhos plantam árvores sob cuja sombra jamais se sentarão.",
+      "autor": "Provérbio grego",
+      "categoria": "Amor e amizade",
       "fonte": "tradição popular",
       "origem": "citação"
     },
     {
       "texto": "O tempo revela o valor daquilo que foi bem construído.",
       "autor": "Camila Martins",
-      "categoria": "Paciência",
+      "categoria": "Vida",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Se você não sente vergonha da primeira versão do seu produto, ele foi lançado tarde demais.",
-      "autor": "Reid Hoffman",
+      "texto": "Tenha coragem para as grandes dores da vida e paciência para as pequenas.",
+      "autor": "Victor Hugo",
+      "categoria": "Coragem",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "A melhor maneira de descobrir se você pode confiar em alguém é confiar.",
+      "autor": "Ernest Hemingway",
+      "categoria": "Alegria",
+      "fonte": "Cartas",
+      "origem": "citação"
+    },
+    {
+      "texto": "Educação não transforma o mundo. Educação muda as pessoas. Pessoas transformam o mundo.",
+      "autor": "Paulo Freire",
       "categoria": "Reflexão",
       "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "A vida é como andar de bicicleta: para manter o equilíbrio, é preciso continuar em movimento.",
+      "autor": "Albert Einstein",
+      "categoria": "Vida",
+      "fonte": "Carta ao filho Eduard, 1930",
+      "origem": "citação"
+    },
+    {
+      "texto": "Todas as coisas excelentes são tão difíceis quanto raras.",
+      "autor": "Baruch Spinoza",
+      "categoria": "Reflexão",
+      "fonte": "Ética",
+      "origem": "citação"
+    },
+    {
+      "texto": "O sinal mais seguro da sabedoria é uma alegria constante.",
+      "autor": "Michel de Montaigne",
+      "categoria": "Alegria",
+      "fonte": "Ensaios, I, 26",
+      "origem": "citação"
+    },
+    {
+      "texto": "A verdadeira viagem de descoberta não consiste em buscar novas paisagens, mas em ter novos olhos.",
+      "autor": "Marcel Proust",
+      "categoria": "Sabedoria",
+      "fonte": "Em Busca do Tempo Perdido (paráfrase)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Felicidade é a certeza de que a nossa vida não está se passando inutilmente.",
+      "autor": "Erico Verissimo",
+      "categoria": "Vida",
+      "fonte": "Olhai os Lírios do Campo",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quem canta seus males espanta.",
+      "autor": "Miguel de Cervantes",
+      "categoria": "Alegria",
+      "fonte": "Dom Quixote, I, 22",
+      "origem": "citação"
+    },
+    {
+      "texto": "Esquecer é uma necessidade. A vida é uma lousa, em que o destino, para escrever um novo caso, precisa apagar o caso escrito.",
+      "autor": "Machado de Assis",
+      "categoria": "Coragem",
+      "fonte": "Memórias Póstumas de Brás Cubas",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quem começou já fez metade: ousa saber.",
+      "autor": "Horácio",
+      "categoria": "Coragem",
+      "fonte": "Epístolas, I, 2",
+      "origem": "citação"
+    },
+    {
+      "texto": "Atribuo meu sucesso a isto: nunca dei nem aceitei desculpas.",
+      "autor": "Florence Nightingale",
+      "categoria": "Reflexão",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quando as teias de aranha se unem, podem prender um leão.",
+      "autor": "Provérbio africano",
+      "categoria": "Reflexão",
+      "fonte": "tradição etíope",
+      "origem": "citação"
+    },
+    {
+      "texto": "É impossível aprender aquilo que se pensa já saber.",
+      "autor": "Epicteto",
+      "categoria": "Sabedoria",
+      "fonte": "Diatribes, II, 17",
+      "origem": "citação"
+    },
+    {
+      "texto": "O primeiro princípio é não enganar a si mesmo, e você é a pessoa mais fácil de enganar.",
+      "autor": "Richard Feynman",
+      "categoria": "Reflexão",
+      "fonte": "Ciência de Culto à Carga, 1974",
+      "origem": "citação"
+    },
+    {
+      "texto": "Só quem conheceu a mais profunda tristeza é capaz de sentir a suprema felicidade.",
+      "autor": "Alexandre Dumas",
+      "categoria": "Paz",
+      "fonte": "O Conde de Monte Cristo",
+      "origem": "citação"
+    },
+    {
+      "texto": "Generosidade é dar mais do que se pode; orgulho é receber menos do que se precisa.",
+      "autor": "Khalil Gibran",
+      "categoria": "Amor e amizade",
+      "fonte": "Areia e Espuma",
       "origem": "citação"
     },
     {
       "texto": "A curiosidade abre caminhos que a pressa não percebe.",
       "autor": "Camila Martins",
-      "categoria": "Conhecimento",
+      "categoria": "Sabedoria",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "O sucesso é a soma de pequenos esforços repetidos dia após dia.",
-      "autor": "Robert Collier",
-      "categoria": "Persistência",
+      "texto": "Saber ouvir é o princípio de viver bem.",
+      "autor": "Plutarco",
+      "categoria": "Sabedoria",
+      "fonte": "Sobre a Arte de Ouvir",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não é pobre quem tem pouco, mas quem deseja mais.",
+      "autor": "Sêneca",
+      "categoria": "Reflexão",
+      "fonte": "Cartas a Lucílio, 2",
+      "origem": "citação"
+    },
+    {
+      "texto": "Acima de tudo, não minta para si mesmo.",
+      "autor": "Fiódor Dostoiévski",
+      "categoria": "Reflexão",
+      "fonte": "Os Irmãos Karamázov",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não quero faca nem queijo. Quero a fome.",
+      "autor": "Adélia Prado",
+      "categoria": "Reflexão",
+      "fonte": "Bagagem",
+      "origem": "citação"
+    },
+    {
+      "texto": "Dormi e sonhei que a vida era alegria. Despertei e vi que a vida era serviço. Agi, e eis que o serviço era alegria.",
+      "autor": "Rabindranath Tagore",
+      "categoria": "Alegria",
       "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "O que seria da vida se não tivéssemos coragem de tentar algo?",
+      "autor": "Vincent van Gogh",
+      "categoria": "Coragem",
+      "fonte": "Cartas a Theo",
+      "origem": "citação"
+    },
+    {
+      "texto": "Nada grandioso jamais foi conquistado sem entusiasmo.",
+      "autor": "Ralph Waldo Emerson",
+      "categoria": "Amor e amizade",
+      "fonte": "Círculos (ensaio)",
       "origem": "citação"
     },
     {
       "texto": "Persistência transforma dificuldade em experiência.",
       "autor": "Camila Martins",
-      "categoria": "Persistência",
+      "categoria": "Força",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Não tenha medo de falhar. Tenha medo de não tentar.",
-      "autor": "Roy T. Bennett",
-      "categoria": "Coragem",
-      "fonte": "The Light in the Heart",
-      "origem": "citação"
-    },
-    {
-      "texto": "Responsabilidade dá forma concreta aos objetivos.",
-      "autor": "Camila Martins",
+      "texto": "Não estrague o que você tem desejando o que não tem; lembre-se de que o que tem hoje já esteve entre as coisas que você apenas esperava.",
+      "autor": "Epicuro",
       "categoria": "Reflexão",
-      "fonte": "Autoral",
-      "origem": "autoral"
-    },
-    {
-      "texto": "Não fique olhando o relógio; faça o que ele faz: continue em movimento.",
-      "autor": "Sam Levenson",
-      "categoria": "Paciência",
-      "fonte": "atribuída",
+      "fonte": "Sentenças Vaticanas, 35",
       "origem": "citação"
     },
     {
-      "texto": "A qualidade de uma escolha começa na qualidade da análise.",
-      "autor": "Camila Martins",
-      "categoria": "Excelência",
-      "fonte": "Autoral",
-      "origem": "autoral"
-    },
-    {
-      "texto": "Tentou. Falhou. Não importa. Tente de novo. Falhe de novo. Falhe melhor.",
-      "autor": "Samuel Beckett",
-      "categoria": "Coragem",
-      "fonte": "Worstward Ho",
+      "texto": "Estamos todos na sarjeta, mas alguns de nós estão olhando para as estrelas.",
+      "autor": "Oscar Wilde",
+      "categoria": "Esperança",
+      "fonte": "O Leque de Lady Windermere",
       "origem": "citação"
     },
     {
-      "texto": "As maiores conquistas da humanidade aconteceram quando as pessoas conversaram; os maiores fracassos, quando deixaram de conversar.",
-      "autor": "Stephen Hawking",
-      "categoria": "Coragem",
-      "fonte": "campanha da BT, 1993",
+      "texto": "A arte de viver se parece mais com a luta do que com a dança.",
+      "autor": "Marco Aurélio",
+      "categoria": "Alegria",
+      "fonte": "Meditações, VII, 61",
       "origem": "citação"
     },
     {
-      "texto": "Organização cria espaço para pensar melhor.",
-      "autor": "Camila Martins",
-      "categoria": "Conhecimento",
-      "fonte": "Autoral",
-      "origem": "autoral"
+      "texto": "Menos é mais.",
+      "autor": "Ludwig Mies van der Rohe",
+      "categoria": "Reflexão",
+      "fonte": "lema atribuído",
+      "origem": "citação"
     },
     {
-      "texto": "A única maneira de fazer um excelente trabalho é amar o que você faz.",
-      "autor": "Steve Jobs",
-      "categoria": "Excelência",
-      "fonte": "discurso em Stanford, 2005",
+      "texto": "A amizade é uma só alma que habita dois corpos.",
+      "autor": "Aristóteles",
+      "categoria": "Reflexão",
+      "fonte": "Diógenes Laércio, Vidas, V",
+      "origem": "citação"
+    },
+    {
+      "texto": "As coisas mais belas do mundo não podem ser vistas nem tocadas; precisam ser sentidas com o coração.",
+      "autor": "Helen Keller",
+      "categoria": "Reflexão",
+      "fonte": "Cartas",
+      "origem": "citação"
+    },
+    {
+      "texto": "A sabedoria é filha da experiência.",
+      "autor": "Leonardo da Vinci",
+      "categoria": "Sabedoria",
+      "fonte": "Cadernos",
+      "origem": "citação"
+    },
+    {
+      "texto": "Se você tem um jardim e uma biblioteca, tem tudo de que precisa.",
+      "autor": "Cícero",
+      "categoria": "Reflexão",
+      "fonte": "Cartas aos Familiares, IX, 4",
       "origem": "citação"
     },
     {
       "texto": "Uma mente aberta encontra soluções onde outros veem limites.",
       "autor": "Camila Martins",
-      "categoria": "Conhecimento",
+      "categoria": "Reflexão",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Nossa maior fraqueza está em desistir. O caminho mais certo para vencer é sempre tentar mais uma vez.",
-      "autor": "Thomas Edison",
-      "categoria": "Coragem",
-      "fonte": "atribuída",
+      "texto": "Foi o tempo que dedicaste à tua rosa que a fez tão importante.",
+      "autor": "Antoine de Saint-Exupéry",
+      "categoria": "Vida",
+      "fonte": "O Pequeno Príncipe",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não se preocupe em entender. Viver ultrapassa todo entendimento.",
+      "autor": "Clarice Lispector",
+      "categoria": "Vida",
+      "fonte": "A Paixão segundo G.H.",
+      "origem": "citação"
+    },
+    {
+      "texto": "Convive com aqueles que podem tornar-te melhor.",
+      "autor": "Sêneca",
+      "categoria": "Reflexão",
+      "fonte": "Cartas a Lucílio, 7",
+      "origem": "citação"
+    },
+    {
+      "texto": "Deixe que tudo lhe aconteça: a beleza e o espanto. Apenas continue. Nenhum sentimento é definitivo.",
+      "autor": "Rainer Maria Rilke",
+      "categoria": "Criação",
+      "fonte": "O Livro de Horas",
       "origem": "citação"
     },
     {
       "texto": "Melhorar um pouco todos os dias produz grandes mudanças.",
       "autor": "Camila Martins",
-      "categoria": "Reflexão",
+      "categoria": "Alegria",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Vencer não é tudo, mas querer vencer é.",
-      "autor": "Vince Lombardi",
+      "texto": "Quando vires uma pessoa virtuosa, procura igualá-la; quando vires alguém sem virtude, examina-te a ti mesmo.",
+      "autor": "Confúcio",
       "categoria": "Reflexão",
+      "fonte": "Analectos, IV, 17",
+      "origem": "citação"
+    },
+    {
+      "texto": "Nada no mundo é mais suave do que a água; no entanto, nada a supera em vencer o que é duro e forte.",
+      "autor": "Lao Tsé",
+      "categoria": "Força",
+      "fonte": "Tao Te Ching, 78",
+      "origem": "citação"
+    },
+    {
+      "texto": "Por caminhos difíceis, até as estrelas.",
+      "autor": "Provérbio latino",
+      "categoria": "Esperança",
+      "fonte": "Per aspera ad astra",
+      "origem": "citação"
+    },
+    {
+      "texto": "O homem é apenas um caniço, o mais frágil da natureza, mas é um caniço pensante.",
+      "autor": "Blaise Pascal",
+      "categoria": "Sabedoria",
+      "fonte": "Pensamentos",
+      "origem": "citação"
+    },
+    {
+      "texto": "Tenho apenas duas mãos e o sentimento do mundo.",
+      "autor": "Carlos Drummond de Andrade",
+      "categoria": "Reflexão",
+      "fonte": "Sentimento do Mundo",
+      "origem": "citação"
+    },
+    {
+      "texto": "Se não é certo, não faça; se não é verdade, não diga.",
+      "autor": "Marco Aurélio",
+      "categoria": "Sabedoria",
+      "fonte": "Meditações, XII, 17",
+      "origem": "citação"
+    },
+    {
+      "texto": "Feliz é aquele que encontra paz em seu lar.",
+      "autor": "Johann Wolfgang von Goethe",
+      "categoria": "Alegria",
       "fonte": "atribuída",
       "origem": "citação"
     },
     {
-      "texto": "Autonomia cresce junto com o conhecimento.",
-      "autor": "Camila Martins",
-      "categoria": "Conhecimento",
-      "fonte": "Autoral",
-      "origem": "autoral"
-    },
-    {
-      "texto": "A melhor maneira de começar é parar de falar e começar a fazer.",
-      "autor": "Walt Disney",
-      "categoria": "Reflexão",
+      "texto": "A vida não é fácil para nenhum de nós. Mas é preciso ter perseverança e, sobretudo, confiança em nós mesmos.",
+      "autor": "Marie Curie",
+      "categoria": "Força",
       "fonte": "atribuída",
       "origem": "citação"
     },
     {
       "texto": "Foco é a arte de proteger o que importa.",
       "autor": "Camila Martins",
-      "categoria": "Criatividade",
+      "categoria": "Criação",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Nossas dúvidas são traidoras e nos fazem perder o bem que poderíamos conquistar, por medo de tentar.",
+      "texto": "Se queres ser amado, ama.",
+      "autor": "Sêneca",
+      "categoria": "Amor e amizade",
+      "fonte": "Cartas a Lucílio, 9",
+      "origem": "citação"
+    },
+    {
+      "texto": "A coisa mais difícil é a decisão de agir; o resto é apenas tenacidade.",
+      "autor": "Amelia Earhart",
+      "categoria": "Reflexão",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "A gente é rascunho de pássaro: não acabaram de fazer.",
+      "autor": "Manoel de Barros",
+      "categoria": "Reflexão",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Juntar-se é um começo; manter-se juntos é progresso; trabalhar juntos é sucesso.",
+      "autor": "Edward Everett Hale",
+      "categoria": "Reflexão",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Nenhum caminho é longo demais ao lado de um bom amigo.",
+      "autor": "Provérbio turco",
+      "categoria": "Amor e amizade",
+      "fonte": "tradição popular",
+      "origem": "citação"
+    },
+    {
+      "texto": "Mestre não é quem sempre ensina, mas quem de repente aprende.",
+      "autor": "João Guimarães Rosa",
+      "categoria": "Sabedoria",
+      "fonte": "Grande Sertão: Veredas",
+      "origem": "citação"
+    },
+    {
+      "texto": "A amizade é um amor que nunca morre.",
+      "autor": "Mario Quintana",
+      "categoria": "Amor e amizade",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não há sol sem sombra, e é preciso conhecer a noite.",
+      "autor": "Albert Camus",
+      "categoria": "Esperança",
+      "fonte": "O Mito de Sísifo",
+      "origem": "citação"
+    },
+    {
+      "texto": "A paciência é remédio para toda dor.",
+      "autor": "Publílio Siro",
+      "categoria": "Paz",
+      "fonte": "Sentenças",
+      "origem": "citação"
+    },
+    {
+      "texto": "Depois da tempestade vem a bonança.",
+      "autor": "Provérbio português",
+      "categoria": "Reflexão",
+      "fonte": "tradição popular",
+      "origem": "citação"
+    },
+    {
+      "texto": "Acima de tudo, sê fiel a ti mesmo.",
       "autor": "William Shakespeare",
-      "categoria": "Coragem",
-      "fonte": "Medida por Medida",
+      "categoria": "Reflexão",
+      "fonte": "Hamlet",
       "origem": "citação"
     },
     {
       "texto": "Boas ideias precisam de método para ganhar forma.",
       "autor": "Camila Martins",
-      "categoria": "Reflexão",
+      "categoria": "Sabedoria",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "As pessoas dizem que a motivação não dura. Bem, o banho também não; por isso recomendamos diariamente.",
-      "autor": "Zig Ziglar",
-      "categoria": "Conhecimento",
+      "texto": "Sem música, a vida seria um erro.",
+      "autor": "Friedrich Nietzsche",
+      "categoria": "Alegria",
+      "fonte": "Crepúsculo dos Ídolos",
+      "origem": "citação"
+    },
+    {
+      "texto": "Sou do tamanho do que vejo, e não do tamanho da minha altura.",
+      "autor": "Fernando Pessoa",
+      "categoria": "Amor e amizade",
+      "fonte": "O Guardador de Rebanhos, Alberto Caeiro",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não viva como se fosse viver dez mil anos. Enquanto vive, enquanto pode, seja bom.",
+      "autor": "Marco Aurélio",
+      "categoria": "Vida",
+      "fonte": "Meditações, IV, 17",
+      "origem": "citação"
+    },
+    {
+      "texto": "Nenhuma grande coisa nasce de repente, assim como não nascem de repente o cacho de uvas ou o figo.",
+      "autor": "Epicteto",
+      "categoria": "Reflexão",
+      "fonte": "Diatribes, I, 15",
+      "origem": "citação"
+    },
+    {
+      "texto": "A beleza não está no rosto; a beleza é uma luz no coração.",
+      "autor": "Khalil Gibran",
+      "categoria": "Criação",
       "fonte": "atribuída",
       "origem": "citação"
     },
     {
-      "texto": "Tudo vale a pena se a alma não é pequena.",
-      "autor": "Fernando Pessoa",
+      "texto": "Não conhecemos nossa verdadeira altura até nos levantarmos.",
+      "autor": "Emily Dickinson",
+      "categoria": "Coragem",
+      "fonte": "Poema 1176",
+      "origem": "citação"
+    },
+    {
+      "texto": "Tudo o que um homem pode imaginar, outros homens poderão realizar.",
+      "autor": "Júlio Verne",
+      "categoria": "Criação",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não siga os passos dos antigos; busque o que eles buscaram.",
+      "autor": "Matsuo Bashō",
       "categoria": "Reflexão",
-      "fonte": "Mensagem, Mar Português",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quando beber água, lembre-se da fonte.",
+      "autor": "Provérbio chinês",
+      "categoria": "Reflexão",
+      "fonte": "tradição popular",
+      "origem": "citação"
+    },
+    {
+      "texto": "Viver é lutar.",
+      "autor": "Sêneca",
+      "categoria": "Força",
+      "fonte": "Cartas a Lucílio, 96",
       "origem": "citação"
     },
     {
       "texto": "A evolução acontece quando o conforto deixa de ser prioridade.",
       "autor": "Camila Martins",
-      "categoria": "Planejamento",
+      "categoria": "Reflexão",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Feliz aquele que transfere o que sabe e aprende o que ensina.",
-      "autor": "Cora Coralina",
-      "categoria": "Conhecimento",
-      "fonte": "Exaltação de Aninha",
+      "texto": "O riso é o sol que expulsa o inverno do rosto humano.",
+      "autor": "Victor Hugo",
+      "categoria": "Alegria",
+      "fonte": "Os Miseráveis",
+      "origem": "citação"
+    },
+    {
+      "texto": "Uma das regras básicas do universo é que nada é perfeito. Sem imperfeição, nem você nem eu existiríamos.",
+      "autor": "Stephen Hawking",
+      "categoria": "Reflexão",
+      "fonte": "Into the Universe, 2010",
+      "origem": "citação"
+    },
+    {
+      "texto": "Nada é permanente, exceto a mudança.",
+      "autor": "Heráclito",
+      "categoria": "Alegria",
+      "fonte": "Fragmentos (paráfrase)",
+      "origem": "citação"
+    },
+    {
+      "texto": "O importante é não parar de questionar. A curiosidade tem sua própria razão de existir.",
+      "autor": "Albert Einstein",
+      "categoria": "Sabedoria",
+      "fonte": "Revista LIFE, 1955",
+      "origem": "citação"
+    },
+    {
+      "texto": "Há escolas que são gaiolas e há escolas que são asas.",
+      "autor": "Rubem Alves",
+      "categoria": "Reflexão",
+      "fonte": "Gaiolas ou Asas",
+      "origem": "citação"
+    },
+    {
+      "texto": "Os cientistas estudam o mundo como ele é; os engenheiros criam o mundo que nunca existiu.",
+      "autor": "Theodore von Kármán",
+      "categoria": "Criação",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Mente sã em corpo são.",
+      "autor": "Juvenal",
+      "categoria": "Reflexão",
+      "fonte": "Sátiras, X",
+      "origem": "citação"
+    },
+    {
+      "texto": "A bondade é a linguagem que o surdo pode ouvir e o cego pode ver.",
+      "autor": "Mark Twain",
+      "categoria": "Amor e amizade",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "E ainda assim, eu me levanto.",
+      "autor": "Maya Angelou",
+      "categoria": "Coragem",
+      "fonte": "Ainda Assim Eu Me Levanto",
+      "origem": "citação"
+    },
+    {
+      "texto": "Ninguém é inútil neste mundo enquanto alivia o fardo de outra pessoa.",
+      "autor": "Charles Dickens",
+      "categoria": "Reflexão",
+      "fonte": "Nosso Amigo Comum",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não há grandeza onde não há simplicidade, bondade e verdade.",
+      "autor": "Liev Tolstói",
+      "categoria": "Amor e amizade",
+      "fonte": "Guerra e Paz",
+      "origem": "citação"
+    },
+    {
+      "texto": "Eu não falhei. Apenas descobri dez mil maneiras que não funcionam.",
+      "autor": "Thomas Edison",
+      "categoria": "Força",
+      "fonte": "atribuída",
       "origem": "citação"
     },
     {
       "texto": "Sabedoria também é reconhecer o que ainda falta aprender.",
       "autor": "Camila Martins",
-      "categoria": "Conhecimento",
+      "categoria": "Sabedoria",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "O que a vida quer da gente é coragem.",
-      "autor": "João Guimarães Rosa",
-      "categoria": "Coragem",
-      "fonte": "Grande Sertão: Veredas",
+      "texto": "Se podes olhar, vê. Se podes ver, repara.",
+      "autor": "José Saramago",
+      "categoria": "Reflexão",
+      "fonte": "Ensaio sobre a Cegueira",
+      "origem": "citação"
+    },
+    {
+      "texto": "Um livro deve ser o machado que quebra o mar gelado dentro de nós.",
+      "autor": "Franz Kafka",
+      "categoria": "Reflexão",
+      "fonte": "Cartas",
+      "origem": "citação"
+    },
+    {
+      "texto": "É preciso cultivar o nosso jardim.",
+      "autor": "Voltaire",
+      "categoria": "Reflexão",
+      "fonte": "Cândido",
+      "origem": "citação"
+    },
+    {
+      "texto": "Onde há perigo, cresce também o que salva.",
+      "autor": "Friedrich Hölderlin",
+      "categoria": "Reflexão",
+      "fonte": "Patmos",
+      "origem": "citação"
+    },
+    {
+      "texto": "Faça o difícil enquanto ainda é fácil; faça o grande enquanto ainda é pequeno.",
+      "autor": "Lao Tsé",
+      "categoria": "Reflexão",
+      "fonte": "Tao Te Ching, 63",
+      "origem": "citação"
+    },
+    {
+      "texto": "Se você chorar por ter perdido o sol, as lágrimas não o deixarão ver as estrelas.",
+      "autor": "Rabindranath Tagore",
+      "categoria": "Esperança",
+      "fonte": "Pássaros Perdidos",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não sou alegre nem sou triste: sou poeta.",
+      "autor": "Cecília Meireles",
+      "categoria": "Alegria",
+      "fonte": "Motivo",
+      "origem": "citação"
+    },
+    {
+      "texto": "O universo é mudança; a vida é opinião.",
+      "autor": "Marco Aurélio",
+      "categoria": "Alegria",
+      "fonte": "Meditações, IV, 3",
+      "origem": "citação"
+    },
+    {
+      "texto": "Termine cada dia e deixe-o para trás. Você fez o que pôde.",
+      "autor": "Ralph Waldo Emerson",
+      "categoria": "Vida",
+      "fonte": "Cartas",
+      "origem": "citação"
+    },
+    {
+      "texto": "Embora o mundo esteja cheio de sofrimento, também está cheio da superação dele.",
+      "autor": "Helen Keller",
+      "categoria": "Reflexão",
+      "fonte": "Otimismo",
+      "origem": "citação"
+    },
+    {
+      "texto": "Enquanto adiamos, a vida passa.",
+      "autor": "Sêneca",
+      "categoria": "Vida",
+      "fonte": "Cartas a Lucílio, 1",
       "origem": "citação"
     },
     {
@@ -501,22 +2034,29 @@
       "origem": "autoral"
     },
     {
-      "texto": "Somos o que repetidamente fazemos. A excelência, portanto, não é um ato, mas um hábito.",
-      "autor": "Will Durant",
-      "categoria": "Conhecimento",
-      "fonte": "A História da Filosofia",
+      "texto": "A virtude nunca fica sozinha; sempre terá vizinhos.",
+      "autor": "Confúcio",
+      "categoria": "Reflexão",
+      "fonte": "Analectos, IV, 25",
       "origem": "citação"
     },
     {
-      "texto": "Confiabilidade se constrói com pequenas entregas repetidas.",
-      "autor": "Camila Martins",
+      "texto": "Felicidade é um como, não um quê; um talento, não um objeto.",
+      "autor": "Hermann Hesse",
       "categoria": "Reflexão",
-      "fonte": "Autoral",
-      "origem": "autoral"
+      "fonte": "Reflexões",
+      "origem": "citação"
     },
     {
-      "texto": "Não há nada tão inútil quanto fazer com grande eficiência o que não deveria ser feito.",
-      "autor": "Peter Drucker",
+      "texto": "Há coisas que melhor se dizem calando.",
+      "autor": "Machado de Assis",
+      "categoria": "Reflexão",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Há sempre flores para quem quer vê-las.",
+      "autor": "Henri Matisse",
       "categoria": "Reflexão",
       "fonte": "atribuída",
       "origem": "citação"
@@ -524,36 +2064,169 @@
     {
       "texto": "A visão de longo prazo melhora as decisões de hoje.",
       "autor": "Camila Martins",
-      "categoria": "Planejamento",
+      "categoria": "Reflexão",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Os cientistas estudam o mundo como ele é; os engenheiros criam o mundo que nunca existiu.",
-      "autor": "Theodore von Kármán",
+      "texto": "A perfeição é atingida não quando não há mais nada a acrescentar, mas quando não há mais nada a retirar.",
+      "autor": "Antoine de Saint-Exupéry",
       "categoria": "Reflexão",
+      "fonte": "Terra dos Homens",
+      "origem": "citação"
+    },
+    {
+      "texto": "Só se consegue a simplicidade através de muito trabalho.",
+      "autor": "Clarice Lispector",
+      "categoria": "Reflexão",
+      "fonte": "A Hora da Estrela",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não basta estar ocupado; a questão é: com o que estamos ocupados?",
+      "autor": "Henry David Thoreau",
+      "categoria": "Reflexão",
+      "fonte": "Cartas",
+      "origem": "citação"
+    },
+    {
+      "texto": "O navio está seguro no porto, mas não foi para isso que os navios foram construídos.",
+      "autor": "John A. Shedd",
+      "categoria": "Criação",
+      "fonte": "Sal do Meu Sótão",
+      "origem": "citação"
+    },
+    {
+      "texto": "Pense em toda a beleza que ainda resta ao seu redor e seja feliz.",
+      "autor": "Anne Frank",
+      "categoria": "Alegria",
+      "fonte": "O Diário de Anne Frank",
+      "origem": "citação"
+    },
+    {
+      "texto": "Somos o que repetidamente fazemos. A excelência, portanto, não é um ato, mas um hábito.",
+      "autor": "Will Durant",
+      "categoria": "Reflexão",
+      "fonte": "A História da Filosofia",
+      "origem": "citação"
+    },
+    {
+      "texto": "Até os macacos caem das árvores.",
+      "autor": "Provérbio japonês",
+      "categoria": "Reflexão",
+      "fonte": "tradição popular",
+      "origem": "citação"
+    },
+    {
+      "texto": "A sorte favorece os audazes.",
+      "autor": "Terêncio",
+      "categoria": "Coragem",
+      "fonte": "Formião",
+      "origem": "citação"
+    },
+    {
+      "texto": "Descansa: o campo que descansou dá colheita abundante.",
+      "autor": "Ovídio",
+      "categoria": "Paz",
+      "fonte": "A Arte de Amar, II",
+      "origem": "citação"
+    },
+    {
+      "texto": "Tempo perdido nunca mais é reencontrado.",
+      "autor": "Benjamin Franklin",
+      "categoria": "Vida",
+      "fonte": "Almanaque do Pobre Ricardo",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não é a coisa que o perturba, mas o seu julgamento sobre ela; e esse julgamento você pode desfazer agora.",
+      "autor": "Marco Aurélio",
+      "categoria": "Reflexão",
+      "fonte": "Meditações, VIII, 47",
+      "origem": "citação"
+    },
+    {
+      "texto": "A alegria verdadeira é coisa séria.",
+      "autor": "Sêneca",
+      "categoria": "Alegria",
+      "fonte": "Cartas a Lucílio, 23",
+      "origem": "citação"
+    },
+    {
+      "texto": "Tudo pode ser tirado de uma pessoa, menos a última das liberdades: escolher a própria atitude diante das circunstâncias.",
+      "autor": "Viktor Frankl",
+      "categoria": "Vida",
+      "fonte": "Em Busca de Sentido",
+      "origem": "citação"
+    },
+    {
+      "texto": "O otimista é um tolo. O pessimista, um chato. Bom mesmo é ser um realista esperançoso.",
+      "autor": "Ariano Suassuna",
+      "categoria": "Esperança",
+      "fonte": "entrevista",
+      "origem": "citação"
+    },
+    {
+      "texto": "Sou amplo, contenho multidões.",
+      "autor": "Walt Whitman",
+      "categoria": "Reflexão",
+      "fonte": "Folhas de Relva",
+      "origem": "citação"
+    },
+    {
+      "texto": "O que vale na vida não é o ponto de partida, e sim a caminhada.",
+      "autor": "Cora Coralina",
+      "categoria": "Vida",
       "fonte": "atribuída",
       "origem": "citação"
     },
     {
       "texto": "Uma meta clara transforma esforço disperso em movimento.",
       "autor": "Camila Martins",
-      "categoria": "Persistência",
+      "categoria": "Força",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "O médico pode enterrar seus erros, mas o arquiteto só pode aconselhar o cliente a plantar trepadeiras.",
-      "autor": "Frank Lloyd Wright",
-      "categoria": "Reflexão",
-      "fonte": "New York Times, 1953",
+      "texto": "Paciência e tempo fazem mais do que força e raiva.",
+      "autor": "Jean de La Fontaine",
+      "categoria": "Paz",
+      "fonte": "Fábulas",
       "origem": "citação"
     },
     {
-      "texto": "Menos é mais.",
-      "autor": "Ludwig Mies van der Rohe",
-      "categoria": "Clareza",
-      "fonte": "lema atribuído",
+      "texto": "O amor tudo vence.",
+      "autor": "Virgílio",
+      "categoria": "Amor e amizade",
+      "fonte": "Bucólicas, X",
+      "origem": "citação"
+    },
+    {
+      "texto": "Uma andorinha só não faz verão, nem um só dia de bem-estar faz alguém feliz.",
+      "autor": "Aristóteles",
+      "categoria": "Alegria",
+      "fonte": "Ética a Nicômaco, I",
+      "origem": "citação"
+    },
+    {
+      "texto": "A amizade torna a prosperidade mais brilhante e alivia a adversidade, dividindo-a.",
+      "autor": "Cícero",
+      "categoria": "Força",
+      "fonte": "Sobre a Amizade",
+      "origem": "citação"
+    },
+    {
+      "texto": "Há apenas um caminho: entre em si mesmo.",
+      "autor": "Rainer Maria Rilke",
+      "categoria": "Vida",
+      "fonte": "Cartas a um Jovem Poeta",
+      "origem": "citação"
+    },
+    {
+      "texto": "Minha vida foi cheia de terríveis desgraças, a maioria das quais nunca aconteceu.",
+      "autor": "Michel de Montaigne",
+      "categoria": "Vida",
+      "fonte": "atribuída",
       "origem": "citação"
     },
     {
@@ -564,38 +2237,171 @@
       "origem": "autoral"
     },
     {
-      "texto": "Toda construção deve atender a três princípios: solidez, utilidade e beleza.",
-      "autor": "Vitrúvio",
-      "categoria": "Criatividade",
-      "fonte": "Dez Livros de Arquitetura (paráfrase)",
+      "texto": "Lembra-te de manter o ânimo sereno nos momentos difíceis.",
+      "autor": "Horácio",
+      "categoria": "Paz",
+      "fonte": "Odes, II, 3",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não há grande talento sem grande vontade.",
+      "autor": "Honoré de Balzac",
+      "categoria": "Reflexão",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "A riqueza não consiste em ter grandes posses, mas em ter poucas necessidades.",
+      "autor": "Epicteto",
+      "categoria": "Reflexão",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "O que me atrai é a curva livre e sensual.",
+      "autor": "Oscar Niemeyer",
+      "categoria": "Reflexão",
+      "fonte": "As Curvas do Tempo",
+      "origem": "citação"
+    },
+    {
+      "texto": "A cor é a minha obsessão diária, minha alegria e meu tormento.",
+      "autor": "Claude Monet",
+      "categoria": "Alegria",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Lembrar é uma forma de encontro.",
+      "autor": "Khalil Gibran",
+      "categoria": "Reflexão",
+      "fonte": "Areia e Espuma",
+      "origem": "citação"
+    },
+    {
+      "texto": "A vida é o dever que nós trouxemos para fazer em casa.",
+      "autor": "Mario Quintana",
+      "categoria": "Vida",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Aprende a sentir alegria.",
+      "autor": "Sêneca",
+      "categoria": "Alegria",
+      "fonte": "Cartas a Lucílio, 23",
+      "origem": "citação"
+    },
+    {
+      "texto": "Quem contempla a beleza da Terra encontra reservas de força que durarão enquanto houver vida.",
+      "autor": "Rachel Carson",
+      "categoria": "Força",
+      "fonte": "O Sentido da Admiração",
+      "origem": "citação"
+    },
+    {
+      "texto": "O sábio não acumula. Quanto mais faz pelos outros, mais tem.",
+      "autor": "Lao Tsé",
+      "categoria": "Reflexão",
+      "fonte": "Tao Te Ching, 81",
+      "origem": "citação"
+    },
+    {
+      "texto": "O destino não está nas estrelas, mas em nós mesmos.",
+      "autor": "William Shakespeare",
+      "categoria": "Esperança",
+      "fonte": "Júlio César (paráfrase)",
+      "origem": "citação"
+    },
+    {
+      "texto": "O segredo da existência humana não está apenas em viver, mas em ter algo pelo que viver.",
+      "autor": "Fiódor Dostoiévski",
+      "categoria": "Vida",
+      "fonte": "Os Irmãos Karamázov",
       "origem": "citação"
     },
     {
       "texto": "Pensar antes de agir economiza tempo depois.",
       "autor": "Camila Martins",
-      "categoria": "Conhecimento",
+      "categoria": "Sabedoria",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "O que me atrai é a curva livre e sensual.",
-      "autor": "Oscar Niemeyer",
-      "categoria": "Criatividade",
-      "fonte": "As Curvas do Tempo",
+      "texto": "Em nenhum lugar o homem encontra retiro mais tranquilo do que em sua própria alma.",
+      "autor": "Marco Aurélio",
+      "categoria": "Paz",
+      "fonte": "Meditações, IV, 3",
       "origem": "citação"
     },
     {
-      "texto": "A boa execução começa com entendimento.",
-      "autor": "Camila Martins",
-      "categoria": "Reflexão",
-      "fonte": "Autoral",
-      "origem": "autoral"
+      "texto": "Viver não é necessário; o que é necessário é criar.",
+      "autor": "Fernando Pessoa",
+      "categoria": "Vida",
+      "fonte": "Navegar é Preciso",
+      "origem": "citação"
     },
     {
-      "texto": "A alegria de ver e entender é o mais perfeito dom da natureza.",
-      "autor": "Albert Einstein",
+      "texto": "Nada é perda de tempo se você usa a experiência com sabedoria.",
+      "autor": "Auguste Rodin",
+      "categoria": "Sabedoria",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Meça o que é mensurável e torne mensurável o que ainda não é.",
+      "autor": "Galileu Galilei",
       "categoria": "Reflexão",
       "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Eu sonho com a pintura e depois pinto o meu sonho.",
+      "autor": "Vincent van Gogh",
+      "categoria": "Esperança",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "A manhã é mais sábia do que a noite.",
+      "autor": "Provérbio russo",
+      "categoria": "Reflexão",
+      "fonte": "tradição popular",
+      "origem": "citação"
+    },
+    {
+      "texto": "A vida pertence aos vivos, e quem vive deve estar preparado para as mudanças.",
+      "autor": "Johann Wolfgang von Goethe",
+      "categoria": "Alegria",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "A coragem é uma espécie de sabedoria: saber o que se deve e o que não se deve temer.",
+      "autor": "Platão",
+      "categoria": "Coragem",
+      "fonte": "Laques",
+      "origem": "citação"
+    },
+    {
+      "texto": "Sentimos que o que fazemos é apenas uma gota no oceano. Mas o oceano seria menor sem essa gota.",
+      "autor": "Madre Teresa de Calcutá",
+      "categoria": "Reflexão",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Não é tanto a ajuda dos amigos que nos ajuda, mas a confiança de que ela virá.",
+      "autor": "Epicuro",
+      "categoria": "Amor e amizade",
+      "fonte": "Sentenças Vaticanas, 34",
+      "origem": "citação"
+    },
+    {
+      "texto": "Experiência é o nome que damos aos nossos erros.",
+      "autor": "Oscar Wilde",
+      "categoria": "Reflexão",
+      "fonte": "O Leque de Lady Windermere",
       "origem": "citação"
     },
     {
@@ -606,59 +2412,227 @@
       "origem": "autoral"
     },
     {
-      "texto": "A perfeição é atingida não quando não há mais nada a acrescentar, mas quando não há mais nada a retirar.",
-      "autor": "Antoine de Saint-Exupéry",
-      "categoria": "Clareza",
-      "fonte": "Terra dos Homens",
+      "texto": "A música expressa aquilo que não pode ser dito e sobre o qual é impossível calar.",
+      "autor": "Victor Hugo",
+      "categoria": "Alegria",
+      "fonte": "William Shakespeare (ensaio)",
+      "origem": "citação"
+    },
+    {
+      "texto": "O homem superior é modesto no falar e generoso no agir.",
+      "autor": "Confúcio",
+      "categoria": "Amor e amizade",
+      "fonte": "Analectos, XIV, 27",
+      "origem": "citação"
+    },
+    {
+      "texto": "Procure não ser uma pessoa de sucesso, mas uma pessoa de valor.",
+      "autor": "Albert Einstein",
+      "categoria": "Reflexão",
+      "fonte": "Revista LIFE, 1955",
+      "origem": "citação"
+    },
+    {
+      "texto": "Qualquer amor já é um pouquinho de saúde, um descanso na loucura.",
+      "autor": "João Guimarães Rosa",
+      "categoria": "Paz",
+      "fonte": "Grande Sertão: Veredas",
+      "origem": "citação"
+    },
+    {
+      "texto": "Pense levemente em si mesmo e profundamente no mundo.",
+      "autor": "Miyamoto Musashi",
+      "categoria": "Sabedoria",
+      "fonte": "O Caminho Solitário",
+      "origem": "citação"
+    },
+    {
+      "texto": "Só sei que nada sei.",
+      "autor": "Sócrates",
+      "categoria": "Reflexão",
+      "fonte": "Platão, Apologia (tradição)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Mantenha o rosto voltado para o sol e você não verá as sombras.",
+      "autor": "Helen Keller",
+      "categoria": "Esperança",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "De grão em grão, a galinha enche o papo.",
+      "autor": "Provérbio português",
+      "categoria": "Reflexão",
+      "fonte": "tradição popular",
+      "origem": "citação"
+    },
+    {
+      "texto": "A imaginação nos leva a mundos que nunca existiram, mas sem ela não vamos a lugar nenhum.",
+      "autor": "Carl Sagan",
+      "categoria": "Criação",
+      "fonte": "Cosmos",
+      "origem": "citação"
+    },
+    {
+      "texto": "O fogo prova o ouro; a adversidade prova os fortes.",
+      "autor": "Sêneca",
+      "categoria": "Força",
+      "fonte": "Sobre a Providência",
+      "origem": "citação"
+    },
+    {
+      "texto": "Torna-te quem tu és.",
+      "autor": "Friedrich Nietzsche",
+      "categoria": "Reflexão",
+      "fonte": "A Gaia Ciência",
+      "origem": "citação"
+    },
+    {
+      "texto": "Tudo o que temos de decidir é o que fazer com o tempo que nos é dado.",
+      "autor": "J. R. R. Tolkien",
+      "categoria": "Vida",
+      "fonte": "O Senhor dos Anéis",
+      "origem": "citação"
+    },
+    {
+      "texto": "Para examinar a verdade, é preciso, uma vez na vida, pôr todas as coisas em dúvida.",
+      "autor": "René Descartes",
+      "categoria": "Sabedoria",
+      "fonte": "Princípios da Filosofia",
       "origem": "citação"
     },
     {
       "texto": "Pequenas escolhas coerentes constroem trajetórias duradouras.",
       "autor": "Camila Martins",
-      "categoria": "Planejamento",
+      "categoria": "Reflexão",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Por mais difícil que a vida pareça, sempre há algo que você pode fazer e em que pode ter sucesso.",
-      "autor": "Stephen Hawking",
+      "texto": "Seja como o promontório contra o qual as ondas se quebram: ele permanece firme, e a fúria das águas se acalma ao seu redor.",
+      "autor": "Marco Aurélio",
+      "categoria": "Paz",
+      "fonte": "Meditações, IV, 49",
+      "origem": "citação"
+    },
+    {
+      "texto": "A originalidade consiste em voltar à origem.",
+      "autor": "Antoni Gaudí",
       "categoria": "Reflexão",
-      "fonte": "palestra de 2016",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "O tempo não é linear; é um maravilhoso emaranhado onde, a qualquer instante, se podem escolher pontos e inventar soluções.",
+      "autor": "Lina Bo Bardi",
+      "categoria": "Vida",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Deixe sua vida dançar levemente nas bordas do tempo, como o orvalho na ponta de uma folha.",
+      "autor": "Rabindranath Tagore",
+      "categoria": "Alegria",
+      "fonte": "Pássaros Perdidos",
+      "origem": "citação"
+    },
+    {
+      "texto": "A pedra preciosa não se lapida sem atrito, nem o ser humano se aperfeiçoa sem provações.",
+      "autor": "Provérbio chinês",
+      "categoria": "Reflexão",
+      "fonte": "tradição popular",
+      "origem": "citação"
+    },
+    {
+      "texto": "Os anos ensinam muito do que os dias jamais souberam.",
+      "autor": "Ralph Waldo Emerson",
+      "categoria": "Amor e amizade",
+      "fonte": "Experiência (ensaio)",
+      "origem": "citação"
+    },
+    {
+      "texto": "A sorte favorece a mente preparada.",
+      "autor": "Louis Pasteur",
+      "categoria": "Reflexão",
+      "fonte": "Conferência de 1854",
+      "origem": "citação"
+    },
+    {
+      "texto": "Amar se aprende amando.",
+      "autor": "Carlos Drummond de Andrade",
+      "categoria": "Amor e amizade",
+      "fonte": "Amar se Aprende Amando",
       "origem": "citação"
     },
     {
       "texto": "A qualidade do caminho importa tanto quanto a chegada.",
       "autor": "Camila Martins",
-      "categoria": "Excelência",
+      "categoria": "Vida",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Não deixe que o ruído da opinião dos outros abafe a sua voz interior.",
-      "autor": "Steve Jobs",
-      "categoria": "Reflexão",
-      "fonte": "discurso em Stanford, 2005",
+      "texto": "A melhor maneira de se animar é tentar animar outra pessoa.",
+      "autor": "Mark Twain",
+      "categoria": "Força",
+      "fonte": "Cadernos",
       "origem": "citação"
     },
     {
-      "texto": "Eu não falhei. Apenas descobri 10 mil maneiras que não funcionam.",
-      "autor": "Thomas Edison",
-      "categoria": "Coragem",
+      "texto": "Seja menos curioso sobre as pessoas e mais curioso sobre as ideias.",
+      "autor": "Marie Curie",
+      "categoria": "Sabedoria",
       "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Parte da cura está em querer ser curado.",
+      "autor": "Sêneca",
+      "categoria": "Criação",
+      "fonte": "Fedra",
+      "origem": "citação"
+    },
+    {
+      "texto": "Tudo o que não invento é falso.",
+      "autor": "Manoel de Barros",
+      "categoria": "Criação",
+      "fonte": "Memórias Inventadas",
+      "origem": "citação"
+    },
+    {
+      "texto": "Mudam-se os tempos, mudam-se as vontades.",
+      "autor": "Luís de Camões",
+      "categoria": "Vida",
+      "fonte": "Sonetos",
       "origem": "citação"
     },
     {
       "texto": "Uma obra bem-feita começa no projeto e termina no cuidado com cada detalhe.",
       "autor": "Camila Martins",
-      "categoria": "Excelência",
+      "categoria": "Criação",
       "fonte": "Autoral",
       "origem": "autoral"
     },
     {
-      "texto": "Uma das regras básicas do universo é que nada é perfeito. Sem imperfeição, nem você nem eu existiríamos.",
-      "autor": "Stephen Hawking",
-      "categoria": "Clareza",
-      "fonte": "Into the Universe, 2010",
+      "texto": "Se queres construir um barco, não chames as pessoas para juntar madeira; ensina-as a desejar o mar.",
+      "autor": "Antoine de Saint-Exupéry",
+      "categoria": "Sabedoria",
+      "fonte": "Cidadela (paráfrase)",
+      "origem": "citação"
+    },
+    {
+      "texto": "Perder-se também é caminho.",
+      "autor": "Clarice Lispector",
+      "categoria": "Vida",
+      "fonte": "atribuída",
+      "origem": "citação"
+    },
+    {
+      "texto": "Se vi mais longe, foi por estar sobre os ombros de gigantes.",
+      "autor": "Isaac Newton",
+      "categoria": "Reflexão",
+      "fonte": "Carta a Robert Hooke, 1675",
       "origem": "citação"
     }
   ]
