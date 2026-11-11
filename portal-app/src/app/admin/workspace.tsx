@@ -5,6 +5,7 @@ import {AdminPageHeader,SelectionChips} from '@/components/admin-ui';
 import {AdminProjectPicker} from '@/components/admin-project-picker';
 import {Button,Card,Field,Notice,Screen,StateView} from '@/components/ui';
 import {CamilinhaGreeting} from '@/components/camilinha';
+import {AdminDashboardPanel} from '@/components/admin-dashboard';
 import {useAuth} from '@/providers/auth-provider';
 import {getDisplayName,getFirstName} from '@/lib/user-name';
 import {useLiveRefresh} from '@/hooks/use-live-refresh';
@@ -63,12 +64,10 @@ export default function AdminWorkspace(){
   return rows.filter(r=>(!projectId||r.projectId===projectId||r.id==='client:'+project?.clientId||((r.id.startsWith('email:')||r.id.startsWith('missing-access:'))&&r.clientId===project?.clientId))&&text(r.label+' '+r.detail).includes(text(query)));
  },[clients,projects,files,entries,approvals,requests,emailJobs,mode,projectId,project,query]);
  return <Screen><AdminPageHeader title="Visão geral" description="Indicadores, busca, pendências e ficha do cliente ou projeto." />
- {!embedded?<CamilinhaGreeting text={`Olá, ${adminFirstName}! Aqui estão as pendências e os indicadores de hoje.`} />:null}
+ {!embedded?<CamilinhaGreeting text={`Bem-vinda, ${adminFirstName}! Aqui estão os indicadores e as pendências de hoje.`} />:null}
  {error?<Notice tone="warning">{error} O resumo pode estar incompleto; atualize antes de tomar decisões.</Notice>:null}
  {!embedded?<SelectionChips label="Consultar" value={mode} onChange={value=>{setMode(value);setPage(0);}} items={[{value:'summary',label:'Resumo'},{value:'search',label:'Pesquisar'},{value:'pending',label:'Pendências'},{value:'profile',label:'Ficha do cliente / projeto'}]} />:null}
- {mode==='summary'?<View style={styles.metrics}>{([
-  ['Clientes ativos',counts.activeClients,'clients'],['Projetos ativos',counts.activeProjects,'projects'],['Solicitações abertas',counts.openRequests,'requests'],['Aprovações pendentes',counts.pendingApprovals,'approvals'],
- ] as const).map(([label,value,section])=><Card key={label} style={styles.metric}><Text style={styles.meta}>{label}</Text><Text style={styles.number}>{value===null?'Indisponível':value}</Text><Button title={'Consultar '+label.toLowerCase()} variant="ghost" onPress={()=>open(section)} /></Card>)}</View>:null}
+ {mode==='summary'?<AdminDashboardPanel entries={entries} projects={projects} contracts={contracts} counts={counts} loading={loading} unavailable={Boolean(error)} onOpen={(section,id,extra)=>open(section,id,extra)} onSelectProject={id=>{selectProject(id);}} />:null}
  <Card><Field label="Buscar cliente, contrato, arquivo ou lançamento" value={query} onChangeText={value=>{setQuery(value);setPage(0);}} />
  {!embedded?<><AdminProjectPicker projects={projects} value={projectId} onChange={selectProject} />{projectId?<Button debounceMs={0} title="Todos os projetos" variant="ghost" onPress={()=>selectProject(null)} />:null}</>:null}</Card>
  {client&&(mode==='profile'||project)?<Card><Text style={styles.title}>{client.name}</Text><Text style={styles.meta}>{client.email??'E-mail não informado'} • {client.phone??'Telefone não informado'} • {client.status}</Text><View style={styles.actions}><Button title="Cadastro e acessos do cliente" variant="secondary" onPress={()=>open('clients',null,{clientId:client.id})} /><Button title="Orçamentos e contratos deste cliente" variant="secondary" onPress={()=>open('commercial-documents',null,{clientId:client.id})} /></View>
