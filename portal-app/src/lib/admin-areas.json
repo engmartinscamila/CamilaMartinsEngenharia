@@ -130,12 +130,25 @@
         ]
       },
       {
+        "key": "installments",
+        "label": "Dar baixa",
+        "views": [
+          {
+            "key": "installments",
+            "label": "Dar baixa em parcelas",
+            "module": "financial",
+            "subview": "installments",
+            "scope": true
+          }
+        ]
+      },
+      {
         "key": "receivables",
-        "label": "A receber",
+        "label": "Extrato a receber",
         "views": [
           {
             "key": "receivables",
-            "label": "A receber",
+            "label": "Extrato a receber",
             "module": "financial",
             "subview": "receivables",
             "scope": true

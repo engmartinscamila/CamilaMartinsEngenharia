@@ -167,7 +167,13 @@ await act(async()=>choices('Área financeira').props.onChange('fiscal'));assert(
 await act(async()=>choices('Área financeira').props.onChange('entries'));
 await expandGroups();
 const pendingBefore=entries.find(row=>row.status==='pendente'),entryCount=entries.length;
-assert(pendingBefore);await act(async()=>button('Registrar recebimento').props.onPress());
+assert(pendingBefore);
+await act(async()=>choices('Área financeira').props.onChange('installments'));
+assert(text().includes('Dar baixa em parcelas'),'Área direta de baixa deve existir');
+assert(text().includes(pendingBefore.description),'Parcela pendente deve aparecer sem expandir grupos');
+await act(async()=>choices('Área financeira').props.onChange('entries'));
+await expandGroups();
+await act(async()=>button('Dar baixa (registrar recebimento)').props.onPress());
 assert(renderer.root.findByType('modal'),'Confirmar recebimento deve abrir um diálogo visível');
 await act(async()=>field('Forma de pagamento').props.onChangeText('Pix'));
 receiptFail=true;
