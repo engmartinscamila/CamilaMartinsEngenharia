@@ -14,45 +14,68 @@
     options('receiptContract', contracts.filter(row=>String(row.cliente_id)===value('receiptClient')).map(row=>({...row,label:row.contract_number})), 'Sem contrato informado');
     options('receiptProject', matching.map(row => ({ ...row, label: [row.numero_contrato || row.contract_number, row.nome].filter(Boolean).join(' · ') })), 'Sem projeto — serviço avulso');
   }
-  async function loadHistory() {
-    $('receiptHistoryState').textContent = 'Carregando recibos...';
-    const all=[];
-    for(let page=0;;page+=500){
-      const {data,error}=await supabaseClient.from('payment_receipts').select('*').order('created_at',{ascending:false}).order('id').range(page,page+499);
-      if(error){$('receiptHistoryState').textContent='Não foi possível carregar todo o histórico. Tente atualizar.';return;}
-      all.push(...(data||[]));
-      if((data||[]).length<500)break;
-      if(all.length>=100000){$('receiptHistoryState').textContent='Histórico muito extenso. Consulte pelo Financeiro.';return;}
-    }
-    history=all;
-    const clientsById=new Map();
-    for(const row of history){
-      const key=row.client_id;
-      if(!clientsById.has(key))clientsById.set(key,{name:clients.find(c=>c.id===key)?.nome||row.snapshot.payer_name,rows:[]});
-      clientsById.get(key).rows.push(row);
-    }
-    const groups=[...clientsById.values()].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
-    offset=Math.min(offset,Math.max(0,Math.floor((groups.length-1)/25)*25));
+  // Histórico: carregado do banco uma vez por atualização; paginação, busca e grupos abertos ficam na memória.
+  const openGroups=new Set();let historyQuery='',focusReceiptId=null,historyWarning='';
+  const normalize=text=>String(text??'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLocaleLowerCase('pt-BR');
+  const receiptCode=row=>`REC-${String(row.receipt_number).padStart(6,'0')}`;
+  const clientName=row=>clients.find(c=>c.id===row.client_id)?.nome||row.snapshot?.payer_name||'Cliente não identificado';
+  const projectName=row=>row.project_id?(projects.find(p=>p.id===row.project_id)?.nome||row.snapshot?.project_name||'Projeto não identificado'):'Serviços sem projeto';
+  const clientKey=row=>'c:'+(row.client_id||row.snapshot?.payer_name||'');
+  const projectKey=row=>clientKey(row)+'|p:'+(row.project_id||'sem-projeto');
+  const byName=(a,b)=>a.name.localeCompare(b.name,'pt-BR');
+  function matches(row){
+    if(!historyQuery)return true;
+    const text=normalize([receiptCode(row),row.receipt_number,clientName(row),row.snapshot?.payer_name,projectName(row),row.snapshot?.contract_number,row.description,money(row.amount),date(row.paid_on),row.reversed_at?'estornado':''].join(' '));
+    return historyQuery.split(/\s+/).every(term=>text.includes(term));
+  }
+  function groupDetails(key,label,className){
+    const details=document.createElement('details'),summary=document.createElement('summary');
+    details.className=className;details.dataset.group=key;summary.textContent=label;details.append(summary);
+    details.open=Boolean(historyQuery)||openGroups.has(key);
+    details.addEventListener('toggle',()=>{if(historyQuery)return;if(details.open)openGroups.add(key);else openGroups.delete(key);});
+    return details;
+  }
+  function renderHistory(){
+    const rows=history.filter(matches),clientsByKey=new Map();
+    for(const row of rows){const key=clientKey(row);if(!clientsByKey.has(key))clientsByKey.set(key,{key,name:clientName(row),rows:[]});clientsByKey.get(key).rows.push(row);}
+    const groups=[...clientsByKey.values()].sort(byName);
+    const focused=focusReceiptId&&rows.find(row=>row.id===focusReceiptId);
+    if(focused){openGroups.add(clientKey(focused));openGroups.add(projectKey(focused));offset=Math.floor(groups.findIndex(group=>group.key===clientKey(focused))/25)*25;}
+    offset=Math.min(Math.max(0,offset),Math.max(0,Math.floor((groups.length-1)/25)*25));
     $('receiptHistory').replaceChildren();
-    $('receiptHistoryState').textContent=groups.length?`${groups.length} cliente(s) · ${history.length} recibo(s). Abra o cliente e depois o projeto.`:'Nenhum recibo emitido.';
+    const state=historyQuery
+      ?(rows.length?`${rows.length} recibo(s) encontrado(s) em ${groups.length} cliente(s).`:'Nenhum recibo encontrado para esta busca.')
+      :(groups.length?`${groups.length} cliente(s) · ${history.length} recibo(s). Abra o cliente e depois o projeto.`:'Nenhum recibo emitido.');
+    $('receiptHistoryState').textContent=historyWarning?`${state} ${historyWarning}`:state;
     for(const group of groups.slice(offset,offset+25)){
-      const client=document.createElement('details'),title=document.createElement('summary');
-      client.className='item-lista';client.style.display='block';title.textContent=`${group.name} · ${group.rows.length} recibo(s)`;client.append(title);
-      const projectsById=new Map();
-      for(const row of group.rows){const key=row.project_id||'without-project';if(!projectsById.has(key))projectsById.set(key,{name:row.project_id?(projects.find(p=>p.id===row.project_id)?.nome||row.snapshot.project_name||'Projeto não identificado'):'Serviços sem projeto',rows:[]});projectsById.get(key).rows.push(row);}
-      for(const project of [...projectsById.values()].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'))){
-        const details=document.createElement('details'),summary=document.createElement('summary');
-        details.style.margin='16px';summary.textContent=`${project.name} · ${project.rows.length} recibo(s)`;details.append(summary);
+      const client=groupDetails(group.key,`${group.name} · ${group.rows.length} recibo(s)`,'item-lista receipt-client');
+      const projectsByKey=new Map();
+      for(const row of group.rows){const key=projectKey(row);if(!projectsByKey.has(key))projectsByKey.set(key,{key,name:projectName(row),rows:[]});projectsByKey.get(key).rows.push(row);}
+      for(const project of [...projectsByKey.values()].sort(byName)){
+        const details=groupDetails(project.key,`${project.name} · ${project.rows.length} recibo(s)`,'receipt-project');
         for(const row of project.rows){
           const entry=document.createElement('div');entry.className='item-lista';
-          const copy=document.createElement('span');copy.textContent=`REC-${String(row.receipt_number).padStart(6,'0')} · ${row.snapshot.contract_number||'Sem contrato'} · ${row.description} · ${money(row.amount)} · ${date(row.paid_on)}${row.reversed_at?' · ESTORNADO':''}`;
-          const open=document.createElement('button');open.type='button';open.textContent='Abrir recibo';open.addEventListener('click',()=>showReceipt(row));entry.append(copy,open);details.append(entry);
+          if(row.id===focusReceiptId){entry.classList.add('receipt-focus');entry.setAttribute('aria-current','true');}
+          const copy=document.createElement('span');copy.textContent=`${receiptCode(row)} · ${row.snapshot?.contract_number||'Sem contrato'} · ${row.description} · ${money(row.amount)} · ${date(row.paid_on)}${row.reversed_at?' · ESTORNADO':''}`;
+          const open=document.createElement('button');open.type='button';open.textContent='Abrir recibo';open.addEventListener('click',()=>{focusReceiptId=row.id;showReceipt(row);});entry.append(copy,open);details.append(entry);
         }
         client.append(details);
       }
       $('receiptHistory').append(client);
     }
     $('receiptPrevious').disabled=offset===0;$('receiptNext').disabled=offset+25>=groups.length;
+  }
+  async function loadHistory() {
+    $('receiptHistoryState').textContent='Carregando recibos...';
+    const all=[];historyWarning='';
+    for(let start=0;;start+=500){
+      const {data,error}=await supabaseClient.from('payment_receipts').select('*').order('created_at',{ascending:false}).order('id').range(start,start+499);
+      if(error){$('receiptHistoryState').textContent='Não foi possível carregar todo o histórico. Tente atualizar.';return;}
+      all.push(...(data||[]));
+      if((data||[]).length<500)break;
+      if(all.length>=100000){historyWarning='Histórico muito extenso: exibindo os 100.000 recibos mais recentes. Use a busca ou o Financeiro.';break;}
+    }
+    history=all;renderHistory();
   }
 
   async function issue(event) {
@@ -70,7 +93,7 @@
     const {data,error}=response;
     busy = false; $('issueReceipt').disabled = false;
     if (error || !data?.id) { message(error?.message || 'Não foi possível confirmar a emissão. Tente novamente sem alterar os dados.',true); return; }
-    showReceipt(data); message('Recibo emitido e preservado no histórico. Recebimento registrado no caixa. Você já pode imprimir ou salvar em PDF.');
+    focusReceiptId=data.id; showReceipt(data); message('Recibo emitido e preservado no histórico. Recebimento registrado no caixa. Você já pode imprimir ou salvar em PDF.');
     requestId = null; $('receiptConfirmed').checked = false; $('receiptForm').dispatchEvent(new Event('cme:form-saved',{bubbles:true})); offset = 0; await loadHistory();
   }
   document.addEventListener('DOMContentLoaded', async () => {
@@ -103,7 +126,8 @@
         try{if(window.parent!==window){parentTitle=window.parent.document.title;window.parent.document.title=title;}}catch{}
         try{document.title=title;window.print();}finally{if(parentTitle!==undefined)try{window.parent.document.title=parentTitle;}catch{}}
       }); $('refreshReceipts').addEventListener('click',() => void loadHistory());
-      $('receiptPrevious').addEventListener('click',()=>{offset=Math.max(0,offset-25);void loadHistory();}); $('receiptNext').addEventListener('click',()=>{offset+=25;void loadHistory();});
+      $('receiptPrevious').addEventListener('click',()=>{focusReceiptId=null;offset=Math.max(0,offset-25);renderHistory();}); $('receiptNext').addEventListener('click',()=>{focusReceiptId=null;offset+=25;renderHistory();});
+      $('receiptSearch')?.addEventListener('input',event=>{historyQuery=normalize(event.target.value).trim();focusReceiptId=null;offset=0;renderHistory();});
       $('receiptForm').addEventListener('input',()=>{if (!busy) requestId=null;});
       const contextualProject=new URLSearchParams(location.search).get('projectId');
       if(!financialId&&contextualProject){const project=projects.find(item=>String(item.id)===contextualProject);if(project){$('receiptClient').value=project.cliente_id;selectProject();$('receiptProject').value=project.id;}}
@@ -132,12 +156,12 @@
       if(financialId){
         const existing=await supabaseClient.from('payment_receipts').select('*').eq('financial_entry_id',financialId).maybeSingle();
         if(existing.error){message('Não foi possível conferir se este pagamento já possui recibo. Atualize antes de emitir.',true);return;}
-        if(existing.data){showReceipt(existing.data);message(existing.data.reversed_at?'Recibo já emitido para este recebimento e posteriormente estornado. O documento continua disponível, identificado como estornado.':'Recibo já emitido para este recebimento. Use Word ou PDF para salvar a mesma emissão.');}
+        if(existing.data){focusReceiptId=existing.data.id;showReceipt(existing.data);message(existing.data.reversed_at?'Recibo já emitido para este recebimento e posteriormente estornado. O documento continua disponível, identificado como estornado.':'Recibo já emitido para este recebimento. Use Word ou PDF para salvar a mesma emissão.');}
         else $('receiptEditor').hidden=false;
       }else if(contextualProject)$('receiptEditor').hidden=false;
       $('issueReceipt').disabled = false; await loadHistory();
       const receiptId=new URLSearchParams(location.search).get('receiptId');
-      if(receiptId){const saved=await supabaseClient.from('payment_receipts').select('*').eq('id',receiptId).maybeSingle();if(saved.error||!saved.data)message('Não foi possível abrir o recibo solicitado.',true);else showReceipt(saved.data);}
+      if(receiptId){const saved=await supabaseClient.from('payment_receipts').select('*').eq('id',receiptId).maybeSingle();if(saved.error||!saved.data)message('Não foi possível abrir o recibo solicitado.',true);else{focusReceiptId=saved.data.id;showReceipt(saved.data);renderHistory();}}
     } catch { message('Não foi possível carregar os cadastros. Atualize a página para tentar novamente.',true); }
   });
   window.CMEReceipts = { parseAmount, showReceipt };
