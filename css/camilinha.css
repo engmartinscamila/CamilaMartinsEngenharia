@@ -1,6 +1,6 @@
 /* Camilinha — animações da folha de sprites ORIGINAL do ChatGPT Work.
    Fonte: Pets/Camilinha/Camilinha_Animacoes.tar.gz (atlas expandido, 8 x 11).
-   Apenas aparece em uma ação, espera ou falha. Nenhuma camada fixa no site. */
+   No site público aparece só em carregamentos; botões e menus não a exibem. */
 :root {
   --camilinha-work-atlas: url("../assets/camilinha/work-atlas.png");
 }
@@ -19,47 +19,6 @@
 @keyframes camilinha-work-8 {
   from { background-position-x: 0%; }
   to { background-position-x: 100%; }
-}
-
-/* Orçamento: aceno original (linha 3, quatro quadros). */
-.camilinha-orcamento { position: relative; }
-.camilinha-orcamento::after {
-  content: "";
-  position: absolute;
-  inset-inline-end: 8px;
-  bottom: calc(100% - 8px);
-  z-index: 5;
-  width: 36px;
-  aspect-ratio: 12 / 13;
-  pointer-events: none;
-  visibility: hidden;
-  background-image: var(--camilinha-work-atlas);
-  background-repeat: no-repeat;
-  background-size: 800% 1100%;
-  background-position: 0% 30%;
-}
-.camilinha-orcamento:focus-visible::after {
-  visibility: visible;
-  animation: camilinha-work-4 740ms steps(4, jump-none) both;
-}
-@media (hover: hover) {
-  .camilinha-orcamento:hover::after {
-    visibility: visible;
-    animation: camilinha-work-4 740ms steps(4, jump-none) both;
-  }
-}
-.gallery-budget.camilinha-orcamento::after {
-  inset-inline-end: 0;
-  bottom: calc(100% - 4px);
-}
-/* Os cards de contato cortam o que passa da borda (overflow: hidden),
-   então a mascote fica inteira dentro da caixa, à direita e centralizada. */
-.contact-card a.camilinha-orcamento::after {
-  inset-inline-end: 14px;
-  top: 50%;
-  bottom: auto;
-  width: 40px;
-  transform: translateY(-50%);
 }
 
 /* Carregando a galeria: trabalho em andamento, linha 7. */
@@ -174,14 +133,10 @@
   animation: camilinha-work-8 1.3s steps(8, jump-none) both;
 }
 @media (prefers-reduced-motion: reduce) {
-  .camilinha-orcamento:focus-visible::after,
   .camilinha-carregando .camilinha-indicador::after,
   .portfolio3d-state.camilinha-3d-carregando::before,
   .portfolio3d-state.camilinha-3d-erro::before,
   .camilinha-work { animation: none !important; }
-}
-@media (prefers-reduced-motion: reduce) and (hover: hover) {
-  .camilinha-orcamento:hover::after { animation: none !important; }
 }
 
 /* Portal do cliente clássico: animação discreta apenas em estados observados. */
@@ -209,48 +164,3 @@
   display: block;
   margin: 0 auto 6px;
 }
-
-/* Feedback nos links públicos, com espaço reservado apenas dentro do desenho. */
-.camilinha-acao { position: relative; }
-.camilinha-acao > .camilinha-acao-mascote {
-  position: absolute;
-  inset-inline-end: 8px;
-  bottom: calc(100% - 8px);
-  z-index: 5;
-  visibility: hidden;
-  animation: none;
-}
-.camilinha-acao > .camilinha-acao-mascote[data-state="waving"] {
-  --camilinha-acao-animacao: camilinha-work-4 740ms steps(4, jump-none) both;
-}
-.camilinha-acao > .camilinha-acao-mascote[data-state="review"] {
-  --camilinha-acao-animacao: camilinha-work-6 1.2s steps(6, jump-none) both;
-}
-.camilinha-acao:focus-visible > .camilinha-acao-mascote,
-.camilinha-acao:active > .camilinha-acao-mascote {
-  visibility: visible;
-  animation: var(--camilinha-acao-animacao);
-}
-@media (hover: hover) {
-  .camilinha-acao:hover > .camilinha-acao-mascote {
-    visibility: visible;
-    animation: var(--camilinha-acao-animacao);
-  }
-}
-.float-btn.camilinha-acao > .camilinha-acao-mascote {
-  inset-inline-end: calc(100% + 6px);
-  bottom: 4px;
-}
-.featured-project-card.camilinha-acao > .camilinha-acao-mascote {
-  top: 12px;
-  bottom: auto;
-  inset-inline-end: 12px;
-}
-.contact-card a.camilinha-acao > .camilinha-acao-mascote {
-  inset-inline-end: 14px;
-  top: 50%;
-  bottom: auto;
-  --camilinha-size: 40px;
-  transform: translateY(-50%);
-}
-/* Menu superior não recebe a mascote (ver camilinha-work.js). */
