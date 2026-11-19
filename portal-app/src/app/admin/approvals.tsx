@@ -9,7 +9,7 @@ import { DateField } from '@/components/date-field';
 import { Button, Card, Field, Notice, Screen, StateView, StatusPill } from '@/components/ui';
 import { formatDate, humanizeStatus } from '@/lib/format';
 import { useAppTheme, useThemeStyles } from '@/providers/theme-provider';
-import { createAdminApproval, listAdminApprovals, listAdminProjects } from '@/services/admin-service';
+import { createAdminApproval, listAdminApprovals, listAdminProjects, listContractScheduleStages } from '@/services/admin-service';
 import { listProjectContractDocuments, type ContractDocumentSummary } from '@/services/document-workflow-service';
 import { radius, spacing, ThemeColors, typography } from '@/theme/tokens';
 import type { AdminProjectSummary, ApprovalSummary } from '@/types/domain';
@@ -41,6 +41,8 @@ export function AdminApprovalsScreen({embedded=false,onProjectChange,contextProj
   const [description, setDescription] = useState(initialDraft?.description??'');
   const [relatedDocumentId, setRelatedDocumentId] = useState<string | null>(initialDraft?.relatedDocumentId??null);
   const [dueDate, setDueDate] = useState(initialDraft?.dueDate??'');
+  const [stages, setStages] = useState<{ id: string; name: string; done: boolean; requiresAcceptance: boolean }[]>([]);
+  const [scheduleStageId, setScheduleStageId] = useState<string | null>(null);
   useEffect(()=>{onDraftChange?.({type,approvalObject,description,relatedDocumentId,dueDate});},[type,approvalObject,description,relatedDocumentId,dueDate,onDraftChange]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -70,8 +72,18 @@ export function AdminApprovalsScreen({embedded=false,onProjectChange,contextProj
       setRelatedDocumentId((current) => result.data.some((item) => item.id === current) ? current : null);
       if (result.error) setError(result.error);
     });
+    void listContractScheduleStages(projectId).then((result) => {
+      if (!mounted) return;
+      setStages(result.data);
+      setScheduleStageId((current) => result.data.some((item) => item.id === current && !item.done) ? current : null);
+    });
     return () => { mounted = false; };
   }, [projectId]);
+
+  const chooseStage = (stage: { id: string; name: string } | null) => {
+    setScheduleStageId(stage?.id ?? null);
+    if (stage && (!approvalObject.trim() || approvalObject.startsWith('Aceite da entrega — '))) setApprovalObject(`Aceite da entrega — ${stage.name}`);
+  };
 
   const selectedProject = contextProject ?? projects.find((item) => item.id === projectId) ?? null;
 
@@ -91,10 +103,11 @@ export function AdminApprovalsScreen({embedded=false,onProjectChange,contextProj
       description,
       relatedDocumentId,
       dueDate: dueDate || null,
+      scheduleStageId,
     });
     if (result) { setError(result); return; }
     setSuccess('Aprovação enviada ao cliente com objeto, contexto e prazo registrados.');
-    setApprovalObject(''); setDescription(''); setRelatedDocumentId(null); setDueDate('');
+    setApprovalObject(''); setDescription(''); setRelatedDocumentId(null); setDueDate(''); setScheduleStageId(null);
     await load();
     onCreated?.();
     }catch{setError('Não foi possível criar a aprovação. Tente novamente.');}
@@ -132,6 +145,23 @@ export function AdminApprovalsScreen({embedded=false,onProjectChange,contextProj
           ))}
         </View>
       </Card>
+
+      {stages.length ? <Card>
+        <Text style={styles.sectionTitle}>Serviço do contrato entregue</Text>
+        <Text style={styles.meta}>Ao ser aceito pelo cliente, a etapa escolhida é concluída automaticamente no cronograma.</Text>
+        <View style={styles.documentList}>
+          <Pressable onPress={() => chooseStage(null)} style={[styles.documentChip, scheduleStageId === null && styles.selected]}>
+            <Text style={[styles.projectText, scheduleStageId === null && styles.selectedText]}>Outro objeto (não conclui etapa)</Text>
+          </Pressable>
+          {stages.map((stage) => (
+            <Pressable key={stage.id} disabled={stage.done} onPress={() => chooseStage(stage)} style={[styles.documentChip, scheduleStageId === stage.id && styles.selected]}>
+              <Text style={[styles.projectText, scheduleStageId === stage.id && styles.selectedText]}>
+                {stage.name}{stage.done ? ' • já concluída' : ''}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </Card> : null}
 
       <Card>
         <Text style={styles.sectionTitle}>Objeto específico</Text>

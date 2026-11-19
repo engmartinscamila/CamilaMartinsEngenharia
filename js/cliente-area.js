@@ -412,6 +412,17 @@ CAMILA MARTINS ENGENHARIA
             return;
         }
 
+        // Etapas na ordem do contrato (assinatura, serviços, encerramento).
+        itens = [...itens].sort((a, b) =>
+            Number(a.ordem ?? 0) - Number(b.ordem ?? 0) ||
+            String(a.data_inicio || "").localeCompare(String(b.data_inicio || ""))
+        );
+        const conclusao = item => {
+            if (!item.concluida_em) return "";
+            const data = new Date(item.concluida_em).toLocaleDateString("pt-BR");
+            const motivo = item.conclusao_tipo === "automatica" && item.conclusao_motivo ? ` — ${escapar(item.conclusao_motivo)}` : "";
+            return `<div class="item-meta"><span><i class="bi bi-check2-circle"></i> Concluída em ${escapar(data)}${motivo}</span></div>`;
+        };
         const progresso = window.cmCalcularProgresso?.(itens) || 0;
         container.innerHTML = `
             <article class="item-card">
@@ -435,6 +446,7 @@ CAMILA MARTINS ENGENHARIA
                             <span>Peso: ${escapar(item.peso_percentual || 0)}%</span>
                         </div>
                         <div class="barra-cliente"><span style="width:${window.cmPercentualEtapa?.(item) || 0}%"></span></div>
+                        ${conclusao(item)}
                     </article>
                 `).join("")}
             </div>

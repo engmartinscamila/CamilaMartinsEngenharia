@@ -492,6 +492,16 @@ export async function updateAdminScheduleStage(id: string, status: string, progr
   return null;
 }
 
+/** Etapas do cronograma simples geradas pelo escopo do contrato (serviços contratados). */
+export async function listContractScheduleStages(projectId: string): Promise<ServiceResult<{ id: string; name: string; done: boolean; requiresAcceptance: boolean }[]>> {
+  const result = await supabase.from('cronograma')
+    .select('id, nome, status, servico_codigo, exige_aceite, origem')
+    .eq('projeto_id', projectId).eq('origem', 'contrato').not('servico_codigo', 'is', null)
+    .order('ordem');
+  if (result.error) return { data: [], error: 'Não foi possível carregar os serviços do contrato.' };
+  return { data: (result.data ?? []).map((row) => ({ id: row.id, name: row.nome, done: normalizeStatus(row.status) === 'concluido', requiresAcceptance: Boolean(row.exige_aceite) })), error: null };
+}
+
 export async function listAdminApprovals(projectId?:string): Promise<ServiceResult<ApprovalSummary[]>> {
   let query=supabase.from('aprovacoes')
     .select('id, projeto_id, tipo, titulo, descricao, approval_object, related_document_id, approval_due_at, status, comentario, created_at, respondido_at')
@@ -525,6 +535,7 @@ export async function createAdminApproval(input: {
   description?: string;
   relatedDocumentId?: string | null;
   dueDate?: string | null;
+  scheduleStageId?: string | null;
 }) {
   const approvalObject = input.approvalObject.trim();
   if (approvalObject.length < 3) return 'Informe o objeto específico que o cliente deverá avaliar.';
@@ -537,6 +548,7 @@ export async function createAdminApproval(input: {
     approval_object: approvalObject,
     descricao: input.description?.trim() || null,
     related_document_id: input.relatedDocumentId || null,
+    schedule_stage_id: input.scheduleStageId || null,
     delivered_at: new Date().toISOString(),
     approval_due_at: input.dueDate ? `${input.dueDate}T23:59:59-03:00` : null,
     status: 'aguardando',
