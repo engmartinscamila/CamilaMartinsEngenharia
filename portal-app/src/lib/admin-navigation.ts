@@ -51,6 +51,7 @@ export const modernWebsiteAdminSections = new Set([
   'construction-schedule',
   'construction-schedule-new',
   'construction-schedule-test',
+  'construction-schedule-planner',
   'construction-schedule-revision',
   'construction-schedule-budget',
   'project-cost-control',

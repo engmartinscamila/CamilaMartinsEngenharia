@@ -14,6 +14,7 @@ import Measurements from '@/app/admin/construction-schedule-measurements';
 import Revision from '@/app/admin/construction-schedule-revision';
 import Baselines from '@/app/admin/construction-schedule-baselines';
 import TestSchedule from '@/app/admin/construction-schedule-test';
+import Planner from '@/app/admin/construction-schedule-planner';
 import Tasks from '@/app/admin/tasks';
 import Diary from '@/app/admin/work-diary';
 import Procurement from '@/app/admin/procurement';
@@ -33,7 +34,7 @@ const components:Record<string,React.ComponentType>={
  clients:Clients,projects:Projects,documents:Content,photos:Content,'document-archive':Archive,
  'construction-schedule':Complete,schedule:Simple,'construction-schedule-new':NewSchedule,
  'construction-schedule-budget':Budget,'project-cost-control':CostControl,'construction-schedule-measurements':Measurements,
- 'construction-schedule-revision':Revision,'construction-schedule-baselines':Baselines,'construction-schedule-test':TestSchedule,
+ 'construction-schedule-revision':Revision,'construction-schedule-baselines':Baselines,'construction-schedule-test':TestSchedule,'construction-schedule-planner':Planner,
  tasks:Tasks,'work-diary':Diary,procurement:Procurement,financial:Financial,receipts:Receipts,
  agenda:Agenda,requests:Requests,notifications:Notifications,settings:Settings,'portal-control':Portal,
  security:Security,'system-health':Health,'service-level-governance':Services,'website-content':Website,workspace:Workspace,
