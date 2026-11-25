@@ -8,15 +8,15 @@
         "label": "Planejamento",
         "views": [
           {
-            "key": "complete",
-            "label": "Cronograma completo",
-            "module": "construction-schedule-planner"
-          },
-          {
             "key": "contracted",
             "label": "Cronograma contratado",
             "module": "construction-schedule",
             "project": true
+          },
+          {
+            "key": "complete",
+            "label": "Cronograma completo",
+            "module": "construction-schedule-planner"
           },
           {
             "key": "simple",
