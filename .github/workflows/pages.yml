@@ -33,7 +33,14 @@ jobs:
           node-version: "22"
 
       - name: Gerar acervo de frases do dia
-        run: node scripts/build-frases-do-dia-v7.mjs
+        run: |
+          # Se o Project Gutenberg estiver fora do ar, publica com o acervo já versionado,
+          # que precisa passar pela mesma validação (700+ frases únicas, autores, frases da Camila).
+          if ! node scripts/build-frases-do-dia-v7.mjs; then
+            echo "::warning::Fontes das frases indisponíveis; usando o acervo já versionado."
+            git checkout -- assets/frases-do-dia.json
+            node scripts/validate-frases-do-dia.mjs
+          fi
 
       # O index.html referencia um MP4 gerado a partir da foto 03 original.
       # Gerar ANTES de site-audit.mjs para a auditoria validar o arquivo real.
@@ -159,7 +166,14 @@ jobs:
           node-version: "22"
 
       - name: Gerar acervo de frases do dia
-        run: node scripts/build-frases-do-dia-v7.mjs
+        run: |
+          # Se o Project Gutenberg estiver fora do ar, publica com o acervo já versionado,
+          # que precisa passar pela mesma validação (700+ frases únicas, autores, frases da Camila).
+          if ! node scripts/build-frases-do-dia-v7.mjs; then
+            echo "::warning::Fontes das frases indisponíveis; usando o acervo já versionado."
+            git checkout -- assets/frases-do-dia.json
+            node scripts/validate-frases-do-dia.mjs
+          fi
 
       - name: Instalar FFmpeg para a publicação da Casa Urben
         run: bash scripts/install-ci-ffmpeg.sh
